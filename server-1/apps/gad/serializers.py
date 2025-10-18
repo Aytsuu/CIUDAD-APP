@@ -123,7 +123,7 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         model = GAD_Budget_Tracker
         fields = [
             'gbud_num', 'gbud_datetime', 'gbud_add_notes', 'gbud_exp_particulars', 'gbud_actual_expense',
-            'gbud_remaining_bal', 'gbud_is_archive', 'gbud_project_index',
+            'gbud_remaining_bal', 'gbud_is_archive', 'gbud_project_index', 'gbud_reference_num',
             'gbudy', 'staff', "gbud_proposed_budget", 'files', 'dev'
         ]
         extra_kwargs = {

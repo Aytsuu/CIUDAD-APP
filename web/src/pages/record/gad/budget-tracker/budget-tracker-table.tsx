@@ -246,29 +246,29 @@ function BudgetTracker() {
         const hasFiles = files.length > 0;
 
         return (
-          <div className="flex justify-center gap-2">
-            {!hasReferenceNum || !hasFiles ? (
-              <span className="text-red-500">
-                Missing
-                {!hasReferenceNum && " Reference Number"}
-                {!hasReferenceNum && !hasFiles && " and"}
-                {!hasFiles && " Supporting Docs"}
-              </span>
-            ) : files.length > 0 ? (
-              <div
-                className="text-sky-500 underline cursor-pointer"
-                onClick={() => {
-                  setSelectedRowFiles(files);
-                  setIsSuppDocDialogOpen(true);
-                }}
-              >
-                View All Docs ({files.length})
-              </div>
-            ) : (
-              <span>No docs</span>
-            )}
-          </div>
-        );
+        <div className="flex justify-center gap-2">
+          {files.length > 0 ? (
+            <div
+              className="text-sky-500 underline cursor-pointer"
+              onClick={() => {
+                setSelectedRowFiles(files);
+                setIsSuppDocDialogOpen(true);
+              }}
+            >
+              View All Docs ({files.length})
+            </div>
+          ) : !hasReferenceNum || !hasFiles ? (
+            <span className="text-red-500">
+              Missing
+              {!hasReferenceNum && " Reference Number"}
+              {!hasReferenceNum && !hasFiles && " and"}
+              {!hasFiles && " Supporting Docs"}
+            </span>
+          ) : (
+            <span>No docs</span>
+          )}
+        </div>
+      );
       },
     },
     {

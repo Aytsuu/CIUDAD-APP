@@ -484,7 +484,7 @@ function TreasurerDisbursementVouchers() {
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
-          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+          <DialogHeader className="p-4 bg-background border-b rounded sticky top-0 z-50">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-left">
                 Disbursement Voucher #{selectedDisbursement?.dis_num} -{" "}

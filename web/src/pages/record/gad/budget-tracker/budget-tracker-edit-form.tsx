@@ -197,7 +197,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_exp_particulars: values.gbud_exp_particulars,
         gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_actual_expense: values.gbud_actual_expense,
-        gbud_reference_num: values.gbud_reference_num,
+        gbud_reference_num: values.gbud_reference_num || null,
         gbud_remaining_bal:
           remainingBalance - (values.gbud_actual_expense || 0),
         dev: values.dev,
