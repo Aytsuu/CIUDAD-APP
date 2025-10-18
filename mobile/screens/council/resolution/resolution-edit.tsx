@@ -232,8 +232,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
                     <MediaPicker
                         selectedImages={selectedImages}
                         setSelectedImages={setSelectedImages}
-                        multiple={true}
-                        maxImages={5}
+                        limit={5}
                     />  
                 </View>
             </View>
