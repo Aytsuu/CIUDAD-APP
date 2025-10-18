@@ -333,28 +333,30 @@ class Ordinance(models.Model):
                 pass
 
     def save(self, *args, **kwargs):
-        # Run validations before saving
+        # Generate ord_num if not provided BEFORE validation
+        if not self.ord_num:  # If no ordinance number provided
+            from django.utils import timezone
+            
+            # Use the ordinance's year, or current year if not set
+            year = getattr(self, 'ord_year', timezone.now().year)
+            year_suffix = year % 100
+            
+            # Count existing ordinances for this year
+            try:
+                existing_count = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                existing_count = Ordinance.objects.count()
+            
+            # Generate next sequence number
+            seq = existing_count + 1
+            self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+        
+        # Run validations after generating ord_num
         try:
             self.full_clean()
         except Exception:
             # Re-raise to preserve default behavior upstream
             raise
-        if not self.ord_num:  # If no ordinance number provided
-            
-            year = getattr(self, 'ord_year', 2024)
-            import random
-            import string
-            
-            # Generate a unique number
-            while True:
-                # Generate 4 random digits
-                random_digits = ''.join(random.choices(string.digits, k=4))
-                ord_num = f"ORD-{year}-{random_digits}"
-                
-                # Check if it's unique
-                if not Ordinance.objects.filter(ord_num=ord_num).exists():
-                    self.ord_num = ord_num
-                    break
         
         super().save(*args, **kwargs)
     

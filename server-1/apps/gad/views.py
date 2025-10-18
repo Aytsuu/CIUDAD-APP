@@ -856,8 +856,7 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                         act_type="GAD Development Plan Created",
                         act_description=f"GAD development plan '{development_plan.dev_project}' created for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan creation: {development_plan.dev_id}")
                 else:
@@ -926,8 +925,7 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
                         act_type="GAD Development Plan Updated",
                         act_description=f"GAD development plan '{development_plan.dev_project}' updated for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan update: {development_plan.dev_id}")
                 else:

@@ -193,10 +193,10 @@ function OrdinancePage() {
     }
   };
 
-  // Loading state component
+  // Loading state component (same as certificates module)
   const renderLoadingState = () => (
-    <View className="h-64 justify-center items-center">
-      <LoadingState/>
+    <View className="flex-1 justify-center items-center p-6">
+      <LoadingState />
     </View>
   );
 

@@ -52,7 +52,16 @@ def create_activity_log(
     # Feature creation removed - no longer posting to feature table
     feature = None
     
- 
+    # Filter out any kwargs that aren't actual ActivityLog model fields
+    # Common extra params that views might pass: feat_name, etc.
+    allowed_fields = {
+        'act_timestamp', 'act_type', 'act_description', 
+        'act_module', 'act_action', 'act_record_id', 'staff'
+    }
+    
+    # Remove any kwargs that aren't valid model fields
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_fields}
+    
     try:
         activity_log = ActivityLog.objects.create(
             act_timestamp=timezone.now(),
@@ -62,7 +71,7 @@ def create_activity_log(
             act_action=act_action,
             act_record_id=record_id,
             staff=staff,
-            **kwargs
+            **filtered_kwargs
         )
         return activity_log
     except Exception as e:
