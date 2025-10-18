@@ -135,7 +135,11 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
     queryset = SummonCase.objects.all().prefetch_related(
-        'hearing_schedules',  # Now uses the related_name
+        Prefetch(
+            'hearing_schedules',
+            queryset=HearingSchedule.objects.all().order_by('hs_id')
+        ),
+        'hearing_schedules',  
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',
@@ -153,8 +157,9 @@ class CouncilCaseDetailView(generics.RetrieveAPIView):
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
-                hs_level__icontains='Mediation'
-            )
+                hs_level__icontains='Mediation' 
+            ).order_by('hs_id') 
+
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -174,7 +179,7 @@ class LuponCaseDetailView(generics.RetrieveAPIView):
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
                 hs_level__icontains='Conciliation Proceedings'
-            )
+            ).order_by('hs_id') 
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -237,7 +242,7 @@ class HearingScheduleListView(generics.ListAPIView):
             'sc_id',     
             'sd_id',
             'st_id'
-        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
+        ).order_by('hs_id')
     
 class RemarkView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]

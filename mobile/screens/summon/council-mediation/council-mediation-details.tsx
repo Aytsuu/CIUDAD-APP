@@ -1,12 +1,12 @@
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert } from "react-native"
+import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert, Linking } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight" 
 import { X } from "@/lib/icons/X" 
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { ComplaintRecordForSummon } from "../complaint-record"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Users, User, FileText, Calendar, Paperclip, Eye, Check, Forward, CircleAlert, Plus } from "lucide-react-native"
 import { useGetCouncilCaseDetails } from "../queries/summonFetchQueries"
@@ -16,15 +16,13 @@ import { formatDate } from "@/helpers/dateHelpers"
 import { formatTime } from "@/helpers/timeFormatter"
 import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import CreateSummonSched from "../summon-create"
+import { LoadingModal } from "@/components/ui/loading-modal"
 
 export default function CouncilMediationDetails() {
     const router = useRouter()
     const params = useLocalSearchParams()
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false)
-    const [createScheduleModalVisible, setCreateScheduleModalVisible] = useState(false)
-    const [confirmationModal, setConfirmationModal] = useState<{ visible: boolean; type: "resolve" | "forward" | null }>({ visible: false, type: null })
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -40,8 +38,8 @@ export default function CouncilMediationDetails() {
     } = params
 
     const { data: caseDetails, isLoading } = useGetCouncilCaseDetails(String(sc_id))
-    const { mutate: resolve } = useResolveCase()
-    const { mutate: forward } = useForwardcase()
+    const { mutate: resolve, isPending: isResolvePending } = useResolveCase()
+    const { mutate: forward, isPending: isForwardPending } = useForwardcase()
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -68,7 +66,7 @@ export default function CouncilMediationDetails() {
 
     // Check if current mediation is 3rd level and closed
     const isThirdMediation = hearing_schedules.some(schedule => 
-        schedule.hs_level === "3rd Mediation" && schedule.hs_is_closed
+        schedule.hs_level === "3rd MEDIATION" && schedule.hs_is_closed
     )
 
     // Check if all hearing schedules have remarks
@@ -87,7 +85,6 @@ export default function CouncilMediationDetails() {
     // Determine if Create button should be shown
     const shouldShowCreateButton = !isCaseClosed && 
                                   !hasResidentBool && 
-                                  (hearing_schedules.length === 0 || lastScheduleIsRescheduled) &&
                                   !isThirdMediation
 
     // Determine if Resolve button should be shown
@@ -96,12 +93,10 @@ export default function CouncilMediationDetails() {
     const handleResolve = () => {
         const status_type = "Council"
         resolve({ status_type, sc_id: String(sc_id) })
-        setConfirmationModal({ visible: false, type: null })
     }
     
     const handleForward = () => {
         forward(String(sc_id))
-        setConfirmationModal({ visible: false, type: null })
     }
 
     const handleViewImages = (files: any[], index = 0) => {
@@ -126,15 +121,27 @@ export default function CouncilMediationDetails() {
                 }
             })
         } else {
-            // Open URL in browser for mobile
             const firstMinute = hearingMinutes.find(minute => minute.hm_url)
             if (firstMinute?.hm_url) {
                 Alert.alert("Open Minutes", "Would you like to view the minutes?", [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Open", onPress: () => {} } // Add Linking.openURL(firstMinute.hm_url)
+                    { text: "Open", onPress: () => {
+                        Linking.openURL(firstMinute.hm_url).catch(() =>
+                            Alert.alert('Cannot Open File', 'Please make sure you have a PDF reader app installed.')
+                        );
+                    } } // Add Linking.openURL(firstMinute.hm_url)
                 ])
             }
         }
+    }
+
+    const handleCreateSched = (sc_id: string) => {
+        router.push({
+            pathname: "/(summon)/create-schedule",
+            params: {
+                sc_id: sc_id
+            }
+        })
     }
 
     const getStatusColor = (status: string | null | undefined) => {
@@ -289,25 +296,39 @@ export default function CouncilMediationDetails() {
                         </CardHeader>
                         <CardContent className="space-y-3 flex flex-col gap-3">
                             {shouldShowResolveButton && (
-                                <Button
-                                    className={` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
-                                    onPress={() => setConfirmationModal({ visible: true, type: "resolve" })}
-                                    disabled={shouldDisableButtons}
-                                >
-                                    <Check size={20} color="white" />
-                                    <Text className="text-white font-semibold ml-2">Mark as Resolved</Text>
-                                </Button>
+                                <ConfirmationModal
+                                    trigger={
+                                        <Button
+                                            className={` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
+                                            disabled={shouldDisableButtons}
+                                        >
+                                            <Check size={20} color="white" />
+                                            <Text className="text-white font-semibold ml-2">Mark as Resolved</Text>
+                                        </Button>
+                                    }
+                                    title="Confirm Resolution"
+                                    description="Are you sure you want to mark this case as resolved?"
+                                    actionLabel="Confirm"
+                                    onPress={() => handleResolve()}
+                                />
                             )}
                             
                             {isThirdMediation && (
-                                <Button
-                                    className={ ` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
-                                    onPress={() => setConfirmationModal({ visible: true, type: "forward" })}
-                                    disabled={shouldDisableButtons}
-                                >
-                                    <Forward size={20} color="white" />
-                                    <Text className="text-white font-semibold ml-2">Forward to Lupon</Text>
-                                </Button>
+                                <ConfirmationModal
+                                    trigger={
+                                        <Button
+                                            className={ ` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
+                                            disabled={shouldDisableButtons}
+                                        >
+                                            <Forward size={20} color="white" />
+                                            <Text className="text-white font-semibold ml-2">Forward to Lupon</Text>
+                                        </Button>
+                                    }
+                                    title="Forward to Lupon"
+                                    description="Are you sure you want to forward this case to Lupon for further action?"
+                                    actionLabel="Confirm"
+                                    onPress={() => handleForward()}
+                                />
                             )}
 
                             {(shouldDisableButtons && (shouldShowResolveButton || isThirdMediation)) && (
@@ -352,8 +373,8 @@ export default function CouncilMediationDetails() {
                 {shouldShowCreateButton && (
                     <View className="p-4 border-b border-gray-200 bg-white">
                         <Button
-                            className="bg-blue-500 py-3 rounded-lg"
-                            onPress={() => setCreateScheduleModalVisible(true)}
+                            className="flex flex-row gap-2 bg-blue-500 py-3 rounded-lg"
+                            onPress={() => handleCreateSched(String(sc_id))}
                         >
                             <Plus size={20} color="white" />
                             <Text className="text-white font-semibold ml-2">Create New Schedule</Text>
@@ -400,16 +421,10 @@ export default function CouncilMediationDetails() {
                                         {/* Hearing Date and Time */}
                                         <View className="space-y-2 mb-3">
                                             <View className="flex-row justify-between items-center">
-                                                <Text className="text-sm font-medium text-gray-600">Hearing Date</Text>
+                                                <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
                                                 <Text className="text-sm font-semibold text-gray-900">
-                                                    {formatDate(schedule.summon_date?.sd_date, "long")}
-                                                </Text>
-                                            </View>
-                                            <View className="flex-row justify-between items-center">
-                                                <Text className="text-sm font-medium text-gray-600">Hearing Time</Text>
-                                                <Text className="text-sm font-semibold text-gray-900">
-                                                    {formatTime(schedule.summon_time?.st_start_time)}
-                                                </Text>
+                                                    {formatDate(schedule.summon_date?.sd_date, "long")}, {formatTime(schedule.summon_time?.st_start_time)}
+                                                </Text>{}
                                             </View>
                                         </View>
 
@@ -607,63 +622,6 @@ export default function CouncilMediationDetails() {
                     </View>
                 </View>
 
-                {/* Create Schedule Modal */}
-                <Modal
-                    visible={createScheduleModalVisible}
-                    animationType="slide"
-                    presentationStyle="pageSheet"
-                >
-                    <View className="flex-1 bg-white">
-                        <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-                            <Text className="text-lg font-semibold">Create New Schedule</Text>
-                            <TouchableOpacity onPress={() => setCreateScheduleModalVisible(false)}>
-                                <X size={24} color="black" />
-                            </TouchableOpacity>
-                        </View>
-                        {/* <CreateSummonSched
-                            sc_id={String(sc_id)}
-                            onSuccess={() => setCreateScheduleModalVisible(false)}
-                        /> */}
-                    </View>
-                </Modal>
-
-                {/* Confirmation Modal */}
-                <Modal
-                    visible={confirmationModal.visible}
-                    transparent={true}
-                    animationType="fade"
-                >
-                    <View className="flex-1 justify-center items-center bg-black/50 p-4">
-                        <View className="bg-white rounded-lg p-6 w-full max-w-sm">
-                            <Text className="text-lg font-semibold mb-2">
-                                {confirmationModal.type === "resolve" ? "Confirm Resolution" : "Forward to Lupon"}
-                            </Text>
-                            <Text className="text-gray-600 mb-6">
-                                {confirmationModal.type === "resolve" 
-                                    ? "Are you sure you want to mark this case as resolved?"
-                                    : "Are you sure you want to forward this case to Lupon for further action?"}
-                            </Text>
-                            <View className="flex-row justify-end space-x-3">
-                                <Button
-                                    className="bg-gray-300 px-4 py-2 rounded-lg"
-                                    onPress={() => setConfirmationModal({ visible: false, type: null })}
-                                >
-                                    <Text className="text-gray-700 font-medium">Cancel</Text>
-                                </Button>
-                                <Button
-                                    className={`px-4 py-2 rounded-lg ${
-                                        confirmationModal.type === "resolve" ? "bg-green-500" : "bg-red-500"
-                                    }`}
-                                    onPress={confirmationModal.type === "resolve" ? handleResolve : handleForward}
-                                >
-                                    <Text className="text-white font-medium">
-                                        {confirmationModal.type === "resolve" ? "Confirm" : "Forward"}
-                                    </Text>
-                                </Button>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
 
                 {/* Image Viewer Modal */}
                 <Modal
@@ -734,6 +692,7 @@ export default function CouncilMediationDetails() {
                         )}
                     </View>
                 </Modal>
+                <LoadingModal visible={isForwardPending || isResolvePending}/>
             </PageLayout>
         </>
     )

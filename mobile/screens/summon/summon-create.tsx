@@ -1,122 +1,3 @@
-// import '@/global.css';
-// import React from 'react';
-// import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-// import { Button } from '@/components/ui/button';
-// import _ScreenLayout from '@/screens/_ScreenLayout';
-// import { ChevronLeft } from 'lucide-react-native';
-// import { useRouter } from 'expo-router';
-// import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
-// import { useAuth } from '@/contexts/AuthContext';
-// import { LoadingModal } from '@/components/ui/loading-modal';
-// import { useAddSummonSchedule } from "./queries/summonInsertQueries";
-// import { useGetSummonDates } from "./queries/summonFetchQueries";
-// import { useGetSummonTimeSlots } from "./queries/summonFetchQueries";
-// import { formatTime } from "@/helpers/timeFormatter";
-// import { useGetScheduleList } from "./queries/summonFetchQueries";
-// import { LoadingState } from '@/components/ui/loading-state';
-// import { FormSelect } from '@/components/ui/form/form-select';
-// import { useState } from 'react';
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import SummonSchema from '@/form-schema/summon-schema';
-// import { useForm } from 'react-hook-form';
-
-
-// export default function SummonCreateForm() {
-//     const {user} = useAuth()  
-//     const router = useRouter();
-//     const sc_id = ""
-//     const [selectedDateId, setSelectedDateId] = useState<number | null>(null);
-//     const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sc_id)
-//     const { data: dates = [], isLoading: isLoadingDates } = useGetSummonDates();
-//     const { data: timeslots = [], isLoading: isLoadingTimeslots } = useGetSummonTimeSlots(selectedDateId || 0);
-
-//     const dateOptions = dates.map(date => ({
-//         value: date.sd_id.toString(),  
-//         label: date.sd_date 
-//     }));
-//     const currentDateStr = new Date().toISOString().split('T')[0];
-
-//     function getMediationLevel(scheduleCount: number){
-//         if (scheduleCount === 0) {
-//             return "1st Mediation";
-//         } else if (scheduleCount === 1) {
-//             return "2nd Mediation";
-//         } else if (scheduleCount === 2) {
-//             return "3rd Mediation";
-//         } else if (scheduleCount === 3) {
-//             return "1st Conciliation Proceedings";
-//         } else if (scheduleCount === 4){
-//             return "2nd Conciliation Proceedings";
-//         } else if (scheduleCount === 5){
-//             return "3rd Conciliation Proceedings";
-//         }
-//         return "None"; 
-//     }
-
-//     const mediationLevel = getMediationLevel(scheduleList.length);
-//     const { control,  handleSubmit,   formState: { errors },  setValue } = useForm({
-//         resolver: zodResolver(SummonSchema),
-//         defaultValues: {
-//             sd_id: "",
-//             st_id: "",
-//             hs_level: mediationLevel,
-//             sc_id: String(sc_id),
-//         }
-//     });
-
-
-// //   const onSubmit = (values: z.infer<typeof garbagePickupRequestCreateSchema>) => {
-
-// //     const files = selectedImages.map((media) => ({
-// //         name: media.name,
-// //         type: media.type,
-// //         file: media.file
-// //     }))
-
-// //     // addRequest({values, files})
-// //   };
-
-
-//   return (
-//     <_ScreenLayout
-//       showExitButton={false}
-//       customLeftAction={
-//         <TouchableOpacity onPress={() => router.back()}>
-//           <ChevronLeft size={30} className="text-black" />
-//         </TouchableOpacity>
-//       }
-//       headerBetweenAction={<Text className="text-[13px]">Create Summon Schedule</Text>}
-//     >
-//       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-//         <View className="mb-8 p-6">
-//           <View className="space-y-4">
-          
-//             <FormSelect
-//                 control={control}
-//                 label="Hearing Date"
-//                 name="date_id"
-//                 options={dateOptions}
-//                 placeholder="Select Sitio"
-//             />
-
-
-//             <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
-//               <Button
-//                 // onPress={handleSubmit(onSubmit)}
-//                 className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-//               >
-//                 <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-//               </Button>
-//             </View>
-//           </View>
-//         </View>
-        
-//         {/* <LoadingModal visible={isPending} /> */}
-//       </ScrollView>
-//     </_ScreenLayout>
-//   );
-// }
-
 import '@/global.css';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
@@ -152,11 +33,11 @@ export default function SummonCreateForm() {
 
     function getMediationLevel(scheduleCount: number) {
         if (scheduleCount === 0) {
-            return "1st Mediation";
+            return "1st MEDIATION";
         } else if (scheduleCount === 1) {
-            return "2nd Mediation";
+            return "2nd MEDIATION";
         } else if (scheduleCount === 2) {
-            return "3rd Mediation";
+            return "3rd MEDIATION";
         } else if (scheduleCount === 3) {
             return "1st Conciliation Proceedings";
         } else if (scheduleCount === 4) {
@@ -222,20 +103,9 @@ export default function SummonCreateForm() {
     // Loading state
     if (isLoadingDates || isLoadingSchedList) {
         return (
-            <_ScreenLayout
-                showExitButton={false}
-                customLeftAction={
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <ChevronLeft size={30} className="text-black" />
-                    </TouchableOpacity>
-                }
-                headerBetweenAction={<Text className="text-[13px]">Create Summon Schedule</Text>}
-            >
-                <View className="flex-1 justify-center items-center p-6">
-                    <LoadingState />
-                    <Text className="text-gray-500 mt-4">Loading schedule information...</Text>
-                </View>
-            </_ScreenLayout>
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>    
         );
     }
 
@@ -284,7 +154,7 @@ export default function SummonCreateForm() {
                         )}
 
                         {/* Hearing Date Selection */}
-                        <View>
+                        <View className='mt-3'>
                             <FormSelect
                                 control={control}
                                 name="sd_id"

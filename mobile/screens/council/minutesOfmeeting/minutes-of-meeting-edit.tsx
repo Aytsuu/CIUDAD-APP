@@ -169,7 +169,6 @@ export default function MOMEdit() {
               <MediaPicker
                   selectedImages={selectedImages}
                   setSelectedImages={setSelectedImages}
-                  multiple={true}
               />
           </View>
         </View>
