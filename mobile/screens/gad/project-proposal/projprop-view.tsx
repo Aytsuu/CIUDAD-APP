@@ -616,7 +616,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 )}
 
                 {!disableDocumentManagement && (
-                  <View className="flex-row justify-end space-x-2 mt-3">
+                  <View className="flex-row justify-end space-x-2 mt-3 gap-2">
                     {supportDocsViewMode === "active"
                       ? !project.gprIsArchive && (
                           <ConfirmationModal
@@ -725,7 +725,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <TabsList className="bg-white flex-row justify-between">
                 <TabsTrigger
                   value="details"
-                  className={`flex-1 mx-1 ${
+                  className={`flex-1 mx-1 bg-white ${
                     activeTab === "details"
                       ? " border-b-2 border-primaryBlue"
                       : ""
@@ -741,7 +741,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 </TabsTrigger>
                 <TabsTrigger
                   value="documents"
-                  className={`flex-1 mx-1 ${
+                  className={`flex-1 mx-1 bg-white ${
                     activeTab === "documents"
                       ? " border-b-2 border-primaryBlue"
                       : ""
@@ -782,9 +782,6 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
                 <Text className="text-blue-500 font-sans">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold font-sans">
-                Add Supporting Documents
-              </Text>
               <TouchableOpacity
                 onPress={handleUploadFiles}
                 disabled={selectedImages.length === 0}
