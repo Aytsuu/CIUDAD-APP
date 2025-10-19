@@ -1,11 +1,11 @@
-# # Rest Framework Imports
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
+# Rest Framework Imports
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 # # Django Imports
-# from django.utils import timezone
-# from django.db import transaction
+from django.utils import timezone
+from django.db import transaction
 
 # Model Imports
 from apps.complaint.models import Complaint
@@ -15,7 +15,7 @@ from apps.treasurer.models import Purpose_And_Rates
 # # Python Imports
 # import logging
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ServiceChargeRequestCreateView(APIView):
