@@ -230,7 +230,7 @@ export default function CouncilMediationMain() {
                     </TouchableOpacity>
                 }
                 wrapScroll={false}
-                headerTitle={<Text className="text-gray-900 text-[13px]">Council Mediation Cases</Text>}
+                headerTitle={<Text className="text-gray-900 text-[13px]">Council Mediation</Text>}
                 rightAction={
                     <TouchableOpacity 
                         onPress={() => setShowSearch(!showSearch)} 

@@ -95,4 +95,22 @@ export const features: FeatureType[] = [
     route: "/(certificates)/cert-main",
     users: []
   },
+  {
+    name: "Summon Remarks",
+    icon: <Circle />,
+    route: "/(summon)/summon-remarks-main",
+    users: []
+  },
+  {
+    name: "Council Mediation",
+    icon: <Circle />,
+    route: "/(summon)/council-mediation-main",
+    users: []
+  },
+  {
+    name: "Conciliation Proceedings",
+    icon: <Circle />,
+    route: "/(summon)/lupon-conciliation-main",
+    users: []
+  }
 ]
