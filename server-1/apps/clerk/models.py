@@ -223,9 +223,10 @@ class SummonSuppDoc(models.Model):
 class ServiceChargePaymentRequest(models.Model):
     pay_id = models.BigAutoField(primary_key=True)
     pay_sr_type = models.CharField(max_length=200)
-    pay_status = models.CharField(max_length=200)
+    pay_status = models.CharField(max_length=200, default='Unpaid')
     pay_date_req = models.DateTimeField(default=datetime.now)
     pay_due_date = models.DateField(default = default_due_date())
+    pay_req_status = models.CharField(max_length=200, default='Pending')
     pay_date_paid = models.DateTimeField(null = True, blank = True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')

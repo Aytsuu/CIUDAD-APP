@@ -18,22 +18,58 @@ import { Spinner } from "@/components/ui/spinner";
 
 // Create columns function that accepts the handlePaymentSuccess callback
 const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharge>[] => [
-    { accessorKey: "sr_id",
+    { accessorKey: "sr_code",
         header: ({ column }) => (
               <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
               >
-                Case No.
+                SR No.
                 <ArrowUpDown size={14}/>
               </div>
         ),
         cell: ({row}) => (
-            <div className="">{row.getValue("sr_id")}</div>
+            <div className="flex justify-center items-center gap-2">
+              <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+                {row.getValue("sr_code")}
+              </span>
+            </div>
         )
     },
     {accessorKey: "complainant_name", header: "Complainant Name"},
-    {accessorKey: "sr_type", header: "Type"},
+    {accessorKey: "sr_type", 
+        header: "Type",
+        cell: ({ row }) => {
+            const value = row.getValue("sr_type") as string;
+            const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+            let bg = "bg-[#eaf4ff]";
+            let text = "text-[#2563eb]";
+            let border = "border border-[#b6d6f7]";
+            
+            if (capitalizedValue === "Summon") {
+                bg = "bg-[#fffbe6]";
+                text = "text-[#b59f00]";
+                border = "border border-[#f7e7b6]";
+            } else if (capitalizedValue === "File action") {
+                bg = "bg-[#e6f7e6]";
+                text = "text-[#16a34a]";
+                border = "border border-[#d1f2d1]";
+            } else {
+                bg = "bg-[#f3f2f2]";
+                text = "text-black";
+                border = "border border-[#e5e7eb]";
+            }
+            
+            return (
+                <span
+                    className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+                    style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+                >
+                    {capitalizedValue}
+                </span>
+            );
+        }
+    },
     {accessorKey: "sr_req_date",
         header: ({ column }) => (
               <div
@@ -56,7 +92,43 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
             );
         }
     },
-    {accessorKey: "sr_req_status", header: "Request Status"},
+    {accessorKey: "sr_req_status", 
+        header: "Request Status",
+        cell: ({ row }) => {
+            const value = row.getValue("sr_req_status") as string;
+            const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+            let bg = "bg-[#eaf4ff]";
+            let text = "text-[#2563eb]";
+            let border = "border border-[#b6d6f7]";
+            
+            if (capitalizedValue === "Pending") {
+                bg = "bg-[#fffbe6]";
+                text = "text-[#b59f00]";
+                border = "border border-[#f7e7b6]";
+            } else if (capitalizedValue === "Completed") {
+                bg = "bg-[#e6f7e6]";
+                text = "text-[#16a34a]";
+                border = "border border-[#d1f2d1]";
+            } else if (capitalizedValue === "Declined") {
+                bg = "bg-[#ffeaea]";
+                text = "text-[#b91c1c]";
+                border = "border border-[#f3dada]";
+            } else {
+                bg = "bg-[#f3f2f2]";
+                text = "text-black";
+                border = "border border-[#e5e7eb]";
+            }
+            
+            return (
+                <span
+                    className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+                    style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+                >
+                    {capitalizedValue}
+                </span>
+            );
+        }
+    },
     { accessorKey: "action", 
         header: "Action",
         cell: ({ row }) =>(
@@ -72,17 +144,19 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                         (() => {
                           const sc = row.original as ServiceCharge;
                           const receiptData = {
-                            id: String(sc.payment_request?.spay_id || sc.sr_id),
+                            id: String(sc.sr_id), // Always use sr_id for service charge
                             purpose: sc.sr_type || "Service Charge",
                             rate: (window as any).__serviceChargeRate || "0",
                             requester: sc.complainant_name || "Unknown",
                             pay_status: sc.payment_request?.spay_status || "Unpaid",
                             nat_col: "Service Charge",
                             is_resident: false,
-                            spay_id: sc.payment_request?.spay_id
+                            pay_id: sc.payment_request?.spay_id || (parseInt(sc.sr_id) || undefined) // Get spay_id from payment_request, fallback to sr_id if valid
                           };
                           console.log("ReceiptForm data being passed:", receiptData);
                           console.log("Full ServiceCharge object:", sc);
+                          console.log("sc.payment_request:", sc.payment_request);
+                          console.log("sc.payment_request?.spay_id:", sc.payment_request?.spay_id);
                           return (
                             <ReceiptForm
                               id={receiptData.id}
@@ -92,7 +166,7 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                               pay_status={receiptData.pay_status}
                               nat_col={receiptData.nat_col}
                               is_resident={receiptData.is_resident}
-                              spay_id={receiptData.spay_id}
+                              pay_id={receiptData.pay_id}
                               onComplete={handlePaymentSuccess}
                               onRequestDiscount={() => {}}
                             />
@@ -169,19 +243,19 @@ function ServiceCharge(){
     // Filter data based on active tab (client-side filtering)
     const filteredData = useMemo(() => {
         if (activeTab === "declined") {
-            // For declined items, we might need to implement server-side filtering
-            // For now, return empty array as declined items are handled differently
-            return [];
-        } else if (activeTab === "paid") {
-            // Filter for paid service charges
+            // Filter for declined service charges using pay_req_status
             return serviceCharges.filter(charge => 
-                charge.payment_request?.spay_status === "Paid"
+                charge.sr_req_status === "Declined"
+            );
+        } else if (activeTab === "paid") {
+            // Filter for completed service charges using pay_req_status
+            return serviceCharges.filter(charge => 
+                charge.sr_req_status === "Completed"
             );
         }
-        // For pending tab, show unpaid service charges
+        // For pending tab, show pending service charges using pay_req_status
         return serviceCharges.filter(charge => 
-            charge.payment_request?.spay_status === "Unpaid" || 
-            !charge.payment_request?.spay_status
+            charge.sr_req_status === "Pending"
         );
     }, [serviceCharges, activeTab]);
 
@@ -213,7 +287,7 @@ function ServiceCharge(){
                             size={17}
                         />
                         <Input
-                            placeholder="Search by case number, complainant name, or status..."
+                            placeholder="Search by SR number, complainant name, or status..."
                             className="pl-10 w-full bg-white text-sm"
                             value={searchQuery}
                             onChange={(e) => handleSearch(e.target.value)}
@@ -264,7 +338,7 @@ function ServiceCharge(){
                                     }`}
                                 >
                                     <CheckCircle size={14} />
-                                    Paid
+                                    Completed
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("declined")}
@@ -290,7 +364,7 @@ function ServiceCharge(){
                     ) : filteredData.length === 0 ? (
                         <div className="p-6 text-sm text-darkGray text-center">
                             {activeTab === "pending" ? "No pending service charge records found." : 
-                             activeTab === "paid" ? "No paid service charge records found." : 
+                             activeTab === "paid" ? "No completed service charge records found." : 
                              "No declined service charge records found."}
                         </div>
                     ) : (
@@ -305,7 +379,7 @@ function ServiceCharge(){
                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                     </p>
 
-                    <div className="w-full sm:w-auto flex justify-center">
+                    <div className="w-full sm:w-auto flex justify-end">
                         <PaginationLayout
                             totalPages={totalPages}
                             currentPage={currentPage}

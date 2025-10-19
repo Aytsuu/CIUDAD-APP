@@ -654,29 +654,43 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     def get_complainant_name(self, obj):
         try:
             if obj.comp_id:
+                # Try to get complainant through the complaint relationship
                 complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
-                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
-        except Exception:
-            pass
-        return None
+                if complainant and complainant.cpnt:
+                    return complainant.cpnt.cpnt_name
+                else:
+                    
+                    return "N/A"
+            else:
+                return "N/A"
+        except Exception as e:
+            return "Error Loading Complainant"
 
     def get_complainant_names(self, obj):
         try:
             if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
-                return [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
+                names = [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
+                if not names:
+                    # If no complainants found, return N/A
+                    return ["N/A"]
+                return names
         except Exception:
             pass
-        return []
+        return ["No Complainant Data"]
 
     def get_complainant_addresses(self, obj):
         try:
             if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
-                return [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
+                addresses = [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
+                if not addresses:
+                    # If no complainants found, return a default address
+                    return ["N/A"]
+                return addresses
         except Exception:
             pass
-        return []
+        return ["N/A"]
 
     def get_accused_names(self, obj):
         try:
@@ -701,8 +715,10 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         return f"SR-{obj.pay_id}"
     
     def get_sr_code(self, obj):
-        # Return None for now, will be generated when payment is made
-        return None
+        # Generate SR code like SR000-25 (similar to CR000-25)
+        from django.utils import timezone
+        year_suffix = timezone.now().year % 100
+        return f"SR{obj.pay_id:03d}-{year_suffix:02d}"
     
     def get_sr_type(self, obj):
         # Use the payment request type
@@ -713,10 +729,8 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         return obj.pay_date_req
     
     def get_sr_req_status(self, obj):
-        # Map payment status to service request status
-        if obj.pay_status == "Unpaid":
-            return "Pending"
-        return obj.pay_status
+        # Use pay_req_status for request status
+        return obj.pay_req_status
     
     def get_sr_case_status(self, obj):
         # Default case status

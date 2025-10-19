@@ -299,6 +299,10 @@ export function AppSidebar() {
                 url: "record/clearances/businesspermit",
               },
               {
+                title: "Service Charge",
+                url: "record/clearances/servicecharge",
+              },
+              {
                 title: "Issued Certificates",
                 url: "record/clearances/issuedcertificates",
               },

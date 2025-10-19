@@ -1449,7 +1449,7 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
         self._auto_decline_overdue_charges()
         
         queryset = ServiceChargePaymentRequest.objects.filter(
-            pay_sr_type='Summon'
+            pay_sr_type__in=['File Action']
         ).select_related(
             'comp_id',
             'pr_id'
@@ -1469,6 +1469,21 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
                 Q(comp_id__comp_location__icontains=search_query)
             ).distinct()
 
+        # Add status filtering
+        status_filter = self.request.GET.get('status', None)
+        if status_filter and status_filter != 'all':
+            if status_filter == 'pending':
+                queryset = queryset.filter(pay_req_status='Pending')
+            elif status_filter == 'completed':
+                queryset = queryset.filter(pay_req_status='Completed')
+            elif status_filter == 'declined':
+                queryset = queryset.filter(pay_req_status='Declined')
+
+        # Add payment status filtering
+        payment_status_filter = self.request.GET.get('payment_status', None)
+        if payment_status_filter:
+            queryset = queryset.filter(pay_status=payment_status_filter)
+
         return queryset.order_by('-pay_date_req')
     
     def _auto_decline_overdue_charges(self):
@@ -1486,6 +1501,7 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             # Find overdue unpaid charges
             overdue_charges = ServiceChargePaymentRequest.objects.filter(
                 pay_status='Unpaid',
+                pay_req_status='Pending',
                 pay_date_req__lt=cutoff_date,
                 pay_sr_type='Summon'
             )
@@ -1493,8 +1509,7 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             if overdue_charges.exists():
                 # Update all overdue charges to declined
                 updated_count = overdue_charges.update(
-                    pay_status='Declined',
-                    pay_date_paid=timezone.now()
+                    pay_req_status='Declined'
                 )
                 
                 if updated_count > 0:
@@ -1617,15 +1632,23 @@ class UpdateServiceChargePaymentStatusView(APIView):
             # Get the payment request
             payment_request = ServiceChargePaymentRequest.objects.get(pay_id=pay_id)
             
-            # Update the payment status
-            payment_request.pay_status = "Paid"
-            payment_request.pay_date_paid = timezone.now()
+            # Update payment status if provided
+            if 'pay_status' in request.data:
+                payment_request.pay_status = request.data['pay_status']
+                if request.data['pay_status'] == "Paid":
+                    payment_request.pay_date_paid = timezone.now()
+            
+            # Update request status if provided
+            if 'pay_req_status' in request.data:
+                payment_request.pay_req_status = request.data['pay_req_status']
+            
             payment_request.save()
             
             return Response({
                 'message': 'Payment status updated successfully',
                 'pay_id': payment_request.pay_id,
                 'pay_status': payment_request.pay_status,
+                'pay_req_status': payment_request.pay_req_status,
                 'pay_date_paid': payment_request.pay_date_paid
             }, status=status.HTTP_200_OK)
             
