@@ -516,32 +516,6 @@ export default function CouncilMediationDetails() {
                                                     </TouchableOpacity>
                                                 )}
                                             </View>
-
-                                            {/* Generate Summon Button */}
-                                            {/* <Button
-                                                className={`py-2 rounded-lg ${schedule.hs_is_closed ? 'bg-gray-400' : 'bg-blue-500'}`}
-                                                onPress={() => {
-                                                    // Navigate to summon preview/generation
-                                                    router.push({
-                                                        pathname: "/(summon)/summon-preview",
-                                                        params: {
-                                                            sc_id: String(sc_id),
-                                                            hs_id: schedule.hs_id,
-                                                            sc_code: String(sc_code),
-                                                            comp_names: String(comp_names),
-                                                            acc_names: String(acc_names),
-                                                            complainant_addresses: String(complainant_addresses),
-                                                            accused_addresses: String(accused_addresses),
-                                                            hearing_date: schedule.summon_date?.sd_date,
-                                                            hearing_time: schedule.summon_time?.st_start_time,
-                                                            mediation_level: schedule.hs_level
-                                                        }
-                                                    })
-                                                }}
-                                                disabled={schedule.hs_is_closed}
-                                            >
-                                                <Text className="text-white font-semibold">Generate Summon</Text>
-                                            </Button> */}
                                         </CardContent>
                                     </Card>
                                 )
