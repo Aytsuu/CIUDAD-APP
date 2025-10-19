@@ -3,7 +3,6 @@ import {
   TouchableOpacity, 
   View, 
   Text,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -14,6 +13,7 @@ import PageLayout from "@/screens/_PageLayout";
 import ComplaintDetails from "./ComplaintDetails";
 import { ComplaintData } from "./types";
 import { useGetComplaintById } from "./queries/ComplaintGetQueries";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface TabButtonProps {
   title: string;
@@ -99,18 +99,9 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Render Loading State
   if (isDataLoading) {
     return (
-      <PageLayout
-        leftAction={LeftHeader}
-        headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
-        rightAction={RightHeader}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50">
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="text-gray-500 text-center mt-4 font-PoppinsRegular">
-            Loading complaint details...
-          </Text>
-        </View>
-      </PageLayout>
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <LoadingState/>
+      </View>
     );
   }
 
@@ -152,7 +143,7 @@ export default function ComplaintMainView(): React.JSX.Element {
   return (
     <PageLayout
       leftAction={LeftHeader}
-      headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
+      headerTitle={<Text className="flex items-start text-gray-900 font-medium">Blotter Request</Text>}
       rightAction={RightHeader}
     >
       <View className="flex-1 bg-gray-50">

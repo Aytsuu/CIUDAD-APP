@@ -1,17 +1,13 @@
 import React, { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
 import ScreenLayout from "../_ScreenLayout";
 import { getComplaintLists } from "./queries/ComplaintGetQueries";
 import { router } from "expo-router";
 import { ChevronLeft, MoreVertical } from "lucide-react-native";
 import { SearchWithTabs } from "./SearchWithTabs";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface ComplaintItem {
   comp_id: string;
@@ -23,11 +19,11 @@ interface ComplaintItem {
   comp_incident_type: string;
 }
 
-export default function ComplaintListScreen() {
+export default function ComplaintLists() {
   const { data: complaintList, isLoading, isError } = getComplaintLists();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
-
+  console.log(JSON.stringify(complaintList, null, 2));
   // Calculate status counts
   const statusCounts = useMemo(() => {
     if (!complaintList) return { all: 0, pending: 0, resolved: 0, raised: 0 };
@@ -97,59 +93,74 @@ export default function ComplaintListScreen() {
 
   const renderComplaintCard = ({ item }: { item: ComplaintItem }) => (
     <TouchableOpacity
-      // onPress={() => router.push(`/complaint/${item.comp_id}`)}
-      className="bg-white rounded-xl p-4 mb-3 mx-4 shadow-sm border border-gray-100"
+      onPress={() =>
+        router.push({
+          pathname: `/(my-request)/complaint-tracking/compMainView`,
+          params: { comp_id: item.comp_id },
+        })
+      }
+      className="bg-white rounded-xl p-4"
     >
-      <View className="flex-row items-start justify-between mb-3">
-        <View className="flex-row items-center flex-1">
-          <View className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3">
-            <Text className="text-indigo-600 font-PoppinsSemiBold text-sm">
-              {item.comp_incident_type.charAt(0).toUpperCase()}
-            </Text>
+      <View className="flex-row items-start justify-between">
+        <View className="flex-row flex-1">
+          <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mr-3 overflow-hidden">
+            {/* <Image
+              source={
+                user?.profile_image
+                  ? { uri: user.profile_image }
+                  : require("@/assets/images/Logo.png")
+              }
+              className="w-full h-full rounded-full"
+              style={{ backgroundColor: "#f3f4f6" }}
+            /> */}
           </View>
+
+          {/* Text Details */}
           <View className="flex-1">
-            <Text
-              className="text-base font-PoppinsSemiBold text-gray-900"
-              numberOfLines={1}
-            >
-              {item.comp_incident_type}
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mr-2">
+                {item.cpnt_name}
+              </Text>
+
+              <View
+                className={`px-3 py-1 rounded-full ${
+                  getStatusColor(item.comp_status).split(" ")[0]
+                }`}
+              >
+                <Text
+                  className={`text-xs font-PoppinsMedium ${
+                    getStatusColor(item.comp_status).split(" ")[1]
+                  }`}
+                >
+                  {item.comp_status}
+                </Text>
+              </View>
+            </View>
+
             <Text
               className="text-sm font-PoppinsRegular text-gray-500"
               numberOfLines={1}
             >
               {item.comp_allegation} | {item.comp_location}
             </Text>
+
+            {/* Status directly below details */}
+            <View className="flex-row items-center mt-2">
+              <Text className="text-xs font-PoppinsRegular text-gray-400">
+                {localDateFormatter(item.comp_datetime)}
+              </Text>
+            </View>
           </View>
         </View>
+
+        {/* Right: More icon */}
         <TouchableOpacity className="p-1">
           <MoreVertical size={20} color="#9CA3AF" />
         </TouchableOpacity>
       </View>
 
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center">
-          <Text className="text-xs font-PoppinsRegular text-gray-500 mr-2">
-            Status
-          </Text>
-          <View
-            className={`px-3 py-1 rounded-full ${
-              getStatusColor(item.comp_status).split(" ")[0]
-            }`}
-          >
-            <Text
-              className={`text-xs font-PoppinsMedium ${
-                getStatusColor(item.comp_status).split(" ")[1]
-              }`}
-            >
-              {item.comp_status}
-            </Text>
-          </View>
-        </View>
-        <Text className="text-xs font-PoppinsRegular text-gray-400">
-          {item.comp_datetime}
-        </Text>
-      </View>
+      {/* Datetime - bottom right */}
+      <View className="items-end mt-2"></View>
     </TouchableOpacity>
   );
 
@@ -157,10 +168,7 @@ export default function ComplaintListScreen() {
     if (isLoading) {
       return (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#6366F1" />
-          <Text className="text-gray-500 font-PoppinsRegular mt-2">
-            Loading complaints...
-          </Text>
+          <LoadingState />
         </View>
       );
     }
@@ -221,7 +229,7 @@ export default function ComplaintListScreen() {
         </TouchableOpacity>
       }
       headerBetweenAction={
-        <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+        <Text className="text-md font-PoppinsRegular text-gray-900">
           Blotter
         </Text>
       }

@@ -9,17 +9,6 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { CloudUpload } from "@/lib/icons/CloudUpload";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import {
-  Image,
-  View,
-  TouchableOpacity,
-  FlatList,
-  Text
-} from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import {CloudUpload} from "@/lib/icons/CloudUpload"
-import { Ionicons } from "@expo/vector-icons";
 
 export interface MediaItem {
   uri: string

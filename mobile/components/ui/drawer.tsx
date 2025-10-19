@@ -1,4 +1,3 @@
-// components/ui/drawer.tsx
 import React from "react";
 import { Animated, Dimensions, Modal, TouchableOpacity, View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -102,7 +101,7 @@ export const Drawer = ({
 
             {/* Drawer Content */}
             {children}
-          </TouchableOpacity>
+            </View>
         </Animated.View>
       </TouchableOpacity>
     </Modal>

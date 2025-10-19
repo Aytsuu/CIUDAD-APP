@@ -26,6 +26,7 @@ export const StatusFilterTabs: React.FC<StatusFilterTabsProps> = ({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 8 }}
+        className=""
       >
         {tabs.map((tab) => (
           <TouchableOpacity

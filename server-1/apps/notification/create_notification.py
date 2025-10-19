@@ -54,8 +54,7 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
     print(f"Target obj type: {type(target_obj)}")
     print(f"Has mobile route: {hasattr(target_obj, 'get_mobile_route')}")
     
-    # Group tokens by device_id across all accounts
-    device_tokens = {}  # {device_id: token_obj}
+    device_tokens = {} 
     
     for acc in recipient_accounts:
         tokens = FCMToken.objects.filter(acc=acc)
@@ -66,7 +65,6 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
             if not device_id:
                 continue
             
-            # Only store the first token we encounter for each device_id
             if device_id not in device_tokens:
                 device_tokens[device_id] = {
                     'token': token_obj.fcm_token,
@@ -75,6 +73,7 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
     
     print(f"Unique devices to send: {len(device_tokens)}")
     
+    # Send one notification per unique device
     for device_id, token_data in device_tokens.items():
         token = token_data['token']
         acc = token_data['account']
