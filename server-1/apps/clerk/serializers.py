@@ -546,67 +546,10 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
 
 # ================== SERVICE CHARGE SERIALIZERS =========================
     
-class ServiceChargeDecisionSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = ServiceChargeDecision
-        fields = '__all__'
-
 class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceChargePaymentRequest
         fields = '__all__'
-
-class SummonScheduleDetailSerializer(serializers.ModelSerializer):
-    hearing_date = serializers.DateField(source='sd_id.sd_date', read_only=True)
-    hearing_time = serializers.TimeField(source='st_id.st_start_time', read_only=True)
-    
-    class Meta:
-        model = SummonSchedule
-        fields = [
-            'ss_id', 
-            'ss_mediation_level', 
-            'ss_is_rescheduled', 
-            'ss_reason',
-            'hearing_date',
-            'hearing_time'
-        ]
-
-
-# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-#     complaint = serializers.SerializerMethodField()
-#     schedules = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_type',
-#             'sr_req_date',
-#             'sr_req_status',
-#             'sr_case_status',
-#             'sr_date_marked',
-#             'comp_id',
-#             'complaint',       
-#             'schedules',      
-#         ]
-
-#     def get_complaint(self, obj):
-#         if not obj.comp_id:
-#             return None
-#         return ComplaintSerializer(obj.comp_id, context=self.context).data
-
-#     def get_schedules(self, obj):
-#         schedules = SummonSchedule.objects.filter(sr_id=obj)
-#         result = []
-#         for schedule in schedules:
-#             schedule_data = SummonScheduleDetailSerializer(schedule).data
-#             supp_docs = SummonSuppDoc.objects.filter(ss_id=schedule)
-#             schedule_data['supporting_docs'] = SummonSuppDocViewSieralizer(
-#                 supp_docs, many=True
-#             ).data
-#             result.append(schedule_data)
-#         return result
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
@@ -752,448 +695,270 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             return None
         
 
-# SUMMON CASE SERIALIZER FOR COMPLAINANT TRACKING MOBILE
-class CaseTrackingSerializer(serializers.ModelSerializer):
-    decision = serializers.SerializerMethodField()
-    payment = serializers.SerializerMethodField()
-    schedule = serializers.SerializerMethodField()
-    current_step = serializers.SerializerMethodField()
-    progress_percentage = serializers.SerializerMethodField()
+# # SUMMON CASE SERIALIZER FOR COMPLAINANT TRACKING MOBILE
+# class CaseTrackingSerializer(serializers.ModelSerializer):
+#     decision = serializers.SerializerMethodField()
+#     payment = serializers.SerializerMethodField()
+#     schedule = serializers.SerializerMethodField()
+#     current_step = serializers.SerializerMethodField()
+#     progress_percentage = serializers.SerializerMethodField()
     
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 'sr_code', 'sr_type', 'sr_req_date', 
-            'sr_req_status', 'sr_case_status', 'sr_date_marked',
-            'decision', 'payment', 'schedule', 'current_step', 'progress_percentage'
-        ]
-    
-    def get_decision(self, obj):
-        try:
-            decision = ServiceChargeDecision.objects.get(sr_id=obj)
-            return {
-                'scd_decision_date': decision.scd_decision_date,
-                'scd_reason': decision.scd_reason
-            }
-        except ServiceChargeDecision.DoesNotExist:
-            return None
-    
-    def get_payment(self, obj):
-        try:
-            payment = ServiceChargePaymentRequest.objects.get(sr_id=obj)
-            payment_data = {
-                'spay_id': payment.spay_id,
-                'spay_status': payment.spay_status,
-                'spay_due_date': payment.spay_due_date,
-                'spay_date_paid': payment.spay_date_paid,
-            }
-            
-            # Add amount and purpose from the related pr_id
-            if payment.pr_id:
-                payment_data['amount'] = payment.pr_id.pr_rate
-                payment_data['purpose'] = payment.pr_id.pr_purpose
-            
-            return payment_data
-        except ServiceChargePaymentRequest.DoesNotExist:
-            return None
-    
-    def get_schedule(self, obj):
-        try:
-            schedule = SummonSchedule.objects.get(sr_id=obj)
-            schedule_data = {
-                'ss_id': schedule.ss_id,
-                'ss_mediation_level': schedule.ss_mediation_level,
-                'ss_is_rescheduled': schedule.ss_is_rescheduled,
-                'ss_reason': schedule.ss_reason,
-            }
-            
-            # Add date and time from related objects
-            if schedule.sd_id:
-                schedule_data['date'] = schedule.sd_id.sd_date
-            if schedule.st_id:
-                schedule_data['time'] = schedule.st_id.st_start_time
-            
-            return schedule_data
-        except SummonSchedule.DoesNotExist:
-            return None
-    
-    def get_current_step(self, obj):
-        """Determine the current step based on the case status"""
-        steps = [
-            {
-                'id': 1,
-                'title': 'Summon Request',
-                'description': self._get_step1_description(obj),
-                'status': self._get_step1_status(obj),
-                'details': self._get_step1_details(obj),
-                'display_status': self._get_step1_display_status(obj),
-            },
-            {
-                'id': 2,
-                'title': 'Payment',
-                'description': 'Process payment for mediation services',
-                'status': self._get_step2_status(obj),
-                'details': self._get_step2_details(obj),
-                'display_status': self._get_step2_display_status(obj),
-            },
-            {
-                'id': 3,
-                'title': 'Schedule Mediation',
-                'description': 'Book your mediation session with available mediators',
-                'status': self._get_step3_status(obj),
-                'details': self._get_step3_details(obj),
-                'display_status': self._get_step3_display_status(obj),
-            },
-            {
-                'id': 4,
-                'title': 'Case Completion',
-                'description': 'Receive final documentation and case resolution',
-                'status': self._get_step4_status(obj),
-                'details': 'Final documents will be available after mediation completion.',
-                'display_status': self._get_step4_display_status(obj),
-            }
-        ]
-        return steps
-    
-    def get_progress_percentage(self, obj):
-        """Calculate progress percentage based on completed steps"""
-        steps = self.get_current_step(obj)
-        completed_steps = sum(1 for step in steps if step['status'] == 'accepted')
-        return (completed_steps / len(steps)) * 100 if steps else 0
-    
-    # Step 1: Summon Request
-    def _get_step1_status(self, obj):
-        if not obj.sr_req_status:
-            return 'pending'
-        status_lower = obj.sr_req_status.lower()
-        if status_lower == 'accepted':
-            return 'accepted'
-        elif status_lower == 'rejected':
-            return 'rejected'
-        return 'pending'
-    
-    def _get_step1_display_status(self, obj):
-        status = self._get_step1_status(obj)
-        return status.capitalize()  # Pending, Accepted, Rejected
-    
-    def _get_step1_description(self, obj):
-        status = self._get_step1_status(obj)
-        if status == 'pending':
-            return 'Waiting for approval.'
-        elif status == 'accepted':
-            return 'Your summon request has been approved.'
-        else:
-            return 'Your summon request has been rejected.'
-    
-    def _get_step1_details(self, obj):
-        decision = self.get_decision(obj)
-        status = self._get_step1_status(obj)
-        
-        details = f"Requested on {obj.sr_req_date.strftime('%B %d, %Y') if obj.sr_req_date else 'N/A'}."
-        
-        if status == 'accepted' and decision and decision.get('scd_decision_date'):
-            details += f" Accepted on {decision['scd_decision_date'].strftime('%B %d, %Y')}."
-        elif status == 'rejected' and decision:
-            decision_date = decision.get('scd_decision_date')
-            reason = decision.get('scd_reason', 'No reason provided')
-            if decision_date:
-                details += f" Rejected on {decision_date.strftime('%B %d, %Y')}. Reason: {reason}."
-            else:
-                details += f" Rejected. Reason: {reason}."
-        
-        return details
-    
-    # Step 2: Payment
-    def _get_step2_status(self, obj):
-        payment = self.get_payment(obj)
-        if not payment:
-            return 'pending'
-        
-        status = payment.get('spay_status', '').lower()
-        
-        if status == 'paid':
-            return 'accepted'
-        elif status == 'unpaid':
-            spay_due_date = payment.get('spay_due_date')
-            if spay_due_date and timezone.now().date() > spay_due_date:
-                return 'rejected'  # Overdue unpaid payment
-            return 'pending'  # Not yet due
-        return 'pending'
-    
-    def _get_step2_display_status(self, obj):
-        payment = self.get_payment(obj)
-        if not payment:
-            return 'Unpaid'
-        
-        status = payment.get('spay_status', '').lower()
-        if status == 'paid':
-            return 'Paid'
-        elif status == 'unpaid':
-            return 'Unpaid'
-        return 'Unpaid'
-    
-    def _get_step2_details(self, obj):
-        payment = self.get_payment(obj)
-        status = self._get_step2_status(obj)
-        
-        if status == 'pending' and payment:
-            amount = payment.get('amount', 'N/A')
-            purpose = payment.get('purpose', 'mediation services')
-            spay_due_date = payment.get('spay_due_date')
-            
-            if spay_due_date:
-                return f"Payment of {amount} for {purpose} is due on {spay_due_date.strftime('%B %d, %Y')}."
-            else:
-                return f"Payment of {amount} for {purpose} will be enabled once your summon request is approved."
-        
-        elif status == 'accepted' and payment:
-            amount = payment.get('amount', 'N/A')
-            spay_date_paid = payment.get('spay_date_paid')
-            if spay_date_paid:
-                return f"Payment of {amount} paid on {spay_date_paid.strftime('%B %d, %Y')}."
-            else:
-                return f"Payment of {amount} completed."
-        
-        elif status == 'rejected' and payment:
-            spay_due_date = payment.get('spay_due_date')
-            if spay_due_date:
-                return f"Payment overdue. Due date was {spay_due_date.strftime('%B %d, %Y')}."
-            else:
-                return "Payment overdue."
-        
-        return "Payment details not available."
-    
-    # Step 3: Schedule Mediation
-    def _get_step3_status(self, obj):
-        schedule = self.get_schedule(obj)
-        if not schedule:
-            return 'pending'
-        
-        if schedule.get('ss_is_rescheduled'):
-            return 'rejected'
-        return 'accepted'
-    
-    def _get_step3_display_status(self, obj):
-        schedule = self.get_schedule(obj)
-        if not schedule:
-            return 'Not Scheduled'
-        
-        if schedule.get('ss_is_rescheduled'):
-            return 'Rescheduled'
-        return 'Scheduled'
-    
-    def _get_step3_details(self, obj):
-        schedule = self.get_schedule(obj)
-        status = self._get_step3_status(obj)
-        
-        if status == 'pending':
-            return "Schedule mediation after payment is completed."
-        elif status == 'accepted' and schedule and schedule.get('date') and schedule.get('time'):
-            return f"Scheduled for {schedule['date']} at {schedule['time']}."
-        elif status == 'rejected' and schedule:
-            reason = schedule.get('ss_reason', 'No reason provided')
-            return f"Previous slot rejected. Reason: {reason}. Please select a new time."
-        return ""
-    
-    # Step 4: Case Completion
-    def _get_step4_status(self, obj):
-        if not obj.sr_case_status:
-            return 'pending'
-        
-        status_lower = obj.sr_case_status.lower()
-        if status_lower == 'resolved':
-            return 'accepted'
-        elif status_lower == 'escalated':
-            return 'rejected'
-        return 'pending'
-    
-    def _get_step4_display_status(self, obj):
-        if not obj.sr_case_status:
-            return 'In Progress'
-        
-        status_lower = obj.sr_case_status.lower()
-        if status_lower == 'resolved':
-            return 'Resolved'
-        elif status_lower == 'escalated':
-            return 'Escalated'
-        return 'In Progress'
-
-# New: Flat serializer exposing top-level payment fields for easy Paid-list consumption
-class ServiceChargePaidListSerializer(serializers.ModelSerializer):
-    complainant_name = serializers.SerializerMethodField()
-    spay_status = serializers.SerializerMethodField()
-    spay_date_paid = serializers.SerializerMethodField()
-    pr_id = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_req_date',
-            'sr_req_status',
-            'sr_case_status',
-            'comp_id',
-            'staff_id',
-            'complainant_name',
-            'spay_status',
-            'spay_date_paid',
-            'pr_id',
-        ]
-
-    def get_complainant_name(self, obj):
-        if obj.comp_id:
-            try:
-                complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
-                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
-            except Exception:
-                return None
-        return None
-
-    def get_spay_status(self, obj):
-        try:
-            return getattr(obj.servicechargepaymentrequest, 'spay_status', None)
-        except Exception:
-            return None
-
-    def get_spay_date_paid(self, obj):
-        try:
-            return getattr(obj.servicechargepaymentrequest, 'spay_date_paid', None)
-        except Exception:
-            return None
-
-    def get_pr_id(self, obj):
-        try:
-            pr = getattr(obj.servicechargepaymentrequest, 'pr_id', None)
-            return pr.pr_id if pr else None
-        except Exception:
-            return None
-# ============================ MIGHT DELETE THESE LATER ==============================
-
-# Complaint-related Serializers
-# class CaseSuppDocSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = CaseSuppDoc
-#         fields = '__all__'
-
-# class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ServiceChargeRequestFile
-#         fields = '__all__'
-
-# class CaseActivitySerializer(serializers.ModelSerializer):
-#     srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
-#     supporting_documents = CaseSuppDocSerializer(
-#         source='supporting_docs',
-#         many=True,
-#         read_only=True
-#     )
-#     formatted_hearing_datetime = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = CaseActivity
-#         fields = [
-#             'ca_id',
-#             'ca_reason',
-#             'ca_hearing_date',
-#             'ca_hearing_time',
-#             'formatted_hearing_datetime',
-#             'ca_mediation',
-#             'ca_date_of_issuance',
-#             'srf_detail',
-#             'supporting_documents'
-#         ]
-    
-#     def get_formatted_hearing_datetime(self, obj):
-#         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-
-# Service Charge Request Serializers
-# class ServiceChargeRequestSerializer(serializers.ModelSerializer):
-#     complainant_names = serializers.SerializerMethodField()
-#     accused_names = serializers.SerializerMethodField()
-#     incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
-#     allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-#     formatted_decision_date = serializers.SerializerMethodField()
-#     formatted_request_date = serializers.SerializerMethodField()
-
 #     class Meta:
 #         model = ServiceChargeRequest
 #         fields = [
-#             'sr_id', 
-#             'sr_code',
-#             'complainant_names', 
-#             'accused_names', 
-#             'incident_type', 
-#             'allegation',
-#             'sr_status',
-#             'sr_payment_status',
-#             'sr_type',
-#             'formatted_decision_date',
-#             'formatted_request_date'
-#         ]
-
-#     def get_complainant_names(self, obj):
-#         if not obj.comp:
-#             return []
-#         return [c.cpnt_name for c in obj.comp.complainant.all()]
-    
-#     def get_accused_names(self, obj):
-#         if not obj.comp:
-#             return []
-#         return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
-    
-#     def get_formatted_decision_date(self, obj):
-#         if obj.sr_decision_date:
-#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-#         return None
-    
-#     def get_formatted_request_date(self, obj):
-#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-
-# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-#     complaint = ComplaintSerializer(source='comp', read_only=True)
-#     case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-#     file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-#     parent_summon = ServiceChargeRequestSerializer(read_only=True)
-#     formatted_request_date = serializers.SerializerMethodField()
-#     formatted_decision_date = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_status',
-#             'sr_payment_status',
-#             'sr_type',
-#             'formatted_request_date',
-#             'formatted_decision_date',
-#             'sr_decision_date',
-#             'complaint',
-#             'case_activities',
-#             'file_action_file',
-#             'parent_summon'
+#             'sr_id', 'sr_code', 'sr_type', 'sr_req_date', 
+#             'sr_req_status', 'sr_case_status', 'sr_date_marked',
+#             'decision', 'payment', 'schedule', 'current_step', 'progress_percentage'
 #         ]
     
-#     def get_formatted_request_date(self, obj):
-#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+#     def get_decision(self, obj):
+#         try:
+#             decision = ServiceChargeDecision.objects.get(sr_id=obj)
+#             return {
+#                 'scd_decision_date': decision.scd_decision_date,
+#                 'scd_reason': decision.scd_reason
+#             }
+#         except ServiceChargeDecision.DoesNotExist:
+#             return None
     
-#     def get_formatted_decision_date(self, obj):
-#         if obj.sr_decision_date:
-#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-#         return None
-
-# class FileActionRequestSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_type',
-#             'sr_payment_status',
-#             'parent_summon',
-#             'file_action_file',
-#             'comp'
+#     def get_payment(self, obj):
+#         try:
+#             payment = ServiceChargePaymentRequest.objects.get(sr_id=obj)
+#             payment_data = {
+#                 'spay_id': payment.spay_id,
+#                 'spay_status': payment.spay_status,
+#                 'spay_due_date': payment.spay_due_date,
+#                 'spay_date_paid': payment.spay_date_paid,
+#             }
+            
+#             # Add amount and purpose from the related pr_id
+#             if payment.pr_id:
+#                 payment_data['amount'] = payment.pr_id.pr_rate
+#                 payment_data['purpose'] = payment.pr_id.pr_purpose
+            
+#             return payment_data
+#         except ServiceChargePaymentRequest.DoesNotExist:
+#             return None
+    
+#     def get_schedule(self, obj):
+#         try:
+#             schedule = SummonSchedule.objects.get(sr_id=obj)
+#             schedule_data = {
+#                 'ss_id': schedule.ss_id,
+#                 'ss_mediation_level': schedule.ss_mediation_level,
+#                 'ss_is_rescheduled': schedule.ss_is_rescheduled,
+#                 'ss_reason': schedule.ss_reason,
+#             }
+            
+#             # Add date and time from related objects
+#             if schedule.sd_id:
+#                 schedule_data['date'] = schedule.sd_id.sd_date
+#             if schedule.st_id:
+#                 schedule_data['time'] = schedule.st_id.st_start_time
+            
+#             return schedule_data
+#         except SummonSchedule.DoesNotExist:
+#             return None
+    
+#     def get_current_step(self, obj):
+#         """Determine the current step based on the case status"""
+#         steps = [
+#             {
+#                 'id': 1,
+#                 'title': 'Summon Request',
+#                 'description': self._get_step1_description(obj),
+#                 'status': self._get_step1_status(obj),
+#                 'details': self._get_step1_details(obj),
+#                 'display_status': self._get_step1_display_status(obj),
+#             },
+#             {
+#                 'id': 2,
+#                 'title': 'Payment',
+#                 'description': 'Process payment for mediation services',
+#                 'status': self._get_step2_status(obj),
+#                 'details': self._get_step2_details(obj),
+#                 'display_status': self._get_step2_display_status(obj),
+#             },
+#             {
+#                 'id': 3,
+#                 'title': 'Schedule Mediation',
+#                 'description': 'Book your mediation session with available mediators',
+#                 'status': self._get_step3_status(obj),
+#                 'details': self._get_step3_details(obj),
+#                 'display_status': self._get_step3_display_status(obj),
+#             },
+#             {
+#                 'id': 4,
+#                 'title': 'Case Completion',
+#                 'description': 'Receive final documentation and case resolution',
+#                 'status': self._get_step4_status(obj),
+#                 'details': 'Final documents will be available after mediation completion.',
+#                 'display_status': self._get_step4_display_status(obj),
+#             }
 #         ]
+#         return steps
+    
+#     def get_progress_percentage(self, obj):
+#         """Calculate progress percentage based on completed steps"""
+#         steps = self.get_current_step(obj)
+#         completed_steps = sum(1 for step in steps if step['status'] == 'accepted')
+#         return (completed_steps / len(steps)) * 100 if steps else 0
+    
+#     # Step 1: Summon Request
+#     def _get_step1_status(self, obj):
+#         if not obj.sr_req_status:
+#             return 'pending'
+#         status_lower = obj.sr_req_status.lower()
+#         if status_lower == 'accepted':
+#             return 'accepted'
+#         elif status_lower == 'rejected':
+#             return 'rejected'
+#         return 'pending'
+    
+#     def _get_step1_display_status(self, obj):
+#         status = self._get_step1_status(obj)
+#         return status.capitalize()  # Pending, Accepted, Rejected
+    
+#     def _get_step1_description(self, obj):
+#         status = self._get_step1_status(obj)
+#         if status == 'pending':
+#             return 'Waiting for approval.'
+#         elif status == 'accepted':
+#             return 'Your summon request has been approved.'
+#         else:
+#             return 'Your summon request has been rejected.'
+    
+#     def _get_step1_details(self, obj):
+#         decision = self.get_decision(obj)
+#         status = self._get_step1_status(obj)
+        
+#         details = f"Requested on {obj.sr_req_date.strftime('%B %d, %Y') if obj.sr_req_date else 'N/A'}."
+        
+#         if status == 'accepted' and decision and decision.get('scd_decision_date'):
+#             details += f" Accepted on {decision['scd_decision_date'].strftime('%B %d, %Y')}."
+#         elif status == 'rejected' and decision:
+#             decision_date = decision.get('scd_decision_date')
+#             reason = decision.get('scd_reason', 'No reason provided')
+#             if decision_date:
+#                 details += f" Rejected on {decision_date.strftime('%B %d, %Y')}. Reason: {reason}."
+#             else:
+#                 details += f" Rejected. Reason: {reason}."
+        
+#         return details
+    
+#     # Step 2: Payment
+#     def _get_step2_status(self, obj):
+#         payment = self.get_payment(obj)
+#         if not payment:
+#             return 'pending'
+        
+#         status = payment.get('spay_status', '').lower()
+        
+#         if status == 'paid':
+#             return 'accepted'
+#         elif status == 'unpaid':
+#             spay_due_date = payment.get('spay_due_date')
+#             if spay_due_date and timezone.now().date() > spay_due_date:
+#                 return 'rejected'  # Overdue unpaid payment
+#             return 'pending'  # Not yet due
+#         return 'pending'
+    
+#     def _get_step2_display_status(self, obj):
+#         payment = self.get_payment(obj)
+#         if not payment:
+#             return 'Unpaid'
+        
+#         status = payment.get('spay_status', '').lower()
+#         if status == 'paid':
+#             return 'Paid'
+#         elif status == 'unpaid':
+#             return 'Unpaid'
+#         return 'Unpaid'
+    
+#     def _get_step2_details(self, obj):
+#         payment = self.get_payment(obj)
+#         status = self._get_step2_status(obj)
+        
+#         if status == 'pending' and payment:
+#             amount = payment.get('amount', 'N/A')
+#             purpose = payment.get('purpose', 'mediation services')
+#             spay_due_date = payment.get('spay_due_date')
+            
+#             if spay_due_date:
+#                 return f"Payment of {amount} for {purpose} is due on {spay_due_date.strftime('%B %d, %Y')}."
+#             else:
+#                 return f"Payment of {amount} for {purpose} will be enabled once your summon request is approved."
+        
+#         elif status == 'accepted' and payment:
+#             amount = payment.get('amount', 'N/A')
+#             spay_date_paid = payment.get('spay_date_paid')
+#             if spay_date_paid:
+#                 return f"Payment of {amount} paid on {spay_date_paid.strftime('%B %d, %Y')}."
+#             else:
+#                 return f"Payment of {amount} completed."
+        
+#         elif status == 'rejected' and payment:
+#             spay_due_date = payment.get('spay_due_date')
+#             if spay_due_date:
+#                 return f"Payment overdue. Due date was {spay_due_date.strftime('%B %d, %Y')}."
+#             else:
+#                 return "Payment overdue."
+        
+#         return "Payment details not available."
+    
+#     # Step 3: Schedule Mediation
+#     def _get_step3_status(self, obj):
+#         schedule = self.get_schedule(obj)
+#         if not schedule:
+#             return 'pending'
+        
+#         if schedule.get('ss_is_rescheduled'):
+#             return 'rejected'
+#         return 'accepted'
+    
+#     def _get_step3_display_status(self, obj):
+#         schedule = self.get_schedule(obj)
+#         if not schedule:
+#             return 'Not Scheduled'
+        
+#         if schedule.get('ss_is_rescheduled'):
+#             return 'Rescheduled'
+#         return 'Scheduled'
+    
+#     def _get_step3_details(self, obj):
+#         schedule = self.get_schedule(obj)
+#         status = self._get_step3_status(obj)
+        
+#         if status == 'pending':
+#             return "Schedule mediation after payment is completed."
+#         elif status == 'accepted' and schedule and schedule.get('date') and schedule.get('time'):
+#             return f"Scheduled for {schedule['date']} at {schedule['time']}."
+#         elif status == 'rejected' and schedule:
+#             reason = schedule.get('ss_reason', 'No reason provided')
+#             return f"Previous slot rejected. Reason: {reason}. Please select a new time."
+#         return ""
+    
+#     # Step 4: Case Completion
+#     def _get_step4_status(self, obj):
+#         if not obj.sr_case_status:
+#             return 'pending'
+        
+#         status_lower = obj.sr_case_status.lower()
+#         if status_lower == 'resolved':
+#             return 'accepted'
+#         elif status_lower == 'escalated':
+#             return 'rejected'
+#         return 'pending'
+    
+#     def _get_step4_display_status(self, obj):
+#         if not obj.sr_case_status:
+#             return 'In Progress'
+        
+#         status_lower = obj.sr_case_status.lower()
+#         if status_lower == 'resolved':
+#             return 'Resolved'
+#         elif status_lower == 'escalated':
+#             return 'Escalated'
+#         return 'In Progress'
 
+#

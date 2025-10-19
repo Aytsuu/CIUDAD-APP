@@ -166,59 +166,6 @@ class SummonTimeAvailability(models.Model):
         db_table = 'summon_time_availability'
         managed = False
 
-# ====================== MIGHT DELETE THESE LATER ============================
-
-class ServiceChargeRequest(models.Model):
-    sr_id = models.CharField(primary_key=True, max_length = 200)
-    sr_code = models.CharField(max_length=10, blank=True, null=True) 
-    sr_type = models.CharField(max_length = 250, null=True, blank=True)
-    sr_req_date = models.DateTimeField(default=datetime.now)
-    sr_req_status = models.CharField(max_length = 250)
-    sr_case_status = models.CharField(max_length = 250)
-    sr_date_marked = models.DateTimeField(null=True, blank = True)
-    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
-
-    class Meta:
-        db_table = 'service_charge_request'
-
-class ServiceChargeDecision(models.Model):
-    scd_id = models.BigAutoField(primary_key=True)
-    scd_decision_date = models.DateTimeField(default=datetime.now)
-    scd_reason = models.TextField(null = True, blank = True)
-    sr_id = models.OneToOneField('ServiceChargeRequest', db_column = 'sr_id', on_delete=models.CASCADE, null = True, blank = True)
-
-    class Meta:
-        db_table = 'service_charge_decision'
-
-
-class SummonSchedule(models.Model):
-    ss_id = models.BigAutoField(primary_key=True)
-    ss_mediation_level = models.CharField(max_length=500)
-    ss_is_rescheduled = models.BooleanField(default=False)
-    ss_reason = models.TextField()
-    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sr_id = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
-
-    class Meta:
-        db_table = 'summon_schedule'
-
-
-class SummonSuppDoc(models.Model):
-    ssd_id = models.BigAutoField(primary_key=True)
-    ssd_name = models.CharField(max_length=255)
-    ssd_type = models.CharField(max_length=100)
-    ssd_path = models.CharField(max_length=500)
-    ssd_url = models.CharField(max_length=500)
-    ssd_upload_date = models.DateTimeField(default=datetime.now)
-    ss_id = models.ForeignKey('SummonSchedule', on_delete=models.CASCADE, null=True, db_column="ss_id", related_name="supporting_docs")
-
-    class Meta:
-        db_table = 'summon_supp_doc'
-
-
-# =========================================================
 
 class ServiceChargePaymentRequest(models.Model):
     pay_id = models.BigAutoField(primary_key=True)

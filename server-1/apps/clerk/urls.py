@@ -14,7 +14,7 @@ urlpatterns = [
     path('update-summon-case/<str:sc_id>/', UpdateSummonCaseView.as_view(), name='update-summon-case'),
     path('summon-schedule-list/<str:sc_id>/', HearingScheduleListView.as_view(), name='summon-schedule-list'),
     path('view-complaint/<str:comp_id>/', ComplaintDetailView.as_view(), name='complaint-detail'),
-
+    
     path('hearing-minutes/', HearingMinutesCreateView.as_view(), name='hearing-minutes-create'),
     path('hearing-schedule/', HearingScheduleView.as_view(), name='hearing-sched-create'),
     path('update-hearing-schedule/<str:hs_id>/', UpdateHearingScheduleView.as_view(), name='hearing-sched-update'),
@@ -37,8 +37,8 @@ urlpatterns = [
     path('service-charge-payment-req/', ServiceChargePaymentReqView.as_view(), name='service-charge-payment-req'),
     path('file-action-id/', FileActionIdView.as_view(), name='file-action-id'),
 
-    path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
-    path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
+    # resident case tracking
+    # path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),
