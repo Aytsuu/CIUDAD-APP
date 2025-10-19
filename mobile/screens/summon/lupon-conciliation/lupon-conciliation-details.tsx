@@ -112,8 +112,8 @@ export default function LuponConciliationDetails() {
 
     const handleViewImages = (files: any[], index = 0) => {
         const images = files.map(file => ({
-            url: file.url || file.momsp_url || file.sd_url,
-            name: file.name || file.momsp_name || file.sd_name || 'Document'
+            url: file.url || file.rsd_url ,
+            name: file.name || file.rsd_name
         }))
         setSelectedImages(images)
         setCurrentIndex(index)
@@ -155,17 +155,6 @@ export default function LuponConciliationDetails() {
             pathname: "/(summon)/create-schedule",
             params: {
                 sc_id: String(sc_id)
-            }
-        })
-    }
-
-    const handleViewRemarks = (remark: any) => {
-        router.push({
-            pathname: "/(summon)/view-conciliation-details",
-            params: {
-                rem_remarks: remark.rem_remarks,
-                rem_date: remark.rem_date,
-                supp_docs: JSON.stringify(remark.supp_docs || [])
             }
         })
     }

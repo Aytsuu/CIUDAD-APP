@@ -60,10 +60,6 @@ export default function CouncilMediationDetails() {
 
     const isCaseClosed = case_status === "Resolved" || case_status === "Forwarded to Lupon"
     
-    const lastScheduleIsRescheduled = hearing_schedules.length > 0 
-        ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
-        : false
-
     // Check if current mediation is 3rd level and closed
     const isThirdMediation = hearing_schedules.some(schedule => 
         schedule.hs_level === "3rd MEDIATION" && schedule.hs_is_closed
@@ -101,8 +97,8 @@ export default function CouncilMediationDetails() {
 
     const handleViewImages = (files: any[], index = 0) => {
         const images = files.map(file => ({
-            url: file.url || file.momsp_url || file.sd_url,
-            name: file.name || file.momsp_name || file.sd_name || 'Document'
+            url: file.url || file.rsd_url ,
+            name: file.name || file.rsd_name
         }))
         setSelectedImages(images)
         setCurrentIndex(index)
