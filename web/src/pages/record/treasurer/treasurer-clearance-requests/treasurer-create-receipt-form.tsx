@@ -29,7 +29,7 @@ import { Loader2 } from "lucide-react";
     onRequestDiscount,
     discountedAmount,
     discountReason,
-    spay_id
+    pay_id
 }: {
     id: string;
     purpose: string | undefined;
@@ -45,7 +45,7 @@ import { Loader2 } from "lucide-react";
     onRequestDiscount: () => void;
     discountedAmount?: string;
     discountReason?: string;
-    spay_id?: number;
+    pay_id?: number;
 }){
    const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
@@ -100,14 +100,16 @@ import { Loader2 } from "lucide-react";
         try {
             console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
             
+            let newPayId; // Declare newPayId in the outer scope
+            
             if (nat_col === 'Service Charge'){
                 // Check if payment request already exists
-                if (spay_id) {
-                    console.log('[Receipt onSubmit] Payment request already exists with spay_id:', spay_id);
+                if (pay_id) {
+                    console.log('[Receipt onSubmit] Payment request already exists with pay_id:', pay_id);
                     // Just update the existing payment request status to Paid
                     console.log('[Receipt onSubmit] updating service charge status to Paid');
                     await updateServiceChargeStatus({ 
-                        pay_id: spay_id, 
+                        pay_id: pay_id, 
                         data: { 
                             status: "Paid" 
                         } 
@@ -120,16 +122,23 @@ import { Loader2 } from "lucide-react";
                         console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
                     } else {
                         console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                        const newPaymentRequest = await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
-                        const newSpayId = newPaymentRequest?.spay_id || newPaymentRequest?.pay_id;
+                        const newPaymentRequest = await createScPayReq({ 
+                            sr_id: id.toString(), 
+                            pr_id: prId, 
+                            spay_amount: amount,
+                            pay_sr_type: purpose || 'File Action'
+                        });
+                        newPayId = newPaymentRequest?.pay_id || newPaymentRequest?.spay_id;
                         
-                        // Auto-mark summon as Accepted
-                        await acceptSummon(id.toString());
+                        // Update the pay_id for invoice creation
+                        // Note: We'll use newPayId directly in the invoice creation logic
+                        
+                        // Service charge payment request created successfully
                         
                         // Update status to "Paid" - backend will generate sr_code automatically
                         console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
-                            pay_id: newSpayId, 
+                            pay_id: newPayId, 
                             data: { 
                                 status: "Paid" 
                             } 
@@ -157,23 +166,37 @@ import { Loader2 } from "lucide-react";
             };
             
             // Add the appropriate ID field based on the type
+            let effectivePayId; // Declare in outer scope for logging
             if (nat_col === 'Service Charge') {
-                if (!spay_id) {
-                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without spay_id');
+                // Use newPayId if available (from newly created payment request), otherwise use the original pay_id
+                effectivePayId = typeof newPayId !== 'undefined' ? newPayId : pay_id;
+                if (!effectivePayId) {
+                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without pay_id');
                     return;
                 }
-                payload.spay_id = spay_id;
-                console.log('[Receipt onSubmit] Added spay_id to payload:', spay_id);
+                payload.pay_id = effectivePayId;
+                console.log('[Receipt onSubmit] Added pay_id to payload:', effectivePayId);
             } else if (effectiveIsResident) {
                 payload.cr_id = id.toString();
             } else {
                 payload.nrc_id = Number(id);
             }
             
-            // Clean up undefined/empty values
-            Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
+            // Clean up undefined/empty values, but preserve pay_id even if it's 0
+            Object.keys(payload).forEach((k) => {
+                if (k === 'pay_id') {
+                    // Don't delete pay_id even if it's 0, as it's a valid ID
+                    return;
+                }
+                if (payload[k] === undefined || payload[k] === '') {
+                    delete payload[k];
+                }
+            });
             console.log('[Receipt onSubmit] Final payload before sending:', payload);
-            console.log('[Receipt onSubmit] spay_id value:', spay_id, 'type:', typeof spay_id);
+            console.log('[Receipt onSubmit] pay_id value:', pay_id, 'type:', typeof pay_id);
+            console.log('[Receipt onSubmit] effectivePayId:', effectivePayId, 'type:', typeof effectivePayId);
+            console.log('[Receipt onSubmit] newPayId:', newPayId, 'type:', typeof newPayId);
+            console.log('[Receipt onSubmit] payload.pay_id:', payload.pay_id, 'type:', typeof payload.pay_id);
             await receipt(payload as any);
 
             console.log('Receipt mutation called successfully');

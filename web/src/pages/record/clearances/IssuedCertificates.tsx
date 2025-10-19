@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
-import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/serviceChargeFetchQueries";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -33,12 +33,12 @@ function IssuedCertificates() {
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValue, setFilterValue] = useState("All");
+  const [filterValue, setFilterValue] = useState("");
   const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
   
   
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
-  const [businessFilterValue, setBusinessFilterValue] = useState("All");
+  const [businessFilterValue, setBusinessFilterValue] = useState("");
   
   const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -335,10 +335,12 @@ function IssuedCertificates() {
     queryFn: () => getIssuedBusinessPermits(businessSearchQuery, currentPage, pageSize, businessFilterValue),
   });
 
-  const { data: serviceCharges, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery<ServiceCharge[]>({
-    queryKey: ["issuedServiceCharges"],
-    queryFn: getPaidServiceCharges,
+  const { data: serviceChargesData, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery({
+    queryKey: ["issuedServiceCharges", serviceChargeSearchQuery, currentPage, pageSize],
+    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize),
   });
+
+  const serviceCharges = serviceChargesData?.results || [];
 
   const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
@@ -362,7 +364,7 @@ function IssuedCertificates() {
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = filterValue === "All" || cert.purpose === filterValue;
+    const matchesFilter = !filterValue || filterValue === "All" || cert.purpose === filterValue;
     return matchesSearch && matchesFilter;
   });
 
@@ -391,7 +393,7 @@ function IssuedCertificates() {
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
     const matchesSearch = permit.business_name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
       (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
-    const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
+    const matchesFilter = !businessFilterValue || businessFilterValue === "All" || permit.purpose === businessFilterValue;
     return matchesSearch && matchesFilter;
   });
 
@@ -432,10 +434,7 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
@@ -459,10 +458,7 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={businessFilterValue}
               onChange={(value) => setBusinessFilterValue(value)}
             />
@@ -586,7 +582,7 @@ function IssuedCertificates() {
         )}
       </div>
 
-      <div className="w-full sm:w-auto flex justify-center">
+      <div className="w-full sm:w-auto flex justify-end">
         <PaginationLayout 
           totalPages={activeTab === 'certificates' ? totalPagesCert : activeTab === 'businessPermits' ? totalPagesBP : 1}
           currentPage={currentPage}
