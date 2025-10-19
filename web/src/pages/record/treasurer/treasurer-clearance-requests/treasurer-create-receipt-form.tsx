@@ -54,7 +54,7 @@ import { Loader2 } from "lucide-react";
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
     const { data: scRate } = useServiceChargeRate();
     const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
-    const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
+    const { mutateAsync: _acceptSummon } = useAcceptSummonRequest();
     const { mutateAsync: updateServiceChargeStatus } = useUpdateServiceChargeStatus();
 
    console.log('stat', pay_status, 'staffId', staffId)
