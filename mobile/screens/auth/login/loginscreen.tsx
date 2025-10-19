@@ -3,7 +3,14 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import PageLayout from "@/screens/_PageLayout";
 import { router, useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import { TouchableOpacity, View, Text, ScrollView, Alert } from "react-native";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import PhoneOTP from "../signup/account/PhoneOTP";
 import EmailOTP from "../signup/account/EmailOTP";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
@@ -16,76 +23,82 @@ const SignupOptionsMemo = React.memo(SignupOptions);
 
 export default function Login() {
   const [currentStep, setCurrentStep] = React.useState<number>(1);
-  const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
-  const [showSignupOptions, setShowSignupOptions] = React.useState<boolean>(false);
-  const {control, getValues} = useRegistrationFormContext();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">(
+    "phone"
+  );
+  const [showSignupOptions, setShowSignupOptions] =
+    React.useState<boolean>(false);
+  const { control, getValues } = useRegistrationFormContext();
   const { login, isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const {toast} = useToastContext();
+  const { toast } = useToastContext();
 
   const handleOTPVerified = () => {
     setCurrentStep(2);
   };
 
   useEffect(() => {
-    if(isAuthenticated && user){
+    if (isAuthenticated && user) {
       toast.success("Welcome!");
       router.replace("/(tabs)");
-    } 
+    }
   }, [user, isAuthenticated, router, toast]);
 
-  const handleCloseSignupOptions = () => setShowSignupOptions(false)
+  const handleCloseSignupOptions = () => setShowSignupOptions(false);
 
   const handleLogin = async () => {
     try {
+      setIsLoading(true);
       const values = getValues();
-      const {accountFormSchema} = values;
+      const { accountFormSchema } = values;
       await login({
-        ...(loginMethod == "phone" ? { 
-          phone: accountFormSchema.phone
-        } : {
-          email: accountFormSchema.email
-        }),
+        ...(loginMethod == "phone"
+          ? {
+              phone: accountFormSchema.phone,
+            }
+          : {
+              email: accountFormSchema.email,
+            }),
         password: accountFormSchema.password,
       });
-      
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       Alert.alert("Error", "Incorrect password or login failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <PageLayout
       leftAction={
-        currentStep == 2 ?
-        <TouchableOpacity
-          onPress={() => {
-            if (currentStep > 1) {
-              setCurrentStep((prev) => prev - 1);
-            } else {
-              router.back();
-            }
-          }}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          accessibilityLabel="Go back"
-        > 
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-        : 
-        <View className="w-10 h-10" />
+        currentStep == 2 ? (
+          <TouchableOpacity
+            onPress={() => {
+              if (currentStep > 1) {
+                setCurrentStep((prev) => prev - 1);
+              } else {
+                router.back();
+              }
+            }}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            accessibilityLabel="Go back"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        ) : (
+          <View className="w-10 h-10" />
+        )
       }
-      headerTitle={
-        <View>
+      headerTitle={<View></View>}
+      rightAction={
+        <View className="h-10 pr-2">
+          <TouchableOpacity onPress={() => setShowSignupOptions(true)}>
+            <Text className="text-[13px]">Sign up</Text>
+          </TouchableOpacity>
         </View>
       }
-      rightAction={<View className="h-10 pr-2">
-        <TouchableOpacity
-          onPress={() => setShowSignupOptions(true)}
-        >
-          <Text className="text-[13px]">Sign up</Text>
-        </TouchableOpacity>
-      </View>}
     >
       <ScrollView
         showsHorizontalScrollIndicator={false}
@@ -100,7 +113,7 @@ export default function Login() {
                 params={{
                   next: handleOTPVerified,
                   signin: true,
-                  switch: () => setLoginMethod("email")
+                  switch: () => setLoginMethod("email"),
                 }}
               />
             ) : (
@@ -109,8 +122,8 @@ export default function Login() {
                   next: handleOTPVerified,
                   signin: true,
                   switch: () => {
-                    setLoginMethod("phone")
-                  }
+                    setLoginMethod("phone");
+                  },
                 }}
               />
             )}
@@ -135,10 +148,21 @@ export default function Login() {
             <TouchableOpacity
               className="bg-blue-600 py-4 rounded-xl mb-4"
               onPress={handleLogin}
+              disabled={isLoading}
+              style={{ opacity: isLoading ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-center text-lg">
-                Sign In
-              </Text>
+              {isLoading ? (
+                <View className="flex-row items-center justify-center gap-2">
+                  <ActivityIndicator color="#ffffff" />
+                  <Text className="text-white font-semibold text-lg">
+                    Signing in...
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-white font-semibold text-center text-lg">
+                  Sign In
+                </Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity className="py-3">
@@ -155,7 +179,6 @@ export default function Login() {
         visible={showSignupOptions}
         onClose={handleCloseSignupOptions}
       />
-
     </PageLayout>
   );
 }

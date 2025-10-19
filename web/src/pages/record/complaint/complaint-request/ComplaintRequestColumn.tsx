@@ -239,7 +239,7 @@ export const requestComplaintColumns = ({
           id: "view",
           name: (
             <Link
-              to={`/complaint/${complaint.comp_id}`}
+              to={`/complaint/view/`}
               state={{ complaint }}
               className="w-full h-full flex items-center gap-2"
             >

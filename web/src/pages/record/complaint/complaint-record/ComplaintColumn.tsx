@@ -200,6 +200,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
           name: (
             <Link
               to={`/complaint/view/`}
+              state={{ complaint: complaint }}
               className="w-full h-full flex items-center gap-2"
             >
               <File size={16} className="text-darkGray" />

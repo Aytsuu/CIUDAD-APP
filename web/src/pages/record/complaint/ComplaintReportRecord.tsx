@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   User,
   AlertCircle,
@@ -12,184 +12,107 @@ import {
   Phone,
   FileText,
   Download,
+  Printer,
 } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-// import { getComplaintById } from "./api-operations/restful-api/complaint-api";
-import { Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-// Type definitions
-interface Address {
-  street: string;
-  barangay: string;
-  city: string;
-  province: string;
-  sitio?: string;
-}
-
-interface Complainant {
-  rp_id?: string | null;
-  cpnt_id?: string | number;
-  cpnt_name: string;
-  cpnt_age: string;
-  cpnt_gender: string;
-  genderInput?: string;
-  cpnt_number: string;
-  cpnt_email?: string;
-  cpnt_address?: string;
-  address?: Address;
-  cpnt_relation_to_respondent: string;
-}
-
-interface Accused {
-  rp_id?: string | null;
-  acsd_id?: string | number;
-  acsd_name: string;
-  acsd_age: string;
-  acsd_gender: string;
-  genderInput?: string;
-  acsd_description: string;
-  acsd_address?: string;
-  address?: Address;
-}
-
-interface SupportingDocument {
-  doc_id: string | number;
-  doc_name: string;
-  doc_type: string;
-  doc_url: string;
-  doc_size?: number;
-  doc_uploaded_at?: string;
-}
-
-interface ComplaintData {
-  comp_id: string | number;
-  comp_incident_type: string;
-  comp_datetime: string;
-  comp_created_at: string;
-  comp_location: string;
-  comp_allegation: string;
-  comp_status: string;
-  complainant: Complainant[];
-  accused?: Accused[];
-  supporting_documents?: SupportingDocument[];
-}
-
-interface LocationState {
-  complaint?: ComplaintData;
-}
+import Loading from "@/components/ui/loading";
+import { Complainant, Accused, ComplaintFile } from "./complaint-type";
+import { useGetComplaintById } from "./api-operations/queries/complaintGetQueries";
 
 type ActiveSection = "details" | "initiation" | "resolution";
 
-const formatAddress = (address?: Address, fallbackAddress?: string): string => {
-  if (address) {
-    const parts = [
-      address.sitio,
-      address.street,
-      address.barangay,
-      address.city,
-      address.province,
-    ].filter(Boolean);
-    return parts.join(", ");
-  }
-  return fallbackAddress || "N/A";
-};
-
-const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return "Unknown size";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-};
-
 export function ComplaintViewRecord() {
-  // const { comp_id } = useParams<{ comp_id: string }>();
-  const { state } = useLocation() as { state: LocationState | null };
-  const [complaintData, _setComplaintData] = useState<ComplaintData | null>(
-    state?.complaint || null
-  );
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<ActiveSection>("details");
 
-  // useEffect(() => {
-  //   if (!complaintData && comp_id) {
-  //     getComplaintById().then((res) => setComplaintData(res.data));
-  //   }
-  // }, [comp_id, complaintData]);
+  // Get complaint ID from URL params
+  const complaintId = searchParams.get("id");
+  
+  // Fetch complaint data
+  const { data: complaintData, isLoading, isError } = useGetComplaintById(
+    complaintId ?? ""
+  );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <LayoutWithBack
+        title="Complaint Details"
+        description="Review and manage complaint record information"
+      >
+        <div className="flex items-center justify-center h-64 space-x-4">
+          <Loading /> <span>Loading Data...</span>
+        </div>
+      </LayoutWithBack>
+    );
+  }
+
+  // Error or no data
+  if (!complaintData || isError) {
+    return (
+      <LayoutWithBack
+        title="Complaint Details"
+        description="Review and manage complaint record information"
+      >
+        <div className="flex items-center justify-center h-64">
+          No data available
+        </div>
+      </LayoutWithBack>
+    );
+  }
 
   const renderContent = () => {
-    if (!complaintData) return null;
-
     switch (activeSection) {
       case "details":
         return (
-          <div className="">
-            {/* Main Section */}
+          <div>
+            {/* Header */}
             <div className="flex justify-between items-center bg-blue-500 w-full h-16 rounded-lg px-4">
-              <div className="">
-                <p className="text-white font-normal text-sm">Confirmed by: </p>
+              <div>
+                <p className="text-white font-normal text-sm">Confirmed by:</p>
               </div>
               <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
+                <Button variant="outline" className="gap-2 bg-transparent text-white">
                   <Forward className="w-4 h-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
+                <Button variant="outline" className="gap-2 bg-transparent text-white">
                   <Edit2 className="w-4 h-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
+                <Button variant="outline" className="gap-2 bg-transparent text-white">
                   <Printer className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Blotter Details */}
+            {/* Complaint Details */}
             <div className="p-2">
               {/* Allegation */}
               <section className="p-4">
-                <h2 className="font-semibold text-[20px] text-gray-500">
-                  Allegation
-                </h2>
+                <h2 className="font-semibold text-[20px] text-gray-500">Allegation</h2>
                 <p className="text-gray-600 text-sm mb-4">Case details</p>
                 <Card>
                   <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Incident Type
-                        </p>
+                        <p className="text-sm font-medium text-gray-500">Incident Type</p>
                         <p className="text-lg font-semibold text-gray-900">
                           {complaintData.comp_incident_type}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Date & Time
-                        </p>
+                        <p className="text-sm font-medium text-gray-500">Date & Time</p>
                         <p className="text-gray-900 flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          {new Date(
-                            complaintData.comp_datetime
-                          ).toLocaleString()}
+                          {new Date(complaintData.comp_datetime).toLocaleString()}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Filed On
-                        </p>
+                        <p className="text-sm font-medium text-gray-500">Filed On</p>
                         <p className="text-gray-900 flex items-center gap-2">
                           <Clock className="w-4 h-4 text-gray-400" />
-                          {new Date(
-                            complaintData.comp_created_at
-                          ).toLocaleString()}
+                          {new Date(complaintData.comp_created_at).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -197,9 +120,7 @@ export function ComplaintViewRecord() {
                     <Separator />
 
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">
-                        Location
-                      </p>
+                      <p className="text-sm font-medium text-gray-500">Location</p>
                       <p className="text-gray-900 flex items-start gap-2">
                         <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                         {complaintData.comp_location}
@@ -209,9 +130,7 @@ export function ComplaintViewRecord() {
                     <Separator />
 
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-500">
-                        Allegation Details
-                      </p>
+                      <p className="text-sm font-medium text-gray-500">Allegation Details</p>
                       <div className="p-4 bg-gray-50 rounded-lg border">
                         <p className="text-gray-800 leading-relaxed">
                           {complaintData.comp_allegation}
@@ -222,28 +141,24 @@ export function ComplaintViewRecord() {
                 </Card>
               </section>
 
-              {/* Complainants Section */}
-              <section className="p-4 ">
+              {/* Complainant Section */}
+              <section className="p-4">
                 <Card>
                   <CardContent className="space-y-6">
-                    {complaintData.complainant.map((person, index) => (
+                    {complaintData.complainant.map((person: Complainant, index: number) => (
                       <div key={person.cpnt_id || index}>
                         {index > 0 && <Separator />}
                         <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Name
-                              </p>
+                              <p className="text-sm font-medium text-gray-500">Name</p>
                               <p className="text-gray-900 flex items-center gap-2">
                                 <User className="w-4 h-4 text-gray-400" />
                                 {person.cpnt_name.toUpperCase()}
                               </p>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Age
-                              </p>
+                              <p className="text-sm font-medium text-gray-500">Age</p>
                               <p className="text-gray-900 flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-gray-400" />
                                 {person.cpnt_age}
@@ -253,9 +168,7 @@ export function ComplaintViewRecord() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Gender
-                              </p>
+                              <p className="text-sm font-medium text-gray-500">Gender</p>
                               <p className="text-gray-900 flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-gray-400" />
                                 {person.cpnt_gender.toUpperCase()}
@@ -273,28 +186,20 @@ export function ComplaintViewRecord() {
                           </div>
 
                           <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-500">
-                              Address
-                            </p>
+                            <p className="text-sm font-medium text-gray-500">Address</p>
                             <p className="text-gray-900 flex items-start gap-2">
                               <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                              {formatAddress(
-                                person.address,
-                                person.cpnt_address
-                              )}
                             </p>
                           </div>
 
                           {person.cpnt_relation_to_respondent && (
-                            <div className="">
-                              <div className="">
-                                <p className="text-sm font-medium text-gray-500 mb-1">
-                                  Relationship to Respondent
-                                </p>
-                                <p className="text-gray-600 font-medium">
-                                  {person.cpnt_relation_to_respondent.toUpperCase()}
-                                </p>
-                              </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500 mb-1">
+                                Relationship to Respondent
+                              </p>
+                              <p className="text-gray-600 font-medium">
+                                {person.cpnt_relation_to_respondent.toUpperCase()}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -305,48 +210,37 @@ export function ComplaintViewRecord() {
               </section>
 
               {/* Accused Section */}
-              {complaintData.accused && complaintData.accused.length > 0 && (
+              {complaintData.accused?.length > 0 && (
                 <section className="p-4">
                   <Card>
                     <CardContent className="space-y-6">
-                      {complaintData.accused.map((person, index) => (
+                      {complaintData.accused.map((person: Accused, index: number) => (
                         <div key={person.acsd_id || index}>
                           {index > 0 && <Separator />}
                           <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                  {person.acsd_name}
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                  {person.acsd_age} years old,{" "}
-                                  {person.acsd_gender}
-                                </p>
-                              </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                {person.acsd_name}
+                              </h3>
+                              <p className="text-gray-600 text-sm">
+                                {person.acsd_age} years old, {person.acsd_gender}
+                              </p>
                             </div>
 
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Address
-                              </p>
+                              <p className="text-sm font-medium text-gray-500">Address</p>
                               <p className="text-gray-900 flex items-start gap-2">
                                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                                {formatAddress(
-                                  person.address,
-                                  person.acsd_address
-                                )}
                               </p>
                             </div>
 
-                            <div className="">
-                              <div className="">
-                                <p className="text-sm font-medium text-gray-500 mb-1">
-                                  Description
-                                </p>
-                                <p className="text-gray-800 leading-relaxed">
-                                  {person.acsd_description}
-                                </p>
-                              </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500 mb-1">
+                                Description
+                              </p>
+                              <p className="text-gray-800 leading-relaxed">
+                                {person.acsd_description}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -356,101 +250,76 @@ export function ComplaintViewRecord() {
                 </section>
               )}
 
-              {/* Supporting Documents Section */}
-              {complaintData.supporting_documents &&
-                complaintData.supporting_documents.length > 0 && (
-                  <section className="p-4">
-                    <h2 className="font-semibold text-[20px] text-gray-500">
-                      Supporting Documents
-                    </h2>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Attached files and evidence
-                    </p>
-                    <Card>
-                      <CardContent className="space-y-4">
-                        {complaintData.supporting_documents.map(
-                          (doc, index) => (
-                            <div key={doc.doc_id || index}>
-                              {index > 0 && <Separator />}
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
-                                  <div className="space-y-1">
-                                    <h3 className="text-base font-semibold text-gray-900">
-                                      {doc.doc_name}
-                                    </h3>
-                                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                                      <span>{doc.doc_type}</span>
-                                      <span>•</span>
-                                      <span>
-                                        {formatFileSize(doc.doc_size)}
-                                      </span>
-                                      {doc.doc_uploaded_at && (
-                                        <>
-                                          <span>•</span>
-                                          <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(
-                                              doc.doc_uploaded_at
-                                            ).toLocaleDateString()}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
+              {/* Supporting Documents */}
+              {complaintData.complaint_files?.length > 0 && (
+                <section className="p-4">
+                  <h2 className="font-semibold text-[20px] text-gray-500">
+                    Supporting Documents
+                  </h2>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Attached files and evidence
+                  </p>
+                  <Card>
+                    <CardContent className="space-y-4">
+                      {complaintData.complaint_files.map(
+                        (doc: ComplaintFile, index: number) => (
+                          <div key={doc.comp_file_id || index}>
+                            {index > 0 && <Separator />}
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-start gap-3 flex-1">
+                                <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+                                <div className="space-y-1">
+                                  <h3 className="text-base font-semibold text-gray-900">
+                                    {doc.comp_file_name}
+                                  </h3>
+                                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                                    <span>{doc.comp_file_type}</span>
                                   </div>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-2"
-                                  onClick={() =>
-                                    window.open(doc.doc_url, "_blank")
-                                  }
-                                >
-                                  <Download className="w-4 h-4" />
-                                  View
-                                </Button>
                               </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => window.open(doc.comp_file_url, "_blank")}
+                              >
+                                <Download className="w-4 h-4" />
+                                View
+                              </Button>
                             </div>
-                          )
-                        )}
-                      </CardContent>
-                    </Card>
-                  </section>
-                )}
+                          </div>
+                        )
+                      )}
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
             </div>
           </div>
         );
+
       case "initiation":
         return (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Initiation
-              </h2>
-              <p className="text-gray-600">
-                Initial proceedings and actions taken
-              </p>
-            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Initiation</h2>
+            <p className="text-gray-600">Initial proceedings and actions taken</p>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <p className="text-gray-500">Initiation content goes here</p>
             </div>
           </div>
         );
+
       case "resolution":
         return (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Resolution
-              </h2>
-              <p className="text-gray-600">Final resolution and outcome</p>
-            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Resolution</h2>
+            <p className="text-gray-600">Final resolution and outcome</p>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <p className="text-gray-500">Resolution content goes here</p>
             </div>
           </div>
         );
+
       default:
         return null;
     }
@@ -458,21 +327,25 @@ export function ComplaintViewRecord() {
 
   return (
     <LayoutWithBack
-      title={`Complaint Details`}
-      description={`Review and manage complaint record information`}
+      title="Complaint Details"
+      description="Review and manage complaint record information"
     >
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <div className="w-56 bg-white border border-gray-200 rounded-lg h-fit p-1">
-          {/* Status Badge */}
-          <div className="text-center items-center bg-blue-500 rounded-lg pb-2">
+          <div
+            className={`text-center items-center ${
+              complaintData.comp_status === "Pending"
+                ? `bg-red-500`
+                : complaintData.comp_status === "Filed"
+                ? `bg-orange-500`
+                : `bg-blue-500`
+            } rounded-lg pb-2`}
+          >
             <h2 className="font-medium text-white">Status</h2>
-            <p className="text-white font-semibold">
-              {complaintData?.comp_status}
-            </p>
+            <p className="text-white font-semibold">{complaintData.comp_status}</p>
           </div>
 
-          {/* Navigation */}
           <nav className="space-y-1 p-2">
             <button
               onClick={() => setActiveSection("details")}
@@ -513,7 +386,7 @@ export function ComplaintViewRecord() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-1 bg-white  rounded-lg mx-2 border border-gray-200">
+        <div className="flex-1 overflow-auto p-1 bg-white rounded-lg mx-2 border border-gray-200">
           {renderContent()}
         </div>
       </div>

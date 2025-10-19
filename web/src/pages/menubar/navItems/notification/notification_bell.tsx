@@ -2,37 +2,61 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, Trash2, ExternalLink } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, BookCopy  } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
+import { toast } from "sonner";
+import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
+import { MdNotificationAdd } from "react-icons/md";
 
 interface Notification {
   notif_id: string;
   notif_title: string;
   notif_message: string;
+  notif_type: string;
   is_read: boolean;
   notif_created_at: string;
-  redirect_url?: string;
+  redirect_url?: {
+    path: string;
+    params: Record<string, any>;
+  };
   sender_name?: string;
-  sender_avatar?: string;
+  sender_profile?: string;
   resident?: {
     rp_id: string;
     name?: string;
   };
 }
 
+interface NotificationTypeIconProps {
+  notif_type?: string;
+}
+
+const NotificationIconType: React.FC<NotificationTypeIconProps> = ({ notif_type }) => {
+  switch (notif_type) {
+    case "REQUEST":
+      return (
+        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white shadow-md">
+          <BookCopy className="w-5 h-5 text-white" />
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
 export const NotificationBell: React.FC = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate(); 
+  const {mutate: bulkMarkAsRead} = useUpdateBulkNotification();
+  const {mutate: MarkAsRead} = useUpdateNotification();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-
-  // Fetch notifications via query
   const { data, isLoading, isError, refetch } = fetchNotification();
-
-  // Update local state when data is fetched
+  console.log(JSON.stringify(notifications, null, 2));
+  
   useEffect(() => {
     if (data) {
       setNotifications(data);
@@ -40,101 +64,117 @@ export const NotificationBell: React.FC = () => {
     }
   }, [data]);
 
+  // Helper function to build URL from redirect_url object
+  const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
+    if (!redirectUrl || !redirectUrl.path) return null;
+    
+    const { path, params } = redirectUrl;
+    if (!params || Object.keys(params).length === 0) {
+      return path;
+    }
+    
+    const searchParams = new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString();
+    
+    return `${path}?${searchParams}`;
+  };
+
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
     const unsubscribe = listenForMessages((payload) => {
+      // Parse redirect_path and redirect_params from FCM data
+      let redirectUrl = undefined;
+      if (payload.data?.redirect_path) {
+        try {
+          const params = payload.data.redirect_params 
+            ? JSON.parse(payload.data.redirect_params) 
+            : {};
+          redirectUrl = {
+            path: payload.data.redirect_path,
+            params: params
+          };
+        } catch (e) {
+          console.error("Failed to parse redirect params:", e);
+        }
+      }
+
       const newNotif: Notification = {
         notif_id: payload.data?.notification_id || Date.now().toString(),
         notif_title: payload.notification?.title || "No title",
         notif_message: payload.notification?.body || "No message",
+        notif_type: payload.data?.notif_type || "",
         is_read: false,
         notif_created_at: new Date().toISOString(),
-        redirect_url: payload.data?.redirect_url,
+        redirect_url: redirectUrl,
         sender_name: payload.data?.sender_name,
-        sender_avatar: payload.data?.sender_avatar,
+        sender_profile: payload.data?.sender_profile,
       };
 
       setNotifications((prev) => [newNotif, ...prev]);
       setUnreadCount((prev) => prev + 1);
+      toast(
+        <div className="flex items-center gap-3 w-full">
+          <Avatar className="h-16 w-16 ring-2 ring-white shadow-md flex-shrink-0">
+            <AvatarImage
+              src={newNotif.sender_profile}
+              alt={newNotif.sender_name || "System"}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium text-sm">
+              {newNotif.sender_name?.charAt(0) || "S"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 pr-4">
+            <p className="font-semibold text-sm text-gray-900 mb-0.5">
+              {newNotif.notif_title}
+            </p>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {newNotif.notif_message}
+            </p>
+          </div>
+        </div>,
+        {
+          duration: 5000,
+        }
+      );
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
-  const markAsRead = async (notif_id: string) => {
-    try {
-      const response = await fetch(`/api/notifications/mark-read/${notif_id}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Failed to mark as read");
-
-      setNotifications((prev) =>
-        prev.map((n) => (n.notif_id === notif_id ? { ...n, is_read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(prev - 1, 0));
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
-    }
+  const handleAcceptRequest = (id: string) => {
+    // Implementation here
   };
 
-  const deleteNotification = async (notif_id: string) => {
-    try {
-      const response = await fetch(`/api/notifications/${notif_id}/`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete notification");
-
-      setNotifications((prev) => {
-        const notif = prev.find((n) => n.notif_id === notif_id);
-        if (notif && !notif.is_read) {
-          setUnreadCount((count) => Math.max(count - 1, 0));
-        }
-        return prev.filter((n) => n.notif_id !== notif_id);
-      });
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-    }
+  const handleDeclineRequest = (id: string) => {
+    // Implementation here
   };
 
-  const markAllAsRead = async () => {
-    try {
-      const unreadIds = notifications
-        .filter((n) => !n.is_read)
-        .map((n) => n.notif_id);
+  const markAsRead = (notif_id: string) => {
+    MarkAsRead(notif_id, {
+      onSuccess: () => {
+        setNotifications((prev) => 
+          prev.map((n) => n.notif_id === notif_id ? {...n, is_read: true} : n)
+        );
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      }
+    });
+  };
 
-      if (unreadIds.length === 0) return;
+  const markAllAsRead = () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n)=> n.notif_id);
 
-      const response = await fetch(`/api/notifications/mark-all-read/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ notification_ids: unreadIds }),
-      });
+    if (unreadIds.length === 0) return;
 
-      if (!response.ok) throw new Error("Failed to mark all as read");
-
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, is_read: true }))
-      );
-      setUnreadCount(0);
-    } catch (err) {
-      console.error("Failed to mark all as read:", err);
-      notifications.forEach((n) => {
-        if (!n.is_read) markAsRead(n.notif_id);
-      });
-    }
+    bulkMarkAsRead(unreadIds, {
+      onSuccess: () => {
+        setNotifications((prev) => prev.map((n) => ({...n, is_read: true})));
+        setUnreadCount(0);
+      }
+    });
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -143,8 +183,12 @@ export const NotificationBell: React.FC = () => {
       markAsRead(notification.notif_id);
     }
     
+    // Navigate using the redirect_url
     if (notification.redirect_url) {
-      navigate(notification.redirect_url);
+      const url = buildRedirectUrl(notification.redirect_url);
+      if (url) {
+        navigate(url);
+      }
     }
     
     setOpen(false);
@@ -159,19 +203,15 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          if (notification.redirect_url.startsWith('http://') || notification.redirect_url.startsWith('https://')) {
-            window.open(notification.redirect_url, '_blank');
-          } else {
-            navigate(notification.redirect_url);
+          const url = buildRedirectUrl(notification.redirect_url);
+          if (url) {
+            navigate(url);
           }
         }
         setOpen(false);
         break;
       case "mark_read":
         markAsRead(notif_id);
-        break;
-      case "delete":
-        deleteNotification(notif_id);
         break;
     }
   };
@@ -183,26 +223,26 @@ export const NotificationBell: React.FC = () => {
   };
 
   const headerMenuOptions = [
-    ...(unreadCount > 0
-      ? [
-          {
-            id: "mark_all_read",
-            name: "Mark All as Read",
-            icon: <CheckCheck className="h-4 w-4" />,
-          },
-        ]
-      : []),
+    {
+      id: "mark_all_read",
+      name: "Mark All as Read",
+      icon: <CheckCheck className="h-4 w-4" />,
+    },
+    {
+      id: "view_notification",
+      name: "Open Notification",
+      icon: <MdNotificationAdd className="h-4 w-4" />,
+    }
   ];
 
   const getNotificationMenuOptions = (notification: Notification) => {
     const options = [];
-
     // Show "View Notification" if there's a redirect URL
     if (notification.redirect_url) {
       options.push({
         id: "view",
         name: "View Notification",
-        icon: <ExternalLink className="h-4 w-4 text-blue-500" />,
+        icon: <ExternalLink className="h-4 w-4" />,
       });
     }
 
@@ -210,15 +250,9 @@ export const NotificationBell: React.FC = () => {
       options.push({
         id: "mark_read",
         name: "Mark as Read",
-        icon: <Eye className="h-4 w-4 text-green-500" />,
+        icon: <Eye className="h-4 w-4 " />,
       });
     }
-
-    options.push({
-      id: "delete",
-      name: "Delete",
-      icon: <Trash2 className="h-4 w-4 text-red-500" />,
-    });
 
     return options;
   };
@@ -236,74 +270,64 @@ export const NotificationBell: React.FC = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative cursor-pointer p-3 hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-300">
+        <div className="relative cursor-pointer p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200">
           <Bell
-            className={`h-6 w-6 transition-all duration-300 ${
-              unreadCount > 0 ? "text-blue-600" : "text-gray-600"
+            className={`h-6 w-6 transition-colors duration-200 ${
+              unreadCount > 0 ? "text-gray-700" : "text-gray-600"
             }`}
           />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs flex items-center justify-center">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
+           <Badge className="absolute -top-0.5 -right-1 h-5 w-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-xs flex items-center justify-center">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
           )}
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-96 p-0 shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden"
+        className="w-96 p-0 shadow-lg border border-gray-200 bg-white rounded-lg overflow-hidden"
         align="end"
         side="bottom"
         sideOffset={8}
         alignOffset={-50}
       >
         <div className="w-full">
-          <div className="p-4 border-b bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <Bell className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Notifications</h4>
-                {unreadCount > 0 && (
-                  <p className="text-xs text-gray-600">{unreadCount} unread</p>
-                )}
-              </div>
+          <div className="px-4 py-3 border-b border-gray-100 bg-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-gray-900 text-base">Notifications</h4>
             </div>
-            {headerMenuOptions.length > 0 && (
-              <div className="flex items-center gap-1">
-                <DropdownLayout
-                  trigger={
-                    <button
-                      className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
-                      title="Options"
-                    >
-                      <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                    </button>
-                  }
-                  options={headerMenuOptions}
-                  onSelect={handleHeaderMenuAction}
-                  contentClassName="w-48"
-                />
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <DropdownLayout
+                trigger={
+                  <button
+                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                    title="Options"
+                  >
+                    <MoreHorizontal className="h-5 w-5 text-gray-600" />
+                  </button>
+                }
+                options={headerMenuOptions}
+                onSelect={handleHeaderMenuAction}
+                contentClassName="w-48"
+              />
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <Bell className="h-8 w-8 text-gray-400" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 font-medium">
+                <p className="text-gray-500 text-sm">
                   Loading notifications...
                 </p>
               </div>
             ) : isError ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bell className="h-8 w-8 text-red-400" />
+                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-red-400" />
                 </div>
-                <p className="text-red-500 font-medium">
+                <p className="text-red-500 text-sm font-medium">
                   Failed to load notifications
                 </p>
                 <button
@@ -315,77 +339,83 @@ export const NotificationBell: React.FC = () => {
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bell className="h-8 w-8 text-gray-400" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 font-medium">No notifications yet</p>
-                <p className="text-gray-400 text-sm mt-1">
+                <p className="text-gray-500 text-sm">No notifications yet</p>
+                <p className="text-gray-400 text-xs mt-1">
                   We'll let you know when something happens
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div>
                 {notifications.slice(0, 10).map((item) => (
                   <div
                     key={item.notif_id}
                     onClick={() => handleNotificationClick(item)}
-                    className={`group cursor-pointer px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${
-                      !item.is_read
-                        ? "bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-l-4 border-blue-400"
-                        : ""
+                    className={`cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0 ${
+                      !item.is_read ? "bg-blue-50" : "bg-white"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-11 w-11 ring-2 ring-white shadow-lg">
-                        <AvatarImage
-                          src={item.sender_avatar}
-                          alt={item.sender_name || "System"}
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
-                          {item.sender_name?.charAt(0) || "S"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative flex-shrink-0">
+                        <Avatar className="h-16 w-16">
+                          <AvatarImage
+                            src={item.sender_profile}
+                            alt={item.sender_name || "System"}
+                          />
+                          <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
+                            {item.sender_name?.charAt(0) || "S"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/** Icons for specific type notifications */}
+                        <div className="absolute -bottom-2 -right-1">
+                          <NotificationIconType notif_type={item.notif_type}/>
+                        </div>
+                        {!item.is_read && (
+                          <div className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p
-                                className={`font-semibold text-sm ${
-                                  !item.is_read ? "text-gray-900" : "text-gray-700"
-                                }`}
-                              >
-                                {item.notif_title || "Notification"}
-                              </p>
-                              {!item.is_read && (
-                                <div className="h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-sm"></div>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
+                            <p className="text-sm text-gray-900 mb-0.5">
+                              <span className="font-semibold">{item.notif_title}</span>
+                            </p>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-1">
                               {item.notif_message || "No message content"}
                             </p>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500 font-medium">
-                                {formatTimeAgo(item.notif_created_at)}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {item.sender_name || "System"}
-                              </span>
-                              {item.redirect_url && (
-                                <span className="text-xs text-blue-500 flex items-center gap-1">
-                                  <ExternalLink className="h-3 w-3" />
-                                  Click to view
-                                </span>
+                            <span className="text-xs text-gray-400 w-full">
+                              {formatTimeAgo(item.notif_created_at)}
+                            </span>
+                           {/* <div className="flex flex-col gap-2 mt-2">
+                              {item.notif_type === "REQUEST" && (
+                              <div className="flex gap-2">
+                                <Button
+                                  className="flex-1 py-1 px-2 "
+                                  onClick={(e) => { e.stopPropagation(); handleAcceptRequest(item.notif_id); }}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  className="flex-1 py-1 px-2 bg-gray-500 hover:bg-gray-400"
+                                  onClick={(e) => { e.stopPropagation(); handleDeclineRequest(item.notif_id); }}
+                                >
+                                  Decline
+                                </Button>
+                              </div>
                               )}
-                            </div>
+                            </div> */}
                           </div>
                           <div
-                            className="flex items-center gap-1"
+                            className="flex items-start"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <DropdownLayout
                               trigger={
                                 <button
-                                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                  className="p-1 hover:bg-gray-200 rounded-md transition-colors duration-200"
                                   title="More options"
                                 >
                                   <MoreHorizontal className="h-4 w-4 text-gray-500" />
@@ -408,9 +438,9 @@ export const NotificationBell: React.FC = () => {
           </div>
 
           {notifications.length > 10 && (
-            <div className="p-3 text-center text-sm text-gray-500 border-t bg-gradient-to-r from-gray-50 to-blue-50">
-              <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 hover:underline">
-                View all {notifications.length} notifications
+            <div className="p-3 text-center text-sm border-t border-gray-100 bg-white">
+              <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline">
+                View all notifications
               </button>
             </div>
           )}
@@ -418,4 +448,4 @@ export const NotificationBell: React.FC = () => {
       </PopoverContent>
     </Popover>
   );
-}
+};

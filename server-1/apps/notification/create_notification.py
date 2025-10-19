@@ -2,11 +2,10 @@ from apps.notification.models import FCMToken, Recipient, Notification
 from .notifications import send_push_notification
 from apps.account.models import Account
 from django.contrib.contenttypes.models import ContentType
+import json
 
 def create_notification(title, message, sender, recipients, notif_type, target_obj=None):
-    """
-    Create a notification and send push notifications to recipients."""
-    print("Creating notification...")
+    print(f"Recipients count: {len(recipients)}")
     
     recipient_accounts = []
 
@@ -14,10 +13,10 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
     for rp in recipients:
         account = Account.objects.filter(rp=rp).first()
         if account:
-            print(f"Found account: {account.username}")
             recipient_accounts.append(account)
-        else:
-            print(f"No account found for ResidentProfile: {rp.rp_id}")
+    
+    if not recipient_accounts:
+        return None
     
     # Prepare notification data
     notification_data = {
@@ -32,9 +31,7 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
         notification_data['content_type'] = ContentType.objects.get_for_model(target_obj)
         notification_data['object_id'] = target_obj.pk
     
-    # Create the notification entry
     notification = Notification.objects.create(**notification_data)
-    print(f"Notification created with ID: {notification.notif_id}")
     
     # Create recipient entries
     for rp in recipients:
@@ -42,46 +39,76 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
             notif=notification,
             rp=rp
         )
-        print(f"Recipient created for rp_id: {rp.rp_id}")
     
-    # Get redirect URL for the notification
-    redirect_url = None
+    redirect_data = None
+    mobile_route = None
     if target_obj and hasattr(target_obj, 'get_absolute_url'):
-        redirect_url = target_obj.get_absolute_url()
-        print(f"Redirect URL: {redirect_url}")
-    
-    # Send push notifications via FCM
-    for acc in recipient_accounts:
-        tokens = FCMToken.objects.filter(acc=acc).values_list('fcm_token', flat=True)
-        print(f"Found {len(tokens)} FCM tokens for {acc.username}")
+        redirect_data = target_obj.get_absolute_url()
+
+    if target_obj and hasattr(target_obj, 'get_mobile_route'):
+        mobile_route = target_obj.get_mobile_route()
         
-        for token in tokens:
-            # Prepare FCM data payload
-            fcm_data = {
-                "notification_id": str(notification.notif_id),
-                "type": notif_type,
-                "sender_name": sender.username if sender else "System",
-            }
-            
-            # Add redirect URL to FCM data if available
-            if redirect_url:
-                fcm_data["redirect_url"] = redirect_url
-            
-            # Add sender avatar if available
-            if sender and hasattr(sender, 'avatar') and sender.avatar:
-                avatar_url = sender.avatar.url if hasattr(sender.avatar, 'url') else str(sender.avatar)
-                fcm_data["sender_avatar"] = avatar_url
-            
-            try:
-                send_push_notification(
-                    title=title,
-                    message=message,
-                    token=token,
-                    data=fcm_data
-                )
-                print(f"Push notification sent to token: {token[:20]}...")
-            except Exception as e:
-                print(f"Failed to send push notification: {e}")
+    total_sent = 0
+    total_failed = 0
     
-    print(f"Notification process completed. Total recipients: {len(recipients)}")
+    print(f"Target obj type: {type(target_obj)}")
+    print(f"Has mobile route: {hasattr(target_obj, 'get_mobile_route')}")
+    
+    device_tokens = {} 
+    
+    for acc in recipient_accounts:
+        tokens = FCMToken.objects.filter(acc=acc)
+        
+        for token_obj in tokens:
+            device_id = token_obj.fcm_device_id if hasattr(token_obj, 'fcm_device_id') else None
+            
+            if not device_id:
+                continue
+            
+            if device_id not in device_tokens:
+                device_tokens[device_id] = {
+                    'token': token_obj.fcm_token,
+                    'account': acc
+                }
+    
+    print(f"Unique devices to send: {len(device_tokens)}")
+    
+    # Send one notification per unique device
+    for device_id, token_data in device_tokens.items():
+        token = token_data['token']
+        acc = token_data['account']
+        
+        # Prepare FCM data payload
+        fcm_data = {
+            "notification_id": str(notification.notif_id),
+            "notif_type": notif_type,
+            "sender_name": sender.username if sender else "System",
+            "sender_profile": sender.profile_image if sender and hasattr(sender, 'profile_image') else "", 
+            "object_id": str(target_obj.pk) if target_obj else "",
+        }
+            
+        if redirect_data:
+            fcm_data["redirect_path"] = redirect_data.get('path', '')
+            fcm_data["redirect_params"] = json.dumps(redirect_data.get('params', {}))
+        
+        if mobile_route:
+            fcm_data["screen"] = mobile_route.get('screen', '')
+            fcm_data["params"] = json.dumps(mobile_route.get('params', {}))
+            
+        try:
+            result = send_push_notification(
+                token=token,
+                title=title,
+                message=message,
+                data=fcm_data
+            )
+            
+            if result:
+                total_sent += 1
+            else:
+                total_failed += 1
+                
+        except Exception as e:
+            total_failed += 1
+    
     return notification
