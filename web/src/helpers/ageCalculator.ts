@@ -1,4 +1,4 @@
-export const calculateAge = (dateOfBirth: string, type?: string): string => {
+export const calculateAge = (dateOfBirth: string): string => {
   if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime())) {
     return "-"; // or 'N/A' if you prefer
   }
@@ -43,11 +43,11 @@ export interface AgeCalculation {
   totalDays: number
   totalWeeks: number
   totalMonths: number
-  totalYears: number // Added totalYears
+  totalYears: number 
   months: number
   days: number
   weeks: number
-  years: number // Added years
+  years: number
   remainingDaysAfterWeeks: number
   remainingDaysAfterMonths: number
   ageString: string

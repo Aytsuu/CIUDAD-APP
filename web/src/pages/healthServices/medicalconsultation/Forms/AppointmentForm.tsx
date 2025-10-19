@@ -349,7 +349,7 @@ export default function AppointmentForm() {
     );
   }
 
-  if (isCheckingPatient) {
+  if (isCheckingPatient || isRegistering) {
     return (
       <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 justify-center items-center h-full flex">
