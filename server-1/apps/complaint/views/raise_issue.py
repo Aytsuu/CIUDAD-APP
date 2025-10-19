@@ -13,7 +13,7 @@ from apps.clerk.models import ServiceChargePaymentRequest
 from apps.treasurer.models import Purpose_And_Rates
 
 # # Python Imports
-# import logging
+import logging
 
 logger = logging.getLogger(__name__)
 

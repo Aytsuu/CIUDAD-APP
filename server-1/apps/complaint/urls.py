@@ -18,5 +18,5 @@ urlpatterns = [
     path('<int:comp_id>/update/', ComplaintUpdateView.as_view(), name='complaint-update'),
     
     # Sending the blotter to the ServiceChargeRequest
-    # path('<int:comp_id>/raiseissue/', ServiceChargeRequestCreateView.as_view(), name='complaint-issue-raise'),
+    path('<int:comp_id>/raiseissue/', ServiceChargeRequestCreateView.as_view(), name='complaint-issue-raise'),
 ]
