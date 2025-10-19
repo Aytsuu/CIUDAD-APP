@@ -575,7 +575,7 @@ export default function LuponCaseDetails() {
                             </Button>
                           }
                           title="Confirm Escalation"
-                          description="Are you sure you want to escalate this case?"
+                          description="Are you sure you want to escalate this case? If escalated, a request for file action will automatically be made."
                           actionLabel="Confirm"
                           onClick={handleEscalate}
                         />

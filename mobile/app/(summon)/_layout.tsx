@@ -12,6 +12,9 @@ export default () => {
                 <Stack.Screen name="add-hearing-minutes" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="create-schedule" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="view-conciliation-details" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="summon-remarks-main" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="lupon-conciliation-main" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="council-mediation-main" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
         </ToastProvider>
     )

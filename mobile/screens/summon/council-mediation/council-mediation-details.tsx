@@ -109,9 +109,13 @@ export default function CouncilMediationDetails() {
         setViewImagesModalVisible(true)
     }
 
-    const handleMinutesClick = (hearingMinutes: any[], hs_id: string) => {
+    const handleMinutesClick = (hearingMinutes: any[], hs_id: string, hasRemarks: boolean) => {
         // For mobile, navigate to hearing minutes form
         if (hearingMinutes.length === 0 || !hearingMinutes.some(minute => minute.hm_url)) {
+            if (!hasRemarks) {
+                Alert.alert("Cannot Add Minutes", "Please add remarks first before adding hearing minutes.")
+                return
+            }
             router.push({
                 pathname: "/(summon)/add-hearing-minutes",
                 params: {
@@ -129,7 +133,7 @@ export default function CouncilMediationDetails() {
                         Linking.openURL(firstMinute.hm_url).catch(() =>
                             Alert.alert('Cannot Open File', 'Please make sure you have a PDF reader app installed.')
                         );
-                    } } // Add Linking.openURL(firstMinute.hm_url)
+                    } } 
                 ])
             }
         }
@@ -290,11 +294,7 @@ export default function CouncilMediationDetails() {
 
                 {/* Action Buttons */}
                 {!isCaseClosed && (
-                    <Card className="border-2 border-gray-200 shadow-sm bg-white">
-                        <CardHeader>
-                            <Text className="text-md font-bold text-gray-900">Case Actions</Text>
-                        </CardHeader>
-                        <CardContent className="space-y-3 flex flex-col gap-3">
+                    <View className="flex flex-col gap-3">
                             {shouldShowResolveButton && (
                                 <ConfirmationModal
                                     trigger={
@@ -338,8 +338,7 @@ export default function CouncilMediationDetails() {
                                     </Text>
                                 </View>
                             )}
-                        </CardContent>
-                    </Card>
+                    </View>
                 )}
 
                 {/* Notices */}
@@ -395,146 +394,162 @@ export default function CouncilMediationDetails() {
                 ) : (
                     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                         <View className="p-6">
-                            {hearingSchedules.map((schedule: any, index: number) => (
-                                <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-4">
-                                    <CardContent className="p-4">
-                                        {/* Header with Hearing Level and Status */}
-                                        <View className="flex-row justify-between items-start mb-3">
-                                            <View className="flex flex-row items-center gap-3">
-                                                <Text className="text-md font-bold text-gray-900">
-                                                    {schedule.hs_level}
-                                                </Text>
-                                                <View className={`px-2 py-1 rounded-full ${
-                                                    schedule.hs_is_closed
-                                                        ? "bg-orange-100 border border-orange-200"
-                                                        : "bg-green-100 border border-green-200"
-                                                }`}> 
-                                                    <Text className={`text-xs font-medium ${
-                                                        schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
-                                                    }`}>
-                                                        {schedule.hs_is_closed ? "Closed" : "Open"}
+                            {hearingSchedules.map((schedule: any, index: number) => {
+                                const hasRemarks = schedule.remark && schedule.remark.rem_id
+                                
+                                return (
+                                    <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-4">
+                                        <CardContent className="p-4">
+                                            {/* Header with Hearing Level and Status */}
+                                            <View className="flex-row justify-between items-start mb-3">
+                                                <View className="flex flex-row items-center gap-3">
+                                                    <Text className="text-md font-bold text-gray-900">
+                                                        {schedule.hs_level}
+                                                    </Text>
+                                                    <View className={`px-2 py-1 rounded-full ${
+                                                        schedule.hs_is_closed
+                                                            ? "bg-orange-100 border border-orange-200"
+                                                            : "bg-green-100 border border-green-200"
+                                                    }`}> 
+                                                        <Text className={`text-xs font-medium ${
+                                                            schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
+                                                        }`}>
+                                                            {schedule.hs_is_closed ? "Closed" : "Open"}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+
+                                            {/* Hearing Date and Time */}
+                                            <View className="space-y-2 mb-3">
+                                                <View className="flex-row justify-between items-center">
+                                                    <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
+                                                    <Text className="text-sm font-semibold text-gray-900">
+                                                        {formatDate(schedule.summon_date?.sd_date, "long")}, {formatTime(schedule.summon_time?.st_start_time)}
                                                     </Text>
                                                 </View>
                                             </View>
-                                        </View>
 
-                                        {/* Hearing Date and Time */}
-                                        <View className="space-y-2 mb-3">
-                                            <View className="flex-row justify-between items-center">
-                                                <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
-                                                <Text className="text-sm font-semibold text-gray-900">
-                                                    {formatDate(schedule.summon_date?.sd_date, "long")}, {formatTime(schedule.summon_time?.st_start_time)}
-                                                </Text>{}
-                                            </View>
-                                        </View>
-
-                                        {/* Remarks Section */}
-                                        <View className="border-t border-gray-100 pt-3 mb-3">
-                                            {schedule.remark && schedule.remark.rem_id ? (
-                                                <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                                    <View className="flex-row justify-between items-start mb-2">
-                                                        <Text className="text-sm font-semibold text-blue-800">
-                                                            Remarks Added
-                                                        </Text>
-                                                        <Text className="text-xs text-blue-600">
-                                                            {formatTimestamp(schedule.remark.rem_date)}
-                                                        </Text>
-                                                    </View>
-                                                    <Text className="text-sm text-gray-700 mb-2">
-                                                        {schedule.remark.rem_remarks}
-                                                    </Text>
-                                                    {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
-                                                        <View className="mt-2">
-                                                            <TouchableOpacity 
-                                                                onPress={() => handleViewImages(schedule.remark.supp_docs)}
-                                                                className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
-                                                            >
-                                                                <View className="flex-row items-center">
-                                                                    <Paperclip size={16} color="#3b82f6" />
-                                                                    <Text className="text-blue-700 font-medium ml-2">
-                                                                        View Attached Files ({schedule.remark.supp_docs.length})
-                                                                    </Text>
-                                                                </View>
-                                                                <Eye size={16} color="#3b82f6" />
-                                                            </TouchableOpacity>
+                                            {/* Remarks Section */}
+                                            <View className="border-t border-gray-100 pt-3 mb-3">
+                                                {hasRemarks ? (
+                                                    <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                                        <View className="flex-row justify-between items-start mb-2">
+                                                            <Text className="text-sm font-semibold text-blue-800">
+                                                                Remarks Added
+                                                            </Text>
+                                                            <Text className="text-xs text-blue-600">
+                                                                {formatTimestamp(schedule.remark.rem_date)}
+                                                            </Text>
                                                         </View>
-                                                    )}
-                                                </View>
-                                            ) : (
-                                                <View className="bg-red-50 rounded-lg p-3 border border-red-200">
-                                                    <View className="flex-row items-center space-x-2">
-                                                        <CircleAlert size={16} color="#dc2626" />
-                                                        <Text className="text-sm font-semibold text-red-800">
-                                                            No Remarks Available
+                                                        <Text className="text-sm text-gray-700 mb-2">
+                                                            {schedule.remark.rem_remarks}
                                                         </Text>
+                                                        {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
+                                                            <View className="mt-2">
+                                                                <TouchableOpacity 
+                                                                    onPress={() => handleViewImages(schedule.remark.supp_docs)}
+                                                                    className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
+                                                                >
+                                                                    <View className="flex-row items-center">
+                                                                        <Paperclip size={16} color="#3b82f6" />
+                                                                        <Text className="text-blue-700 text-sm font-semibold ml-2">
+                                                                            View Attached Files ({schedule.remark.supp_docs.length})
+                                                                        </Text>
+                                                                    </View>
+                                                                    <Eye size={16} color="#3b82f6" />
+                                                                </TouchableOpacity>
+                                                            </View>
+                                                        )}
                                                     </View>
-                                                    <Text className="text-xs text-red-600 mt-1">
-                                                        Add remarks to close this hearing schedule
-                                                    </Text>
-                                                </View>
-                                            )}
-                                        </View>
+                                                ) : (
+                                                    <View className="bg-red-50 rounded-lg p-3 border border-red-200">
+                                                        <View className="flex-row items-center space-x-2 gap-2">
+                                                            <CircleAlert size={16} color="#dc2626" />
+                                                            <Text className="text-sm font-semibold text-red-800">
+                                                                No Remarks Available
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                )}
+                                            </View>
 
-                                        {/* Minutes Section */}
-                                        <View className="border-t border-gray-100 pt-3 mb-3">
-                                            <Text className="text-sm font-medium text-gray-600 mb-2">Hearing Minutes</Text>
-                                            {schedule.hearing_minutes && schedule.hearing_minutes.length > 0 ? (
-                                                <TouchableOpacity 
-                                                    onPress={() => handleMinutesClick(schedule.hearing_minutes, schedule.hs_id)}
-                                                    className="flex-row items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3"
-                                                >
-                                                    <View className="flex-row items-center">
-                                                        <FileText size={16} color="#16a34a" />
-                                                        <Text className="text-green-700 font-medium ml-2">
-                                                            View Minutes
-                                                        </Text>
-                                                    </View>
-                                                    <Eye size={16} color="#16a34a" />
-                                                </TouchableOpacity>
-                                            ) : (
-                                                <TouchableOpacity 
-                                                    onPress={() => handleMinutesClick([], schedule.hs_id)}
-                                                    className="flex-row items-center justify-between bg-red-50 border border-red-200 rounded-lg p-3"
-                                                >
-                                                    <View className="flex-row items-center">
-                                                        <CircleAlert size={16} color="#dc2626" />
-                                                        <Text className="text-red-700 font-medium ml-2">
-                                                            No Minutes Available
-                                                        </Text>
-                                                    </View>
-                                                    <Plus size={16} color="#dc2626" />
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
+                                            {/* Minutes Section - UPDATED WITH DISABLED STATE */}
+                                            <View className="border-t border-gray-100 pt-3 mb-3">
+                                                <Text className="text-sm font-medium text-gray-600 mb-2">Hearing Minutes</Text>
+                                                {schedule.hearing_minutes && schedule.hearing_minutes.length > 0 ? (
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleMinutesClick(schedule.hearing_minutes, schedule.hs_id, hasRemarks)}
+                                                        className="flex-row items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3"
+                                                    >
+                                                        <View className="flex-row items-center">
+                                                            <FileText size={16} color="#16a34a" />
+                                                            <Text className="text-green-700 text-sm font-semibold ml-2">
+                                                                View Minutes
+                                                            </Text>
+                                                        </View>
+                                                        <Eye size={16} color="#16a34a" />
+                                                    </TouchableOpacity>
+                                                ) : (
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleMinutesClick([], schedule.hs_id, hasRemarks)}
+                                                        className={`flex-row items-center justify-between rounded-lg p-3 ${
+                                                            hasRemarks 
+                                                                ? "bg-red-50 border border-red-200" 
+                                                                : "bg-gray-100 border border-gray-300"
+                                                        }`}
+                                                        disabled={!hasRemarks}
+                                                    >
+                                                        <View className="flex-row items-center">
+                                                            {hasRemarks ? (
+                                                                <CircleAlert size={16} color="#dc2626" />
+                                                            ) : (
+                                                                <CircleAlert size={16} color="#9ca3af" />
+                                                            )}
+                                                            <Text className={`text-sm font-semibold ml-2 ${
+                                                                hasRemarks ? "text-red-700" : "text-gray-500"
+                                                            }`}>
+                                                                No Minutes Available
+                                                            </Text>
+                                                        </View>
+                                                        {hasRemarks ? (
+                                                            <Plus size={16} color="#dc2626" />
+                                                        ) : (
+                                                            <Plus size={16} color="#9ca3af" />
+                                                        )}
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
 
-                                        {/* Generate Summon Button */}
-                                        {/* <Button
-                                            className={`py-2 rounded-lg ${schedule.hs_is_closed ? 'bg-gray-400' : 'bg-blue-500'}`}
-                                            onPress={() => {
-                                                // Navigate to summon preview/generation
-                                                router.push({
-                                                    pathname: "/(summon)/summon-preview",
-                                                    params: {
-                                                        sc_id: String(sc_id),
-                                                        hs_id: schedule.hs_id,
-                                                        sc_code: String(sc_code),
-                                                        comp_names: String(comp_names),
-                                                        acc_names: String(acc_names),
-                                                        complainant_addresses: String(complainant_addresses),
-                                                        accused_addresses: String(accused_addresses),
-                                                        hearing_date: schedule.summon_date?.sd_date,
-                                                        hearing_time: schedule.summon_time?.st_start_time,
-                                                        mediation_level: schedule.hs_level
-                                                    }
-                                                })
-                                            }}
-                                            disabled={schedule.hs_is_closed}
-                                        >
-                                            <Text className="text-white font-semibold">Generate Summon</Text>
-                                        </Button> */}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                            {/* Generate Summon Button */}
+                                            {/* <Button
+                                                className={`py-2 rounded-lg ${schedule.hs_is_closed ? 'bg-gray-400' : 'bg-blue-500'}`}
+                                                onPress={() => {
+                                                    // Navigate to summon preview/generation
+                                                    router.push({
+                                                        pathname: "/(summon)/summon-preview",
+                                                        params: {
+                                                            sc_id: String(sc_id),
+                                                            hs_id: schedule.hs_id,
+                                                            sc_code: String(sc_code),
+                                                            comp_names: String(comp_names),
+                                                            acc_names: String(acc_names),
+                                                            complainant_addresses: String(complainant_addresses),
+                                                            accused_addresses: String(accused_addresses),
+                                                            hearing_date: schedule.summon_date?.sd_date,
+                                                            hearing_time: schedule.summon_time?.st_start_time,
+                                                            mediation_level: schedule.hs_level
+                                                        }
+                                                    })
+                                                }}
+                                                disabled={schedule.hs_is_closed}
+                                            >
+                                                <Text className="text-white font-semibold">Generate Summon</Text>
+                                            </Button> */}
+                                        </CardContent>
+                                    </Card>
+                                )
+                            })}
                         </View>
                     </ScrollView>
                 )}

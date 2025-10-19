@@ -231,7 +231,7 @@ export default function LuponConciliationMain() {
                     </TouchableOpacity>
                 }
                 wrapScroll={false}
-                headerTitle={<Text className="text-gray-900 text-[13px]">Conciliation Proceedings Cases</Text>}
+                headerTitle={<Text className="text-gray-900 text-[13px]">Conciliation Proceedings</Text>}
                 rightAction={
                     <TouchableOpacity 
                         onPress={() => setShowSearch(!showSearch)} 

@@ -26,6 +26,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <LuponConciliationMain/>
+    return <App/>
 }
  
