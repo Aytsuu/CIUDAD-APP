@@ -24,7 +24,6 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import *
 from django.http import JsonResponse
-from authentication.views.web_views import *
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
@@ -50,4 +49,5 @@ urlpatterns = [
     path('council/', include('apps.council.urls')),
     path('clerk/', include("apps.clerk.urls")),
     path('api/activity-log/', include('apps.act_log.urls')),
+    path('landing/', include('apps.landing.urls'))
 ]

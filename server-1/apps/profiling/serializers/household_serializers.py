@@ -49,6 +49,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   head = serializers.SerializerMethodField()
   head_id = serializers.CharField(source='rp.rp_id')
   date_registered = serializers.DateField(source='hh_date_registered')
+  registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household

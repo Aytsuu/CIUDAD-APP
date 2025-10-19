@@ -35,10 +35,9 @@
       ]
     }
   },
-  "overrides": {
-    "nativewind": {
-      "react-native-css-interop": "0.1.22"
-    }
+  "overrides": { "nativewind": { 
+    "react-native-css-interop": "0.1.22" 
+    } 
   },
   "dependencies": {
     "@expo/cli": "^0.22.18",
@@ -83,7 +82,6 @@
     "expo-dev-client": "~5.2.4",
     "expo-document-picker": "~13.1.6",
     "expo-fetch": "^0.0.0",
-
     "expo-file-system": "~18.1.11",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
@@ -114,14 +112,12 @@
     "react-hook-form": "^7.54.2",
     "react-native": "0.79.5",
     "react-native-calendars": "^1.1313.0",
-    "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-keychain": "^10.0.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-reanimated": "~3.17.4",
-
     "react-native-reanimated-carousel": "^4.0.3",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
@@ -150,12 +146,10 @@
     "@types/js-cookie": "^3.0.6",
     "@types/lodash.isequal": "^4.5.8",
     "@types/react": "~19.0.10",
-
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^9.28.0",
     "react-native-svg-transformer": "^1.5.1",
     "typescript": "~5.8.3"
-
   },
   "private": true
 }
