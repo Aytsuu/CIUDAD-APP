@@ -13,15 +13,22 @@ class ReportType(AbstractModels):
 class IncidentReport(AbstractModels):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
-  ir_time = models.TimeField()
-  ir_date = models.DateField()
-  ir_area = models.TextField()
+  ir_time = models.TimeField(null=True)
+  ir_date = models.DateField(null=True)
+  ir_area = models.TextField(null=True)
   ir_involved = models.IntegerField(default=0)
-  ir_severity = models.CharField()
+  ir_severity = models.CharField(null=True)
+  ir_is_tracker = models.BooleanField(default=False)
+  ir_track_rep_id = models.CharField(null=True)
+  ir_track_lat = models.FloatField(null=True)
+  ir_track_lng = models.FloatField(null=True)
+  ir_track_user_lat = models.FloatField(null=True)
+  ir_track_user_lng = models.FloatField(null=True)
   ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
-  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
-  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
+  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
+  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, null=True)
+  
   class Meta:
     db_table = 'incident_report'
 
