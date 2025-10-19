@@ -17,10 +17,12 @@ class IRTableView(generics.ListAPIView):
 
   def get_queryset(self):
     rp_id = self.request.query_params.get("rp_id", None)
+    is_get_tracker = self.request.query_params.get('get_tracker', 'false') == 'true'
     is_archive = self.request.query_params.get('is_archive', 'false') == 'true'
 
     queryset = IncidentReport.objects.filter(
       ir_is_archive=is_archive,
+      ir_is_tracker=is_get_tracker
     ).select_related(
       'rt',
       'rp',
