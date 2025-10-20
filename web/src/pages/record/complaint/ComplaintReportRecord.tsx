@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
   User,
   AlertCircle,
@@ -25,18 +25,36 @@ type ActiveSection = "details" | "initiation" | "resolution";
 
 export function ComplaintViewRecord() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState<ActiveSection>("details");
 
-  // Get complaint ID from URL params
+  // Method 1: Get data from location state (from table link with state)
+  const stateData = location.state?.complaint;
+  
+  // Method 2: Get data from URL params (from notification)
+  const urlDataParam = searchParams.get("data");
+  const urlData = urlDataParam ? JSON.parse(urlDataParam) : null;
+  
+  // Method 3: Fallback - Get ID for API fetch if no data provided
   const complaintId = searchParams.get("id");
   
-  // Fetch complaint data
-  const { data: complaintData, isLoading, isError } = useGetComplaintById(
-    complaintId ?? ""
+  // Determine which data source to use
+  const hasDirectData = stateData || urlData;
+  const complaintDataDirect = stateData || urlData;
+  
+  // Only fetch from API if no direct data is available
+  const { data: fetchedData, isLoading, isError } = useGetComplaintById(
+    complaintId ?? "",
+    {
+      enabled: !hasDirectData && !!complaintId, // Only fetch if no direct data
+    }
   );
+  
+  // Use direct data if available, otherwise use fetched data
+  const complaintData = complaintDataDirect || fetchedData;
 
-  // Loading state
-  if (isLoading) {
+  // Loading state - only show if actually fetching
+  if (isLoading && !hasDirectData) {
     return (
       <LayoutWithBack
         title="Complaint Details"
@@ -50,7 +68,7 @@ export function ComplaintViewRecord() {
   }
 
   // Error or no data
-  if (!complaintData || isError) {
+  if (!complaintData || (isError && !hasDirectData)) {
     return (
       <LayoutWithBack
         title="Complaint Details"
@@ -143,6 +161,7 @@ export function ComplaintViewRecord() {
 
               {/* Complainant Section */}
               <section className="p-4">
+                <h2 className="font-semibold text-[20px] text-gray-500 mb-4">Complainant</h2>
                 <Card>
                   <CardContent className="space-y-6">
                     {complaintData.complainant.map((person: Complainant, index: number) => (
@@ -189,6 +208,7 @@ export function ComplaintViewRecord() {
                             <p className="text-sm font-medium text-gray-500">Address</p>
                             <p className="text-gray-900 flex items-start gap-2">
                               <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                              {/* {person.cpnt_address || "N/A"} */}
                             </p>
                           </div>
 
@@ -212,6 +232,7 @@ export function ComplaintViewRecord() {
               {/* Accused Section */}
               {complaintData.accused?.length > 0 && (
                 <section className="p-4">
+                  <h2 className="font-semibold text-[20px] text-gray-500 mb-4">Accused</h2>
                   <Card>
                     <CardContent className="space-y-6">
                       {complaintData.accused.map((person: Accused, index: number) => (
@@ -231,6 +252,7 @@ export function ComplaintViewRecord() {
                               <p className="text-sm font-medium text-gray-500">Address</p>
                               <p className="text-gray-900 flex items-start gap-2">
                                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                                {/* {person.acsd_address || "N/A"} */}
                               </p>
                             </div>
 

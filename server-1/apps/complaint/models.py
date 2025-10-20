@@ -89,9 +89,12 @@ class Complaint(models.Model):
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
+        from apps.complaint.serializers import ComplaintSerializer
+        complaint_data = ComplaintSerializer(self)
+        print(f"Notification Complaint Data: {complaint_data.data}")
         return {
             'path': '/complaint/view',
-            'params': {'id': self.comp_id}
+            'params': {'data': json.dumps(complaint_data.data)}
         }
     
     def get_mobile_route(self):
@@ -99,7 +102,6 @@ class Complaint(models.Model):
             'screen' : '/(my-request)/complaint-tracking/compMainView',
             'params' : {'comp_id': str(self.comp_id)}
         }
-        
         
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)

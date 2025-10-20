@@ -2,7 +2,15 @@ from utils.supabase_client import upload_to_storage
 from rest_framework import serializers
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
-from .models import *
+from .models import (
+    Accused,
+    Complainant,
+    Complaint,
+    ComplaintComplainant,
+    ComplaintAccused,
+    Complaint_File,
+    ComplaintRecipient
+)
 import json
 # from django.utils import timezone
 
