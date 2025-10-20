@@ -102,7 +102,7 @@ export const getAnimalBiteStats = async () => {
   }
 };
 
-export const getAnimalBitePatientSummary = async (params: { search?: string; filter?: string; page?: number; limit?: number } | undefined) => {
+export const getAnimalBitePatientSummary = async () => {
   try {
     console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-summary/...")
     const res = await api2.get("animalbites/patient-details/")

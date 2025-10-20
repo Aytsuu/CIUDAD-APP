@@ -47,15 +47,10 @@ export const useCreatePatient = () => {
 //   })
 // }
 
-export const useAnimalBitePatientSummary = (params?: {
-  search?: string;
-  filter?: string;
-  page?: number;
-  limit?: number;
-}) => {
+export const useAnimalBitePatientSummary = () => {
   return useQuery({
-    queryKey: ["animalbite-patient-summary", params],
-    queryFn: () => getAnimalBitePatientSummary(params),
+    queryKey: ["animalbite-patient-summary"],
+    queryFn: () => getAnimalBitePatientSummary(),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
