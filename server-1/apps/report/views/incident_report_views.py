@@ -10,7 +10,8 @@ class IRCreateView(generics.CreateAPIView):
   serializer_class = IRCreateSerializer
   queryset = IncidentReport.objects.all()
 
-class TrackerReportCreateVIEW(generics.CreateAPIView):
+class TrackerReportCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = IRBaseSerializer
   queryset = IncidentReport.objects.all()
 

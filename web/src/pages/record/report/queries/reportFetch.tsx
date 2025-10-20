@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/api";
+import React from "react";
+import supabase from "@/supabase/supabase";
 
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean) => {
+export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean) => {
   return useQuery({
     queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive],
     queryFn: async () => {
@@ -11,7 +13,8 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
             page,
             page_size: pageSize,
             search: searchQuery,
-            is_archive: isArchive
+            is_archive: isArchive,
+            get_tracker
           }
         });
         return res.data;
@@ -23,6 +26,28 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
   })
 }
 
+export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
+  return useQuery({
+    queryKey: ["convertCoordinates", lat, lng],
+    queryFn: async () => {
+      try {
+        const res = await api.get(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+          {
+            headers: {
+              "User-Agent": "bluedot21/1.0",
+            },
+          }
+        );
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000,
+  });
+};
+
 export const useGetIRInfo = (ir_id: string) => {
   return useQuery({
     queryKey: ['IRInfo', ir_id],
@@ -33,7 +58,9 @@ export const useGetIRInfo = (ir_id: string) => {
       } catch (err) {
         throw err;
       }
-    }
+    },
+    staleTime: 5000,
+    enabled: !!ir_id,
   })
 }
 
