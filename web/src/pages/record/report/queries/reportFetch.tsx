@@ -1,7 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/api/api";
-import React from "react";
-import supabase from "@/supabase/supabase";
+import { useQuery } from "@tanstack/react-query";
+import { api, mapApi } from "@/api/api";
 
 export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean) => {
   return useQuery({
@@ -31,11 +29,11 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
     queryKey: ["convertCoordinates", lat, lng],
     queryFn: async () => {
       try {
-        const res = await api.get(
+        const res = await mapApi.get(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
           {
             headers: {
-              "User-Agent": "bluedot21/1.0",
+              "User-Agent": "ciudad-app/1.0",
             },
           }
         );
@@ -45,6 +43,7 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
       }
     },
     staleTime: 5000,
+    retry: false
   });
 };
 

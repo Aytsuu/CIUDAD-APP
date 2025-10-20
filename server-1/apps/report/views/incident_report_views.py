@@ -74,4 +74,4 @@ class IRTableView(generics.ListAPIView):
         Q(rp__per__per_mname__icontains=search) 
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-ir_created_at')
