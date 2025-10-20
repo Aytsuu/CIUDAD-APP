@@ -9,6 +9,15 @@ class IRCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
   serializer_class = IRCreateSerializer
   queryset = IncidentReport.objects.all()
+
+class TrackerReportCreateVIEW(generics.CreateAPIView):
+  serializer_class = IRBaseSerializer
+  queryset = IncidentReport.objects.all()
+
+class IRInfoView(generics.RetrieveAPIView):
+  serializer_class = IRTableSerializer
+  queryset = IncidentReport.objects.all()
+  lookup_field = 'ir_id'
   
 class IRTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -33,6 +42,14 @@ class IRTableView(generics.ListAPIView):
       'ir_time',
       'ir_area',
       'ir_involved',
+      'ir_is_tracker',
+      'ir_track_rep_id',
+      'ir_track_lat',
+      'ir_track_lng',
+      'ir_track_user_lat',
+      'ir_track_user_lng',
+      'ir_track_user_contact',
+      'ir_track_user_name',
       'rt__rt_label',
       'rp__per__per_lname',
       'rp__per__per_fname',
