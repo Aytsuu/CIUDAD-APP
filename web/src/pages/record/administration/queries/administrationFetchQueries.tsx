@@ -21,7 +21,7 @@ export const useStaffs = (
   });
 };
 
-export const usePositions = (staff_type: string) => {
+export const usePositions = (staff_type?: string) => {
   return useQuery({
     queryKey: ["positions", staff_type],
     queryFn: () => getPositions(staff_type),

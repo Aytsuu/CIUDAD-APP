@@ -35,10 +35,9 @@
       ]
     }
   },
-  "overrides": {
-    "nativewind": {
-      "react-native-css-interop": "0.1.22"
-    }
+  "overrides": { "nativewind": { 
+    "react-native-css-interop": "0.1.22" 
+    } 
   },
   "dependencies": {
     "@expo/cli": "^0.22.18",
