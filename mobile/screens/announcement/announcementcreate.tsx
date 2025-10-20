@@ -4,7 +4,7 @@ import { useForm, Controller, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { ChevronLeft } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { SubmitButton } from "@/components/ui/button/submit-button";
@@ -14,7 +14,11 @@ import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input"
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import AnnouncementSchema from "@/form-schema/announcement-schema";
-import { usePostAnnouncement, usePostAnnouncementRecipient } from "./queries";
+import {
+  usePostAnnouncement,
+  usePostAnnouncementRecipient,
+  useUpdateAnnouncement,
+} from "./queries";
 import { usePositions } from "@/screens/_global_queries/Retrieve";
 import { capitalize } from "@/helpers/capitalize";
 import PageLayout from "../_PageLayout";
@@ -24,15 +28,6 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { useToastContext } from "@/components/ui/toast";
 import { LoadingModal } from "@/components/ui/loading-modal";
 
-// helpers
-function capitalizeWords(str: string) {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
 function normalizeTitle(value: string) {
   return String(value || "")
     .normalize("NFKC")
@@ -57,15 +52,23 @@ export default function AnnouncementCreate() {
   const { toast } = useToastContext();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const data = React.useMemo(() => {
+    try {
+      return JSON.parse(params.data as string);
+    } catch (error) {
+      return null;
+    }
+  }, [params.data]);
 
   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
     pos_category: string;
     pos_group: string;
   };
 
-  const defaultValues = generateDefaultValues(AnnouncementSchema)
+  const defaultValues = generateDefaultValues(AnnouncementSchema);
 
-  const { control, watch, reset, getValues } =
+  const { control, watch, reset, getValues, trigger, setValue } =
     useForm<AnnouncementCreateFormValues>({
       resolver: zodResolver(AnnouncementSchema) as Resolver<any>,
       defaultValues: defaultValues,
@@ -74,13 +77,18 @@ export default function AnnouncementCreate() {
   const annType = watch("ann_type");
   const recipientType = watch("ar_category");
   const posCategory = watch("pos_category");
-  const posGroup = watch("pos_group");
 
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const { mutateAsync: postAnnouncement } = usePostAnnouncement();
+  const { mutateAsync: postAnnouncementRecipient } =
+    usePostAnnouncementRecipient();
+  const { mutateAsync: updateAnnouncement } = useUpdateAnnouncement();
+  const { data: positions = [] } = usePositions();
+
   React.useEffect(() => {
-    if (recipientType !== "staff") {
+    if (recipientType !== "STAFF") {
       reset((prev) => ({
         ...prev,
         ar_type: [],
@@ -90,10 +98,38 @@ export default function AnnouncementCreate() {
     }
   }, [recipientType]);
 
-  const { mutateAsync: postAnnouncement } = usePostAnnouncement();
-  const { mutateAsync: postAnnouncementRecipient } =
-    usePostAnnouncementRecipient();
-  const { data: positions = [] } = usePositions("BARANGAY STAFF");
+  React.useEffect(() => {
+    if (data) {
+      setValue("ann_type", data?.ann_type);
+      setValue("ann_title", data?.ann_title);
+      setValue("ann_details", data?.ann_details);
+      setValue("ar_category", data?.recipients?.ar_category);
+
+      if (data?.recipients?.ar_types?.length > 0) {
+        const types = data?.recipients?.ar_types;
+        const category = new Set(
+          positions
+            .filter((pos: any) => types.includes(pos.pos_title) == true)
+            .map((pos: any) => pos.pos_category)
+        );
+        console.log([...category][0]);
+        if ([...category].length > 0) {
+          setValue(
+            "pos_category",
+            [...category].length == 2 ? "ALL" : ([...category][0] as string)
+          );
+        }
+
+        setValue("ar_type", types);
+      }
+      setValue("ann_start_at", data?.ann_start_at);
+      setValue("ann_end_at", data?.ann_end_at);
+      setValue("ann_event_start", data?.ann_event_start);
+      setValue("ann_event_end", data?.ann_event_end);
+      setValue("ann_to_sms", data?.ann_to_sms);
+      setValue("ann_to_email", data?.ann_to_email);
+    }
+  }, [data]);
 
   const categoryOptions = React.useMemo(() => {
     const cats = positions
@@ -101,49 +137,69 @@ export default function AnnouncementCreate() {
       .filter(Boolean);
     const uniqueCats = Array.from(new Set(cats));
     return uniqueCats.map((cat) => ({
-      label: capitalizeWords(String(cat)),
-      value: String(cat),
+      label: cat as string,
+      value: cat as string,
     }));
   }, [positions]);
 
-  const groupOptions = React.useMemo(() => {
-    if (!posCategory) return [];
-    const groups = positions
-      .filter((p: { pos_category: string }) => p.pos_category === posCategory)
-      .map((p: { pos_group: any }) => p.pos_group)
-      .filter(Boolean);
-    const uniqueGroups = Array.from(new Set(groups));
-    return uniqueGroups.map((grp) => ({
-      label: capitalizeWords(String(grp)),
-      value: String(grp),
-    }));
-  }, [positions, posCategory]);
+  const update = async () => {
+    if (!(await trigger(["ann_title", "ann_details"]))) {
+      toast.error("Please fill out all required fields");
+      return;
+    }
 
-  const positionsForGroup = React.useMemo(() => {
-    if (!posCategory || !posGroup) return [];
-    const filtered = positions.filter(
-      (p: { pos_category: string; pos_group: string }) =>
-        p.pos_category === posCategory && p.pos_group === posGroup
-    );
-    return uniquePreserve(filtered, (p: any) => normalizeTitle(p.pos_title));
-  }, [positions, posCategory, posGroup]);
-
-  const onSubmit = async () => {
     try {
-      const data = getValues()
+      setIsSubmitting(true);
+      const values = getValues();
+      const {
+        pos_group,
+        pos_category,
+        staff_group,
+        ar_category,
+        staff,
+        ...announcementData
+      } = values;
+
+      const files = selectedImages.map((file) => ({
+        name: file.name,
+        type: file.type,
+        file: file.file,
+      }));
+
+      await updateAnnouncement({
+        ann: data?.ann_id,
+        data: {
+          ...announcementData,
+          ...(files.length > 0 && { files: files }),
+        },
+      });
+
+      router.back();
+      toast.success("Updated successfully");
+    } catch (err) {
+      toast.error("Failed to update. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const create = async () => {
+    if (!(await trigger(["ann_title", "ann_details"]))) {
+      toast.error("Please fill out all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const data = getValues();
       const cleanedData: Record<string, any> = {};
       for (const key in data) {
         const value = (data as any)[key];
         cleanedData[key] = value !== "" && value !== undefined ? value : null;
       }
 
-      let {
-        ar_type,
-        ar_category,
-        pos_category,
-        pos_group,
-        ...announcementData
-      } = cleanedData;
+      let { ar_type, ar_category, pos_category, ...announcementData } =
+        cleanedData;
 
       // Handle Event Type: Sync ann_end_at with ann_event_end if type is "event"
       if (announcementData.ann_type === "EVENT") {
@@ -155,24 +211,14 @@ export default function AnnouncementCreate() {
         }
       }
 
-      // Handle Event & Public Types
-      if (["EVENT", "PUBLIC"].includes(announcementData.ann_type)) {
+      // Handle Event Types
+      if (["EVENT"].includes(announcementData.ann_type)) {
         if (announcementData.ann_event_end && !announcementData.ann_end_at) {
           announcementData.ann_end_at = announcementData.ann_event_end;
         }
         if (!announcementData.ann_event_end && announcementData.ann_end_at) {
           announcementData.ann_event_end = announcementData.ann_end_at;
         }
-      }
-
-      // Public: strip recipients + notifications
-      if (announcementData.ann_type === "PUBLIC") {
-        announcementData.ar_category = null;
-        announcementData.ar_type = [];
-        announcementData.pos_category = null;
-        announcementData.pos_group = null;
-        announcementData.ann_to_sms = false;
-        announcementData.ann_to_email = false;
       }
 
       // **Force Active if no scheduler provided**
@@ -200,10 +246,9 @@ export default function AnnouncementCreate() {
         announcementData.files = filesPayload;
       }
 
-      setIsSubmitting(true)
       const createdAnnouncement = await postAnnouncement({
         ...announcementData,
-        staff: user?.staff?.staff_id
+        staff: user?.staff?.staff_id,
       });
 
       if (Array.isArray(ar_type) && ar_type.length > 0) {
@@ -218,7 +263,7 @@ export default function AnnouncementCreate() {
         await postAnnouncementRecipient({ recipients: recipientsPayload });
       }
 
-      if (ar_category?.toLowerCase() === "resident") {
+      if (ar_category?.toLowerCase() !== "staff") {
         await postAnnouncementRecipient({
           recipients: [
             {
@@ -230,11 +275,11 @@ export default function AnnouncementCreate() {
       }
 
       reset(defaultValues);
-      setSelectedImages([])
+      setSelectedImages([]);
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      toast.success("Announcement created")
+      toast.success("Announcement created");
     } catch (error) {
-      toast.error("Failed to create a announcement. Please try again.")
+      toast.error("Failed to create a announcement. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -251,7 +296,7 @@ export default function AnnouncementCreate() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Create Announcement</Text>
+        <Text className="text-gray-900 text-[13px]">Post Announcement</Text>
       }
       rightAction={<View className="w-10 h-10" />}
     >
@@ -263,7 +308,6 @@ export default function AnnouncementCreate() {
           label="Type"
           options={[
             { label: "GENERAL", value: "GENERAL" },
-            { label: "PUBLIC", value: "PUBLIC" },
             { label: "EVENT", value: "EVENT" },
           ]}
         />
@@ -284,130 +328,110 @@ export default function AnnouncementCreate() {
               placeholder="Provide details"
             />
 
-            {["EVENT", "GENERAL"].includes(annType) && (
+            {/* Recipients */}
+            <FormSelect
+              control={control}
+              name="ar_category"
+              label="Recipients"
+              options={[
+                { label: "RESIDENT ONLY", value: "RESIDENT" },
+                { label: "STAFF ONLY", value: "STAFF" },
+                { label: "PUBLIC", value: "PUBLIC" },
+              ]}
+            />
+            {recipientType === "STAFF" && (
               <>
-                {/* Recipients */}
                 <FormSelect
                   control={control}
-                  name="ar_category"
-                  label="Recipients"
-                  options={[
-                    { label: "RESIDENT", value: "RESIDENT" },
-                    { label: "STAFF", value: "STAFF" },
-                  ]}
+                  name="pos_category"
+                  label="Category"
+                  options={[{ label: "ALL", value: "ALL" }, ...categoryOptions]}
                 />
-                {recipientType === "staff" && (
-                  <>
-                    <FormSelect
-                      control={control}
-                      name="pos_category"
-                      label="Category"
-                      options={categoryOptions}
-                    />
-                    {posCategory && (
-                      <FormSelect
-                        control={control}
-                        name="pos_group"
-                        label="Group"
-                        options={groupOptions}
-                      />
-                    )}
-                    {posGroup && (
-                      <FormComboCheckbox
-                        label="Positions"
-                        control={control}
-                        name="ar_type"
-                        options={positionsForGroup.map(
-                          (pos: { pos_title: string }) => ({
-                            id: pos.pos_title,
-                            name: pos.pos_title,
-                            label: pos.pos_title,
-                            value: pos.pos_title,
-                          })
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-
-                {/* Schedule */}
-                <Text className="text-gray-700 font-medium mt-3 mb-2">
-                  Schedule
-                </Text>
-
-                {annType === "PUBLIC" && (
-                  <>
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_event_start"
-                      label="Event Start"
-                    />
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_event_end"
-                      label="Event End"
-                    />
-                  </>
-                )}
-
-                {annType === "EVENT" && (
-                  <>
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_start_at"
-                      label="Start Date & Time"
-                    />
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_event_start"
-                      label="Event Start"
-                    />
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_event_end"
-                      label="Event End"
-                    />
-                  </>
-                )}
-
-                {annType === "GENERAL" && (
-                  <>
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_start_at"
-                      label="Start Date & Time"
-                    />
-                    <FormDateAndTimeInput
-                      control={control}
-                      name="ann_end_at"
-                      label="End Date & Time"
-                    />
-                  </>
-                )}
-
-                <View className="mt-6 mb-6">
-                  <View className="mb-6">
-                    <Text className="text-[14px] font-medium text-gray-700">
-                      Images
-                    </Text>
-                    <Text className="text-sm text-gray-600">
-                     Upload images, recommended but not required.
-                    </Text>
-                  </View>
-
-                  <MediaPicker
-                    selectedImages={selectedImages}
-                    setSelectedImages={setSelectedImages}
-                    multiple={true}
-                    maxImages={2}
+                {posCategory && (
+                  <FormComboCheckbox
+                    label="Positions"
+                    control={control}
+                    name="ar_type"
+                    options={positions
+                      .filter(
+                        (pos: any) =>
+                          (pos.pos_category == posCategory ||
+                            posCategory == "ALL") &&
+                          pos.pos_title !== "ADMIN"
+                      )
+                      .map((pos: any) => ({
+                        label: pos.pos_title,
+                        value: pos.pos_title,
+                      }))}
                   />
-                </View>
+                )}
+              </>
+            )}
 
-                {/* Notifications */}
-                <Text className="text-gray-700 font-medium mt-3 mb-2">
+            {/* Schedule */}
+            <Text className="text-gray-700 font-medium mt-6 mb-2">
+              Schedule
+            </Text>
+
+            {annType === "EVENT" ? (
+              <>
+                <FormDateAndTimeInput
+                  control={control}
+                  name="ann_start_at"
+                  label="Start Date & Time"
+                />
+                <FormDateAndTimeInput
+                  control={control}
+                  name="ann_event_start"
+                  label="Event Start"
+                />
+                <FormDateAndTimeInput
+                  control={control}
+                  name="ann_event_end"
+                  label="Event End"
+                />
+              </>
+            ) : (
+              <View>
+                <FormDateAndTimeInput
+                  control={control}
+                  name="ann_start_at"
+                  label="Start Date & Time"
+                />
+                <FormDateAndTimeInput
+                  control={control}
+                  name="ann_end_at"
+                  label="End Date & Time"
+                />
+              </View>
+            )}
+
+            <View className="mt-6 mb-6">
+              <View className="mb-6">
+                <Text className="text-[14px] font-medium text-gray-700">
+                  Images
+                </Text>
+                <Text className="text-sm text-gray-600">
+                  {data
+                    ? "Uploading new image, will remove the current."
+                    : "Upload images, recommended but not required."}
+                </Text>
+              </View>
+
+              <MediaPicker
+                selectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
+                limit={2}
+              />
+            </View>
+
+            {/* Notifications */}
+            {!data && (
+              <>
+                <Text className="text-gray-700 font-medium mt-3 mb-4">
                   Additional Notifications
                 </Text>
-                <View className="flex-row gap-4 items-center">
+                <View className="flex-row gap-8 items-center">
                   <Controller
                     control={control}
                     name="ann_to_sms"
@@ -452,18 +476,18 @@ export default function AnnouncementCreate() {
 
             <View className="mt-8 mb-8">
               <SubmitButton
-                buttonLabel="Create Announcement"
-                submittingLabel="Submitting..."
+                buttonLabel={
+                  data ? "Update Announcement" : "Create Announcement"
+                }
+                submittingLabel={data ? "Saving..." : "Creating..."}
                 isSubmitting={isSubmitting}
-                handleSubmit={onSubmit}
+                handleSubmit={data ? update : create}
               />
             </View>
           </>
         ) : null}
       </View>
-      <LoadingModal 
-        visible={isSubmitting}
-      />
+      <LoadingModal visible={isSubmitting} />
     </PageLayout>
   );
 }

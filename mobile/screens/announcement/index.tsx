@@ -6,20 +6,19 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDeleteAnnouncement, useGetAnnouncementList } from "./queries";
 import PageLayout from "@/screens/_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { FileText } from "@/lib/icons/FileText";
-import { Calendar } from "@/lib/icons/Calendar";
-import { formatTimeAgo } from "@/helpers/dateHelpers";
+import { formatDate, formatTimeAgo } from "@/helpers/dateHelpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Plus } from "@/lib/icons/Plus";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
-import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,8 +27,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Ellipsis } from "@/lib/icons/Ellipsis";
+import { capitalize } from "@/helpers/capitalize";
+import ImageCarousel from "@/components/ui/imageCarousel";
 
-const INITIAL_PAGE_SIZE = 10;
+const INITIAL_PAGE_SIZE = 15;
 
 export default () => {
   const router = useRouter();
@@ -42,13 +44,15 @@ export default () => {
   const [searchInputVal, setSearchInputVal] = React.useState<string>("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
-  const [hasScrolled, setHasScrolled] = React.useState(false);
   const [myAnnouncement, setMyAnnouncement] = React.useState<string | null>(
     null
   );
   const [sortBy, setSortBy] = React.useState<string>("Newest");
   const [filter, setFilter] = React.useState<string>("Type");
   const [recipient, setRecipient] = React.useState<string>("Recipient");
+  const [viewMoreList, setViewMoreList] = React.useState<string[]>([]);
+  const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
+  const scrollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   const {
     data: announcements,
@@ -89,6 +93,17 @@ export default () => {
     if (!isFetching && isLoadMore) setIsLoadMore(false);
   }, [isFetching, isLoadMore]);
 
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
   const handleSearch = React.useCallback(() => {
     setIsRefreshing(true);
     setSearchQuery(searchInputVal);
@@ -119,16 +134,131 @@ export default () => {
 
   // Load more items when user reaches end of list
   const handleLoadMore = () => {
-    setIsLoadMore(true);
-    if (hasNext && hasScrolled && !isFetching && !isRefreshing && !isLoading) {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+    if (hasNext && isScrolling) {
       setPageSize((prev) => prev + 5);
     }
   };
 
-  const truncateText = (text: string, maxLength: number = 100) => {
+  const truncateText = (text: string, maxLength: number = 150) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength);
+    return text.substring(0, maxLength) + "...";
   };
+
+  const handleFormatDate = (posted: string) => {
+    const timeAgo = formatTimeAgo(posted);
+    const raw = timeAgo?.split(" ")[0];
+    const isPastWeek =
+      parseInt(raw) > 7 && raw.split("")[raw.length - 1] == "d";
+
+    return isPastWeek ? formatDate(posted, "short") : timeAgo;
+  };
+
+  const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => (
+    <View className="">
+      {/* Header */}
+      <View className="flex-row items-start justify-between mb-2">
+        <View className="flex-1 mr-2">
+          <Text
+            className="text-base font-semibold text-gray-900 truncate"
+            numberOfLines={2}
+          >
+            {item.ann_title}
+          </Text>
+          <Text className="text-xs text-gray-500 mt-0.5 truncate font-medium">
+            {item.staff.id == user?.staff?.staff_id
+              ? "POSTED BY YOU"
+              : `${capitalize(item.staff.name)} - ${capitalize(
+                  item.staff.position
+                )}`}
+          </Text>
+        </View>
+        <View>
+          {item.staff.id == user?.staff?.staff_id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Ellipsis size={20} className="text-gray-700" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(announcement)/announcementcreate",
+                      params: {
+                        data: JSON.stringify(item),
+                      },
+                    })
+                  }
+                >
+                  <Text className="text-sm text-gray-700">Edit</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Text className="text-sm text-gray-700">Delete</Text>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </View>
+      </View>
+
+      {/* Description with gradient fade */}
+      <View className="relative mb-2">
+        {viewMoreList.includes(item.ann_id) ? (
+          <View>
+            <Text className="text-sm text-gray-700 leading-5">
+              {item.ann_details}
+            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                setViewMoreList(
+                  viewMoreList.filter((view) => view !== item.ann_id)
+                )
+              }
+              className="mt-1"
+            >
+              <Text className="text-sm font-semibold text-primaryBlue">
+                View less
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text className="text-sm text-gray-700 leading-5">
+            {truncateText(item.ann_details)}
+            {item.ann_details.length > 150 && (
+              <Text
+                onPress={() =>
+                  setViewMoreList((prev) => [...prev, item.ann_id])
+                }
+                className="text-sm font-semibold text-primaryBlue"
+              >
+                {" "}
+                View more
+              </Text>
+            )}
+          </Text>
+        )}
+      </View>
+      {item.files?.length > 0 && <ImageCarousel images={item.files} />}
+
+      {/* Footer Info */}
+      <View className="flex-row items-center justify-between border-b border-gray-100 pb-5">
+        <View></View>
+        <Text className="text-xs text-gray-500">
+          {handleFormatDate(
+            item.ann_start_at ? item.ann_start_at : item.ann_created_at
+          )}
+        </Text>
+      </View>
+    </View>
+  ));
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Record<string, any> }) => <ItemCard item={item} />,
+    []
+  );
 
   if (isLoading && isInitialRender) {
     return <LoadingState />;
@@ -178,28 +308,30 @@ export default () => {
       <View className="flex-1 px-6">
         <View>
           <View className="flex-row gap-2 pb-2 flex-wrap">
-            <Button
-              variant={"outline"}
-              className={`native:h-9 native:p-0 rounded-full ${
-                myAnnouncement ? "border-primaryBlue" : "border-gray-400"
-              }`}
-              onPress={() => {
-                setIsRefreshing(true);
-                setMyAnnouncement(
-                  myAnnouncement ? null : user?.staff?.staff_id
-                );
-              }}
-            >
-              <Text
-                className={`text-xs ${
-                  myAnnouncement
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-700 font-normal"
+            {user?.staff && (
+              <Button
+                variant={"outline"}
+                className={`native:h-9 native:p-0 rounded-full ${
+                  myAnnouncement ? "border-primaryBlue" : "border-gray-400"
                 }`}
+                onPress={() => {
+                  setIsRefreshing(true);
+                  setMyAnnouncement(
+                    myAnnouncement ? null : user?.staff?.staff_id
+                  );
+                }}
               >
-                Created
-              </Text>
-            </Button>
+                <Text
+                  className={`text-xs ${
+                    myAnnouncement
+                      ? "text-primaryBlue font-medium"
+                      : "text-gray-700 font-normal"
+                  }`}
+                >
+                  Created
+                </Text>
+              </Button>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger>
@@ -247,7 +379,7 @@ export default () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {user?.staff?.staff_id && (
+            {user?.staff && (
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
@@ -260,27 +392,32 @@ export default () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onPress={() => handleRecipient("Staff Only")}
+                    onPress={() => handleRecipient("Staff")}
                   >
                     <Text className="text-xs">Staff Only</Text>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onPress={() => handleRecipient("Resident Only")}
+                    onPress={() => handleRecipient("Resident")}
                   >
                     <Text className="text-xs">Resident Only</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onPress={() => handleRecipient("Public")}
+                  >
+                    <Text className="text-xs">Public</Text>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
           </View>
           {!isRefreshing && (
-            <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${totalCount} announcements ${
+            <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${data.length} of ${totalCount} announcements ${
               myAnnouncement ? "you created" : ""
             }`}</Text>
           )}
         </View>
-        {isFetching && !isLoadMore && <LoadingState />}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
 
         {/* List */}
         {!isRefreshing && (
@@ -288,85 +425,33 @@ export default () => {
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
             overScrollMode="never"
-            maxToRenderPerBatch={5}
-            initialNumToRender={5}
-            windowSize={5}
-            data={data}
-            onScroll={() => {
-              if (!hasScrolled) setHasScrolled(true);
-            }}
-            renderItem={({ item }) => (
-              <View className="">
-                {/* Header */}
-                <View className="flex-row items-start justify-between mb-2">
-                  <View className="flex-1 mr-2">
-                    <Text
-                      className="text-base font-semibold text-gray-900 truncate"
-                      numberOfLines={2}
-                    >
-                      {item.ann_title}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-0.5 truncate">
-                      {item.staff.name} - {item.staff.position}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Description with gradient fade */}
-                <View className="relative mb-2">
-                  <Text className="text-sm text-gray-700 leading-5">
-                    {truncateText(item.ann_details)}
-                  </Text>
-                  {item.ann_details.length > 100 && (
-                    <LinearGradient
-                      colors={["rgba(255,255,255,0)", "rgba(255,255,255,1)"]}
-                      className="absolute bottom-0 left-0 right-0 h-8"
-                      pointerEvents="none"
-                    />
-                  )}
-                </View>
-
-                {/* Footer Info */}
-                <View className="flex-row items-center justify-between pt-2">
-                  <TouchableOpacity
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(announcement)/announcementview",
-                        params: { ann_id: item.ann_id },
-                      })
-                    }
-                  >
-                    <Text className="text-sm font-semibold text-primaryBlue">
-                      View more
-                    </Text>
-                  </TouchableOpacity>
-                  <View className="flex-row items-center gap-1">
-                    <Calendar size={12} className="text-gray-400" />
-                    <Text className="text-xs text-gray-500">
-                      {formatTimeAgo(item.ann_created_at)}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
-            keyExtractor={(item) => item.ann_id}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
+            maxToRenderPerBatch={10}
+            initialNumToRender={10}
+            windowSize={21}
+            data={data}
+            onScroll={handleScroll}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.ann_id}
+            removeClippedSubviews
             ListFooterComponent={() =>
-              isFetching && pageSize > INITIAL_PAGE_SIZE ? (
+              isFetching ? (
                 <View className="py-4 items-center">
                   <ActivityIndicator size="small" color="#3B82F6" />
                   <Text className="text-xs text-gray-500 mt-2">
                     Loading more...
                   </Text>
                 </View>
-              ) : !hasNext && data.length > 0 && pageSize >= data.length ? (
-                <View className="py-4 items-center">
-                  <Text className="text-xs text-gray-400">
-                    No more announcements
-                  </Text>
-                </View>
-              ) : null
+              ) : (
+                !hasNext && data.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more announcements
+                    </Text>
+                  </View>
+                )
+              )
             }
             refreshControl={
               <RefreshControl
@@ -384,7 +469,7 @@ export default () => {
               <View className="items-center justify-center py-12">
                 <FileText size={48} className="text-gray-300 mb-3" />
                 <Text className="text-gray-500 text-sm">
-                  No announcements yet
+                  No announcements found
                 </Text>
               </View>
             }

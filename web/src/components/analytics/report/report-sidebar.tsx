@@ -39,6 +39,8 @@ export const ReportSidebar = () => {
     });
   };
 
+  console.log(reportSidebar)
+
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none shadow-sm">
       {/* Content */}
@@ -58,18 +60,18 @@ export const ReportSidebar = () => {
           <div>
             {reportSidebar.map((data: Record<string, any>, index: number) => {
               const severityConfig = SEVERITY[data.ir_severity];
-              const SeverityIcon = severityConfig.icon;
+              const SeverityIcon = severityConfig?.icon;
               
               return (
                 <div 
                   key={index}
-                  className={`${severityConfig.bgColor} p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 ${index === 0 ? 'border-t' : ''}`}
+                  className={`${severityConfig?.bgColor} p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 ${index === 0 ? 'border-t' : ''}`}
                   onClick={() => handleClick(data.ir_id)}
                 >
                   {/* Content */}
                   <div className="relative z-10">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-10 flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-1 min-w-0">
                         <div className="min-w-0 space-y-2">
                           <h3 className="font-semibold truncate text-sm text-gray-700">
                             {data.ir_reported_by}
@@ -78,12 +80,12 @@ export const ReportSidebar = () => {
                          <div className="flex gap-2 text-xs font-medium text-gray-600">
                            <span>{formatTimeAgo(data.ir_created_at)}</span>
                            <span>-</span>
-                            <span className={severityConfig.textColor}>{severityConfig.label}</span>
+                            <span className={severityConfig?.textColor}>{severityConfig?.label}</span>
                          </div>
                         </div>
                         {SeverityIcon && (
-                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                            <SeverityIcon size={20} className={severityConfig.iconColor} />
+                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mr-8">
+                            <SeverityIcon size={20} className={severityConfig?.iconColor} />
                           </div>
                         )}
                       </div>

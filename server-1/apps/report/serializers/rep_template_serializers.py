@@ -23,7 +23,7 @@ class RTEUpdateSerializer(serializers.ModelSerializer):
   def update(self, instance, validated_data):
     logo_right = validated_data.pop('logo_right', None)
     logo_left = validated_data.pop('logo_left', None)
-    print(logo_left)
+    logo_top = validated_data.pop('logo_top', None)
 
     if logo_right:
       url = upload_to_storage(logo_right, 'report-bucket', 'template')

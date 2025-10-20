@@ -21,6 +21,7 @@ import Svg, { Path } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { capitalize } from "@/helpers/capitalize";
+import ImagePickerExample from "@/components/ui/image-picker";
 
 const styles = StyleSheet.create({
   container: {
@@ -129,30 +130,6 @@ export default function HomeScreen() {
         <Ciudad width={80} height={70}/>
       </View>
       {/* Header Card Section */}
-      {/* <ScrollView
-        className="flex-1"
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        overScrollMode="never"
-      >
-        <TouchableOpacity
-          className="active:opacity-80 w-screen"
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Featured content card"
-        >
-          <Card className="h-[140px] border-0 bg-gray-400 justify-center items-center shadow-lg rounded-none">
-            <Text className="text-white font-semibold text-lg">
-              Featured
-            </Text>
-            <Text className="text-white/80 text-sm mt-1">
-              Discover new content 
-            </Text>
-          </Card>
-        </TouchableOpacity>
-      </ScrollView> */}
-
       <View className="flex-row px-6 mt-2 mb-6 items-center gap-4">
         <Image
           source={
@@ -186,19 +163,6 @@ export default function HomeScreen() {
 
           <View className="absolute bg-blue-300 w-24 h-24 rounded-full right-0" />
           <View className="absolute bg-blue-400 w-24 h-24 rounded-full right-10 bottom-0 opacity-70" />
-
-          {/* <Svg
-            height="160"
-            width="211"
-            viewBox="0 0 211 160"
-            style={{position: "absolute", left: 0}}
-          >
-            <Path
-              d="M0 0 L211 0 C211 0, 185 20, 185 40 S211 60, 211 80 S185 100, 185 120 S211 140, 211 160 L0 160 Z"
-              fill="#dbeafe"
-              opacity="1"
-            />
-          </Svg> */}
         </View>
       </View>
 
@@ -218,75 +182,6 @@ export default function HomeScreen() {
           {renderFeatures()}
         </View>
       </Card>
-
-      {/* What's New Section */}
-      {/* <View className="px-6 py-6">
-        <View className="mb-6">
-          <Text className="text-xl font-semibold text-gray-900">
-            What's New For You
-          </Text>
-          <Text className="text-sm text-gray-600">
-            Latest updates and recommendations
-          </Text>
-        </View>
-
-        <View className="gap-3">
-          <TouchableOpacity className="active:opacity-80" activeOpacity={0.8}>
-            <Card className="p-4 bg-white shadow-sm border border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-semibold">🎉</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-gray-900 mb-1">
-                    New Feature Available
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    Check out our latest update with improved performance
-                  </Text>
-                </View>
-                <View className="w-2 h-2 bg-green-500 rounded-full" />
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="active:opacity-80" activeOpacity={0.8}>
-            <Card className="p-4 bg-white shadow-sm border border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-green-600 font-semibold">📱</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-gray-900 mb-1">
-                    App Update
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    Version 2.1 is now available with bug fixes
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="active:opacity-80" activeOpacity={0.8}>
-            <Card className="p-4 bg-white shadow-sm border border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-purple-600 font-semibold">⭐</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-gray-900 mb-1">
-                    Recommended for You
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    Based on your activity, you might like this
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        </View>
-      </View> */}
     </SafeAreaView>
   ))  
 
