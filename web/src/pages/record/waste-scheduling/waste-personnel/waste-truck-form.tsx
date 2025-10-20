@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
+import { Eye, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -214,7 +214,7 @@ const TruckManagement = ({
               />
             )}
 
-            {activeTab === "archive" && (
+            {/* {activeTab === "archive" && (
               <TooltipLayout
                 trigger={
                   <div className="flex items-center h-8">
@@ -243,7 +243,7 @@ const TruckManagement = ({
                 }
                 content="Delete"
               />
-            )}
+            )} */}
           </div>
         );
       },
