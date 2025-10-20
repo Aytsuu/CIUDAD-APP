@@ -23,8 +23,7 @@ export type ServiceCharge = {
 export const getPaidServiceCharges = async (
   searchTerm: string = "",
   page: number = 1,
-  pageSize: number = 10,
-  statusFilter?: string
+  pageSize: number = 10
 ): Promise<{ results: ServiceCharge[]; count: number }> => {
   try {
     // Build query parameters
@@ -37,10 +36,9 @@ export const getPaidServiceCharges = async (
       params.append('search', searchTerm);
     }
 
-    if (statusFilter && statusFilter !== 'all') {
-      params.append('status', statusFilter);
-    }
-
+    // Always filter for completed service charges only
+    params.append('status', 'completed');
+    
     // Always filter for paid service charges only
     params.append('payment_status', 'Paid');
 
