@@ -625,6 +625,8 @@ class PatientSerializer(serializers.ModelSerializer):
                         latest_prenatal = Prenatal_Form.objects.filter(
                             pregnancy_id=latest_pregnancy
                         ).order_by('-created_at').first()
+
+                        additional_info['latest_pf_id'] = latest_prenatal.pf_id
                         
                         if latest_prenatal:
                             # Get the latest prenatal care entry with AOG data
@@ -676,6 +678,8 @@ class PatientSerializer(serializers.ModelSerializer):
                         latest_prenatal = Prenatal_Form.objects.filter(
                             pregnancy_id=latest_pregnancy
                         ).order_by('-created_at').first()
+
+                        additional_info['latest_pf_id'] = latest_prenatal.pf_id
                         
                         if latest_prenatal:
                             # Get the latest prenatal care entry with AOG data
