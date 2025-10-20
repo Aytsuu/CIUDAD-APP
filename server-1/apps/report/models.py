@@ -25,6 +25,7 @@ class IncidentReport(AbstractModels):
   ir_track_user_lat = models.FloatField(null=True)
   ir_track_user_lng = models.FloatField(null=True)
   ir_track_user_contact = models.CharField(max_length=20, null=True)
+  ir_track_user_name = models.CharField(max_length=100, null=True)
   ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
