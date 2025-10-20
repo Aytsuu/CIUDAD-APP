@@ -10,6 +10,10 @@ class IRCreateView(generics.CreateAPIView):
   serializer_class = IRCreateSerializer
   queryset = IncidentReport.objects.all()
 
+class TrackerReportCreateVIEW(generics.CreateAPIView):
+  serializer_class = IRBaseSerializer
+  queryset = IncidentReport.objects.all()
+
 class IRInfoView(generics.RetrieveAPIView):
   serializer_class = IRTableSerializer
   queryset = IncidentReport.objects.all()
@@ -46,6 +50,7 @@ class IRTableView(generics.ListAPIView):
       'ir_track_user_lat',
       'ir_track_user_lng',
       'ir_track_user_contact',
+      'ir_track_user_name',
       'rt__rt_label',
       'rp__per__per_lname',
       'rp__per__per_fname',

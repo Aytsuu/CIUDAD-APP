@@ -55,6 +55,7 @@ class Personal(AbstractModels):
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
     per_disability = models.CharField(max_length=100, null=True, blank=True)
+    per_is_deceased = models.BooleanField(default=False)
 
     history = HistoricalRecords(
         table_name='personal_history',
