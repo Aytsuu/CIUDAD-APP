@@ -15,7 +15,7 @@ scheduler = BackgroundScheduler()
         recipients=[user1, user2],
         notif_type="reminder_type",
         remind_at=datetime(2024, 12, 31, 10, 0, 0),
-        target_obj=optional_target_object,
+        target_obj=target_object,
     )
 """
 

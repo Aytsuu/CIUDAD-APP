@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, BookCopy  } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, BookCopy, Settings  } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
@@ -10,6 +10,7 @@ import { listenForMessages } from "@/firebase";
 import { toast } from "sonner";
 import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
 import { MdNotificationAdd } from "react-icons/md";
+import { Button } from "@/components/ui/button/button";
 
 interface Notification {
   notif_id: string;
@@ -52,7 +53,9 @@ export const NotificationBell: React.FC = () => {
   const {mutate: bulkMarkAsRead} = useUpdateBulkNotification();
   const {mutate: MarkAsRead} = useUpdateNotification();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [displayCount, setDisplayCount] = useState(10);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [filterType, setFilterType] = useState<"all" | "read" | "unread">("all");
   const [open, setOpen] = useState(false);
   const { data, isLoading, isError, refetch } = fetchNotification();
   console.log(JSON.stringify(notifications, null, 2));
@@ -64,7 +67,6 @@ export const NotificationBell: React.FC = () => {
     }
   }, [data]);
 
-  // Helper function to build URL from redirect_url object
   const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
     if (!redirectUrl || !redirectUrl.path) return null;
     
@@ -145,14 +147,6 @@ export const NotificationBell: React.FC = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  const handleAcceptRequest = (id: string) => {
-    // Implementation here
-  };
-
-  const handleDeclineRequest = (id: string) => {
-    // Implementation here
-  };
-
   const markAsRead = (notif_id: string) => {
     MarkAsRead(notif_id, {
       onSuccess: () => {
@@ -220,6 +214,9 @@ export const NotificationBell: React.FC = () => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
+    if(action === "view_notification") {
+      navigate("/notification");
+    }
   };
 
   const headerMenuOptions = [
@@ -232,6 +229,11 @@ export const NotificationBell: React.FC = () => {
       id: "view_notification",
       name: "Open Notification",
       icon: <MdNotificationAdd className="h-4 w-4" />,
+    },
+    {
+      id: "notification_settings",
+      name: "Notification Settings",
+      icon: <Settings className="h-4 w-4" />,
     }
   ];
 
@@ -267,6 +269,18 @@ export const NotificationBell: React.FC = () => {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
+  const loadMoreNotifications = () => {
+    setDisplayCount((prev) => prev + 10);
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (filterType === "unread") return !n.is_read;
+    return true;
+  });
+
+  const displayedNotifications = filteredNotifications.slice(0, displayCount);
+  const hasMore = displayCount < filteredNotifications.length;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -291,24 +305,56 @@ export const NotificationBell: React.FC = () => {
         alignOffset={-50}
       >
         <div className="w-full">
-          <div className="px-4 py-3 border-b border-gray-100 bg-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-gray-900 text-base">Notifications</h4>
+          <div className="px-4 py-3 border-b border-gray-100 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-lg text-darkBlue2">Notifications</h1>
+              </div>
+              <div className="flex items-center gap-1">
+                <DropdownLayout
+                  trigger={
+                    <button
+                      className="p-1.5 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                      title="Options"
+                    >
+                      <MoreHorizontal className="h-5 w-5 text-gray-600" />
+                    </button>
+                  }
+                  options={headerMenuOptions}
+                  onSelect={handleHeaderMenuAction}
+                  contentClassName="w-48"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <DropdownLayout
-                trigger={
-                  <button
-                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors duration-200"
-                    title="Options"
-                  >
-                    <MoreHorizontal className="h-5 w-5 text-gray-600" />
-                  </button>
-                }
-                options={headerMenuOptions}
-                onSelect={handleHeaderMenuAction}
-                contentClassName="w-48"
-              />
+            
+            {/* Filter Tabs */}
+            <div className="flex-1 justify-start">
+              <Button
+                onClick={() => {
+                  setFilterType("all");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 mr-2 ${
+                  filterType === "all" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => {
+                  setFilterType("unread");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 ${
+                  filterType === "unread" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
+              >
+                Unread
+              </Button>
             </div>
           </div>
 
@@ -337,19 +383,25 @@ export const NotificationBell: React.FC = () => {
                   Try again
                 </button>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : filteredNotifications.length === 0 ? (
               <div className="p-8 text-center">
                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 text-sm">No notifications yet</p>
+                {/* <p className="text-gray-500 text-sm">
+                  {filterType === "read" 
+                    ? "No read notifications" 
+                    : filterType === "unread" 
+                    ? "No unread notifications" 
+                    : "No notifications yet"}
+                </p> */}
                 <p className="text-gray-400 text-xs mt-1">
-                  We'll let you know when something happens
+                  {filterType === "all" && "We'll let you know when something happens"}
                 </p>
               </div>
             ) : (
               <div>
-                {notifications.slice(0, 10).map((item) => (
+                {displayedNotifications.map((item) => (
                   <div
                     key={item.notif_id}
                     onClick={() => handleNotificationClick(item)}
@@ -389,24 +441,6 @@ export const NotificationBell: React.FC = () => {
                             <span className="text-xs text-gray-400 w-full">
                               {formatTimeAgo(item.notif_created_at)}
                             </span>
-                           {/* <div className="flex flex-col gap-2 mt-2">
-                              {item.notif_type === "REQUEST" && (
-                              <div className="flex gap-2">
-                                <Button
-                                  className="flex-1 py-1 px-2 "
-                                  onClick={(e) => { e.stopPropagation(); handleAcceptRequest(item.notif_id); }}
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  className="flex-1 py-1 px-2 bg-gray-500 hover:bg-gray-400"
-                                  onClick={(e) => { e.stopPropagation(); handleDeclineRequest(item.notif_id); }}
-                                >
-                                  Decline
-                                </Button>
-                              </div>
-                              )}
-                            </div> */}
                           </div>
                           <div
                             className="flex items-start"
@@ -433,17 +467,22 @@ export const NotificationBell: React.FC = () => {
                     </div>
                   </div>
                 ))}
+
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
+                    <Button
+                      onClick={loadMoreNotifications}
+                      variant="ghost"
+                      className="w-full text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      See Previous Notifications
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
-
-          {notifications.length > 10 && (
-            <div className="p-3 text-center text-sm border-t border-gray-100 bg-white">
-              <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline">
-                View all notifications
-              </button>
-            </div>
-          )}
         </div>
       </PopoverContent>
     </Popover>

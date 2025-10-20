@@ -40,6 +40,7 @@ import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { healthreports_router } from "./health-reports-router";
 import { medicalConsultation } from "./med-consultation";
+import { NotificationRouter } from "./notification-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -220,6 +221,7 @@ export const main_router: RouteObject[] = [
       ...template_router, 
       ...healthreports_router,
       ...medicalConsultation,
+      ...NotificationRouter,
       ])
     }
 ]
