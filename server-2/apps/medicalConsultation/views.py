@@ -476,135 +476,6 @@ class PendingMedConCountView(APIView):
             "count": total_count
         })
     
-    
-# class MedicalConsultationTotalCountAPIView(APIView):
-#     def get(self, request):
-#         try:
-#             # Count total unique medical consultation records
-#             total_records = MedicalConsultation_Record.objects.count()
-            
-#             return Response({
-#                 'success': True,
-#                 'total_records': total_records
-#             }, status=status.HTTP_200_OK)
-
-#         except Exception as e:
-#             return Response({
-#                 'success': False,
-#                 'error': str(e)
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
-#================================ CREATE STEP1
-# class CreateMedicalConsultationView(APIView):
-#     @transaction.atomic
-#     def post(self, request):
-#         data = request.data
-#         try:
-#             # 🔹 Required fields (excluding staff if optional)
-#             required_fields = ["pat_id", "medrec_chief_complaint", "height", "weight"]
-
-#             missing_fields = []
-#             for field in required_fields:
-#                 value = data.get(field, None)
-#                 if value is None or str(value).strip() == "":
-#                     missing_fields.append(field)
-
-#             if missing_fields:
-#                 return Response(
-#                     {
-#                         "success": False,
-#                         "error": "Missing required fields",
-#                         "missing_fields": missing_fields,
-#                         "received_data": data,
-#                     },
-#                     status=status.HTTP_400_BAD_REQUEST,
-#                 )
-
-#             # 🔹 Handle staff (optional)
-#             staff = None
-#             staff_id = data.get("staff")
-#             if staff_id not in [None, "", "null"]:
-#                 try:
-#                     staff = Staff.objects.get(pk=staff_id)
-#                 except Staff.DoesNotExist:
-#                     return Response(
-#                         {"error": f"Invalid staff ID: {staff_id}"},
-#                         status=status.HTTP_400_BAD_REQUEST,
-#                     )
-            
-#             # 🔹 Get Patient instance (ADD THIS)
-#             try:
-#                 patient = Patient.objects.get(pat_id=data["pat_id"])
-#             except Patient.DoesNotExist:
-#                 return Response(
-#                     {"error": f"Invalid patient ID: {data['pat_id']}"},
-#                     status=status.HTTP_400_BAD_REQUEST,
-#                 )
-
-#             # 1. Create PatientRecord
-#             patrec = PatientRecord.objects.create(
-#                 pat_id_id=data["pat_id"],  # This might also need fixing if it expects a Patient instance
-#                 patrec_type="Medical Consultation",
-#             )
-
-#             # 2. Create VitalSigns
-#             vital = VitalSigns.objects.create(
-#                 vital_bp_systolic=data.get("vital_bp_systolic", ""),
-#                 vital_bp_diastolic=data.get("vital_bp_diastolic", ""),
-#                 vital_temp=data.get("vital_temp", ""),
-#                 vital_RR=data.get("vital_RR", ""),
-#                 vital_o2="N/A",
-#                 vital_pulse=data.get("vital_pulse", ""),
-#                 patrec=patrec,
-#                 staff=staff,
-#             )
-
-#             # 3. Create BodyMeasurement - FIXED
-#             bm = BodyMeasurement.objects.create(
-#                 height=float(data.get("height", 0)),
-#                 weight=float(data.get("weight", 0)),
-#                 pat=patient,  # ✅ Now passing Patient instance instead of string
-#                 staff=staff,
-#             )
-
-#             assigned_staff = None
-#             selected_staff_id = data.get('selectedDoctorStaffId')
-#             if selected_staff_id:  # This checks for truthy values (not None, not empty string)
-#                 try:
-#                     assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
-#                 except Staff.DoesNotExist:
-#                     print(f"Staff with ID {selected_staff_id} does not exist")
-       
-#             # 4. Create MedicalConsultation_Record
-#             medrec = MedicalConsultation_Record.objects.create(
-#                 patrec=patrec,
-#                 vital=vital,
-#                 bm=bm,
-#                 find=None,
-#                 medrec_chief_complaint=data["medrec_chief_complaint"],
-#                 staff=staff,
-#                 assigned_to=assigned_staff
-#             )
-
-#             return Response(
-#                 {
-#                     "success": True,
-#                     "patrec_id": patrec.patrec_id,
-#                     "vital_id": vital.vital_id,
-#                     "bm_id": bm.bm_id,
-#                     "medrec_id": medrec.medrec_id,
-#                 },
-#                 status=status.HTTP_201_CREATED,
-#             )
-
-#         except Exception as e:
-#             return Response(
-#                 {"error": str(e), "received_data": data},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
 
 
 class CreateMedicalConsultationView(APIView):
@@ -1968,4 +1839,134 @@ class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
             return Response({
                 'success': False,
                 'error': f'Error fetching pending appointments: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+# ================== WEBVIEW APPOINTMENT (Unified by status + keeps date_filter) ==================
+class MedicalUserAppointmentsView(generics.ListAPIView):
+    serializer_class = MedConsultAppointmentSerializer
+    pagination_class = StandardResultsPagination
+
+    def _get_statuses(self):
+        # Supports ?status=pending or ?status=pending&status=confirmed or ?status=pending,confirmed
+        statuses = self.request.GET.getlist('status')
+        if not statuses:
+            raw = self.request.GET.get('status', '').strip()
+            if raw:
+                statuses = [s.strip() for s in raw.split(',') if s.strip()]
+        return statuses  # empty => no status filter (all)
+
+    def _get_meridiems(self):
+        # Supports ?meridiem=AM,PM or repeated meridiem params
+        meridiems = self.request.GET.getlist('meridiem')
+        if not meridiems:
+            raw = self.request.GET.get('meridiem', '').strip()
+            if raw:
+                meridiems = [m.strip().upper() for m in raw.split(',') if m.strip()]
+        return meridiems  # empty => no meridiem filter
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '').strip()
+        date_filter = self.request.GET.get('date_filter', 'all').strip()
+        statuses = self._get_statuses()
+        meridiems = self._get_meridiems()
+
+        # Annotate each appointment with pat_id if a Patient exists for its rp
+        patient_subq = Patient.objects.filter(rp_id=OuterRef('rp')).values('pat_id')[:1]
+
+        queryset = (
+            MedConsultAppointment.objects.all()
+            .annotate(pat_id_anno=Subquery(patient_subq))
+            .select_related('rp')
+        )
+
+        # Status filter (pending/confirmed/cancelled/referred/completed/in queue)
+        if statuses:
+            queryset = queryset.filter(status__in=statuses)
+
+        # Meridiem filter (AM/PM)
+        if meridiems:
+            queryset = queryset.filter(meridiem__in=meridiems)
+
+        # Search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(rp__per__per_contact__icontains=search_query) |
+                Q(id__icontains=search_query) |
+                Q(rp__rp_id__icontains=search_query) |
+                Q(chief_complaint__icontains=search_query) |
+                (Q(notes__icontains=search_query) if hasattr(MedConsultAppointment, 'notes') else Q()) |
+                Q(rp__per__personal_addresses__add__add_province__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_city__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_barangay__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_street__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_external_sitio__icontains=search_query) |
+                Q(rp__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(rp__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()
+
+        # Date filter
+        if date_filter != 'all':
+            today = datetime.now().date()
+            if date_filter == 'today':
+                queryset = queryset.filter(created_at__date=today)
+            elif date_filter == 'this-week':
+                start_of_week = today - timedelta(days=today.weekday())
+                queryset = queryset.filter(created_at__date__gte=start_of_week)
+            elif date_filter == 'this-month':
+                start_of_month = today.replace(day=1)
+                queryset = queryset.filter(created_at__date__gte=start_of_month)
+            elif date_filter == 'tomorrow':
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date=tomorrow)
+            elif date_filter == 'upcoming':
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date__gte=tomorrow)
+            elif date_filter == 'past':
+                queryset = queryset.filter(scheduled_date__lt=today)
+
+        return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                # Attach annotated pat_id to each item
+                augmented = []
+                for rec, inst in zip(serializer.data, page):
+                    row = dict(rec)
+                    row['pat_id'] = getattr(inst, 'pat_id_anno', None)
+                    augmented.append(row)
+
+                response = self.get_paginated_response(augmented)
+                response.data['total_appointments'] = queryset.count()
+                return response
+
+            serializer = self.get_serializer(queryset, many=True)
+            augmented = []
+            for rec, inst in zip(serializer.data, queryset):
+                row = dict(rec)
+                row['pat_id'] = getattr(inst, 'pat_id_anno', None)
+                augmented.append(row)
+
+            return Response({
+                'success': True,
+                'results': augmented,
+                'count': len(augmented),
+                'total_appointments': queryset.count()
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

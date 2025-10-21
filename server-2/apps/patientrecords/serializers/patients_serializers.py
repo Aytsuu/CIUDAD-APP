@@ -336,7 +336,6 @@ class PatientSerializer(serializers.ModelSerializer):
                     sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
                     # Construct full address dynamically based on available fields
                     address_parts = [
-                        f"Sitio {sitio}" if sitio else None,
                         address.add_barangay if address.add_barangay else None,
                         address.add_city if address.add_city else None,
                         address.add_province if address.add_province else None,
@@ -362,7 +361,6 @@ class PatientSerializer(serializers.ModelSerializer):
                     sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
                     # Construct full address dynamically based on available fields
                     address_parts = [
-                        f"Sitio {sitio}" if sitio else None,
                         address.add_barangay if address.add_barangay else None,
                         address.add_city if address.add_city else None,
                         address.add_province if address.add_province else None,
@@ -389,7 +387,6 @@ class PatientSerializer(serializers.ModelSerializer):
                 sitio = trans_addr.tradd_sitio
                 # Construct full address dynamically based on available fields
                 address_parts = [
-                    f"Sitio {sitio}" if sitio else None,
                     trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
                     trans_addr.tradd_city if trans_addr.tradd_city else None,
                     trans_addr.tradd_province if trans_addr.tradd_province else None,

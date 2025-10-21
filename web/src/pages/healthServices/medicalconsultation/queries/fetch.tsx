@@ -1,11 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getConsultationHistory, getconfirmedAppointments, getpendingAppointments, getMedicalRecord, getPreviousBMI, getMedConPHHistory, getFamHistory } from "../restful-api/get";
+import { getConsultationHistory, getconfirmedAppointments, getpendingAppointments, getMedicalRecord, getPreviousBMI, getMedConPHHistory, getFamHistory, getAppointments } from "../restful-api/get";
 
-export const useConsultationHistory = ( patientId?: string, page?: number, 
-  pageSize?: number, 
-  searchQuery?: string,
-  currentConsultationId?: number
-) => {
+export const useConsultationHistory = (patientId?: string, page?: number, pageSize?: number, searchQuery?: string, currentConsultationId?: number) => {
   return useQuery<any>({
     queryKey: ["consultationHistory", patientId, page, pageSize, searchQuery, currentConsultationId],
     queryFn: () => getConsultationHistory(patientId, page, pageSize, searchQuery, currentConsultationId),
@@ -62,5 +58,14 @@ export const useConfimedAppointments = (page: number = 1, pageSize: number = 10,
   return useQuery<any>({
     queryKey: ["confirmedmedicalapp", page, pageSize, search, dateFilter],
     queryFn: () => getconfirmedAppointments(page, pageSize, search, dateFilter)
+  });
+};
+
+export const useAppointments = (page?: number, pageSize?: number, search?: string, dateFilter?: string, statuses?: string[] | string, meridiems?: ("AM" | "PM")[] | string, enabled: boolean = true) => {
+  const params = { page, pageSize, search, dateFilter, statuses, meridiems };
+  return useQuery<any>({
+    queryKey: ["medicalapp", params],
+    queryFn: () => getAppointments(params),
+    enabled
   });
 };

@@ -6,15 +6,16 @@ import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentConfirmedColumns } from "./columns/confirmed-appointments";
-import { useConfimedAppointments } from "../queries/fetch";
+import { medicalAppointmentCompletedColumns } from "../columns/completed-appointments";
+import { useAppointments } from "../../queries/fetch";
 
-export default function ConfirmedMedicalAppointments() {
+export default function CompleteddMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const [meridiemFilter, setMeridiemFilter] = useState<"all" | "AM" | "PM">("all");
 
   // Debounce search query
   useEffect(() => {
@@ -33,11 +34,14 @@ export default function ConfirmedMedicalAppointments() {
     isLoading,
     error,
     refetch
-  } = useConfimedAppointments(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-    dateFilter
+  } = useAppointments(
+    currentPage,                                      
+    pageSize,                                         
+    debouncedSearch,                                 
+    dateFilter,                                      
+    ["completed"],                                  
+    meridiemFilter === "all" ? undefined : [meridiemFilter],
+    true                                             
   );
 
   // Extract data from paginated response
@@ -90,13 +94,27 @@ export default function ConfirmedMedicalAppointments() {
               { id: "today", name: "Today" },
               { id: "this-week", name: "This Week" },
               { id: "this-month", name: "This Month" },
-              { id: "tomorrow", name: "Tomorrow" },
-              { id: "upcoming", name: "Upcoming" },
-              { id: "past", name: "Past" }
             ]}
             value={dateFilter}
             onChange={(value) => {
               setDateFilter(value);
+              setCurrentPage(1);
+            }}
+          />
+
+          {/* Meridiem Filter */}
+          <SelectLayout
+            placeholder="Meridiem"
+            label=""
+            className="bg-white w-full sm:w-40"
+            options={[
+              { id: "all", name: "All" },
+              { id: "AM", name: "AM" },
+              { id: "PM", name: "PM" }
+            ]}
+            value={meridiemFilter}
+            onChange={(value) => {
+              setMeridiemFilter(value as "all" | "AM" | "PM");
               setCurrentPage(1);
             }}
           />
@@ -188,14 +206,14 @@ export default function ConfirmedMedicalAppointments() {
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
               <p className="text-lg font-medium mb-1">No confirmed appointments found</p>
               <p className="text-sm">
-                {debouncedSearch || dateFilter !== "all" 
-                  ? "No confirmed appointments match your search criteria" 
+                {debouncedSearch || dateFilter !== "all" || meridiemFilter !== "all"
+                  ? "No confirmed appointments match your search criteria"
                   : "No confirmed appointments at the moment"}
               </p>
             </div>
           ) : (
             <DataTable 
-              columns={medicalAppointmentConfirmedColumns} 
+              columns={medicalAppointmentCompletedColumns} 
               data={appointments} 
             />
           )}

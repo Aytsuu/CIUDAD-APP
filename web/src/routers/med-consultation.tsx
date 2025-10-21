@@ -5,8 +5,8 @@ import MedicalConsultationForm from "@/pages/healthServices/medicalconsultation/
 import MainMedicalConsultation from "@/pages/healthServices/medicalconsultation/tables/main-medicalconsultation";
 import AppointmentForm from "@/pages/healthServices/medicalconsultation/Forms/AppointmentForm";
 import MedconRecordsLayout from "@/pages/healthServices/medicalconsultation/tables/main-medconlayout";
-import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/tables/main-layout/main-appointmentlayout";
-import MainAppointments from "@/pages/healthServices/medicalconsultation/tables/main-appoimnents";
+import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/tables/appointments/main-appointmentlayout";
+import MainAppointments from "@/pages/healthServices/medicalconsultation/tables/appointments/main-appoimnents";
 
 export const medicalConsultation = [
   {
@@ -44,6 +44,26 @@ export const medicalConsultation = [
           },
           {
             path: "pending",
+            element: <MainAppointments />
+          },
+          {
+            path: "referred",
+            element: <MainAppointments />
+          },
+          {
+            path: "rejected",
+            element: <MainAppointments />
+          },
+          {
+            path: "cancelled",
+            element: <MainAppointments />
+          },
+          {
+            path: "missed",
+            element: <MainAppointments />
+          },
+          {
+            path: "completed",
             element: <MainAppointments />
           },
         ]

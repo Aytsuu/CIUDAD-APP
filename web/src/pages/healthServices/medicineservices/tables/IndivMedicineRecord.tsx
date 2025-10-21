@@ -1,5 +1,5 @@
 // src/features/medicine/pages/IndivMedicineRecords.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { medicineRecordColumns } from "./columns/inv-med-col";
 import { useIndividualMedicineRecords } from "../queries/fetch";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { serializePatientData } from "@/helpers/serializePatientData";
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
@@ -24,17 +25,16 @@ export default function IndivMedicineRecords() {
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
-    return <div>Error: Patient ID not provided</div>;
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertCircle className="h-4 w-4 text-yellow-500" />
+          <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
+        </div>
+        <p className="text-sm text-gray-700">Please select a patient from the medicine records page first.</p>
+      </div>
+    );
   }
-
-  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
-
-  useEffect(() => {
-    if (location.state?.params?.patientData) {
-      const patientData = location.state.params.patientData;
-      setSelectedPatientData(patientData);
-    }
-  }, [location.state]);
 
   // Debounce search query
   useEffect(() => {
@@ -56,7 +56,27 @@ export default function IndivMedicineRecords() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  console.log("Medicine Records API Response:", apiResponse);
+  // Derive patient data from first medicine record (similar to consultation)
+  const derivedPatientData: any | null = useMemo(() => {
+    if (!medicineRecords || medicineRecords.length === 0) {
+      return null;
+    }
+
+    const firstRecord = medicineRecords[0];
+    // Adjust the path based on your medicine record structure
+    const patientDetails = firstRecord?.patient_record?.pat_details;
+    if (!patientDetails) {
+      return null;
+    }
+
+    try {
+      const serialized = serializePatientData ? serializePatientData(patientDetails) : patientDetails;
+      return serialized as any;
+    } catch (e) {
+      return patientDetails as any;
+    }
+  }, [medicineRecords]);
+
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -79,29 +99,20 @@ export default function IndivMedicineRecords() {
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        {selectedPatientData ? (
-          <div className="mb-4">
-            <PatientInfoCard patient={selectedPatientData} />
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
-            </div>
-            <p className="text-sm text-gray-700">Please select a patient from the medicine records page first.</p>
-          </div>
-        )}
+        {/* Use derivedPatientData instead of selectedPatientData */}
+        <div className="mb-4">
+          <PatientInfoCard patient={derivedPatientData} isLoading={isLoading} />
+        </div>
 
-        <div className="w-full lg:flex justify-between items-center  px-4 gap-6 mt-4 bg-white py-4 border ">
+        <div className="w-full lg:flex justify-between items-center px-4 gap-6 bg-white py-4  border-t border-x ">
           <div className="flex gap-2 items-center p-2">
             <div className="flex items-center justify-center">
               <Pill className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800 pr-2">Total Medicine Records</p>
+              <p className="text-sm font-medium text-gray-800 pr-2">records</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
+            <p className="text-2xl font-bold text-gray-900">{isLoading ? "..." : totalCount}</p>
           </div>
 
           <ProtectedComponentButton exclude={["DOCTOR"]}>
@@ -111,7 +122,7 @@ export default function IndivMedicineRecords() {
                 <Input placeholder="Search by medicine name, category..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
               <div>
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto" disabled={isLoading || !!error}>
                   <Link
                     to="/services/medicine/form"
                     state={{
@@ -129,9 +140,9 @@ export default function IndivMedicineRecords() {
           </ProtectedComponentButton>
         </div>
 
-        <div className="h-full w-full rounded-md bg-white border">
+        <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-center sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 border">
-            <div className="flex gap-x-2 items-centFer">
+            <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
@@ -143,6 +154,7 @@ export default function IndivMedicineRecords() {
                   setCurrentPage(1);
                 }}
                 min="1"
+                disabled={isLoading || !!error}
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
@@ -171,7 +183,8 @@ export default function IndivMedicineRecords() {
               </div>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-                <span className="ml-2">Error loading medicine records. Please check console.</span>
+                <AlertCircle className="h-5 w-5 mr-2" />
+                <span>Error loading medicine records. Please try again.</span>
               </div>
             ) : medicineRecords.length === 0 ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
@@ -181,15 +194,10 @@ export default function IndivMedicineRecords() {
               <DataTable columns={medicineRecordColumns} data={medicineRecords} />
             )}
           </div>
-          <hr></hr>
-
+          <hr />
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
-            </p>
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-            </div>
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">{error ? "Error loading records" : `Showing ${Math.min((currentPage - 1) * pageSize + 1, totalCount)} to ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} records`}</p>
+            <div className="w-full sm:w-auto flex justify-center">{!isLoading && !error && totalCount > 0 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}</div>
           </div>
         </div>
       </div>

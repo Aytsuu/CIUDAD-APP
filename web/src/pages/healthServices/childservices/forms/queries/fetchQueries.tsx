@@ -1,6 +1,6 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory ,getChildnotesfollowup} from "../restful-api/get";
+import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory ,getChildnotesfollowup,getChildData} from "../restful-api/get";
 
 
 export const useChildHealthRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
@@ -65,5 +65,14 @@ export const useChildNotesFollowup = (id: string | undefined) => {
     enabled: !!id,
     staleTime: 1000 * 60 * 5
   });
+}
+
+export const useChildData = (id: string, page?: number, pageSize?: number ) => {
+	return useQuery({
+		queryKey: ['childData', id, page, pageSize],
+		queryFn: () => getChildData(id, page, pageSize),
+		staleTime: 300000, // 5 minutes
+		enabled: !!id
+	})
 }
 

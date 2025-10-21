@@ -30,6 +30,7 @@ class MedConsultAppointment(models.Model):
     
     class Meta:
         db_table = "medconsult_appointment"
+        
 class PhilHealthLaboratory(models.Model):
     lab_id = models.BigAutoField(primary_key=True)
     

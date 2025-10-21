@@ -8,7 +8,7 @@ from .views.pending_table_views import *
 from .views.count_views import *
 from .views.register_patient_views import *
 from .views.medrequest_views import *
-
+from .views.comcanref_table_views import *
 
 urlpatterns=[
         
@@ -50,6 +50,9 @@ urlpatterns=[
         path('user-requests/', UserMedicineRequestsView.as_view(), name='user-medicine-requests'),
         path('medicine-request-items-by-request/<str:medreq_id>/', MedicineRequestItemsByRequestView.as_view(), name='medicine_request_items_by_request'),
         
+        path('medicine-requests-statuses/table/', MedicineRequestStatusTableView.as_view(), name='comcanref-medicine-requests'),
+         path('medicine-requests-statuses/details/<str:medreq_id>', MedicineRequestStatusTableViewDetails.as_view(), name='medicine-requests-statuses-details'),
+
         # path('medicine-request/', MedicineRequestProcessingView.as_view(), name='medicine_request-processing'),
         # path('medrec-totalrecords/', MedicineTotalCountAPIView.as_view(), name='medrec-totalrecords'),
         # path('month-count/', MonthlyMedicineCountAPIView.as_view(), name='month-count'),

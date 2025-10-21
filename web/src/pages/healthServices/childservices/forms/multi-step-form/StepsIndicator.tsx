@@ -25,7 +25,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
     },
     {
       id: 2,
-      title: "Child History",
+      title: "Child & Mother Details",
       icon: Users
     },
     {
