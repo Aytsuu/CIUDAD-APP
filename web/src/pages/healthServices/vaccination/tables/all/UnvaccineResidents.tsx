@@ -82,13 +82,13 @@ export default function UnvaccinatedResidents() {
   const totalResidentsCount = response?.total_residents_count || 0;
 
   // Calculate total vaccination statistics
-  const totalStats = useMemo(() => {
-    return vaccines.reduce((acc, vaccine) => ({
-      unvaccinated: acc.unvaccinated + vaccine.total_unvaccinated,
-      partially_vaccinated: acc.partially_vaccinated + vaccine.total_partially_vaccinated,
-      fully_vaccinated: acc.fully_vaccinated + vaccine.total_fully_vaccinated,
-    }), { unvaccinated: 0, partially_vaccinated: 0, fully_vaccinated: 0 });
-  }, [vaccines]);
+  // const totalStats = useMemo(() => {
+  //   return vaccines.reduce((acc, vaccine) => ({
+  //     unvaccinated: acc.unvaccinated + vaccine.total_unvaccinated,
+  //     partially_vaccinated: acc.partially_vaccinated + vaccine.total_partially_vaccinated,
+  //     fully_vaccinated: acc.fully_vaccinated + vaccine.total_fully_vaccinated,
+  //   }), { unvaccinated: 0, partially_vaccinated: 0, fully_vaccinated: 0 });
+  // }, [vaccines]);
 
   // Define table columns
   const unvaccinatedColumns: ColumnDef<VaccineSummary>[] = [

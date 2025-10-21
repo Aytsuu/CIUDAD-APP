@@ -51,10 +51,14 @@ export function PersonalInfoCard({
         pat_type: "Resident"
       });
 
-      await updateMedicineRequest(medreq_id, {
-        rp_id: null,
-        pat_id: response.pat_id
-      });
+      if (medreq_id) {
+        await updateMedicineRequest(medreq_id, {
+          rp_id: null,
+          pat_id: response.pat_id
+        });
+      } else {
+        console.error("medreq_id is undefined");
+      }
 
       onPatientRegistered(response.pat_id);
       toast.success("Successfully registered");
