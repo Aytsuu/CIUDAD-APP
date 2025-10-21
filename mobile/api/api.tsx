@@ -10,14 +10,6 @@ import Constants from 'expo-constants'
 //   },
 // });
 
-export const api = axios.create({
-  baseURL: "http://10.229.181.53:8000",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
 
 // export const api2 = axios.create({
 //   baseURL: Constants.expoConfig?.extra?.apiUrl2,
