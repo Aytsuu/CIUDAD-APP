@@ -149,6 +149,7 @@ class SummonCasesSerializer(serializers.ModelSerializer):
     
 class RemarkDetailSerializer(serializers.ModelSerializer):
     supp_docs = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Remark
@@ -156,7 +157,8 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
             'rem_id',
             'rem_remarks',
             'rem_date',
-            'supp_docs'
+            'supp_docs',
+            'staff_name'
         ]
     
     def get_supp_docs(self, obj):
@@ -166,6 +168,25 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting remark supp docs: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
+        return None
 
 class HearingScheduleDetailSerializer(serializers.ModelSerializer):
     remark = RemarkDetailSerializer(read_only=True)
@@ -206,6 +227,7 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
 
 class SummonCaseDetailSerializer(serializers.ModelSerializer):
     hearing_schedules = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = SummonCase
@@ -217,7 +239,9 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
             'sc_date_marked', 
             'sc_reason', 
             'comp_id',
+            'staff_name',
             'hearing_schedules'
+            
         ]
     
     def get_hearing_schedules(self, obj):
@@ -228,6 +252,24 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting hearing schedules: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
         
 
 class HearingMinutesCreateSerializer(serializers.ModelSerializer):

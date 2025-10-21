@@ -169,12 +169,13 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
 class SummonCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.all().order_by('hs_id')
         ),
-        'hearing_schedules',  
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',
@@ -188,13 +189,14 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
 class CouncilCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
                 hs_level__icontains='Mediation' 
             ).order_by('hs_id') 
-
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -209,7 +211,9 @@ class CouncilCaseDetailView(generics.RetrieveAPIView):
 class LuponCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(

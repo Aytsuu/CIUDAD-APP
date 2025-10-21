@@ -126,14 +126,15 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_ty
 }
 
 
-export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string; type: string; file: string | undefined }[], staff_id: string) => {
     try{
 
         // insert the remark
         const response = await api.post('clerk/remark/', {
             rem_date: new Date().toISOString(),
             rem_remarks: remarks,
-            hs_id: hs_id
+            hs_id: hs_id,
+            staff_id: staff_id
         })
 
         // extract the rem_id

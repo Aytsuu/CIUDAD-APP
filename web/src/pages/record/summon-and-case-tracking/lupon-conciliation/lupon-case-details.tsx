@@ -27,6 +27,7 @@ import { InfoIcon } from "lucide-react"
 import SummonRemarksView from "../summon-remarks-view"
 import { useEscalateCase } from "../queries/summonUpdateQueries"
 import LuponPreview from "./conciliation-preview"
+import { useAuth } from "@/context/AuthContext"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -43,6 +44,7 @@ function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
 }
 
 export default function LuponCaseDetails() {
+  const {user} = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -88,6 +90,7 @@ export default function LuponCaseDetails() {
     sc_date_marked,
     sc_reason,
     comp_id,
+    staff_name,
     hearing_schedules = [],
   } = caseDetails || {}
 
@@ -130,13 +133,16 @@ export default function LuponCaseDetails() {
   const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
   const handleResolve = () => {
+    const staff_id = user?.staff?.staff_id
     const status_type = "Lupon"
-    resolve({status_type, sc_id})
+    resolve({status_type, sc_id, staff_id})
   }
 
   const handleEscalate = () => {
+    const staff_id = user?.staff?.staff_id
+
     if (caseDetails?.comp_id) {
-      escalate({sc_id, comp_id});
+      escalate({sc_id, comp_id, staff_id});
     } else {
       console.error("Cannot escalate: comp_id is undefined");
     }
@@ -199,6 +205,7 @@ export default function LuponCaseDetails() {
                     rem_remarks={remark.rem_remarks}
                     rem_date={remark.rem_date}
                     supp_docs={remark.supp_docs}
+                    staff_name = {remark.staff_name}
                   />
                 }
                 title="Remarks"
@@ -588,8 +595,10 @@ export default function LuponCaseDetails() {
               // Only show date marked if not null and case is closed
               sc_date_marked && (
                 <p className="text-sm text-gray-500">
-                  Marked on{" "}
-                  {formatTimestamp(new Date(sc_date_marked))}
+                  Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
+                  {staff_name && (
+                    <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
+                  )}
                 </p>
               )
             )}

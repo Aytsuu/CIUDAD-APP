@@ -2,15 +2,6 @@ import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
 import Constants from 'expo-constants'
 
-export const api = axios.create({
-  baseURL: "http://192.168.1.24:8000",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
-
 // export const api = axios.create({
 //   baseURL: Constants.expoConfig?.extra?.apiUrl,
 //   headers: {

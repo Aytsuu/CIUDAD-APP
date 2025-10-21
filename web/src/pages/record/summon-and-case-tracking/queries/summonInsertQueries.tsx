@@ -123,8 +123,9 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             close: boolean
             status_type: string;
             files: { name: string; type: string; file: string | undefined}[];
+            staff_id: string;
         }) => {
-            return addRemarks(data.hs_id, data.st_id, data.sc_id, data.remarks, data.close, data.status_type, data.files);
+            return addRemarks(data.hs_id, data.st_id, data.sc_id, data.remarks, data.close, data.status_type, data.files, data.staff_id);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
