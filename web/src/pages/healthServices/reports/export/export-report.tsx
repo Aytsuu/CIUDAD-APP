@@ -89,7 +89,7 @@ export function exportToPDF2(data: any[], filename: string, title: string = "Vac
     const pdf = new jsPDF({
       orientation: isWideTable ? 'landscape' : 'portrait' as 'landscape' | 'portrait',
       unit: 'mm',
-      format: isWideTable ? 'a4' : 'legal' // Use A4 for landscape, legal for portrait
+      format: isWideTable ? 'legal' : 'legal' // Use A4 for landscape, legal for portrait
     });
 
     const pageWidth = pdf.internal.pageSize.getWidth();

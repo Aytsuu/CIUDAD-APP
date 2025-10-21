@@ -653,46 +653,57 @@ def get_patient_details_data(request, patient_id):
             print(f"Error fetching spouse information: {e}")
 
         # Fetch obstetrical history
+      
         try:
-            obstetrical_history = Obstetrical_History.objects.filter(pat=patient).order_by('-patrec_id__created_at').first()
-            if obstetrical_history:
-                fp_form_data["obstetricalHistory"] = {
-                    "g_pregnancies": obstetrical_history.obs_gravida or 0,
-                    "p_pregnancies": obstetrical_history.obs_para or 0,
-                    "fullTerm": obstetrical_history.obs_fullterm or 0,
-                    "premature": obstetrical_history.obs_preterm or 0,
-                    "abortion": obstetrical_history.obs_abortion or 0,
-                    "livingChildren": obstetrical_history.obs_living_ch or 0,
-                    "lastDeliveryDate": obstetrical_history.obs_last_delivery.isoformat() if obstetrical_history.obs_last_delivery else "",
-                    "typeOfLastDelivery": obstetrical_history.obs_type_last_delivery or "",
-                    "lastMenstrualPeriod": obstetrical_history.obs_last_period.isoformat() if obstetrical_history.obs_last_period else "",
-                    "previousMenstrualPeriod": obstetrical_history.obs_previous_period.isoformat() if obstetrical_history.obs_previous_period else "",
-                    "menstrualFlow": obstetrical_history.obs_mens_flow or "Scanty",
-                    "dysmenorrhea": obstetrical_history.obs_dysme or False,
-                    "hydatidiformMole": obstetrical_history.obs_hydatidiform or False,
-                    "ectopicPregnancyHistory": obstetrical_history.obs_ectopic_pregnancy or False,
-                }
-                print("✓ Complete obstetrical history:", fp_form_data["obstetricalHistory"])
+            # First get the patient's records
+            patient_records = PatientRecord.objects.filter(pat_id=patient)
+            
+            if patient_records.exists():
+                # Get the most recent obstetrical history from patient records
+                obstetrical_history = Obstetrical_History.objects.filter(
+                    patrec_id__in=patient_records
+                ).order_by('-patrec_id__created_at').first()
+                
+                if obstetrical_history:
+                    fp_form_data["obstetricalHistory"] = {
+                        "g_pregnancies": obstetrical_history.obs_gravida or 0,
+                        "p_pregnancies": obstetrical_history.obs_para or 0,
+                        "fullTerm": obstetrical_history.obs_fullterm or 0,
+                        "premature": obstetrical_history.obs_preterm or 0,
+                        "abortion": obstetrical_history.obs_abortion or 0,
+                        "livingChildren": obstetrical_history.obs_living_ch or 0,
+                        # "lastDeliveryDate": obstetrical_history.obs_last_delivery.isoformat() if hasattr(obstetrical_history, 'obs_last_delivery') and obstetrical_history.obs_last_delivery else "",
+                        # "typeOfLastDelivery": obstetrical_history.obs_type_last_delivery or "",
+                        "lastMenstrualPeriod": obstetrical_history.obs_lmp.isoformat() if obstetrical_history.obs_lmp else "",
+                        # "previousMenstrualPeriod": obstetrical_history.obs_previous_period.isoformat() if hasattr(obstetrical_history, 'obs_previous_period') and obstetrical_history.obs_previous_period else "",
+                        # "menstrualFlow": obstetrical_history.obs_mens_flow or "Scanty",
+                        # "dysmenorrhea": obstetrical_history.obs_dysme or False,
+                        # "hydatidiformMole": obstetrical_history.obs_hydatidiform or False,
+                        # "ectopicPregnancyHistory": obstetrical_history.obs_ectopic_pregnancy or False,
+                    }
+                    print("✓ Complete obstetrical history:", fp_form_data["obstetricalHistory"])
 
-                # Fetch FP-specific obstetrical history
-                try:
-                    fp_record = FP_Record.objects.filter(patrec=patient).order_by('-created_at').first()
-                    if fp_record:
-                        fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=fp_record).select_related('obs_record').first()
-                        if fp_obs_history:
-                            fp_form_data["obstetricalHistory"].update({
-                                "lastDeliveryDate": fp_obs_history.fpob_last_delivery.isoformat() if fp_obs_history.fpob_last_delivery else fp_form_data["obstetricalHistory"]["lastDeliveryDate"],
-                                "typeOfLastDelivery": fp_obs_history.fpob_type_last_delivery or fp_form_data["obstetricalHistory"]["typeOfLastDelivery"],
-                                "lastMenstrualPeriod": fp_obs_history.fpob_last_period.isoformat() if fp_obs_history.fpob_last_period else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"],
-                                "previousMenstrualPeriod": fp_obs_history.fpob_previous_period.isoformat() if fp_obs_history.fpob_previous_period else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"],
-                                "menstrualFlow": fp_obs_history.fpob_mens_flow or fp_form_data["obstetricalHistory"]["menstrualFlow"],
-                                "dysmenorrhea": fp_obs_history.fpob_dysme or fp_form_data["obstetricalHistory"]["dysmenorrhea"],
-                                "hydatidiformMole": fp_obs_history.fpob_hydatidiform or fp_form_data["obstetricalHistory"]["hydatidiformMole"],
-                                "ectopicPregnancyHistory": fp_obs_history.fpob_ectopic_pregnancy or fp_form_data["obstetricalHistory"]["ectopicPregnancyHistory"],
-                            })
-                            print("✓ Updated with FP-specific obstetrical history")
-                except Exception as e:
-                    print(f"Error fetching FP-specific obstetrical history: {e}")
+                    # Fetch FP-specific obstetrical history
+                    try:
+                        # Get FP records for this patient
+                        fp_records = FP_Record.objects.filter(patrec__in=patient_records).order_by('-created_at')
+                        if fp_records.exists():
+                            fp_record = fp_records.first()
+                            fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=fp_record).first()
+                            if fp_obs_history:
+                                fp_form_data["obstetricalHistory"].update({
+                                    "lastDeliveryDate": fp_obs_history.fpob_last_delivery.isoformat() if fp_obs_history.fpob_last_delivery else fp_form_data["obstetricalHistory"]["lastDeliveryDate"],
+                                    "typeOfLastDelivery": fp_obs_history.fpob_type_last_delivery or fp_form_data["obstetricalHistory"]["typeOfLastDelivery"],
+                                    "lastMenstrualPeriod": fp_obs_history.fpob_last_period.isoformat() if hasattr(fp_obs_history, 'fpob_last_period') and fp_obs_history.fpob_last_period else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"],
+                                    "previousMenstrualPeriod": fp_obs_history.fpob_previous_period.isoformat() if fp_obs_history.fpob_previous_period else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"],
+                                    "menstrualFlow": fp_obs_history.fpob_mens_flow or fp_form_data["obstetricalHistory"]["menstrualFlow"],
+                                    "dysmenorrhea": fp_obs_history.fpob_dysme or fp_form_data["obstetricalHistory"]["dysmenorrhea"],
+                                    "hydatidiformMole": fp_obs_history.fpob_hydatidiform or fp_form_data["obstetricalHistory"]["hydatidiformMole"],
+                                    "ectopicPregnancyHistory": fp_obs_history.fpob_ectopic_pregnancy or fp_form_data["obstetricalHistory"]["ectopicPregnancyHistory"],
+                                })
+                                print("✓ Updated with FP-specific obstetrical history")
+                    except Exception as e:
+                        print(f"Error fetching FP-specific obstetrical history: {e}")
         except Exception as e:
             print(f"Error fetching obstetrical history: {e}")
 
@@ -2273,15 +2284,30 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                         type_of_last_delivery_for_prev_preg = None
 
                     if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
+                        # GET LATEST PREVIOUS PREGNANCY DATA FOR SAME PATREC_ID
+                        latest_previous_pregnancy = Previous_Pregnancy.objects.filter(
+                            patrec_id=patrec_id
+                        ).order_by('-pfpp_id').first()
+                        
+                        # Use latest data if available, otherwise use None
+                        outcome = latest_previous_pregnancy.outcome if latest_previous_pregnancy else None
+                        babys_wt = latest_previous_pregnancy.babys_wt if latest_previous_pregnancy else None
+                        gender = latest_previous_pregnancy.gender if latest_previous_pregnancy else None
+                        ballard_score = latest_previous_pregnancy.ballard_score if latest_previous_pregnancy else None
+                        apgar_score = latest_previous_pregnancy.apgar_score if latest_previous_pregnancy else None
+
                         prev_pregnancy_comparison_data = {
                             "date_of_delivery": last_delivery_date_for_prev_preg,
                             "type_of_delivery": type_of_last_delivery_for_prev_preg,
-                            "outcome": None, "babys_wt": None, "gender": None,
-                            "ballard_score": None, "apgar_score": None,
+                            "outcome": outcome,
+                            "babys_wt": babys_wt,
+                            "gender": gender,
+                            "ballard_score": ballard_score,
+                            "apgar_score": apgar_score,
                             "patrec_id": patrec_id, 
                         }
                         
-                        # Check for existing Previous Pregnancy
+                        # Check for existing Previous Pregnancy with same delivery date
                         existing_prev_pregnancy, is_duplicate = _find_existing_record(
                             Previous_Pregnancy,
                             {
@@ -2300,6 +2326,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                                 prev_pregnancy_instance = prev_pregnancy_serializer.save()
                                 created_instances['previous_pregnancy'] = prev_pregnancy_instance
                                 logger.info(f"Created new Previous_Pregnancy record: {prev_pregnancy_instance.pfpp_id}")
+                                logger.info(f"Previous Pregnancy Data - Outcome: {outcome}, Baby Weight: {babys_wt}, Gender: {gender}, Ballard: {ballard_score}, Apgar: {apgar_score}")
                             else:
                                 logger.error(f"Error validating Previous_Pregnancy data: {prev_pregnancy_serializer.errors}")
 
@@ -2444,7 +2471,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             bp_same = (vital_bp_systolic == latest_vital.vital_bp_systolic and 
                        vital_bp_diastolic == latest_vital.vital_bp_diastolic)
             
-            if pulse_diff < 5 and bp_same:
+            if bp_same:
                 vital_id = latest_vital.vital_id
                 should_create_vital = False
                 logger.info(f"Using existing VitalSigns record ID: {vital_id} (minimal changes)")

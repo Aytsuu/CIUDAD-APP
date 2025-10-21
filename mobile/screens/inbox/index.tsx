@@ -1,4 +1,4 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import ScreenLayout from "../_ScreenLayout";
 import { Megaphone } from "@/lib/icons/Megaphone";
 import { ChevronRight } from "@/lib/icons/ChevronRight";

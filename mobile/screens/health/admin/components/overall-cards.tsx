@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { ChevronRight, File, Home, PersonStanding, Syringe, User2Icon, Users } from "lucide-react-native";
+import { User2Icon } from "lucide-react-native";
 import { StatusBadge } from "./status-badge";
 
 export const Overallrecordcard: React.FC<{

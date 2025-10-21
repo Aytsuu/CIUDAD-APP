@@ -3,12 +3,10 @@ import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { router, Href } from "expo-router"; // Import Href
-import { Archive,Baby,Calendar,Dog,Heart,Pill,Stethoscope,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,NotebookPen,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
+import { Archive,Baby,Calendar,Dog,Heart,Pill,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon, NotebookPen} from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import NotificationBadge from "./my-schedules/notifbadge";
-import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 
 const { width } = Dimensions.get("window");
 
@@ -55,9 +53,9 @@ const Homepage = () => {
 
   // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
 
-  const modules: Module[] = [
+const modules: Module[] = [
   { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
-  // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+  { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
   { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
   { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
   { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },

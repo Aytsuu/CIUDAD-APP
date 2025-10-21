@@ -10,12 +10,12 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useResidentsTable } from "../queries/profilingGetQueries";
+import { useResidentsTable } from "../../../../profiling/queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UserRound } from "@/lib/icons/UserRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "@/screens/_PageLayout";
+import PageLayout from "../../../../_PageLayout";
 
 export default function ResidentRecords() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function ResidentRecords() {
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: '/(profiling)/resident/details', // or '/resident-details' depending on your structure
+            pathname: '/(health)/admin/health-profiling/resident/details', // or '/resident-details' depending on your structure
             params: {
               resident: JSON.stringify(item)
             }
@@ -67,11 +67,6 @@ export default function ResidentRecords() {
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <View className="flex-row items-center mb-2">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-semibold text-lg">
-                    {item.fname.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
                 <View className="flex-1">
                   <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
                     {fullName}
@@ -190,6 +185,7 @@ export default function ResidentRecords() {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

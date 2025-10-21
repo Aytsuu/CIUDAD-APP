@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Trash2, X } from "lucide-react-native";
+import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle, X } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrenatalAppointmentRequests } from "./queries/fetch";
 import { useCancelPrenatalAppointment } from "./queries/update";

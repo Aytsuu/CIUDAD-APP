@@ -1,8 +1,9 @@
 import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
 
+//brgy-api
 export const api = axios.create({
-  baseURL: "http://10.151.16.31:8000",
+  baseURL: "http://192.168.1.7:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -10,8 +11,9 @@ export const api = axios.create({
   }
 });
 
+//health-api
 export const api2 = axios.create({
-  baseURL: "http://10.151.16.31:8001",
+  baseURL: "http://192.168.1.7:8001",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

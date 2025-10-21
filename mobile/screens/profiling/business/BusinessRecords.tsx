@@ -16,7 +16,6 @@ import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
 import { formatCurrency } from "@/helpers/currencyFormat";
 import { LoadingState } from "@/components/ui/loading-state";
-import business from "@/screens/business";
 
 export default function BusinessRecords() {
   // ============= STATE INITIALIZATION =============

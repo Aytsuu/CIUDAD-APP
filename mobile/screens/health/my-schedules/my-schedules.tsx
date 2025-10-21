@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react"
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
-import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, MapPin, RefreshCw } from "lucide-react-native"
+import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, RefreshCw } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
@@ -145,7 +145,7 @@ const AppointmentCard: React.FC<{
               </View>
               <View className="flex-1">
                 <Text className="font-semibold text-lg text-gray-900">
-                  {appointment.patrecType} Appointment
+                  {appointment.patrecType} 
                 </Text>
                 {/* <Text className="text-sm text-gray-500">ID: {appointment.id}</Text> */}
               </View>
@@ -254,7 +254,7 @@ export default function MyAppointmentsScreen() {
             status: (consult.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
             sitio: "",
             type: "Resident",
-            patrecType: "Consultation",
+            patrecType: "Medical Consultation",
             createdAt: consult.created_at || consult.scheduled_date || "",
           }
           console.log("Transformed consultation record:", record)
@@ -293,7 +293,7 @@ export default function MyAppointmentsScreen() {
 
   // Filter and sort appointments based on search and active tab
   const filteredAppointments = useMemo(() => {
-    let result = userAppointments
+    const result = userAppointments
       .map((appt: any) => ({ ...appt, status: getAppointmentStatus(appt.scheduledDate, appt.status) }))
       .filter((appt: any) => {
         if (activeTab === 'pending' && appt.status !== 'Pending') return false

@@ -202,14 +202,14 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
 
               <div>
                 <Label>SERVICE PROVIDER</Label>
-                <Input type="text" {...recordForm.register("nameOfServiceProvider")} disabled={isReadOnly} />
+                <Input type="text" {...recordForm.register("nameOfServiceProvider")} disabled={true} />
                 {recordForm.formState.errors.nameOfServiceProvider && <p className="text-red-600 text-sm">{recordForm.formState.errors.nameOfServiceProvider.message}</p>}
               </div>
 
               {['weight','bp_systolic','bp_diastolic'].map((field) => (
                 <div key={field}>
                   <Label>{field.replace('_',' ').toUpperCase()}</Label>
-                  <Input type="number" {...recordForm.register(field as keyof ServiceProvisionRecord)} disabled={isReadOnly} />
+                  <Input type="number" {...recordForm.register(field as keyof ServiceProvisionRecord)} disabled={true} />
                   {recordForm.formState.errors[field as keyof ServiceProvisionRecord] && <p className="text-red-600 text-sm">{(recordForm.formState.errors[field as keyof ServiceProvisionRecord] as any)?.message}</p>}
                 </div>
               ))}

@@ -67,6 +67,7 @@ export default function ParentsFormLayout({
           onSelect={respondentSetter}
           prefix="respondentInfo"
           title="Respondent's Information"
+          hideHealthFields={true}
         />
 
         <Separator />

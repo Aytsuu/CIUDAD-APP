@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, TextInput, Alert } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
-import { fetchResidents } from '@/api/health-family-profiling-api';
+import { useGetResidents } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData } from '@/form-schema/health-family-profiling-schema';
 import { Plus, Trash2 } from 'lucide-react-native';
 
@@ -65,11 +64,9 @@ export const HealthRecordsStep: React.FC<HealthRecordsStepProps> = ({ form, fami
   const tbList = form.watch('tbRecords.list') || [];
 
   // Fetch residents excluding family members
-  const { data: residents = [], isLoading } = useQuery({
-    queryKey: ['residents-for-health-records', familyId],
-    queryFn: () => familyId ? fetchResidents({ exclude_family: familyId }) : fetchResidents(),
-    enabled: !!familyId,
-  });
+  const { data: residents = [], isLoading } = useGetResidents(
+    familyId ? { exclude_family: familyId } : undefined
+  );
 
   const residentOptions = residents.map((resident: any) => {
     const personal = resident.personal_info || resident;

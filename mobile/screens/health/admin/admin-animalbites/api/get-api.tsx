@@ -9,13 +9,7 @@ const handleApiError = (err: any, operation: string) => {
   throw new Error(err.response?.data?.detail || `Failed to ${operation.toLowerCase()}`)
 }
 
-export const getAnimalBitePatientSummary = async (params?: { 
-  search?: string; 
-  filter?: string; 
-  page?: number; 
-  limit?: number;
-  ordering?: string;
-}) => {
+export const getAnimalBitePatientSummary = async (params?: {  search?: string; filter?: string; page?: number; limit?: number;ordering?: string;}) => {
   try {
     console.log("🔍 Fetching unique animal bite patients from /animalbites/unique-patients/...")
     

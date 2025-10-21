@@ -1,5 +1,5 @@
 import React from "react"
-import { Animated, Dimensions, Modal, ScrollView, TouchableOpacity, View, Text } from "react-native"
+import { Animated, Dimensions, Modal, TouchableOpacity, View, Text } from "react-native"
 import { Ionicons } from '@expo/vector-icons';
 
 export const Drawer = ({

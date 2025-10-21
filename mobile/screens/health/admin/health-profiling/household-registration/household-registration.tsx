@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
@@ -13,7 +13,7 @@ import { Home } from "@/lib/icons/Home";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
-import api from "@/api/api";
+import api2 from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 // @ts-ignore - TypeScript cache issue, file exists and works at runtime
 import { CustomDropdown } from "@/components/ui/custom-dropdown";
@@ -43,7 +43,7 @@ export default function HouseholdRegistration() {
   const { data: residentsData, isLoading: loadingResidents } = useQuery({
     queryKey: ["residents-list", searchQuery],
     queryFn: async () => {
-      const response = await api.get("profiling/resident/", {
+      const response = await api2.get("profiling/resident/", {
         params: {
           is_staff: false,
           exclude_independent: true,
@@ -59,7 +59,7 @@ export default function HouseholdRegistration() {
   const { data: allAddressesData, isLoading: loadingAddresses } = useQuery({
     queryKey: ["per-addresses-list"],
     queryFn: async () => {
-      const response = await api.get("profiling/per_address/list/");
+      const response = await api2.get("profiling/per_address/list/");
       return response.data;
     },
   });
@@ -153,7 +153,7 @@ export default function HouseholdRegistration() {
       console.log("Payload:", JSON.stringify(payload, null, 2));
       console.log("=================================");
 
-      const response = await api.post("profiling/household/create/", payload);
+      const response = await api2.post("profiling/household/create/", payload);
 
       console.log("Success response:", response.data);
       toast.success("Household registered successfully!");

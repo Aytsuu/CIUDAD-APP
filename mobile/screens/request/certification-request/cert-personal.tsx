@@ -231,7 +231,7 @@ const CertForm: React.FC = () => {
         disabled={addPersonalCert.status === 'pending' || !!isLoading}
       >
         <Text className="text-white font-semibold text-base">
-          {addPersonalCert.status === 'pending' ? 'Submitting...' : !!isLoading ? 'Loading...' : 'Submit Request'}
+          {addPersonalCert.status === 'pending' ? 'Submitting...' : isLoading ? 'Loading...' : 'Submit Request'}
         </Text>
       </TouchableOpacity>
       </View>

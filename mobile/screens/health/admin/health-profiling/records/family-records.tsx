@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import PageLayout from '@/screens/_PageLayout';
-import { fetchFamilyList } from '@/api/health-family-profiling-api';
+import { useGetFamilyList } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { ChevronLeft, Search, Users, ChevronRight } from 'lucide-react-native';
 
 export default function FamilyRecordsScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: families = [], isLoading, error } = useQuery({
-    queryKey: ['families-list'],
-    queryFn: fetchFamilyList,
-  });
+  const { data: families = [], isLoading, error } = useGetFamilyList();
 
   const filteredFamilies = families.filter((family: any) => {
     const searchLower = searchQuery.toLowerCase();

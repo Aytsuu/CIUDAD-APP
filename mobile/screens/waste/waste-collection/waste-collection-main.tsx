@@ -1332,15 +1332,12 @@ import {
 } from 'react-native';
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
 import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from './queries/waste-col-delete-queries';
-import { Plus, Trash, Archive, ArchiveRestore, Eye, Edit3 } from 'lucide-react-native';
+import { Plus, Trash, Edit3 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { formatTime } from '@/helpers/timeFormatter';
 import ScreenLayout from '@/screens/_ScreenLayout';
-import { Input } from '@/components/ui/input';
-import { SelectLayout } from '@/components/ui/select-layout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { MaterialIcons } from '@expo/vector-icons';
 

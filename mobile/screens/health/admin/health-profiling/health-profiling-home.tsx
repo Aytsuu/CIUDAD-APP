@@ -5,7 +5,6 @@ import {
   UserRoundPlus, 
   UsersRound, 
   Building, 
-  Store, 
   Plus, 
   ChevronLeft, 
   ChevronRight 
@@ -40,20 +39,20 @@ function HealthProfilingHome() {
       route: '/(health)/admin/health-profiling/family-profiling',
       color: '#8B5CF6'
     },
-    {
-      id: 'family-records',
-      title: 'Family Health Records',
-      description: 'View family health profiles',
-      icon: UsersRound,
-      route: '/(health)/admin/health-profiling/family-records',
-      color: '#8B5CF6'
-    },
+    // {
+    //   id: 'family-records',
+    //   title: 'Family Health Records',
+    //   description: 'View family health profiles',
+    //   icon: UsersRound,
+    //   route: '/(health)/admin/health-profiling/family-records',
+    //   color: '#8B5CF6'
+    // },
     {
       id: 'resident',
       title: 'Residents',
       description: 'View individual records',
       icon: UserRoundPlus,
-      route: '/(profiling)/resident/records',
+      route: '/(health)/admin/health-profiling/resident/records',
       color: '#10B981'
     },
     {
@@ -69,7 +68,7 @@ function HealthProfilingHome() {
       title: 'Households',
       description: 'View housing information',
       icon: Building,
-      route: '/(profiling)/household/records',
+      route: '/(health)/admin/health-profiling/household/records',
       color: '#F59E0B'
     },
    
@@ -153,12 +152,12 @@ function HealthProfilingHome() {
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         {/* Header Section */}
-        <View className="mt-4 mb-6">
+        <View className="mt-2 mb-4">
           <Text className="text-2xl font-bold text-gray-900 mb-2">
-            Resident Management
+            Health Profiling Management
           </Text>
           <Text className="text-sm text-gray-600 leading-5">
-            Register new residents or manage existing records. Complete profiling includes personal information, household details, and family composition.
+            Register households, residents, and families. Manage health profiling records and view comprehensive health information.
           </Text> 
         </View>
 

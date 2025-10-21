@@ -6,7 +6,7 @@ export const useRiskStiData = (patientId: string | number | undefined) => {
     return useQuery({
         queryKey: ["risk-sti", patientId],
         queryFn: async () => {
-            const {data} = await api2.get(`family-planning/risk_sti/${patientId}`);
+            const {data} = await api2.get(`familyplanning/risk_sti/${patientId}`);
             return data;
         },
         enabled: !!patientId,

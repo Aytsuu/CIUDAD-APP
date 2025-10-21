@@ -1,7 +1,6 @@
 import PageLayout from "@/screens/_PageLayout"
 import { Text, View, TouchableOpacity, ScrollView } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { Search } from "@/lib/icons/Search"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import ResidentPending from "./tabs/pending"

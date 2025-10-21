@@ -386,7 +386,7 @@ export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup"
 
     // Enhanced validation for create/edit modes only
     if (
-      data.typeOfClient === "currentuser" &&
+      (data.typeOfClient === "currentuser" || data.typeOfClient === "newacceptor") &&
       (data.subTypeOfClient === "changingmethod" ||
         data.subTypeOfClient === "dropoutrestart" ||
         data.subTypeOfClient === "changingclinic")

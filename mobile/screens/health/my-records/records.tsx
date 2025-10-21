@@ -1,5 +1,5 @@
 import * as React from "react";
-import { View, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, Image, ActivityIndicator } from "react-native";
+import { View, TouchableOpacity, ScrollView, StatusBar, Image, ActivityIndicator } from "react-native";
 import { ChevronLeft, ChevronRight, Baby, Dog, Heart, Cross, Activity, BriefcaseMedical, Syringe } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";

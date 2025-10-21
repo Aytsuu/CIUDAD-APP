@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
-import { getMaternalCount, getPatientPostpartumAllRecords,
+import { getMaternalCount,
 	getPatientPostpartumCompleteRecord,
 	getPrenatalRecordComplete
  } from "../restful-api/maternalGET";

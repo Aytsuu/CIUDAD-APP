@@ -1,5 +1,4 @@
-import { View, Image, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
-import { Button } from '@/components/ui/button'
+import { View, Image, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';

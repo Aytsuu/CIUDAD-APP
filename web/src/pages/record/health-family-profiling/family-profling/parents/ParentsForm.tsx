@@ -12,13 +12,14 @@ import { DependentRecord } from "../../../profiling/ProfilingTypes"
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 
-export default function ParentsForm({ residents, form, dependentsList, onSelect, prefix, title }: {
+export default function ParentsForm({ residents, form, dependentsList, onSelect, prefix, title, hideHealthFields = false }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   dependentsList: DependentRecord[];
   onSelect: React.Dispatch<React.SetStateAction<string>>
   prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo' | 'respondentInfo';
   title: string;
+  hideHealthFields?: boolean;
 }) {
 
   // Early return if residents data is not available
@@ -136,44 +137,48 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
             <FormInput control={form.control} name={`${prefix}.religion`} label="Religion" readOnly />
             <FormInput control={form.control} name={`${prefix}.edAttainment`} label="Educational Attainment" readOnly />
             <FormInput control={form.control} name={`${prefix}.contact`} label="Contact#" readOnly />
-            <FormSelect
-              control={form.control}
-              name={`${prefix}.perAddDetails.bloodType`}
-              label="Blood Type"
-              options={[
-                { id: "A+", name: "A+" },
-                { id: "A-", name: "A-" },
-                { id: "B+", name: "B+" },
-                { id: "B-", name: "B-" },
-                { id: "AB+", name: "AB+" },
-                { id: "AB-", name: "AB-" },
-                { id: "O+", name: "O+" },
-                { id: "O-", name: "O-" },
-                { id: "unknown", name: "Unknown" },
-              ]}
-            />
-            <FormInput
-              control={form.control}
-              name={`${prefix}.perAddDetails.philHealthId`}
-              label="PhilHealth ID"
-              placeholder="Enter PhilHealth ID"
-              type="number"
-            />
+            {!hideHealthFields && (
+              <>
+                <FormSelect
+                  control={form.control}
+                  name={`${prefix}.perAddDetails.bloodType`}
+                  label="Blood Type"
+                  options={[
+                    { id: "A+", name: "A+" },
+                    { id: "A-", name: "A-" },
+                    { id: "B+", name: "B+" },
+                    { id: "B-", name: "B-" },
+                    { id: "AB+", name: "AB+" },
+                    { id: "AB-", name: "AB-" },
+                    { id: "O+", name: "O+" },
+                    { id: "O-", name: "O-" },
+                    { id: "unknown", name: "Unknown" },
+                  ]}
+                />
+                <FormInput
+                  control={form.control}
+                  name={`${prefix}.perAddDetails.philHealthId`}
+                  label="PhilHealth ID"
+                  placeholder="Enter PhilHealth ID"
+                  type="number"
+                />
 
-            <FormSelect
-              control={form.control}
-              name={`${prefix}.perAddDetails.covidVaxStatus`}
-              label="COVID Vaccination Status"
-              options={[
-                { id: "notVaccinated", name: "Not Vaccinated" },
-                {
-                  id: "firstdose",
-                  name: "1st Dose",
-                },
-                { id: "seconddose", name: "2nd Dose" },
-                { id: "booster", name: "Booster Shot" },
-              ]}
-            />
+                <FormSelect
+                  control={form.control}
+                  name={`${prefix}.perAddDetails.covidVaxStatus`}
+                  label="COVID Vaccination Status"
+                  options={[
+                    { id: "notVaccinated", name: "Not Vaccinated" },
+                    {
+                      id: "firstdose",
+                      name: "1st Dose",
+                    },
+                    { id: "seconddose", name: "2nd Dose" },
+                    { id: "booster", name: "Booster Shot" },
+                  ]}
+                />
+              </>
+            )}
           </div>
         </form>
       </Form>

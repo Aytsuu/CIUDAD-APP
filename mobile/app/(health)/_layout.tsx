@@ -3,7 +3,6 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();

@@ -29,7 +29,6 @@ export default function EditMonthlyRecipientList() {
   const passedStaffId = reports?.staff_details?.staff_id || "";
   const signatureBase64 = reports?.signature || null;
 
- 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
       // Find the staff member in the options
@@ -38,7 +37,7 @@ export default function EditMonthlyRecipientList() {
         const staffIdFromValue = staff.id;
         return staffIdFromValue === passedStaffId;
       });
-      
+
       if (staffMember) {
         // Set both the display value and the actual ID
         setSelectedStaffDisplay(`${staffMember.id}-${staffMember.rawName}-${staffMember.position}`);
@@ -256,28 +255,28 @@ export default function EditMonthlyRecipientList() {
             <div className="mt-6">
               <Label className="block mb-2">Name</Label>
               <div className="relative">
-              <Combobox
-            options={staffOptions?.formatted || []}
-            value={selectedStaffDisplay}
-            onChange={(value) => {
-              console.log("Combobox selected value:", value);
-              
-              if (value) {
-                // Extract just the ID part (first part before first hyphen)
-                const staffId = value.split('-')[0];
-                console.log("Extracted staff ID:", staffId);
-                
-                setSelectedStaffDisplay(value); // Full display value for combobox
-                setSelectedStaffId(staffId);    // Just the ID for submission
-              } else {
-                setSelectedStaffDisplay("");
-                setSelectedStaffId("");
-              }
-            }}
-            placeholder={isLoading ? "Loading staff..." : "Select staff member"}
-            emptyMessage="No available staff members"
-            triggerClassName="w-full"
-          />
+                <Combobox
+                  options={staffOptions?.formatted || []}
+                  value={selectedStaffDisplay}
+                  onChange={(value) => {
+                    console.log("Combobox selected value:", value);
+
+                    if (value) {
+                      // Extract just the ID part (first part before first hyphen)
+                      const staffId = value.split("-")[0];
+                      console.log("Extracted staff ID:", staffId);
+
+                      setSelectedStaffDisplay(value); // Full display value for combobox
+                      setSelectedStaffId(staffId); // Just the ID for submission
+                    } else {
+                      setSelectedStaffDisplay("");
+                      setSelectedStaffId("");
+                    }
+                  }}
+                  placeholder={isLoading ? "Loading staff..." : "Select staff member"}
+                  emptyMessage="No available staff members"
+                  triggerClassName="w-full"
+                />
                 <Edit className="absolute right-3 top-3 h-4 w-4 text-gray-500" />
               </div>
             </div>

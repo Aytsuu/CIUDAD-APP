@@ -1,7 +1,6 @@
 import { Text, View, TouchableOpacity } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import {ChevronRight} from "@/lib/icons/ChevronRight"
 
 export default () => {

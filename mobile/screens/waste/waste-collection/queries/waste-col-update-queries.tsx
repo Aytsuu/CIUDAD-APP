@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { api } from "@/api/api";
 import { updateWasteColData } from "../request/waste-col-put-request";

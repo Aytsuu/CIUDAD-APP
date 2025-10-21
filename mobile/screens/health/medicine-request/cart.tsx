@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import { ArrowLeft, Trash2, ShoppingBag, Pill, X, CheckCircle, AlertTriangle } from "lucide-react-native";
+import { ArrowLeft, Trash2, ShoppingBag, Pill, AlertTriangle } from "lucide-react-native";
 import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
 import { submitMedicineRequest } from "./queries/queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -92,6 +92,12 @@ export default function CartScreen() {
       return;
     }
 
+    console.log("🛒 Cart Items Debug:", cartItems.map(item => ({
+    name: item.name,
+    minv_id: item.minv_id,
+    type: typeof item.minv_id
+  })));
+  
     const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
     if (invalidItems.length > 0) {
       Alert.alert("Invalid Cart", "One or more items are missing a valid minv_id. Please reselect medicines.");

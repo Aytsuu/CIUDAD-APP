@@ -605,7 +605,6 @@ class PendingMedConCountView(APIView):
 #                 {"error": str(e), "received_data": data},
 #                 status=status.HTTP_400_BAD_REQUEST,
 #             )
-      
 
 
 class CreateMedicalConsultationView(APIView):
@@ -614,7 +613,7 @@ class CreateMedicalConsultationView(APIView):
         data = request.data
         try:
             # 🔹 Required fields (excluding staff if optional)
-            required_fields = ["pat_id", "medrec_chief_complaint", "height", "weight"]
+            required_fields = ["pat_id", "medrec_chief_complaint"]
 
             missing_fields = []
             for field in required_fields:
@@ -632,6 +631,17 @@ class CreateMedicalConsultationView(APIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            # 🔹 FIX: Add proper boolean parsing function
+            def parse_boolean(value):
+                if isinstance(value, bool):
+                    return value
+                if isinstance(value, str):
+                    if value.lower() in ['true', '1', 'yes', 'on']:
+                        return True
+                    elif value.lower() in ['false', '0', 'no', 'off', 'null', 'undefined', '']:
+                        return False
+                return bool(value)
 
             # 🔹 Handle staff (optional)
             staff = None
@@ -653,6 +663,17 @@ class CreateMedicalConsultationView(APIView):
                     {"error": f"Invalid patient ID: {data['pat_id']}"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            # 🔹 Handle Appointment if provided
+            appointment = None
+            app_id = data.get("app_id")
+            if app_id and app_id not in [None, "", "null"]:
+                try:
+                    appointment = MedConsultAppointment.objects.get(id=app_id)
+                    print(f"DEBUG: Found appointment with ID: {appointment.id}")
+                except MedConsultAppointment.DoesNotExist:
+                    print(f"DEBUG: Appointment with ID {app_id} not found")
+                    appointment = None
 
             # 1. Create PatientRecord
             patrec = PatientRecord.objects.create(
@@ -688,8 +709,11 @@ class CreateMedicalConsultationView(APIView):
                 except Staff.DoesNotExist:
                     print(f"Staff with ID {selected_staff_id} does not exist")
 
-            # 🔹 DEFAULT: is_phrecord is False unless explicitly provided as True
-            is_phrecord = data.get('is_phrecord', False)
+            # 🔹 FIX: Use the boolean parsing function
+            is_phrecord = parse_boolean(data.get('is_phrecord', False))
+            
+            print(f"DEBUG: is_phrecord value: {is_phrecord}, type: {type(is_phrecord)}")
+            print(f"DEBUG: Raw is_phrecord from data: {data.get('is_phrecord')}")
             
             # Only process PhilHealth data if explicitly marked as PhilHealth record
             tts_instance = None
@@ -697,11 +721,14 @@ class CreateMedicalConsultationView(APIView):
             phil_details_instance = None
 
             if is_phrecord:
+                print("DEBUG: Processing PhilHealth record")
+                
                 # 🔹 Handle TT Status - only if PhilHealth record
                 tts_status = data.get('tts_status')
                 tts_date_given = data.get('tts_date_given')
                 tts_id = data.get('tts_id')
                 
+                # ✅ FIX: Ensure TT Status is properly handled and linked
                 if tts_status and tts_status.strip():
                     # Check if TT Status with same status already exists
                     existing_tts = TT_Status.objects.filter(
@@ -712,20 +739,26 @@ class CreateMedicalConsultationView(APIView):
                     if existing_tts:
                         # Use existing TT Status
                         tts_instance = existing_tts
+                        print(f"DEBUG: Using existing TT Status with ID: {tts_instance.tts_id}")
                     else:
-                        # Create new TT Status
+                        # Create new TT Status - ✅ FIX: Parse boolean
                         tts_instance = TT_Status.objects.create(
                             tts_status=tts_status,
                             tts_date_given=tts_date_given if tts_date_given else None,
-                            tts_tdap=data.get('tts_tdap', False),
+                            tts_tdap=parse_boolean(data.get('tts_tdap', False)),
                             pat_id=patient
                         )
+                        print(f"DEBUG: Created new TT Status with ID: {tts_instance.tts_id}")
                 elif tts_id and tts_id.strip():
                     # Use existing TT Status by ID
                     try:
                         tts_instance = TT_Status.objects.get(tts_id=tts_id)
+                        print(f"DEBUG: Found TT Status by ID: {tts_instance.tts_id}")
                     except TT_Status.DoesNotExist:
+                        print(f"DEBUG: TT Status with ID {tts_id} not found")
                         tts_instance = None
+                else:
+                    print("DEBUG: No TT Status data provided")
 
                 # 🔹 Handle Obstetrical History - only if PhilHealth record
                 obs_data = {
@@ -734,7 +767,7 @@ class CreateMedicalConsultationView(APIView):
                     'obs_abortion': data.get('obs_abortions'),
                     'obs_still_birth': data.get('obs_still_birth'),
                     'obs_lg_babies': data.get('obs_lg_babies'),
-                    'obs_lg_babies_str': data.get('obs_lg_babies_str'),
+                    'obs_lg_babies_str': data.get('obs_lg_babies_str'),  # BooleanField!
                     'obs_gravida': data.get('obs_gravida'),
                     'obs_para': data.get('obs_para'),
                     'obs_fullterm': data.get('obs_fullterm'),
@@ -750,6 +783,9 @@ class CreateMedicalConsultationView(APIView):
                 )
                 
                 if has_obs_data:
+                    # ✅ FIX: Parse the boolean field FIRST
+                    obs_data['obs_lg_babies_str'] = parse_boolean(obs_data.get('obs_lg_babies_str', False))
+                    
                     # Convert string numbers to integers where applicable
                     for field in ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 
                                  'obs_still_birth', 'obs_lg_babies', 'obs_gravida', 
@@ -763,6 +799,7 @@ class CreateMedicalConsultationView(APIView):
                             obs_data[field] = None
                     
                     obs_instance = Obstetrical_History.objects.create(**obs_data)
+                    print(f"DEBUG: Created Obstetrical_History with ID: {obs_instance.obs_id}")
 
             # 4. Create MedicalConsultation_Record (CORE CONSULTATION ONLY)
             medrec = MedicalConsultation_Record.objects.create(
@@ -774,35 +811,83 @@ class CreateMedicalConsultationView(APIView):
                 staff=staff,
                 assigned_to=assigned_staff,
                 is_phrecord=is_phrecord,
+                app_id=appointment,  # Link the appointment if exists
             )
+
+            # 🔹 Update appointment status if appointment exists
+            if appointment:
+                print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'in queue'")
+                appointment.status = "in queue"
+                appointment.save()
+                print(f"DEBUG: Appointment status updated to '{appointment.status}'")
+
+            # 🔹 Create MedicalHistory records for FAMILY illnesses
+            famselected_illnesses = data.get('famselectedIllnesses', [])
+            if famselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(famselected_illnesses)} family illnesses")
+                for illness_id in famselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=True,  # This is family history
+                            is_for_surveillance=False,
+                            remarks="Family medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created family medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating family medical history for illness {illness_id}: {str(e)}")
+
+            # 🔹 Create MedicalHistory records for PERSONAL illnesses  
+            myselected_illnesses = data.get('myselectedIllnesses', [])
+            if myselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(myselected_illnesses)} personal illnesses")
+                for illness_id in myselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=False,  # This is personal medical history
+                            is_for_surveillance=False,
+                            remarks="Personal medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created personal medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating personal medical history for illness {illness_id}: {str(e)}")
 
             # 🔹 Create PhilhealthDetails ONLY if it's explicitly a PhilHealth record
             if is_phrecord:
-                # ✅ FIX: Clean data to ensure empty strings become None for foreign keys
-                def clean_foreign_key_value(value):
-                    """Convert empty strings to None for foreign key fields"""
-                    if value in [None, "", "null", "undefined"]:
-                        return None
-                    return value
+                print("DEBUG: Creating PhilhealthDetails")
                 
+                # ✅ FIX: Parse all boolean fields using the function
                 phil_details_data = {
-                    'iswith_atc': data.get('iswith_atc', False),
-                    'marital_status': data.get('marital_status'),
+                    'iswith_atc': parse_boolean(data.get('iswith_atc', False)),
+                    'civil_status': data.get('civil_status'),
                     'dependent_or_member': data.get('dependent_or_member'),
                     'ogtt_result': data.get('ogtt_result'),
                     'contraceptive_used': data.get('contraceptive_used'),
                     'smk_sticks_per_day': data.get('smk_sticks_per_day'),
                     'smk_years': data.get('smk_years'),
-                    'is_passive_smoker': data.get('is_passive_smoker', False),
+                    'is_passive_smoker': parse_boolean(data.get('is_passive_smoker', False)),
                     'alcohol_bottles_per_day': data.get('alcohol_bottles_per_day'),
-                    # ✅ FIX: Ensure foreign keys are properly cleaned
-                    'tts': clean_foreign_key_value(tts_instance),
-                    'obs': clean_foreign_key_value(obs_instance),
-                    'lab': None,  # ✅ ALWAYS NULL
+                    'tts': tts_instance,  # ✅ This will be the FK - either existing or newly created
+                    'obs': obs_instance,
+                    'lab': None,  
                 }
                 
+                print(f"DEBUG: PhilhealthDetails data - tts: {tts_instance}, obs: {obs_instance}")
+                print(f"DEBUG: TT Status instance details: {tts_instance.tts_id if tts_instance else 'None'}")
+                
                 # ✅ FIX: Clean string fields to ensure empty strings become None
-                string_fields = ['marital_status', 'dependent_or_member', 'ogtt_result', 
+                string_fields = ['civil_status', 'dependent_or_member', 'ogtt_result', 
                                'contraceptive_used', 'smk_sticks_per_day', 'smk_years', 
                                'alcohol_bottles_per_day']
                 
@@ -811,10 +896,20 @@ class CreateMedicalConsultationView(APIView):
                         phil_details_data[field] = None
                 
                 # Create PhilhealthDetails linked to the consultation
-                phil_details_instance = PhilhealthDetails.objects.create(
-                    medrec=medrec,
-                    **phil_details_data
-                )
+                try:
+                    phil_details_instance = PhilhealthDetails.objects.create(
+                        medrec=medrec,
+                        **phil_details_data
+                    )
+                    print(f"DEBUG: PhilhealthDetails created with ID: {phil_details_instance.phil_id}")
+                    # ✅ VERIFY: Check that the TT FK is properly set
+                    if phil_details_instance.tts:
+                        print(f"DEBUG: CONFIRMED - PhilhealthDetails.tts is set to: {phil_details_instance.tts.tts_id}")
+                    else:
+                        print("DEBUG: PhilhealthDetails.tts is None")
+                except Exception as e:
+                    print(f"DEBUG: Error creating PhilhealthDetails: {str(e)}")
+                    raise e
 
             response_data = {
                 "success": True,
@@ -823,7 +918,14 @@ class CreateMedicalConsultationView(APIView):
                 "bm_id": bm.bm_id,
                 "medrec_id": medrec.medrec_id,
                 "is_phrecord": is_phrecord,
+                "family_illnesses_count": len(famselected_illnesses),
+                "personal_illnesses_count": len(myselected_illnesses),
             }
+
+            # Add appointment info if appointment was linked
+            if appointment:
+                response_data["appointment_id"] = appointment.id
+                response_data["appointment_status_updated"] = "in queue"
 
             # Add PhilHealth details info ONLY if it's a PhilHealth record
             if is_phrecord and phil_details_instance:
@@ -832,9 +934,11 @@ class CreateMedicalConsultationView(APIView):
                 if tts_instance:
                     response_data["tts_id"] = tts_instance.tts_id
                     response_data["tts_status"] = tts_instance.tts_status
+                    response_data["tts_linked_to_phil"] = True  # ✅ Confirm linkage
 
                 if obs_instance:
                     response_data["obs_id"] = obs_instance.obs_id
+                    response_data["obs_linked_to_phil"] = True  # ✅ Confirm linkage
 
             return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -850,8 +954,7 @@ class CreateMedicalConsultationView(APIView):
                     "received_data": data
                 },
                 status=status.HTTP_400_BAD_REQUEST,
-            )                
-
+            )
 
 # ========MEDICAL CONSULTATION END SOAP FORM
 
@@ -864,6 +967,7 @@ class SoapFormSubmissionView(APIView):
             staff_id = data.get('staff_id') or None
             medrec_id = data.get('medrec_id') or None
             patrec_id = data.get('patrec_id') or None
+            app_id = data.get('app_id') or None  # Get appointment ID
 
             # only enforce medrec_id and patrec_id as required
             if not all([medrec_id, patrec_id]):
@@ -871,6 +975,16 @@ class SoapFormSubmissionView(APIView):
 
             # Get the medical record to check PhilHealth status
             phil_id = data.get('phil_id')
+
+            # 🔹 Handle Appointment if provided - Update status to "completed"
+            appointment = None
+            if app_id and app_id not in [None, "", "null"]:
+                try:
+                    appointment = MedConsultAppointment.objects.get(id=app_id)
+                    print(f"DEBUG: Found appointment with ID: {appointment.id}, current status: '{appointment.status}'")
+                except MedConsultAppointment.DoesNotExist:
+                    print(f"DEBUG: Appointment with ID {app_id} not found")
+                    appointment = None
 
             # 1. Create Findings
             finding_data = {
@@ -1031,9 +1145,23 @@ class SoapFormSubmissionView(APIView):
                 medreq_id=med_request_id,
             )
 
-            return Response({
+            # 🔹 Update appointment status to "completed" if appointment exists
+            if appointment:
+                print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'completed'")
+                appointment.status = "completed"
+                appointment.save()
+                print(f"DEBUG: Appointment status updated to '{appointment.status}'")
+
+            response_data = {
                 'success': True,
-            }, status=status.HTTP_201_CREATED)
+            }
+
+            # Add appointment info to response if appointment was updated
+            if appointment:
+                response_data["appointment_id"] = appointment.id
+                response_data["appointment_status_updated"] = "completed"
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -1047,7 +1175,8 @@ class SoapFormSubmissionView(APIView):
                 {'error': 'Internal server error', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
+            
+            
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -1555,14 +1684,33 @@ class UserAppointmentsView(generics.ListAPIView):
     def get_queryset(self):
         rp_id = self.request.query_params.get('rp_id')
         include_archived = self.request.query_params.get('include_archived', 'false').lower() == 'true'
+        status = self.request.query_params.get('status')
+        search = self.request.query_params.get('search', '').strip()
 
         if not rp_id:
             raise ValidationError({'error': 'rp_id is required.'})
 
         queryset = MedConsultAppointment.objects.filter(rp__rp_id=rp_id).select_related('rp')
 
-        if not include_archived:
-            queryset = queryset.exclude(status='cancelled')
+        # Status filtering
+        if status:
+            if status == 'cancelled':
+                # For cancelled tab, include both cancelled and rejected statuses
+                queryset = queryset.filter(status__in=['cancelled', 'rejected'])
+            else:
+                queryset = queryset.filter(status=status)
+        elif not include_archived:
+            # Default behavior - exclude cancelled if not specifically requested
+            queryset = queryset.exclude(status__in=['cancelled', 'rejected'])
+
+        # Search functionality
+        if search:
+            queryset = queryset.filter(
+                Q(chief_complaint__icontains=search) |
+                Q(scheduled_date__icontains=search) |
+                Q(meridiem__icontains=search) |
+                Q(archive_reason__icontains=search)
+            )
 
         return queryset.order_by('-created_at')
     

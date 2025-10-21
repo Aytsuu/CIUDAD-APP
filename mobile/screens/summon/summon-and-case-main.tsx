@@ -1,6 +1,5 @@
 import PageLayout from "../_PageLayout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { useGetServiceChargeRequest } from "./queries/summonFetchQueries"
 import { TouchableOpacity, View, Text, ActivityIndicator, ScrollView } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight"

@@ -10,10 +10,9 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useHouseholdTable } from "../queries/profilingGetQueries";
+import { useHouseholdTable } from "../../../../profiling/queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UsersRound } from "@/lib/icons/UsersRound";
-import { MapPin } from "@/lib/icons/MapPin";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
@@ -61,12 +60,13 @@ export default function HouseholdRecords() {
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
     const householdInitials = item.hh_id ? item.hh_id.substring(0, 2).toUpperCase() : 'HH';
     const fullAddress = [item.street, item.sitio].filter(Boolean).join(', ') || 'Address not specified';
+    const isNHTS = item.nhts && (item.nhts.toUpperCase() === 'YES' || item.nhts.toUpperCase() === 'Y');
     
     return (
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: '/(profiling)/household/details', // or '/resident-details' depending on your structure
+            pathname: '/(health)/admin/health-profiling/household/details', // or '/resident-details' depending on your structure
             params: {
               household: JSON.stringify(item)
             }
@@ -90,9 +90,13 @@ export default function HouseholdRecords() {
             </View>
             
             {/* NHTS Badge */}
-            {item.nhts && (
+            {isNHTS ? (
               <View className="bg-green-100 px-2 py-1 rounded-full mr-2">
                 <Text className="text-green-600 text-xs font-medium">NHTS</Text>
+              </View>
+            ) : (
+              <View className="bg-gray-100 px-2 py-1 rounded-full mr-2">
+                <Text className="text-gray-600 text-xs font-medium">NON-NHTS</Text>
               </View>
             )}
             
@@ -159,6 +163,7 @@ export default function HouseholdRecords() {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

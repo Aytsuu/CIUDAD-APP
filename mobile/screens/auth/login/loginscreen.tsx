@@ -1,7 +1,7 @@
 import "@/global.css";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import PageLayout from "@/screens/_PageLayout";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { TouchableOpacity, View, Text, ScrollView, Alert } from "react-native";
 import PhoneOTP from "../signup/account/PhoneOTP";

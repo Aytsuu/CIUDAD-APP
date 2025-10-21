@@ -28,7 +28,7 @@ interface MedicineRequestItem {
   mode: 'app' | 'walk-in';
 }
 
-type TabType = "pending" | "cancelled" | "ready_for_pickup" | "completed";
+type TabType = "pending" | "cancelled" | "confirmed" | "completed";
 
 const getUserMedicineRequests = async (
   userId: string,
@@ -55,13 +55,11 @@ const getUserMedicineRequests = async (
     next: response.data.next || null,
     previous: response.data.previous || null,
     results: results.map((item: any) => {
-      // Normalize status to ensure consistent filtering
       let normalizedStatus = item.status?.toLowerCase() || 'pending';
       
-      // Map similar statuses to standard ones (expanded for consistency)
       if (['rejected', 'declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
       if (['fulfilled', 'completed'].includes(normalizedStatus)) normalizedStatus = 'completed';
-      if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'ready_for_pickup';
+      if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
       if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
       
       return {
@@ -113,7 +111,6 @@ const getStatusConfig = (status: string) => {
         label: 'Cancelled' 
       };
     case 'confirmed':
-    case 'ready_for_pickup':
       return { 
         color: 'text-orange-700', 
         bgColor: 'bg-orange-100', 
@@ -121,7 +118,6 @@ const getStatusConfig = (status: string) => {
         label: 'Ready for Pickup' 
       };
     case 'completed':
-    case 'fulfilled':
       return { 
         color: 'text-green-700', 
         bgColor: 'bg-green-100', 
@@ -165,10 +161,10 @@ const TabBar: React.FC<{
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
-      onPress={() => setActiveTab('ready_for_pickup')}
-      className={`flex-1 items-center py-3 ${activeTab === 'ready_for_pickup' ? 'border-b-2 border-blue-600' : ''}`}
+      onPress={() => setActiveTab('confirmed')}
+      className={`flex-1 items-center py-3 ${activeTab === 'confirmed' ? 'border-b-2 border-blue-600' : ''}`}
     >
-      <Text className={`text-sm font-medium ${activeTab === 'ready_for_pickup' ? 'text-blue-600' : 'text-gray-600'}`}>
+      <Text className={`text-sm font-medium ${activeTab === 'confirmed' ? 'text-blue-600' : 'text-gray-600'}`}>
         To Pick Up
       </Text>
     </TouchableOpacity>
@@ -299,31 +295,29 @@ const CancelModal: React.FC<{
           </Text>
           <TextInput
             className="border border-gray-300 rounded-lg p-3 mb-4 text-gray-800"
-            placeholder="Please provide a reason"
+            placeholder="Please provide a reason for cancellation..."
             placeholderTextColor="#9CA3AF"
             value={cancellationReason}
             onChangeText={setCancellationReason}
             multiline
             numberOfLines={3}
           />
-          <View className="flex-row justify-end gap-2">
-             <TouchableOpacity 
+          <View className="flex-row justify-end space-x-3">
+            <TouchableOpacity 
+              onPress={onClose}
+              disabled={isPending}
+              className="px-4 py-2 rounded-lg bg-gray-100"
+            >
+              <Text className="text-gray-700 font-medium">Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
               onPress={onConfirm}
               disabled={isPending}
               className="px-4 py-2 rounded-lg bg-red-600 flex-row items-center"
             >
               {isPending && <RefreshCw size={16} color="white" className="animate-spin mr-2" />}
-              <Text className="text-white font-medium">Cancel</Text>
+              <Text className="text-white font-medium">Confirm</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={onClose}
-              disabled={isPending}
-              className="px-4 py-2 rounded-lg bg-gray-400"
-            >
-              <Text className="text-white font-medium">Close</Text>
-            </TouchableOpacity>
-           
           </View>
         </View>
       </View>
@@ -504,7 +498,7 @@ const MedicineRequestTracker: React.FC = () => {
         )}
     
         {/* Reminder for To Pick Up Tab */}
-        {activeTab === 'ready_for_pickup' && (
+        {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
             <Text className="text-blue-800 text-sm font-medium">
               Reminder: Medicines are available for pickup at the Barangay Health Center
@@ -533,39 +527,70 @@ const MedicineRequestTracker: React.FC = () => {
             )}
           </View>
         ) : (
-          <FlatList
-            data={filteredRequests}  // Use filteredRequests
-            keyExtractor={(item) => `medicine-request-${item.medreqitem_id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={10}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            renderItem={({ item }) => (
-              <MedicineRequestCard
-                item={item}
-                onCancel={() => {
-                  setSelectedItem(item);
-                  setShowCancelModal(true);
-                }}
-                isCancelPending={cancelMutation.isPending}
-              />
-            )}
-            ListFooterComponent={
-              totalPages > 1 ? (
-                <PaginationControls
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              ) : isFetching ? (
-                <View className="py-4 items-center">
-                  <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
-                </View>
-              ) : null
-            }
-          />
+    <FlatList
+  data={filteredRequests}
+  keyExtractor={(item) => `medicine-request-${item.medreqitem_id}`}
+  refreshControl={
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      colors={['#3B82F6']}
+    />
+  }
+  showsVerticalScrollIndicator={false}
+  contentContainerStyle={{
+    flexGrow: 1, // Ensure the FlatList takes up available space
+    padding: 16,
+    minHeight: '100%', // Ensure the container has enough height to be scrollable
+  }}
+  initialNumToRender={10}
+  maxToRenderPerBatch={10}
+  windowSize={10}
+  ListEmptyComponent={
+    <View className="flex-1 justify-center items-center px-6 py-12">
+      <Package size={64} color="#9CA3AF" />
+      <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+        No requests found
+      </Text>
+      <Text className="text-gray-600 text-center mt-2 mb-8">
+        {searchQuery || activeTab !== 'pending'
+          ? "No requests match your current filters."
+          : "Start by requesting medicines you need."}
+      </Text>
+      {!searchQuery && activeTab === 'pending' && (
+        <TouchableOpacity
+          onPress={() => router.push('/medicine-request/med-request')}
+          className="bg-blue-600 px-6 py-3 rounded-lg"
+        >
+          <Text className="text-white font-medium">Request Medicine</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  }
+  renderItem={({ item }) => (
+    <MedicineRequestCard
+      item={item}
+      onCancel={() => {
+        setSelectedItem(item);
+        setShowCancelModal(true);
+      }}
+      isCancelPending={cancelMutation.isPending}
+    />
+  )}
+  ListFooterComponent={
+    filteredRequests.length > 0 && totalPages > 1 ? (
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+    ) : isFetching ? (
+      <View className="py-4 items-center">
+        <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+      </View>
+    ) : null
+  }
+/>
         )}
       </View>
 

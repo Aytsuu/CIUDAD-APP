@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimalBitePatientDetails } from "./api/get-api";
 import { ColumnDef } from "@tanstack/react-table";
-import { Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
+import { Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText, TrendingUp, AlertCircle, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -11,6 +11,7 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from "recharts";
 
 // --- Type Definition ---
 type PatientRecordDetail = {
@@ -35,6 +36,21 @@ type PatientRecordDetail = {
   record_created_at: string;
 };
 
+// --- Statistics Card Component ---
+const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; bgColor: string; iconColor: string }> = ({ icon, title, value, bgColor, iconColor }) => (
+  <div className={`${bgColor} rounded-xl p-6 shadow-lg transform transition-all hover:scale-105 hover:shadow-xl`}>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+        <p className="text-3xl font-bold text-gray-900">{value}</p>
+      </div>
+      <div className={`${iconColor} p-4 rounded-full bg-white bg-opacity-50`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
+
 // --- New Printable Referral Slip Component (Redesigned) ---
 const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => {
   const slipRef = useRef<HTMLDivElement>(null);
@@ -43,9 +59,8 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
     const content = slipRef.current;
     if (!content) return;
 
-    const margin = 10; // 10mm margin on both sides
-    const pdf = new jsPDF("p", "mm", "letter"); // bondpaper size
-
+    const margin = 10;
+    const pdf = new jsPDF("p", "mm", "letter");
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const contentWidth = pdfWidth - margin * 2;
 
@@ -135,7 +150,6 @@ const IndividualPatientHistory: React.FC = () => {
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<PatientRecordDetail | null>(null);
 
-  // Redirect to Overall page if no patientId is provided
   useEffect(() => {
     if (!patientId) {
       navigate("/Animalbite_viewing");
@@ -172,6 +186,43 @@ const IndividualPatientHistory: React.FC = () => {
     };
   }, [patientData]);
 
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const exposureTypes = patientRecords.reduce((acc, record) => {
+      acc[record.exposure_type] = (acc[record.exposure_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const animalTypes = patientRecords.reduce((acc, record) => {
+      acc[record.biting_animal] = (acc[record.biting_animal] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const exposureSites = patientRecords.reduce((acc, record) => {
+      acc[record.exposure_site] = (acc[record.exposure_site] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const timeline = patientRecords
+      .sort((a, b) => new Date(a.referral_date).getTime() - new Date(b.referral_date).getTime())
+      .map(record => ({
+        date: new Date(record.referral_date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        count: 1
+      }));
+
+    return {
+      totalIncidents: patientRecords.length,
+      exposureTypes: Object.entries(exposureTypes).map(([name, value]) => ({ name, value })),
+      animalTypes: Object.entries(animalTypes).map(([name, value]) => ({ name, value })),
+      exposureSites: Object.entries(exposureSites).map(([name, value]) => ({ name, value })),
+      timeline,
+      mostCommonAnimal: Object.entries(animalTypes).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A",
+      mostCommonSite: Object.entries(exposureSites).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A",
+    };
+  }, [patientRecords]);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
   const handlePrintClick = (record: PatientRecordDetail) => {
     setSelectedRecord(record);
     setPrintModalOpen(true);
@@ -179,9 +230,39 @@ const IndividualPatientHistory: React.FC = () => {
 
   const tableColumns = useMemo<ColumnDef<PatientRecordDetail>[]>(
     () => [
-      { accessorKey: "referral_date", header: "Date", cell: ({ row }) => new Date(row.original.referral_date).toLocaleDateString() },
-      { accessorKey: "exposure_type", header: "Exposure Type" },
-      { accessorKey: "biting_animal", header: "Biting Animal" },
+      { 
+        accessorKey: "referral_date", 
+        header: "Date", 
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Calendar size={14} className="text-blue-500" />
+            {new Date(row.original.referral_date).toLocaleDateString()}
+          </div>
+        )
+      },
+      { 
+        accessorKey: "exposure_type", 
+        header: "Exposure Type",
+        cell: ({ row }) => (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            row.original.exposure_type.toLowerCase().includes('bite') 
+              ? 'bg-red-100 text-red-700' 
+              : 'bg-yellow-100 text-yellow-700'
+          }`}>
+            {row.original.exposure_type}
+          </span>
+        )
+      },
+      { 
+        accessorKey: "biting_animal", 
+        header: "Biting Animal",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <PawPrint size={14} className="text-orange-500" />
+            {row.original.biting_animal}
+          </div>
+        )
+      },
       { accessorKey: "exposure_site", header: "Site of Exposure" },
       { accessorKey: "actions_taken", header: "Actions Taken" },
       { accessorKey: "referredby", header: "Referred By" },
@@ -190,7 +271,7 @@ const IndividualPatientHistory: React.FC = () => {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex gap-4 justify-center">
-            <Button size="sm" onClick={() => handlePrintClick(row.original)}>
+            <Button size="sm" onClick={() => handlePrintClick(row.original)} className="bg-blue-600 hover:bg-blue-700">
               <Printer size={16} className="mr-2" /> Print
             </Button>
           </div>
@@ -211,16 +292,20 @@ const IndividualPatientHistory: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+        <p className="text-gray-600 font-medium">Loading patient records...</p>
       </div>
     );
   }
 
   if (isError || !patientId) {
     return (
-      <div className="p-4 text-center text-red-600">
-        Error: {error?.message || "Patient ID not provided or could not load patient history."}
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-red-50 to-pink-100">
+        <AlertCircle size={64} className="text-red-500 mb-4" />
+        <p className="text-red-600 font-semibold text-lg">
+          {error?.message || "Patient ID not provided or could not load patient history."}
+        </p>
       </div>
     );
   }
@@ -230,31 +315,143 @@ const IndividualPatientHistory: React.FC = () => {
     : "Patient";
 
   return (
-    <LayoutWithBack title="Animal Bite Patient History" description="Detailed history of animal bite incidents for the selected patient.">
-      <div className="container mx-auto py-8 space-y-8">
+    <LayoutWithBack title="Animal Bite Patient History" description="Comprehensive analysis of animal bite incidents">
+      <div className="container mx-auto py-8 space-y-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
         <PatientInfoCard patient={patientInfo} />
 
+        {/* Statistics Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            icon={<Activity size={28} />}
+            title="Total Incidents"
+            value={stats.totalIncidents}
+            bgColor="bg-gradient-to-br from-blue-100 to-blue-200"
+            iconColor="text-blue-600"
+          />
+          <StatCard
+            icon={<PawPrint size={28} />}
+            title="Most Common Animal"
+            value={stats.mostCommonAnimal}
+            bgColor="bg-gradient-to-br from-orange-100 to-orange-200"
+            iconColor="text-orange-600"
+          />
+          <StatCard
+            icon={<MapPin size={28} />}
+            title="Common Exposure Site"
+            value={stats.mostCommonSite}
+            bgColor="bg-gradient-to-br from-green-100 to-green-200"
+            iconColor="text-green-600"
+          />
+          <StatCard
+            icon={<TrendingUp size={28} />}
+            title="Latest Incident"
+            value={patientRecords.length > 0 ? new Date(patientRecords[patientRecords.length - 1].referral_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "N/A"}
+            bgColor="bg-gradient-to-br from-purple-100 to-purple-200"
+            iconColor="text-purple-600"
+          />
+        </div>
+
+        {/* Charts Section */}
+        {patientRecords.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Exposure Types Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <ShieldCheck size={20} className="text-blue-600" />
+                Exposure Type Distribution
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={stats.exposureTypes}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {stats.exposureTypes.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Biting Animals Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <PawPrint size={20} className="text-orange-600" />
+                Biting Animals
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={stats.animalTypes}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#f59e0b" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Exposure Sites Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <MapPin size={20} className="text-green-600" />
+                Exposure Sites
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={stats.exposureSites} layout="vertical">
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#10b981" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Timeline Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Calendar size={20} className="text-purple-600" />
+                Incident Timeline
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={stats.timeline}>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
         {/* Records Summary Table */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
-            <FileText size={20} />
-            Records Summary
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-3">
+            <FileText size={24} className="text-blue-600" />
+            Detailed Records
           </h2>
           <DataTable columns={tableColumns} data={patientRecords} />
         </div>
 
-        {/* Vertical History Comparison */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
-            <Calendar size={20} />
-            Referral History
+        {/* Timeline History */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-3">
+            <Calendar size={24} className="text-indigo-600" />
+            Incident Timeline Comparison
           </h2>
           {patientRecords.length > 0 ? (
             <div className="overflow-x-auto pb-4">
               <div className="flex space-x-4 min-w-max">
-                <div className="flex-shrink-0 w-48 space-y-4 pt-16">
+                <div className="flex-shrink-0 w-48 space-y-4 pt-20 sticky left-0 bg-white z-10">
                   {historyFields.map((field) => (
-                    <div key={field.key} className="h-20 flex items-center">
+                    <div key={field.key} className="h-20 flex items-center border-r-2 border-gray-200 pr-4">
                       <div className="flex items-center gap-2">
                         {field.icon}
                         <span className="font-semibold text-gray-700">{field.label}</span>
@@ -262,18 +459,19 @@ const IndividualPatientHistory: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {patientRecords.map((record) => (
-                  <div key={record.bite_id} className="flex-shrink-0 w-64 bg-slate-50 rounded-lg p-4 border">
-                    <div className="border-b pb-2 mb-4 text-center">
-                      <div className="font-bold text-lg text-blue-600 flex items-center justify-center gap-2">
-                        <Calendar size={20} />
-                        {new Date(record.referral_date).toLocaleDateString()}
+                {patientRecords.map((record, index) => (
+                  <div key={record.bite_id} className="flex-shrink-0 w-72 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-5 border-2 border-blue-200 shadow-md hover:shadow-xl transition-all">
+                    <div className="border-b-2 border-blue-300 pb-3 mb-4 text-center">
+                      <div className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md">
+                        <Calendar size={18} />
+                        {new Date(record.referral_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
+                      <div className="mt-2 text-xs text-gray-500 font-medium">Incident #{patientRecords.length - index}</div>
                     </div>
                     <div className="space-y-4">
                       {historyFields.map((field) => (
-                        <div key={`${record.bite_id}-${field.key}`} className="h-20 flex items-center text-gray-800 text-sm break-words">
-                          <p>{record[field.key as keyof PatientRecordDetail] || "N/A"}</p>
+                        <div key={`${record.bite_id}-${field.key}`} className="h-20 flex items-center text-gray-800 text-sm break-words bg-white rounded-lg p-3 shadow-sm">
+                          <p className="font-medium">{record[field.key as keyof PatientRecordDetail] || "N/A"}</p>
                         </div>
                       ))}
                     </div>
@@ -282,8 +480,9 @@ const IndividualPatientHistory: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-16">
-              <p className="text-gray-500">No records found.</p>
+            <div className="text-center py-20 bg-gray-50 rounded-xl">
+              <AlertCircle size={48} className="text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg font-medium">No records found for this patient.</p>
             </div>
           )}
         </div>

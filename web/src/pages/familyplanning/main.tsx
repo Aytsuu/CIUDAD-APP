@@ -188,12 +188,6 @@ const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormD
   enabled: !!internalPatientId && 
     (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup")})
 
-  // Query for fetching specific FP record for follow-up prefill
-  // const { data: followUpPrefillRecord, isLoading: isFetchingFollowUpPrefillRecord } = useQuery<FormData, Error>({
-  //   queryKey: ["followUpPrefillRecord", prefillFromFpRecord],
-  //   queryFn: () => getFPCompleteRecord(Number(prefillFromFpRecord)),
-  //   enabled: currentMode === "followup" && !!prefillFromFpRecord,
-  // })
   console.log("=== LATEST RECORD DEBUG ===");
 console.log("latestRecord:", latestRecord);
 console.log("num_of_children from backend:", latestRecord?.num_of_children);
@@ -243,7 +237,6 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         ? latestRecord.otherMethod
         : latestRecord.methodCurrentlyUsed;
 
-      // Different prefill logic for "New Method" vs regular prefill
       const prefillData = isNewMethod ? {
         ...initialFormData,
         ...latestRecord,

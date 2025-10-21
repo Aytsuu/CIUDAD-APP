@@ -1,20 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import PageLayout from '@/screens/_PageLayout';
-import { fetchFamilyHealthProfiling } from '@/api/health-family-profiling-api';
+import { useGetFamilyHealthProfiling } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { ChevronLeft, Users, Home, Droplet, Heart, FileText } from 'lucide-react-native';
 
 export default function FamilyDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
-  const { data: familyData, isLoading, error } = useQuery({
-    queryKey: ['family-health-profiling', id],
-    queryFn: () => fetchFamilyHealthProfiling(id as string),
-    enabled: !!id,
-  });
+  const { data: familyData, isLoading, error } = useGetFamilyHealthProfiling(id as string);
 
   const InfoCard = ({ icon: Icon, title, children, color = '#3B82F6' }: any) => (
     <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">

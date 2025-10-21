@@ -3,7 +3,6 @@ import React from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import PageLayout from '@/screens/_PageLayout';
 import { ChevronLeft } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');

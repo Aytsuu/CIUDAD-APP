@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
-import { fetchResidents, createFamily, createFamilyCompositionBulk, createRespondent, createHealthRelatedDetails, createMotherHealthInfo, createDependentUnderFive } from '@/api/health-family-profiling-api';
+import { 
+  useGetResidents, 
+  useCreateFamily, 
+  useCreateFamilyCompositionBulk, 
+  useCreateRespondent, 
+  useCreateHealthRelatedDetails, 
+  useCreateMotherHealthInfo, 
+  useCreateDependentUnderFive 
+} from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData, DependentData } from '@/form-schema/health-family-profiling-schema';
-import { Plus, Trash2, UserPlus, Calendar } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Plus, Trash2, UserPlus } from 'lucide-react-native';
 
 interface DependentsStepProps {
   form: UseFormReturn<HealthFamilyProfilingFormData>;
@@ -71,10 +78,15 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
   const queryClient = useQueryClient();
 
   // Fetch residents for dependent selection
-  const { data: residents = [], isLoading } = useQuery({
-    queryKey: ['residents-for-dependents'],
-    queryFn: () => fetchResidents({ exclude_independent: true }),
-  });
+  const { data: residents = [], isLoading } = useGetResidents({ exclude_independent: true });
+
+  // Mutation hooks
+  const createFamilyMut = useCreateFamily();
+  const createCompositionMut = useCreateFamilyCompositionBulk();
+  const createRespondentMut = useCreateRespondent();
+  const createHealthDetailsMut = useCreateHealthRelatedDetails();
+  const createMotherHealthMut = useCreateMotherHealthInfo();
+  const createDependentUnderFiveMut = useCreateDependentUnderFive();
 
   const residentOptions = residents.map((resident: any) => {
     const personal = resident.personal_info || resident;
@@ -171,9 +183,9 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
   const newDependentDOB = form.watch('dependentsInfo.new.dateOfBirth');
   const isUnderFive = calculateAge(newDependentDOB) < 5;
 
-  // Family creation mutation
-  const createFamilyMutation = useMutation({
-    mutationFn: async () => {
+  // Handle family creation
+  const handleCreateFamily = async () => {
+    try {
       const formData = form.getValues();
       const householdId = formData.demographicInfo.householdNo;
 
@@ -185,7 +197,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       });
 
       // Step 1: Create Family
-      const familyResponse = await createFamily({
+      const familyResponse = await createFamilyMut.mutateAsync({
         fam_indigenous: formData.demographicInfo.indigenous,
         fam_building: formData.demographicInfo.building,
         hh: householdId,
@@ -235,11 +247,11 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       });
 
       console.log('Creating family composition:', familyMembers);
-      await createFamilyCompositionBulk({ members: familyMembers });
+      await createCompositionMut.mutateAsync({ members: familyMembers });
 
       // Step 3: Create Respondent Info
       if (formData.respondentInfo.id) {
-        await createRespondent({
+        await createRespondentMut.mutateAsync({
           rp: formData.respondentInfo.id.split(' ')[0],
           fam: famId,
         });
@@ -248,7 +260,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       // Step 4: Create Health Related Details for parents and dependents
       const createHealthDetails = async (person: any, rpId: string) => {
         if (person.perAddDetails && (person.perAddDetails.bloodType || person.perAddDetails.philHealthId || person.perAddDetails.covidVaxStatus)) {
-          await createHealthRelatedDetails({
+          await createHealthDetailsMut.mutateAsync({
             per_add_bloodType: person.perAddDetails.bloodType || null,
             per_add_philhealth_id: person.perAddDetails.philHealthId || null,
             per_add_covid_vax_status: person.perAddDetails.covidVaxStatus || null,
@@ -279,7 +291,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       if (formData.motherInfo.id && formData.motherInfo.motherHealthInfo) {
         const mhi = formData.motherInfo.motherHealthInfo;
         if (mhi.healthRiskClass || mhi.immunizationStatus || mhi.method || mhi.source || mhi.lmpDate) {
-          await createMotherHealthInfo({
+          await createMotherHealthMut.mutateAsync({
             mhi_healthRisk_class: mhi.healthRiskClass || null,
             mhi_immun_status: mhi.immunizationStatus || null,
             mhi_famPlan_method: mhi.method ? mhi.method.join(', ') : null,
@@ -296,7 +308,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
         if (dependent.id && calculateAge(dependent.dateOfBirth) < 5 && dependent.dependentUnderFiveSchema) {
           const duf = dependent.dependentUnderFiveSchema;
           if (duf.fic || duf.nutritionalStatus || duf.exclusiveBf) {
-            await createDependentUnderFive({
+            await createDependentUnderFiveMut.mutateAsync({
               duf_fic: duf.fic || null,
               nutritional_status: duf.nutritionalStatus || null,
               exclusive_bf: duf.exclusiveBf || null,
@@ -307,18 +319,20 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
         }
       }
 
-      return famId;
-    },
-    onSuccess: (famId) => {
       console.log('Family profiling Step 3 completed, family ID:', famId);
-      queryClient.invalidateQueries({ queryKey: ['families'] });
+      queryClient.invalidateQueries({ queryKey: ['healthFamilyList'] });
       onFamilyCreated(famId);
-    },
-    onError: (error: any) => {
+      return famId;
+    } catch (error: any) {
       console.error('Family creation error:', error);
       Alert.alert('Error', error?.response?.data?.message || 'Failed to create family. Please try again.');
-    },
-  });
+      throw error;
+    }
+  };
+
+  const isCreatingFamily = createFamilyMut.isPending || createCompositionMut.isPending || 
+    createRespondentMut.isPending || createHealthDetailsMut.isPending || 
+    createMotherHealthMut.isPending || createDependentUnderFiveMut.isPending;
 
   return (
     <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
@@ -581,15 +595,15 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
         {/* Create Family Button */}
         {!showAddForm && (
           <TouchableOpacity
-            onPress={() => createFamilyMutation.mutate()}
-            disabled={createFamilyMutation.isPending}
+            onPress={handleCreateFamily}
+            disabled={isCreatingFamily}
             className={`rounded-lg p-4 flex-row items-center justify-center ${
-              createFamilyMutation.isPending ? 'bg-green-400' : 'bg-green-600'
+              isCreatingFamily ? 'bg-green-400' : 'bg-green-600'
             }`}
           >
             <UserPlus size={20} color="white" />
             <Text className="text-white font-bold ml-2">
-              {createFamilyMutation.isPending ? 'Creating Family...' : 'Create Family & Continue'}
+              {isCreatingFamily ? 'Creating Family...' : 'Create Family & Continue'}
             </Text>
           </TouchableOpacity>
         )}

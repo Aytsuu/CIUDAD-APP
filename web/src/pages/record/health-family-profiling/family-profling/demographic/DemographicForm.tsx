@@ -132,7 +132,7 @@ export default function DemographicForm({
               className="w-full sm:w-32"
               disabled={isLoadingData}
             >
-              {isLoadingData ? "Loading..." : "Next"}
+            Next
             </Button>
           </div>
         </form>

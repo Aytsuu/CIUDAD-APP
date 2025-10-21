@@ -24,7 +24,7 @@ export default function PendingDisplayMedicalConsultation({ patientData, Medical
 
 
       <div className="flex justify-end mb-4">
-          <Link to="/services/medical-consultation/records" state={{ params: { patientData, mode: "doctor" } }}>
+          <Link to="/services/medical-consultation/records/individual-records" state={{ params: { patientData, mode: "doctor" } }}>
             <Button className="flex gap-2 items-center text-white">
               <History className="w-4 h-4" /> View History
             </Button>

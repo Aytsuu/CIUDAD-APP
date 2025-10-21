@@ -3,14 +3,11 @@ import {
   TouchableOpacity,
   View,
   Text,
-  Modal,
   FlatList,
   ActivityIndicator,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
-import _ScreenLayout from "../_ScreenLayout";
 import { router } from "expo-router";
 import {
   ChevronLeft,

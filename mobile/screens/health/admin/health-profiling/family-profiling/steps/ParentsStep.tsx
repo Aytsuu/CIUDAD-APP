@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
-import { fetchResidents } from '@/api/health-family-profiling-api';
+import { useGetResidents } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData } from '@/form-schema/health-family-profiling-schema';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'lucide-react-native';
@@ -42,10 +41,7 @@ export const ParentsStep: React.FC<ParentsStepProps> = ({ form }) => {
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
 
   // Fetch residents
-  const { data: residents = [], isLoading } = useQuery({
-    queryKey: ['residents-for-family'],
-    queryFn: () => fetchResidents({ exclude_independent: true }),
-  });
+  const { data: residents = [], isLoading } = useGetResidents({ exclude_independent: true });
 
   const residentOptions = residents.map((resident: any) => {
     const personal = resident.personal_info || resident;
