@@ -7,7 +7,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+// import { Card } from "@/components/ui/card";
 import { formatTimeAgo, getDateTimeFormat } from "@/helpers/dateHelper";
 import ReportMapLocation from "./ReportMapLocation";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,16 +19,18 @@ import {
   CircleAlert,
   UserRound,
   FileText,
+  Search,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import TrackerIcon from "@/assets/images/tracker_icon.svg";
 import UserIcon from "@/assets/images/user_icon.svg";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
+import { Input } from "@/components/ui/input";
 
 export default function SecuradoReports(): JSX.Element {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [currentPage, _setCurrentPage] = React.useState<number>(1);
   const [search, setSearch] = React.useState<string>("");
   const [selectedReport, setSelectedReport] = React.useState<string>("");
 
@@ -54,7 +56,7 @@ export default function SecuradoReports(): JSX.Element {
 
   const data = activeIRs?.results || [];
   const totalCount = activeIRs?.count || 0;
-  const totalPages = Math.ceil(totalCount / 20);
+  // const totalPages = Math.ceil(totalCount / 20);
 
   return (
     <div className="w-full h-[85vh] flex justify-start relative gap-6">
@@ -70,7 +72,17 @@ export default function SecuradoReports(): JSX.Element {
             <span className="text-white font-bold text-sm">{totalCount}</span>
           </div>
         </div>
-        <Separator />
+        <div className="px-5 mt-5">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder={`Search reports...`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+        </div>
         <ScrollArea className="flex-1">
           <div className="flex flex-col p-4 gap-2">
             {isLoading ? (

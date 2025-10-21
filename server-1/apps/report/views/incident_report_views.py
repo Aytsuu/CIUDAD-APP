@@ -68,6 +68,7 @@ class IRTableView(generics.ListAPIView):
         Q(ir_add_details__icontains=search) |
         Q(ir_date__icontains=search) |
         Q(ir_time__icontains=search) |
+        Q(ir_track_user_name__icontains=search) |
         Q(rt__rt_label__icontains=search) |
         Q(rp__per__per_lname__icontains=search) |
         Q(rp__per__per_fname__icontains=search) |
