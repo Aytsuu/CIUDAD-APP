@@ -36,13 +36,11 @@ export const getPaidServiceCharges = async (
       params.append('search', searchTerm);
     }
 
-    // Always filter for completed service charges only
-    params.append('status', 'completed');
-    
-    // Always filter for paid service charges only
+    //fetch only pending and paid 
+    params.append('status', 'pending');
     params.append('payment_status', 'Paid');
 
-    // Fetch from the service charge treasurer list endpoint with pagination
+
     const res = await api.get(`/clerk/service-charge-treasurer-list/?${params.toString()}`);
     const payload = res.data as any;
     
