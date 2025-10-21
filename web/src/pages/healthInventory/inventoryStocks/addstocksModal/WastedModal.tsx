@@ -5,7 +5,7 @@ import * as z from "zod";
 import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { useEffect } from "react";
-import { isVaccine, isSupply } from "../tables/VaccineStocks";
+import { isVaccine, isSupply } from "../tables/type";
 import { Pill, X } from "lucide-react";
 import { useHandleWaste } from "../REQUEST/Antigen/queries/WastedQueries";
 import { useHandleMedicineDeduction } from "../REQUEST/Medicine/queries/wasted-queries";
