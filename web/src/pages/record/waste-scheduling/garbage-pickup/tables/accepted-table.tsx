@@ -1,4 +1,4 @@
-import { Search, ChevronRight, ArrowUpDown } from "lucide-react"
+import { Search, ChevronRight, ArrowUpDown, CheckCircle } from "lucide-react"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { useState, useEffect } from "react"
@@ -14,6 +14,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Spinner } from "@/components/ui/spinner"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal"
+import { useUpdateGarbageRequestStatus } from "../queries/GarbageRequestUpdateQueries"
 
 export default function AcceptedTable() {
   const { showLoading, hideLoading } = useLoading();
@@ -25,6 +27,7 @@ export default function AcceptedTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
+  const {mutate: confirm} = useUpdateGarbageRequestStatus();
   const { data: acceptedReqData = { results: [], count: 0 }, isLoading: isLoadingAccepted } = useGetGarbageAcceptRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
 
   const acceptedRequests = acceptedReqData.results || []
@@ -54,6 +57,10 @@ export default function AcceptedTable() {
 
   const handleEditSuccess = () => {
     setViewDetailsRowId(null) // Close the dialog on successful edit
+  }
+
+  const handleConfirm = (garb_id: string) => {
+    confirm(garb_id)
   }
 
   const columns: ColumnDef<GarbageRequestAccept>[] = [
@@ -126,6 +133,7 @@ export default function AcceptedTable() {
               mainContent={
                 <div className="flex flex-col h-full overflow-y-hidden">
                   <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+
                     <ViewGarbageRequestDetails
                       garb_requester={row.original.garb_requester}
                       garb_location={row.original.garb_location}
@@ -148,6 +156,20 @@ export default function AcceptedTable() {
                       dec_date={row.original.dec_date}
                       isAccepted={true}
                     />
+
+                    <div className="flex flex-cols-2 gap-4 justify-end">
+                      <ConfirmationModal
+                          trigger={
+                             <div className="bg-green-600 flex p-3 items-center gap-2 justify-center hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors">
+                                <CheckCircle size={20} /> Confirm Completion
+                              </div>
+                          }
+                          title="Completion Confirmation"
+                          description="Are you sure you want to mark this request as done?"
+                          actionLabel="Confirm"
+                          onClick={() => handleConfirm(row.original.garb_id)}
+                      />
+                    </div>
                   </div>
                 </div>
               }
