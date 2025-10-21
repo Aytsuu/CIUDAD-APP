@@ -1,4 +1,4 @@
-// components/reject-modal.tsx
+// components/refer-modal.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,12 +10,12 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { useActionAppointment } from "./queries/update";
 import { useEffect } from "react";
 
-// Define the form schema
-const rejectFormSchema = z.object({
-  reason: z.string().min(1, "Reason is required").max(500, "Reason must be less than 500 characters")
+// Refer form schema
+const referFormSchema = z.object({
+  reason: z.string().min(1, "Reason is required").max(500, "Reason must be less than 500 characters"),
 });
 
-type RejectFormValues = z.infer<typeof rejectFormSchema>;
+type ReferFormValues = z.infer<typeof referFormSchema>;
 
 interface RejectModalProps {
   isOpen: boolean;
@@ -26,26 +26,29 @@ interface RejectModalProps {
 }
 
 // Custom Loader2 component with animated spin
-const Loader2 = ({ className = "h-4 w-4" }: { className?: string }) => <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />;
+const Loader2 = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />
+);
 
-export const RejectModal = ({ isOpen, onClose, appointmentId, patientName, onSuccess }: RejectModalProps) => {
-  const { mutate: rejectAppointment, isPending: isSubmitting } = useActionAppointment();
+export const ReferredModal = ({ isOpen, onClose, appointmentId, patientName, onSuccess }: RejectModalProps) => {
+  const { mutate: referAppointment, isPending: isSubmitting } = useActionAppointment();
 
-  const form = useForm<RejectFormValues>({
-    resolver: zodResolver(rejectFormSchema),
+  const form = useForm<ReferFormValues>({
+    resolver: zodResolver(referFormSchema),
     defaultValues: {
-      reason: ""
-    }
+      reason:
+        "Based on our assessment, you need immediate medical consultation. Please go to the nearest health center/hospital right away for proper medical care.",
+    },
   });
 
   // Modal configuration
   const modalConfig = {
-    title: "Reject Appointment",
+    title: "Refer Appointment",
     icon: AlertCircle,
     iconColor: "text-red-600",
-    buttonText: "Reject Appointment",
+    buttonText: "Refer Appointment",
     buttonColor: "bg-red-600 hover:bg-red-700",
-    status: "rejected" // This will be passed as the status parameter
+    status: "referred",
   };
 
   const IconComponent = modalConfig.icon;
@@ -57,19 +60,19 @@ export const RejectModal = ({ isOpen, onClose, appointmentId, patientName, onSuc
     }
   }, [isOpen, form]);
 
-  const handleSubmit = async (formData: RejectFormValues) => {
-    rejectAppointment(
+  const handleSubmit = async (formData: ReferFormValues) => {
+    referAppointment(
       {
         appointmentId: appointmentId.toString(),
-        status: modalConfig.status, // Pass the status
-        reason: formData.reason // Pass the reason
+        status: modalConfig.status,
+        reason: formData.reason,
       },
       {
         onSuccess: () => {
           form.reset();
           onClose();
           onSuccess?.();
-        }
+        },
       }
     );
   };
@@ -101,12 +104,17 @@ export const RejectModal = ({ isOpen, onClose, appointmentId, patientName, onSuc
             <Label className="text-sm font-medium text-gray-700">
               Patient: <span className="font-semibold text-gray-900">{patientName}</span>
             </Label>
-           
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormTextArea name="reason" control={form.control} label="Reason for Rejection *" placeholder="Enter the reason for rejecting this appointment..." rows={6} />
+              <FormTextArea
+                name="reason"
+                control={form.control}
+                label="Reason for Referral *"
+                placeholder="Enter the reason for referring this appointment..."
+                rows={6}
+              />
 
               <p className="text-xs text-gray-500">This reason will be recorded and may be shared with the patient.</p>
 
@@ -115,16 +123,19 @@ export const RejectModal = ({ isOpen, onClose, appointmentId, patientName, onSuc
                 <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="min-w-[80px]">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className={`min-w-[80px] ${modalConfig.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !form.formState.isValid}
+                  className={`min-w-[80px] ${modalConfig.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 text-white" />
-                      Rejecting...
+                      Submitting...
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Send className="h-4 w-4" />
-                      {modalConfig.buttonText}
+                      Submit
                     </div>
                   )}
                 </Button>

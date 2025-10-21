@@ -90,7 +90,7 @@ export default function MedicineRequestPendingItems() {
   }, [patientInfo, currentPatId, patientExists]);
 
   // Use the existing fetchMedicinesWithStock function
-  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock({is_temp:true});
+  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock({ is_temp: true });
 
   // Use the original mutation hook
   const { mutate: confirmAllPendingItems, isPending, error: confirmError, isSuccess } = useConfirmAllPendingItems();

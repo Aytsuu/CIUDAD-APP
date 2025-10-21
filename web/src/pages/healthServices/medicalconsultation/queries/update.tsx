@@ -27,7 +27,7 @@ export const useActionAppointment = () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["medical-appointments"] });
 
-      showSuccessToast("Appointment rejected successfully");
+      showSuccessToast("Successful");
     },
 
     onError: (error: Error) => {

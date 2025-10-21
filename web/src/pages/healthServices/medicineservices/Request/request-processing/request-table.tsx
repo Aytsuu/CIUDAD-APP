@@ -130,11 +130,11 @@ export default function PickupTable() {
           {isLoading ? (
             <div className="w-full h-[100px] flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading pending requests...</span>
+              <span className="ml-2">Loading...</span>
             </div>
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
-              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>
+              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No confirmed medicine requests found"}</span>
             </div>
           ) : (
             <DataTable columns={medicineRequestColumns} data={medicineRequests} />

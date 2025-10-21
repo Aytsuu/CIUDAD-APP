@@ -90,3 +90,23 @@ export const getChildnotesfollowup = async (chrec_id: any) => {
     throw err;
   }
   }
+
+  export const getChildData = async (id: string, page?: number, pageSize?: number): Promise<any> => {
+    try {
+      const res = await api2.get(`/child-health/records/by-patient/${id}/`, {
+        params: {
+          page: page,
+          page_size: pageSize
+        },
+      });
+      if (res.status !== 200) {
+        throw new Error("Failed to fetch child data");
+      }
+      console.log(res);
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching child data:", error);
+      throw error;
+    }
+  };
+  

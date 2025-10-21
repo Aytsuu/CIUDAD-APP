@@ -9,6 +9,14 @@ import MainMedicine from "@/pages/healthServices/medicineservices/Main";
 import PickupTable from "@/pages/healthServices/medicineservices/Request/request-processing/request-table";
 import PendingConfirmation from "@/pages/healthServices/medicineservices/Request/request-pending/request-pending-table";
 import MedicineLayout from "@/pages/healthServices/medicineservices/MedicineLayout";
+import CompletedRequest from "@/pages/healthServices/medicineservices/Request/completed-request/request-completed-table";
+import CompletedRequestDetail from "@/pages/healthServices/medicineservices/Request/completed-request/request-completed-details";
+import RejectedRequest from "@/pages/healthServices/medicineservices/Request/rejected-request/request-rejected-table";
+import RejectedRequestDetail from "@/pages/healthServices/medicineservices/Request/rejected-request/request-rejected-details";
+import CancelledRequest from "@/pages/healthServices/medicineservices/Request/cancelled-request/request-cancelled-table";
+import CancelledRequestDetail from "@/pages/healthServices/medicineservices/Request/cancelled-request/request-cancelled-details";
+import ReferredRequest from "@/pages/healthServices/medicineservices/Request/referred-request/request-referred-table";
+import ReferredRequestDetail from "@/pages/healthServices/medicineservices/Request/referred-request/request-referred-details";
 
 
 export const medicineRequest = [
@@ -29,7 +37,11 @@ export const medicineRequest = [
             element: <MedicineRequestMain />,
             children: [
               { path: "pickup", element: <PickupTable /> },
-              { path: "pending", element: <PendingConfirmation /> }
+              { path: "pending", element: <PendingConfirmation /> },
+              { path: "completed", element: <CompletedRequest /> },
+              {path:"rejected", element:<RejectedRequest />},
+              {path:"cancelled", element:<CancelledRequest />},
+              {path:"referred", element:<ReferredRequest />}
             ]
           }
         ]
@@ -61,5 +73,22 @@ export const medicineRequest = [
   {
     path: "/medicine-request/pending-items",
     element: <MedicineRequestPendingItems />
+  },
+  {
+    path: "/services/medicine/requests/completed/view",
+    element: <CompletedRequestDetail />
+  },
+  {
+    path: "/services/medicine/requests/rejected/view",
+    element: <RejectedRequestDetail />
+  },
+  {
+    path: "/services/medicine/requests/cancelled/view",
+    element: <CancelledRequestDetail />
+  },
+  {
+    path: "/services/medicine/requests/referred/view",
+    element: <ReferredRequestDetail />
   }
+
 ];

@@ -130,7 +130,7 @@ export default function PendingConfirmation() {
           {isLoading ? (
             <div className="w-full h-[100px] flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading pending requests...</span>
+              <span className="ml-2">Loading...</span>
             </div>
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">

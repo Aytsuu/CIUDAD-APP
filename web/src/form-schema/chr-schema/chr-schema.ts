@@ -41,12 +41,12 @@ export const BasicInfoSchema = z.object({
 export const BFCheckSchema = z.object({
   ebf_id: z.number().optional(),
   ebf_date: z.string().min(1, "Date is required"),
+  type_of_feeding: z.string().min(1, "type_of_feeding is required"),
   created_at: z.string().optional(),
   chhist: z.number().optional(),
 });
 
 export const ChildDetailsSchema = z.object({
-  type_of_feeding: z.string().min(1, "required"),
   BFdates: z.array(z.string()).optional(),
   BFchecks: z.array(BFCheckSchema).optional(), // New field for BF checks with IDs
 

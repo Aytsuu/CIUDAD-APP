@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table/table";
-import { format, isValid, isBefore, isSameDay } from "date-fns";
+import { format, isValid, isBefore, isSameDay, parse } from "date-fns";
 
 interface BFCheckTableProps {
   fullHistoryData: any[];
@@ -38,7 +38,7 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({ fullHistoryData, chh
           record.exclusive_bf_checks?.map((bfCheck: any) => ({
             recordDate,
             bfCheck,
-            bfDate: bfCheck.ebf_date && isValid(new Date(bfCheck.ebf_date)) ? format(new Date(bfCheck.ebf_date), "MMM dd, yyyy") : "Not recorded",
+            bfDate: bfCheck.ebf_date ? bfCheck.ebf_date : "Not recorded",
             createdAt: isValid(new Date(bfCheck.created_at)) ? format(new Date(bfCheck.created_at), "MMM dd, yyyy") : "N/A",
             isCurrentRecord: record.chhist_id === chhistId
           })) || []
@@ -47,6 +47,13 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({ fullHistoryData, chh
       return [];
     })
     .sort((a, b) => a.recordDate.getTime() - b.recordDate.getTime());
+
+  // Function to format YYYY-MM to "Month Year"
+  const formatMonthYear = (dateStr: string) => {
+    if (!dateStr || dateStr === "Not recorded") return "Not recorded";
+    const parsedDate = parse(dateStr, "yyyy-MM", new Date());
+    return isValid(parsedDate) ? format(parsedDate, "MMMM yyyy") : "Not recorded";
+  };
 
   return (
     <div className="border border-black mb-6">
@@ -74,7 +81,7 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({ fullHistoryData, chh
             {filteredBfChecks.length > 0 ? (
               filteredBfChecks.map((check, index) => (
                 <TableCell key={`bfdate-${index}`} className={`p-3 ${index < filteredBfChecks.length - 1 ? "border-r border-black" : ""} ${check.isCurrentRecord ? "font-medium" : ""}`}>
-                  {check.bfDate}
+                  {formatMonthYear(check.bfDate)}
                 </TableCell>
               ))
             ) : (

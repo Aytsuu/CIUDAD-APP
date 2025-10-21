@@ -86,15 +86,20 @@ class ChildHealthRecordsView(generics.ListAPIView):
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
-        # Patient type filter
+        # Patient type filter - FIXED: Use correct relationship path
         patient_type_search = self.request.query_params.get('patient_type', '').strip()
         if patient_type_search:
             filters_applied = True
-            queryset = apply_patient_type_filter(queryset, patient_type_search)
+            # Use the correct path: patrec__pat_id__pat_type instead of just pat_type
+            if patient_type_search.lower() == 'resident':
+                queryset = queryset.filter(patrec__pat_id__pat_type='Resident')
+            elif patient_type_search.lower() == 'transient':
+                queryset = queryset.filter(patrec__pat_id__pat_type='Transient')
+            
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
-        return queryset
+        return queryset 
     
     def _apply_child_search_filter(self, queryset, search_query):
         """Reusable search filter for child health records with multiple term support"""
@@ -164,6 +169,7 @@ class ChildHealthRecordsView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
     serializer_class = ChildHealthHistorySerializer
@@ -971,7 +977,6 @@ class CompleteChildHealthRecordAPIView(APIView):
             place_of_delivery_type=submitted_data.get('place_of_delivery_type'),
             pod_location=submitted_data.get('pod_location', ''),
             mother_occupation=submitted_data.get('mother_occupation', ''),
-            type_of_feeding=submitted_data.get('type_of_feeding'),
             father_occupation=submitted_data.get('father_occupation', ''),
             birth_order=submitted_data.get('birth_order', 0),
             newborn_screening=newborn_screening,
@@ -1118,20 +1123,24 @@ class CompleteChildHealthRecordAPIView(APIView):
     def _handle_breastfeeding_dates(self, bf_dates, chhist_id):
         """Handle exclusive breastfeeding check dates"""
         chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
+        
         for bf_data in bf_dates:
-            # Extract the ebf_date from the object
+            # Extract the ebf_date and type_of_feeding from the object
             if isinstance(bf_data, dict):
                 date_value = bf_data.get('ebf_date')
+                type_of_feeding = bf_data.get('type_of_feeding')
             else:
                 # Handle case where it might be just a date string
                 date_value = bf_data
+                type_of_feeding = None
             
             # Clean date before creating
             cleaned_date = self._clean_date_value(date_value)
             if cleaned_date:
                 ExclusiveBFCheck.objects.create(
                     chhist=chhist,
-                    ebf_date=cleaned_date
+                    ebf_date=cleaned_date,
+                    type_of_feeding=type_of_feeding
                 )
     
     def _handle_medicines(self, medicines, pat_id, chhist_id, staff_instance):
@@ -1728,7 +1737,7 @@ class UpdateChildHealthRecordAPIView(APIView):
             ebf_id = bf_check.get('ebf_id')
             ebf_date = bf_check.get('ebf_date')
             chhist = bf_check.get('chhist')  # Note: using 'chhist' not 'chhist_id'
-            
+            type_of_feeding = bf_check.get('type_of_feeding')  
             if not ebf_date:
                 print(f"Skipping BF check {ebf_id} - no ebf_date provided")
                 continue
@@ -1744,7 +1753,8 @@ class UpdateChildHealthRecordAPIView(APIView):
                         if existing_bf.ebf_date != ebf_date:
                             # Update the existing record
                             ExclusiveBFCheck.objects.filter(ebf_id=ebf_id).update(
-                                ebf_date=ebf_date
+                                ebf_date=ebf_date,
+                                type_of_feeding=type_of_feeding
                             )
                             print(f"Updated BF check {ebf_id}: {existing_bf.ebf_date} -> {ebf_date}")
                         else:
@@ -1759,7 +1769,8 @@ class UpdateChildHealthRecordAPIView(APIView):
                     # Check if a BF check with this date already exists for this chhist_id
                     existing_check = ExclusiveBFCheck.objects.filter(
                         chhist_id=chhist_id,
-                        ebf_date=ebf_date
+                        ebf_date=ebf_date,
+                        type_of_feeding=type_of_feeding
                     ).first()
                     
                     if existing_check:
@@ -1767,7 +1778,9 @@ class UpdateChildHealthRecordAPIView(APIView):
                     else:
                         new_bf_check = ExclusiveBFCheck.objects.create(
                             chhist_id=chhist_id,
-                            ebf_date=ebf_date
+                            ebf_date=ebf_date,
+                            type_of_feeding=type_of_feeding
+                            
                         )
                         print(f"Created new BF check {new_bf_check.ebf_id} with date: {ebf_date}")
                         

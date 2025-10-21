@@ -479,7 +479,6 @@ export default function LastPage({
               <pre className="mt-2 text-sm text-red-700">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-          // In your Step4.tsx (excerpt)
           <PendingFollowupsSection chrecId={chrecId || ""} pendingStatuses={pendingFollowupUpdates} onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))} />
           {/* Always show today's vital signs if they exist */}
           {hasTodaysVitalSigns && (

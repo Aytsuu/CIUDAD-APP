@@ -95,24 +95,7 @@ export const medicineColumns: ColumnDef<any>[] = [
       const navigate = useNavigate();
       const patientData = {
         pat_id: row.original.pat_id,
-        pat_type: row.original.pat_type,
-        age: row.original.age,
-        addressFull: row.original.address || "No address provided",
-        address: {
-          add_street: row.original.street,
-          add_barangay: row.original.barangay,
-          add_city: row.original.city,
-          add_province: row.original.province,
-          add_sitio: row.original.sitio
-        },
-        households: [{ hh_id: row.original.householdno }],
-        personal_info: {
-          per_fname: row.original.fname,
-          per_mname: row.original.mname,
-          per_lname: row.original.lname,
-          per_dob: row.original.dob,
-          per_sex: row.original.sex
-        }
+       
       };
 
       return (

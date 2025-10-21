@@ -6,15 +6,16 @@ import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentPendingColumns } from "./columns/pendng";
-import { usePendingAppointments } from "../queries/fetch";
+import { medicalAppointmentConfirmedColumns } from "../columns/confirmed-appointments";
+import { useAppointments } from "../../queries/fetch";
 
-export default function PendingMedicalAppointments() {
+export default function ConfirmedMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const [meridiemFilter, setMeridiemFilter] = useState<"all" | "AM" | "PM">("all");
 
   // Debounce search query
   useEffect(() => {
@@ -33,11 +34,14 @@ export default function PendingMedicalAppointments() {
     isLoading,
     error,
     refetch
-  } = usePendingAppointments(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-    dateFilter
+  } = useAppointments(
+    currentPage,                                      // page?
+    pageSize,                                         // pageSize?
+    debouncedSearch,                                  // search?
+    dateFilter,                                       // dateFilter?
+    ["confirmed"],                                    // statuses? -> only confirmed
+    meridiemFilter === "all" ? undefined : [meridiemFilter], // meridiems? optional
+    true                                              // enabled?
   );
 
   // Extract data from paginated response
@@ -60,7 +64,7 @@ export default function PendingMedicalAppointments() {
   if (error) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 text-lg mb-4">Failed to load pending appointments</div>
+        <div className="text-red-500 text-lg mb-4">Failed to load confirmed appointments</div>
         <Button onClick={() => refetch()}>Retry</Button>
       </div>
     );
@@ -100,6 +104,23 @@ export default function PendingMedicalAppointments() {
               setCurrentPage(1);
             }}
           />
+
+          {/* Meridiem Filter */}
+          <SelectLayout
+            placeholder="Meridiem"
+            label=""
+            className="bg-white w-full sm:w-40"
+            options={[
+              { id: "all", name: "All" },
+              { id: "AM", name: "AM" },
+              { id: "PM", name: "PM" }
+            ]}
+            value={meridiemFilter}
+            onChange={(value) => {
+              setMeridiemFilter(value as "all" | "AM" | "PM");
+              setCurrentPage(1);
+            }}
+          />
         </div>
       </div>
 
@@ -108,7 +129,7 @@ export default function PendingMedicalAppointments() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Pending</p>
+              <p className="text-sm font-medium text-gray-600">Total Confirmed</p>
               <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
             </div>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -181,21 +202,21 @@ export default function PendingMedicalAppointments() {
           {isLoading ? (
             <div className="w-full h-32 flex flex-col items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <span className="text-gray-600">Loading pending appointments...</span>
+              <span className="text-gray-600">Loading confirmed appointments...</span>
             </div>
           ) : appointments.length === 0 ? (
             <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500">
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
-              <p className="text-lg font-medium mb-1">No pending appointments found</p>
+              <p className="text-lg font-medium mb-1">No confirmed appointments found</p>
               <p className="text-sm">
-                {debouncedSearch || dateFilter !== "all" 
-                  ? "No pending appointments match your search criteria" 
-                  : "No pending appointments at the moment"}
+                {debouncedSearch || dateFilter !== "all" || meridiemFilter !== "all"
+                  ? "No confirmed appointments match your search criteria"
+                  : "No confirmed appointments at the moment"}
               </p>
             </div>
           ) : (
             <DataTable 
-              columns={medicalAppointmentPendingColumns} 
+              columns={medicalAppointmentConfirmedColumns} 
               data={appointments} 
             />
           )}

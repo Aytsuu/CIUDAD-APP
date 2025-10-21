@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { format, isValid } from "date-fns";
+import { format, isValid, isBefore, isSameDay, parse, isSameMonth,isAfter } from "date-fns";
 import { getValueByPath } from "./ChildHealthutils";
 import { VitalSignsTable } from "./tables/VitalSignsTable";
 import { BFCheckTable } from "./tables/BFTable";
@@ -25,6 +25,61 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   if (recordsToDisplay.length === 0) return null;
+
+  // Function to get EBF feeding type based on selected chhistId from exclusive_bf_checks
+  // Display feeding type if ebf_date month matches or is before the chhist created_at month
+   // Get EBF feeding type by month logic (match month, else nearest after, else latest before)
+   const getCurrentEBFFeedingType = () => {
+    if (!chhistId || !fullHistoryData?.length) return "N/A";
+
+    const currentRecord = fullHistoryData.find((r: any) => r.chhist_id === chhistId);
+    if (!currentRecord) return "N/A";
+
+    const currentRecordDate = new Date(currentRecord.created_at);
+    const currentMonth = new Date(currentRecordDate.getFullYear(), currentRecordDate.getMonth(), 1);
+
+    const checks = fullHistoryData
+      .flatMap((record: any) => {
+        const recordDate = new Date(record.created_at);
+        // Match BFTable: only include records on/before current record date
+        if (!(isBefore(recordDate, currentRecordDate) || isSameDay(recordDate, currentRecordDate))) return [];
+        return (record.exclusive_bf_checks || []).map((bf: any) => {
+          const ebfDateParsed = bf.ebf_date ? parse(bf.ebf_date, "yyyy-MM", new Date()) : null;
+          const ebfMonth = ebfDateParsed && isValid(ebfDateParsed)
+            ? new Date(ebfDateParsed.getFullYear(), ebfDateParsed.getMonth(), 1)
+            : null;
+          return {
+            ebfMonth,
+            createdAt: isValid(new Date(bf.created_at)) ? new Date(bf.created_at) : null,
+            type: bf.type_of_feeding as string | undefined,
+          };
+        });
+      })
+      .filter((x: any) => x.ebfMonth && x.type);
+
+    if (!checks.length) return "N/A";
+
+    // 1) Prefer same month, pick latest by createdAt
+    const sameMonth = checks
+      .filter((x: any) => isSameMonth(x.ebfMonth, currentMonth))
+      .sort((a: any, b: any) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+    if (sameMonth.length) return sameMonth[sameMonth.length - 1].type || "N/A";
+
+    // 2) Nearest future month (earliest after currentMonth)
+    const future = checks
+      .filter((x: any) => isAfter(x.ebfMonth, currentMonth))
+      .sort((a: any, b: any) => a.ebfMonth.getTime() - b.ebfMonth.getTime() || (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+    if (future.length) return future[0].type || "N/A";
+
+    // 3) Latest prior month (latest before currentMonth)
+    const past = checks
+      .filter((x: any) => isBefore(x.ebfMonth, currentMonth))
+      .sort((a: any, b: any) => b.ebfMonth.getTime() - a.ebfMonth.getTime() || (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    if (past.length) return past[0].type || "N/A";
+
+    return "N/A";
+  };
+
 
   // New function to generate PDF using jsPDF and open in new tab
   const generatePDF = async () => {
@@ -177,7 +232,7 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
                           if (deliveryType === "HC") {
                             return (
                               <span>
-                               <span className="underline">({getValueByPath(recordsToDisplay[0], ["chrec_details", "pod_location"])})</span>
+                                <span className="underline">({getValueByPath(recordsToDisplay[0], ["chrec_details", "pod_location"])})</span>
                               </span>
                             );
                           }
@@ -247,7 +302,7 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
                   </div>
                   <div>
                     <p>
-                      <strong>Type of Feeding:</strong> <span className="underline">{getValueByPath(recordsToDisplay[0], ["chrec_details", "type_of_feeding"]) || "N/A"}</span>
+                      <strong>Type of Feeding:</strong> <span className="underline">{getCurrentEBFFeedingType()}</span>
                     </p>
                   </div>
                 </div>

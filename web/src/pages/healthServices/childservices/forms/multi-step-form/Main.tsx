@@ -123,6 +123,7 @@ export default function ChildHealthRecordForm() {
       chhistRecord.exclusive_bf_checks?.map((check: any) => ({
         ebf_id: check.ebf_id,
         ebf_date: check.ebf_date,
+        type_of_feeding:check.type_of_feeding,
         created_at: check.created_at,
         chhist: check.chhist
       })) || [];
@@ -174,7 +175,7 @@ export default function ChildHealthRecordForm() {
       anemic: chhistRecord.anemic || initialFormData.anemic,
       birthwt: chhistRecord.birthwt || initialFormData.birthwt,
       status: chhistRecord.status || "recorded",
-      type_of_feeding: chrecDetails?.type_of_feeding || "",
+      // type_of_feeding: chrecDetails?.type_of_feeding || "",
       tt_status: chhistRecord.tt_status || "",
       nutritionalStatus: chhistRecord.nutritionalStatus || initialFormData.nutritionalStatus,
       vaccines: vaccinesFromApi,
@@ -284,6 +285,7 @@ export default function ChildHealthRecordForm() {
             history.exclusive_bf_checks?.map((check: any) => ({
               ebf_id: check.ebf_id,
               ebf_date: check.ebf_date,
+              type_of_feeding:check.type_of_feeding,
               created_at: check.created_at,
               chhist: check.chhist
             })) || [];

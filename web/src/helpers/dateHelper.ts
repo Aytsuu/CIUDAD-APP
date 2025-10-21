@@ -251,3 +251,21 @@ export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
 
   return weekEndDate < currentDate
 }
+
+
+// Safe date and time formatting function
+export const formatDateTime = (dateString: string | null | undefined) => {
+  if (!dateString) return { date: "N/A", time: "" };
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return { date: "Invalid Date", time: "" };
+    }
+    return {
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    };
+  } catch {
+    return { date: "Invalid Date", time: "" };
+  }
+};
