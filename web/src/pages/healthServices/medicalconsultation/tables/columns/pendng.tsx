@@ -1,13 +1,12 @@
-// components/columns.ts
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
+import { Check, X, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
 import { ReferredModal } from "../../referred-modal";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useActionAppointment } from "../../queries/update";
-import { formatDate,formatDateTime } from "@/helpers/dateHelper";
+import { formatDate, formatDateTime } from "@/helpers/dateHelper";
 
 export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
   {
@@ -124,26 +123,16 @@ export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
       );
     }
   },
-  // {
-  //   accessorKey: "status",
-  //   header: () => <div className="text-center">Status</div>,
-  //   size: 100,
-  //   cell: ({ row }) => (
-  //     <div className="flex justify-center py-2">
-  //       <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 capitalize text-xs px-3 py-1">
-  //         {row.original.status || "pending"}
-  //       </Badge>
-  //     </div>
-  //   )
-  // },
   {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
-    size: 180,
+    size: 220,
     cell: ({ row }) => {
       const appointment = row.original;
       const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
       const [isReferredModalOpen, setIsReferredModalOpen] = useState(false);
+      const [isRejectedModalOpen, setIsRejectedModalOpen] = useState(false);
+      const [modalMode, setModalMode] = useState<"referred" | "rejected">("referred");
       const { mutate: actionAppointment, isPending: isSubmitting } = useActionAppointment();
 
       const handleConfirm = () => {
@@ -161,9 +150,19 @@ export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
         );
       };
 
+      const handleOpenReferredModal = () => {
+        setModalMode("referred");
+        setIsReferredModalOpen(true);
+      };
+
+      const handleOpenRejectedModal = () => {
+        setModalMode("rejected");
+        setIsRejectedModalOpen(true);
+      };
+
       return (
         <>
-          <div className="flex justify-center gap-2 py-2 px-2">
+          <div className="flex justify-center gap-2 py-2 px-2 flex-wrap">
             <Button 
               size="sm" 
               className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1" 
@@ -175,13 +174,22 @@ export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
             </Button>
             <Button 
               size="sm" 
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1" 
+              onClick={handleOpenReferredModal} 
+              disabled={isSubmitting}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Refer
+            </Button>
+            <Button 
+              size="sm" 
               variant="destructive" 
               className="flex items-center gap-1" 
-              onClick={() => setIsReferredModalOpen(true)} 
+              onClick={handleOpenRejectedModal} 
               disabled={isSubmitting}
             >
               <X className="h-4 w-4" />
-              Refer
+              Reject
             </Button>
           </div>
 
@@ -206,11 +214,22 @@ export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
             onCancel={() => setIsConfirmModalOpen(false)}
           />
 
+          {/* Referred Modal */}
           <ReferredModal 
             isOpen={isReferredModalOpen} 
             onClose={() => setIsReferredModalOpen(false)} 
             appointmentId={appointment.id} 
-            patientName={`${appointment.personal_info?.per_fname} ${appointment.personal_info?.per_lname}`} 
+            patientName={`${appointment.personal_info?.per_fname} ${appointment.personal_info?.per_lname}`}
+            mode="referred"
+          />
+
+          {/* Rejected Modal */}
+          <ReferredModal 
+            isOpen={isRejectedModalOpen} 
+            onClose={() => setIsRejectedModalOpen(false)} 
+            appointmentId={appointment.id} 
+            patientName={`${appointment.personal_info?.per_fname} ${appointment.personal_info?.per_lname}`}
+            mode="rejected"
           />
         </>
       );
