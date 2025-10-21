@@ -12,9 +12,22 @@ import { formatTimeAgo, getDateTimeFormat } from "@/helpers/dateHelper";
 import ReportMapLocation from "./ReportMapLocation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { capitalize } from "@/helpers/capitalize";
-import { Phone } from "lucide-react";
+import {
+  Phone,
+  AlertTriangle,
+  Clock,
+  CircleAlert,
+  UserRound,
+  FileText,
+} from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import TrackerIcon from "@/assets/images/tracker_icon.svg";
+import UserIcon from "@/assets/images/user_icon.svg";
+import { Button } from "@/components/ui/button/button";
+import { useNavigate } from "react-router";
 
 export default function SecuradoReports(): JSX.Element {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [search, setSearch] = React.useState<string>("");
   const [selectedReport, setSelectedReport] = React.useState<string>("");
@@ -30,15 +43,14 @@ export default function SecuradoReports(): JSX.Element {
   );
   const { data: IRInfo, isLoading: isLoadingIRInfo } =
     useGetIRInfo(selectedReport);
-  const { data: userLocation, isLoading: isLoadingUserLoc } = useConvertCoordinatesToAddress(
-    IRInfo?.ir_track_user_lat,
-    IRInfo?.ir_track_user_lng
-  );
+  const { data: userLocation, isLoading: isLoadingUserLoc } =
+    useConvertCoordinatesToAddress(
+      IRInfo?.ir_track_user_lat,
+      IRInfo?.ir_track_user_lng
+    );
 
-  const { data: deviceLocation, isLoading: isLoadingDeviceLoc } = useConvertCoordinatesToAddress(
-    IRInfo?.ir_track_lat,
-    IRInfo?.ir_track_lng
-  );
+  const { data: deviceLocation, isLoading: isLoadingDeviceLoc } =
+    useConvertCoordinatesToAddress(IRInfo?.ir_track_lat, IRInfo?.ir_track_lng);
 
   const data = activeIRs?.results || [];
   const totalCount = activeIRs?.count || 0;
@@ -46,59 +58,259 @@ export default function SecuradoReports(): JSX.Element {
 
   return (
     <div className="w-full h-[85vh] flex justify-start relative gap-6">
-      <div className="w-[700px] h-full rounded-lg bg-white border border-gray-200 shadow-sm">
-        <div className="p-4 flex justify-between items-center">
-          <Label className="text-black text-lg">Reports</Label>
+      {/* Reports List Panel */}
+      <div className="w-full max-w-[360px] rounded-lg bg-white border border-red-200 shadow-sm flex flex-col">
+        <div className="px-5 py-3 flex justify-between items-center bg-red-600 rounded-t-lg">
+          <div className="flex items-center gap-2">
+            <Label className="text-white text-lg font-semibold">
+              Securado Reports
+            </Label>
+          </div>
+          <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+            <span className="text-white font-bold text-sm">{totalCount}</span>
+          </div>
         </div>
         <Separator />
         <ScrollArea className="flex-1">
-          <div className="flex flex-col p-4 gap-4">
-            {data?.map((report: any) => (
-              <Card
-                className={`p-4 cursor-pointer transition-colors ease-in duration-500 ${
-                  selectedReport == report.ir_id
-                    ? "bg-blue-100 border-2 border-primary"
-                    : "bg-gray-100"
-                }`}
-                onClick={() => {
-                  if (report.ir_id != selectedReport) {
-                    setSelectedReport(report.ir_id);
-                  }
-                }}
-              >
-                <div className="flex flex-col">
-                  <p className="text-md font-medium">
-                    Reported by {capitalize(report.ir_track_user_name)}
-                  </p>
-                  <p className="font-normal flex items-center gap-2">
-                    <Phone size={14} />
-                    {report.ir_track_user_contact}
+          <div className="flex flex-col p-4 gap-2">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <Spinner size="lg" />
+              </div>
+            ) : data.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <AlertTriangle className="mx-auto mb-2" size={48} />
+                <p>No active reports</p>
+              </div>
+            ) : (
+              data?.map((report: any) => (
+                <div
+                  className={`flex justify-between gap-5 items-center px-2 ${
+                    selectedReport == report.ir_id
+                      ? "text-red-600"
+                      : "text-red-400"
+                  }`}
+                >
+                  <Button
+                    variant={"link"}
+                    className={`justify-start p-0 cursor-pointer text-red-400 ${
+                      selectedReport == report.ir_id
+                        ? "text-red-600"
+                        : "text-red-400"
+                    }`}
+                    onClick={() => setSelectedReport(report.ir_id)}
+                  >
+                    <AlertTriangle />
+                    <p className="text-sm truncate">
+                      Report of {capitalize(report.ir_track_user_name)}
+                    </p>
+                  </Button>
+                  <p className="text-sm">
+                    {formatTimeAgo(report.ir_created_at)}
                   </p>
                 </div>
-                <p className="text-end text-sm">
-                  {formatTimeAgo(report.ir_created_at)}
-                </p>
-              </Card>
-            ))}
+                // <Card
+                //   key={report.ir_id}
+                //   className={`p-4 cursor-pointer transition-color duration-200 ${
+                //     selectedReport === report.ir_id
+                //       ? "bg-red-50 border-2 border-red-500"
+                //       : "bg-gradient-to-br from-red-100 to-red-50 border-red-200 hover:border-red-300"
+                //   }`}
+                //   onClick={() => {
+                //     if (report.ir_id !== selectedReport) {
+                //       setSelectedReport(report.ir_id);
+                //     }
+                //   }}
+                // >
+                //   <div className="flex items-start justify-between mb-3">
+                //     <div className="flex items-center gap-2">
+                //       <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                //       <span className="text-xs font-semibold text-red-700 uppercase tracking-wide">
+                //         Device Report
+                //       </span>
+                //     </div>
+                //     <Clock className="text-red-600" size={14} />
+                //   </div>
+
+                //   <div className="flex flex-col gap-2">
+                //     <div className="flex items-center gap-2">
+                //       <UserRound className="text-gray-600" size={16} />
+                //       <p className="text-sm font-semibold text-gray-900">
+                //         {capitalize(report.ir_track_user_name)}
+                //       </p>
+                //     </div>
+                //     <div className="flex items-center gap-2">
+                //       <Phone className="text-gray-600" size={14} />
+                //       <p className="text-sm font-medium text-gray-700">
+                //         {report.ir_track_user_contact}
+                //       </p>
+                //     </div>
+                //   </div>
+
+                //   <div className="mt-3 pt-3 border-t border-red-200">
+                //     <p className="text-xs text-gray-600 text-end font-medium">
+                //       {formatTimeAgo(report.ir_created_at)}
+                //     </p>
+                //   </div>
+                // </Card>
+              ))
+            )}
           </div>
         </ScrollArea>
       </div>
+
+      {/* Map Section */}
       <ReportMapLocation IRInfo={IRInfo} selectedReport={selectedReport} />
-      <div className="w-1/2 h-full rounded-lg bg-white border border-gray-200 shadow-sm">
-        {selectedReport ? (
-          <div className="flex flex-col p-4">
-            <p>{IRInfo?.ir_track_user_name}</p>
-            <p>{IRInfo?.ir_add_details}</p>
-            <p>User location: {userLocation?.display_name}</p>
-            <p>Device location: {deviceLocation?.display_name}</p>
-            <p>{getDateTimeFormat(IRInfo?.ir_created_at)}</p>
+
+      {/* Report Details Panel */}
+      {selectedReport && (
+        <div className="w-full max-w-sm flex flex-col gap-4">
+          {isLoadingIRInfo ? (
+            <div className="flex justify-center items-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <div className="rounded-lg bg-white border border-red-200 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-red-600 to-red-700 px-5 py-3">
+                <div className="flex items-center gap-2 text-white">
+                  <h3 className="font-semibold text-lg">Report Details</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <UserRound
+                    className="text-red-600 mt-1 flex-shrink-0"
+                    size={18}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 tracking-wide font-medium mb-1">
+                      REPORTED BY
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {capitalize(IRInfo?.ir_track_user_name)}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-start gap-3">
+                  <Phone
+                    className="text-red-600 mt-1 flex-shrink-0"
+                    size={18}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 tracking-wide font-medium mb-1">
+                      CONTACT
+                    </p>
+                    <p className="text-sm text-gray-900 font-medium leading-relaxed">
+                      {IRInfo?.ir_track_user_contact || "No contact provided"}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-start gap-3">
+                  <AlertTriangle
+                    className="text-red-600 mt-1 flex-shrink-0"
+                    size={18}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 tracking-wide font-medium mb-1">
+                      ADDITIONAL DETAILS
+                    </p>
+                    <p className="text-sm text-gray-900 font-medium leading-relaxed">
+                      {IRInfo?.ir_add_details ||
+                        "No additional details provided"}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-start gap-3">
+                  <Clock
+                    className="text-red-600 mt-1 flex-shrink-0"
+                    size={18}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 tracking-wide font-medium mb-1">
+                      REPORTED AT
+                    </p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {getDateTimeFormat(IRInfo?.ir_created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => {
+                      navigate("/report/acknowledgement/form", {
+                        state: {
+                          params: {
+                            data: IRInfo,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Create AR
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isLoadingUserLoc ? (
+            <div className="flex justify-center items-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <div className="flex gap-4 rounded-lg bg-blue-50 border border-primary shadow-sm overflow-hidden p-5">
+              <img src={UserIcon} className="w-[40px] h-[35px]" />
+              <div className="flex flex-col gap-2 text-white">
+                <h4 className="font-semibold text-md text-primary">
+                  User Location
+                </h4>
+                <p className="text-sm text-gray-900 leading-relaxed">
+                  {userLocation?.display_name || "Location unavailable"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isLoadingDeviceLoc ? (
+            <div className="flex justify-center items-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <div className="flex gap-4 rounded-lg bg-blue-50 border border-primary shadow-sm overflow-hidden p-5">
+              <img src={TrackerIcon} className="w-[40px] h-[35px]" />
+              <div className="flex flex-col gap-2 text-white">
+                <h4 className="font-semibold text-md text-primary">
+                  Device Location
+                </h4>
+                <p className="text-sm text-gray-900 leading-relaxed">
+                  {deviceLocation?.display_name || "Location unavailable"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-3  text-gray-600">
+            <CircleAlert className="w-8 h-8" />
+            <p className="text-sm">
+              The user and device location shown is not live, it's at the time
+              the user reported the device as stolen.
+            </p>
           </div>
-        ) : (
-          <div className="w-full h-full flex justify-center items-center">
-            <p>No selected report</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
