@@ -17,8 +17,10 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { LoadingModal } from "@/components/ui/loading-modal"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LuponConciliationDetails() {
+    const {user} = useAuth()
     const router = useRouter()
     const params = useLocalSearchParams()
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
@@ -56,6 +58,7 @@ export default function LuponConciliationDetails() {
         sc_date_marked,
         sc_reason,
         comp_id,
+        staff_name,
         hearing_schedules = [],
     } = caseDetails || {}
 
@@ -98,13 +101,16 @@ export default function LuponConciliationDetails() {
     const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
     const handleResolve = () => {
+        const staff_id = user?.staff?.staff_id
         const status_type = "Lupon"
-        resolve({ status_type, sc_id: String(sc_id) })
+        resolve({ status_type, sc_id: String(sc_id), staff_id})
     }
     
     const handleEscalate = () => {
+        const staff_id = user?.staff?.staff_id
+
         if (comp_id) {
-            escalate({ sc_id: String(sc_id), comp_id: String(comp_id) })
+            escalate({ sc_id: String(sc_id), comp_id: String(comp_id), staff_id })
         } else {
             Alert.alert("Error", "Cannot escalate: Complaint ID is missing")
         }
@@ -226,6 +232,7 @@ export default function LuponConciliationDetails() {
                                 <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
                                 <Text className="text-sm font-semibold text-gray-900">
                                     {formatTimestamp(sc_date_marked)}
+                                    {staff_name && ` • ${staff_name}`}
                                 </Text>
                             </View>
                         )}
@@ -438,6 +445,7 @@ export default function LuponConciliationDetails() {
                                                             </Text>
                                                             <Text className="text-xs text-blue-600">
                                                                 {formatTimestamp(schedule.remark.rem_date)}
+                                                                {schedule.remark.staff_name && ` • ${schedule.remark.staff_name}`}
                                                             </Text>
                                                         </View>
                                                         <Text className="text-sm text-gray-700 mb-2">

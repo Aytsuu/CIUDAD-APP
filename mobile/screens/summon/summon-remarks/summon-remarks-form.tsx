@@ -199,8 +199,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SummonRemarksForm() {
+    const {user} = useAuth()
     const router = useRouter();
     const params = useLocalSearchParams()
     const {hs_id, st_id, sc_id, schedCount} = params
@@ -237,6 +239,7 @@ export default function SummonRemarksForm() {
         }));
 
         const status_type = parseInt(schedCount as string) > 3 ? "Lupon" : "Council";
+        const staff_id = user?.staff?.staff_id
 
         addRemarks({ 
             hs_id: String(hs_id), 
@@ -245,7 +248,8 @@ export default function SummonRemarksForm() {
             remarks: data.remarks, 
             close: data.closeHearing, 
             status_type, 
-            files 
+            files,
+            staff_id
         });
     };
 

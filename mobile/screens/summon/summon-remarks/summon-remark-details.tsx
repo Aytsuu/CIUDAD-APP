@@ -22,15 +22,13 @@ export default function SummonRemarkDetails(){
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const { sc_id, incident_type, hasResident, comp_names, acc_names, complainant_addresses, accused_addresses, complainant_rp_ids, sc_code, sc_mediation_status} = params
+    const { sc_id, incident_type, hasResident, comp_names, acc_names, sc_code, sc_mediation_status} = params
 
     const {data: details, isLoading} = useGetSummonCaseDetails(String(sc_id))
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
     const accusedNames = acc_names ? (acc_names as string).split(',') : []
-    const complainantAddresses = complainant_addresses ? (complainant_addresses as string).split(',') : []
-    const accusedAddresses = accused_addresses ? (accused_addresses as string).split(',') : []
 
     const hasResidentBool = hasResident === "true"
 
@@ -131,6 +129,7 @@ export default function SummonRemarkDetails(){
                                 <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
                                 <Text className="text-sm font-semibold text-gray-900">
                                     {formatTimestamp(details.sc_date_marked)}
+                                    {details.staff_name && ` • ${details.staff_name}`}
                                 </Text>
                             </View>
                         )}
@@ -266,6 +265,7 @@ export default function SummonRemarkDetails(){
                                                     </Text>
                                                     <Text className="text-xs text-blue-600">
                                                         {formatTimestamp(schedule.remark.rem_date)}
+                                                        {schedule.remark.staff_name && ` • ${schedule.remark.staff_name}`}
                                                     </Text>
                                                 </View>
                                                 <Text className="text-sm text-gray-700 mb-2">
