@@ -42,8 +42,8 @@ import {
 } from "@/components/ui/sheet/sheet"
 import { EditableFormField } from "@/components/health-profiling/EditableFormField"
 import { HistoryList } from "@/components/health-profiling/HistoryList"
-import { NCDHistoryDisplay } from "./components/NCDHistoryDisplay"
-import { TBHistoryDisplay } from "./components/TBHistoryDisplay"
+import { NCDHistoryDisplay } from "../../../components/health-profiling/NCDHistoryDisplay"
+import { TBHistoryDisplay } from "../../../components/health-profiling/TBHistoryDisplay"
 import {
   useUpdateNCD,
   useUpdateTBSurveillance,

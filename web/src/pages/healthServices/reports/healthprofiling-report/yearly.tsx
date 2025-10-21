@@ -1,0 +1,221 @@
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search, Folder, Calendar } from "lucide-react";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { toast } from "sonner";
+import { useLoading } from "@/context/LoadingContext";
+import { usePopulationYearlyRecords } from "./queries/fetchQueries";
+import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useNavigate } from "react-router-dom";
+
+interface YearRecord {
+  year: string;
+  total_population: number;
+  total_families: number;
+  total_households: number;
+}
+
+export default function YearlyPopulationRecords() {
+  const { showLoading, hideLoading } = useLoading();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
+
+  const { data: apiResponse, isLoading, error } = usePopulationYearlyRecords();
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to fetch reports");
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  const yearlyData = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
+  const totalYears = yearlyData.length;
+
+  // Filter data based on search query
+  const filteredData = yearlyData.filter((yearData: YearRecord) => {
+    const searchText = `${yearData.year}`.toLowerCase();
+    return searchText.includes(searchQuery.toLowerCase());
+  });
+
+  // Paginate the filtered data
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handleYearClick = (yearRecord: YearRecord) => {
+    navigate("/health-family-profiling/records", {
+      state: {
+        year: yearRecord.year,
+        totalPopulation: yearRecord.total_population,
+        totalFamilies: yearRecord.total_families,
+        totalHouseholds: yearRecord.total_households,
+      },
+    });
+  };
+
+  return (
+    <LayoutWithBack 
+      title="Population Structure Reports" 
+      description={`View population structure reports by year (${totalYears} years found)`}
+    >
+      <div>
+        <Card className="">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
+            <div className="flex-1"></div>
+
+            <div className="flex flex-col sm:flex-row gap-3 p-3 w-full sm:w-auto">
+              {/* Search Input */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                <Input 
+                  placeholder="Search by year..." 
+                  className="pl-10 bg-white w-full" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="h-full w-full rounded-md">
+            {/* Table Header with Pagination Controls */}
+            <div className="w-full h-auto sm:h-16 bg-slate-50 flex flex-col sm:flex-row justify-between sm:items-center p-4 mb-4 gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Show</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(Number.parseInt(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-20 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries per page</span>
+              </div>
+
+              {totalPages > 1 && (
+                <PaginationLayout 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={setCurrentPage} 
+                  className="justify-end" 
+                />
+              )}
+            </div>
+
+            <div className="bg-white w-full px-4 pt-3">
+              {isLoading ? (
+                <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <span>Loading population reports...</span>
+                </div>
+              ) : paginatedData.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  {paginatedData.map((record: YearRecord) => (
+                    <button
+                      key={record.year}
+                      onClick={() => handleYearClick(record)}
+                      className="group relative bg-gradient-to-br from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 p-6 rounded-xl border-2 border-violet-200 hover:border-violet-400 transition-all duration-300 hover:scale-105 hover:shadow-lg text-left"
+                    >
+                      <div className="flex flex-col gap-4">
+                        {/* Icon */}
+                        <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-violet-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                          <Calendar className="w-6 h-6 text-white" />
+                        </div>
+
+                        {/* Year */}
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800">{record.year}</h3>
+                          <p className="text-sm text-gray-500 mt-1">Calendar Year</p>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Population:</span>
+                            <span className="font-semibold text-violet-600">
+                              {record.total_population?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Families:</span>
+                            <span className="font-semibold text-violet-600">
+                              {record.total_families?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Households:</span>
+                            <span className="font-semibold text-violet-600">
+                              {record.total_households?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Hover indicator */}
+                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
+                  <Folder className="w-16 h-16 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No years found</h3>
+                  <p className="text-sm text-center text-gray-400">
+                    {searchQuery ? "Try adjusting your search criteria" : "No population records available"}
+                  </p>
+                </div>
+              )}
+
+              {/* Footer with Pagination */}
+              {paginatedData.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full py-6 gap-3 border-t mt-6">
+                  <p className="text-sm text-gray-600">
+                    Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{" "}
+                    {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} years
+                  </p>
+
+                  {totalPages > 1 && (
+                    <PaginationLayout 
+                      currentPage={currentPage} 
+                      totalPages={totalPages} 
+                      onPageChange={setCurrentPage} 
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </LayoutWithBack>
+  );
+}
