@@ -3,7 +3,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { formatDate,formatDateTime } from "@/helpers/dateHelper";
 
 
@@ -142,18 +141,7 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
       const navigate = useNavigate();
       const appointment = row.original;
     
-      const appointmentData = {
-        id: appointment.id,
-        personal_info: appointment.personal_info,
-        address: appointment.address,
-        chief_complaint: appointment.chief_complaint,
-        scheduled_date: appointment.scheduled_date,
-        meridiem: appointment.meridiem,
-        status: appointment.status,
-        created_at: appointment.created_at,
-        archive_reason: appointment.archive_reason,
-        rp: appointment.rp
-      };
+     
     
       return (
         <div className="flex justify-center py-2">

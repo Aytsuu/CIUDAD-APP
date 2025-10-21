@@ -278,7 +278,6 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                 'error': f'Error fetching processed medicine requests: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class MedicineRequestStatusTableViewDetails(APIView):
     """
     DETAILED VIEW FOR PROCESSED MEDICINE REQUEST ITEMS
@@ -325,7 +324,6 @@ class MedicineRequestStatusTableViewDetails(APIView):
             med_id = item.med.med_id
             med_name = item.med.med_name
             med_type = item.med.med_type
-            # Medicine table typically doesn't have dosage/form, those are in inventory
             
         # Priority 2: Get from minv_id (MedicineInventory - specific stock with dosage/form)
         if item.minv_id:
@@ -349,7 +347,7 @@ class MedicineRequestStatusTableViewDetails(APIView):
     def get(self, request, *args, **kwargs):
         try:
             medreq_id = self.kwargs.get('medreq_id')
-            status_filter = request.GET.get('status', 'all').strip()  # Status filter
+            status_filter = request.GET.get('status', 'all').strip()
             
             # Build base queryset based on status filter
             if status_filter == 'all':
@@ -364,25 +362,24 @@ class MedicineRequestStatusTableViewDetails(APIView):
                 queryset = queryset.filter(medreq_id=medreq_id)
             
             # Add select_related and prefetch_related for performance
-            # Handle both pat_id and rp_id cases
             queryset = queryset.select_related( 
                 'medreq_id', 
                 'med', 
                 'minv_id',
                 'minv_id__med_id',
-                'minv_id__inv_id',  # Add inventory parent
+                'minv_id__inv_id',
                 'medreq_id__pat_id',
                 'medreq_id__pat_id__rp_id',
                 'medreq_id__pat_id__trans_id',
                 'medreq_id__pat_id__rp_id__per',
-                'medreq_id__rp_id',  # Requesting physician/resident
-                'medreq_id__rp_id__per',  # Requesting resident personal info
+                'medreq_id__rp_id',
+                'medreq_id__rp_id__per',
             ).prefetch_related(
                 'medreq_id__medicine_files',
-                'allocations',  # Prefetch allocations for each request item
-                'allocations__minv',  # Prefetch the inventory for each allocation
-                'allocations__minv__med_id',  # Prefetch medicine details for allocations
-                'allocations__minv__inv_id',  # Prefetch inventory parent
+                'allocations',
+                'allocations__minv',
+                'allocations__minv__med_id',
+                'allocations__minv__inv_id',
             ).order_by('-medreq_id__requested_at')
             
             # Group by medicine name, dosage, form, and medicine request ID
@@ -395,9 +392,7 @@ class MedicineRequestStatusTableViewDetails(APIView):
                 # Get formatted patient name - Handle both pat_id and rp_id cases
                 patient_name = "Unknown Patient"
                 if item.medreq_id.pat_id:
-                    # Patient is registered
                     patient = item.medreq_id.pat_id
-                    
                     if patient.rp_id and patient.rp_id.per:
                         personal = patient.rp_id.per
                         patient_name = f"{personal.per_fname} {personal.per_lname}"
@@ -409,22 +404,20 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         if transient.tran_mname:
                             patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
                 elif item.medreq_id.rp_id:
-                    # Patient not registered yet, use rp_id
                     if item.medreq_id.rp_id.per:
                         personal = item.medreq_id.rp_id.per
                         patient_name = f"{personal.per_fname} {personal.per_lname}"
                         if personal.per_mname:
                             patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
                 
-                # Create unique key for grouping - combine formatted name (with dosage/form) and medreq_id
-                # This ensures items with same medicine name but different dosage/form are grouped separately
+                # Create unique key for grouping
                 group_key = f"{formatted_name}_{item.medreq_id.medreq_id}"
                 
                 if group_key not in medicine_groups:
                     medicine_groups[group_key] = {
                         'med_id': med_id,
-                        'med_name': med_name,  # Original medicine name
-                        'formatted_name': formatted_name,  # Medicine name with dosage and form
+                        'med_name': med_name,
+                        'formatted_med_name': formatted_name,
                         'med_type': med_type,
                         'dosage': dosage,
                         'dosage_unit': dosage_unit,
@@ -434,9 +427,8 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         'requested_at': item.medreq_id.requested_at,
                         'fulfilled_at': item.medreq_id.updated_at,
                         'request_items': [],
-                        'total_requested_qty': 0,  # Sum of all requested quantities for this medicine variant
-                        'total_allocated_qty': 0,  # Sum of all allocated quantities for this medicine variant
-                    
+                        'total_requested_qty': 0,
+                        'total_allocated_qty': 0,
                     }
                 
                 # Get medicine files for this request (only add once per group)
@@ -453,13 +445,11 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         })
                     medicine_groups[group_key]['medicine_files'] = medicine_files
                 
-                # Get patient information - Handle both pat_id and rp_id cases (only add once per group)
+                # Get patient information (only add once per group)
                 if not medicine_groups[group_key].get('patient'):
                     patient_info = {}
                     if item.medreq_id.pat_id:
-                        # Patient is registered
                         patient = item.medreq_id.pat_id
-                        
                         if patient.rp_id and patient.rp_id.per:
                             personal = patient.rp_id.per
                             patient_info = {
@@ -485,7 +475,6 @@ class MedicineRequestStatusTableViewDetails(APIView):
                                 'tran_sex': transient.tran_sex
                             }
                     elif item.medreq_id.rp_id:
-                        # Patient not registered yet, use rp_id
                         if item.medreq_id.rp_id.per:
                             personal = item.medreq_id.rp_id.per
                             patient_info = {
@@ -518,47 +507,83 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         'inv_type': item.minv_id.inv_id.inv_type if item.minv_id.inv_id else None,
                     }
                 
-                # Get allocation details for this request item (only for completed items)
-                allocations = []
+                # Calculate item_allocated_qty based on connection type
                 item_allocated_qty = 0
+                allocations = []
                 
                 if item.status == 'completed':
-                    for allocation in item.allocations.all():
-                        allocation_data = {
-                            'alloc_id': allocation.alloc_id,
-                            'minv_id': allocation.minv.minv_id,
-                            'inv_id': allocation.minv.inv_id.inv_id if allocation.minv.inv_id else None,
-                            'minv_name': allocation.minv.med_id.med_name if allocation.minv.med_id else "Unknown",
-                            'allocated_qty': allocation.allocated_qty,
-                            'created_at': allocation.created_at,
+                    # Check if item is directly connected to minv_id
+                    if item.minv_id:
+                        # Item directly connected to inventory
+                        # Use the requested quantity as allocated quantity
+                        item_allocated_qty = item.medreqitem_qty
+                        
+                        # Create a single allocation entry representing the direct connection
+                        allocations.append({
+                            'alloc_id': f"direct_{item.medreqitem_id}",  # Synthetic ID
+                            'minv_id': item.minv_id.minv_id,
+                            'inv_id': item.minv_id.inv_id.inv_id if item.minv_id.inv_id else None,
+                            'minv_name': item.minv_id.med_id.med_name if item.minv_id.med_id else "Unknown",
+                            'allocated_qty': item.medreqitem_qty,  # Full requested quantity
+                            'created_at': item.medreq_id.updated_at,
+                            'allocation_type': 'direct',  # Flag to indicate direct connection
                             'minv_details': {
-                                'minv_dsg': allocation.minv.minv_dsg,
-                                'minv_dsg_unit': allocation.minv.minv_dsg_unit,
-                                'minv_form': allocation.minv.minv_form,
-                                'minv_qty': allocation.minv.minv_qty,
-                                'minv_qty_unit': allocation.minv.minv_qty_unit,
-                                'minv_pcs': allocation.minv.minv_pcs,
-                                'minv_qty_avail': allocation.minv.minv_qty_avail,
-                                'wasted': allocation.minv.wasted,
-                                'temporary_deduction': allocation.minv.temporary_deduction,
+                                'minv_dsg': item.minv_id.minv_dsg,
+                                'minv_dsg_unit': item.minv_id.minv_dsg_unit,
+                                'minv_form': item.minv_id.minv_form,
+                                'minv_qty': item.minv_id.minv_qty,
+                                'minv_qty_unit': item.minv_id.minv_qty_unit,
+                                'minv_pcs': item.minv_id.minv_pcs,
+                                'minv_qty_avail': item.minv_id.minv_qty_avail,
+                                'wasted': item.minv_id.wasted,
+                                'temporary_deduction': item.minv_id.temporary_deduction,
                             },
                             'inv_details': {
-                                'expiry_date': allocation.minv.inv_id.expiry_date if allocation.minv.inv_id else None,
-                                'inv_type': allocation.minv.inv_id.inv_type if allocation.minv.inv_id else None,
-                                'is_archived': allocation.minv.inv_id.is_Archived if allocation.minv.inv_id else None,
+                                'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
+                                'inv_type': item.minv_id.inv_id.inv_type if item.minv_id.inv_id else None,
+                                'is_archived': item.minv_id.inv_id.is_Archived if item.minv_id.inv_id else None,
                             }
-                        }
-                        allocations.append(allocation_data)
-                        item_allocated_qty += allocation.allocated_qty
+                        })
+                    else:
+                        # Item uses allocation table (multiple sources possible)
+                        for allocation in item.allocations.all():
+                            allocation_data = {
+                                'alloc_id': allocation.alloc_id,
+                                'minv_id': allocation.minv.minv_id,
+                                'inv_id': allocation.minv.inv_id.inv_id if allocation.minv.inv_id else None,
+                                'minv_name': allocation.minv.med_id.med_name if allocation.minv.med_id else "Unknown",
+                                'allocated_qty': allocation.allocated_qty,
+                                'created_at': allocation.created_at,
+                                'allocation_type': 'table',  # Flag to indicate allocation table
+                                'minv_details': {
+                                    'minv_dsg': allocation.minv.minv_dsg,
+                                    'minv_dsg_unit': allocation.minv.minv_dsg_unit,
+                                    'minv_form': allocation.minv.minv_form,
+                                    'minv_qty': allocation.minv.minv_qty,
+                                    'minv_qty_unit': allocation.minv.minv_qty_unit,
+                                    'minv_pcs': allocation.minv.minv_pcs,
+                                    'minv_qty_avail': allocation.minv.minv_qty_avail,
+                                    'wasted': allocation.minv.wasted,
+                                    'temporary_deduction': allocation.minv.temporary_deduction,
+                                },
+                                'inv_details': {
+                                    'expiry_date': allocation.minv.inv_id.expiry_date if allocation.minv.inv_id else None,
+                                    'inv_type': allocation.minv.inv_id.inv_type if allocation.minv.inv_id else None,
+                                    'is_archived': allocation.minv.inv_id.is_Archived if allocation.minv.inv_id else None,
+                                }
+                            }
+                            allocations.append(allocation_data)
+                            item_allocated_qty += allocation.allocated_qty
                 
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
                     'medreqitem_qty': item.medreqitem_qty,
                     'reason': item.reason,
                     'status': item.status,
+                    'is_direct_connection': bool(item.minv_id),  # Flag to indicate connection type
                     'inventory': inventory_info,
                     'allocations': allocations,
-                    'item_allocated_qty': item_allocated_qty,  # Allocated qty for this specific item
+                    'item_allocated_qty': item_allocated_qty,
                     'remaining_qty': item.medreqitem_qty - item_allocated_qty if item.status == 'completed' else 0,
                     'is_fully_allocated': item_allocated_qty >= item.medreqitem_qty if item.status == 'completed' else False,
                 }

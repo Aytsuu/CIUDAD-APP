@@ -261,14 +261,11 @@ export const completedDetailsIColumns: ColumnDef<any>[] = [
       cell: ({ row }) => {
         const allocated = row.original.total_allocated_qty || 0;
         const requested = row.original.total_requested_qty || 0;
-        const percentage = requested > 0 ? Math.round((allocated / requested) * 100) : 0;
   
         return (
           <div className="text-center py-2">
             <div className="font-medium text-green-600">{allocated}</div>
-            {percentage > 0 && (
-              <div className="text-xs text-gray-500 mt-0.5">({percentage}%)</div>
-            )}
+          
           </div>
         );
       }
