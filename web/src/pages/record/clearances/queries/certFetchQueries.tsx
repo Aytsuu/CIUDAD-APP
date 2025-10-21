@@ -61,22 +61,24 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
     if (paymentStatus) params.append('payment_status', paymentStatus);
     
     const queryString = params.toString();
-    const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
     
-    // Fetch resident certificates with pagination
-    const residentRes = await api.get(url);
+    // Fetch both resident and non-resident certificates
+    const [residentRes, nonResidentRes] = await Promise.all([
+      api.get(`/clerk/certificate/${queryString ? '?' + queryString : ''}`),
+      api.get(`/clerk/nonresident-personal-clearance/${queryString ? '?' + queryString : ''}`)
+    ]);
+    
     const residentData = residentRes.data;
+    const nonResidentData = nonResidentRes.data;
     
-    // Handle both paginated and non-paginated responses
+    // Handle both paginated and non-paginated responses for residents
     const residentRaw = residentData.results || residentData;
-    const residentCount = residentData.count || residentRaw.length;
-    const residentNext = residentData.next || null;
-    const residentPrevious = residentData.previous || null;
     
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
+    // Handle both paginated and non-paginated responses for non-residents
+    const nonResidentRaw = nonResidentData.results || nonResidentData;
+    
+    // Map resident certificates
     const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
-      
       return {
         cr_id: item.cr_id,
         resident_details: item.resident_details ? {
@@ -104,13 +106,115 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
       } as Certificate;
     });
 
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
+    // Map non-resident certificates
+    const nonResidentCertificates: Certificate[] = (nonResidentRaw || []).map((item: any) => {
+      return {
+        cr_id: item.nrc_id, // nrc_id is now the formatted ID (NRC001-25) saved in database
+        resident_details: null, // Non-residents don't have resident_details
+        req_pay_method: 'Walk-in',
+        req_request_date: item.nrc_req_date,
+        req_type: item.purpose?.pr_purpose || '',
+        req_purpose: item.purpose?.pr_purpose || '',
+        req_payment_status: item.nrc_req_payment_status,
+        req_transac_id: '',
+        is_nonresident: true,
+        nrc_id: item.nrc_id, // This is the formatted ID from database
+        nrc_requester: item.nrc_requester,
+        nrc_address: item.nrc_address,
+        nrc_birthdate: item.nrc_birthdate,
+        invoice: item.invoice
+          ? {
+              inv_num: item.invoice.inv_num,
+              inv_serial_num: item.invoice.inv_serial_num,
+              inv_date: item.invoice.inv_date,
+              inv_amount: item.invoice.inv_amount,
+              inv_nat_of_collection: item.invoice.inv_nat_of_collection,
+            }
+          : undefined,
+      } as Certificate;
+    });
+
+    // Combine both types of certificates
+    let allCertificates = [...residentCertificates, ...nonResidentCertificates];
+    
+    // Apply type filtering
+    if (status && status !== "all") {
+      if (status === "resident") {
+        allCertificates = allCertificates.filter(cert => !cert.is_nonresident);
+      } else if (status === "nonresident") {
+        allCertificates = allCertificates.filter(cert => cert.is_nonresident);
+      }
+    }
+    
+    // Apply purpose filtering (case-insensitive)
+    if (paymentStatus && paymentStatus !== "all") {
+      console.log('Filtering by purpose:', paymentStatus);
+      allCertificates = allCertificates.filter(cert => {
+        const purposeMatch = cert.req_purpose?.toLowerCase() === paymentStatus.toLowerCase();
+        console.log(`Certificate ${cert.cr_id}: purpose="${cert.req_purpose}" matches="${purposeMatch}"`);
+        return purposeMatch;
+      });
+    }
+    
+    // Apply search filtering
+    if (search) {
+      const searchLower = search.toLowerCase();
+      allCertificates = allCertificates.filter(cert => {
+        const firstName = cert.is_nonresident 
+          ? cert.nrc_requester?.split(' ')[0]?.toLowerCase() || ''
+          : cert.resident_details?.per_fname?.toLowerCase() || '';
+        const lastName = cert.is_nonresident 
+          ? cert.nrc_requester?.split(' ').slice(1).join(' ').toLowerCase() || ''
+          : cert.resident_details?.per_lname?.toLowerCase() || '';
+        const fullName = cert.is_nonresident 
+          ? cert.nrc_requester?.toLowerCase() || ''
+          : `${cert.resident_details?.per_fname || ''} ${cert.resident_details?.per_lname || ''}`.toLowerCase();
+        const purpose = cert.req_purpose?.toLowerCase() || '';
+        const crId = cert.cr_id?.toLowerCase() || '';
+        
+        return firstName.includes(searchLower) || 
+               lastName.includes(searchLower) || 
+               fullName.includes(searchLower) ||
+               purpose.includes(searchLower) ||
+               crId.includes(searchLower);
+      });
+    }
+    
+    const totalCount = allCertificates.length;
+    
+    // Sort by request date (newest first) with robust date parsing
+    allCertificates.sort((a, b) => {
+      const dateA = new Date(a.req_request_date);
+      const dateB = new Date(b.req_request_date);
+      
+      // Handle invalid dates by putting them at the end
+      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) {
+        // If both dates are invalid, sort by ID (newest first based on ID pattern)
+        return b.cr_id.localeCompare(a.cr_id);
+      }
+      if (isNaN(dateA.getTime())) return 1;
+      if (isNaN(dateB.getTime())) return -1;
+      
+      const dateDiff = dateB.getTime() - dateA.getTime();
+      
+      // If dates are the same (within 1 second), sort by ID as secondary sort
+      if (Math.abs(dateDiff) < 1000) {
+        return b.cr_id.localeCompare(a.cr_id);
+      }
+      
+      return dateDiff;
+    });
+    
+    // Apply pagination to combined results
+    const startIndex = ((page || 1) - 1) * (pageSize || 10);
+    const endIndex = startIndex + (pageSize || 10);
+    const paginatedResults = allCertificates.slice(startIndex, endIndex);
+    
     return {
-      results: residentCertificates,
-      count: residentCount,
-      next: residentNext,
-      previous: residentPrevious
+      results: paginatedResults,
+      count: totalCount,
+      next: endIndex < totalCount ? 'next' : null,
+      previous: startIndex > 0 ? 'previous' : null
     };
   } catch (err) {
     const error = err as AxiosError;

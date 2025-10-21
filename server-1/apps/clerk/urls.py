@@ -55,7 +55,7 @@ urlpatterns = [
     # Personal Clearances and Payment URLs
     path('personal-clearances/', PersonalClearancesView.as_view(), name='personal-clearances-list'),
     path('nonresident-personal-clearance/', NonResidentsCertReqView.as_view(), name='nonresident-personal-cert-req'),
-    path('update-personal-req-status/<int:nrc_id>/', UpdateNonResidentCertReqView.as_view(), name='update-non-resident-status'),
+    path('update-personal-req-status/<str:nrc_id>/', UpdateNonResidentCertReqView.as_view(), name='update-non-resident-status'),
     path('permit-clearances/', PermitClearanceView.as_view(), name='permit-clearances-list'),
     path('payment/create/<str:cr_id>/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
     path('payment/webhook/', PaymentStatusView.as_view(), name='payment-webhook'),

@@ -149,7 +149,7 @@ function CertificatePage() {
 
   const { data: certificatesData, isLoading, error } = useQuery({
     queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
-    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, undefined),
+    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, filterPurpose === "all" ? undefined : filterPurpose),
   });
 
   // Handle loading state
@@ -344,12 +344,26 @@ function CertificatePage() {
     {
       accessorKey: "resident_details.per_fname",
       header: "First Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_fname || row.original.nrc_requester || 'N/A'}</div>,
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // For non-residents, split the nrc_requester name
+          const nameParts = row.original.nrc_requester?.split(' ') || [];
+          return <div>{nameParts[0] || 'N/A'}</div>;
+        }
+        return <div>{row.original.resident_details?.per_fname || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "resident_details.per_lname",
       header: "Last Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_lname || 'N/A'}</div>,
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // For non-residents, join all parts except the first as last name
+          const nameParts = row.original.nrc_requester?.split(' ') || [];
+          return <div>{nameParts.slice(1).join(' ') || 'N/A'}</div>;
+        }
+        return <div>{row.original.resident_details?.per_lname || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "req_request_date",
@@ -372,6 +386,10 @@ function CertificatePage() {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
+        } else if (capitalizedValue === "Burial") {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
         } else {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
@@ -536,6 +554,7 @@ function CertificatePage() {
               { id: "all", name: "All Purposes" },
               { id: "employment", name: "Employment" },
               { id: "bir", name: "BIR" },
+              { id: "burial", name: "Burial" },
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}

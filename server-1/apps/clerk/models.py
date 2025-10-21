@@ -39,7 +39,7 @@ class ClerkCertificate(models.Model):
         managed = False
 
 class NonResidentCertificateRequest(models.Model):
-    nrc_id = models.BigAutoField(primary_key=True)  
+    nrc_id = models.CharField(primary_key=True, max_length=20)  # For formatted ID like NRC001-25
     nrc_req_date = models.DateTimeField(default = datetime.now)
     nrc_req_status = models.CharField(max_length=100, default = 'None')
     nrc_req_payment_status = models.CharField(max_length=100, default='None')
