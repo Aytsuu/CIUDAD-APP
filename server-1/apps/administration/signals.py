@@ -8,7 +8,3 @@ def handle_waste_personnel(sender, instance, created, **kwargs):
     if hasattr(instance, 'pos') and instance.pos.pos_group and instance.pos.pos_group.lower() == "waste personnel":
         if created:
             WastePersonnel.objects.create(staff=instance)
-        else:
-            # Update existing WastePersonnel if it exists
-            if hasattr(instance, 'wastepersonnel'):
-                instance.wastepersonnel.save()
