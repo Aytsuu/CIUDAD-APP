@@ -73,13 +73,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       });
 
       //5. Add new Expense log
-      if(values.returnAmount > 0){
-        await expense_log(iet_num, {
-          returnAmount: values.returnAmount,
-          el_proposed_budget: values.iet_amount,
-          el_actual_expense: values.iet_actual_amount
-        });
-      }      
+      await expense_log(iet_num, {
+        returnAmount: values.returnAmount,
+        el_proposed_budget: values.iet_amount,
+        el_actual_expense: values.iet_actual_amount
+      });
+ 
       
       return iet_num;
     },  
