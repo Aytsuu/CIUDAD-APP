@@ -189,16 +189,19 @@ export const usePatientVaccinationDetails = (patientId: string) => {
   });
 };
 
-// Updated hook with parameters
-export const useVaccinationRecords = () => {
-  return useQuery<VaccinationRecord[]>({
-    queryKey: ["vaccinationRecords"],
-    queryFn: getVaccinationRecords,
-    refetchOnMount: true,
-    staleTime: 1 * 60 * 1000,
+
+
+// Update your fetch query hook
+export const useVaccinationRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
+  return useQuery({
+    queryKey: ["VaccinationRecords", params],
+    queryFn: () => getVaccinationRecords(params),
+    staleTime: 1000 * 60 * 5,
     retry: 3
   });
 };
+
+
 
 export const useUnvaccinatedResidents = () => {
   return useQuery({

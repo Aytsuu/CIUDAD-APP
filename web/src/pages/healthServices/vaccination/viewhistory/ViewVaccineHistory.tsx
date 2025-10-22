@@ -63,7 +63,7 @@ export default function VaccinationView() {
               {currentVaccination && <CurrentVaccination currentVaccination={currentVaccination} />}
 
               {/* Vaccination History */}
-              <VaccinationHistoryRecord relevantHistory={relevantHistory} currentVaccinationId={Vaccination?.vachist_id} loading={isLoading} error={error?.message} />
+              <VaccinationHistoryRecord relevantHistory={relevantHistory} patientDob={patientData?.personal_info?.per_dob} currentVaccinationId={Vaccination?.vachist_id} loading={isLoading} error={error?.message} />
             </div>
           </>
         }

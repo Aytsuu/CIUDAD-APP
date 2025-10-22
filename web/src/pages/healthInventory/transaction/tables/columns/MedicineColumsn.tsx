@@ -1,15 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 export const MedTransactioncolumns = (): ColumnDef<any>[] => [
-  {
-    accessorKey: "inv_id",
-    header: "ID",
-    cell: ({ row }) => (
-      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
-        {row.original.inv_id}{" "}
-      </div>
-    ),
-  },
+  // {
+  //   accessorKey: "inv_id",
+  //   header: "ID",
+  //   cell: ({ row }) => (
+  //     <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+  //       {row.original.inv_id}{" "}
+  //     </div>
+  //   ),
+  // },
   {
     accessorKey: "med_name",
     header: "Medicine Name",

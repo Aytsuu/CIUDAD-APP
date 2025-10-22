@@ -96,7 +96,7 @@ export type ObstetricalHistory = {
   fullTerm: number;
   premature: number;
   abortion: number;
-  livingChildren: number;
+  numOfLivingChildren: number;
   lastDeliveryDate?: string;
   typeOfLastDelivery?: string;
   lastMenstrualPeriod?: string;

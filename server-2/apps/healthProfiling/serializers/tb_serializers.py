@@ -25,12 +25,10 @@ class TBSurveilanceSerializer(serializers.ModelSerializer):
 
 class TBSurveilanceCreateSerializer(serializers.ModelSerializer):
     rp_id = serializers.CharField(write_only=True)
-    tb_id = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = TBsurveilance
         fields = [
-            'tb_id',
             'tb_meds_source',
             'tb_days_taking_meds',
             'tb_status',
@@ -46,19 +44,39 @@ class TBSurveilanceCreateSerializer(serializers.ModelSerializer):
         except ResidentProfile.DoesNotExist:
             raise serializers.ValidationError(f"ResidentProfile with id {rp_id} does not exist")
             
-        # Auto-generate tb_id if not provided
-        if not validated_data.get('tb_id'):
-            # Generate based on resident ID and count
-            existing_count = TBsurveilance.objects.filter(rp=rp).count()
-            validated_data['tb_id'] = f"TB-{rp_id}-{existing_count + 1:03d}"
-            
+        # BigAutoField will auto-generate the tb_id, no manual assignment needed
         return super().create(validated_data)
 
 class TBSurveilanceUpdateSerializer(serializers.ModelSerializer):
+    staff_id = serializers.CharField(write_only=True, required=False)
+    
     class Meta:
         model = TBsurveilance
         fields = [
             'tb_meds_source',
             'tb_days_taking_meds',
-            'tb_status'
+            'tb_status',
+            'staff_id'
         ]
+    
+    def update(self, instance, validated_data):
+        from apps.administration.models import Staff
+        
+        # Extract staff_id for history tracking
+        staff_id = validated_data.pop('staff_id', None)
+        
+        # Set history user if staff_id provided
+        if staff_id:
+            try:
+                staff = Staff.objects.get(staff_id=staff_id)
+                instance._history_user = staff
+            except Staff.DoesNotExist:
+                pass
+        
+        # Update instance fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+

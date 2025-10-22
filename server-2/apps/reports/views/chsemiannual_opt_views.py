@@ -208,7 +208,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
             Prefetch(
-                'pat__rp_id__per__personaladdress_set',
+                'pat__rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_personal_addresses'
             ),
@@ -287,7 +287,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                     child_fname = personal_info.get('per_fname', '')
                     child_mname = personal_info.get('per_mname', '')
                     child_lname = personal_info.get('per_lname', '')
-                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
+                    child_name = f"{child_fname or ''} {child_mname or ''} {child_lname or ''}".strip()
 
                     # Use utility function for address
                     address, sitio, is_transient = get_patient_address(bm_obj.pat)
@@ -320,7 +320,8 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                         'wfl': bm_obj.wfl,
                         'muac': bm_obj.muac,
                         'edema': bm_obj.edemaSeverity,
-                        'muac_status': bm_obj.muac_status
+                        'muac_status': bm_obj.muac_status,
+                        'remarks':bm_obj.remarks
                     }
 
                     # Determine semi-annual period

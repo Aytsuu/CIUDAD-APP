@@ -19,7 +19,7 @@ export default function PendingDisplayMedicalConsultation({
   // patientData // Added patientData to props
 }: PendingDisplayMedicalConsultationProps) {
   // const patId = checkupData.pat_details.pat_id;
-  const chrecId = checkupData.chrec_id;
+  const chrecId = checkupData.chrec;
   const chhistId = checkupData.chhist_id;
   // const navigate = useNavigate(); // Added navigate hook
 
@@ -78,6 +78,7 @@ export default function PendingDisplayMedicalConsultation({
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
       <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
+
 
       {/* Navigation Buttons */}
       <div className="flex justify-end mt-6 sm:mt-8">

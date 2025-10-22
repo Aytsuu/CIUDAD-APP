@@ -4,7 +4,6 @@ import { View, SafeAreaView, Text, ActivityIndicator, TouchableOpacity, ScrollVi
 import { ChevronLeft } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
-import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useState } from "react";
 import BudgetPlanHistory from "./budget-plan-history";
 import BudgetPlanSuppDocs from "./budget-plan-suppdocs";

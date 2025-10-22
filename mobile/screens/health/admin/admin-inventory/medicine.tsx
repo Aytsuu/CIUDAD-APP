@@ -1,13 +1,4 @@
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  RefreshControl,
-  ActivityIndicator,
-  FlatList,
-  Alert,
-} from "react-native";
+import { View,ScrollView,TouchableOpacity,TextInput,RefreshControl,FlatList} from "react-native";
 import { Search, Package, ChevronLeft, AlertTriangle, Filter } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import * as React from "react";
@@ -336,7 +327,7 @@ export default function InventoryScreen() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Inventory</Text>}
+      headerTitle={<Text className="text-gray-900 text-[16px]">Inventory</Text>}
       rightAction={<TouchableOpacity
         onPress={() => setShowFilters(!showFilters)}
         className="p-2 bg-gray-100 rounded-xl"

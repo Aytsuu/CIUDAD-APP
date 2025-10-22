@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  getFamilyHealthProfilingData,
   getFamFilteredByHouseHealth,
   getFamiliesTableHealth,
   getFamilyCompositionHealth,
@@ -31,7 +32,18 @@ import {
   getSurveyIdentificationByFamily,
   getSurveyIdentificationFormData,
   getSurveyIdentificationDataByHousehold,
+  fetchIllnesses,
 } from "../restful-api/profilingGetAPI";
+
+// ================ FAMILY HEALTH PROFILING ================ (Status: New)
+export const useFamilyHealthProfilingData = (famId: string | null) => {
+  return useQuery({
+    queryKey: ['familyHealthProfilingData', famId],
+    queryFn: () => getFamilyHealthProfilingData(famId!),
+    enabled: !!famId, // Only run query when famId exists
+    staleTime: 5000,
+  })
+}
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
 
@@ -355,5 +367,16 @@ export const useSurveyIdentificationDataByHousehold = (hhId: string | null) => {
     queryFn: () => getSurveyIdentificationDataByHousehold(hhId!),
     enabled: !!hhId,
     staleTime: 5000,
+  })
+}
+// ================ ILLNESSES ================ (Status: New)
+export const useIllnessesList = () => {
+  return useQuery({
+    queryKey: ['illnessesList'],
+    queryFn: fetchIllnesses,
+    select: (data) => ({
+      data: data?.illnesses || []
+    }),
+    staleTime: 300000, // 5 minutes - illnesses don't change often
   })
 }

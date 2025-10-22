@@ -9,19 +9,33 @@ export const useConfirmAllPendingItems = () => {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: confirmAllPendingItems,
+    mutationFn: (payload: {
+      medreq_id: string;
+      selected_medicines: any[];
+      staff_id?: string;
+      pat_id: string;
+    }) => confirmAllPendingItems(payload),
     onSuccess: (variables) => {
       // Invalidate and refetch related queries
-      queryClient.invalidateQueries({ queryKey: ["pendingItemsMedRequest", variables] });
-      queryClient.invalidateQueries({ queryKey: ["medicineRequestItems"] });
       queryClient.invalidateQueries({ queryKey: ["medicinesWithStock"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords", variables.pat_id] });
+      queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
 
+
+      
+      // Show success message with allocation details
+      showSuccessToast("Confirmed Successfully"      );
+      
       navigate(-1); // Navigate back to the previous page
-      showSuccessToast("All pending items confirmed successfully");
     },
-    onError: (error) => {
-      console.error("Failed to confirm pending items:", error);
-      showErrorToast;
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || "Failed to confirm pending items";
+      showErrorToast(errorMessage);
     }
   });
 };

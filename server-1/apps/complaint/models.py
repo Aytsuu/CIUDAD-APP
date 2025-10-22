@@ -9,14 +9,12 @@ class Complainant(models.Model):
     cpnt_age = models.CharField(max_length=2)
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
-    cpnt_address = models.CharField(max_length=255, blank=True, null=True)
-    rp_id = models.ForeignKey(
-        'profiling.ResidentProfile', 
-        on_delete=models.CASCADE, 
-        db_column='rp_id',
-        null = True,
-        blank = True,
-    )
+    cpnt_address = models.CharField(max_length=255)
+    # rp_id = models.ForeignKey(
+    #     'profiling.ResidentProfile', 
+    #     on_delete=models.CASCADE, 
+    #     db_column='rp_id'
+    # )
     
     class Meta:
         db_table = 'complainant'
@@ -27,14 +25,8 @@ class Accused(models.Model):
     acsd_age = models.CharField(max_length=2)
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
-    acsd_address = models.CharField(max_length=255, blank=True, null=True)
-    rp_id = models.ForeignKey(
-        'profiling.ResidentProfile',
-        on_delete=models.CASCADE,
-        db_column='rp_id',
-        null=True,
-        blank=True,
-    )
+    acsd_address = models.CharField(max_length=255)
+
     class Meta:
         db_table = 'accused'
 
@@ -49,13 +41,6 @@ class Complaint(models.Model):
     comp_status = models.CharField(
         max_length=20, 
         default='Pending',
-    )
-    staff_id = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE,
-        null=True,
-        db_column='staff_id',
-        related_name='accept_complaints',
     )
     complainant = models.ManyToManyField(
         Complainant,

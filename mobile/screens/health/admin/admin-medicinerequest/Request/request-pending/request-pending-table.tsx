@@ -9,7 +9,6 @@ import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { MedicineRequestPending } from "../types";
 import { medicineRequestPendingColumns } from "./columns";
 import { usePendingMedRequest } from "../queries.tsx/fetch";
 

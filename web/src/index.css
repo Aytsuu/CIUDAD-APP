@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Canterbury Font */
+@font-face {
+  font-family: 'Canterbury';
+  src: url('./assets/fonts/Canterbury.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Remove arrow icon for input type number */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {

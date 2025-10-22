@@ -1,4 +1,5 @@
 export interface FPRecordData {
+  num_of_children: string;
   client_id?: string;
   givenName?: string;
   lastName?: string;
@@ -20,12 +21,13 @@ export interface FPRecordData {
   typeOfClient?: string;
   reasonForFP?: string;
   methodCurrentlyUsed?: string;
-  avg_monthly_income?: number;
+  avg_monthly_income_display?: number;
   plan_more_children?: boolean;
   fourps?: boolean;
   obstetricalHistory?: {
     menstrualFlow?: string;
     lastDeliveryDate?: string;
+    lastMenstrualPeriod?: string;
     typeOfLastDelivery?: string;
     previousMenstrualPeriod?: string;
     dysmenorrhea?: boolean;
@@ -33,7 +35,7 @@ export interface FPRecordData {
     ectopicPregnancyHistory?: boolean;
     g_pregnancies?: number;
     p_pregnancies?: number;
-    livingChildren?: number;
+    numOfLivingChildren?: number;
     fullTerm?: number;
     premature?: number;
     abortion?: number;
@@ -43,10 +45,13 @@ export interface FPRecordData {
   };
   medical_history_records?: { medhist_id: string; illname: string; ill_id: string }[];
   selectedIllnessIds?: string[];
-  risk_sti?: {
+  sexuallyTransmittedInfections?: {
     abnormalDischarge?: boolean;
     dischargeFrom?: string;
     sores?: boolean;
+    pain?: boolean;
+    history?: boolean;
+    hiv?: boolean;
   };
   risk_vaw?: {
     vaw_unpleasant_rs?: boolean;
@@ -70,12 +75,15 @@ export interface FPRecordData {
     recent_abortion?: boolean;
     using_contraceptive?: boolean;
   };
-  skinExamination?: string;
-  conjunctivaExamination?: string;
-  neckExamination?: string;
-  breastExamination?: string;
-  abdomenExamination?: string;
-  extremitiesExamination?: string;
+  fp_physical_exam?: {
+  skin_exam?: string;
+  conjunctiva_exam?: string;
+  neck_exam?: string;
+  breast_exam?: string;
+  abdomen_exam?: string;
+  extremities_exam?: string;
+  },
+
   weight?: number;
   height?: number;
   bloodPressure?: string;

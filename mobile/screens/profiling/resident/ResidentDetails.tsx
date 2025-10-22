@@ -3,8 +3,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
-  ActivityIndicator,
   FlatList,
   RefreshControl,
 } from "react-native";
@@ -22,7 +20,6 @@ import {
   useGetFamilyMembers,
   useGetPersonalInfo,
 } from "../queries/profilingGetQueries";
-import { capitalize } from "@/helpers/capitalize";
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatDate } from "@/helpers/dateHelpers";
 

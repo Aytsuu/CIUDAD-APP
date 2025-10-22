@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { Syringe, CheckCircle, Clock, AlertCircle, User, FileChartColumn, Activity } from 'lucide-react-native';
+import { CheckCircle, Clock, AlertCircle, Activity } from 'lucide-react-native';
 
 interface VaccinationStatusCardsProps {
   vaccinations: any[];

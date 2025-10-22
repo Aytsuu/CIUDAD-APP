@@ -1,4 +1,3 @@
-import { formatDate } from "@/helpers/dateHelper";
 import { z } from "zod";
 
 const today = new Date();
@@ -20,17 +19,31 @@ export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
-  dateOfFollowUp: z.preprocess(
-    (arg) => (arg === "" ? null : arg),
-    z.union([
-      z.literal(null),
-      z.coerce
-        .date()
-        .refine((date) => date > today, { message: "Follow-up date must be a future date" })
-        .refine((date) => !isWeekend(date), { message: "Follow-up date cannot be on weekends (Saturday or Sunday)" })
-        .transform((date) => formatDate(date)),
-    ]),
-  ),
+dateOfFollowUp: z.preprocess(
+  (arg) => (arg === "" ? null : arg),
+  z.union([
+    z.literal(null),
+    z.string().refine(
+      (dateString) => {
+        if (!dateString) return true; // Allow null/empty
+        
+        const date = new Date(dateString);
+        date.setHours(0, 0, 0, 0); // Normalize time for comparison
+        
+        // Check if date is today or in the past
+        const isTodayOrPast = date <= today;
+        // Check if date is on weekend
+        const isOnWeekend = isWeekend(date);
+        
+        // Return false if date is today/past OR on weekend
+        return !isTodayOrPast && !isOnWeekend;
+      },
+      { 
+        message: "Follow-up date must be a future date, and cannot be on weekends" 
+      }
+    ),
+  ]).optional(),
+),
   bloodPressure: z.string().optional(),
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
@@ -51,12 +64,28 @@ const PregnancyCheckSchema = z.object({
 
 const FamilyPlanningBaseSchema = z.object({
   pat_id: z.string().optional(),
-  patrec_id: z.string().optional(),
+  patrec_id: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   // fpt_id: z.string().optional(),
   client_id: z.string().optional(),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean().optional(),
   fourps: z.boolean().optional(),
+  skinExamination: z.string().optional(),
+  staff_id: z.string().optional(),
+
+  conjunctivaExamination: z.string().optional(),
+  neckExamination: z.string().optional(),
+breastExamination: z.string().optional(),
+abdomenExamination: z.string().optional(),
+  pelvicExamination: z.string().optional(),
+ extremitiesExamination: z.string().optional(),
+  cervicalConsistency: z.string().optional(),
+  cervicalTenderness: z.string().optional(),
+  cervicalAdnexal: z.string().optional(),
+  uterinePosition: z.string().optional(),
+  uterineDepth: z.string().optional(),
+
+
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
@@ -98,7 +127,11 @@ const FamilyPlanningBaseSchema = z.object({
   reason: z.string().optional(), 
   otherReason: z.string().optional(),
   otherMethod: z.string().optional(),
-  
+  fp_type: z.object({
+    fpt_reason: z.string().optional(),
+    fpt_reason_fp: z.string().optional(),
+    fpt_other_reason_fp: z.string().optional(),
+  }),
   previousMethod: z.string().optional(),
 
   methodCurrentlyUsed: z.string().nonempty(),
@@ -136,6 +169,7 @@ const FamilyPlanningBaseSchema = z.object({
 //     is_current: boolean;
 //   }>,
 
+  num_of_children: z.number().min(0).optional(),
   obstetricalHistory: z.object({
     g_pregnancies: z.coerce.number().min(0).default(0),
     p_pregnancies: z.coerce.number().min(0).default(0),
@@ -234,40 +268,44 @@ const FamilyPlanningBaseSchema = z.object({
     }),
   bodyMeasurementRecordedAt: z.string().optional(),
 
-  skinExamination: z.string().optional(),
-  conjunctivaExamination: z.string().optional(),
-  neckExamination: z.string().optional(),
-  breastExamination: z.string().optional(),
-  abdomenExamination: z.string().optional(),
-  extremitiesExamination: z.string().optional(),
+  fp_physical_exam: z.object({
+  skin_exam: z.string().optional(),
+  conjunctiva_exam: z.string().optional(),
+  neck_exam: z.string().optional(),
+  breast_exam: z.string().optional(),
+  abdomen_exam: z.string().optional(),
+  extremities_exam: z.string().optional(),
+  }),
+  
 
 selectedIllnessIds:z.string().optional(),
 
-  pelvicExamination: z.enum([
-  "normal",
-  "mass",
-  "abnormal_discharge",
-  "cervical_abnormalities",
-  "warts",
-  "polyp_or_cyst",
-  "inflammation_or_erosion",
-  "bloody_discharge",
-  "not_applicable",
-]).optional(),
+//   pelvicExamination: z.enum([
+//   "normal",
+//   "mass",
+//   "abnormal_discharge",
+//   "cervical_abnormalities",
+//   "warts",
+//   "polyp_or_cyst",
+//   "inflammation_or_erosion",
+//   "bloody_discharge",
+//   "not_applicable",
+// ]).optional(),
 
-  cervicalConsistency: z.enum([
-    "firm",
-    "soft",
-    "not_applicable",
-  ]).optional(),
-
-  cervicalTenderness: z.boolean().optional(),
-
-  cervicalAdnexal: z.boolean().optional(),
-
-  uterinePosition: z.string().optional(),
-
+  fp_pelvic_exam: z.object({
+    pelvicExamination: z.string().optional(),
+ cervicalConsistency: z.string().optional(),
+ cervicalTenderness: z.boolean().optional(),
+ cervicalAdnexal: z.boolean().optional(),
+ uterinePosition: z.string().optional(),
   uterineDepth: z.string().optional(),
+  }),
+
+  // cervicalConsistency: z.string().optional(),
+  // cervicalTenderness: z.boolean().optional(),
+  // cervicalAdnexal: z.boolean().optional(),
+  // uterinePosition: z.string().optional(),
+  // uterineDepth: z.string().optional(),
   
  acknowledgement: z.object({
   selectedMethod: z.string().nonempty("Please select a family planning method"),
@@ -298,11 +336,10 @@ selectedIllnessIds:z.string().optional(),
   pregnancyCheck: PregnancyCheckSchema.optional(),
 });
 
-export const page1Schema = FamilyPlanningBaseSchema.pick({
+const page1BaseSchema = FamilyPlanningBaseSchema.pick({
   pat_id: true,
   patrec_id: true,
   client_id: true,
-  
   philhealthNo: true,
   nhts_status: true,
   fourps: true,
@@ -314,19 +351,80 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   educationalAttainment: true,
   occupation: true,
   address: true,
-  // spouse: false,
   numOfLivingChildren: true,
   plan_more_children: true,
   avg_monthly_income: true,
   typeOfClient: true,
   subTypeOfClient: true,
-  // reasonForFP: true,
-  // otherReasonForFP: true,
-  // reason: true, // For current user reason
-  // otherReason: true, // For current user reason specify
+  reasonForFP: true,
+  otherReasonForFP: true,
+  reason: true,
   methodCurrentlyUsed: true,
-  // otherMethod: true,
+  otherMethod: true,
 });
+
+// Create different validation rules based on mode
+export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup") => 
+  page1BaseSchema.superRefine((data, ctx) => {
+    // Skip validation for view mode
+    if (mode === "view") return;
+
+    // For followup mode, only validate basic required fields, not reason fields
+    if (mode === "followup") {
+      if (!data.methodCurrentlyUsed) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Method currently used is required",
+          path: ["methodCurrentlyUsed"]
+        });
+      }
+      
+      if (data.methodCurrentlyUsed === "Others" && !data.otherMethod) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the other method",
+          path: ["otherMethod"]
+        });
+      }
+      return; // Skip other validations for followup mode
+    }
+
+    // Enhanced validation for create/edit modes only
+    if (data.typeOfClient === "currentuser" && (data.subTypeOfClient === "changingmethod" || data.subTypeOfClient === "dropoutrestart" || data.subTypeOfClient === "changingclinic")) {
+      if (!data.reasonForFP) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reason is required",
+          path: ["reasonForFP"]
+        });
+      }
+      
+      if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the other reason",
+          path: ["otherReasonForFP"]
+        });
+      }
+      
+      if (data.reasonForFP === "sideeffects" && !data.reason) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the side effects",
+          path: ["reason"]
+        });
+      }
+    }
+
+    if (data.methodCurrentlyUsed === "Others" && !data.otherMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please specify the other method",
+        path: ["otherMethod"]
+      });
+    }
+  });
+
 
 
 export const page2Schema = FamilyPlanningBaseSchema.pick({
@@ -346,17 +444,7 @@ export const page4Schema = FamilyPlanningBaseSchema.pick({
   bloodPressure: true,
   pulseRate: true,
   skinExamination: true,
-  conjunctivaExamination: true,
-  neckExamination: true,
-  breastExamination: true,
-  abdomenExamination: true,
-  extremitiesExamination: true,
-  // pelvicExamination: false,
-  // cervicalConsistency: false,
-  // cervicalTenderness: false,
-  // cervicalAdnexal: false,
-  // uterinePosition: false,
-  // uterineDepth: false,
+ 
   bodyMeasurementRecordedAt: true 
 });
 
@@ -401,12 +489,12 @@ export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, 
   }
 
   // Common validation for IUD
-  const isIUD = data.methodCurrentlyUsed?.includes("IUD");
-  if (isIUD) {
-  if (!data.pelvicExamination || !data.cervicalConsistency || !data.uterinePosition) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pelvic exam details (Pelvic Examination, Cervical Consistency, Uterine Position) are required for IUD method", path: ["pelvicExamination"] });
-  }
-}
+//   const isIUD = data.methodCurrentlyUsed?.includes("IUD");
+//   if (isIUD) {
+//   if (!data.pelvicExamination || !data.cervicalConsistency || !data.uterinePosition) {
+//     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pelvic exam details (Pelvic Examination, Cervical Consistency, Uterine Position) are required for IUD method", path: ["pelvicExamination"] });
+//   }
+// }
 
 
   // --- Conditional Logic for Type of Client ---

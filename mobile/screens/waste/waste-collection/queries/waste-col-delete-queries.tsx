@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { arciveWasteColData } from "../request/waste-col-delete-request";
 import { restoreWasteColData } from "../request/waste-col-delete-request";
@@ -23,7 +22,7 @@ export const useArchiveWasteCol = () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       
       // Show success toast
-      toast.success("Successfully archived schedule");
+    //   toast.success("Successfully archived schedule");
     },
     onError: (err) => {
       toast.error("Failed to archived schedule");

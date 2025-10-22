@@ -31,6 +31,7 @@ export default function ScheduledVaccine() {
   const location = useLocation();
   const { Vaccination, patientData } = location.state || {};
   const patientId = patientData?.pat_id;
+  console.log("patrec_id",patientData.patrec_id)
 
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patientId, patientData.personal_info.per_dob);
   const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } = useFollowupVaccines(patientId);
@@ -150,7 +151,8 @@ export default function ScheduledVaccine() {
       vaccination: activeVaccination,
       previousVaccination, // This is the key fix - passing previousVaccination
       followUpData: activeVaccination?.follow_up_visit ? formData : undefined,
-      patientId 
+      patientId ,
+      patrec_id: patientData.patrec_id || ""
     })
   };
 
@@ -206,12 +208,7 @@ export default function ScheduledVaccine() {
                               label="Follow-up Visit Date" 
                               type="date" 
                             />
-                            <FormInput 
-                              control={form.control} 
-                              name="followv_status" 
-                              label="Follow-up Status" 
-                              placeholder="Status" 
-                            />
+                           
                           </div>
                           <div className="mt-4">
                             <FormInput 
@@ -228,6 +225,7 @@ export default function ScheduledVaccine() {
                     <VaccinationHistoryRecord 
                       relevantHistory={relevantHistory} 
                       currentVaccinationId={Vaccination?.vachist_id} 
+                      patientDob={patientData?.personal_info?.per_dob}
                       loading={isLoading} 
                       error={error?.message} 
                     />

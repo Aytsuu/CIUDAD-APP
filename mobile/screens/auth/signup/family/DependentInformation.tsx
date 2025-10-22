@@ -1,4 +1,3 @@
-import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { router } from "expo-router";
 import { ScrollView, TouchableOpacity, Text, View, Alert } from "react-native";
@@ -9,7 +8,6 @@ import React from "react";
 import PersonalInformation from "../PersonalInformation";
 import { useToastContext } from "@/components/ui/toast";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { X } from "@/lib/icons/X";
 import { UserRound } from "@/lib/icons/UserRound";
 import { Pen } from "@/lib/icons/Pen";
 import { Trash } from "@/lib/icons/Trash";

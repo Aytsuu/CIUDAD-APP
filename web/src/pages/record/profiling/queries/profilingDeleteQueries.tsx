@@ -16,7 +16,7 @@ export const useDeleteSitio = () => {
     }, 
     onSuccess: (_, sitio_id) => { 
       queryClient.setQueryData(["sitioList"], (old: any[] = []) => 
-        old.filter((sitio) => sitio.sitio_id !== sitio_id)
+        old.filter((sitio:any) => sitio.sitio_id !== sitio_id)
       )
       queryClient.invalidateQueries({ queryKey: ["sitioList"] })
     }

@@ -12,7 +12,7 @@ import { router } from "expo-router";
 
 export default function ResidentPending() {
   const {user} = useAuth()  
-  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user?.rp || '')
+  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user?.resident?.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");

@@ -129,5 +129,3 @@ class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
         rp = self.kwargs.get('rp')
         obj = get_object_or_404(FamilyComposition, fam=fam, rp=rp)
         return obj
-
-    

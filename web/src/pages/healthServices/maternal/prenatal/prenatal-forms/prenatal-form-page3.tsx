@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useCallback } from "react" // Added useEffect
+import { useState, useCallback } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
@@ -12,31 +12,43 @@ import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/
 import { Label } from "@/components/ui/label"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
-import { FormSelect } from "@/components/ui/form/form-select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Added Card imports
 
-import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { MedicineDisplay } from "@/components/ui/medicine-display"
-import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQueries"
+import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
-export default function PrenatalFormThirdPg({
-  form,
-  onSubmit,
-  back,
-}: {
+import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
+import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQueries"
+import { ScrollText } from "lucide-react"
+import { ANCVisitsGuide } from "../../maternal-components/guide-for-8anc"
+import { useAuth } from "@/context/AuthContext"
+
+// main  component
+export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedicines, setSelectedMedicines }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
   onSubmit: () => void
   back: () => void
+  selectedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]
+  setSelectedMedicines: React.Dispatch<React.SetStateAction<{ minv_id: string; medrec_qty: number; reason: string }[]>>
 }) {
-  // Renamed to submitLocal for clarity
-  const handleNext = async () => {
-    window.scrollTo(0, 0)
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
+  const { user } = useAuth()
+  const staff = `${user?.personal?.per_fname || ""} ${user?.personal?.per_lname || ""} (${user?.staff?.pos || ""})`
+  const staffId = user?.staff?.staff_id || ""
+
+  form.setValue("assessedBy.name", staff)
+  form.setValue("assessedBy.id", staffId)
+
+  const handleNext = async () => {
     if (Object.keys(form.formState.errors).length === 0) {
       console.log("Form is valid, proceeding to next page")
-      onSubmit() // This calls handlePatientSubmit(3) from prenatal-form-main.tsx
+      onSubmit() 
     } else {
       console.log("Form validation failed for RHF fields.")
       console.log("Validation errors:", form.formState.errors) 
@@ -46,17 +58,64 @@ export default function PrenatalFormThirdPg({
         firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" })
       }
     }
-    window.scrollTo(0, 0)
   }
 
-  // const [selectedOption, setSelectedOption] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
+  function calculateAOG(lmp: string): {weeks: number, days: number} {
+    const lmpDate = new Date(lmp)
+    const today = new Date()
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
-  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
-  const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
-  
+    // clearing time portion
+    lmpDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
+    // difference in milliseconds
+    const diffInMs = today.getTime() - lmpDate.getTime()
+    if (diffInMs < 0) return {weeks: 0, days: 0}
+
+    // convert to days
+    const totalDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    const weeks = Math.floor(totalDays / 7);
+    const days = totalDays % 7;
+
+    return {weeks, days}
+  }
+
+  const lmp = form.watch("presentPregnancy.pf_lmp")
+
+  // compute age of gestation (weeks, days) from LMP; default to 0 when not available
+  const aog = (() => {
+    try {
+      if (!lmp) return { weeks: 0, days: 0 }
+      const res = calculateAOG(lmp)
+      form.setValue("followUpSchedule.aogWeeks", res.weeks)
+      form.setValue("followUpSchedule.aogDays", res.days)
+      return {
+        weeks: Number.isFinite(res.weeks) ? res.weeks : 0,
+        days: Number.isFinite(res.days) ? res.days : 0,
+      }
+    } catch {
+      return { weeks: 0, days: 0 }
+    }
+  })()
+
+  const getDayName = (dateString: string) => {
+    const date = new Date(dateString)
+    return  date.toLocaleDateString("en-PH", { weekday: "long" })
+  }
+
+  const followupDate = form.watch("followUpSchedule.followUpDate")
+
+  // compute today's date in YYYY-MM-DD for use as min on date inputs
+  const todayIso = (() => {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  })()
+
+  const followupDayName = followupDate ? `is on ${getDayName(followupDate)}` : ""
 
   const handleSelectedMedicinesChange = useCallback(
     (
@@ -111,7 +170,6 @@ export default function PrenatalFormThirdPg({
     ],
   ]
 
-  // risk codes
   type RiskCodes = z.infer<typeof PrenatalFormSchema>["riskCodes"]
   type HasOneOrMoreOfTheFFKeys = keyof RiskCodes["hasOneOrMoreOfTheFF"]
   type HasOneOrMoreOneConditionsKeys = keyof RiskCodes["hasOneOrMoreOneConditions"]
@@ -128,68 +186,6 @@ export default function PrenatalFormThirdPg({
       { name: "bronchialAsthma" as HasOneOrMoreOneConditionsKeys, label: "Bronchial Asthma" },
       { name: "goiter" as HasOneOrMoreOneConditionsKeys, label: "Goiter" },
     ],
-  }
-
-  // AOG Analysis and Visit Tracking
-  const [aogAnalysis, setAogAnalysis] = useState<{
-    currentMonth: number
-    currentWeek: number
-    expectedVisits: number
-    missedVisits: number
-    visitFrequency: string
-    nextVisitRecommendation: string
-  } | null>(null)
-
-  const calculateAOGAnalysis = () => {
-    const weeks = Number(form.getValues("followUpSchedule.aogWeeks")) || 0
-    const days = Number(form.getValues("followUpSchedule.aogDays")) || 0
-
-    if (weeks === 0) return
-
-    const totalWeeks = weeks + days / 7
-    const currentMonth = Math.ceil(totalWeeks / 4.33) // Average weeks per month
-
-    let expectedVisits = 0
-    let visitFrequency = ""
-    let nextVisitRecommendation = ""
-
-    if (totalWeeks < 28) {
-      // monthly visits
-      expectedVisits = Math.floor(totalWeeks / 4)
-      visitFrequency = "Monthly (every 4 weeks)"
-      nextVisitRecommendation = "4 weeks"
-    } else if (totalWeeks < 36) {
-      // bi-weekly visits
-      const visitsBeforeWeek28 = 7 // total monthly visits
-
-      const weeksAfter28 = totalWeeks - 28
-      const biWeeklyVisits = Math.floor(weeksAfter28 / 2)
-      expectedVisits = visitsBeforeWeek28 + biWeeklyVisits
-      visitFrequency = "Bi-weekly (every 2 weeks)"
-      nextVisitRecommendation = "2 weeks"
-    } else {
-      // weekly visits
-      const visitsBeforeWeek28 = 7 // total monthly visits
-      const biWeeklyVisits = 4 // total bi-weekly visits
-
-      const weeksAfter36 = totalWeeks - 36
-      const weeklyVisits = Math.floor(weeksAfter36)
-      expectedVisits = visitsBeforeWeek28 + biWeeklyVisits + weeklyVisits
-      visitFrequency = "Weekly"
-      nextVisitRecommendation = "1 week"
-    }
-
-    const actualVisits = 1 // example visit
-    const missedVisits = Math.max(0, expectedVisits - actualVisits)
-
-    setAogAnalysis({
-      currentMonth,
-      currentWeek: Math.floor(totalWeeks),
-      expectedVisits,
-      missedVisits,
-      visitFrequency,
-      nextVisitRecommendation,
-    })
   }
 
   const getStatusBadge = (status: string) => {
@@ -240,120 +236,44 @@ export default function PrenatalFormThirdPg({
               {/* schedule for follow-up */}
               <div className="">
                 <div className="flex flex-col">
-                  <h3 className="text-md font-semibold mt-2 mb-4 p-5">SCHEDULE FOR FOLLOW-UP VISIT</h3>
-                  <div className="px-4">
-                    <div className="mb-4 p-2 bg-green-100 border border-green-300 rounded text-green-700 text-sm">
-                      <strong>📋 Prenatal Visit Guidelines:</strong>
-                      <ul className="mt-1 ml-4 list-disc text-xs">
-                        <li>Months 1-6 (Weeks 4-28): Monthly visits (6 total)</li>
-                        <li>Months 7-8 (Weeks 28-36): Bi-weekly visits (4 total)</li>
-                        <li>Month 9 (Weeks 36-40): Weekly visits (4-5 total)</li>
-                      </ul>
-                    </div>
-
-                    {/* AOG Input Section */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      <FormInput
-                        control={form.control}
-                        name="followUpSchedule.aogWeeks"
-                        label="AOG Weeks"
-                        type="number"
-                        placeholder="0"
-                      />
-                      <FormInput
-                        control={form.control}
-                        name="followUpSchedule.aogDays"
-                        label="AOG Days"
-                        type="number"
-                        placeholder="0"
-                      />
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full mr-2 bg-transparent"
-                          onClick={calculateAOGAnalysis}
-                        >
-                          Check AOG
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="default"
-                          className="w-full"
-                          onClick={() => {
-                            // Auto-calculate recommended follow-up based on AOG
-                            const weeks = Number(form.getValues("followUpSchedule.aogWeeks")) || 0
-                            const today = new Date()
-                            const recommendedDate = new Date(today)
-
-                            if (weeks <= 28) {
-                              // Monthly visits for first 28 weeks
-                              recommendedDate.setMonth(today.getMonth() + 1)
-                            } else if (weeks <= 36) {
-                              // Bi-weekly visits from 28-36 weeks
-                              recommendedDate.setDate(today.getDate() + 14)
-                            } else {
-                              // Weekly visits after 36 weeks
-                              recommendedDate.setDate(today.getDate() + 7)
-                            }
-
-                            form.setValue("followUpSchedule.followUpDate", recommendedDate.toISOString().split("T")[0])
-                          }}
-                        >
-                          Auto Schedule
-                        </Button>
+                  <div className="px-5">
+                    <ANCVisitsGuide />
+                  </div>
+                  
+                  <h3 className="text-md font-semibold mt-2 p-5">SCHEDULE FOR FOLLOW-UP VISIT</h3>
+                  <div className="px-8">
+                    {/* age of gestation */}
+                    <div className="border shadow-md rounded-md p-2 mb-4">
+                      <div className="grid grid-cols-2">
+                        <Label className="text-sm font-medium mb-1">Current age of gestation (AOG)</Label>
+                        <div className="flex-1">
+                            <div className="grid grid-cols-2">
+                              <span className="text-[12px] text-black/50 font-poppins font-semibold">Weeks: <span className="font-bold text-black text-[16px] ml-1">{aog.weeks}</span></span>
+                              <span className="text-[12px] text-black/50 font-poppins font-semibold">Days: <span className="font-bold text-black text-[16px] ml-1">{aog.days}</span></span>
+                            </div> 
+                        </div>
                       </div>
                     </div>
-
-                    {aogAnalysis && (
-                      <Card className="mt-4 mb-4 p-4 border rounded-lg bg-blue-50">
-                        <CardHeader>
-                          <CardTitle className="font-semibold text-blue-800 mb-3">AOG Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p>
-                                <strong>Current Status:</strong>
-                              </p>
-                              <p>
-                                Month {aogAnalysis.currentMonth} (Week {aogAnalysis.currentWeek})
-                              </p>
-                              <p>
-                                <strong>Visit Frequency:</strong>
-                              </p>
-                              <p>{aogAnalysis.visitFrequency}</p>
-                            </div>
-                            <div>
-                              <p>
-                                <strong>Expected Visits by Now:</strong> {aogAnalysis.expectedVisits}
-                              </p>
-                              {aogAnalysis.missedVisits > 0 && (
-                                <p className="text-red-600">
-                                  <strong>Missed Visits:</strong> {aogAnalysis.missedVisits}
-                                </p>
-                              )}
-                              <p>
-                                <strong>Next Visit:</strong> In {aogAnalysis.nextVisitRecommendation}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
 
                     {/* Follow-up Date Picker */}
                     <div className="mb-4">
                       <FormDateTimeInput
                         control={form.control}
                         name="followUpSchedule.followUpDate"
-                        label="Follow-up Date"
+                        label='Follow-up Date'
                         type="date"
+                        min={todayIso}
                       />
                     </div>
+                    {followupDate && (
+                      <span className="text-sm italic text-yellow-600">
+                        Note: Next follow-up visit {followupDayName}
+                      </span>
+                    )}
+                    
 
-                    {/* Quick Follow-up History */}
-                    <Card className="border rounded-lg p-3 bg-gray-50">
+                    {/* Follow-up History */}
+                    <Card className="border rounded-lg p-2 bg-gray-50 mt-3">
                       <CardHeader>
                         <CardTitle className="text-sm font-semibold mb-2">Recent Follow-ups</CardTitle>
                       </CardHeader>
@@ -391,77 +311,24 @@ export default function PrenatalFormThirdPg({
                               })
                           ) : (
                             <div className="flex justify-center items-center py-4">
-                              <span className="text-sm text-gray-500">No follow-up visits found</span>
+                              <span className="flex justify-center items-center text-sm text-gray-500">
+                                <ScrollText size={30}/> No follow-up visits found
+                              </span>
                             </div>
                           )}
                         </div>
                       </CardContent>
                     </Card>
+
+                    
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* guide for 4anc visits */}
-              <div className="grid grid-cols- gap-4 mb-8 p-4">
-                <Card className="border rounded-lg shadow-md flex flex-col w-full mb-8">
-                  <CardHeader>
-                    <div className="flex justify-between items-center p-5">
-                      <CardTitle className="text-md font-semibold">GUIDE FOR 4ANC VISITS</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="px-4">
-                      <div className="grid grid-cols-3 px-4 mb-5 gap-3 ">
-                        <Card className="border rounded-md p-5">
-                          <CardContent>
-                            <FormDateTimeInput
-                              control={form.control}
-                              name="ancVisits.firstTri"
-                              label="1st Trimester"
-                              type="date"
-                            />
-                            <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
-                          </CardContent>
-                        </Card>
-                        <Card className="border rounded-md p-5">
-                          <CardContent>
-                            <FormDateTimeInput
-                              control={form.control}
-                              name="ancVisits.secondTri"
-                              label="2nd Trimester"
-                              type="date"
-                            />
-                            <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
-                          </CardContent>
-                        </Card>
-                        <Card className="grid gap-2 border p-5">
-                          <CardContent>
-                            <Label className="col-span-2">3rd Trimester</Label>
-                            <div>
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriOne"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div>
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* checklist */}
-                <Card className="border rounded-lg shadow-md flex flex-col w-full">
+            <div>
+              {/* Checklist */}
+                <Card className="border rounded-lg shadow-md flex flex-col w-full mb-5">
                   <CardHeader>
                     <CardTitle className="text-md font-semibold p-5">CHECKLIST</CardTitle>
                     <Label className="ml-10">()PRE-ECLAMPSIA</Label>
@@ -488,10 +355,11 @@ export default function PrenatalFormThirdPg({
                     ))}
                   </CardContent>
                 </Card>
-              </div>
             </div>
+            
+            {/* Birth Plans and Micronutrient Supplementation */}
             <div className="grid ">
-              <Card className=" p-4 border rounded-lg shadow-md mb-8">
+              <Card className=" p-4 border rounded-lg shadow-md mb-5">
                 <CardHeader>
                   <CardTitle className="text-md font-semibold mt-2">BIRTH PLANS</CardTitle>
                 </CardHeader>
@@ -514,7 +382,6 @@ export default function PrenatalFormThirdPg({
                             <RadioGroup
                               onValueChange={(value) => {
                                 field.onChange(value === "yes") // Convert "yes"/"no" to boolean
-                                // setSelectedOption(value)
                               }}
                               value={field.value ? "yes" : "no"} // Convert boolean to "yes"/"no" for RadioGroup
                               className="ml-3"
@@ -540,7 +407,7 @@ export default function PrenatalFormThirdPg({
                 </CardContent>
               </Card>
 
-              <Card className="border rounded-lg shadow-md p-4 mb-8">
+              <Card className="border rounded-lg shadow-md p-4 mb-5">
                 <CardHeader>
                   <span className="flex flex-row items-center">
                     <CardTitle className="text-md font-semibold mt-2 mb-3 mr-2">
@@ -558,7 +425,7 @@ export default function PrenatalFormThirdPg({
                     </div>
                   ) : (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions ?? []}
+                      medicines={medicineStocksOptions?.medicines ?? []}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
@@ -566,31 +433,21 @@ export default function PrenatalFormThirdPg({
                       onPageChange={handlePageChange}
                     />
                   )}
-                  {/* <div className="flex flex-col px-4">
-                    <Label className="mt-5">IRON W/ FOLIC ACID:</Label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormDateTimeInput
-                        control={form.control}
-                        name="micronutrientSupp.ironFolicStarted"
-                        label="Date Started"
-                        type="date"
-                      />
-                      <FormDateTimeInput
-                        control={form.control}
-                        name="micronutrientSupp.ironFolicCompleted"
-                        label="Date Completed"
-                        type="date"
-                      />
+                  
+                  <div className="flex px-3 mt-4">
+                    <div className="border rounded-lg p-3 w-full">
+                      <Label className="font-semibold">Given Medicines</Label>
+                      <div className="flex justify-center items-center p-3">
+                        {/* {selectedMedicines.map((medicine) => (
+                          <div key={medicine.id} className="flex justify-between">
+                            <span>{medicine.name}</span>
+                            <span>{medicine.dosage}</span>
+                          </div>
+                        ))} */}
+                        <Label className="text-black/70">No history of given medicines yet.</Label>
+                      </div>
                     </div>
-
-                    <Label className="mt-5">DEWORMING TAB: (preferably 3rd trimester):</Label>
-                    <FormDateTimeInput
-                      control={form.control}
-                      name="micronutrientSupp.deworming"
-                      label="Date Given"
-                      type="date"
-                    />
-                  </div> */}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -644,15 +501,10 @@ export default function PrenatalFormThirdPg({
             </Card>
             {/* staff assessed by */}
             <div className="grid w-full m-2">
-              <FormSelect
+              <FormInput
                 control={form.control}
-                name="assessedBy.assessedby"
+                name="assessedBy.name"
                 label="ASSESSED BY:"
-                options={[
-                  { id: "0", name: "Juliana Zamora" },
-                  { id: "1", name: "Inka Kamarani" },
-                  { id: "2", name: "Lowe Anika" },
-                ]}
               />
             </div>
             <div className="mt-8 sm:mt-12 flex justify-end">

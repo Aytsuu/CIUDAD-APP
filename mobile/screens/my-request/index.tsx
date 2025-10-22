@@ -15,12 +15,7 @@ export default () => {
   {
     title: "Certification Request",
      description: "Request official certification documents for personal or legal use.",
-     route: "/(my-request)/certification-tracking/cert-choices-tracking"
-  },
-  {
-    title: "Blotter Request",
-    description: "Monitor blotter request",
-    route: "/(my-request)/complaint-tracking/compMainReq"
+     route: "/(my-request)/certification-tracking/certificate-request-tracker"
   },
   {
     title: "Medicine Request",
@@ -28,14 +23,14 @@ export default () => {
      route: "/(health)/medicine-request/my-requests"
   },
   {
-    title: "Maternal Appointment",
-     description: "",
-     route: ""
+    title: "Prenatal Appointment",
+     description: "Monitor your prenatal appointments.",
+     route: "/(health)/maternal/my-appointments"
   },
   {
     title: "Medical Consultation Appointment",
-     description: "",
-     route: ""
+     description: "Monitor your medical consultation appointments",
+     route: "/(health)/medconsultation/my-medappointments"
   },
 ]
 

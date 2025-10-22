@@ -1,154 +1,736 @@
-// "use client"
+"use client"
 
-// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-// import { DataTable } from "@/components/ui/table/data-table"
-// import type { ColumnDef } from "@tanstack/react-table"
-// import { TooltipProvider } from "@/components/ui/tooltip"
+import { useLocation } from "react-router-dom"
+import { Loader2 } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePrenatalRecordComparison } from "../../queries/maternalFetchQueries"
 
-// type bodyMeasurement = {
-// 	weight: number;
-// 	height: number;
-// 	bmi: number;
-// 	bmiCategory: string;
-// }
+import { capitalize } from "@/helpers/capitalize"
 
-// type obstetricHistory = {
-// 	noOfChildrenBornAlive: number;
-// 	noOfLivingChildren: number;
-// 	noOfAbortion: number;
-// 	noOfStillBirths: number;
-// 	historyOfLargeBabies: number;
-// 	historyOfDiabetes: boolean
-// }
+// Helper function to calculate age from DOB
+const calculateAge = (dob: string): number => {
+  const birthDate = new Date(dob)
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDiff = today.getMonth() - birthDate.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+  return age
+}
 
-// type medicalHistory = {
-// 	prevIllnesses: string[];
-// 	yearOfIllness: string[];
-// 	prevHospitalization: string[];
-// 	yearOfHospitalization: string[];
-// }
+// Helper function to calculate BMI
+const calculateBMI = (weight: number, height: number): { bmi: string; category: string } => {
+  const heightInMeters = height / 100
+  const bmi = weight / (heightInMeters * heightInMeters)
+  const bmiValue = bmi.toFixed(1)
 
-// type previousPregnancy = {
-// 	dateOfDevilery: string;
-// 	outcome: string;
-// 	typeOfDelivery: string;
-// 	babysWt: string;
-// 	gender: string;
-// 	ballardScore: string;
-// 	apgarScore: string;
-// }
+  let category = ""
+  if (bmi < 18.5) category = "Underweight"
+  else if (bmi < 25) category = "Normal"
+  else if (bmi < 30) category = "Overweight"
+  else category = "Obese"
 
-// type tetanusToxoid = {
-// 	ttStatus: string;
-// 	ttStatusDate: string;
-// 	tdapGiven: boolean;
-// }
+  return { bmi: bmiValue, category }
+}
 
-// type presentPregnancy = {
-// 	gravida: number;
-// 	para: number;
-// 	fullterm: number;
-// 	preterm: number;
-// 	lmp: string;
-// 	edc: string;
-// }
+// Helper function to format date
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return "N/A"
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
 
-// type laboratoryTests = {
-// 	labTests: string[];
-// 	// labTestDate: string;
-// }
+export default function PrenatalFormTableHistory() {
+  const location = useLocation()
+  const { pregnancyId } = location.state?.params || {}
 
-// type guide4AncVisit = {
-// 	firstTrimester: string;
-// 	secondTrimester: string;
-// 	thirdTrimesterOne: string;
-// 	thirdTrimesterTwo: string;
-// }
+  const { data: prenatalData, isLoading, error } = usePrenatalRecordComparison(pregnancyId || "")
 
-// type checklist = {
-// 	checklistItems: string[];
-// }
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="animate-spin h-8 w-8 mr-2" />
+        <span>Loading prenatal records...</span>
+      </div>
+    )
+  }
 
-// type birthPlan = {
-// 	planPlaceOfDelivery: string;
-// 	planForNewbornScreening: string;
-// }
+  if (error) {
+    return <div className="text-center text-red-600 p-4">Failed to load prenatal records. Please try again.</div>
+  }
 
-// type micronutrientSupplementation = {
-// 	supplementationName: string[];
-// 	// supplementationDate: string;
-// }
+  if (!prenatalData?.results || prenatalData.results.length === 0) {
+    return <div className="text-center text-gray-500 p-4">No prenatal records found for this pregnancy.</div>
+  }
 
-// type riskCodeAssessment = {
-// 	riskCodes: string[];
-// }
+  const records = prenatalData.results
 
-// type prenatalCareVisit = {
-// 	visitDate: string;
-// 	weight: number;
-// 	gestationalAge: number;
-// 	bloodPressure: string;
-// 	leopoldsFindings: {
-// 		fundalHeight: string;
-// 		fetalHeartbeat: string;
-// 		fetalPosition: string;
-// 	};
-// 	complaints: string;
-// 	advises: string;
-// }
+  return (
+    <div className="p-4 text-xs">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Complete Prenatal History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">Field</TableHead>
+                {records.map((record: any, index: number) => (
+                  <TableHead key={index} className="text-center">
+                    Visit {index + 1}
+                    <br />
+                    <span className="text-xs text-gray-500">{formatDate(record.created_at)}</span>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Personal Information Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Personal Information
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Family No.</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.patient_details?.family?.fam_id || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Name</TableCell>
+                {records.map((record: any, index: number) => {
+                  const info = record.patient_details?.personal_info
+                  const fullName = `${info?.per_fname || ""} ${info?.per_mname || ""} ${info?.per_lname || ""}`.trim()
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {capitalize(fullName || "N/A")}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Age</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.patient_details?.personal_info?.per_dob
+                      ? calculateAge(record.patient_details.personal_info.per_dob)
+                      : "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Date of Birth</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {formatDate(record.patient_details?.personal_info?.per_dob)}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Husband's Name</TableCell>
+                {records.map((record: any, index: number) => {
+                  const father = record.patient_details?.family?.family_heads?.father
+                  const husbandName = father
+                    ? `${father.personal_info?.per_fname || ""} ${father.personal_info?.per_mname || ""} ${father.personal_info?.per_lname || ""}`.trim()
+                    : record.spouse_details?.spouse_fname
+                      ? `${record.spouse_details.spouse_fname} ${record.spouse_details.spouse_mname || ""} ${record.spouse_details.spouse_lname}`.trim()
+                      : "N/A"
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {capitalize(husbandName)}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Occupation</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.pf_occupation || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Address</TableCell>
+                {records.map((record: any, index: number) => {
+                  const addr = record.patient_details?.address
+                  const fullAddress = addr
+                    ? `${addr.add_street || ""}, ${addr.add_sitio || ""}, ${addr.add_barangay || ""}, ${addr.add_city || ""}`.trim()
+                    : "N/A"
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {capitalize(fullAddress)}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Weight (kg)</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.body_measurement_details?.weight || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Height (cm)</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.body_measurement_details?.height || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">BMI</TableCell>
+                {records.map((record: any, index: number) => {
+                  const weight = record.body_measurement_details?.weight
+                  const height = record.body_measurement_details?.height
+                  if (weight && height) {
+                    const { bmi, category } = calculateBMI(weight, height)
+                    return (
+                      <TableCell key={index} className="text-center">
+                        {bmi}{" "}
+                        <Badge variant="outline" className="ml-1">
+                          {category}
+                        </Badge>
+                      </TableCell>
+                    )
+                  }
+                  return (
+                    <TableCell key={index} className="text-center">
+                      N/A
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
 
-// type AttributeValue = {
-//   attribute: string
-//   value: React.ReactNode // Use React.ReactNode to handle various data types
-// }
+              {/* Obstetrical History Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Obstetrical History
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Children Born Alive</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_ch_born_alive ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Living Children</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_living_ch ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Abortions</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_abortion ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Still Births</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_still_birth ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Large Babies (8LBS+)</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_lg_babies ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Diabetes History</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_lg_babies_str ? "Yes" : "No"}
+                  </TableCell>
+                ))}
+              </TableRow>
 
-// Helper function to transform an object into an array of attribute-value pairs
-// function transformObjectToAttributeValueArray<T extends Record<string, any>>(obj: T): AttributeValue[] {
-//   return Object.entries(obj).map(([key, value]) => {
-//     let displayValue: React.ReactNode
+              {/* Medical History Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Medical History
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Previous Illnesses</TableCell>
+                {records.map((record: any, index: number) => {
+                  const illnesses = record.medical_history || []
+                  const uniqueIllnesses = Array.from(
+                    new Map(
+                      illnesses.map((item: any) => [
+                        `${item.illness_name}-${item.ill_date}`,
+                        `${item.illness_name} (${item.ill_date})`,
+                      ]),
+                    ).values(),
+                  )
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {uniqueIllnesses.length > 0 ? (
+                        <div className="space-y-1">
+                          {uniqueIllnesses.map((illness, idx) => (
+                            <div key={idx}>{String(illness)}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        "None"
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Previous Hospitalizations</TableCell>
+                {records.map((record: any, index: number) => {
+                  const hospitalizations = record.previous_hospitalizations || []
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {hospitalizations.length > 0 ? (
+                        <div className="space-y-1">
+                          {hospitalizations.map((hosp: any, idx: number) => (
+                            <div key={idx}>
+                              {hosp.prev_hospitalization} ({hosp.prev_hospitalization_year})
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        "None"
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Previous Complications</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_complications || "None"}
+                  </TableCell>
+                ))}
+              </TableRow>
 
-//     if (Array.isArray(value)) {
-//       displayValue = value.join(", ")
-//     } else if (typeof value === "boolean") {
-//       displayValue = value ? "Yes" : "No"
-//     } else if (typeof value === "object" && value !== null) {
-//       // For nested objects, you might want a more specific display or stringify
-//       displayValue = JSON.stringify(value)
-//     } else {
-//       displayValue = String(value)
-//     }
+              {/* Previous Pregnancy Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Previous Pregnancy
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Date of Delivery</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {formatDate(record.previous_pregnancy?.date_of_delivery)}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Outcome</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.outcome || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Type of Delivery</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.type_of_delivery || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Baby's Weight (lbs)</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.babys_wt || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Gender</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.gender || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Ballard Score</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.ballard_score ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">APGAR Score</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.previous_pregnancy?.apgar_score ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
 
-//     // Convert camelCase keys to "Camel Case" for display
-//     const displayAttribute = key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())
+              {/* Tetanus Toxoid Status Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Tetanus Toxoid Status
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">TT Status</TableCell>
+                {records.map((record: any, index: number) => {
+                  const ttStatuses = record.tt_statuses || []
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {ttStatuses.length > 0 ? (
+                        <div className="space-y-1">
+                          {ttStatuses.map((tt: any, idx: number) => (
+                            <div key={idx}>
+                              {tt.tts_status} - {formatDate(tt.tts_date_given)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        "None"
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
 
-//     return {
-//       attribute: displayAttribute,
-//       value: displayValue,
-//     }
-//   })
-// }
+              {/* Present Pregnancy Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Present Pregnancy
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Gravida</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_gravida ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Para</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_para ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Fullterm</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_fullterm ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Preterm</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.obstetric_history?.obs_preterm ?? "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Last Menstrual Period</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {formatDate(record.obstetric_history?.obs_lmp)}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Expected Date of Confinement</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {formatDate(record.pf_edc)}
+                  </TableCell>
+                ))}
+              </TableRow>
 
-// const attributeValueColumns: ColumnDef<AttributeValue>[] = [
-//   {
-//     accessorKey: "attribute",
-//     header: "Attribute",
-//     cell: ({ row }) => <span className="font-medium">{row.original.attribute}</span>,
-// 	 size: 100,
-//   },
-//   {
-//     accessorKey: "value",
-//     header: "Value",
-//   },
-// ]
+              {/* Assessment & Planning Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell colSpan={records.length + 1} className="font-semibold">
+                  Assessment & Planning
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Laboratory Results</TableCell>
+                {records.map((record: any, index: number) => {
+                  const labs = record.laboratory_results || []
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {labs.length > 0 ? (
+                        <div className="space-y-1">
+                          {labs.map((lab: any, idx: number) => (
+                            <div key={idx}>
+                              {capitalize(lab.lab_type)} - {formatDate(lab.result_date)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        "None"
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Pre-eclampsia Signs</TableCell>
+                {records.map((record: any, index: number) => {
+                  const checklist = record.checklist_data
+                  const trueItems = checklist
+                    ? Object.entries(checklist)
+                        .filter(([key, value]) => value === true && key !== "pfc_id")
+                        .map(([key]) => key.replace(/_/g, " "))
+                    : []
+                  return (
+                    <TableCell key={index} className="text-center">
+                      {trueItems.length > 0 ? capitalize(trueItems.join(", ")) : "None"}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Place of Delivery Plan</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.birth_plan_details?.place_of_delivery_plan || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Newborn Screening Plan</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.birth_plan_details?.newborn_screening_plan ? "Yes" : "No"}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Micronutrient Supplementation</TableCell>
+                {records.map((record: any, index: number) => {
+                  const medicines = record.medicine_records || []
+                  return (
+                    <TableCell key={index} className="text-center text-xs">
+                      {medicines.length > 0 ? (
+                        <div className="space-y-1">
+                          {medicines.map((med: any, idx: number) => (
+                            <div key={idx}>
+                              {med.medicine_name} ({med.quantity}) - {formatDate(med.requested_at)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        "None"
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Risk Codes</TableCell>
+                {records.map((record: any, index: number) => {
+                  const risks = record.obstetric_risk_codes
+                  const trueRisks = risks
+                    ? Object.entries(risks)
+                        .filter(([key, value]) => value === true && key !== "pforc_id")
+                        .map(([key]) => key.replace(/pforc_/g, "").replace(/_/g, " "))
+                    : []
+                  return (
+                    <TableCell key={index} className="text-center text-xs">
+                      {trueRisks.length > 0 ? trueRisks.join(", ") : "None"}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Assessed By</TableCell>
+                {records.map((record: any, index: number) => (
+                  <TableCell key={index} className="text-center">
+                    {record.staff_details?.staff_name || "N/A"}
+                  </TableCell>
+                ))}
+              </TableRow>
 
+              {/* Prenatal Care Visit Details Section */}
+              {records.some((r: any) => r.prenatal_care_entries?.length > 0) && (
+                <>
+                  <TableRow className="bg-muted/50">
+                    <TableCell colSpan={records.length + 1} className="font-semibold">
+                      Prenatal Care Visit Details
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Age of Gestation</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const entries = record.prenatal_care_entries || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {entries.length > 0 ? (
+                            <div className="space-y-1">
+                              {entries.map((entry: any, idx: number) => (
+                                <div key={idx}>
+                                  {entry.pfpc_aog_wks || 0}w {entry.pfpc_aog_days || 0}d
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            "N/A"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Weight (kg)</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const entries = record.prenatal_care_entries || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {entries.length > 0 && record.body_measurement_details?.weight
+                            ? record.body_measurement_details.weight
+                            : "N/A"}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Blood Pressure</TableCell>
+                    {records.map((record: any, index: number) => (
+                      <TableCell key={index} className="text-center">
+                        {record.vital_signs_details?.vital_bp_systolic}/{record.vital_signs_details?.vital_bp_diastolic}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Leopold's Findings</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const entries = record.prenatal_care_entries || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {entries.length > 0 ? (
+                            <div className="space-y-1">
+                              {entries.map((entry: any, idx: number) => (
+                                <div key={idx}>
+                                  FH: {entry.pfpc_fundal_ht || "N/A"}, FHR: {entry.pfpc_fetal_hr || "N/A"}, Pos:{" "}
+                                  {entry.pfpc_fetal_pos || "N/A"}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            "N/A"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Complaints</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const entries = record.prenatal_care_entries || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {entries.length > 0 ? (
+                            <div className="space-y-1">
+                              {entries.map((entry: any, idx: number) => (
+                                <div key={idx}>{entry.pfpc_complaints || "None"}</div>
+                              ))}
+                            </div>
+                          ) : (
+                            "None"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Advises</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const entries = record.prenatal_care_entries || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {entries.length > 0 ? (
+                            <div className="space-y-1">
+                              {entries.map((entry: any, idx: number) => (
+                                <div key={idx}>{entry.pfpc_advises || "None"}</div>
+                              ))}
+                            </div>
+                          ) : (
+                            "None"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                </>
+              )}
 
-
-export default function PrenatalFormHistory() {
-	return (
-		<>
-		<div>
-			
-		</div>
-		</>
-	)
+              {/* Vaccination Records Section */}
+              {records.some((r: any) => r.vaccination_records?.length > 0) && (
+                <>
+                  <TableRow className="bg-muted/50">
+                    <TableCell colSpan={records.length + 1} className="font-semibold">
+                      Vaccination Records
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Vaccines Administered</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const vaccines = record.vaccination_records || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {vaccines.length > 0 ? (
+                            <div className="space-y-1">
+                              {vaccines.map((vac: any, idx: number) => (
+                                <div key={idx}>
+                                  {vac.vaccine_name} (Dose {vac.dose_number}) - {formatDate(vac.date_administered)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            "None"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                </>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

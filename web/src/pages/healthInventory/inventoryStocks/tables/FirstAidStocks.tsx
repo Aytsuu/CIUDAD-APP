@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Search, Plus, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +16,9 @@ import { useArchiveFirstAidInventory } from "../REQUEST/Archive/ArchivePutQuerie
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import WastedModal from "../addstocksModal/WastedModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
 export default function FirstAidStocks() {
@@ -31,7 +33,7 @@ export default function FirstAidStocks() {
     isExpired: boolean;
     hasAvailableStock: boolean;
   } | null>(null);
-  
+
   // New state for WastedModal
   const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -76,6 +78,107 @@ export default function FirstAidStocks() {
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
+  };
+  // Corrected prepareExportData function for First Aid
+  const prepareExportData = () => {
+    return firstAidData.map((firstAid: any) => {
+      const expired = firstAid.isExpired;
+      const isLow = firstAid.isLowStock;
+      const isOutOfStock = firstAid.isOutOfStock;
+      const isNear = firstAid.isNearExpiry;
+      const unit = firstAid.finv_qty_unit;
+      const pcs = firstAid.qty?.finv_pcs || 1;
+
+      // Format Total Qty based on unit type
+      let totalQtyDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        totalQtyDisplay = `${firstAid.qty_number} boxes (${firstAid.qty_number * pcs} pcs)`;
+      } else {
+        totalQtyDisplay = `${firstAid.qty_number} ${unit}`;
+      }
+
+      // Add expired indicator to Total Qty
+      if (expired) {
+        totalQtyDisplay += " (Expired)";
+      }
+
+      // Format Available Stock based on unit type
+      let availableStockDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        const availablePcs = firstAid.availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcs);
+        const remainingPcs = availablePcs % pcs;
+        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? "es" : ""} (${availablePcs} total pcs)`;
+      } else {
+        availableStockDisplay = `${firstAid.availableStock} ${unit}`;
+      }
+
+      // Add status indicators to Available Stock
+      if (expired) {
+        availableStockDisplay += " (Expired)";
+      } else {
+        if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+        if (isLow) availableStockDisplay += " (Low Stock)";
+      }
+
+      // Determine overall status
+      let status = "Normal";
+      if (expired) {
+        status = "Expired";
+      } else if (isOutOfStock) {
+        status = "Out of Stock";
+      } else if (isLow) {
+        status = "Low Stock";
+      } else if (isNear) {
+        status = "Near Expiry";
+      }
+
+      // Format First Aid Details with expired indicator
+      const firstAidName = firstAid.item?.fa_name || "Unknown First Aid";
+      const firstAidDetails = `${firstAidName}${expired ? " (Expired)" : ""}`;
+
+      // Format Expiry Date
+      let expiryDateDisplay = firstAid.expiryDate ? new Date(firstAid.expiryDate).toLocaleDateString() : "N/A";
+      if (expired) {
+        expiryDateDisplay += " (Expired)";
+      } else if (isNear) {
+        expiryDateDisplay += " (Near Expiry)";
+      }
+
+      return {
+        Date: firstAid.created_at
+          ? new Date(firstAid.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
+            })
+          : "N/A",
+        ID: firstAid.inv_id || "N/A",
+        "First Aid Details": firstAidDetails,
+        Category: firstAid.category || "N/A",
+        "Total Qty": totalQtyDisplay,
+        "Available Stock": availableStockDisplay,
+        "Qty Used": firstAid.administered || 0,
+        "Expiry Date": expiryDateDisplay,
+        Status: status
+      };
+    });
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `first_aid_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `first_aid_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `first_aid_stocks_${new Date().toISOString().slice(0, 10)}`, "First Aid Stocks Report");
   };
 
   const confirmArchiveInventory = async () => {
@@ -171,7 +274,7 @@ export default function FirstAidStocks() {
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
         </div>
-        <Button onClick={() => navigate("/addFirstAidStock")} className="hover:bg-buttonBlue/90 group">
+        <Button onClick={() => navigate("/inventory-stocks/list/stocks/firstaid/add")} className="hover:bg-buttonBlue/90 group">
           <Plus size={15} /> New First Aid
         </Button>
       </div>
@@ -194,19 +297,7 @@ export default function FirstAidStocks() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-transparent">
-                  <FileInput />
-                  Export Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
           </div>
         </div>
 

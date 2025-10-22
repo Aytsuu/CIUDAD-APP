@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Ionicons } from '@expo/vector-icons'

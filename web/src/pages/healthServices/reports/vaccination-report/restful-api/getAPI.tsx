@@ -1,23 +1,19 @@
-
 import { api2 } from "@/api/api";
-import { VaccineRecordsResponse,VaccineChartResponse } from "../types";
-export const getVaccineRecords = async (year?: string): Promise<VaccineRecordsResponse> => {
-    try {
-      const url = year
-        ? `/vaccination/vaccination-records/monthly/?year=${year}`
-        : `/vaccination/vaccination-records/monthly/`;
-      const response = await api2.get<VaccineRecordsResponse>(url);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching Medicine records:", error);
-      throw error;
-    }
-  };
+export const getVaccineRecords = async (year?: string): Promise<any> => {
+  try {
+    const url = year ? `/vaccination/vaccination-records/monthly/?year=${year}` : `/vaccination/vaccination-records/monthly/`;
+    const response = await api2.get<any>(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Medicine records:", error);
+    throw error;
+  }
+};
 
-export const getVaccineReports = async (month: string): Promise<VaccineRecordsResponse> => {
+export const getVaccineReports = async (month: string): Promise<any> => {
   try {
     const url = `/vaccination/vaccination-reports/${month}/`;
-    const response = await api2.get<VaccineRecordsResponse>(url);
+    const response = await api2.get<any>(url);
     console.log("Reports Response:", response.data);
     return response.data;
   } catch (error) {
@@ -26,18 +22,3 @@ export const getVaccineReports = async (month: string): Promise<VaccineRecordsRe
   }
 };
 
-export  const getVaccinationChart = async(month:string)=>{
-  try
-  {
-    const url = `/vaccination/vaccination-records/monthly/chart/${month}/`;
-    const response = await api2.get<VaccineChartResponse>(url);
-    console.log("Chart Response:", response.data);
-    return response.data;
-  }
-  catch (error) {
-    console.error("Error fetching Vaccination Chart:", error);
-    throw error;
-  }
-
-
-}

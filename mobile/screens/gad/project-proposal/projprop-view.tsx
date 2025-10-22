@@ -34,21 +34,19 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   customHeaderActions,
   disableDocumentManagement = false,
 }) => {
+
   //add early return for undefined projects
   if (!project) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center">
         <Text className="text-gray-500">No project data available</Text>
-        <TouchableOpacity
-          onPress={onBack || (() => router.back())}
-          className="mt-4"
-        >
+        <TouchableOpacity onPress={onBack || (() => router.back())} className="mt-4">
           <Text className="text-blue-500">Go back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
-
+  
   const [activeTab, setActiveTab] = useState<"soft" | "supporting">("soft");
   const [supportDocsViewMode, setSupportDocsViewMode] = useState<
     "active" | "archived"
@@ -80,17 +78,15 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   ).filter((doc) => doc.psd_type?.startsWith("image/"));
 
   const handleUploadFiles = async () => {
-    console.log(
-      "Selected images:",
-      selectedImages.map((file) => ({
-        uri: file.uri,
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        hasFile: !!file.file,
-        filePrefix: file.file ? file.file.substring(0, 20) : "undefined",
-      }))
-    );
+    console.log('Selected images:', selectedImages.map(file => ({
+      uri: file.uri,
+      id: file.id,
+      name: file.name,
+      type: file.type,
+      hasFile: !!file.file,
+      filePrefix: file.file ? file.file.substring(0, 20) : 'undefined'
+    })));
+    
 
     try {
       await addSupportDocMutation.mutateAsync({
@@ -148,7 +144,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     <ScrollView className="flex-1 bg-white p-4">
       {!disableDocumentManagement && (
         <View className="flex-row justify-between items-center mb-4">
-          {
+          {(project.status === "Pending" ||
+            project.status === "Amend" ||
+            project.status === "Rejected") && (
             <TouchableOpacity
               className={`px-4 py-2 rounded-lg ${
                 project.gprIsArchive ? "bg-gray-300" : "bg-blue-500"
@@ -164,7 +162,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 Add Documents
               </Text>
             </TouchableOpacity>
-          }
+          )}
 
           <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
             <TouchableOpacity
@@ -236,7 +234,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             {!disableDocumentManagement && (
               <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
                 {supportDocsViewMode === "active"
-                  ? !project.gprIsArchive && (
+                  ? !project.gprIsArchive &&
+                    (project.status === "Pending" ||
+                      project.status === "Amend" ||
+                      project.status === "Rejected") && (
                       <ConfirmationModal
                         trigger={
                           <TouchableOpacity className="p-2 rounded-lg">
@@ -249,7 +250,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                         onPress={() => handleArchiveSupportDoc(doc.psd_id)}
                       />
                     )
-                  : !project.gprIsArchive && (
+                  : !project.gprIsArchive &&
+                    (project.status === "Pending" ||
+                      project.status === "Amend" ||
+                      project.status === "Rejected") && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -409,11 +413,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               .filter((item) => item.name && item.name.trim())
               .map((item, index) => {
                 const amount = Number.parseFloat(item.amount?.toString()) || 0;
-                const paxCount =
-                  typeof item.pax === "string"
-                    ? parseInt(item.pax) ||
-                      (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
-                    : 1;
+                const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                 const total = paxCount * amount;
 
                 return (
@@ -458,13 +460,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                   ?.reduce((sum, item) => {
                     const amount =
                       Number.parseFloat(item.amount?.toString()) || 0;
-                    const paxCount =
-                      typeof item.pax === "string"
-                        ? parseInt(item.pax) ||
-                          (item.pax.includes("pax")
-                            ? parseInt(item.pax) || 1
-                            : 1)
-                        : 1;
+                    const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                     return sum + paxCount * amount;
                   }, 0)
                   .toFixed(2)}
@@ -478,8 +476,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             Monitoring Evaluation:
           </Text>
           <Text className="text-sm text-gray-800 leading-5">
-            {project.monitoringEvaluation ||
-              "No monitoring evaluation provided"}
+            {project.monitoringEvaluation || "No monitoring evaluation provided"}
           </Text>
         </View>
 
@@ -617,9 +614,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               >
                 <Text
                   className={`${
-                    selectedImages.length === 0
-                      ? "text-gray-400"
-                      : "text-blue-500"
+                    selectedImages.length === 0 ? "text-gray-400" : "text-blue-500"
                   }`}
                 >
                   Upload

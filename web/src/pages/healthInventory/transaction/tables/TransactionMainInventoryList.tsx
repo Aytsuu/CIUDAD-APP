@@ -1,30 +1,49 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import VaccinationList from "./TransactionAntigen";
-import FirstAidList from "./TransactionFirstAidList";
-import MedicineTransactionTable from "./TransactionMedicineList";
-import CommodityTransactionTable from "./TransactionCommodityList";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+
+const TransactionTabConfig = [
+  { id: "medicine", icon: Pill, label: "Medicine", path: "medicine" },
+  { id: "antigen", icon: Syringe, label: "Antigen", path: "antigen" },
+  { id: "commodity", icon: Package, label: "Commodity", path: "commodity" },
+  { id: "firstaid", icon: Bandage, label: "First Aid", path: "firstaid" },
+];
 
 export default function TransactionMainInventoryList() {
-  const [selectedView, setSelectedView] = useState<string>("medicine");
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get current tab from URL path
+  const getCurrentTabFromPath = () => {
+    const pathSegments = location.pathname.split("/");
+    const currentSegment = pathSegments[pathSegments.length - 1];
+    return TransactionTabConfig.find(tab => tab.path === currentSegment)?.id || "medicine";
+  };
+
+  const [selectedView, setSelectedView] = useState(getCurrentTabFromPath);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // Only check localStorage after component mounts
-    const savedView = localStorage.getItem("selectedView");
-    if (savedView && ["medicine", "antigen", "commodity", "firstaid"].includes(savedView)) {
-      setSelectedView(savedView);
-    }
   }, []);
 
+  // Update URL when tab changes
   useEffect(() => {
     if (isMounted) {
+      const currentTab = TransactionTabConfig.find(tab => tab.id === selectedView);
+      if (currentTab) {
+        navigate(currentTab.path, { replace: true });
+      }
       localStorage.setItem("selectedView", selectedView);
     }
-  }, [selectedView, isMounted]);
+  }, [selectedView, navigate, isMounted]);
+
+  // Update selected view when URL changes
+  useEffect(() => {
+    setSelectedView(getCurrentTabFromPath());
+  }, [location.pathname]);
 
   if (!isMounted) {
     return <div className="p-4">Loading...</div>;
@@ -40,50 +59,25 @@ export default function TransactionMainInventoryList() {
         >
           <div className="px-4 pt-4">
             <TabsList className="w-md grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
-              <TabsTrigger
-                value="medicine"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
-              >
-                <Pill className="h-4 w-4" />
-                <span>Medicine</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="antigen"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
-              >
-                <Syringe className="h-4 w-4" />
-                <span>Antigen</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="commodity"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
-              >
-                <Package className="h-4 w-4" />
-                <span>Commodity</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="firstaid"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
-              >
-                <Bandage className="h-4 w-4" />
-                <span>First Aid</span>
-              </TabsTrigger>
+              {TransactionTabConfig.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{tab.label}</span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
 
           <CardContent className="p-4 pt-6">
-            <TabsContent value="medicine" className="mt-0">
-              <MedicineTransactionTable />
-            </TabsContent>
-            <TabsContent value="antigen" className="mt-0">
-              <VaccinationList />
-            </TabsContent>
-            <TabsContent value="commodity" className="mt-0">
-              <CommodityTransactionTable />
-            </TabsContent>
-            <TabsContent value="firstaid" className="mt-0">
-              <FirstAidList />
-            </TabsContent>
+            {/* Render nested tab content */}
+            <Outlet />
           </CardContent>
         </Tabs>
       </CardHeader>

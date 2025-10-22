@@ -17,7 +17,7 @@ export const BasicInfoSchema = z.object({
   childSex: z.string().min(1, "required"),
   childDob: z.string().min(1, "required"),
   childAge: z.string().min(1, "required"),
-  placeOfDeliveryType: z.enum(["Hospital Gov't/Private", "Home", "Private Clinic", "HC"], {
+  placeOfDeliveryType: z.enum(["Hospital Gov't/Private", "Home", "Private Clinic", "HC","Lying in"], {
     required_error: "Place of delivery is required",
   }),
   placeOfDeliveryLocation: z.string().optional(),
@@ -188,6 +188,8 @@ export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetailsSchema)
     created_at: z.string().optional(),
     chhist_status: z.string().optional(),
     historicalSupplementStatuses: z.array(CHSSupplementStatSchema).optional(),
+    selectedStaffId: z.string().optional(),
+    passed_status: z.string().optional(),
   })
 
 export type FormData = z.infer<typeof ChildHealthFormSchema>

@@ -6,7 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { formatDate } from "@/helpers/dateHelper"
+
+// Utility function to format dates
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
 
 // Add props type to the component
 type Page4Props = {
@@ -160,55 +165,54 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
             </div>
             <span className="text-xs italic mt-5 m">
               {(formData.weight > 0 || formData.height > 0) && (
-                `Weight & height last recorded (y/m/d): ${
-                  formData.bodyMeasurementRecordedAt 
-                    ? formatDate(formData.bodyMeasurementRecordedAt) 
-                    : 'N/A'
+                `Weight & height last recorded (y/m/d): ${formData.bodyMeasurementRecordedAt
+                  ? formatDate(formData.bodyMeasurementRecordedAt)
+                  : formatDate(new Date().toISOString().split('T')[0])
                 }`
               )}
             </span>
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}
               {renderRadioGroup("SKIN", "skinExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "pale", label: "Pale" },
-                { value: "yellowish", label: "Yellowish" },
-                { value: "hematoma", label: "Hematoma" },
+                { value: "Normal", label: "Normal" },
+                { value: "Pale", label: "Pale" },
+                { value: "Yellowish", label: "Yellowish" },
+                { value: "Hematoma", label: "Hematoma" },
               ])}
 
               {/* Conjunctiva Examination */}
               {renderRadioGroup("CONJUNCTIVA", "conjunctivaExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "pale", label: "Pale" },
-                { value: "yellowish", label: "Yellowish" },
+                { value: "Normal", label: "Normal" },
+                { value: "Pale", label: "Pale" },
+                { value: "Yellowish", label: "Yellowish" },
               ])}
 
               {/* Neck Examination */}
               {renderRadioGroup("NECK", "neckExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "neck_mass", label: "Neck mass" },
-                { value: "enlarged_lymph_nodes", label: "Enlarged lymph nodes" },
+                { value: "Normal", label: "Normal" },
+                { value: "Neck Mass", label: "Neck Mass" },
+                { value: "Enlarged Lymph Nodes", label: "Enlarged Lymph Nodes" },
               ])}
 
               {/* Breast Examination */}
               {renderRadioGroup("BREAST", "breastExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "mass", label: "Mass" },
-                { value: "nipple_discharge", label: "Nipple discharge" },
+                { value: "Normal", label: "Normal" },
+                { value: "Mass", label: "Mass" },
+                { value: "Nipple Discharge", label: "Nipple Discharge" },
               ])}
 
               {/* Abdomen Examination */}
               {renderRadioGroup("ABDOMEN", "abdomenExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "abdominal_mass", label: "Abdominal mass" },
-                { value: "varicosities", label: "Varicosities" },
+                { value: "Normal", label: "Normal" },
+                { value: "Abdominal Mass", label: "Abdominal Mass" },
+                { value: "Varicosities", label: "Varicosities" },
               ])}
 
               {/* Extremities Examination */}
               {renderRadioGroup("EXTREMITIES", "extremitiesExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "edema", label: "Edema" },
-                { value: "varicosities", label: "Varicosities" },
+                { value: "Normal", label: "Normal" },
+                { value: "Edema", label: "Edema" },
+                { value: "Varicosities", label: "Varicosities" },
               ])}
             </div>
 
@@ -238,7 +242,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                   <p className="font-semibold mt-7">CERVICAL CONSISTENCY</p>
                   <FormField
                     control={form.control}
-                    name="cervicalConsistency"
+                    name="fp_pelvic_exam.cervicalConsistency"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
@@ -278,7 +282,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                 <div className="space-y-2 mt-4">
                   <FormField
                     control={form.control}
-                    name="cervicalTenderness"
+                    name="fp_pelvic_exam.cervicalTenderness"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -300,7 +304,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
                   <FormField
                     control={form.control}
-                    name="cervicalAdnexal"
+                    name="fp_pelvic_exam.cervicalAdnexal"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -325,7 +329,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                   <p className="font-semibold mb-2">UTERINE POSITION</p>
                   <FormField
                     control={form.control}
-                    name="uterinePosition"
+                    name="fp_pelvic_exam.uterinePosition"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
@@ -374,7 +378,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
                 <FormField
                   control={form.control}
-                  name="uterineDepth"
+                  name="fp_pelvic_exam.uterineDepth"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Uterine Depth</FormLabel>

@@ -20,7 +20,7 @@ interface SelectProps{
   label?: string,
   className?: string,
   options: Option[],
-  value: string,
+  value?: string,
   onChange: (value: string) => void
   withRest?: boolean;
   valueLabel?: string
@@ -29,23 +29,21 @@ interface SelectProps{
 export function SelectLayout({ placeholder, label, className, options, value, withRest=true, valueLabel, onChange }: SelectProps) {
 
   return (
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value && value.length > 0 ? value : undefined} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
               <p className="text-sm text-gray-600">{valueLabel && valueLabel}: </p><SelectValue placeholder={placeholder} />
           </SelectTrigger> 
           <SelectContent>
               <SelectGroup>
-                  {withRest && (
-                    <SelectLabel className="flex justify-between">
-                      <p>{label}</p>
-                      <div className="flex items-center gap-1 text-gray-600 cursor-pointer hover:text-black/90"
-                        onClick={() => onChange("")}
-                      >
-                        <RotateCcw size={14}/>
-                        Reset
-                      </div>
-                    </SelectLabel>
-                  )}
+                  <SelectLabel className="flex justify-between">
+                    <p>{label}</p>
+                    <div className="flex items-center gap-1 text-gray-600 cursor-pointer hover:text-black/90"
+                      onClick={() => onChange("")}
+                    >
+                      <RotateCcw size={14}/>
+                      Reset
+                    </div>
+                  </SelectLabel>
                   {options.map((option) => {
                       return <SelectItem key={option?.id} value={option?.id} className="cursor-pointer">{option?.name}</SelectItem>
                   })}

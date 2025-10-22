@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from .models import *
-# Import Patient, PatientRecord, Transient, TransientAddress from patientrecords app
 from apps.patientrecords.models import PatientRecord, Patient, Transient, TransientAddress 
-# Import ResidentProfile, Personal, PersonalAddress, Household, Address from healthProfiling app
 from apps.healthProfiling.models import ResidentProfile, Personal, PersonalAddress, Household, Address 
 from datetime import date 
 
@@ -15,7 +13,13 @@ class AnimalBiteDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnimalBite_Details
         fields = '__all__'
-
+        
+class AnimalBiteInfographicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnimalBiteInfographic
+        fields = ['id', 'content', 'updated_at']
+        
+        
 class AnimalBiteCreateSerializer(serializers.Serializer):
     pat_id = serializers.CharField(max_length=255, help_text="Patient ID (e.g., P2023R0001)")
     
@@ -237,6 +241,65 @@ class AnimalBitePatientDetailsSerializer(serializers.ModelSerializer):
             'patrec_id'
         ]
 
+class AnimalBiteUniquePatientSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='pat_id.pat_id')
+    fname = serializers.SerializerMethodField()
+    lname = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
+    date = serializers.DateField(source='latest_date')
+    patientType = serializers.CharField(source='pat_id.pat_type')
+    exposure = serializers.CharField(source='latest_exposure')
+    siteOfExposure = serializers.CharField(source='latest_site')
+    bitingAnimal = serializers.CharField(source='latest_animal')
+    actions_taken = serializers.CharField(source='latest_actions')
+    referredby = serializers.CharField(source='latest_referredby')
+    recordCount = serializers.IntegerField(source='bite_count')
+
+    def _get_patient_instance(self, obj):
+        return obj.pat_id if hasattr(obj, 'pat_id') else None
+
+    def _get_personal_field(self, patient_instance, field_name, default_value="N/A"):
+        if not patient_instance:
+            return default_value
+        if patient_instance.pat_type == 'Resident':
+            if hasattr(patient_instance, 'rp_id') and patient_instance.rp_id and hasattr(patient_instance.rp_id, 'per'):
+                personal = patient_instance.rp_id.per
+                personal_attr = field_name.replace('patient_', 'per_')
+                return getattr(personal, personal_attr, default_value)
+        elif patient_instance.pat_type == 'Transient':
+            if hasattr(patient_instance, 'trans_id') and patient_instance.trans_id:
+                transient = patient_instance.trans_id
+                transient_attr = field_name.replace('patient_', 'tran_')
+                return getattr(transient, transient_attr, default_value)
+        return default_value
+
+    def get_fname(self, obj):
+        return self._get_personal_field(self._get_patient_instance(obj), 'patient_fname')
+
+    def get_lname(self, obj):
+        return self._get_personal_field(self._get_patient_instance(obj), 'patient_lname')
+
+    def get_gender(self, obj):
+        return self._get_personal_field(self._get_patient_instance(obj), 'patient_sex')
+
+    def get_age(self, obj):
+        patient = self._get_patient_instance(obj)
+        dob = None
+        if patient:
+            if patient.pat_type == 'Resident' and hasattr(patient.rp_id, 'per'):
+                dob = patient.rp_id.per.per_dob
+            elif patient.pat_type == 'Transient' and patient.trans_id:
+                dob = patient.trans_id.tran_dob
+        if dob and isinstance(dob, date):
+            ref_date = obj.latest_date or date.today()
+            age = ref_date.year - dob.year - ((ref_date.month, ref_date.day) < (dob.month, dob.day))
+            return str(age)  # Return as string to match UniquePatientDisplay
+        return "N/A"
+
+    class Meta:
+        model = PatientRecord
+        fields = ['id', 'fname', 'lname', 'gender', 'age', 'date', 'patientType', 'exposure', 'siteOfExposure', 'bitingAnimal', 'actions_taken', 'referredby', 'recordCount']
 
 class AnimalBitePatientRecordCountSerializer(serializers.Serializer):
     patient_id = serializers.CharField(source='pat_id')

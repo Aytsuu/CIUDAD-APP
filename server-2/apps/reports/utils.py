@@ -254,19 +254,43 @@ def apply_age_filter_to_body_measurement(queryset, age_range):
 
 def get_household_no(pat_obj):
     """
-    Get household number for a patient based on the reference PatientSerializer logic
+    Get household number using Django's relationship traversal
     """
-    if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-        try:
-            # Get the most recent family composition for this resident
-            current_composition = FamilyComposition.objects.filter(
-                rp=pat_obj.rp_id
-            ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+    if not pat_obj or pat_obj.pat_type != 'Resident' or not pat_obj.rp_id:
+        return 'N/A'
+    
+    try:
+        # Try to get household through multiple possible relationships
+        resident_profile = pat_obj.rp_id
+        
+        # 1. Direct household head
+        if hasattr(resident_profile, 'household_set'):
+            household = resident_profile.household_set.first()
+            if household:
+                return str(household.hh_id)
+        
+        # 2. Through family compositions
+        if hasattr(resident_profile, 'family_compositions'):
+            composition = resident_profile.family_compositions.select_related(
+                'fam__hh'
+            ).order_by('-fam__fam_date_registered').first()
             
-            if current_composition:
-                return str(current_composition.fam_id.fam_no) if hasattr(current_composition.fam_id, 'fam_no') else 'N/A'
-        except Exception as e:
-            print(f"Error fetching household number for resident {pat_obj.rp_id.rp_id}: {str(e)}")
+            if composition and composition.fam.hh:
+                return str(composition.fam.hh.hh_id)
+        
+        # 3. Through respondents info
+        if hasattr(resident_profile, 'respondents_info'):
+            respondent = resident_profile.respondents_info.select_related(
+                'fam__hh'
+            ).first()
+            
+            if respondent and respondent.fam and respondent.fam.hh:
+                return str(respondent.fam.hh.hh_id)
+                
+    except Exception as e:
+        print(f"Error fetching household number: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
     
     return 'N/A'
 

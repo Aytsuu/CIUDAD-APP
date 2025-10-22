@@ -13,6 +13,7 @@ from utils.supabase_client import upload_to_storage
 
 class PatientMedicineRecordSerializer(serializers.ModelSerializer):
     medicine_count = serializers.SerializerMethodField()
+    latest_medicine_date = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
     
     class Meta:
@@ -23,8 +24,18 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         count = MedicineRecord.objects.filter(
             patrec_id__pat_id=obj.pat_id
         ).count()
-        print(f"medicine count for patient {obj.pat_id} with status RECORDED: {count}")
+        print(f"medicine count for patient {obj.pat_id}: {count}")
         return count
+
+    def get_latest_medicine_date(self, obj):
+        # Get the most recent medicine record date for this patient based on fulfilled_at
+        latest_medicine = MedicineRecord.objects.filter(
+            patrec_id__pat_id=obj.pat_id
+        ).order_by('-fulfilled_at').first()
+        
+        if latest_medicine and latest_medicine.fulfilled_at:
+            return latest_medicine.fulfilled_at
+        return None
 
 class MedicineRecordSerialzer(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
@@ -32,6 +43,9 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
+
+        
 class MedicineRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
@@ -82,10 +96,10 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
             if obj.pat_id:
                 return obj.pat_id.pat_id
             elif obj.rp_id:
-                return f"RES_{obj.rp_id.rp_id}"
+                return f"{obj.rp_id.rp_id}"
         except Exception as e:
             print(f"Error getting patient ID: {str(e)}")
-        return None
+        return None 
 
     def get_personal_info(self, obj):
         """Get personal information using the same pattern as PatientSerializer"""

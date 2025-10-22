@@ -1,89 +1,132 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import MedicineStocks from "./MedicineStocks";
-import VaccineStocks from "./VaccineStocks";
-import FirstAidStocks from "./FirstAidStocks";
-import CommodityStocks from "./CommodityStocks";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+
+import { useReportsCount } from "@/pages/healthServices/count-return/count";
+
+const TabConfig = [
+  {
+    id: "medicine",
+    icon: Pill,
+    label: "Medicine",
+    path: "medicine"
+  },
+  {
+    id: "vaccine", 
+    icon: Syringe,
+    label: "Antigen",
+    path: "antigen"
+  },
+  {
+    id: "commodity",
+    icon: Package,
+    label: "Commodity", 
+    path: "commodity"
+  },
+  {
+    id: "firstaid",
+    icon: Bandage,
+    label: "First Aid",
+    path: "firstaid"
+  }
+] as const;
+
+type TabType = (typeof TabConfig)[number]["id"];
 
 export default function MainInventoryStocks() {
-  const [selectedView, setSelectedView] = useState<string>("medicine"); // Start with default value
-  const [isMounted, setIsMounted] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get current tab from URL path
+  const getCurrentTabFromPath = () => {
+    const pathSegments = location.pathname.split("/");
+    const currentSegment = pathSegments[pathSegments.length - 1];
+    return TabConfig.find(tab => tab.path === currentSegment)?.id || "medicine";
+  };
 
+  const [selectedView, setSelectedView] = useState<TabType>(getCurrentTabFromPath);
+  const { data: count, isLoading: countLoading } = useReportsCount();
+
+  const [counts, setCounts] = useState({
+    medicine: 0,
+    vaccine: 0,
+    commodity: 0,
+    firstaid: 0
+  });
+
+  // Update URL when tab changes
   useEffect(() => {
-    setIsMounted(true);
-    // Only check localStorage after component mounts
-    const savedView = localStorage.getItem("mainInventoryStocksView");
-    if (savedView && ["medicine", "vaccine", "commodity", "firstaid"].includes(savedView)) {
-      setSelectedView(savedView);
+    const currentTab = TabConfig.find(tab => tab.id === selectedView);
+    if (currentTab) {
+      navigate(currentTab.path, { replace: true });
     }
-  }, []);
+    localStorage.setItem("mainInventoryStocksView", selectedView);
+  }, [selectedView, navigate]);
 
+  // Update selected view when URL changes
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem("mainInventoryStocksView", selectedView);
-    }
-  }, [selectedView, isMounted]);
+    setSelectedView(getCurrentTabFromPath());
+  }, [location.pathname]);
 
-  if (!isMounted) {
-    return <div className="p-4">Loading...</div>; // Show loading state
-  }
+  // Update counts when API data changes
+  useEffect(() => {
+    if (count?.data) {
+      setCounts({
+        medicine: count.data.inv_medicine_count || 0,
+        vaccine: count.data.inv_antigen_count || 0,
+        commodity: count.data.inv_commodity_count || 0,
+        firstaid: count.data.inv_firstaid_count || 0
+      });
+    }
+  }, [count]);
+
+  // Get count with loading state
+  const getCountDisplay = (count: number, isLoading: boolean) => {
+    if (isLoading) return "⋯";
+    return count.toString();
+  };
 
   return (
     <Card className="border shadow-sm">
       <CardHeader className="p-0">
         <Tabs
           value={selectedView}
-          onValueChange={setSelectedView}
+          onValueChange={(value) => setSelectedView(value as TabType)}
           className="w-full"
         >
           <div className="px-4 pt-4">
             <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
-              <TabsTrigger
-                value="medicine"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-              >
-                <Pill className="h-4 w-4" />
-                <span>Medicine</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="vaccine"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-              >
-                <Syringe className="h-4 w-4" />
-                <span>Vaccine</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="commodity"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-              >
-                <Package className="h-4 w-4" />
-                <span>Commodity</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="firstaid"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-              >
-                <Bandage className="h-4 w-4" />
-                <span>First Aid</span>
-              </TabsTrigger>
+              {TabConfig.map((tab) => {
+                const Icon = tab.icon;
+                const countValue = counts[tab.id];
+                const isActive = selectedView === tab.id;
+
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className={`flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{tab.label}</span>
+                    <span className={`text-xs rounded-full h-6 w-6 flex items-center justify-center ${
+                      isActive 
+                        ? "bg-red-500 text-white" 
+                        : "bg-red-300 text-white"
+                    }`}>
+                      {getCountDisplay(countValue, countLoading)}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
 
           <CardContent className="p-4 pt-6">
-            <TabsContent value="medicine" className="mt-0">
-              <MedicineStocks />
-            </TabsContent>
-            <TabsContent value="vaccine" className="mt-0">
-              <VaccineStocks />
-            </TabsContent>
-            <TabsContent value="commodity" className="mt-0">
-              <CommodityStocks />
-            </TabsContent>
-            <TabsContent value="firstaid" className="mt-0">
-              <FirstAidStocks />
-            </TabsContent>
+            {/* Render nested tab content */}
+            <Outlet />
           </CardContent>
         </Tabs>
       </CardHeader>

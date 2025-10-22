@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react"
 import { Form } from "@/components/ui/form/form"
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form"
@@ -41,6 +42,8 @@ export default function HealthInfoForm({
       }
       // Clear the source field when no family planning is selected
       form.setValue(`${prefix}.source`, "")
+      // Also clear LMP date if no family planning is selected
+      form.setValue(`${prefix}.lmpDate`, "")
     }
     // If other family planning methods are selected and "No Family Planning" gets added, 
     // remove "No Family Planning" to allow multiple selections
@@ -76,7 +79,7 @@ export default function HealthInfoForm({
 
       <Form {...form}>
         <form className="grid gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <FormSelect
               control={form.control}
               name={`${prefix}.healthRiskClass`}
@@ -100,7 +103,14 @@ export default function HealthInfoForm({
                 { id: "fim", name: "FIM" },
               ]}
             />
-            <div className={showFamilyPlanningSource ? "sm:col-span-2 lg:col-span-1" : "sm:col-span-2 lg:col-span-2"}>
+            <FormDateTimeInput
+              control={form.control}
+              name={`${prefix}.lmpDate`}
+              label="Last Menstrual Period (LMP)"
+              type="date"
+              max={new Date().toISOString().split('T')[0]}
+            />
+            <div className={showFamilyPlanningSource ? "sm:col-span-3 lg:col-span-1" : "sm:col-span-2 lg:col-span-2"}>
               <FormComboCheckbox
                 control={form.control}
                 name={`${prefix}.method`}
@@ -122,6 +132,7 @@ export default function HealthInfoForm({
  
               />
             </div>
+           
             {showFamilyPlanningSource && (
               <FormSelect
                 control={form.control}
@@ -135,6 +146,8 @@ export default function HealthInfoForm({
                 ]}
               />
             )}
+
+            
           </div>
         </form>
       </Form>

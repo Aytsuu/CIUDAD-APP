@@ -270,5 +270,3 @@ class CompleteRegistrationView(APIView):
           BusinessFile.objects.bulk_create(business_files)
 
     return business
-
-  

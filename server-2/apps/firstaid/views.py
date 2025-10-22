@@ -3,7 +3,7 @@ from rest_framework import generics
 from .serializers import *
 from apps.patientrecords.models import *
 from apps.patientrecords.serializers import *
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Subquery
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,31 +14,263 @@ from django.utils.timezone import now
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from apps.pagination import StandardResultsPagination
-from apps.healthProfiling.models import PersonalAddress
-
+from apps.healthProfiling.models import *
+from apps.medicalConsultation.utils import *
 
 
 class PatientFirstaidRecordsView(generics.ListAPIView):
     serializer_class = PatientFirstaidRecordSerializer
-
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return Patient.objects.filter(
-          Q(patient_records__first_aid_records__patrec_id__isnull=False)
+        # Subquery to get the latest first aid date for each patient
+        latest_firstaid_subquery = FirstAidRecord.objects.filter(
+            patrec_id__pat_id=OuterRef('pat_id')
+        ).order_by('-created_at').values('created_at')[:1]
+
+        # Base queryset with annotations for count and latest date
+        queryset = Patient.objects.annotate(
+            firstaid_count=Count(
+                'patient_records__first_aid_records',
+                distinct=True
+            ),
+            latest_firstaid_date=Subquery(latest_firstaid_subquery)
+        ).filter(
+            # Only include patients who have first aid records
+            patient_records__first_aid_records__isnull=False
+        ).select_related(
+            'rp_id__per',         
+            'trans_id',             
+            'trans_id__tradd_id'   
         ).distinct()
 
-class IndividualFirstaidRecordView(generics.ListCreateAPIView):
+        # Order by latest first aid date (most recent first) then by count
+        queryset = queryset.order_by('-latest_firstaid_date', '-firstaid_count')
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query and len(search_query) >= 2:
+            queryset = apply_patient_search_filter(queryset, search_query)
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search and patient_type_search != 'all':
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()) 
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class IndividualFirstaidRecordView(generics.ListAPIView):
     serializer_class = FirstaidRecordSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-        return FirstAidRecord.objects.filter(
-            patrec_id__pat_id=pat_id
-        ).order_by('-created_at')  # Optional: latest first
         
-class CreateFirstaidRecordView(generics.CreateAPIView):
-    serializer_class = FirstaidRecordSerializer
+        # Base queryset - using the correct relationship path
+        queryset = FirstAidRecord.objects.filter(
+            patrec__pat_id=pat_id  # Direct field access, not through relationship
+        ).select_related(
+            'finv__fa_id',  # FirstAid details
+            'finv__fa_id__cat',  # Category details
+            'patrec',  # Patient record
+            'staff'  # Staff details
+        ).order_by('-created_at')
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query and len(search_query) >= 2:
+            queryset = self._apply_firstaid_search_filter(queryset, search_query)
+        
+        return queryset
+    
+    def _apply_firstaid_search_filter(self, queryset, search_term):
+        """
+        Apply search filter for first aid records
+        """
+        return queryset.filter(
+            Q(finv__fa_id__fa_name__icontains=search_term) |  # FirstAid name
+            Q(finv__fa_id__cat__cat_name__icontains=search_term) |  # Category name
+            Q(finv__fa_id__cat__cat_type__icontains=search_term) |  # Category type
+            Q(reason__icontains=search_term) |  # Reason field
+            Q(qty__icontains=search_term)  # Quantity field
+        )
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True) 
+        return Response(serializer.data) 
+
+        
+class CreateFirstaidRecordView(generics.CreateAPIView):  
+    serializer_class = FirstaidRecordSerializer 
     queryset = FirstAidRecord.objects.all()
     
+
+class CreateFirstAidRequestView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            # Extract data from request
+            pat_id = request.data.get('pat_id')
+            signature = request.data.get('signature')
+            firstaid_items = request.data.get('firstaid', [])
+            staff_id = request.data.get('staff_id')
+            
+            print(f"Received first aid request: pat_id={pat_id}, items={len(firstaid_items)}")
+            
+            if not pat_id:
+                return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not firstaid_items:
+                return Response({"error": "At least one first aid item is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 1. Get the Patient instance
+            try:
+                patient = Patient.objects.get(pat_id=pat_id)
+            except Patient.DoesNotExist:
+                return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # 2. Get Staff instance if staff_id is provided
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {staff_id} not found, continuing without staff")
+            
+            # 3. Create patient record
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type="First Aid Request",
+            )
+            
+            # 4. Process each first aid item
+            firstaid_records = []
+            inventory_updates = {}  # Store original quantities for rollback
+            firstaid_transactions = []  # Store transactions
+            
+            for item_data in firstaid_items:
+                finv_id = item_data.get('finv_id')
+                qty = item_data.get('qty', 0)
+                reason = item_data.get('reason', '')
+                
+                if not finv_id or qty is None:
+                    continue
+                
+                # Check first aid inventory
+                try:
+                    firstaid_inv = FirstAidInventory.objects.get(finv_id=finv_id)
+                    
+                    # Handle unit conversion
+                    unit = firstaid_inv.finv_qty_unit
+                    if unit == "boxes":
+                        unit = "pc/s"
+                    
+                    # Store original quantity for rollback
+                    inventory_updates[finv_id] = {
+                        'firstaid_inv': firstaid_inv,
+                        'original_qty': firstaid_inv.finv_qty_avail
+                    }
+                    
+                    # Handle zero quantity case
+                    if qty == 0:
+                        # Create record without updating inventory
+                        firstaid_record = FirstAidRecord.objects.create(
+                            patrec=patient_record,
+                            finv=firstaid_inv,
+                            qty=f"0 {unit}",
+                            reason=reason,
+                            signature=signature,
+                            created_at=timezone.now(),
+                            staff=staff_instance
+                        )
+                        firstaid_records.append(firstaid_record)
+                        continue
+                    
+                    # Check stock for non-zero quantities
+                    if firstaid_inv.finv_qty_avail < qty:
+                        raise Exception(f"Insufficient stock for First Aid ID {finv_id}. Available: {firstaid_inv.finv_qty_avail}, Requested: {qty}")
+                    
+                    # Update inventory
+                    firstaid_inv.finv_qty_avail -= qty
+                    firstaid_inv.save()
+                    
+                    # Update inventory timestamp if available - FIXED HERE
+                    # Use inv_id directly instead of inv_detail
+                    try:
+                        # Access the related Inventory object through the inv_id field
+                        inventory = firstaid_inv.inv_id
+                        if inventory:
+                            inventory.updated_at = timezone.now()
+                            inventory.save()
+                    except Exception as e:
+                        print(f"Could not update inventory timestamp: {str(e)}")
+                    
+                    # Create first aid transaction
+                    firstaid_transaction = FirstAidTransactions.objects.create(
+                        fat_qty=f"{qty} {unit}",
+                        fat_action="Deducted",
+                        staff=staff_instance,
+                        finv_id=firstaid_inv
+                    )
+                    firstaid_transactions.append(firstaid_transaction)
+                    
+                    # Create first aid record
+                    firstaid_record = FirstAidRecord.objects.create(
+                        patrec=patient_record,
+                        finv=firstaid_inv,
+                        qty=f"{qty} {unit}",
+                        reason=reason,
+                        signature=signature,
+                        created_at=timezone.now(),
+                        staff=staff_instance
+                    )
+                    firstaid_records.append(firstaid_record)
+                    
+                except FirstAidInventory.DoesNotExist:
+                    raise Exception(f"First Aid ID {finv_id} not found in inventory")
+            
+            return Response({
+                "message": "First Aid request created successfully",
+                "patrec_id": patient_record.patrec_id,
+                "firstaid_records_created": len(firstaid_records),
+                "firstaid_transactions_created": len(firstaid_transactions)
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            
+            # Manual inventory rollback
+            try:
+                for finv_id, update_info in inventory_updates.items():
+                    firstaid_inv = update_info['firstaid_inv']
+                    original_qty = update_info['original_qty']
+                    firstaid_inv.finv_qty_avail = original_qty
+                    firstaid_inv.save()
+                    print(f"Rolled back inventory for first aid {finv_id} to {original_qty}")
+            except Exception as rollback_error:
+                print(f"Error during inventory rollback: {str(rollback_error)}")
+            
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class GetFirstaidRecordCountView(APIView):
     def get(self, request, pat_id):
@@ -230,7 +462,7 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
         }, status=status.HTTP_200_OK)
         
    
-   
+
 class MonthlyFirstAidChart(APIView):
     def get(self, request, month):
         try:
@@ -245,25 +477,36 @@ class MonthlyFirstAidChart(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get first aid item counts for the specified month
+            # Get the monthly recipient list ID for FirstAid type
+            try:
+                monthly_report = MonthlyRecipientListReport.objects.get(
+                    month_year=month,
+                    rcp_type='FirstAid'
+                )
+                monthly_id = monthly_report.monthlyrcplist_id
+            except MonthlyRecipientListReport.DoesNotExist:
+                monthly_id = None
+
+            # Count first aid records for the specified month (don't sum quantities)
             queryset = FirstAidRecord.objects.filter(
                 created_at__year=year,
                 created_at__month=month_num
             ).values(
                 'finv__fa_id__fa_name'  # Path to first aid item name
             ).annotate(
-                count=Count('finv__fa_id')
-            ).order_by('-count')
+                record_count=Count('farec_id')  # Count the number of records instead of summing quantities
+            ).order_by('-record_count')
 
-            # Convert to dictionary format {item_name: count}
+            # Convert to dictionary format {item_name: record_count}
             item_counts = {
-                item['finv__fa_id__fa_name']: item['count'] 
+                item['finv__fa_id__fa_name']: item['record_count']
                 for item in queryset
             }
 
             return Response({
                 'success': True,
                 'month': month,
+                'monthly_report_id': monthly_id,
                 'first_aid_counts': item_counts,
                 'total_records': sum(item_counts.values())
             }, status=status.HTTP_200_OK)
@@ -273,8 +516,6 @@ class MonthlyFirstAidChart(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 class FirstAidTotalCountAPIView(APIView):
     def get(self, request):

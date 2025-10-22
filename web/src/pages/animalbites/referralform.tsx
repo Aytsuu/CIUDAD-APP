@@ -124,13 +124,19 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
         const patientData = await getAllPatients()
         console.log("📥 Fetched patients:", patientData)
         if (patientData && patientData.length > 0) {
-          const formattedPatients: SelectOption[] = patientData.map((patient: any) => ({
-            id: patient.pat_id.toString(),
-            name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
-          }))
-          setPatients(formattedPatients)
-          setPatientsData(patientData)
-        } else {
+    const formattedPatients: SelectOption[] = patientData.map((patient: any) => {
+        const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim();
+        const patientId = patient.pat_id.toString();
+
+        return {
+            id: `${fullName} (${patientId})`, 
+            name: fullName,
+        };
+    });
+    setPatients(formattedPatients);
+    setPatientsData(patientData);
+} 
+        else {
           console.warn("⚠️ No patients found in database")
           setPatients([])
           setPatientsData([])
@@ -152,8 +158,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   const handlePatientSelection = (id: string | undefined) => {
     if (!id) return
     setSelectedPatientId(id)
-    const selectedPatient = patientsData.find((p) => p.pat_id.toString() === id)
+    const patIdMatch = id.match(/\(([^)]+)\)$/);
+    const realPatId = patIdMatch ? patIdMatch[1] : id.split(' ')[0]; 
 
+    setSelectedPatientId(realPatId) 
+    setSelectedPatientId(id);
+    const selectedPatient = patientsData.find((p) => p.pat_id.toString() === realPatId)
     if (selectedPatient) {
       const personalInfo = selectedPatient.personal_info
       form.setValue("pat_id", String(selectedPatient.pat_id))

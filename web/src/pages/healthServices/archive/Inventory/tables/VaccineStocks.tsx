@@ -13,7 +13,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { getArchivedStockColumns  } from "./columns/AntigenCol";
 import { useAntigenSocks } from "../queries/fetch";
 
-export default function CombinedStockTable() {
+export default function CombinedStockTableArchive() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

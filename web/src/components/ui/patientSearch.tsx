@@ -9,70 +9,74 @@ import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { usePatientsQuery, usePatients5yearsbelowQuery } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 
-export interface Patient {
-  pat_id: string;
-  pat_type: string;
-  name?: string;
-  trans_id?: string;
-  rp_id?: { rp_id?: string };
-  personal_info?: {
-    per_fname?: string;
-    per_mname?: string;
-    per_lname?: string;
-    per_dob?: string;
-    per_sex?: string;
-  };
-  households?: { hh_id: string }[];
-  address?: {
-    add_street?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-    add_sitio?: string;
-    full_address?: string;
-  };
-  family?: {
-    fam_id: string;
-    fc_role: string;
-  };
-  family_head_info?: {
-    fam_id: string | null;
-    family_heads?: {
-      mother?: {
-        role?: string;
-        personal_info?: {
-          per_fname?: string | null;
-          per_mname?: string | null;
-          per_lname?: string | null;
-          per_dob?: string | null;
-          per_sex?: string | null;
-        };
-      };
-      father?: {
-        role?: string;
-        personal_info?: {
-          per_fname?: string | null;
-          per_mname?: string | null;
-          per_lname?: string | null;
-          per_dob?: string | null;
-          per_sex?: string | null;
-        };
-      };
-    };
-  };
-  spouse_info?: {
-    spouse_info?: {
-      spouse_fname?: string
-      spouse_lname?: string
-      spouse_mname?: string
-      spouse_dob?: string
-      spouse_occupation?: string
-    }
-  };
-}
+// export interface Patient {
+//   pat_id: string;
+//   pat_type: string;
+//   name?: string;
+//   trans_id?: string;
+//   rp_id?: { rp_id?: string };
+//   personal_info?: {
+//     per_fname?: string;
+//     per_mname?: string;
+//     per_lname?: string;
+//     per_dob?: string;
+//     per_sex?: string;
+//   };
+//   households?: { hh_id: string }[];
+//   address?: {
+//     add_street?: string;
+//     add_barangay?: string;
+//     add_city?: string;
+//     add_province?: string;
+//     add_sitio?: string;
+//     full_address?: string;
+//   };
+//   family?: {
+//     fam_id: string;
+//     fc_role: string;
+//   };
+//   family_head_info?: {
+//     fam_id: string | null;
+//     family_heads?: {
+//       mother?: {
+//         role?: string;
+//         personal_info?: {
+//           per_fname?: string | null;
+//           per_mname?: string | null;
+//           per_lname?: string | null;
+//           per_dob?: string | null;
+//           per_sex?: string | null;
+//         };
+//       };
+//       father?: {
+//         role?: string;
+//         personal_info?: {
+//           per_fname?: string | null;
+//           per_mname?: string | null;
+//           per_lname?: string | null;
+//           per_dob?: string | null;
+//           per_sex?: string | null;
+//         };
+//       };
+//       tt_status:string | null;
+//     };
+//   };
+//   spouse_info?: {
+//     spouse_info?: {
+//       spouse_fname?: string
+//       spouse_lname?: string
+//       spouse_mname?: string
+//       spouse_dob?: string
+//       spouse_occupation?: string
+//     }
+//   };
+//   additional_info?: {
+//     philhealth_id?: string;
+// }
+// }
 
 interface PatientSearchProps {
-  onPatientSelect: (patient: Patient | null, patientId: string) => void;
+  onPatientSelect: (patient: any | null, patientId: string) => void;
   className?: string;
   value: string;
   onChange: (id: string) => void;
@@ -108,9 +112,15 @@ export function PatientSearch({
       toast.error(`Failed to load children patients: ${(error5YearsBelow as Error).message}`);
     }
   }, [isError, error, isError5YearsBelow, error5YearsBelow]);
-
+  
   const handlePatientSelection = useCallback(
     (id: string) => {
+      if (!id) {
+        onChange("");
+        onPatientSelect(null, "");
+        return;
+      }
+  
       onChange(id);
       const dataSource = ischildren ? patients5YearsBelowData?.default : patientsData?.default;
       const selectedPatient = dataSource?.find(
@@ -120,6 +130,7 @@ export function PatientSearch({
     },
     [patientsData?.default, patients5YearsBelowData?.default, onPatientSelect, onChange, ischildren]
   );
+  
 
   const currentData = ischildren ? patients5YearsBelowData : patientsData;
   const currentIsLoading = ischildren ? isLoading5YearsBelow : isLoading;
@@ -127,7 +138,7 @@ export function PatientSearch({
 
   return (
     <div
-      className={`bg-white pb-4 ${className}`}
+      className={`bg-white rounded-lg ${className}`}
     >
       <div className="flex items-center gap-3 mb-2">
       <User className="h-4 w-4 text-darkBlue3" />

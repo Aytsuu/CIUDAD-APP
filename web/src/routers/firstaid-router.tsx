@@ -3,11 +3,11 @@ import IndivFirstAidRecords from "@/pages/healthServices/firstaidservices/tables
 import FirstAidRequestForm from "@/pages/healthServices/firstaidservices/FirstAidRequestForm";
 export const firstaid_router = [
   {
-    path: "/all-firstaid-records",
+    path: "/services/firstaid",
     element: <AllFirstAidRecords />,
   },
   {
-    path: "/indiv-firstaid-records",
+    path: "/services/firstaid/records",
     element: <IndivFirstAidRecords />,
   },
 

@@ -1,39 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, TouchableOpacity, TextInput, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-  Search, 
-  User, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Baby, 
-  Heart, 
-  Loader2, 
-  ChevronLeft, 
-  ChevronRight, 
-  UserCheck, 
-  UserPlus, 
-  Users, 
-  Filter,
-  AlertCircle,
-  RefreshCw,
-  FileText,
-  TrendingUp
-} from 'lucide-react-native';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Text as UIText } from '@/components/ui/text';
-import { useChildHealthRecords } from '../forms/queries/fetchQueries';
-import { ChildHealthRecord } from '../forms/muti-step-form/types';
+import { Search, MapPin, Calendar, Baby, Heart, ChevronLeft, Users, AlertCircle, RefreshCw } from 'lucide-react-native';
+import { Text as UIText,Text } from '@/components/ui/text';
+import { useChildHealthRecords } from '../queries/fetchQueries';
+import { ChildHealthRecord } from '../../admin-patientsrecord/types';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { calculateAge } from '@/helpers/ageCalculator';
+import { TabBar, TabType } from '../../components/tab-bar';
 
-type TabType = "all" | "resident" | "transient";
-
-// Components
+// Components (keep your existing StatusBadge, TabBar, ChildHealthCard components the same)
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const getTypeConfig = (type: string) => {
     switch (type.toLowerCase()) {
@@ -67,39 +44,6 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
     </View>
   );
 };
-
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </UIText>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </UIText>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </UIText>
-    </TouchableOpacity>
-  </View>
-);
 
 const ChildHealthCard: React.FC<{
   child: ChildHealthRecord;
@@ -138,9 +82,6 @@ const ChildHealthCard: React.FC<{
           </View>
           <View className="items-end">
             <StatusBadge type={child.pat_type} />
-            {/* <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2"> */}
-              {/* <UIText className="text-blue-700 font-bold text-xs">#{child.chrec_id}</UIText> */}
-            {/* </View> */}
           </View>
         </View>
       </View>
@@ -166,11 +107,11 @@ const ChildHealthCard: React.FC<{
               {child.health_checkup_count} checkups
             </UIText>
           </View>
-          <View className="flex-row items-center">
+          {/* <View className="flex-row items-center">
             <UIText className="text-sm text-gray-600">
               Weight: {child.birth_weight || 'N/A'} kg
             </UIText>
-          </View>
+          </View> */}
         </View>
 
         <View className="flex-row items-start">
@@ -183,12 +124,14 @@ const ChildHealthCard: React.FC<{
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
             <MapPin size={16} color="#6B7280" />
-            <UIText className="ml-2 text-sm text-gray-700 flex-1" numberOfLines={1}>
-              {child.sitio || child.address}
+            <UIText 
+              className="ml-2 text-sm text-gray-700 flex-1"
+              style={{ flexWrap: 'wrap' }}
+            >
+              {child.address}
             </UIText>
-          </View>
+          </View> 
         </View>
-
       </View>
     </TouchableOpacity>
   );
@@ -196,73 +139,103 @@ const ChildHealthCard: React.FC<{
 
 export default function AllChildHealthRecords() {
   const router = useRouter();
-  const { data: childHealthRecords, isLoading, isFetching, refetch, error } = useChildHealthRecords();
+  const { data: childHealthRecords, isLoading, refetch, error } = useChildHealthRecords();
+const [currentPage, setCurrentPage] = useState<number>(1);
+const [searchQuery, setSearchQuery] = useState('');
+const [refreshing, setRefreshing] = useState(false);
+const [activeTab, setActiveTab] = useState<TabType>("all");
+const pageSize = 20;
+ const totalCount = childHealthRecords?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("all");
-
+  // FIXED: Proper error handling for childHealthRecords
   const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
+    console.log("Raw childHealthRecords:", childHealthRecords);
+    
+    // Add comprehensive checks
     if (!childHealthRecords) {
+      console.log("No childHealthRecords data");
       return [];
     }
 
-    return childHealthRecords.map((record: any) => {
-      const childInfo = record.patrec_details?.pat_details?.personal_info || {};
-      const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
-      const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};
-      const addressInfo = record.patrec_details?.pat_details?.address || {};
+    if (!Array.isArray(childHealthRecords)) {
+      console.log("childHealthRecords is not an array:", typeof childHealthRecords);
+      
+      // Try to handle if it's an object with a data property
+      if (childHealthRecords && typeof childHealthRecords === 'object') {
+        if (Array.isArray(childHealthRecords.data)) {
+          console.log("Using childHealthRecords.data array");
+          return childHealthRecords.data.map((record: any) => formatRecord(record));
+        } else if (Array.isArray(childHealthRecords.children)) {
+          console.log("Using childHealthRecords.children array");
+          return childHealthRecords.children.map((record: any) => formatRecord(record));
+        } else if (Array.isArray(childHealthRecords.results)) {
+          console.log("Using childHealthRecords.results array");
+          return childHealthRecords.results.map((record: any) => formatRecord(record));
+        }
+      }
+      
+      return [];
+    }
 
-      const childRecord: ChildHealthRecord = {
-        chrec_id: record.chrec_id || '',
-        pat_id: record.patrec_details?.pat_details?.pat_id || '',
-        fname: childInfo.per_fname || '',
-        lname: childInfo.per_lname || '',
-        mname: childInfo.per_mname || '',
-        sex: childInfo.per_sex || '',
-        age: calculateAge(childInfo.per_dob).toString(),
-        dob: childInfo.per_dob || '',
-        householdno: record.patrec_details?.pat_details?.households?.[0]?.hh_id || '',
-        address: [
-          addressInfo.add_sitio,
-          addressInfo.add_street,
-          addressInfo.add_barangay,
-          addressInfo.add_city,
-          addressInfo.add_province,
-        ].filter(Boolean).join(', ') || 'No address Provided',
-        sitio: addressInfo.add_sitio || '',
-        landmarks: addressInfo.add_landmarks || '',
-        pat_type: record.patrec_details?.pat_details?.pat_type || '',
-        mother_fname: motherInfo.per_fname || '',
-        mother_lname: motherInfo.per_lname || '',
-        mother_mname: motherInfo.per_mname || '',
-        mother_contact: motherInfo.per_contact || '',
-        mother_occupation: motherInfo.per_occupation || record.mother_occupation || '',
-        father_fname: fatherInfo.per_fname || '',
-        father_lname: fatherInfo.per_lname || '',
-        father_mname: fatherInfo.per_mname || '',
-        father_contact: fatherInfo.per_contact || '',
-        father_occupation: fatherInfo.per_occupation || record.father_occupation || '',
-        family_no: record.family_no || 'Not Provided',
-        birth_weight: record.birth_weight || 0,
-        birth_height: record.birth_height || 0,
-        type_of_feeding: record.type_of_feeding || 'Unknown',
-        delivery_type: record.place_of_delivery_type || '',
-        place_of_delivery_type: record.place_of_delivery_type || '',
-        pod_location: record.pod_location || '',
-        pod_location_details: record.pod_location_details || '',
-        health_checkup_count: record.health_checkup_count || 0,
-        birth_order: record.birth_order || '',
-        tt_status: record.tt_status || '',
-        street: '',
-        barangay: '',
-        city: '',
-        province: ''
-      };
-
-      return childRecord;
-    });
+    // If it's an array, proceed normally
+    return childHealthRecords.map((record: any) => formatRecord(record));
   }, [childHealthRecords]);
+
+  // Helper function to format individual records
+  const formatRecord = (record: any): ChildHealthRecord => {
+    const childInfo = record.patrec_details?.pat_details?.personal_info || {};
+    const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
+    const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};
+    const addressInfo = record.patrec_details?.pat_details?.address || {};
+
+    return {
+      chrec_id: record.chrec_id || '',
+      pat_id: record.patrec_details?.pat_details?.pat_id || '',
+      fname: childInfo.per_fname || '',
+      lname: childInfo.per_lname || '',
+      mname: childInfo.per_mname || '',
+      sex: childInfo.per_sex || '',
+      age: calculateAge(childInfo.per_dob).toString(),
+      dob: childInfo.per_dob || '',
+      householdno: record.patrec_details?.pat_details?.households?.[0]?.hh_id || '',
+      address: [
+        addressInfo.add_sitio,
+        addressInfo.add_street,
+        addressInfo.add_barangay,
+        addressInfo.add_city,
+        addressInfo.add_province,
+      ].filter(Boolean).join(', ') || 'No address Provided',
+      sitio: addressInfo.add_sitio || '',
+      landmarks: addressInfo.add_landmarks || '',
+      pat_type: record.patrec_details?.pat_details?.pat_type || '',
+      mother_fname: motherInfo.per_fname || '',
+      mother_lname: motherInfo.per_lname || '',
+      mother_mname: motherInfo.per_mname || '',
+      mother_contact: motherInfo.per_contact || '',
+      mother_occupation: motherInfo.per_occupation || record.mother_occupation || '',
+      father_fname: fatherInfo.per_fname || '',
+      father_lname: fatherInfo.per_lname || '',
+      father_mname: fatherInfo.per_mname || '',
+      father_contact: fatherInfo.per_contact || '',
+      father_occupation: fatherInfo.per_occupation || record.father_occupation || '',
+      family_no: record.family_no || 'Not Provided',
+      birth_weight: record.birth_weight || 0,
+      birth_height: record.birth_height || 0,
+      type_of_feeding: record.type_of_feeding || 'Unknown',
+      delivery_type: record.place_of_delivery_type || '',
+      place_of_delivery_type: record.place_of_delivery_type || '',
+      pod_location: record.pod_location || '',
+      pod_location_details: record.pod_location_details || '',
+      health_checkup_count: record.health_checkup_count || 0,
+      birth_order: record.birth_order || '',
+      tt_status: record.tt_status || '',
+      street: '',
+      barangay: '',
+      city: '',
+      province: ''
+    };
+  };
 
   const formattedData = useMemo(() => formatChildHealthData(), [formatChildHealthData]);
 
@@ -297,12 +270,7 @@ export default function AllChildHealthRecords() {
     return filtered;
   }, [formattedData, searchQuery, activeTab]);
 
-  // Calculate stats for tabs
-  const counts = useMemo(() => ({
-    all: formattedData.length,
-    resident: formattedData.filter((p) => p.pat_type.toLowerCase() === "resident").length,
-    transient: formattedData.filter((p) => p.pat_type.toLowerCase() === "transient").length,
-  }), [formattedData]);
+
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -320,8 +288,11 @@ export default function AllChildHealthRecords() {
       return;
     }
     router.push({
-      pathname: '/admin/childhealth/individual',
-      params: { ChildHealthRecord: JSON.stringify(child) },
+      pathname: '/(health)/childhealth/my-records',
+      params: { 
+        pat_id: child.pat_id,
+        mode: "admin"
+      },
     });
   };
 
@@ -376,11 +347,11 @@ export default function AllChildHealthRecords() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search child records..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -389,21 +360,35 @@ export default function AllChildHealthRecords() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab}/>
 
+        <View className="px-4 flex-row items-center justify-between mt-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-sm text-gray-600">
+                      Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <Text className="text-sm font-medium text-gray-800">
+                      Page {currentPage} of {totalPages}
+                    </Text>
+                  </View>
+                </View>
+
+                
         {/* Records List */}
         {formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
             <Baby size={64} color="#9CA3AF" />
             <UIText className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</UIText>
             <UIText className="text-gray-600 text-center mt-2">
-              There are no child health records available yet.
+              {childHealthRecords ? "No child health records match your criteria." : "No child health records available yet."}
             </UIText>
           </View>
         ) : (
           <FlatList
             data={filteredData}
-            keyExtractor={(item) => `child-${item.chrec_id}`}
+            keyExtractor={(item) => `child-${item.chrec_id}-${item.pat_id}`}
             refreshControl={
               <RefreshControl 
                 refreshing={refreshing} 

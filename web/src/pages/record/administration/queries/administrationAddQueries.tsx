@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 // Adding
 export const useAddPosition = () => {
@@ -75,10 +76,24 @@ export const useAddPositionBulk = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
-        const res = await api.post('administration/position/bulk/create/', data)
-        return res.data
+        console.log('Payload being sent to bulk create:', data);
+        
+        // Call both APIs
+        const [res1, res2] = await Promise.all([
+          api.post('administration/position/bulk/create/', data),
+          api2.post('administration/position/bulk/create/', data)
+        ]);
+        
+        return {
+          api1Response: res1.data,
+          api2Response: res2.data
+        };
       } catch(err: any) {
         console.error('Bulk position creation error:', err);
+        if (err.response) {
+          console.error('Response data:', err.response.data);
+          console.error('Response status:', err.response.status);
+        }
         throw err;
       }
     },

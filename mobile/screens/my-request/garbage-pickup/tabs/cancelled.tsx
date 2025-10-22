@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function ResidentCancelled() {
   const [searchQuery, setSearchQuery] = useState("");
   const {user} = useAuth()  
-  const { data: cancelledRequest = [], isLoading: isDataLoading} = useGetGarbageCancelledResident(user?.rp || '')
+  const { data: cancelledRequest = [], isLoading: isDataLoading} = useGetGarbageCancelledResident(user?.resident?.rp_id)
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);

@@ -1,5 +1,5 @@
-
 import { api2 } from "@/api/api"
+import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
 // Type for a single FP Record entry in the individual patient's table
@@ -21,9 +21,9 @@ export interface FPPatientsCount {
   transient_fp_patients: number;
 }
 
-export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
+export const getFPPatientsCounts = async (params?: { search?: string }): Promise<FPPatientsCount> => {
   try {
-    const response = await api2.get("/familyplanning/patient-counts/"); // Adjust this URL if your Django URL pattern is different
+    const response = await api2.get("/familyplanning/patient-counts/", { params });
     return response.data;
   } catch (error) {
     console.error("Error fetching FP patient counts:", error);
@@ -31,37 +31,23 @@ export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
   }
 };
 
-// Updated getFPRecordsList to match the new backend structure for the overall table
-export const getFPRecordsList = async () => {
+// Updated getFPRecordsList to support backend pagination, search, and filter
+export const getFPRecordsList = async (params: {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  client_type?: string;
+  patient_type?: string;
+}) => {
   try {
-    const response = await api2.get("familyplanning/overall-records/")
-    const fpRecords = response.data
-
-    // The backend now returns data in a format close to FPRecord interface
-    // but with additional fields like patient_id and record_count.
-    // We just ensure types are consistent.
-    const transformedData = fpRecords.map((record: any) => {
-      return {
-        fprecord_id: record.fprecord,
-        patient_id: record.patient_id, // Ensure patient_id is mapped
-        client_id: record.client_id || "N/A",
-        patient_name: record.patient_name || "N/A",
-        patient_age: record.patient_age || "N/A",
-        client_type: record.client_type || "N/A",
-        method_used: record.method_used || "N/A",
-        created_at: record.created_at || "N/A",
-        patient_type: record.patient_type || "N/A",
-        sex: record.sex || "Unknown",
-        record_count: record.record_count || 0, // Ensure record_count is mapped
-      }
-    })
-
-    return transformedData
+    const response = await api2.get("familyplanning/overall-records/", { params });
+    return response.data; // { count, next, previous, results }
   } catch (err) {
     console.error("Error fetching FP records for overall table:", err)
-    return []
+    return { count: 0, next: null, previous: null, results: [] };
   }
 }
+
 export interface FullFPRecordDetail {
   fprecord_id: number;
   client_id: string;
@@ -131,12 +117,11 @@ export interface FullFPRecordDetail {
     others: boolean;
     others_specify?: string;
   };
-  obstetrical: {
-    g: number;
-    p: number;
-    full_term: number;
-    premature: number;
-    abortion: number;
+  obstetrical_history: {
+    no_pregnancies: number;
+    no_fullterm: number;
+    no_premature: number;
+    no_abortions: number;
     living_children: number;
   };
   visits: Array<{
@@ -266,4 +251,20 @@ export const getFPCompleteRecord = async (fprecord_id: any): Promise<any> => {
     console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err)
     throw err
   }
+}
+
+export const useFPRecordsForPatient = (patientId: string) => {
+  return useQuery({
+    queryKey: ["fpRecordsForPatient", patientId],
+    queryFn: () => getFPRecordsForPatient(patientId),
+    enabled: !!patientId, // Ensures the query only runs if a patientId is provided
+  });
+};
+
+export const useFPCompleteRecord = (fprecordId: number) => {
+    return useQuery({
+        queryKey: ["fpCompleteRecord", fprecordId],
+        queryFn: () => getFPCompleteRecord(fprecordId),
+        enabled: !!fprecordId
+    })
 }

@@ -81,29 +81,29 @@ export const getStockColumns = (
       const expired = record.isExpired;
       const isLow = record.isLowStock;
       const isOutOfStock = record.isOutOfStock;
-
+  
       if (record.type === "vaccine") {
         if (record.solvent?.toLowerCase() === "diluent") {
           return (
             <div className={`text-center ${expired ? "text-red-600 line-through" : isLow ? "text-yellow-600" : "text-black"}`}>
               {record.availableStock} containers
               {expired && " (Expired)"}
-              {isLow && " (Low Stock)"}
+              {!isOutOfStock && isLow && record.availableStock > 0 && " (Low Stock)"}
               {isOutOfStock && !expired && " (Out of Stock)"}
             </div>
           );
         }
-
+  
         const dosesPerVial = record.dose_ml || 1;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-
+  
         return (
           <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
             <span className={expired ? "line-through" : isLow ? "text-yellow-600" : "text-black"}>
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
               {expired && " (Expired)"}
-              {isLow && " (Low Stock)"}
+              {!isOutOfStock && isLow && availableDoses > 0 && " (Low Stock)"}
               {isOutOfStock && !expired && " (Out of Stock)"}
             </span>
             <span className={expired ? "text-red-500" : "text-blue-500"}>
@@ -112,14 +112,14 @@ export const getStockColumns = (
           </div>
         );
       }
-
+  
       if (record.type === "supply") {
         if (record.imzStck_unit === "boxes") {
           const pcsPerBox = record.imzStck_pcs || 1;
           const availablePcs = record.availableStock;
           const fullBoxes = Math.floor(availablePcs / pcsPerBox);
           const remainingPcs = availablePcs % pcsPerBox;
-
+  
           return (
             <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
               <span className={expired ? "line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}>
@@ -134,7 +134,7 @@ export const getStockColumns = (
             </div>
           );
         }
-
+  
         return (
           <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
             {record.availableStock} pc{record.availableStock !== 1 ? "s" : ""}
@@ -144,7 +144,7 @@ export const getStockColumns = (
           </div>
         );
       }
-
+  
       return (
         <div className={`text-center ${expired ? "text-red-600 line-through" : isLow ? "text-yellow-600" : "text-green-600"}`}>
           {record.availableStock}

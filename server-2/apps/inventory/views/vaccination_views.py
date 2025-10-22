@@ -16,7 +16,7 @@ import re
 from django.db.models import Q
 from pagination import *
 from apps.inventory.serializers.vaccine_serializers import *
-
+from apps.vaccination.models import *
 
 # =======================AGE GROUP================================#
 
@@ -24,13 +24,43 @@ class AgeGroupView(generics.ListCreateAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
       
+
+
 class DeleteUpdateAgeGroupView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
     lookup_field = 'agegrp_id'
+    
     def get_object(self):
         agegrp_id = self.kwargs.get('agegrp_id')
         return get_object_or_404(Agegroup, agegrp_id=agegrp_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response(
+                {"message": "Age group deleted successfully."}, 
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except ProtectedError as e:
+            # Extract the vaccine names that are using this age group
+            vaccine_objects = e.protected_objects
+            vaccine_names = [str(vaccine) for vaccine in vaccine_objects]
+            
+            return Response(
+                {
+                    "error": "Cannot delete age group",
+                    "message": f"This age group is currently being used by {len(vaccine_objects)} vaccine(s).",
+                    "used_by": vaccine_names,
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Failed to delete age group", "message": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 # =======================SUPPLY================================#
 class ImmunizationSuppliesListTable(generics.ListAPIView):
@@ -248,25 +278,99 @@ class ConditionalVaccineListView(generics.ListCreateAPIView):
     serializer_class = CondtionaleVaccineSerializer
     queryset = ConditionalVaccine.objects.all()
     
-    
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
+    
     def destroy(self, request, *args, **kwargs):
-        """Override destroy method to handle ProtectedError properly"""
+        """Override destroy method to check for critical connections before deletion"""
         try:
             instance = self.get_object()
-            print(f"Attempting to delete instance: {instance}")
+            vac_id = instance.vac_id
+            
+            print(f"Attempting to delete VaccineList: {instance.vac_name} (ID: {vac_id})")
+            
+            # 1. FIRST CHECK: Check if vaccine has any stock records (CRITICAL - prevent deletion)
+            stock_count = VaccineStock.objects.filter(vac_id=vac_id).count()
+            if stock_count > 0:
+                return Response(
+                    {
+                        "error": f"Cannot delete vaccine it has record(s) associated with it.",
+                        "stock_records_count": stock_count,
+                        "message": "Please remove all stock records first before deleting this vaccine."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 2. SECOND CHECK: Check if vaccine has any vaccination history records (CRITICAL - prevent deletion)
+            vaccination_history_count = VaccinationHistory.objects.filter(vac_id=vac_id).count()
+            if vaccination_history_count > 0:
+                return Response(
+                    {
+                        "error": f"Cannot delete vaccine.  record(s) associated with it.",
+                        "vaccination_history_count": vaccination_history_count,
+                        "message": "This vaccine has been used in vaccination records and cannot be deleted."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 3. If no critical connections found, proceed with deleting configuration tables
+            try:
+                # Delete ConditionalVaccine records (safe to delete - just configuration)
+                conditional_count, _ = ConditionalVaccine.objects.filter(vac_id=vac_id).delete()
+                print(f"Deleted {conditional_count} ConditionalVaccine records")
+                
+                # Delete VaccineInterval records (safe to delete - just configuration)
+                interval_count, _ = VaccineInterval.objects.filter(vac_id=vac_id).delete()
+                print(f"Deleted {interval_count} VaccineInterval records")
+                
+                # Delete RoutineFrequency record (OneToOne) - safe to delete
+                try:
+                    routine_freq = RoutineFrequency.objects.get(vac_id=vac_id)
+                    routine_freq.delete()
+                    print("Deleted RoutineFrequency record")
+                except RoutineFrequency.DoesNotExist:
+                    print("No RoutineFrequency record found")
+                
+            except Exception as rel_error:
+                print(f"Error deleting configuration records: {rel_error}")
+                # Even if configuration deletion fails, we can still try to delete the main record
+                # since these are just configuration tables
+            
+            # 4. Now delete the main VaccineList record
             instance.delete()
-            print("Delete succeeded")
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except ProtectedError as e:
-            print(f"ProtectedError caught: {e}")
+            print("VaccineList deleted successfully")
+            
             return Response(
-                {"error": "Cannot delete. It is still in use by other records."},
+                {
+                    "message": "Vaccine deleted successfully",
+                    "details": {
+                        "vaccine_name": instance.vac_name,
+                        "deleted_configuration_records": {
+                            "conditional_vaccines": conditional_count,
+                            "vaccine_intervals": interval_count,
+                            "routine_frequency": 1 if RoutineFrequency.objects.filter(vac_id=vac_id).exists() else 0
+                        }
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except ProtectedError as e:
+            print(f"ProtectedError: {e}")
+            # This shouldn't happen now, but just in case
+            return Response(
+                {"error": "Cannot delete due to database constraints."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception as e:
+            print(f"Unexpected error during deletion: {e}")
+            return Response(
+                {"error": f"Delete failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
 class ConditionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CondtionaleVaccineSerializer
     queryset = ConditionalVaccine.objects.all()
@@ -415,9 +519,8 @@ class VaccineStockCreate(APIView):
         # Calculate quantities
         solvent_type = vaccine_data.get('solvent', 'diluent')
         qty = int(vaccine_data.get('qty', 0))
-        volume = vaccine_data.get('volume', vaccine_data.get('dose_ml', 0))
-        dose_ml = int(volume) if volume else 0
-        
+        dose_ml = int(vaccine_data.get('dose_ml', 0))  
+              
         vaccine_data.update({
             'qty': qty,
             'dose_ml': dose_ml,
@@ -649,7 +752,7 @@ class CombinedStockTable(APIView):
                         'category': 'Vaccine',
                         'item': {
                             'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
-                            'dosage': stock.dose_ml,
+                            'dosage': stock.volume,
                             'unit': 'ml',
                         },
                         'qty': f"{stock.qty} vials ({total_doses} doses)",
@@ -876,9 +979,6 @@ class CombinedStockTable(APIView):
 
 
 # ==========================TRANSATION=========================
-from django.db.models import Q, Case, When, Value, CharField
-from django.db.models.functions import Coalesce
-
 class AntigenTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -889,16 +989,16 @@ class AntigenTransactionView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get antigen transactions with related data
+            # Get antigen transactions with related data - FIXED staff relationship
             transactions = AntigenTransaction.objects.select_related(
                 'vacStck_id__vac_id',
                 'vacStck_id__inv_id',
                 'imzStck_id__imz_id',
                 'imzStck_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
-            # Apply search filter if provided
+            # Apply search filter if provided - UPDATED search fields
             if search_query:
                 transactions = transactions.filter(
                     Q(vacStck_id__vac_id__vac_name__icontains=search_query) |
@@ -906,8 +1006,8 @@ class AntigenTransactionView(APIView):
                     Q(vacStck_id__inv_id__inv_id__icontains=search_query) |
                     Q(imzStck_id__inv_id__inv_id__icontains=search_query) |
                     Q(antt_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Updated
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Updated
                 )
             
             # Format the data for response
@@ -919,7 +1019,7 @@ class AntigenTransactionView(APIView):
                 immunization_stock = transaction.imzStck_id
                 
                 # Determine item type and get details
-                item_name = "Manage by System"
+                item_name = "Unknown Item"
                 item_type = "Unknown"
                 inv_id = "N/A"
                 
@@ -936,12 +1036,13 @@ class AntigenTransactionView(APIView):
                     item_type = "Immunization Supply"
                     inv_id = inventory.inv_id if inventory else "N/A"
                 
-                # Format staff name
-                staff_name = "Unknown"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED (consistent with other views)
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                 
                 item_data = {
                     'antt_id': transaction.antt_id,
@@ -981,7 +1082,7 @@ class AntigenTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching antigen transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            
 # ===========================ARCHIVE==============================
 class AntigenArchiveInventoryView(APIView):
     

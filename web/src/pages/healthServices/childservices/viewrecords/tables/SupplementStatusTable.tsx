@@ -53,7 +53,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({ fu
                   <TableRow key={`${status.chssupplementstat_id}-${index}`} className={`hover:bg-inherit ${isCurrentRecord ? "font-medium" : ""}`}>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{status.date_seen && isValid(new Date(status.date_seen)) ? format(new Date(status.date_seen), "MMM dd, yyyy") : "N/A"}</TableCell>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>
-                      <span className={`px-2 py-1 rounded text-xs ${status.status_type === "completed" ? "bg-green-100 text-green-800" : status.status_type === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}`}>{status.status_type || "N/A"}</span>
+                        <span className="px-2 py-1 rounded text-xs text-black">{status.status_type || "N/A"}</span>
                     </TableCell>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{status.birthwt ? (status.birthwt.toString().endsWith(".00") ? `${status.birthwt.toString().slice(0, -3)} kg` : `${status.birthwt} kg`) : "N/A"}</TableCell>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{status.date_given_iron && isValid(new Date(status.date_given_iron)) ? format(new Date(status.date_given_iron), "MMM dd, yyyy") : "Not given"}</TableCell>

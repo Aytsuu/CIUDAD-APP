@@ -10,12 +10,13 @@ export const useMedicineRequestMutation = () => {
 
   return useMutation({
     mutationFn: ({ data, staff_id }: { data: any; staff_id: string | null }) => {
-      // Allow null
       return processMedicineRequest(data, staff_id);
     },
     onSuccess: () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords"] });
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
       showSuccessToast("Medicine request submitted successfully!");

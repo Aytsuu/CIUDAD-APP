@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronLeft } from 'lucide-react-native';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
-import { Textarea } from '@/components/ui/textarea';
 import { useIncomeParticular } from './queries/income-expense-FetchQueries';
 import { useCreateIncome } from './queries/income-expense-AddQueries';
 import { useAddParticular } from './request/particular-PostRequest';
@@ -75,8 +71,8 @@ function IncomeCreateForm() {
     const yearIncome = Number(year);
     let totalIncome = 0.0;
 
-    let totIncome = Number(totInc);
-    let inc_amount = Number(values.inc_amount);
+    const totIncome = Number(totInc);
+    const inc_amount = Number(values.inc_amount);
     totalIncome = totIncome + inc_amount;
 
     if (inputYear !== yearIncome) {

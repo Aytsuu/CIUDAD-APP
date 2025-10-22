@@ -345,25 +345,17 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  Modal,
-  Image,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
 import {
   Search,
-  ChevronLeft,
-  FileInput,
-  CircleAlert,
-  ArrowUpDown,
-  X
+  ChevronLeft
 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import PageLayout from '@/screens/_PageLayout';
-import { useExpenseLog, type ExpenseLog } from '../queries/income-expense-FetchQueries';
+import { useExpenseLog } from '../queries/income-expense-FetchQueries';
 
 
 const ExpenseLogMain = () => {
@@ -473,7 +465,7 @@ const ExpenseLogMain = () => {
             <Text>₱{actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
           </View>
           <View className="flex-row justify-between pb-2">
-            <Text className="text-gray-600">Return/Excess Amount:</Text>
+            <Text className="text-gray-600">Return Amount:</Text>
             <Text className={`font-semibold ${textColor}`}>
               ₱{returnAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
