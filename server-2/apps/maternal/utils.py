@@ -1,26 +1,24 @@
-# from datetime import datetime, timedelta
-# from dateutil.relativedelta import relativedelta
-# from datetime import date
-
 from apps.patientrecords.models import Spouse
 from apps.patientrecords.serializers.patients_serializers import *
 from apps.maternal.models import Pregnancy, Prenatal_Form
 from apps.maternal.serializers.serializer import *
+from apps.familyplanning.models import FP_Record
 
 
 def check_medical_records_for_spouse(self, obj):
     try:
-        # family_planning_with_spouse = PostpartumRecord.objects.filter(
-        #     patrec_id__pat_id=obj,
-        #     spouse_id__isnull=False
-        # ).select_related('spouse_id').order_by('-created_at').first()
+        # query Family Planning with spouse
+        family_planning_with_spouse = FP_Record.objects.filter(
+            patrec_id__pat_id=obj,
+            spouse_id__isnull=False
+        ).select_related('spouse_id').order_by('-created_at').first()
         
-        # if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
-        #     return {
-        #         'spouse_exists': True,
-        #         'spouse_source': 'postpartum_record',
-        #         'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
-        #     }
+        if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
+            return {
+                'spouse_exists': True,
+                'spouse_source': 'familyplanning_record',
+                'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
+            }
 
         # query PostpartumRecord with spouse
         postpartum_with_spouse = PostpartumRecord.objects.filter(

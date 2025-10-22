@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-import { Loader2 } from "lucide-react"
-
 import { usePrenatalRecordComplete } from "../../../queries/maternalFetchQueries"
 import { capitalize } from "@/helpers/capitalize"
 
@@ -52,11 +50,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const prenatalForm = prenatalFormData?.prenatal_form;
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-32">
-        <Loader2 className="animate-spin h-8 w-8 mr-2">Loading records...</Loader2>
-      </div>
-    );
+    return null;
   }
 
   if (error || !prenatalForm) {

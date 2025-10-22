@@ -590,7 +590,6 @@ class PatientSerializer(serializers.ModelSerializer):
                         current_role = ''
 
                     if current_role == 'father':
-                        # don't attempt to fetch mother TT status when resident's role is Father
                         pass
                     else:
                         fam_id = current_composition.fam_id
@@ -617,14 +616,16 @@ class PatientSerializer(serializers.ModelSerializer):
                         latest_prenatal = Prenatal_Form.objects.filter(
                             pregnancy_id=latest_pregnancy
                         ).order_by('-created_at').first()
-                        
+
+                        additional_info['latest_pf_id'] = latest_prenatal.pf_id
+
                         if latest_prenatal:
                             # Get the latest prenatal care entry with AOG data
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
                                 pfpc_aog_wks__isnull=False
                             ).order_by('-pfpc_date', '-created_at').first()
-                            
+
                             if latest_prenatal_care:
                                 additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
                                 additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
@@ -664,6 +665,8 @@ class PatientSerializer(serializers.ModelSerializer):
                         latest_prenatal = Prenatal_Form.objects.filter(
                             pregnancy_id=latest_pregnancy
                         ).order_by('-created_at').first()
+
+                        additional_info['latest_pf_id'] = latest_prenatal.pf_id
                         
                         if latest_prenatal:
                             # Get the latest prenatal care entry with AOG data

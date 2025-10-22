@@ -1,7 +1,6 @@
 "use client"
 
 import { useLocation } from "react-router-dom"
-import { Loader2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,12 +52,7 @@ export default function PrenatalFormTableHistory() {
   const { data: prenatalData, isLoading, error } = usePrenatalRecordComparison(pregnancyId || "")
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin h-8 w-8 mr-2" />
-        <span>Loading prenatal records...</span>
-      </div>
-    )
+    return null;
   }
 
   if (error) {

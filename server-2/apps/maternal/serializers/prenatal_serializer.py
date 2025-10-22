@@ -1512,8 +1512,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f'Created new Pregnancy: {pregnancy.pregnancy_id}')
 
-                # Get or create PatientRecord for this pregnancy
-                # Same pregnancy should reuse the same PatientRecord
                 # Check if there's already a PatientRecord for this pregnancy
                 existing_prenatal = Prenatal_Form.objects.filter(
                     pregnancy_id=pregnancy,
