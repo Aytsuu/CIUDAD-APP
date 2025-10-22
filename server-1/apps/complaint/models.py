@@ -91,7 +91,6 @@ class Complaint(models.Model):
     def get_absolute_url(self):
         from apps.complaint.serializers import ComplaintSerializer
         complaint_data = ComplaintSerializer(self)
-        print(f"Notification Complaint Data: {complaint_data.data}")
         return {
             'path': '/complaint/view',
             'params': {'data': json.dumps(complaint_data.data)}

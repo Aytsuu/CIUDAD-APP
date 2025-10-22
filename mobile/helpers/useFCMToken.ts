@@ -5,8 +5,6 @@ import * as Device from 'expo-device';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/api';
-
-// ✅ Modular Firebase imports
 import { getApp } from '@react-native-firebase/app';
 import {
   getMessaging,
@@ -18,7 +16,7 @@ import {
   AuthorizationStatus,
 } from '@react-native-firebase/messaging';
 
-// ✅ Configure how notifications behave when app is in the foreground
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -74,7 +72,6 @@ export function useFCMToken() {
           return;
         }
 
-        // 2️⃣ Android notification channel
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {
             name: 'Default Notifications',
