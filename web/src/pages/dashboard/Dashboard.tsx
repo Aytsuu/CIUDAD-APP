@@ -10,6 +10,10 @@ import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wast
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+
 import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
@@ -26,14 +30,18 @@ export default function Dashboard() {
   const garbCards = useGarbagePickupSectionCards();
   const donationCards = useDonationSectionCards();
   const certificateCards = useCertificateSectionCards();
+  const conciliationCards = useConciliationSectionCards();
+  const mediationCards = useMediationSectionCards();
+  const remarkCard = useNoRemarksSectionCard();
+
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard]
   );
 
   const validateFeature = (feature: string) => {
     // Always allow access to basic dashboard sections
-    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE"];
+    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
     if (basicSections.includes(feature)) {
       return true;
     }

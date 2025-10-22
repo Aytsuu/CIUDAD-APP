@@ -2,10 +2,10 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useGetGarbageCardAnalytics } from "./garbage-pickup-analytics-queries";
+import { useGetMediationAnalytics } from "./mediation-analytics-queries";
 
 // Memoized card component with hover effects and navigation
-const GarbagePickupCard = React.memo(({ 
+const MediationCards = React.memo(({ 
   title, 
   value, 
   isLoading,
@@ -45,54 +45,54 @@ const GarbagePickupCard = React.memo(({
   </Card>
 ));
 
-GarbagePickupCard.displayName = "GarbagePickupCard";
+MediationCards.displayName = "MediationCard";
 
 // Card configurations
-const garbagePickupCards = [
+const conciliationCards = [
   {
-    title: "Pending Pickup",
+    title: "Waiting for Schedule",
     description: "",
-    dataKey: "pending" as const,
+    dataKey: "waiting" as const,
   },
   {
-    title: "Accepted Pickup",    
+    title: "Ongoing",    
     description: "",
-    dataKey: "accepted" as const,
+    dataKey: "ongoing" as const,
   },
   {
-    title: "Completed Pickup",
+    title: "Forwarded to Lupon",
     description: "",
-    dataKey: "completed" as const,
+    dataKey: "forwarded" as const,
   },
   {
-    title: "Rejected Pickup",
+    title: "Resolved",
     description: "",
-    dataKey: "rejected" as const,
+    dataKey: "resolved" as const,
   },
 ];
 
 // Hook version (similar to your waste personnel example)
-export const useGarbagePickupSectionCards = () => {
+export const useMediationSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetGarbageCardAnalytics();
+  const { data, isLoading } = useGetMediationAnalytics();
 
-  const cards = garbagePickupCards.map(card => (
-    <GarbagePickupCard 
+  const cards = conciliationCards.map(card => (
+    <MediationCards 
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
       isLoading={isLoading}
       onClick={() => {
-        navigate("/garbage-pickup-request")
+        navigate("/summon-cases")
       }}
     />
   ));
 
   return {
-    pending: cards[0],
-    accepted: cards[1],
-    completed: cards[2],
-    rejected: cards[3],
+    waiting: cards[0],
+    ongoing: cards[1],
+    forwarded: cards[2],
+    resolved: cards[3],
     allCards: cards
   };
 };

@@ -13,7 +13,7 @@ export default function SummonRemarksView({
   rem_date: string;
   staff_name: string;
   supp_docs: RemarkSuppDoc[];
-}) {
+}) {``
 
   const mediaFiles = supp_docs?.map((doc) => ({
     id: doc.rsd_id,

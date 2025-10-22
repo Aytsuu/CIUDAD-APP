@@ -7,6 +7,7 @@ from apps.act_log.utils import ActivityLogMixin
 from apps.pagination import StandardResultsPagination
 from apps.treasurer.serializers import Purpose_And_RatesSerializers
 from apps.treasurer.models import Purpose_And_Rates
+from rest_framework.views import APIView
 
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
@@ -419,3 +420,53 @@ class FileActionIdView(generics.RetrieveAPIView):
             pr_purpose="File Action", 
             pr_is_archive=False
         ).order_by('-pr_date').first()
+    
+
+# ================== ANALYTICS =======================
+
+class ConciliationAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        counts = {
+            'waiting': SummonCase.objects.filter(sc_conciliation_status__iexact='waiting for schedule').count(),
+            'ongoing': SummonCase.objects.filter(sc_conciliation_status__iexact='ongoing').count(),
+            'escalated': SummonCase.objects.filter(sc_conciliation_status__iexact='escalated').count(),
+            'resolved': SummonCase.objects.filter(sc_conciliation_status__iexact='resolved').count(),
+            'total': SummonCase.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+    
+class MediationAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        counts = {
+            'waiting': SummonCase.objects.filter(sc_mediation_status__iexact='waiting for schedule').count(),
+            'ongoing': SummonCase.objects.filter(sc_mediation_status__iexact='ongoing').count(),
+            'forwarded': SummonCase.objects.filter(sc_mediation_status__iexact='forwarded to lupon').count(),
+            'resolved': SummonCase.objects.filter(sc_mediation_status__iexact='resolved').count(),
+            'total': SummonCase.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+    
+
+class SummonRemarksAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        try:
+            no_remarks_count = HearingSchedule.objects.filter(remark__isnull=True).count()
+            
+            return Response({
+                'no_remarks_count': no_remarks_count
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error in hearing schedule analytics: {e}")
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

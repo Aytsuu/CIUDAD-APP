@@ -2,10 +2,10 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useGetGarbageCardAnalytics } from "./garbage-pickup-analytics-queries";
+import { useGetRemarksAnalytics } from "./remarks-analytics-queries";
 
 // Memoized card component with hover effects and navigation
-const GarbagePickupCard = React.memo(({ 
+const RemarkCard = React.memo(({ 
   title, 
   value, 
   isLoading,
@@ -45,55 +45,26 @@ const GarbagePickupCard = React.memo(({
   </Card>
 ));
 
-GarbagePickupCard.displayName = "GarbagePickupCard";
+RemarkCard.displayName = "RemarkCard";
 
-// Card configurations
-const garbagePickupCards = [
-  {
-    title: "Pending Pickup",
-    description: "",
-    dataKey: "pending" as const,
-  },
-  {
-    title: "Accepted Pickup",    
-    description: "",
-    dataKey: "accepted" as const,
-  },
-  {
-    title: "Completed Pickup",
-    description: "",
-    dataKey: "completed" as const,
-  },
-  {
-    title: "Rejected Pickup",
-    description: "",
-    dataKey: "rejected" as const,
-  },
-];
-
-// Hook version (similar to your waste personnel example)
-export const useGarbagePickupSectionCards = () => {
+// Hook version for single card
+export const useNoRemarksSectionCard = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetGarbageCardAnalytics();
+  const { data, isLoading } = useGetRemarksAnalytics();
 
-  const cards = garbagePickupCards.map(card => (
-    <GarbagePickupCard 
-      key={card.title}
-      title={card.title}
-      value={data?.[card.dataKey] ?? 0}
+  const card = (
+    <RemarkCard 
+      title="No Remarks"
+      value={data?.no_remarks_count ?? 0}
       isLoading={isLoading}
+      description=""
       onClick={() => {
-        navigate("/garbage-pickup-request")
+        navigate("/summon-remarks") // Update with your actual route
       }}
     />
-  ));
+  );
 
   return {
-    pending: cards[0],
-    accepted: cards[1],
-    completed: cards[2],
-    rejected: cards[3],
-    allCards: cards
+    noRemark:card,
   };
 };
-

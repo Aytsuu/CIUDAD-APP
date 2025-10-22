@@ -37,6 +37,11 @@ urlpatterns = [
     path('service-charge-payment-req/', ServiceChargePaymentReqView.as_view(), name='service-charge-payment-req'),
     path('file-action-id/', FileActionIdView.as_view(), name='file-action-id'),
 
+    # analytics
+    path('conciliation-analytics/', ConciliationAnalyticsView.as_view(), name='conciliation-analytics'),
+    path('mediation-analytics/', MediationAnalyticsView.as_view(), name='mediation-analytics'),
+    path('remarks-analytics/', SummonRemarksAnalyticsView.as_view(), name='remarks-analytics'),
+
     # resident case tracking
     # path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    

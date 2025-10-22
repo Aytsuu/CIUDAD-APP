@@ -26,7 +26,9 @@ import { useCertificateSectionCards } from "@/components/analytics/certificate/c
 import { CertificatePurposeChart } from "@/components/analytics/certificate/certificate-purpose-chart";
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
-
+import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -38,6 +40,9 @@ export const getItemsConfig = (
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
   certificateCards: ReturnType<typeof useCertificateSectionCards>,
+  conciliationCards: ReturnType<typeof useConciliationSectionCards>,
+  mediationCards: ReturnType<typeof useMediationSectionCards>,
+  remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -56,7 +61,10 @@ export const getItemsConfig = (
   } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {accepted, rejected, completed, pending} = garbCards;
+  const { waiting, ongoing, escalated, resolved} = conciliationCards;
+  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved} = mediationCards;
   const { cashDonations } = donationCards;
+  const { noRemark } = remarkCard;
   const { 
     totalCertificates, 
     totalIssued, 
@@ -111,7 +119,16 @@ export const getItemsConfig = (
         dashboard: "COMPLAINT",
       },
       {
-        dashboard: "SUMMON & CASE TRACKER",
+        dashboard: "CONCILIATION PROCEEDINGS",
+        card: [waiting, ongoing, escalated, resolved], 
+      },
+      {
+        dashboard: "COUNCIL MEDIATION",
+        card: [mediationWaiting, mediationOngoing, forwarded, mediationResolved], 
+      },
+      {
+        dashboard: "SUMMON REMARKS",
+        card: [noRemark]
       },
       {
         dashboard: "GAD",
