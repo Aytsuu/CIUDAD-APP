@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, CheckCircle , Eye } from 'lucide-react';
+import { Search, CheckCircle , Eye, Plus, SquarePen } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
+import TemplateCreateForm from "../council/templates/template-create";
+import TemplateUpdateForm from "../council/templates/template-update";
+import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
@@ -65,6 +68,10 @@ function CertificatePage() {
   const { data: staffList = []} = useGetStaffList();
   const { data: residentsList = [] } = useResidentsList();
 
+  //template details fetch
+  const { data: templates = [] } = useGetTemplateRecord();
+  const [isTempDialogOpen, setIsTempDialogOpen] = useState(false); 
+
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
@@ -99,6 +106,9 @@ function CertificatePage() {
       name: staff.full_name,
     }));
   }, [staffList]);
+
+
+
 
   const residentOptions = useMemo(() => {
     if (!residentsList || residentsList.length === 0) return [];
@@ -139,7 +149,7 @@ function CertificatePage() {
 
   const { data: certificatesData, isLoading, error } = useQuery({
     queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
-    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, undefined),
+    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, filterPurpose === "all" ? undefined : filterPurpose),
   });
 
   // Handle loading state
@@ -334,12 +344,26 @@ function CertificatePage() {
     {
       accessorKey: "resident_details.per_fname",
       header: "First Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_fname || row.original.nrc_requester || 'N/A'}</div>,
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // For non-residents, split the nrc_requester name
+          const nameParts = row.original.nrc_requester?.split(' ') || [];
+          return <div>{nameParts[0] || 'N/A'}</div>;
+        }
+        return <div>{row.original.resident_details?.per_fname || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "resident_details.per_lname",
       header: "Last Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_lname || 'N/A'}</div>,
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // For non-residents, join all parts except the first as last name
+          const nameParts = row.original.nrc_requester?.split(' ') || [];
+          return <div>{nameParts.slice(1).join(' ') || 'N/A'}</div>;
+        }
+        return <div>{row.original.resident_details?.per_lname || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "req_request_date",
@@ -362,6 +386,10 @@ function CertificatePage() {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
+        } else if (capitalizedValue === "Burial") {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
         } else {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
@@ -461,6 +489,51 @@ function CertificatePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {(templates.length > 0 ? (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <SquarePen size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="Edit the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateUpdateForm 
+                    temp_id={templates[0].temp_id}
+                    temp_contact_num={templates[0].temp_contact_num}
+                    temp_email={templates[0].temp_email}
+                    template_files={templates[0].template_files}
+                    onSuccess={() => setIsTempDialogOpen(false)} 
+                  />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ) : (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <Plus size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="please provide the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateCreateForm onSuccess={() => setIsTempDialogOpen(false)} />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ))}      
+
           <SelectLayout
             placeholder="Filter by type"
             label=""
@@ -481,6 +554,7 @@ function CertificatePage() {
               { id: "all", name: "All Purposes" },
               { id: "employment", name: "Employment" },
               { id: "bir", name: "BIR" },
+              { id: "burial", name: "Burial" },
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}

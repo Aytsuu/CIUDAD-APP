@@ -111,6 +111,8 @@ class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
 class NonResidentCertReqSerializer(serializers.ModelSerializer):
     purpose = serializers.SerializerMethodField()
     amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
+    nrc_id = serializers.SerializerMethodField()  # Override nrc_id to return formatted version
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
 
     class Meta:
         model = NonResidentCertificateRequest
@@ -126,16 +128,71 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
             "pr_id",    
             "purpose",   
             "amount",
-            "nrc_discount_reason",   
+            "nrc_discount_reason",
+            "staff_id",   
         ]
+        extra_kwargs = {
+            'nrc_id': {'read_only': True}
+        }
 
     def get_purpose(self, obj):
         if obj.pr_id:
             return {
                 "pr_purpose": obj.pr_id.pr_purpose,
-                "pr_rate": str(obj.pr_id.pr_rate)  #
+                "pr_rate": str(obj.pr_id.pr_rate)
             }
         return None
+    
+    def get_nrc_id(self, obj):
+        """Generate formatted ID like NRC001-25 from the actual nrc_id"""
+        if obj.nrc_id:
+            from django.utils import timezone
+            year_suffix = timezone.now().year % 100
+            # Assuming obj.nrc_id is the numeric ID from the DB before it's overridden
+            # If the DB column is already VARCHAR, this will be the formatted ID
+            # This method is called for existing instances. For new instances, the create method handles it.
+            if isinstance(obj.nrc_id, int): # Check if it's still the auto-incremented number
+                return f"NRC{obj.nrc_id:03d}-{year_suffix:02d}"
+            return obj.nrc_id # If it's already a string, return as is
+        return None
+
+    def validate_staff_id(self, value):
+        """Validate and format staff_id properly"""
+        if not value:
+            return None
+        
+        # Convert to string and strip whitespace
+        staff_id_str = str(value).strip()
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(staff_id_str) < 11:
+            staff_id_str = staff_id_str.zfill(11)
+        
+        # Verify the staff exists
+        from apps.administration.models import Staff
+        try:
+            staff = Staff.objects.get(staff_id=staff_id_str)
+            return staff
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError(f"Staff with ID {staff_id_str} does not exist")
+        except Staff.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            staff = Staff.objects.filter(staff_id=staff_id_str).first()
+            return staff
+
+    def create(self, validated_data):
+        """Create non-resident certificate request with formatted ID like NRC001-25"""
+        from django.utils import timezone
+        
+        if 'nrc_id' not in validated_data or not validated_data['nrc_id']:
+            year_suffix = timezone.now().year % 100
+            try:
+                existing_count = NonResidentCertificateRequest.objects.filter(nrc_id__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                existing_count = NonResidentCertificateRequest.objects.count()
+            seq = existing_count + 1
+            validated_data['nrc_id'] = f"NRC{seq:03d}-{year_suffix:02d}"
+        return super().create(validated_data)
     
 class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -154,6 +211,9 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
     rp_id = serializers.PrimaryKeyRelatedField(
         queryset=ResidentProfile.objects.all()
     )
+    
+    # Add field mapping for frontend compatibility
+    payment_status = serializers.CharField(source='cr_req_payment_status', required=False, allow_null=True)
 
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
@@ -333,6 +393,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'cr_date_rejected',
             'cr_reason',
             'cr_req_payment_status',
+            'payment_status',  # Add frontend-compatible field
             'pr_id',
             'cr_req_status',
             'invoice',

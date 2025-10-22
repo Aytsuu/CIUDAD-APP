@@ -313,12 +313,72 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         old_payment_status = instance.cr_req_payment_status
+        old_status = instance.cr_req_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # Check if payment status changed to "Paid" and create automatic income entry
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
         new_payment_status = instance.cr_req_payment_status
+        new_status = instance.cr_req_status
+        
+        # Debug logging
+        logger.info(f"CertificateStatusUpdateView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_payment_status={new_payment_status}, old_status={old_status}, new_status={new_status}")
+        
+        # Log payment status change activity if it changed
+        if old_payment_status != new_payment_status:
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{new_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status update payment change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No staff found for certificate status update payment change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status update payment change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
         if old_payment_status != "Paid" and new_payment_status == "Paid":
             try:
                 from apps.treasurer.utils import create_automatic_income_entry
@@ -379,7 +439,67 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
         old_payment_status = instance.cr_req_payment_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        
+        # Debug logging
+        logger.info(f"CertificateDetailView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_data={request.data}")
+        
         self.perform_update(serializer)
+        
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
+        new_payment_status = instance.cr_req_payment_status
+        
+        # Log payment status change activity if it changed
+        if old_payment_status != new_payment_status:
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{new_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate payment status change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No staff found for certificate payment status change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
         
         # Check if payment status changed to "Paid" and create automatic income entry
         new_payment_status = instance.cr_req_payment_status
@@ -1299,6 +1419,58 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
             
             instance.save(update_fields=['req_payment_status', 'req_date_completed'])
             
+            # Log payment status change activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id') or getattr(instance, 'staff_id', None)
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get business name and owner for better description
+                    business_name = instance.bus_permit_name or "Unknown Business"
+                    owner_name = "Unknown Owner"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        owner_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for business permit {instance.bpr_id} changed from '{old_payment_status}' to '{instance.req_payment_status}' for '{business_name}' (Owner: {owner_name}) - {purpose}",
+                        staff=staff,
+                        record_id=instance.bpr_id
+                    )
+                    logger.info(f"Activity logged for business permit payment status change: {instance.bpr_id}")
+                else:
+                    logger.warning(f"No staff found for business permit payment status change logging: {instance.bpr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log business permit payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
             # Check if payment status changed to "Paid" and create automatic income entry
             if old_payment_status != "Paid" and instance.req_payment_status == "Paid":
                 try:
@@ -1563,6 +1735,10 @@ class UpdateServiceChargePaymentStatusView(APIView):
             # Get the payment request
             payment_request = ServiceChargePaymentRequest.objects.get(pay_id=pay_id)
             
+            # Store old values for logging
+            old_pay_status = payment_request.pay_status
+            old_pay_req_status = payment_request.pay_req_status
+            
             # Update payment status if provided
             if 'pay_status' in request.data:
                 payment_request.pay_status = request.data['pay_status']
@@ -1574,6 +1750,66 @@ class UpdateServiceChargePaymentStatusView(APIView):
                 payment_request.pay_req_status = request.data['pay_req_status']
             
             payment_request.save()
+            
+            # Log activity for status changes
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(payment_request, 'sr_id') and payment_request.sr_id:
+                    if hasattr(payment_request.sr_id, 'ra_id') and payment_request.sr_id.ra_id:
+                        staff_id = getattr(payment_request.sr_id.ra_id, 'staff_id', None)
+                        if staff_id and len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get service charge details for better description
+                    service_charge_info = "Unknown Service Charge"
+                    if hasattr(payment_request, 'sr_id') and payment_request.sr_id:
+                        service_charge_info = f"Service Charge {payment_request.sr_id.sr_id}"
+                    
+                    # Get purpose
+                    purpose = "N/A"
+                    if hasattr(payment_request, 'pr_id') and payment_request.pr_id:
+                        purpose = payment_request.pr_id.pr_purpose
+                    
+                    # Create activity log for status changes
+                    changes = []
+                    if old_pay_status != payment_request.pay_status:
+                        changes.append(f"payment status: '{old_pay_status}' → '{payment_request.pay_status}'")
+                    if old_pay_req_status != payment_request.pay_req_status:
+                        changes.append(f"request status: '{old_pay_req_status}' → '{payment_request.pay_req_status}'")
+                    
+                    if changes:
+                        create_activity_log(
+                            act_type="Service Charge Payment Status Updated",
+                            act_description=f"Service charge payment {payment_request.pay_id} status updated: {', '.join(changes)} for {service_charge_info} ({purpose})",
+                            staff=staff,
+                            record_id=str(payment_request.pay_id)
+                        )
+                        logger.info(f"Activity logged for service charge payment status change: {payment_request.pay_id}")
+                else:
+                    logger.warning(f"No staff found for service charge payment status change logging: {payment_request.pay_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log service charge payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
             
             return Response({
                 'message': 'Payment status updated successfully',

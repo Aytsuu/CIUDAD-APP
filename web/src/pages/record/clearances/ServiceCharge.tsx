@@ -31,7 +31,7 @@ function ServiceChargePage() {
 
   const { data: serviceChargesData, isLoading, error } = useQuery({
     queryKey: ["paidServiceCharges", currentPage, searchTerm, filterStatus],
-    queryFn: () => getPaidServiceCharges(searchTerm, currentPage, 10, filterStatus === "all" ? undefined : filterStatus),
+    queryFn: () => getPaidServiceCharges(searchTerm, currentPage, 10),
   });
 
   // Handle loading state
@@ -270,7 +270,13 @@ function ServiceChargePage() {
           issuedDate={new Date().toISOString()}
           isNonResident={false}
           showAddDetails={false}
-          businessName={ selectedSC.sr_code}
+          businessName={selectedSC.sr_code}
+          fileActComplainant={(selectedSC.complainant_names && selectedSC.complainant_names.length ? selectedSC.complainant_names.join(', ') : (selectedSC.complainant_name || ''))}
+          fileActComplainantAddress={(selectedSC.complainant_addresses && selectedSC.complainant_addresses.length ? selectedSC.complainant_addresses.filter(Boolean).join(', ') : '')}
+          fileActRespondent={(selectedSC.accused_names && selectedSC.accused_names.length ? selectedSC.accused_names.join(', ') : '')}
+          fileActRespondentAddress={(selectedSC.accused_addresses && selectedSC.accused_addresses.length ? selectedSC.accused_addresses.filter(Boolean).join(', ') : '')}
+          fileActBarangayCase={selectedSC.sr_code || ''}
+          fileActComplainDate={selectedSC.sr_req_date || ''}
         />
       )}
     </div>

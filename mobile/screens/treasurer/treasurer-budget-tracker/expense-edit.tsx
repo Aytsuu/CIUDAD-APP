@@ -371,7 +371,7 @@ function ExpenseEdit() {
         </View>
       }
     >
-      <View className="px-4">
+      <View className="px-6">
         {selectedParticular && (
             <View className="bg-primaryBlue p-3 rounded-md mb-6 mt-5 items-center">
                 <Text className="text-white text-base font-semibold">

@@ -1091,11 +1091,11 @@
 // export default TemplateMainPage;
 
 import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button/button";
-import { Plus } from 'lucide-react';
+// import { Button } from "@/components/ui/button/button";
+// import { Plus } from 'lucide-react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import TemplateCreateForm from "./template-create";
-import TemplateUpdateForm from "./template-update";
+// import TemplateCreateForm from "./template-create";
+// import TemplateUpdateForm from "./template-update";
 import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1161,8 +1161,8 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, fileActComplainant, fileActComplainantAddress, fileActRespondent, fileActRespondentAddress, fileActBarangayCase, fileActComplainDate, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false); 
+function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, fileActComplainant, fileActComplainantAddress, fileActRespondent, fileActRespondentAddress, fileActBarangayCase, fileActComplainDate, Custodies, specificPurpose } : RequestProps ) {
+  // const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
   console.log("NISUDDDDD SAA TEMPLATE MAINNNNNNNNN")
@@ -2208,12 +2208,12 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
         </div>
         
         {/* Edit/Add Details Button */}
-        {showAddDetails && (templates.length > 0 ? (
+        {/* {showAddDetails && (templates.length > 0 ? (
           <DialogLayout
-            trigger={''
-              // <Button className="w-full sm:w-auto">
-              //   <SquarePen size={20} /> Edit Details
-              // </Button>
+            trigger={
+              <Button className="w-full sm:w-auto">
+                <SquarePen size={20} /> Edit Details
+              </Button>
             }
             className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
             title="Template Common Details"
@@ -2250,7 +2250,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
             isOpen={isDialogOpen}
             onOpenChange={setIsDialogOpen}
           />
-        ))}
+        ))} */}
       </div>
     
 

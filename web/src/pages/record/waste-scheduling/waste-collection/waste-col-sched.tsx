@@ -1,10 +1,7 @@
 
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form } from '@/components/ui/form/form';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -28,15 +25,6 @@ interface WasteColSchedProps {
     onSuccess?: () => void;
 }
 
-const announcementOptions = [
-    { id: "all", label: "All" },
-    { id: "allbrgystaff", label: "All Barangay Staff" },
-    { id: "residents", label: "Residents" },
-    { id: "wmstaff", label: "Waste Management Staff" },
-    { id: "drivers", label: "Drivers" },
-    { id: "collectors", label: "Collectors" },
-    { id: "watchmen", label: "Watchmen" },
-];
 
 const dayOptions = [
     { id: "Monday", name: "Monday" },
@@ -106,7 +94,6 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
             selectedCollectors: [],
             driver: '',
             collectionTruck: '',
-            selectedAnnouncements: [],
         },
     });
 
@@ -257,41 +244,6 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     />
                 </div>
 
-
-
-                {/* Announcement Audience Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedAnnouncements"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="announcements">
-                                    <AccordionTrigger>Select Audience</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {announcementOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value?.includes(option.id) || false}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                        ? [...(field.value || []), option.id]
-                                                        : (field.value || []).filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">

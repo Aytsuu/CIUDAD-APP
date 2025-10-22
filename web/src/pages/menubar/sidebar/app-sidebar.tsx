@@ -329,6 +329,10 @@ export function AppSidebar() {
             url: "/garbage-pickup-request",
           },
           {
+            title: "Waste Collection",
+            url: "/waste-collection",
+          },
+          {
             title: "Waste Personnel & Collection Vehicle",
             url: "/waste-personnel",
           },
