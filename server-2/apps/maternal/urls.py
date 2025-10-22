@@ -20,9 +20,7 @@ urlpatterns=[
     path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),
-    # path('prenatal/appointment/request/<int:par_id>/complete/', PrenatalAppointmentRequestCompleteView.as_view(), name='prenatal-appointment-complete'),
-    # path('prenatal/appointment/request/<int:par_id>/missed/', PrenatalAppointmentRequestMissedView.as_view(), name='prenatal-appointment-missed'),
-
+    
     # Pregnancy URLs
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),

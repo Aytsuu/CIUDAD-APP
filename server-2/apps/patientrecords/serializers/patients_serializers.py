@@ -264,7 +264,6 @@ class PatientSerializer(serializers.ModelSerializer):
                             'composition_id': composition.fc_id,
                             'family_planning_method': family_planning_method  # Add FP method
                         }
-                        # NOTE: mother TT status lookup moved to get_additional_info
                 
                 return {
                     'fam_id': fam_id,
@@ -623,9 +622,9 @@ class PatientSerializer(serializers.ModelSerializer):
                             pregnancy_id=latest_pregnancy
                         ).order_by('-created_at').first()
 
-                        additional_info['latest_pf_id'] = latest_prenatal.pf_id
-                        
                         if latest_prenatal:
+                            additional_info['latest_pf_id'] = latest_prenatal.pf_id
+                            
                             # Get the latest prenatal care entry with AOG data
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
@@ -635,6 +634,43 @@ class PatientSerializer(serializers.ModelSerializer):
                             if latest_prenatal_care:
                                 additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
                                 additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+                    else:
+                        # If patient has no active pregnancy, check if they are a child and get mother's AOG data
+                        current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+                        if current_composition:
+                            current_role = (current_composition.fc_role or '').strip().lower()
+                            # If current patient is not a mother/father, get mother's pregnancy data
+                            if current_role not in ['mother', 'father']:
+                                fam_id = current_composition.fam_id
+                                all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
+                                mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
+                                
+                                if mother_comp and mother_comp.rp:
+                                    # Get patient record for mother
+                                    mother_patient = Patient.objects.filter(rp_id=mother_comp.rp).first()
+                                    if mother_patient:
+                                        mother_pregnancy = Pregnancy.objects.filter(
+                                            pat_id=mother_patient,
+                                            status='active'
+                                        ).order_by('-created_at').first()
+                                        
+                                        if mother_pregnancy:
+                                            mother_prenatal = Prenatal_Form.objects.filter(
+                                                pregnancy_id=mother_pregnancy
+                                            ).order_by('-created_at').first()
+                                            
+                                            if mother_prenatal:
+                                                additional_info['mother_latest_pf_id'] = mother_prenatal.pf_id
+                                                
+                                                # Get mother's latest prenatal care entry with AOG data
+                                                mother_prenatal_care = PrenatalCare.objects.filter(
+                                                    pf_id=mother_prenatal,
+                                                    pfpc_aog_wks__isnull=False
+                                                ).order_by('-pfpc_date', '-created_at').first()
+                                                
+                                                if mother_prenatal_care:
+                                                    additional_info['mother_latest_aog_weeks'] = mother_prenatal_care.pfpc_aog_wks
+                                                    additional_info['mother_latest_aog_days'] = mother_prenatal_care.pfpc_aog_days
                 except Exception as e:
                     print(f"Error fetching AOG data for resident: {str(e)}")
 
