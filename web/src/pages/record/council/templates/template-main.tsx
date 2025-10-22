@@ -11,6 +11,7 @@
 // import { Skeleton } from "@/components/ui/skeleton";
 // import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
 
+
 // interface RequestProps {
 //   fname?: string;
 //   lname?: string;
@@ -1100,6 +1101,7 @@ import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
+import { calculateAge } from '@/helpers/ageCalculator';
 
 
 interface RequestProps {
@@ -1109,7 +1111,6 @@ interface RequestProps {
   birthdate?: string;
   address?: string;
   deceasedName?: string;
-  deceasedAge?: string;
   deceasedBirthdate?: string;
   deceasedAddress?: string;
   childName?: string;
@@ -1161,7 +1162,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, fileActComplainant, fileActComplainantAddress, fileActRespondent, fileActRespondentAddress, fileActBarangayCase, fileActComplainDate, Custodies, specificPurpose } : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, fileActComplainant, fileActComplainantAddress, fileActRespondent, fileActRespondentAddress, fileActBarangayCase, fileActComplainDate, Custodies, specificPurpose } : RequestProps ) {
   // const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
@@ -1256,9 +1257,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           /*${deceasedName} (DECEASED)*/\n` +
-      `AGE                        :            /*${deceasedAge}*/\n` +
+      `AGE                        :            /*${calculateAge(deceasedBirthdate || "N/A")}*/\n` +
       `BIRTHDATE\t  :                  /*${FormattedDeceasedBirthdate}*/\n` +
-      `ADDRESS              :            /*${address}*/\n\n` +
+      `ADDRESS              :            /*${deceasedAddress}*/\n\n` +
       `This certification is being issued upon the request of the above mentioned name to support the application for the /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/   \n\n` +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     }
@@ -2165,7 +2166,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
     );
 
     setPreviewTemplates(matchedTemplate ? [matchedTemplate] : []);
-  }, [purpose, templates, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress]);
+  }, [purpose, templates, deceasedName, deceasedBirthdate, deceasedAddress]);
 
 
   if (isLoading) {
