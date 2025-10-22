@@ -919,3 +919,43 @@ class AllAppointmentsView(generics.ListAPIView):
         today = date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         return age
+
+class ChildPatientsWithoutRecordsView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    
+    def get_queryset(self):
+        from apps.healthProfiling.models import PersonalAddress
+        from django.db.models import Prefetch, Q
+        from datetime import date, timedelta
+        
+        # Around 5 years old (0-6 years range)
+        today = date.today()
+        six_years_ago = today - timedelta(days=6 * 365.25)
+        
+        # Get patients with existing child health records
+        patients_with_records = PatientRecord.objects.filter(
+            child_health_records__isnull=False
+        ).values_list('pat_id', flat=True)
+        
+        return Patient.objects.select_related(
+            'rp_id__per',
+            'trans_id'
+        ).prefetch_related(
+            Prefetch(
+                'rp_id__per__personal_addresses',
+                queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
+            ),
+            'rp_id__household_set',
+        ).filter(
+            Q(
+                pat_type='Resident',
+                pat_status='Active',
+                rp_id__per__per_dob__gt=six_years_ago
+            ) | Q(
+                pat_type='Transient',
+                pat_status='Active', 
+                trans_id__tran_dob__gt=six_years_ago
+            )
+        ).exclude(
+            pat_id__in=patients_with_records
+        ).order_by('rp_id__per__per_dob', 'trans_id__tran_dob')
