@@ -365,7 +365,9 @@ SCHEDULER_AUTOSTART = True
 # }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -373,7 +375,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "django.middleware.gzip.GZipMiddleware",  
+    "django.middleware.gzip.GZipMiddleware",   
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -456,9 +458,10 @@ CORS_ALLOWED_ORIGINS = [
     config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 ALLOWED_HOSTS = ['*'] 
+
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
-
+ 
 
 
 # JWT Authentication Settings
@@ -489,13 +492,26 @@ CORS_EXPOSE_HEADERS = ['Authorization']
 
 CORS_ALLOW_METHODS = [
     'DELETE',
-    'GET',
+    'GET', 
     'OPTIONS',
     'PATCH',
     'POST',
     'PUT',
 ]
-CORS_ALLOW_HEADERS = ["*"]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+    'pragma',
+]
 
 
 CORS_PREFLIGHT_MAX_AGE = 86400
