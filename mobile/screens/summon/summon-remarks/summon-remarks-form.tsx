@@ -214,7 +214,7 @@ export default function SummonRemarksForm() {
             remarks: '',
             closeHearing: false,
         },
-        mode: 'onChange' // This enables real-time validation
+        mode: 'onChange' 
     });
 
     // Check if both files and remarks are provided
