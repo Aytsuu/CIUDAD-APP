@@ -23,8 +23,7 @@ export type ServiceCharge = {
 export const getPaidServiceCharges = async (
   searchTerm: string = "",
   page: number = 1,
-  pageSize: number = 10,
-  statusFilter?: string
+  pageSize: number = 10
 ): Promise<{ results: ServiceCharge[]; count: number }> => {
   try {
     // Build query parameters
@@ -37,14 +36,11 @@ export const getPaidServiceCharges = async (
       params.append('search', searchTerm);
     }
 
-    if (statusFilter && statusFilter !== 'all') {
-      params.append('status', statusFilter);
-    }
-
-    // Always filter for paid service charges only
+    //fetch only pending and paid 
+    params.append('status', 'pending');
     params.append('payment_status', 'Paid');
 
-    // Fetch from the service charge treasurer list endpoint with pagination
+
     const res = await api.get(`/clerk/service-charge-treasurer-list/?${params.toString()}`);
     const payload = res.data as any;
     

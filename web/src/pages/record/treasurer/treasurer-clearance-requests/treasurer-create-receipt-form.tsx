@@ -61,6 +61,7 @@ import { Loader2 } from "lucide-react";
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
    console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
+   console.log('DEBUG ReceiptForm props:', { id, purpose, rate, requester, pay_status, nat_col, is_resident, voter_id })
    const isFree = Boolean(
      effectiveIsResident && (
        voter_id !== null && voter_id !== undefined ||
@@ -178,8 +179,10 @@ import { Loader2 } from "lucide-react";
                 console.log('[Receipt onSubmit] Added pay_id to payload:', effectivePayId);
             } else if (effectiveIsResident) {
                 payload.cr_id = id.toString();
+                console.log('DEBUG: Set cr_id to:', id.toString());
             } else {
-                payload.nrc_id = Number(id);
+                payload.nrc_id = id; // nrc_id is now a string like "NRC001-25"
+                console.log('DEBUG: Set nrc_id to:', id, 'type:', typeof id);
             }
             
             // Clean up undefined/empty values, but preserve pay_id even if it's 0

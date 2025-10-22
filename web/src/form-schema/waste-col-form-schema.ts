@@ -9,7 +9,6 @@ const WasteColSchedSchema = z.object({
     selectedCollectors: z.array(z.string()),
     driver: z.string().nonempty("Driver is required"),
     collectionTruck: z.string().nonempty("Truck is required"),
-    selectedAnnouncements: z.array(z.string()).optional(),
 });
 
 export default WasteColSchedSchema;

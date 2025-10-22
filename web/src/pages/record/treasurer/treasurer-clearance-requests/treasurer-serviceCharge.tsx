@@ -153,10 +153,6 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                             is_resident: false,
                             pay_id: sc.payment_request?.spay_id || (parseInt(sc.sr_id) || undefined) // Get spay_id from payment_request, fallback to sr_id if valid
                           };
-                          console.log("ReceiptForm data being passed:", receiptData);
-                          console.log("Full ServiceCharge object:", sc);
-                          console.log("sc.payment_request:", sc.payment_request);
-                          console.log("sc.payment_request?.spay_id:", sc.payment_request?.spay_id);
                           return (
                             <ReceiptForm
                               id={receiptData.id}
