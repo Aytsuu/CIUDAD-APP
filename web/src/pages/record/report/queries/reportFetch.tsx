@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, mapApi } from "@/api/api";
 
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean) => {
+export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean, severity?: string) => {
   return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive],
+    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive, severity],
     queryFn: async () => {
       try {
         const res = await api.get('report/ir/list/table/', {
@@ -12,7 +12,8 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
             page_size: pageSize,
             search: searchQuery,
             is_archive: isArchive,
-            get_tracker
+            get_tracker,
+            severity
           }
         });
         return res.data;
@@ -63,16 +64,17 @@ export const useGetIRInfo = (ir_id: string) => {
   })
 }
 
-export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string, status?: string) => {
   return useQuery({
-    queryKey: ['arReports', page, pageSize, searchQuery],
+    queryKey: ['arReports', page, pageSize, searchQuery, status],
     queryFn: async () => {
       try {
         const res = await api.get('report/ar/list/table/', {
           params: {
             page,
             page_size: pageSize,
-            search: searchQuery
+            search: searchQuery,
+            status
           }
         });
         return res.data;

@@ -260,6 +260,7 @@ export default function SecuradoReports(): JSX.Element {
 
                 <div className="flex justify-end">
                   <Button
+                    className="rounded-full"
                     onClick={() => {
                       navigate("/report/acknowledgement/form", {
                         state: {

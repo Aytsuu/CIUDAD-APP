@@ -24,7 +24,7 @@ export const getItemsConfig = (
       card: [residents, families, households, businesses],
       sidebar: [
         {
-          title: "Recent Registration",
+          title: "Resident Registration",
           element: <ProfilingSidebar />,
         },
       ],
@@ -40,7 +40,7 @@ export const getItemsConfig = (
       ],
       sidebar: [
         {
-          title: "Recent Incident Reports",
+          title: "Incident Reports",
           element: <ReportSidebar />,
         },
       ],

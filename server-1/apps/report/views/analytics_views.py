@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Count, Case, When, Value, IntegerField
+from django.db.models import Count, Case, When, Value
 from ..models import *
 from datetime import date, timedelta
 from django.db.models.functions import TruncDate

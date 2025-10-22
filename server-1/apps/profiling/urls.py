@@ -14,8 +14,8 @@ from .views.all_record_views import *
 from .views.voter_views import *
 
 urlpatterns = [
-    # All record (combined record of resident and business respondents)
-    path("all/", AllRecordTableView.as_view(), name="all-record"),
+    # All record
+    # path("all/", AllRecordTableView.as_view(), name="all-record"),
     path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
 
     #Voter Urls

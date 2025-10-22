@@ -29,6 +29,7 @@ class IRTableView(generics.ListAPIView):
     rp_id = self.request.query_params.get("rp_id", None)
     is_get_tracker = self.request.query_params.get('get_tracker', 'false') == 'true'
     is_archive = self.request.query_params.get('is_archive', 'false') == 'true'
+    severity = self.request.query_params.get("severity", None)
 
     queryset = IncidentReport.objects.filter(
       ir_is_archive=is_archive,
@@ -60,6 +61,9 @@ class IRTableView(generics.ListAPIView):
 
     if rp_id:
       queryset = queryset.filter(rp=rp_id)
+    
+    if severity and severity != "all":
+      queryset = queryset.filter(ir_severity__iexact=severity)
 
     search = self.request.query_params.get('search', '').strip()
     if search:
