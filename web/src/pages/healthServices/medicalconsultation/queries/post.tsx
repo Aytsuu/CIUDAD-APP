@@ -18,6 +18,9 @@ export const useSubmitMedicalConsultation = () => {
       showSuccessToast("Medical record created successfully");
       queryClient.invalidateQueries({ queryKey: ["medicalConsultations"] });
       queryClient.invalidateQueries({ queryKey: ["combinedHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["medicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+
       
       navigate(-1);
     },

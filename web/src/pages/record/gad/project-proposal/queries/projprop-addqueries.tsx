@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 import { ProjectProposalInput, SupportDocInput } from "../projprop-types";
 import { postProjectProposal, addSupportDocuments } from "../api/projproppostreq";
@@ -14,24 +13,14 @@ export const useAddProjectProposal = (isUpdate: boolean = false) => {
       postProjectProposal(proposalData),
     onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
-      toast.success(
-        `Project proposal ${isUpdate ? "updated" : "added"} successfully`,
-        {
-          icon: (
-            <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          ),
-          duration: 2000,
-        }
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
+      showSuccessToast(
+        `Project proposal ${isUpdate ? "updated" : "added"} successfully`
       );
       navigate(`/gad-project-proposal`);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to ${isUpdate ? "update" : "add"} project proposal`, {
-        description: error.response?.data
-          ? JSON.stringify(error.response.data, null, 2)
-          : error.message,
-        duration: 5000,
-      });
+    onError: (_error: any) => {
+      showErrorToast(`Failed to ${isUpdate ? "update" : "add"} project proposal`);
     },
   });
 };
@@ -48,14 +37,10 @@ export const useAddSupportDocument = () => {
       queryClient.invalidateQueries({
         queryKey: ["supportDocs", variables.gpr_id],
       });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
     },
-    onError: (error: any) => {
-      toast.error("Failed to add support document", {
-        description: error.response?.data
-          ? JSON.stringify(error.response.data, null, 2)
-          : error.message,
-        duration: 5000,
-      });
+    onError: (_error: any) => {
+      showErrorToast("Failed to add support document");
     },
   });
 };

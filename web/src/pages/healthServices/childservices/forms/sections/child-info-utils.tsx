@@ -1,6 +1,7 @@
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { initialFormData } from "../multi-step-form/types";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const populatePatientData = (patient: any | null): Partial<FormData> => {
   if (!patient) return initialFormData;
@@ -9,13 +10,13 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     pat_id: patient.pat_id?.toString() || "",
     familyNo: patient.family?.fam_id || "",
     ufcNo: "",
-    childFname: patient.personal_info?.per_fname || "",
-    childLname: patient.personal_info?.per_lname || "",
-    childMname: patient.personal_info?.per_mname || "",
-    childSex: patient.personal_info?.per_sex || "",
+    childFname: toTitleCase(patient.personal_info?.per_fname || ""),
+    childLname: toTitleCase(patient.personal_info?.per_lname || ""),
+    childMname: toTitleCase(patient.personal_info?.per_mname || ""),
+    childSex: toTitleCase(patient.personal_info?.per_sex || ""),
     childDob: patient.personal_info?.per_dob || "",
-    residenceType: patient.pat_type || "Resident",
-    address: patient.address?.full_address || "No address provided",
+    residenceType: toTitleCase(patient.pat_type || "Resident"),
+    address: toTitleCase(patient.address?.full_address || "No address provided"),
     landmarks: "",
     trans_id: patient.trans_id || "",
     rp_id: patient.rp_id?.rp_id || "",
@@ -46,9 +47,9 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
   if (patient.pat_type !== "Transient") {
     const motherInfo = patient.family_head_info?.family_heads?.mother?.personal_info;
     if (motherInfo) {
-      newFormData.motherFname = motherInfo.per_fname || "";
-      newFormData.motherLname = motherInfo.per_lname || "";
-      newFormData.motherMname = motherInfo.per_mname || "";
+      newFormData.motherFname = toTitleCase(motherInfo.per_fname || "");
+      newFormData.motherLname = toTitleCase(motherInfo.per_lname || "");
+      newFormData.motherMname = toTitleCase(motherInfo.per_mname || "");
       newFormData.motherdob = motherInfo.per_dob || "";
       if (motherInfo.per_dob) {
         newFormData.motherAge = calculateAge(motherInfo.per_dob).toString();
@@ -57,9 +58,9 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
 
     const fatherInfo = patient.family_head_info?.family_heads?.father?.personal_info;
     if (fatherInfo) {
-      newFormData.fatherFname = fatherInfo.per_fname || "";
-      newFormData.fatherLname = fatherInfo.per_lname || "";
-      newFormData.fatherMname = fatherInfo.per_mname || "";
+      newFormData.fatherFname = toTitleCase(fatherInfo.per_fname || "");
+      newFormData.fatherLname = toTitleCase(fatherInfo.per_lname || "");
+      newFormData.fatherMname = toTitleCase(fatherInfo.per_mname || "");
       newFormData.fatherdob = fatherInfo.per_dob || "";
       if (fatherInfo.per_dob) {
         newFormData.fatherAge = calculateAge(fatherInfo.per_dob).toString();

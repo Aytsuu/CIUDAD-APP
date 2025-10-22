@@ -8,17 +8,22 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
 
     return useMutation({
       mutationFn: (ags_id: number) => deleteAnnualGrossSales(ags_id),
-      onSuccess: () => {
+      onMutate: async () => {
+            queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+            queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+            
             toast.loading("Deleting record...", { id: "deleteGrossSales" });
-
+      },
+      onSuccess: () => {
             toast.success('Record deleted successfully', {
             id: 'deleteGrossSales',
             icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
             duration: 2000
         });
 
-        queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-        
+        queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+        queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+
         if (onSuccess) onSuccess();
     },
         onError: (err) => {
@@ -42,7 +47,9 @@ export const useDeletePurposeAndRate = (onSuccess?: () => void) => {
             duration: 2000
         });
 
-        queryClient.invalidateQueries({ queryKey: ['purposeRates'] });
+        queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
+        queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
+        queryClient.invalidateQueries({ queryKey: ['barangayPermitPurpose']});
         
         if (onSuccess) onSuccess();
     },

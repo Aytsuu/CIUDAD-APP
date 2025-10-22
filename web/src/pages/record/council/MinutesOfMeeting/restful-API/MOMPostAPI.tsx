@@ -24,7 +24,7 @@ export const createMOMFile = async (files: { name: string; type: string; file: s
 
 export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, files: { name: string; type: string; file: string | undefined }[]) => {
     try {
-        const momResponse = await api.post('council/minutes-of-meeting/', {
+        const momResponse = await api.post('council/minutes-of-meeting-active/', {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,

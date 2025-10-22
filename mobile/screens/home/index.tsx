@@ -39,6 +39,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const {user, isLoading} = useAuth();
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
+  console.log("All Data: ", JSON.stringify(user, null, 2))
+  // console.log("Personal Data: ", JSON.stringify(user?.personal, null, 2))
 
   // if (isLoading) {
   //   return <LoadingModal visible={true} />;

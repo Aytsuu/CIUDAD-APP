@@ -37,7 +37,7 @@ export const ProtectedRoute = ({
   }
   
   const hasAccess = user?.staff?.assignments?.includes(requiredFeature) || 
-                    user?.staff?.pos?.toLowerCase() == "admin" || 
+                    user?.staff?.pos.toLowerCase() == "admin" || 
                     (!requiredFeature && isAuthenticated && user?.staff?.assignments?.length > 0)
   
   if (!hasAccess) {

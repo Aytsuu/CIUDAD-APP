@@ -1,4 +1,3 @@
-//// filepath: /c:/CIUDAD-APP/web/src/pages/healthServices/childservices/tables/ChildHR_inv_records.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -20,6 +19,7 @@ import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { GrowthChart } from "./growth-chart";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { processHistoryData } from "./formattedData";
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 
 export default function InvChildHealthRecords() {
   const location = useLocation();
@@ -45,13 +45,96 @@ export default function InvChildHealthRecords() {
 
   console.log("chhh", chrecId);
   console.log("childData", childData);
+  console.log("historyData", historyData);
+
   useEffect(() => {
     if (!chrecId) {
       console.error("ChildHealthRecord or chrec_id is missing from location state.");
     }
   }, [chrecId, navigate]);
 
-  // Process the history data using a helper function
+  // Transform child data from nested API structure - ONLY for ChildHealthRecordCard
+  const transformChildData = useMemo(() => {
+    console.log("🔄 TRANSFORMING CHILD DATA FOR CARD DISPLAY");
+
+    // Extract the first child health history to get patient details
+    const firstHistory = historyData?.[0];
+    if (!firstHistory) {
+      console.log("❌ No child health histories found - using original childData");
+      return childData; // Fallback to original childData
+    }
+
+    const chrecDetails = firstHistory.chrec_details;
+    const patrecDetails = chrecDetails?.patrec_details;
+    const patDetails = patrecDetails?.pat_details;
+
+    if (!patDetails) {
+      console.log("❌ No patient details found - using original childData");
+      return childData; // Fallback to original childData
+    }
+
+    const personalInfo = patDetails.personal_info || {};
+    const address = patDetails.address || {};
+    const familyHeadInfo = patDetails.family_head_info?.family_heads || {};
+
+    const motherInfo = familyHeadInfo.mother?.personal_info || {};
+    const fatherInfo = familyHeadInfo.father?.personal_info || {};
+
+    console.log("👨‍👩‍👧‍👦 EXTRACTED PATIENT DATA:", {
+      personalInfo,
+      address,
+      motherInfo,
+      fatherInfo
+    });
+
+    const transformedData = {
+      // Patient basic info
+      pat_id: chrecDetails?.patient || patDetails.pat_id || patId,
+      fname: personalInfo?.per_fname || childData?.fname || "",
+      lname: personalInfo?.per_lname || childData?.lname || "",
+      mname: personalInfo?.per_mname || childData?.mname || "",
+      sex: personalInfo?.per_sex || childData?.sex || "",
+      dob: personalInfo?.per_dob || childData?.dob || "",
+      age: personalInfo?.per_dob ? calculateAgeFromDOB(personalInfo.per_dob).years.toString() : childData?.age || "",
+
+      // Mother info
+      mother_fname: motherInfo?.per_fname || childData?.mother_fname || "",
+      mother_lname: motherInfo?.per_lname || childData?.mother_lname || "",
+      mother_mname: motherInfo?.per_mname || childData?.mother_mname || "",
+      mother_occupation: chrecDetails?.mother_occupation || motherInfo?.per_occupation || childData?.mother_occupation || "",
+      mother_age: motherInfo?.per_dob ? calculateAgeFromDOB(motherInfo.per_dob).years.toString() : childData?.mother_age || "",
+
+      // Father info
+      father_fname: fatherInfo?.per_fname || childData?.father_fname || "",
+      father_lname: fatherInfo?.per_lname || childData?.father_lname || "",
+      father_mname: fatherInfo?.per_mname || childData?.father_mname || "",
+      father_age: fatherInfo?.per_dob ? calculateAgeFromDOB(fatherInfo.per_dob).years.toString() : childData?.father_age || "",
+      father_occupation: chrecDetails?.father_occupation || fatherInfo?.per_occupation || childData?.father_occupation || "",
+
+      // Address info
+      address: address?.full_address || childData?.address || "",
+      street: address?.add_street || childData?.street || "",
+      barangay: address?.add_barangay || childData?.barangay || "",
+      city: address?.add_city || childData?.city || "",
+      province: address?.add_province || childData?.province || "",
+      landmarks: chrecDetails?.landmarks || address?.add_landmarks || childData?.landmarks || "",
+
+      // Child health specific info
+      type_of_feeding: chrecDetails?.type_of_feeding || childData?.type_of_feeding || "",
+      delivery_type: chrecDetails?.place_of_delivery_type || childData?.delivery_type || "",
+      pod_location: chrecDetails?.pod_location || childData?.pod_location || "",
+      tt_status: familyHeadInfo?.tt_status || firstHistory?.tt_status || childData?.tt_status || "",
+      birth_order: chrecDetails?.birth_order?.toString() || childData?.birth_order?.toString() || "",
+
+      // Additional fields
+      chrec_id: childData?.chrec_id || chrecId
+    };
+
+    console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
+    return transformedData;
+  }, [historyData, childData, patId, chrecId]);
+
+  // Process the history data using a helper function - KEEP ORIGINAL LOGIC
   const processedHistoryData = useMemo(() => {
     return processHistoryData(historyData, dob);
   }, [historyData, dob]);
@@ -97,15 +180,16 @@ export default function InvChildHealthRecords() {
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
+  // Use transformChildData for navigation
   const navigateToUpdateLatest = () => {
-    if (latestRecord && childData) {
+    if (latestRecord && transformChildData) {
       navigate("/services/childhealthrecords/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
-            patId: childData?.pat_id,
+            patId: transformChildData.pat_id,
             originalRecord: latestRecord,
-            patientData: childData,
+            patientData: transformChildData,
             chrecId: chrecId,
             mode: "addnewchildhealthrecord"
           }
@@ -114,7 +198,8 @@ export default function InvChildHealthRecords() {
     }
   };
 
-  const columns = useMemo(() => getChildHealthColumns(childData, nutritionalStatusData), [childData, nutritionalStatusData]);
+  // Use transformChildData for columns
+  const columns = useMemo(() => getChildHealthColumns(transformChildData, nutritionalStatusData), [transformChildData, nutritionalStatusData]);
 
   if (isError) {
     return (
@@ -151,7 +236,7 @@ export default function InvChildHealthRecords() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
       <div className="mb-5">
-        <ChildHealthRecordCard child={childData} />
+        <ChildHealthRecordCard child={transformChildData} isLoading={childHistoryLoading} />
       </div>
       {isLoading ? (
         <VaccinationStatusCardsSkeleton />
@@ -175,7 +260,7 @@ export default function InvChildHealthRecords() {
           </div>
           <div className="flex gap-2">
             <ProtectedComponentButton exclude={["DOCTOR"]}>
-              <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
                 {latestRecord && !isLatestRecordFromToday && (
                   <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
                     {isLatestRecordImmunizationOrCheckup ? (

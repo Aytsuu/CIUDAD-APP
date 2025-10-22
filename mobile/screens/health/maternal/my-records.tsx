@@ -208,7 +208,7 @@ export default function MyMaternalRecordScreen() {
     data: pregnancyData,
     isLoading: pregnancyDataLoading,
     refetch,
-  } = usePregnancyDetails(patId || "")
+  } = usePregnancyDetails(patId || "", 1, 10, "All", "")
 
   const getLatestFollowupVisit = () => {
     let followUpData = []

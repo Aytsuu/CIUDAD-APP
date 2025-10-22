@@ -9,22 +9,22 @@ import { formatTime } from "@/helpers/timeFormatter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetGarbagePendingResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
+import { LoadingState } from "@/components/ui/loading-state"; // ✅ Import loading state component
 
 export default function ResidentPending() {
-  const {user} = useAuth()  
-  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user?.resident?.rp_id)
+  const { user } = useAuth();
+  const { data: pendingRequests = [], isLoading: isDataLoading } = useGetGarbagePendingResident(String(user?.rp));
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
-
 
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);
     setViewImageModalVisible(true);
     setCurrentZoomScale(1);
   };
-  
 
   const filteredData = pendingRequests.filter((request) => {
     const searchString = `
@@ -38,18 +38,16 @@ export default function ResidentPending() {
     `.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
- 
+
   const handleCancelReq = (garb_id: string) => {
     router.push({
-      pathname: '/(my-request)/garbage-pickup/garbage-cancel-req-form',
-      params: {
-        garb_id: garb_id
-      }
-    })
-  }
+      pathname: "/(my-request)/garbage-pickup/garbage-cancel-req-form",
+      params: { garb_id },
+    });
+  };
 
   return (
-    <View className="flex-1 p-4">
+    <View className="flex-1 p-6">
       {/* Header */}
       <Text className="text-lg font-medium text-gray-800 mb-2">
         Pending Requests ({filteredData.length})
@@ -61,7 +59,7 @@ export default function ResidentPending() {
           <Search size={18} color="#6b7280" />
           <Input
             className="flex-1 ml-2 bg-white text-black"
-            placeholder="Search rejected requests..."
+            placeholder="Search pending requests..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             style={{ borderWidth: 0, shadowOpacity: 0 }}
@@ -69,18 +67,18 @@ export default function ResidentPending() {
         </View>
       )}
 
-      {/* List */}
+      {/* Loading / Empty / List */}
       {isDataLoading ? (
-        <View className="justify-center items-center py-8">
-          <Text className="text-center text-gray-500">Loading requests...</Text>
+        <View className="h-64 justify-center items-center">
+          <LoadingState /> {/* ✅ Replaced plain text with animated loading state */}
         </View>
       ) : filteredData.length === 0 ? (
         <View className="justify-center items-center py-8">
           <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              {pendingRequests.length === 0 
-                ? "No pending requests available" 
+              {pendingRequests.length === 0
+                ? "No pending requests available"
                 : "No matching requests found"}
             </Text>
             {searchQuery && (
@@ -91,9 +89,9 @@ export default function ResidentPending() {
           </View>
         </View>
       ) : (
-        <ScrollView 
-          className="flex-1" 
-          showsVerticalScrollIndicator={false} 
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
           <View className="gap-4">
@@ -116,6 +114,7 @@ export default function ResidentPending() {
                     </View>
                   </View>
                 </CardHeader>
+
                 <CardContent className="p-4">
                   <View className="gap-3">
                     {/* Waste Type */}
@@ -127,7 +126,9 @@ export default function ResidentPending() {
                     {/* Preferred Date */}
                     <View className="flex-row justify-between">
                       <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
-                      <Text className="text-sm">{request.garb_pref_date}, {formatTime(request.garb_pref_time)}</Text>
+                      <Text className="text-sm">
+                        {request.garb_pref_date}, {formatTime(request.garb_pref_time)}
+                      </Text>
                     </View>
 
                     {/* Additional Notes */}
@@ -141,9 +142,7 @@ export default function ResidentPending() {
                     {/* Attached File Link */}
                     {request.file_url && (
                       <View className="mt-2">
-                        <TouchableOpacity
-                          onPress={() => handleViewImage(request.file_url)}
-                        >
+                        <TouchableOpacity onPress={() => handleViewImage(request.file_url)}>
                           <Text className="text-sm text-blue-600 underline">
                             View Attached Image
                           </Text>
@@ -152,8 +151,11 @@ export default function ResidentPending() {
                     )}
 
                     {/* Cancel Button */}
-                   <View className="flex-row justify-end mt-4">
-                      <Button className="border border-red-500 native:h-[40px] rounded-lg px-4" onPress={() => handleCancelReq(request.garb_id)}>
+                    <View className="flex-row justify-end mt-4">
+                      <Button
+                        className="border border-red-500 native:h-[40px] rounded-lg px-4"
+                        onPress={() => handleCancelReq(request.garb_id)}
+                      >
                         <Text className="text-red-600">Cancel</Text>
                       </Button>
                     </View>

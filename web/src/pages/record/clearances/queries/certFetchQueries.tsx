@@ -8,6 +8,8 @@ export type Certificate = {
   resident_details: {
     per_fname: string;
     per_lname: string;
+    per_dob?: string;
+    per_address?: string;
   } | null;
   req_pay_method: string;
   req_request_date: string;
@@ -30,6 +32,66 @@ export type Certificate = {
   };
 };
 
+export type ServiceCharge = {
+  sr_id: string;
+  sr_code: string;
+  sr_req_date: string;
+  req_payment_status: string;
+  complainant_name?: string;
+  invoice?: {
+    inv_num: string;
+    inv_serial_num: string;
+    inv_date: string;
+    inv_amount: string;
+    inv_nat_of_collection: string;
+  };
+  complainant_names?: string[];
+  complainant_addresses?: string[];
+  accused_names?: string[];
+  accused_addresses?: string[];
+};
+
+export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
+  try {
+    // Fetch directly from the Paid list endpoint (includes sr_code and names/addresses)
+    const res = await api.get('/clerk/summon-case-list/');
+    const payload = res.data as any;
+    const list = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.results)
+      ? payload.results
+      : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
+
+    const merged: ServiceCharge[] = list
+      .map((sr: any) => ({
+        sr_id: String(sr.sr_id),
+        sr_code: sr.sr_code ?? null,
+        sr_req_date: sr.sr_req_date ?? '',
+        req_payment_status: sr.payment_status ?? 'Paid',
+        complainant_name: Array.isArray(sr.complainant_names) && sr.complainant_names.length ? sr.complainant_names[0] : undefined,
+        complainant_names: sr.complainant_names ?? [],
+        complainant_addresses: sr.complainant_addresses ?? [],
+        accused_names: sr.accused_names ?? [],
+        accused_addresses: sr.accused_addresses ?? [],
+        invoice: undefined,
+      }));
+
+    merged.sort((a, b) => new Date(b.sr_req_date).getTime() - new Date(a.sr_req_date).getTime());
+
+    return merged;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error fetching service charges:', error.response?.data || error.message);
+    // For 500s, return empty to avoid crashing React Query retry logic
+    if (error.response?.status === 500) {
+      return [];
+    }
+    throw error;
+  }
+};
+
 export type NonResidentCertificate = {
   nrc_id: string;
   nrc_req_date: string;
@@ -47,21 +109,41 @@ export type NonResidentCertificate = {
   amount: string;
 };
 
-export const getCertificates = async (): Promise<Certificate[]> => {
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
-    // Fetch resident certificates
-    const residentRes = await api.get('/clerk/certificate/');
-    const residentRaw = residentRes.data as any[];
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (page) params.append('page', page.toString());
+    if (pageSize) params.append('page_size', pageSize.toString());
+    if (status) params.append('status', status);
+    if (paymentStatus) params.append('payment_status', paymentStatus);
     
-    // Fetch non-resident certificates
-    const nonResidentRes = await api.get('/clerk/nonresident-personal-clearance/');
-    const nonResidentRaw = nonResidentRes.data as NonResidentCertificate[];
-
-    // Map resident certificates
+    const queryString = params.toString();
+    const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+    
+    // Fetch resident certificates with pagination
+    const residentRes = await api.get(url);
+    const residentData = residentRes.data;
+    
+    // Handle both paginated and non-paginated responses
+    const residentRaw = residentData.results || residentData;
+    const residentCount = residentData.count || residentRaw.length;
+    const residentNext = residentData.next || null;
+    const residentPrevious = residentData.previous || null;
+    
+    // For now, we'll only return resident certificates with pagination
+    // Non-resident certificates can be added later if needed
     const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
+      
       return {
         cr_id: item.cr_id,
-        resident_details: item.resident_details || null,
+        resident_details: item.resident_details ? {
+          per_fname: item.resident_details.per_fname,
+          per_lname: item.resident_details.per_lname,
+          per_dob: item.resident_details.per_dob,
+          per_address: item.resident_details.per_address,
+        } : null,
         req_pay_method: item.req_pay_method || 'Walk-in',
         req_request_date: item.cr_req_request_date,
         req_type: item.purpose?.pr_purpose || item.req_type || '',
@@ -81,43 +163,14 @@ export const getCertificates = async (): Promise<Certificate[]> => {
       } as Certificate;
     });
 
-    // Map non-resident certificates to Certificate format
-    const nonResidentCertificates: Certificate[] = nonResidentRaw
-      .filter((item: NonResidentCertificate) => item.nrc_req_payment_status === "Paid")
-      .map((item: NonResidentCertificate) => {
-        // Split the requester name into first and last name
-        const nameParts = item.nrc_requester.split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
-
-        return {
-          cr_id: `NRC-${item.nrc_id}`, // Prefix to distinguish non-resident certificates
-          nrc_id: item.nrc_id,
-          resident_details: {
-            per_fname: firstName,
-            per_lname: lastName,
-          },
-          req_pay_method: 'Walk-in', // Default for non-residents
-          req_request_date: item.nrc_req_date,
-          req_claim_date: item.nrc_pay_date || item.nrc_req_date,
-          req_type: item.purpose?.pr_purpose || '',
-          req_purpose: item.purpose?.pr_purpose || '',
-          req_payment_status: item.nrc_req_payment_status,
-          req_transac_id: '',
-          is_nonresident: true,
-          nrc_requester: item.nrc_requester,
-          nrc_address: item.nrc_address,
-          nrc_birthdate: item.nrc_birthdate,
-        } as Certificate;
-      });
-
-    // Combine both arrays
-    const allCertificates = [...residentCertificates, ...nonResidentCertificates];
-    
-    // Sort by request date (newest first)
-    allCertificates.sort((a, b) => new Date(b.req_request_date).getTime() - new Date(a.req_request_date).getTime());
-
-    return allCertificates;
+    // For now, we'll only return resident certificates with pagination
+    // Non-resident certificates can be added later if needed
+    return {
+      results: residentCertificates,
+      count: residentCount,
+      next: residentNext,
+      previous: residentPrevious
+    };
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error fetching certificates:', error.response?.data || error.message);
@@ -168,6 +221,23 @@ export const markCertificateAsIssued = async (certificateData: MarkCertificateVa
   }
 };
 
+// Mark service charge as issued/printed
+export const markServiceChargeAsIssued = async (serviceChargeData: { sr_id: string }) => {
+  try {
+    console.log('Marking service charge as issued:', serviceChargeData);
+    // Use the proper service charge endpoint
+    const res = await api.patch(`/clerk/update-service-charge-request/${serviceChargeData.sr_id}/`, {
+      sr_req_status: 'Completed',
+      sr_date_marked: new Date().toISOString(),
+    });
+    return res.data;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error marking service charge as issued:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 export type Staff = {
   staff_id: string;
@@ -180,5 +250,4 @@ export const useGetStaffList = () =>
     queryKey: ["staffList"],
     queryFn: getStaffList,
   });
-
 

@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Loader2, Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
+import { Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
@@ -475,8 +475,7 @@ const Overall: React.FC = () => {
           <div className="bg-white w-full overflow-x-auto border">
             {loading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading animal bite records...</span>
+                  
               </div>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">

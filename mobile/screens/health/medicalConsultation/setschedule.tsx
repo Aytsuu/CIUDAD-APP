@@ -7,6 +7,7 @@ import { api2 } from '@/api/api';
 import { format, isWeekend } from 'date-fns';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface Slot {
   date: string;
@@ -51,29 +52,29 @@ const SetSchedule = () => {
     } else {
       setRefreshing(true);
     }
-    
+
     try {
       const response = await api2.get('/medical-consultation/available-slots/');
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of slots, but received: ' + typeof response.data);
       }
 
       const slots: Slot[] = response.data;
-      
+
       // Filter out weekends and validate slots
       const validSlots = slots.filter(slot => {
         if (!slot.date || !slot.day_name || typeof slot.am_available !== 'boolean' || typeof slot.pm_available !== 'boolean') {
           console.warn('Invalid slot format:', slot);
           return false;
         }
-        
+
         const date = new Date(slot.date);
         return !isWeekend(date); // Exclude weekends
       });
 
       setAvailableSlots(validSlots);
-      
+
       // Auto-select first available date
       const firstAvailableSlot = validSlots.find((slot: Slot) => {
         try {
@@ -152,12 +153,12 @@ const SetSchedule = () => {
       Alert.alert('Authentication Error', 'User ID is missing. Please log in again.');
       return;
     }
-    
+
     if (!selectedDate || !selectedMeridiem || !chiefComplaint.trim()) {
       Alert.alert('Required Fields', 'Please select a date, an AM/PM slot, and describe your complaint.');
       return;
     }
-    
+
     const appointmentData = {
       rp_id: rpId,
       scheduled_date: formatDateToISO(selectedDate),
@@ -219,7 +220,7 @@ const SetSchedule = () => {
   const DateItem = ({ item }: { item: Slot }) => {
     const date = new Date(item.date);
     const isSelected = formatDateToISO(selectedDate) === item.date;
-    
+
     return (
       <TouchableOpacity
         className={`mx-2 p-4 rounded-xl border-2 ${isSelected ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-200'}`}
@@ -262,7 +263,7 @@ const SetSchedule = () => {
     >
       <SafeAreaView className='flex-1 bg-white'>
         <StatusBar barStyle="dark-content" />
-        <ScrollView 
+        <ScrollView
           className='p-5'
           refreshControl={
             <RefreshControl
@@ -274,28 +275,11 @@ const SetSchedule = () => {
           }
         >
           {isLoading && availableSlots.length === 0 ? (
-            <View className='flex-1 items-center justify-center h-48'>
-              <ActivityIndicator size="large" color="#2563EB" />
-              <Text className='mt-3 text-gray-600'>Fetching available slots...</Text>
-            </View>
+            <LoadingState/>
           ) : (
             <>
               <Text className='text-lg font-semibold text-gray-700 mb-3'>1. Select Date</Text>
-              
-              {/* Quick Date Selection with FlatList */}
-              {/* <View className="mb-4">
-                <Text className="text-sm text-gray-600 mb-2">Quick select from available dates:</Text>
-                <FlatList
-                  data={availableDates.slice(0, 7)} // Show next 7 available dates
-                  renderItem={DateItem}
-                  keyExtractor={(item) => item.date}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingVertical: 8 }}
-                />
-              </View> */}
 
-              {/* Manual Date Picker */}
               <View className='flex-row items-center justify-between bg-gray-100 rounded-xl p-4 mb-4'>
                 <Calendar size={20} color="#374151" />
                 <Text className='text-md font-medium text-gray-800 flex-1 ml-3'>
@@ -305,7 +289,7 @@ const SetSchedule = () => {
                   <ChevronDown size={20} color="#2563EB" />
                 </TouchableOpacity>
               </View>
-              
+
               {showDatePicker && (
                 <DateTimePicker
                   value={selectedDate}
@@ -313,17 +297,17 @@ const SetSchedule = () => {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   minimumDate={new Date()}
                   onChange={onDateChange}
-                  // Note: filterWeekends prop might not be available on all platforms
-                  // You may need to handle this differently based on platform
+                // Note: filterWeekends prop might not be available on all platforms
+                // You may need to handle this differently based on platform
                 />
               )}
-              
+
               <Text className='text-lg font-semibold text-gray-700 mb-3'>2. Select Time Slot</Text>
               <View className='flex-row justify-between mb-6'>
                 <MeridiemButton meridiem="AM" available={amAvailable} />
                 <MeridiemButton meridiem="PM" available={pmAvailable} />
               </View>
-              
+
               <Text className='text-lg font-semibold text-gray-700 mb-3'>3. Chief Complaint</Text>
               <TextInput
                 className='bg-gray-100 rounded-xl p-4 text-gray-800 mb-4 h-24'
@@ -335,27 +319,33 @@ const SetSchedule = () => {
                 textAlignVertical="top"
                 editable={!isLoading}
               />
-              
+
               <View className='bg-yellow-100 border border-yellow-300 rounded-xl p-4 mb-8'>
                 <View className='flex-row items-center mb-2'>
                   <AlertCircle size={20} color="#b45309" />
-                  <Text className='text-md text-yellow-800 ml-2 font-bold'>Important Information</Text>
+                  <Text className='text-md text-yellow-800 ml-2 font-bold'>Reminders</Text>
                 </View>
                 <View className='space-y-2'>
                   <View className='flex-row'>
                     <Text className='text-yellow-700 mr-2'>•</Text>
-                    <Text className='text-yellow-700 flex-1'>Appointments are dependent on the clinic schedules. </Text>
+                    <Text className='text-yellow-700 flex-1'>Appointments are dependent on the clinic schedules.</Text>
                   </View>
-                  <View className='flex-row'>
+                  <View className='flex-row mt-2'>
                     <Text className='text-yellow-700 mr-2'>•</Text>
                     <Text className='text-yellow-700 flex-1'>Arrive 5-10 minutes before your appointment.</Text>
                   </View>
-                  <View className='flex-row'>
+                  <View className='flex-row mt-2'>
                     <Text className='text-yellow-700 mr-2'>•</Text>
                     <Text className='text-yellow-700 flex-1'>No weekend appointments available.</Text>
                   </View>
+                  <View className='flex-row mt-2'>
+                    <Text className='text-yellow-700 mr-2'>•</Text>
+                    <Text className='text-yellow-700 flex-1'>Please provide a detailed chief complaint for your appointment. We will review your reason before the consultation.</Text>
+                  </View>
+                 
                 </View>
               </View>
+
 
               <TouchableOpacity
                 className={`rounded-xl p-4 items-center mb-8 shadow-md ${isSubmitDisabled ? 'bg-gray-400' : isLoading ? 'bg-blue-400' : 'bg-blue-600'}`}

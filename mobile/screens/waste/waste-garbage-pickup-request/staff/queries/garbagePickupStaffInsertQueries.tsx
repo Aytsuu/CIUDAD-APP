@@ -14,7 +14,8 @@ export const useAddDecision = (onSuccess?: () => void) => {
         return useMutation({
             mutationFn: (values: z.infer<typeof RejectPickupRequestSchema>) => 
             addDecision(values.garb_id, {
-                reason: values.reason
+                reason: values.reason,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 Promise.all([
@@ -46,7 +47,8 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors
+                collectors: values.collectors,
+                staff_id: values.staff_id
             }),
         onSuccess: () => {
             Promise.all([

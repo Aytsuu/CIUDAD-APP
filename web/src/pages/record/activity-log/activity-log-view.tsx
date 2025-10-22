@@ -2,17 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button/button';
 import { getActivityLogById } from './restful-api/activityLogAPI';
-import { Loader2 } from 'lucide-react';
-
-interface ActivityLog {
-  act_id: number;
-  act_timestamp: string;
-  act_type: string;
-  act_description: string;
-  feat: number | null;
-  staff: number | null;
-  staff_name: string;
-}
+import { Spinner } from '@/components/ui/spinner';
+import { ActivityLog } from './queries/ActlogQueries';
 
 const ActivityLogView = () => {
   const { id } = useParams();
@@ -32,7 +23,7 @@ const ActivityLogView = () => {
 
   if (loading) return (
     <div className="p-8 flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+      <Spinner size="lg" />
     </div>
   );
   if (error || !activity) return <div className="p-8 text-center text-red-500">{error || 'Activity log not found.'}</div>;
@@ -49,8 +40,27 @@ const ActivityLogView = () => {
           </div>
           <div className="p-6 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#1273B8]/10 flex items-center justify-center text-[#1273B8] font-semibold border border-[#1273B8]/20">
-                {activity.staff_name?.[0] ?? 'U'}
+              <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
+                {activity.staff_profile_image ? (
+                  <img
+                    src={activity.staff_profile_image}
+                    alt={activity.staff_name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to letter if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<div class="w-full h-full bg-[#1273B8]/10 flex items-center justify-center text-[#1273B8] font-semibold text-sm">${activity.staff_name?.[0] ?? 'U'}</div>`;
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#1273B8]/10 flex items-center justify-center text-[#1273B8] font-semibold text-sm">
+                    {activity.staff_name?.[0] ?? 'U'}
+                  </div>
+                )}
               </div>
               <div>
                 <div className="text-sm text-gray-500">Staff</div>

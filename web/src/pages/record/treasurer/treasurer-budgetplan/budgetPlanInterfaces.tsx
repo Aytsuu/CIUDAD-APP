@@ -43,35 +43,6 @@ export type BudgetHeaderUpdate = {
     plan_calamityFund_limit: number;
 };
 
-export type BudgetDetailUpdate = {
-    dtl_id?: number;
-    dtl_proposed_budget: number;
-    dtl_budget_item: string;
-};
-
-
-export interface BudgetItem {
-      name: string;
-      label: string;
-      category: string;
-    }
-    
-export interface BudgetDetail {
-      dtl_proposed_budget: number;
-      dtl_budget_item: string;
-}
-
-export interface OldBudgetDetail {
-  dtl_id?: number;
-  dtl_proposed_budget: string | number;
-  dtl_budget_item: string;
-}
-
-export interface NewBudgetDetail {
-  dtl_proposed_budget: number;
-  dtl_budget_item: string;
-}
-
 export interface ProcessedOldBudgetDetail {
   proposed_budget: number;
   budget_item: string;

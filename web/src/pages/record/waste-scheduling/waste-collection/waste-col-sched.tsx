@@ -13,9 +13,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
-import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
+import { useGetWasteTrucks, type Trucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
 import { useAssignCollectors } from './queries/wasteColAddQueries';
@@ -37,6 +38,16 @@ const announcementOptions = [
     { id: "watchmen", label: "Watchmen" },
 ];
 
+const dayOptions = [
+    { id: "Monday", name: "Monday" },
+    { id: "Tuesday", name: "Tuesday" },
+    { id: "Wednesday", name: "Wednesday" },
+    { id: "Thursday", name: "Thursday" },
+    { id: "Friday", name: "Friday" },
+    { id: "Saturday", name: "Saturday" },
+    { id: "Sunday", name: "Sunday" },
+]
+
 
 function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
@@ -49,6 +60,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
 
     //FETCH QUERY MUTATIONS
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetWasteCollectors();
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
@@ -56,6 +68,10 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+    console.log("WASTE COLLECTORS: ", collectors)
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];
 
     const collectorOptions = collectors.map(collector => ({
         id: collector.id,  
@@ -67,9 +83,11 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         name: `${driver.firstname} ${driver.lastname}`  
     }));
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: String(truck.truck_id),
-        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            id: String(truck.truck_id),
+            name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`
     }));
 
     const sitioOptions = sitios.map(sitio => ({
@@ -81,7 +99,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: '',
+            day: '',
             time: '',
             additionalInstructions: '',
             selectedSitios: '',
@@ -99,6 +117,44 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         if(!values.additionalInstructions){
             values.additionalInstructions = "None";
         }
+
+        //checks for sitio with the same day
+        const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
+        
+        const hasSameSitioSameDay = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day &&
+            schedule.sitio_name === selectedSitioName
+        );
+
+
+        //checks for overlapping day and time
+        const hasDuplicateSchedule = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day && 
+            schedule.wc_time === formattedTime
+        );
+
+
+        if (hasDuplicateSchedule) {
+            form.setError("day", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });          
+            
+            form.setError("time", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });  
+            return; // Stop form submission
+        }
+
+        
+        if (hasSameSitioSameDay) {
+            form.setError("day", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+            return;
+        }        
 
         createSchedule({
             ...values,
@@ -173,20 +229,19 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     />
 
 
-                    {/* Date and Time */}
-                    <FormDateTimeInput
+                    {/* Day and Time */}
+                    <FormSelect
                         control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
+                        name="day"
+                        label="Collection Day"
+                        options={dayOptions}
                     />
 
                     <FormDateTimeInput
                         control={form.control}
                         name="time"
                         type="time"
-                        label="Time"
+                        label="Collection Time"
                     />
 
                 </div>

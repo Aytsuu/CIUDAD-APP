@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text as RNText, Text, TouchableOpacity, ActivityIndicator } from 'react-native'; // Use raw RN Text
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { format } from 'date-fns';
 import { useGetScheduler, useGetServices } from './queries/schedulerFetchQueries';
 import { useRouter } from 'expo-router';
@@ -64,7 +64,7 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#3B82F6" />
-        <RNText style={{ marginTop: 8, fontSize: 16, color: '#374151' }}>Loading...</RNText>
+        <Text style={{ marginTop: 8, fontSize: 16, color: '#374151' }}>Loading...</Text>
       </View>
     );
   }
@@ -72,12 +72,12 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
   if (servicesError || schedulersError) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: '#FEF2F2', borderRadius: 8 }}>
-        <RNText style={{ fontSize: 16, color: '#DC2626', textAlign: 'center' }}>Unable to load schedule.</RNText>
+        <Text style={{ fontSize: 16, color: '#DC2626', textAlign: 'center' }}>Unable to load schedule.</Text>
         <TouchableOpacity
           style={{ marginTop: 16, backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8 }}
           onPress={() => {}}
         >
-          <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>Retry</RNText>
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -100,11 +100,11 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
 
               return (
                 <View key={serviceName} style={{ marginBottom: 8 }}>
-                  <RNText style={{ fontSize: 16, fontWeight: '500', color: '#1F2937' }}>{serviceName}</RNText>
+                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#1F2937' }}>{serviceName}</Text>
                   <View style={{ flexDirection: 'row', marginTop: 4 }}>
                     {activeSlots.map((slot) => (
                       <View key={slot} style={{ backgroundColor: '#DBEAFE', borderRadius: 9999, paddingVertical: 4, paddingHorizontal: 8, marginRight: 4 }}>
-                        <RNText style={{ fontSize: 12, fontWeight: 'bold', color: '#2563EB' }}>{slot}</RNText>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#2563EB' }}>{slot}</Text>
                       </View>
                     ))}
                   </View>
@@ -113,13 +113,13 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
             })}
           </View>
         ) : (
-          <RNText style={{ fontSize: 14, color: '#4B5563', textAlign: 'center', marginBottom: 8 }}>No services scheduled for today.</RNText>
+          <Text style={{ fontSize: 14, color: '#4B5563', textAlign: 'center', marginBottom: 8 }}>No services scheduled for today.</Text>
         )}
         <TouchableOpacity
           style={{ backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', marginTop: 8 }}
           onPress={handleViewWeeklySchedule}
         >
-          <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>View Weekly Schedule</RNText>
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>View Weekly Schedule</Text>
         </TouchableOpacity>
       </View>
     </View>

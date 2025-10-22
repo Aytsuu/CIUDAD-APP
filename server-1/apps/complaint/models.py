@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models import Max
+import json
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
@@ -9,12 +10,14 @@ class Complainant(models.Model):
     cpnt_age = models.CharField(max_length=2)
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
-    cpnt_address = models.CharField(max_length=255)
-    # rp_id = models.ForeignKey(
-    #     'profiling.ResidentProfile', 
-    #     on_delete=models.CASCADE, 
-    #     db_column='rp_id'
-    # )
+    cpnt_address = models.CharField(max_length=255, blank=True, null=True)
+    rp_id = models.ForeignKey(
+        'profiling.ResidentProfile', 
+        on_delete=models.CASCADE, 
+        db_column='rp_id',
+        null = True,
+        blank = True,
+    )
     
     class Meta:
         db_table = 'complainant'
@@ -25,8 +28,14 @@ class Accused(models.Model):
     acsd_age = models.CharField(max_length=2)
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
-    acsd_address = models.CharField(max_length=255)
-
+    acsd_address = models.CharField(max_length=255, blank=True, null=True)
+    rp_id = models.ForeignKey(
+        'profiling.ResidentProfile',
+        on_delete=models.CASCADE,
+        db_column='rp_id',
+        null=True,
+        blank=True,
+    )
     class Meta:
         db_table = 'accused'
 
@@ -42,15 +51,21 @@ class Complaint(models.Model):
         max_length=20, 
         default='Pending',
     )
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='complaints',
+    )
     complainant = models.ManyToManyField(
         Complainant,
         through='ComplaintComplainant',
-        related_name='complaint'
+        related_name='complaints'
     )
     accused = models.ManyToManyField(
         Accused,
         through='ComplaintAccused',
-        related_name='complaint'
+        related_name='complaints'
     )
 
     class Meta:
@@ -72,6 +87,21 @@ class Complaint(models.Model):
 
             self.comp_id = int(f"{date_str}{seq:03d}") 
         super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        from apps.complaint.serializers import ComplaintSerializer
+        complaint_data = ComplaintSerializer(self)
+        print(f"Notification Complaint Data: {complaint_data.data}")
+        return {
+            'path': '/complaint/view',
+            'params': {'data': json.dumps(complaint_data.data)}
+        }
+    
+    def get_mobile_route(self):
+        return {
+            'screen' : '/(my-request)/complaint-tracking/compMainView',
+            'params' : {'comp_id': str(self.comp_id)}
+        }
         
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)
@@ -95,11 +125,11 @@ class Complaint_File(models.Model):
     comp_file_id = models.BigAutoField(primary_key=True)
     comp_file_name = models.CharField(max_length=100)
     comp_file_type = models.CharField(max_length=50)
-    # comp_file_url = models.URLField(max_length=500)
+    comp_file_url = models.URLField(max_length=500)
     comp = models.ForeignKey(
         Complaint,
         on_delete=models.CASCADE,
-        related_name='complaint_file',
+        related_name='files',
     )
 
     class Meta:

@@ -12,21 +12,37 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input'
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
-import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
+import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useUpdateWasteSchedule } from './queries/waste-col-update-queries';
 import { useUpdateCollectors } from './queries/waste-col-update-queries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
+
+
+const dayOptions = [
+  { label: "Monday", value: "Monday" },
+  { label: "Tuesday", value: "Tuesday" },
+  { label: "Wednesday", value: "Wednesday" },
+  { label: "Thursday", value: "Thursday" },
+  { label: "Friday", value: "Friday" },
+  { label: "Saturday", value: "Saturday" },
+  { label: "Sunday", value: "Sunday" }
+];
+
 
 function WasteColEdit() {
   const router = useRouter();
+  const { user } = useAuth(); 
   const params = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
 
   const {
     wc_num,
-    date,
+    day,
     time,
     info,
     sitio,
@@ -51,12 +67,18 @@ function WasteColEdit() {
   const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
   const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
   const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio(); 
+  const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
   const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
   // UPDATE QUERY MUTATIONS
   const { mutate: updateSchedule, isPending: isUpdating } = useUpdateWasteSchedule();
   const { mutate: updateCollectors, isPending: isUpdatingCollectors } = useUpdateCollectors();
+
+
+  // Extract the actual data array
+  const wasteSchedules = wasteCollectionData.results || [];      
+
 
   // Options
   const collectorOptions = collectors.map(collector => ({
@@ -69,9 +91,11 @@ function WasteColEdit() {
     value: driver.id  
   }));
 
-  const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-    label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
-    value: String(truck.truck_id)
+  const truckOptions = (trucks as Trucks[])
+      .filter(truck => truck.truck_status === "Operational")
+      .map(truck => ({
+          label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+          value: String(truck.truck_id)
   }));
 
   const sitioOptions = sitios.map(sitio => ({
@@ -82,7 +106,7 @@ function WasteColEdit() {
   const form = useForm<z.infer<typeof WasteColSchedSchema>>({
     resolver: zodResolver(WasteColSchedSchema),
     defaultValues: {
-      date: String(date),
+      day: String(day),
       time: String(time),
       additionalInstructions: String(info),
       selectedSitios: String(sitio),
@@ -96,6 +120,57 @@ function WasteColEdit() {
   const onSubmit = async (values: z.infer<typeof WasteColSchedSchema>) => {
 
     try {
+      const [hour, minute] = values.time.split(":");
+      const formattedTime = `${hour}:${minute}:00`;
+
+      //checks for sitio with the same day
+      const selectedSitioName = sitioOptions.find(sitio => sitio.value === values.selectedSitios)?.label; 
+      
+      const hasSameSitioSameDay = wasteSchedules.some(schedule => 
+          schedule.wc_day === values.day &&
+          schedule.sitio_name === selectedSitioName &&
+          schedule.wc_num !== Number(wc_num)   
+      );    
+
+
+      //checks for overlapping day and time
+      const hasDuplicateSchedule = wasteSchedules.some(schedule => 
+          schedule.wc_day === values.day && 
+          schedule.wc_time === formattedTime &&
+          schedule.wc_num !== Number(wc_num)   
+      );     
+
+      
+      //return if there is overlapping schedule
+      if (hasDuplicateSchedule) {
+        
+          form.setError("day", {
+              type: "manual",
+              message: `There is already a schedule for ${values.day} at ${values.time}.`,
+          });          
+          
+          form.setError("time", {
+              type: "manual",
+              message: `There is already a schedule for ${values.day} at ${values.time}.`,
+          });  
+
+          return; 
+      }           
+
+      //return if the sitio has already a schedule for that day
+      if (hasSameSitioSameDay) {
+          form.setError("day", {
+              type: "manual",
+              message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+          });
+
+          form.setError("selectedSitios", {
+              type: "manual",
+              message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+          });
+          return;
+      }        
+
       
       if(!values.additionalInstructions){
         values.additionalInstructions = "None"
@@ -106,6 +181,7 @@ function WasteColEdit() {
           wc_num: Number(wc_num),
           values: {
             ...values,
+            staff: user?.staff?.staff_id
           }
         }, {
           onSuccess: () => {
@@ -149,7 +225,7 @@ function WasteColEdit() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -193,15 +269,14 @@ function WasteColEdit() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4">
+      <View className="w-full px-6">
         {/* Date Input */}
         <View className="relative">
-          <FormDateTimeInput
-            control={form.control}
-            label="Date"
-            name="date"
-            type="date"
-            minimumDate={new Date(Date.now() + 86400000)}
+          <FormSelect
+              control={form.control}
+              name="day"
+              label="Collection Day"
+              options={dayOptions}
           />
           {!isEditing && (
             <TouchableOpacity
@@ -217,7 +292,7 @@ function WasteColEdit() {
         <View className="relative">
           <FormDateTimeInput
             control={form.control}
-            label="Time"
+            label="Collection Time"
             name="time"
             type="time"
           />

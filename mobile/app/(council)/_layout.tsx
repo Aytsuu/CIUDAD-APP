@@ -5,9 +5,10 @@ export default () => {
   return (
     <ToastProvider>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }}/>
         <Stack.Screen name="council-events/calendar" options={{ headerShown: false }} />
         <Stack.Screen name="council-events/schedule" options={{ headerShown: false }} />
-        <Stack.Screen name="council-events/editEvent" options={{ headerShown: false, headerTitle: ""}}/>
+        <Stack.Screen name="council-events/editEvent" options={{ headerShown: false}}/>
         <Stack.Screen name="attendance/main-attendance-page" options={{ headerShown: false }} />
         <Stack.Screen name="attendance/attendance-info" options={{ headerShown: false }} />
 
@@ -18,6 +19,7 @@ export default () => {
         <Stack.Screen name="resolution/res-create" options={{ headerShown: false }} />
         <Stack.Screen name="resolution/res-edit" options={{ headerShown: false }} />    
 
+        <Stack.Screen name="minutes-of-meeting/mom-main" options={{ headerShown: false }} />    
         <Stack.Screen name="minutes-of-meeting/mom-view" options={{ headerShown: false }} />
         <Stack.Screen name="minutes-of-meeting/mom-create" options={{ headerShown: false }} />        
         <Stack.Screen name="minutes-of-meeting/mom-edit" options={{ headerShown: false }} />            

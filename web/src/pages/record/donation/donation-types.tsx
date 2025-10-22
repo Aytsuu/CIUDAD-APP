@@ -7,6 +7,7 @@ export type DonationInput = {
   don_description?: string;
   don_date: string;
   staff?: string | null;
+  don_status: string;
 };
 
 export type Donation = {
@@ -19,6 +20,10 @@ export type Donation = {
   don_receiver: string;
   don_description?: string;
   don_date: string;
+  don_status: string;
+  don_dist_head?: any; 
+  don_dist_date?: any;
+  dist_staff_name?: any
 };
 
 export type Donations = {
@@ -30,6 +35,10 @@ export type Donations = {
   don_description?: string;
   don_date: string;
   per_id?: number | null;
+  don_status: string;
+  don_dist_head?: any; 
+  don_dist_date?: any;
+  dist_staff_name?: any
 };
 
 export type Personal = {
@@ -44,4 +53,10 @@ export interface ClerkDonateCreateFormProps {
 export type ClerkDonateViewProps = {
   don_num: string;
   onSaveSuccess?: () => void;
+};
+
+export type Staff = {
+  staff_id: string;
+  full_name: string;
+  position_title?: string;
 };

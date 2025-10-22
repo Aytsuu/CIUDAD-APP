@@ -19,25 +19,6 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         throw new Error("Budget entry number is required for update");
       }
 
-      if (data.budgetData.gbud_actual_expense) {
-        const currentYearBudget = yearBudgets.find(
-          (b) =>
-            b.gbudy_year ===
-            new Date(data.budgetData.gbud_datetime).getFullYear().toString()
-        );
-        if (!currentYearBudget) {
-          throw new Error("No budget found for the selected year");
-        }
-        const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-        const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-        const remainingBalance = initialBudget - totalExpenses;
-        if (data.budgetData.gbud_actual_expense > remainingBalance) {
-          throw new Error(
-            `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
-          );
-        }
-      }
-
       if (data.filesToDelete.length > 0) {
         await updateGADBudgetFile(data.gbud_num, data.filesToDelete, true);
       }
@@ -60,6 +41,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.budgetData.gbud_num] });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       toast.success('Budget entry updated successfully');
     },
     onError: (error: any) => {

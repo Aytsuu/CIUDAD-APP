@@ -13,7 +13,7 @@ type FileData = {
 };
 
 
-export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
+export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 
@@ -21,10 +21,12 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
     mutationFn: async (values: { 
       rep_status: string;
       files?: FileData[] 
+      staff_id: string;
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
+        staff_id: values.staff_id
       });
       
       // 2. Upload all resolution images in parallel (if any)
@@ -70,7 +72,7 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
 
 // =========================================== RESIDENT ========================================
 
-export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
+export const useUpdateWasteResReport = (rep_id: string, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 

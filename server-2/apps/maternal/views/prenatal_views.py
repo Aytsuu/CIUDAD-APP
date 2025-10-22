@@ -593,3 +593,32 @@ class PrenatalRecordsListView(generics.ListAPIView):
                 'error': 'An error occurred while retrieving prenatal records',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+class CheckPendingAppointmentView(generics.RetrieveAPIView):
+    def get(self, request, rp_id):
+        date_param = request.GET.get('date')
+        
+        if not date_param:
+            return Response({
+                'has_pending': False,
+                'message': 'Date parameter required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            pending_appointment = PrenatalAppointmentRequest.objects.filter(
+                rp_id=rp_id,
+                requested_date=date_param,
+                status='pending'
+            ).exists()
+            
+            return Response({
+                'has_pending': pending_appointment,
+                'date': date_param
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error checking pending appointment: {str(e)}")
+            return Response({
+                'error': 'An error occurred while checking pending appointments'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

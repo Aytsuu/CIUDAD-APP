@@ -13,12 +13,27 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
+import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
+import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report"; 
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
+import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
+import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
+import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
+import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
+import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
+
+
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
-  healthCards: ReturnType<typeof useHealthServicesSectionCards>
+  healthCards: ReturnType<typeof useHealthServicesSectionCards>,
+  wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
+  donationCards: ReturnType<typeof useDonationSectionCards>,
+  garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -35,6 +50,9 @@ export const getItemsConfig = (
     familyPlanning,
     maternal,
   } = healthCards;
+  const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  const {accepted, rejected, completed, pending} = garbCards;
+  const { cashDonations } = donationCards;
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
     return [
@@ -76,21 +94,59 @@ export const getItemsConfig = (
       },
       {
         dashboard: "GAD",
+         chart: [
+          {
+            title: "GAD Budget Overview",
+            element: <GADQuarterlyBudgetChart />,
+          },
+        ],
+        sidebar: [
+          {
+            title: "GAD Recent Expenses",
+            element: <GADExpenseSidebar />,
+          },
+          {
+            title: "Recent Project Proposal",
+            element: <ProjectProposalSidebar />,
+          },
+        ],
       },
       {
         dashboard: "COUNCIL",
       },
       {
         dashboard: "FINANCE",
+        chart: [
+          {
+            title: "Finance Expense Overview",
+            element: <IncomeExpenseQuarterlyChart/>,
+          },
+          {
+            title: "Finance Income Overview",
+            element: <IncomeQuarterlyChart/>,
+          },
+        ],
+        sidebar: [
+          {
+            title: "Recent Disbursement Voucher",
+            element: <DisbursementSidebar />,
+          },
+          {
+            title: "Current Budget Plan",
+            element: <BudgetPlanSidebar />,
+          },
+        ],
       },
       {
         dashboard: "CERTIFICATE & CLEARANCES",
       },
       {
         dashboard: "DONATION",
+         card: [cashDonations],
       },
       {
         dashboard: "WASTE",
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed], 
       },
     ];
   }

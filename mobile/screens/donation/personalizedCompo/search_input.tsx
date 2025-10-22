@@ -58,9 +58,9 @@ export function DonorSelect({
   };
 
   return (
-    <View className="mb-4">
+    <View>
       {label && (
-        <Text className="text-[16px] font-PoppinsRegular mb-2">
+        <Text className="text-[12px] font-PoppinsRegular mb-2">
           {label}
         </Text>
       )}
@@ -68,14 +68,14 @@ export function DonorSelect({
       <View className={cn('relative', className)}>
         <TouchableOpacity
           className={cn(
-            'flex-row items-center justify-between p-3 border rounded-md h-12',
+            'flex-row items-center justify-between p-3 border rounded-xl h-12',
             error ? 'border-red-500' : 'border-gray-300',
             contentClassName
           )}
           onPress={() => setIsOpen(!isOpen)}
           onLayout={measureDropdownPosition}
         >
-          <Text className="text-base font-PoppinsRegular">
+          <Text className="text-[12px] font-PoppinsRegular">
             {selectedDonor || placeholder}
           </Text>
           <ChevronDown size={16} color="#6b7280" />
@@ -94,7 +94,7 @@ export function DonorSelect({
           />
           
           <View
-            className="absolute bg-white rounded-md border border-gray-200 shadow-lg"
+            className="absolute bg-white rounded-xl border border-gray-200 shadow-lg"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,
@@ -103,7 +103,7 @@ export function DonorSelect({
             }}
           >
             {/* Search input */}
-            <View className="p-2 border-b border-gray-200">
+            <View className="p-2 border-b rounded-xl border-gray-200">
               <TextInput
                 placeholder="Search or enter donor name..."
                 value={searchTerm}

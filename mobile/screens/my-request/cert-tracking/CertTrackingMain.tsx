@@ -1,19 +1,25 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { ChevronLeft } from "lucide-react-native";
+import { Search } from "lucide-react-native";
 import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
+import { SearchInput } from "@/components/ui/search-input";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function CertTrackingMain() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
-  const { data, isLoading, isError } = useCertTracking(user?.resident?.rp_id || "");
-  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.resident?.rp_id || "");
+  const { data, isLoading, isError } = useCertTracking(user?.rp || "");
+  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.rp || "");
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
+  const [searchInputVal, setSearchInputVal] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [showSearch, setShowSearch] = React.useState(false);
 
   const getStatusBadge = (status?: string) => {
     const normalized = (status || "").toLowerCase();
@@ -69,138 +75,173 @@ export default function CertTrackingMain() {
     );
   }
 
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setShowSearch(false);
+  };
+
   // Show loading screen while auth is loading
   if (authLoading) {
     return (
-      <_ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
           >
-            <ChevronLeft size={24} className="text-gray-700" />
+            <ChevronLeft size={20} color="#374151" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
-        customRightAction={<View className="w-10 h-10" />}
+        headerTitle="Track Requests"
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
-        </View>
-      </_ScreenLayout>
+        <LoadingState />
+      </PageLayout>
     );
   }
 
   // Show loading screen while tracking data is loading
   if (isLoading) {
     return (
-      <_ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
           >
-            <ChevronLeft size={24} className="text-gray-700" />
+            <ChevronLeft size={20} color="#374151" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
-        customRightAction={<View className="w-10 h-10" />}
+        headerTitle="Track Requests"
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">Loading requests…</Text>
-        </View>
-      </_ScreenLayout>
+        <LoadingState />
+      </PageLayout>
     );
   }
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle="Track Requests"
+      rightAction={
+        <TouchableOpacity
+          onPress={() => setShowSearch(!showSearch)}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={20} color="#374151" />
+        </TouchableOpacity>
+      }
     >
-      <View className="flex-1 px-5">
-        {isLoading && (
-          <View className="items-center justify-center py-10">
-            <ActivityIndicator />
-            <Text className="text-gray-500 mt-2">Loading requests…</Text>
+      <View className="flex-1 bg-gray-50">
+        {showSearch && (
+          <View className="px-6 py-4 bg-white border-b border-gray-200">
+            <SearchInput
+              value={searchInputVal}
+              onChange={setSearchInputVal}
+              onSubmit={handleSearch}
+            />
           </View>
         )}
 
         {isError && (
-          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-            <Text className="text-red-800 text-sm">Failed to load requests.</Text>
+          <View className="px-6 py-4">
+            <View className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <Text className="text-red-800 text-sm text-center">Failed to load requests.</Text>
+            </View>
           </View>
         )}
 
         {!isLoading && !isError && (
           <>
-            {/* Tabs */}
-            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'personal' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setActiveTab('personal')}
-              >
-                <Text className={`text-sm ${activeTab === 'personal' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Personal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'business' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setActiveTab('business')}
-              >
-                <Text className={`text-sm ${activeTab === 'business' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Business</Text>
-              </TouchableOpacity>
+            {/* Fixed Tab Headers */}
+            <View className="bg-white border-b border-gray-200">
+              <View className="flex-row">
+                <TouchableOpacity
+                  className={`flex-1 py-4 items-center border-b-2 ${
+                    activeTab === 'personal' ? 'border-blue-500' : 'border-transparent'
+                  }`}
+                  onPress={() => setActiveTab('personal')}
+                >
+                  <Text className={`text-sm font-medium ${
+                    activeTab === 'personal' ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    Personal
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-4 items-center border-b-2 ${
+                    activeTab === 'business' ? 'border-blue-500' : 'border-transparent'
+                  }`}
+                  onPress={() => setActiveTab('business')}
+                >
+                  <Text className={`text-sm font-medium ${
+                    activeTab === 'business' ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    Business
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Status Filters */}
-            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('all')}
-              >
-                <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'in_progress' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('in_progress')}
-              >
-                <Text className={`text-sm ${statusFilter === 'in_progress' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>In Progress</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'completed' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('completed')}
-              >
-                <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'cancelled' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('cancelled')}
-              >
-                <Text className={`text-sm ${statusFilter === 'cancelled' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Cancelled</Text>
-              </TouchableOpacity>
+            <View className="bg-white px-6 py-3 border-b border-gray-200">
+              <View className="flex-row bg-gray-100 rounded-xl p-1">
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setStatusFilter('all')}
+                >
+                  <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'in_progress' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setStatusFilter('in_progress')}
+                >
+                  <Text className={`text-sm ${statusFilter === 'in_progress' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>In Progress</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'completed' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setStatusFilter('completed')}
+                >
+                  <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'cancelled' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setStatusFilter('cancelled')}
+                >
+                  <Text className={`text-sm ${statusFilter === 'cancelled' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Cancelled</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Tab Content */}
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} className="p-6">
               {activeTab === 'personal' ? (
                 <>
-                  {data?.personal?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
+                  {data?.personal?.filter((i: any) => {
+                    const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                    const searchMatch = !searchQuery || 
+                      (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
+                    return statusMatch && searchMatch;
+                  }).length ? (
                     data.personal
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
+                      .filter((i: any) => {
+                        const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                        const searchMatch = !searchQuery || 
+                          (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
+                        return statusMatch && searchMatch;
+                      })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
@@ -229,14 +270,36 @@ export default function CertTrackingMain() {
                       </View>
                       ))
                   ) : (
-                    <Text className="text-gray-500 text-sm mb-4">No personal certification requests.</Text>
+                    <View className="flex-1 items-center justify-center py-12">
+                      <View className="items-center">
+                        <View className="bg-gray-100 rounded-full p-4 mb-4">
+                          <Text className="text-gray-500 text-2xl">📋</Text>
+                        </View>
+                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                          {searchQuery ? `No ${activeTab} requests found for "${searchQuery}"` : `No ${activeTab} requests yet`}
+                        </Text>
+                        <Text className="text-gray-500 text-sm text-center">
+                          {searchQuery ? 'Try a different search term' : `Your ${activeTab} requests will appear here`}
+                        </Text>
+                      </View>
+                    </View>
                   )}
                 </>
               ) : (
                 <>
-                  {data?.business?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
+                  {data?.business?.filter((i: any) => {
+                    const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                    const searchMatch = !searchQuery || 
+                      (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
+                    return statusMatch && searchMatch;
+                  }).length ? (
                     data.business
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
+                      .filter((i: any) => {
+                        const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                        const searchMatch = !searchQuery || 
+                          (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
+                        return statusMatch && searchMatch;
+                      })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
@@ -265,7 +328,19 @@ export default function CertTrackingMain() {
                       </View>
                       ))
                   ) : (
-                    <Text className="text-gray-500 text-sm">No business permit requests.</Text>
+                    <View className="flex-1 items-center justify-center py-12">
+                      <View className="items-center">
+                        <View className="bg-gray-100 rounded-full p-4 mb-4">
+                          <Text className="text-gray-500 text-2xl">🏢</Text>
+                        </View>
+                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                          {searchQuery ? `No ${activeTab} requests found for "${searchQuery}"` : `No ${activeTab} requests yet`}
+                        </Text>
+                        <Text className="text-gray-500 text-sm text-center">
+                          {searchQuery ? 'Try a different search term' : `Your ${activeTab} requests will appear here`}
+                        </Text>
+                      </View>
+                    </View>
                   )}
                 </>
               )}
@@ -273,7 +348,7 @@ export default function CertTrackingMain() {
           </>
         )}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

@@ -46,6 +46,7 @@ urlpatterns=[
     path('prenatal/missed-visits/<str:pregnancy_id>/', views.calculate_missed_visits_by_pregnancy, name='calculated-missed-visits'),
     path('prenatal/illnesses/', get_illness_list, name='illness-list'),
     path('prenatal/illness/create/', IllnessCreateView.as_view(), name='illness-create'),
+    path('prenatal/appointment/check-pending/<str:rp_id>/', CheckPendingAppointmentView.as_view(), name='check-pending-appointment'),
 
     # Postpartum URLs
     path('postpartum_record/', PostpartumRecordCreateView.as_view(), name='postpartum-record-create'),
@@ -54,4 +55,6 @@ urlpatterns=[
     path('postpartum/<str:pregnancy_id>/all/', PostpartumRecordsListView.as_view(), name='all-postpartum-records'),
     path('postpartum/<str:ppr_id>/complete/', PostpartumPartumFormView.as_view(), name='postpartum-form-complete'),
     path('postpartum/<str:pat_id>/postpartum-assessments/', PostpartumAssessmentsWithVitalsListView.as_view(), name='postpartum-assessment-care'),
+
+
 ]

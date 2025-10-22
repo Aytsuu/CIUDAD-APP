@@ -28,13 +28,11 @@ export const PatientOverviewStats: React.FC<PatientOverviewStatsProps> = ({ reco
     today.setHours(0, 0, 0, 0);
 
     records.forEach(record => {
-      // Track methods
       const method = record.method_used === "Others" && record.otherMethod 
         ? record.otherMethod 
         : record.method_used;
       if (method) methodsUsed.add(method);
 
-      // Track follow-up status
       if (record.followv_status && record.dateOfFollowUp) {
         const followUpDate = new Date(record.dateOfFollowUp);
         followUpDate.setHours(0, 0, 0, 0);
@@ -70,45 +68,52 @@ export const PatientOverviewStats: React.FC<PatientOverviewStatsProps> = ({ reco
       title: 'Records',
       value: stats.totalRecords,
       icon: Activity,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-indigo-600',
+      bgColor: 'bg-gradient-to-br from-indigo-50 to-blue-50',
+      borderColor: 'border-indigo-100'
     },
     {
       title: 'Methods',
       value: stats.methodsUsed,
       icon: Calendar,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-violet-600',
+      bgColor: 'bg-gradient-to-br from-violet-50 to-purple-50',
+      borderColor: 'border-violet-100'
     },
     {
       title: 'Completed',
       value: stats.completedFollowUps,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-emerald-600',
+      bgColor: 'bg-gradient-to-br from-emerald-50 to-teal-50',
+      borderColor: 'border-emerald-100'
     },
     {
       title: 'Follow-up Today',
       value: stats.dueTodayFollowUps,
       icon: Clock,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'text-amber-600',
+      bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
+      borderColor: 'border-amber-100'
     }
   ];
 
   return (
-    <div className="mb-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div className="mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
         {statCards.map((stat, index) => (
-          <Card key={index} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-3">
-              <div className="flex items-center space-x-2">
-                <div className={`p-1.5 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <Card 
+            key={index} 
+            className={`border ${stat.borderColor} bg-white shadow-sm hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden`}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-full ${stat.bgColor} transition-transform duration-300 group-hover:scale-110`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color} transition-colors duration-300`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-600 truncate">{stat.title}</p>
-                  <p className="text-lg font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-500 truncate tracking-tight">{stat.title}</p>
+                  <p className="text-xl font-semibold text-gray-800">{stat.value}</p>
                 </div>
               </div>
             </CardContent>
@@ -116,15 +121,17 @@ export const PatientOverviewStats: React.FC<PatientOverviewStatsProps> = ({ reco
         ))}
         
         {stats.missedFollowUps > 0 && (
-          <Card className="border border-red-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-3">
-              <div className="flex items-center space-x-2">
-                <div className="p-1.5 rounded-lg bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
+          <Card 
+            className="border border-rose-100 bg-white shadow-sm hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-full bg-gradient-to-br from-rose-50 to-red-50 transition-transform duration-300 group-hover:scale-110">
+                  <AlertTriangle className="h-5 w-5 text-rose-600 transition-colors duration-300" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-600 truncate">Missed</p>
-                  <p className="text-lg font-bold text-red-600">{stats.missedFollowUps}</p>
+                  <p className="text-sm font-medium text-gray-500 truncate tracking-tight">Missed</p>
+                  <p className="text-xl font-semibold text-rose-600">{stats.missedFollowUps}</p>
                 </div>
               </div>
             </CardContent>

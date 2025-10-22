@@ -4,9 +4,9 @@ import {
   postdonationreq,
   putdonationreq,
   getdonationreq,
-  getPersonalList,
+  getPersonalList, getStaffList
 } from "./donation-requests";
-import { DonationInput, Donation, Personal } from "../donation-types";
+import { DonationInput, Donation, Personal, Donations, Staff } from "../donation-types";
 
 export const useAddDonation = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
@@ -25,20 +25,20 @@ export const useAddDonation = (onSuccess?: () => void) => {
   });
 };
 
-export const useGetDonations = () => {
-  const { toast } = useToastContext();
-
-  return useQuery<Donation[], Error>({
-    queryKey: ["donations"],
-    queryFn: () =>
-      getdonationreq().catch((error) => {
-        toast.error(error.message || "Failed to fetch donations");
-        console.error("Error fetching donations:", error);
-        throw error;
-      }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+export const useGetDonations = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  category?: string,
+  status?: string
+) => {
+  return useQuery<{ results: Donations[]; count: number }, Error>({
+    queryKey: ["donations", page, pageSize, searchQuery, category, status],
+    queryFn: () => getdonationreq(page, pageSize, searchQuery, category, status),
+    staleTime: 1000 * 60 * 5,
   });
 };
+
 
 export const useGetPersonalList = () => {
   const { toast } = useToastContext();
@@ -98,5 +98,13 @@ export const useUpdateDonation = (onSuccess?: () => void) => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["donations"] });
     },
+  });
+};
+
+export const useGetStaffList = () => {
+  return useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: () => getStaffList(),
+    staleTime: 1000 * 60 * 5,
   });
 };

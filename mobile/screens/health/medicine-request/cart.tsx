@@ -92,6 +92,12 @@ export default function CartScreen() {
       return;
     }
 
+    console.log("🛒 Cart Items Debug:", cartItems.map(item => ({
+    name: item.name,
+    minv_id: item.minv_id,
+    type: typeof item.minv_id
+  })));
+  
     const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
     if (invalidItems.length > 0) {
       Alert.alert("Invalid Cart", "One or more items are missing a valid minv_id. Please reselect medicines.");

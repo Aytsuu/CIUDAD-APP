@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native";
 import { router } from "expo-router";
 import { Search, ShoppingBag, ChevronDown, Pill, X, Ban, ChevronLeft, Clock } from "lucide-react-native";
 import { useGlobalCartState } from "./cart-state";
@@ -119,28 +119,35 @@ const categories = useMemo(() => {
   };
 
   const handleMedicinePress = (medicine: MedicineDisplay) => {
-    const isOutOfStock = medicine.total_qty_available <= 0;
-    const hasPendingRequest = pendingRequests.has(medicine.med_id);
+  const isOutOfStock = medicine.total_qty_available <= 0;
+  const hasPendingRequest = pendingRequests.has(medicine.med_id);
 
-    if (isOutOfStock || hasPendingRequest) {
-      return;
-    }
-    const firstInventory = medicine.inventory_items[0];
+  if (isOutOfStock || hasPendingRequest) {
+    return;
+  }
 
-    const medicineString = JSON.stringify({
-      minv_id: firstInventory?.minv_id,
-      med_id: medicine.med_id,
-      name: medicine.med_name,
-      med_type: medicine.med_type,
-      dosage: firstInventory?.dosage || "Not specified",
-      availableStock: medicine.total_qty_available,
-    });
+  const firstInventory = medicine.inventory_items[0];
+  
+  // Add validation for minv_id
+  if (!firstInventory?.minv_id) {
+    Alert.alert("Error", "This medicine is not available in inventory. Please select another medicine.");
+    return;
+  }
 
-    router.push({
-      pathname: "/medicine-request/details",
-      params: { medicineData: medicineString },
-    });
-  };
+  const medicineString = JSON.stringify({
+    minv_id: firstInventory.minv_id,
+    med_id: medicine.med_id,
+    name: medicine.med_name,
+    med_type: medicine.med_type,
+    dosage: firstInventory?.dosage || "Not specified",
+    availableStock: medicine.total_qty_available,
+  });
+
+  router.push({
+    pathname: "/medicine-request/details",
+    params: { medicineData: medicineString },
+  });
+};
 
   if (isLoading || loadingPending) {
     return <LoadingState />;
@@ -249,11 +256,11 @@ const categories = useMemo(() => {
                           </View>
 
                           <View className="mt-2 gap-1">
-                            <Text className={`text-sm ${
+                            {/* <Text className={`text-sm ${
                               isDisabled ? "text-gray-400" : "text-gray-600"
                             }`}>
                               {medicine.med_type || "Unknown Type"}
-                            </Text>
+                            </Text> */}
 
                             {medicine.inventory_items[0]?.dosage && (
                               <Text className={`text-xs ${

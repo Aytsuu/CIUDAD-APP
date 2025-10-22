@@ -8,10 +8,10 @@ import {
   Modal,
   ScrollView,
   RefreshControl,
+  Linking,
+  Dimensions,
 } from "react-native";
 import {
-  Search,
-  Plus,
   Archive,
   ArchiveRestore,
   Trash,
@@ -19,6 +19,8 @@ import {
   X,
   CircleAlert,
   ClipboardCheck,
+  FileText,
+  ChevronRight,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button } from "@/components/ui/button";
@@ -26,38 +28,59 @@ import { SelectLayout } from "@/components/ui/select-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { useGADBudgets } from "./queries/btracker-fetch";
+import { useGADBudgets, useGetBudgetAggregates } from "./queries/btracker-fetch";
 import {
   useArchiveGADBudget,
   useRestoreGADBudget,
   usePermanentDeleteGADBudget,
 } from "./queries/btracker-del";
-import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
-import { Input } from "@/components/ui/input";
 import PageLayout from "@/screens/_PageLayout";
-import { GADBudgetEntryUI, DropdownOption, GADBudgetFile } from "./gad-btracker-types";
+import {
+  GADBudgetEntryUI,
+  DropdownOption,
+  GADBudgetFile,
+} from "./gad-btracker-types";
+import { useDebounce } from "@/hooks/use-debounce";
+import { LoadingState } from "@/components/ui/loading-state";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 const BudgetTrackerRecords = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
-
-  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("All");
-  const [selectedType, setSelectedType] = useState<
-    "All" | "Expense"
-  >("All");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<GADBudgetFile[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
-
-  const { data: entries = [], isLoading, refetch } = useGADBudgets(year); //imong fetch na query
-  const { data: yearBudgets = [] } = useGetGADYearBudgets();
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("All");
+  const { data: aggregates, isLoading: aggregatesLoading } = useGetBudgetAggregates(year || "");
+  const [refreshing, setRefreshing] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const {
+    data: entriesData,
+    isLoading,
+    refetch,
+  } = useGADBudgets(
+    year,
+    1, 
+    1000, 
+    debouncedSearchQuery,
+    selectedMonth,
+    activeTab === "archive"
+  );
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: deleteEntry } = usePermanentDeleteGADBudget();
-  const [refreshing, setRefreshing] = useState(false);
+
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -65,29 +88,8 @@ const BudgetTrackerRecords = () => {
     setRefreshing(false);
   };
 
-  const currentYearBudget =
-    yearBudgets.find((budget) => budget.gbudy_year === year)?.gbudy_budget || 0;
-
-  const filteredData = entries.filter((entry: GADBudgetEntryUI) => {
-    if (activeTab === "active" && entry.gbud_is_archive) return false;
-    if (activeTab === "archive" && !entry.gbud_is_archive) return false;
-    if (selectedType !== "All" )
-      return false;
-
-    if (selectedMonth !== "All" && entry.gbud_datetime) {
-      const entryDate = new Date(entry.gbud_datetime);
-      const entryMonth = (entryDate.getMonth() + 1).toString().padStart(2, "0");
-      if (entryMonth !== selectedMonth) return false;
-    }
-
-    if (searchQuery) {
-      const searchContent =
-        ` ${entry.gbud_exp_particulars} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
-      return searchContent.includes(searchQuery.toLowerCase());
-    }
-
-    return true;
-  });
+  const entries = entriesData?.results || [];
+  const filteredData = entries;
 
   const handleArchive = (gbud_num: number) => {
     if (gbud_num) {
@@ -110,13 +112,47 @@ const BudgetTrackerRecords = () => {
   const handleViewFiles = (files: GADBudgetFile[] | null | undefined) => {
     if (files && files.length > 0) {
       setSelectedFiles(files);
+      setCurrentFileIndex(0); // Reset to first file
       setViewFilesModalVisible(true);
     }
   };
 
+  const handleOpenFile = () => {
+    const currentFile = selectedFiles[currentFileIndex];
+    if (
+      currentFile &&
+      (currentFile.gbf_type === "application/pdf" ||
+        currentFile.gbf_url?.includes(".pdf"))
+    ) {
+      Linking.openURL(currentFile.gbf_url).catch((err) => {
+        console.error("Failed to open PDF:", err);
+      });
+    }
+  };
+
+  const nextFile = () => {
+    setCurrentFileIndex((prev) =>
+      prev === selectedFiles.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevFile = () => {
+    setCurrentFileIndex((prev) =>
+      prev === 0 ? selectedFiles.length - 1 : prev - 1
+    );
+  };
+
+  const isPDF = (file: GADBudgetFile) => {
+    return (
+      file.gbf_type === "application/pdf" ||
+      file.gbf_url?.includes(".pdf") ||
+      file.gbf_name?.toLowerCase().includes(".pdf")
+    );
+  };
+
   const handleCreate = () => {
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-create-form",
+      pathname: "/(gad)/budget-tracker/budget-tracker-create-form",
       params: { budYear: year },
     });
   };
@@ -151,14 +187,14 @@ const BudgetTrackerRecords = () => {
     };
 
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-edit-form",
+      pathname: "/(gad)/budget-tracker/budget-tracker-edit-form",
       params,
     });
   };
 
   const handleViewLogs = () => {
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-log",
+      pathname: "/(gad)/budget-tracker/budget-tracker-log",
       params: { budYear: year },
     });
   };
@@ -173,65 +209,9 @@ const BudgetTrackerRecords = () => {
     }
   };
 
-  const getLatestRemainingBalance = (): number => {
-    // If no entries, return the initial budget
-    if (!entries || entries.length === 0) {
-      return currentYearBudget ? Number(currentYearBudget) : 0;
-    }
-
-    // Filter active (unarchived) entries
-    const activeEntries = entries.filter((entry) => !entry.gbud_is_archive);
-
-    // If no active entries, return initial budget
-    if (activeEntries.length === 0) {
-      return currentYearBudget ? Number(currentYearBudget) : 0;
-    }
-
-    // Calculate balance from scratch using only gbud_actual_expense
-    let balance = currentYearBudget ? Number(currentYearBudget) : 0;
-
-    activeEntries.forEach((entry) => {
-      if (entry.gbud_actual_expense !== null) {
-        const amount = Number(entry.gbud_actual_expense) || 0;
-        balance -= amount;
-      }
-    });
-
-    return balance;
-  };
-
-  const calculateTotalProposedWithoutActual = () => {
-    if (!entries || entries.length === 0) return 0;
-
-    return entries.reduce((total, entry) => {
-      // Skip archived or non-expense entries
-      if (entry.gbud_is_archive) return total;
-
-      // Convert all values to numbers safely (handles strings like "0.00")
-      const toNum = (val: any) => {
-        if (val === undefined || val === null) return undefined;
-        const num = +val; // Convert to number
-        return isNaN(num) ? undefined : num;
-      };
-
-      const actual = toNum(entry.gbud_actual_expense);
-      const proposed = toNum(entry.gbud_proposed_budget);
-      const shouldInclude =
-        (actual === undefined || actual === null || actual === 0) &&
-        proposed !== undefined &&
-        proposed !== null &&
-        proposed !== 0;
-
-      if (shouldInclude) {
-        return total + proposed;
-      }
-      return total;
-    }, 0);
-  };
-
   const renderItem = ({ item }: { item: GADBudgetEntryUI }) => (
     <TouchableOpacity onPress={() => handleEdit(item)}>
-      <Card className="mb-4 border border-gray-200">
+      <Card className="mb-4 border border-gray-200 bg-white">
         <CardHeader className="flex-row justify-between items-center">
           <CardTitle className="text-lg text-[#2a3a61]">
             {item.gbud_datetime
@@ -295,13 +275,10 @@ const BudgetTrackerRecords = () => {
             <Text className="text-gray-600">Amount:</Text>
             <Text className="font-semibold">
               ₱
-              {
-                 (Number(item.gbud_actual_expense) === 0
-                    ? item.gbud_proposed_budget || 0
-                    : item.gbud_actual_expense || item.gbud_proposed_budget || 0
-                  ).toLocaleString("en-US", { minimumFractionDigits: 2 })
-
-                  }
+              {(Number(item.gbud_actual_expense) === 0
+                ? item.gbud_proposed_budget || 0
+                : item.gbud_actual_expense || item.gbud_proposed_budget || 0
+              ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </Text>
           </View>
           <View className="flex-row justify-between">
@@ -327,253 +304,278 @@ const BudgetTrackerRecords = () => {
   return (
     <PageLayout
       leftAction={
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={24} color="#2a3a61" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} color="#2a3a61" />
+        </TouchableOpacity>
       }
-      headerTitle={<Text>{year} Budget Records</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">{year} Budget Records</Text>}
       rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
     >
-      <View className="flex p-2">
-        <View className="flex-row items-center">
-          <Text className="text-gray-600">Budget:</Text>
-          <Text className="text-blue-500 font-bold ml-2">
-            ₱
-            {Number(currentYearBudget).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-            })}
-          </Text>
-        </View>
-        <View className="flex-row items-center mt-1">
-          <Text className="text-gray-600">Remaining Balance:</Text>
-          <Text className="text-green-600 font-bold ml-2">
-            ₱
-            {getLatestRemainingBalance().toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-            })}
-          </Text>
-        </View>
-        <View className="flex-row items-center mt-1">
-          <Text className="text-gray-600">Pending Expenses:</Text>
-          <Text className="text-red-600 font-bold ml-2">
-            ₱
-            {calculateTotalProposedWithoutActual().toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-            })}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View className="flex-row gap-2 p-2">
-          <SelectLayout
-            options={[
-              { label: "All", value: "All" },
-              { label: "January", value: "01" },
-              { label: "February", value: "02" },
-              { label: "March", value: "03" },
-              { label: "April", value: "04" },
-              { label: "May", value: "05" },
-              { label: "June", value: "06" },
-              { label: "July", value: "07" },
-              { label: "August", value: "08" },
-              { label: "September", value: "09" },
-              { label: "October", value: "10" },
-              { label: "November", value: "11" },
-              { label: "December", value: "12" },
-            ]}
-            selectedValue={selectedMonth}
-            onSelect={handleMonthSelect}
-            placeholder="Month"
-            className="flex-1"
+      <View className="flex-1 bg-white">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
           />
-        </View>
+        )}
 
-        <View className="p-2">
-          <View className="relative">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <Input
-              placeholder="Search..."
-              className="pl-10 w-full bg-white text-sm rounded-lg p-2 border border-gray-300"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          <Button onPress={handleCreate} className="bg-primaryBlue mt-3">
-            <Text className="text-white">
-              <Plus size={16} color="white" className="mr-2" /> New Entry
+        <View className="flex p-2 px-6">
+          <View className="flex-row items-center">
+            <Text className="text-gray-600">Budget:</Text>
+            <Text className="text-blue-500 font-bold ml-2">
+              ₱
+              {aggregatesLoading ? "..." : Number(aggregates?.total_budget || 0).toFixed(2)}
             </Text>
-          </Button>
+          </View>
+          <View className="flex-row items-center mt-1">
+            <Text className="text-gray-600">Remaining Balance:</Text>
+            <Text className="text-green-600 font-bold ml-2">
+              ₱
+              {aggregatesLoading ? "..." : Number(aggregates?.remaining_balance || 0).toFixed(2)}
+            </Text>
+          </View>
+          <View className="flex-row items-center mt-1">
+            <Text className="text-gray-600">Total Expenses:</Text>
+            <Text className="text-amber-600 font-bold ml-2">
+              ₱
+              {aggregatesLoading ? "..." : Number(aggregates?.total_expenses || 0).toFixed(2)}
+            </Text>
+          </View>
+          <View className="flex-row items-center mt-1">
+            <Text className="text-gray-600">Pending Expenses:</Text>
+            <Text className="text-red-600 font-bold ml-2">
+              ₱
+              {aggregatesLoading ? "..." : Number(aggregates?.pending_expenses || 0).toFixed(2)}
+            </Text>
+          </View>
         </View>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="bg-blue-50 mt-5 flex-row justify-between">
-            <TabsTrigger
-              value="active"
-              className={`flex-1 mx-1 ${
-                activeTab === "active"
-                  ? "bg-white border-b-2 border-primaryBlue"
-                  : ""
-              }`}
-            >
-              <Text
-                className={`${
-                  activeTab === "active"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
-                }`}
-              >
-                Active
-              </Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="archive"
-              className={`flex-1 mx-1 ${
-                activeTab === "archive"
-                  ? "bg-white border-b-2 border-primaryBlue"
-                  : ""
-              }`}
-            >
-              <View className="flex-row items-center justify-center">
-                <Archive
-                  size={16}
-                  className="mr-1"
-                  color={activeTab === "archive" ? "#00A8F0" : "#6b7280"}
-                />
-                <Text
-                  className={`${
-                    activeTab === "archive"
-                      ? "text-primaryBlue font-medium"
-                      : "text-gray-500"
-                  }`}
-                >
-                  Archive
-                </Text>
-              </View>
-            </TabsTrigger>
-          </TabsList>
-
-          <View className="flex-row justify-end p-2">
-            <TouchableOpacity
-              onPress={handleViewLogs}
-              className="bg-primaryBlue px-3 py-2 rounded-md"
-            >
-              <Text className="text-white text-[17px]">
-                <ClipboardCheck size={14} color="white" /> Logs
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <TabsContent value="active" className="p-2">
-            <FlatList
-              data={filteredData.filter((item) => !item.gbud_is_archive)}
-              renderItem={renderItem}
-              keyExtractor={(item) =>
-                item.gbud_num?.toString() || Math.random().toString()
-              }
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">
-                  No active entries found
-                </Text>
-              }
-            />
-          </TabsContent>
-
-          <TabsContent value="archive" className="p-2">
-            <FlatList
-              data={filteredData.filter((item) => item.gbud_is_archive)}
-              renderItem={renderItem}
-              keyExtractor={(item) =>
-                item.gbud_num?.toString() || Math.random().toString()
-              }
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">
-                  No archived entries found
-                </Text>
-              }
-            />
-          </TabsContent>
-        </Tabs>
-
-        <Modal
-          visible={viewFilesModalVisible}
-          transparent={true}
-          onRequestClose={() => setViewFilesModalVisible(false)}
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          className="flex-1"
         >
-          <View className="flex-1 bg-black/90 justify-center items-center">
-            <TouchableOpacity
-              className="absolute top-4 right-4 z-10"
-              onPress={() => setViewFilesModalVisible(false)}
-            >
-              <X size={24} color="white" />
-            </TouchableOpacity>
+          <View className="px-6">
+            <View className="flex-row gap-2 p-2">
+              <SelectLayout
+                options={[
+                  { label: "All", value: "All" },
+                  { label: "January", value: "01" },
+                  { label: "February", value: "02" },
+                  { label: "March", value: "03" },
+                  { label: "April", value: "04" },
+                  { label: "May", value: "05" },
+                  { label: "June", value: "06" },
+                  { label: "July", value: "07" },
+                  { label: "August", value: "08" },
+                  { label: "September", value: "09" },
+                  { label: "October", value: "10" },
+                  { label: "November", value: "11" },
+                  { label: "December", value: "12" },
+                ]}
+                selectedValue={selectedMonth}
+                onSelect={handleMonthSelect}
+                placeholder="Month"
+                className="flex-1"
+              />
+            </View>
 
-            {selectedFiles.length > 0 && (
-              <>
-                <Image
-                  source={{ uri: selectedFiles[currentFileIndex]?.gbf_url }}
-                  className="w-full h-4/5"
-                  resizeMode="contain"
-                />
-                <Text className="text-white mt-2">
-                  {selectedFiles[currentFileIndex]?.gbf_name}
+            <View className="p-2">
+              <Button onPress={handleCreate} className="bg-primaryBlue">
+                <Text className="text-white text-[13px] font-bold">
+                   New Entry
                 </Text>
-
-                {selectedFiles.length > 1 && (
-                  <View className="flex-row mt-4">
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentFileIndex((prev) => Math.max(0, prev - 1))
-                      }
-                      disabled={currentFileIndex === 0}
-                      className="p-2"
+              </Button>
+            </View>
+            {isLoading ? (
+              <View className="h-64 justify-center items-center">
+                <LoadingState/>
+              </View>
+            ) : (
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
+                <TabsList className="bg-blue-50 mt-5 flex-row justify-between">
+                  <TabsTrigger
+                    value="active"
+                    className={`flex-1 mx-1 ${
+                      activeTab === "active"
+                        ? "bg-white border-b-2 border-primaryBlue"
+                        : ""
+                    }`}
+                  >
+                    <Text
+                      className={`${
+                        activeTab === "active"
+                          ? "text-primaryBlue font-medium"
+                          : "text-gray-500"
+                      }`}
                     >
-                      <ChevronLeft
-                        size={24}
-                        color={currentFileIndex === 0 ? "gray" : "white"}
-                      />
-                    </TouchableOpacity>
-                    <Text className="text-white mx-4">
-                      {currentFileIndex + 1} / {selectedFiles.length}
+                      Active
                     </Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentFileIndex((prev) =>
-                          Math.min(selectedFiles.length - 1, prev + 1)
-                        )
-                      }
-                      disabled={currentFileIndex === selectedFiles.length - 1}
-                      className="p-2"
-                    >
-                      <ChevronLeft
-                        size={24}
-                        color={
-                          currentFileIndex === selectedFiles.length - 1
-                            ? "gray"
-                            : "white"
-                        }
-                        className="rotate-180"
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="archive"
+                    className={`flex-1 mx-1 ${
+                      activeTab === "archive"
+                        ? "bg-white border-b-2 border-primaryBlue"
+                        : ""
+                    }`}
+                  >
+                    <View className="flex-row items-center justify-center">
+                      <Archive
+                        size={16}
+                        className="mr-1"
+                        color={activeTab === "archive" ? "#00A8F0" : "#6b7280"}
                       />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </>
+                      <Text
+                        className={`${
+                          activeTab === "archive"
+                            ? "text-primaryBlue font-medium"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        Archive
+                      </Text>
+                    </View>
+                  </TabsTrigger>
+                </TabsList>
+
+                <View className="flex-row justify-end p-2">
+                  <TouchableOpacity
+                    onPress={handleViewLogs}
+                    className="bg-primaryBlue px-3 py-2 rounded-md"
+                  >
+                    <Text className="text-white text-[17px]">
+                      <ClipboardCheck size={14} color="white" /> Logs
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TabsContent value="active" className="p-2">
+                  <FlatList
+                    data={filteredData.filter((item) => !item.gbud_is_archive)}
+                    renderItem={renderItem}
+                    keyExtractor={(item) =>
+                      item.gbud_num?.toString() || Math.random().toString()
+                    }
+                    scrollEnabled={false}
+                    ListEmptyComponent={
+                      <Text className="text-center text-gray-500 py-4">
+                        No active entries found
+                      </Text>
+                    }
+                  />
+                </TabsContent>
+
+                <TabsContent value="archive" className="p-2">
+                  <FlatList
+                    data={filteredData.filter((item) => item.gbud_is_archive)}
+                    renderItem={renderItem}
+                    keyExtractor={(item) =>
+                      item.gbud_num?.toString() || Math.random().toString()
+                    }
+                    scrollEnabled={false}
+                    ListEmptyComponent={
+                      <Text className="text-center text-gray-500 py-4">
+                        No archived entries found
+                      </Text>
+                    }
+                  />
+                </TabsContent>
+              </Tabs>
             )}
           </View>
-        </Modal>
-      </ScrollView>
+          {/* Enhanced Modal with PDF Support */}
+          <Modal
+            visible={viewFilesModalVisible}
+            transparent={true}
+            onRequestClose={() => setViewFilesModalVisible(false)}
+          >
+            <View className="flex-1 bg-black/90 justify-center items-center">
+              <TouchableOpacity
+                className="absolute top-10 right-5 z-10"
+                onPress={() => setViewFilesModalVisible(false)}
+              >
+                <X size={24} color="white" />
+              </TouchableOpacity>
+
+              {selectedFiles.length > 0 && (
+                <>
+                  {/* File counter */}
+                  <View className="absolute top-10 left-5 z-10 bg-white/80 px-3 py-1 rounded-full">
+                    <Text className="text-sm font-medium">
+                      {currentFileIndex + 1} / {selectedFiles.length}
+                    </Text>
+                  </View>
+
+                  {isPDF(selectedFiles[currentFileIndex]) ? (
+                    // PDF Display
+                    <View className="w-full h-full justify-center items-center p-4">
+                      <View className="w-full max-w-md aspect-[4/3] bg-gray-100 rounded-lg justify-center items-center p-4">
+                        <FileText size={72} color="#0ea5e9" />
+                        <Text className="text-lg mt-4 font-medium text-center">
+                          {selectedFiles[currentFileIndex]?.gbf_name ||
+                            "PDF Document"}
+                        </Text>
+                        <Text className="text-sm mt-2 text-center">
+                          This document is in PDF format. Tap below to open it in
+                          your PDF viewer.
+                        </Text>
+                        <TouchableOpacity
+                          className="mt-6 bg-blue-500 px-6 py-3 rounded-md"
+                          onPress={handleOpenFile}
+                        >
+                          <Text className="text-white font-medium">Open PDF</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    // Image Display
+                    <>
+                      <Image
+                        source={{ uri: selectedFiles[currentFileIndex]?.gbf_url }}
+                        style={{ width: screenWidth, height: screenHeight * 0.8 }}
+                        resizeMode="contain"
+                      />
+                      <Text className="text-white mt-2 text-center px-4">
+                        {selectedFiles[currentFileIndex]?.gbf_name}
+                      </Text>
+                    </>
+                  )}
+
+                  {/* Navigation arrows - show only if multiple files */}
+                  {selectedFiles.length > 1 && (
+                    <>
+                      <TouchableOpacity
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 w-12 h-12 rounded-full justify-center items-center"
+                        onPress={prevFile}
+                      >
+                        <ChevronLeft size={24} color="white" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 w-12 h-12 rounded-full justify-center items-center"
+                        onPress={nextFile}
+                      >
+                        <ChevronRight size={24} color="white" />
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </>
+              )}
+            </View>
+          </Modal>
+        </ScrollView>
+      </View>
     </PageLayout>
   );
 };

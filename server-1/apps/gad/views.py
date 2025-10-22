@@ -11,22 +11,71 @@ import logging
 from rest_framework.views import APIView
 from django.db import transaction
 from apps.act_log.utils import ActivityLogMixin
+from apps.pagination import StandardResultsPagination
+from django.db.models import Q
+from utils.supabase_client import remove_from_storage
+from django.db.models import Sum, DecimalField
+from django.db.models.functions import Coalesce
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
 class GAD_Budget_TrackerView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
+    # def get_queryset(self):
+    #     year = self.kwargs.get('year')
+    #     if not year:
+    #         raise NotFound("Year parameter is required")
+        
+    #     return GAD_Budget_Tracker.objects.filter(
+    #         gbudy__gbudy_year=year,
+    #         # gbud_is_archive=False
+    #     ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
+    
     def get_queryset(self):
         year = self.kwargs.get('year')
         if not year:
             raise NotFound("Year parameter is required")
         
-        return GAD_Budget_Tracker.objects.filter(
+        queryset = GAD_Budget_Tracker.objects.filter(
             gbudy__gbudy_year=year,
-            # gbud_is_archive=False
         ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gbud_reference_num__icontains=search) |
+                Q(gbud_exp_particulars__icontains=search) |
+                Q(staff__rp__per__per_fname__icontains=search) |
+                Q(staff__rp__per__per_lname__icontains=search)
+            )
+        
+        # Month filter
+        month = self.request.query_params.get('month', None)
+        if month:
+            queryset = queryset.filter(gbud_datetime__month=month)
+        
+        # Archive filter
+        is_archive = self.request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            queryset = queryset.filter(gbud_is_archive=is_archive.lower() == 'true')
+        
+        return queryset.order_by('-gbud_datetime')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):      
         try:
@@ -95,6 +144,22 @@ class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = GAD_Budget_Year.objects.all()
+        
+        # Add search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gbudy_year__icontains=search)
+            )
+        
+        # Filter out archived items
+        queryset = queryset.filter(gbudy_is_archive=False)
+        
+        return queryset.order_by('-gbudy_year')
 
 class GADBudgetFileView(generics.ListCreateAPIView):
     serializer_class = GADBudgetFileSerializer
@@ -128,35 +193,108 @@ class GADBudgetFileDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAP
     
 class GADBudgetLogListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
     def get(self, request, year):
+        search = request.query_params.get('search', None)
+        page = request.query_params.get('page', 1)
+        page_size = request.query_params.get('page_size', 10)
+        
         logs = GADBudgetLog.objects.filter(
             gbudl_budget_entry__gbudy__gbudy_year=year,
-        ).select_related(
-            'gbudl_budget_entry'
-        ).order_by("-gbudl_created_at")
+        ).select_related('gbudl_budget_entry')
         
-        serializer = GADBudgetLogSerializer(logs, many=True)
-        return Response({"data": serializer.data})
+        # Add search functionality
+        if search:
+            logs = logs.filter(
+                Q(gbudl_budget_entry__dev__dev_project__icontains=search) |
+                Q(gbudl_budget_entry__gbud_exp_particulars__icontains=search) |
+                Q(gbudl_id__icontains=search)
+            )
+        
+        logs = logs.order_by("-gbudl_created_at")
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginator.page_size = page_size
+        result_page = paginator.paginate_queryset(logs, request)
+        
+        serializer = GADBudgetLogSerializer(result_page, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
 
 class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
+    # def get_queryset(self):
+    #     queryset = ProjectProposal.objects.all().select_related('staff', 'dev')
+
+    #     # Order by a field in ProjectProposal (example: created date or ID)
+    #     queryset = queryset.order_by('-gpr_id')  
+
+    #     # Get archive status from query params
+    #     archive_status = self.request.query_params.get('archive', None)
+    #     if archive_status == 'true':
+    #         queryset = queryset.filter(gpr_is_archive=True)
+    #     elif archive_status == 'false':
+    #         queryset = queryset.filter(gpr_is_archive=False)
+
+    #     return queryset
+    
     def get_queryset(self):
         queryset = ProjectProposal.objects.all().select_related('staff', 'dev')
+        queryset = queryset.order_by('-gpr_id')
 
-        # Order by a field in ProjectProposal (example: created date or ID)
-        queryset = queryset.order_by('-gpr_id')  
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gpr_background__icontains=search) |
+                Q(gpr_venue__icontains=search) |
+                Q(gpr_monitoring__icontains=search) |
+                Q(dev__dev_project__icontains=search)
+            )
 
-        # Get archive status from query params
-        archive_status = self.request.query_params.get('archive', None)
-        if archive_status == 'true':
-            queryset = queryset.filter(gpr_is_archive=True)
-        elif archive_status == 'false':
-            queryset = queryset.filter(gpr_is_archive=False)
+        # Archive status filter - check both 'archive' and 'is_archive' params
+        archive_status = self.request.query_params.get('archive', None) or self.request.query_params.get('is_archive', None)
+        if archive_status:
+            if archive_status.lower() == 'true':
+                queryset = queryset.filter(gpr_is_archive=True)
+            elif archive_status.lower() == 'false':
+                queryset = queryset.filter(gpr_is_archive=False)
+                
+        year = self.request.query_params.get('year', None)
+        if year:
+            try:
+                year_int = int(year)
+                queryset = queryset.filter(
+                    dev__dev_date__year=year_int
+                )
+            except (ValueError, TypeError):
+                # If year is not a valid integer, ignore the filter
+                pass
 
         return queryset
-
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in ProjectProposalView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -232,13 +370,35 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 {"error": f"Internal server error: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class ProjectProposalYearsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # Get distinct years from dev_date field
+            years_query = ProjectProposal.objects.filter(
+                dev__dev_date__isnull=False
+            )
+            
+            years = years_query.annotate(
+                year=ExtractYear('dev__dev_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            years_list = list(years)
+            
+            return Response(years_list)
+            
+        except Exception as e:
+            logger.error(f"Error fetching proposal years: {str(e)}", exc_info=True)
+            return Response([], status=status.HTTP_200_OK)
 
 class ProjectProposalDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff')
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
     permission_classes = [AllowAny]
-
+    
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -259,25 +419,46 @@ class ProjectProposalDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroy
         serializer = self.get_serializer(instance, data=request_data, partial=partial)
         serializer.is_valid(raise_exception=True)
         
+        # UPLOAD HEADER IMAGE FIRST (OUTSIDE ANY TRANSACTION)
+        header_img_url = None
+        if header_img_data:
+            try:
+                logger.info("Starting header image upload to Supabase")
+                header_img_url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
+                logger.info(f"Header image uploaded successfully: {header_img_url}")
+            except Exception as e:
+                logger.error(f"Header image upload failed: {str(e)}")
+                # Return error immediately if image upload fails
+                return Response(
+                    {"error": f"Header image upload failed: {str(e)}"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         try:
-            with transaction.atomic():
-                # First, save the main proposal data
-                self.perform_update(serializer)
-                
-                # THEN, handle the image upload after successful save
-                if header_img_data:
-                    try:
-                        url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
-                        instance.gpr_header_img = url
-                        instance.save(update_fields=['gpr_header_img'])
-                    except Exception as e:
-                        # Log the error but don't fail the entire request
-                        print(f"Header image upload failed but proposal was saved: {str(e)}")
-                
-                return Response(serializer.data)
-                
+            # Use a simpler approach without transaction.atomic()
+            # Let the serializer handle the update
+            updated_instance = serializer.save()
+            
+            # Update header image URL if upload was successful
+            if header_img_url:
+                updated_instance.gpr_header_img = header_img_url
+                updated_instance.save(update_fields=['gpr_header_img'])
+                logger.info(f"Header image URL saved to database: {header_img_url}")
+            
+            return Response(serializer.data)
+            
         except Exception as e:
-            # If anything fails, the transaction will roll back
+            logger.error(f"Failed to update proposal: {str(e)}")
+            
+            # If database update failed but image was uploaded, you might want to delete the image
+            if header_img_url:
+                try:
+                    # You would need to implement delete_from_storage
+                    remove_from_storage('project-proposal-bucket', header_img_url)
+                    logger.warning(f"Image was uploaded but proposal update failed: {header_img_url}")
+                except Exception as cleanup_error:
+                    logger.error(f"Failed to cleanup uploaded image: {str(cleanup_error)}")
+            
             return Response(
                 {"error": f"Failed to update proposal: {str(e)}"}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -519,18 +700,139 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class GADBudgetAggregatesView(APIView):
+    """Returns budget totals for a given year (excluding archived entries)"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request, year):
+        try:
+            # Get the yearly budget from GAD_Budget_Year
+            yearly_budget = GAD_Budget_Year.objects.filter(
+                gbudy_year=year,
+                gbudy_is_archive=False
+            ).first()
+            
+            if not yearly_budget:
+                return Response({
+                    'total_budget': 0,
+                    'total_expenses': 0,
+                    'pending_expenses': 0,
+                    'remaining_balance': 0,
+                })
+            
+            # Get active entries for calculating pending expenses
+            entries_queryset = GAD_Budget_Tracker.objects.filter(
+                gbudy__gbudy_year=year,
+                gbud_is_archive=False
+            )
+            
+            # Calculate pending expenses (entries with 0 actual expense)
+            pending_expenses_queryset = entries_queryset.filter(gbud_actual_expense=0)
+            pending_aggregates = pending_expenses_queryset.aggregate(
+                pending_expenses=Coalesce(Sum('gbud_proposed_budget'), 0, output_field=DecimalField())
+            )
+            
+            total_budget = Decimal(str(yearly_budget.gbudy_budget))
+            total_expenses = Decimal(str(yearly_budget.gbudy_expenses))
+            pending_expenses = Decimal(str(pending_aggregates['pending_expenses']))
+            remaining = total_budget - total_expenses
+            
+            return Response({
+                'total_budget': float(total_budget),
+                'total_expenses': float(total_expenses),
+                'pending_expenses': float(pending_expenses),
+                'remaining_balance': float(remaining),
+            })
+        except Exception as e:
+            logger.error(f"Error calculating budget aggregates: {str(e)}")
+            return Response({
+                'total_budget': 0,
+                'total_expenses': 0,
+                'pending_expenses': 0,
+                'remaining_balance': 0,
+            })
+
+class ProjectProposalGrandTotalView(APIView):
+    """Returns grand total for all non-archived project proposals"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        try:
+            queryset = ProjectProposal.objects.filter(
+                gpr_is_archive=False
+            ).select_related('dev')
+            
+            total = Decimal('0')
+            
+            for proposal in queryset:
+                if proposal.dev and proposal.dev.dev_gad_items:
+                    for item in proposal.dev.dev_gad_items:
+                        if not isinstance(item, dict):
+                            continue
+                        
+                        # Get amount
+                        amount = item.get('amount') or item.get('price') or 0
+                        try:
+                            amount = Decimal(str(amount))
+                        except:
+                            amount = Decimal('0')
+                        
+                        # Get pax and parse if string
+                        pax = item.get('pax', 1)
+                        if isinstance(pax, str):
+                            # Extract first number from string like "10 pax"
+                            match = re.search(r'(\d+)', pax)
+                            pax = int(match.group(1)) if match else 1
+                        else:
+                            pax = int(pax) if pax else 1
+                        
+                        total += amount * pax
+            
+            return Response({
+                'grand_total': float(total)
+            })
+        except Exception as e:
+            logger.error(f"Error calculating grand total: {str(e)}")
+            return Response({
+                'grand_total': 0
+            })
 
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GADDevelopmentPlanSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         year = self.request.query_params.get('year')
         qs = DevelopmentPlan.objects.all()
         if year:
             qs = qs.filter(dev_date__year=year)
-        return qs
+        
+        # Add search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            qs = qs.filter(
+                Q(dev_project__icontains=search) |
+                Q(dev_client__icontains=search) |
+                Q(dev_issue__icontains=search) |
+                Q(dev_indicator__icontains=search)
+            )
+        
+        return qs.order_by('-dev_date')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
         try:
@@ -545,7 +847,7 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 from apps.administration.models import Staff
                 
                 # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff_id = request.data.get('staff_id') or request.data.get('staff')
                 staff = Staff.objects.filter(staff_id=staff_id).first()
                 
                 if staff:
@@ -554,8 +856,7 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                         act_type="GAD Development Plan Created",
                         act_description=f"GAD development plan '{development_plan.dev_project}' created for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan creation: {development_plan.dev_id}")
                 else:
@@ -576,11 +877,25 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
 
 # GET years with data
 class GADDevelopmentPlanYears(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
-        years = DevelopmentPlan.objects.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
-        return Response(sorted(years))
+        # Add search functionality for years
+        search = request.query_params.get('search', None)
+        queryset = DevelopmentPlan.objects.all()
+        
+        if search:
+            queryset = queryset.filter(
+                Q(dev_project__icontains=search) |
+                Q(dev_client__icontains=search) |
+                Q(dev_issue__icontains=search) |
+                Q(dev_indicator__icontains=search)
+            )
+        
+        years = queryset.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
+        return Response(sorted(years, reverse=True))
 
 class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = DevelopmentPlan.objects.all()
     serializer_class = GADDevelopmentPlanSerializer
     lookup_field = 'dev_id'
@@ -601,7 +916,7 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
                 from apps.administration.models import Staff
                 
                 # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff_id = request.data.get('staff_id') or request.data.get('staff')
                 staff = Staff.objects.filter(staff_id=staff_id).first()
                 
                 if staff:
@@ -610,8 +925,7 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
                         act_type="GAD Development Plan Updated",
                         act_description=f"GAD development plan '{development_plan.dev_project}' updated for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan update: {development_plan.dev_id}")
                 else:

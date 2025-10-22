@@ -22,7 +22,7 @@ export const useArchiveWasteCol = () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       
       // Show success toast
-    //   toast.success("Successfully archived schedule");
+      toast.success("Successfully archived schedule");
     },
     onError: (err) => {
       toast.error("Failed to archived schedule");

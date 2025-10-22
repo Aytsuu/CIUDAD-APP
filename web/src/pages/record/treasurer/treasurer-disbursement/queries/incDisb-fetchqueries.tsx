@@ -1,11 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import { getDisbursementVouchers, getDisbursementVoucher, getDisbursementFiles, getStaffList } from "../api/incDisb-getreq";
+import { getDisbursementVouchers, getDisbursementVoucher, getDisbursementFiles, getStaffList, getDisbursementVoucherYears } from "../api/incDisb-getreq";
+import { DisbursementVoucher } from "../incDisb-types";
 
-export const useGetDisbursementVouchers = (params = {}, options = {}) => {
-  return useQuery({
-    queryKey: ["disbursementVouchers", params],
-    queryFn: () => getDisbursementVouchers(params),
+export const useGetDisbursementVouchers = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  year?: string,
+  archive?: boolean,
+  options = {}
+) => {
+  return useQuery<{ results: DisbursementVoucher[]; count: number }, Error>({
+    queryKey: ["disbursementVouchers", page, pageSize, searchQuery, year, archive],
+    queryFn: () => getDisbursementVouchers(page, pageSize, searchQuery, year, archive),
     staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+};
+
+export const useGetDisbursementVoucherYears = (options = {}) => {
+  return useQuery<number[], Error>({
+    queryKey: ["disbursementVoucherYears"],
+    queryFn: getDisbursementVoucherYears,
+    staleTime: 1000 * 60 * 30, 
     ...options,
   });
 };

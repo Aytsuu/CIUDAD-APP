@@ -1,65 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, RefreshControl, Alert, Modal, TextInput, FlatList } from 'react-native';
 import { router } from 'expo-router';
-import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle } from 'lucide-react-native';
+import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle, ChevronRight, ChevronLeft as ChevronLeftIcon } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
+"use client";
+
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { differenceInDays } from 'date-fns';
+import { AppointmentItem, useUserAppointments, cancelAppointment } from './queries/fetch'; // Make sure cancelAppointment is imported
 
 // Types
-interface AppointmentItem {
-  id: number;
-  chief_complaint: string;
-  scheduled_date: string;
-  meridiem: string;
-  status: string;
-  created_at: string;
-  archive_reason?: string | null;
-}
-
-type TabType = "pending" | "confirmed" | "completed" | "cancelled";
-
-// API Functions
-const fetchUserAppointments = async (rpId: string): Promise<AppointmentItem[]> => {
-  if (!rpId) {
-    throw new Error('User ID is required');
-  }
-  
-  const response = await api2.get(`/medical-consultation/user-appointments/?rp_id=${rpId}&include_archived=true`);
-  
-  const results = response.data.results || response.data;
-  
-  if (!Array.isArray(results)) {
-    throw new Error('Invalid response format from server');
-  }
-  
-  console.log('API Response (Appointments):', results);
-  
-  return results.map((item: any) => ({
-    id: item.id,
-    chief_complaint: item.chief_complaint || 'No complaint provided',
-    scheduled_date: item.scheduled_date,
-    meridiem: item.meridiem,
-    status: item.status,
-    created_at: item.created_at,
-    archive_reason: item.archive_reason || null,
-  }));
-};
-
-const cancelAppointment = async (appointment_id: number, reason: string): Promise<void> => {
-  try {
-    await api2.patch(`/medical-consultation/cancel-appointment/${appointment_id}/`, { 
-      archive_reason: reason 
-    });
-  } catch (error) {
-    console.error('Error canceling appointment:', error);
-    throw error;
-  }
-};
+type TabType = "pending" | "confirmed" | "completed" | "cancelled" | "referred";
 
 // Utility Functions
 const getStatusConfig = (status: string) => {
@@ -87,11 +42,19 @@ const getStatusConfig = (status: string) => {
         label: 'Completed' 
       };
     case 'cancelled':
+    case 'rejected':
       return { 
         color: 'text-red-700', 
         bgColor: 'bg-red-100', 
         borderColor: 'border-red-200', 
         label: 'Cancelled' 
+      };
+    case 'referred':
+      return { 
+        color: 'text-purple-700', 
+        bgColor: 'bg-purple-100', 
+        borderColor: 'border-purple-200', 
+        label: 'Referred' 
       };
     default:
       return { 
@@ -101,6 +64,18 @@ const getStatusConfig = (status: string) => {
         label: status 
       };
   }
+};
+
+// Convert tab to backend status parameter
+const getStatusParam = (tab: TabType): string => {
+  const statusMap: Record<TabType, string> = {
+    'pending': 'pending',
+    'confirmed': 'confirmed',
+    'completed': 'completed',
+    'cancelled': 'cancelled',
+    'referred': 'referred'
+  };
+  return statusMap[tab];
 };
 
 // Components
@@ -118,7 +93,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const TabBar: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
-  counts: { pending: number; confirmed: number; completed: number; cancelled: number };
+  counts: { pending: number; confirmed: number; completed: number; cancelled: number; referred: number };
 }> = ({ activeTab, setActiveTab, counts }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
     <TouchableOpacity
@@ -151,6 +126,14 @@ const TabBar: React.FC<{
     >
       <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
         Cancelled ({counts.cancelled})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('referred')}
+      className={`flex-1 items-center py-3 ${activeTab === 'referred' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'referred' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Referred ({counts.referred})
       </Text>
     </TouchableOpacity>
   </View>
@@ -208,7 +191,7 @@ const AppointmentCard: React.FC<{
           <View className="flex-row items-start">
             <AlertCircle size={16} color="#EF4444" className="mt-0.5" />
             <Text className="ml-2 text-sm text-red-600 flex-1">
-              Cancellation: {item.archive_reason}
+              Reason: {item.archive_reason}
             </Text>
           </View>
         )}
@@ -234,7 +217,7 @@ const AppointmentCard: React.FC<{
   );
 };
 
-// Cancel Modal Component
+// Enhanced Cancel Modal Component
 const CancelModal: React.FC<{
   visible: boolean;
   item: AppointmentItem | null;
@@ -243,26 +226,42 @@ const CancelModal: React.FC<{
   onConfirm: () => void;
   onClose: () => void;
   isPending: boolean;
-}> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
+  error?: string | null;
+}> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending, error }) => {
   return (
-    <Modal visible={visible} transparent>
+    <Modal visible={visible} transparent animationType="fade">
       <View className="flex-1 justify-center items-center bg-black/50 p-4">
         <View className="bg-white rounded-lg w-full max-w-md p-6">
           <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Appointment</Text>
+          
+          {error && (
+            <View className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+              <Text className="text-red-700 text-sm">{error}</Text>
+            </View>
+          )}
+          
           <Text className="text-sm text-gray-600 mb-4">
-            Are you sure you want to cancel? 
-            <Text className="font-bold text-red-700"> This cannot be undone.</Text>
+            Are you sure you want to cancel this appointment? 
+            <Text className="font-bold text-red-700"> This action cannot be undone.</Text>
           </Text>
+          
+          <Text className="text-sm text-gray-700 mb-2 font-medium">Cancellation Reason:</Text>
           <TextInput
             value={cancellationReason}
             onChangeText={setCancellationReason}
-            placeholder="Enter cancellation reason..."
+            placeholder="Please provide a reason for cancellation..."
             multiline
             className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4 text-sm"
             style={{ height: 80, textAlignVertical: 'top' }}
+            editable={!isPending}
           />
+          
           <View className="flex-row justify-end space-x-2">
-            <TouchableOpacity onPress={onClose} className="px-4 py-2">
+            <TouchableOpacity 
+              onPress={onClose} 
+              disabled={isPending}
+              className="px-4 py-2 rounded-md border border-gray-300"
+            >
               <Text className="text-gray-600 font-medium">Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -270,7 +269,9 @@ const CancelModal: React.FC<{
               disabled={!cancellationReason.trim() || isPending}
               className="bg-red-500 px-4 py-2 rounded-md disabled:opacity-50"
             >
-              <Text className="text-white font-medium">{isPending ? 'Cancelling...' : 'Confirm'}</Text>
+              <Text className="text-white font-medium">
+                {isPending ? 'Cancelling...' : 'Confirm Cancellation'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -279,88 +280,146 @@ const CancelModal: React.FC<{
   );
 };
 
+// Pagination Controls Component
+const PaginationControls: React.FC<{
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}> = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  return (
+    <View className="flex-row justify-center items-center p-4 border-t border-gray-200 bg-white">
+      <TouchableOpacity 
+        onPress={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === 1 ? 'bg-gray-100' : 'bg-gray-200'}`}
+      >
+        <ChevronLeftIcon size={16} color={currentPage === 1 ? '#9CA3AF' : '#374151'} />
+        <Text className={`ml-1 ${currentPage === 1 ? 'text-gray-500' : 'text-gray-700'}`}>Previous</Text>
+      </TouchableOpacity>
+      
+      <Text className="mx-4 text-gray-700">
+        Page {currentPage} of {totalPages}
+      </Text>
+      
+      <TouchableOpacity 
+        onPress={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === totalPages ? 'bg-gray-100' : 'bg-gray-200'}`}
+      >
+        <Text className={`mr-1 ${currentPage === totalPages ? 'text-gray-500' : 'text-gray-700'}`}>Next</Text>
+        <ChevronRight size={16} color={currentPage === totalPages ? '#9CA3AF' : '#374151'} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const AppointmentTracker = () => {
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [selectedItem, setSelectedItem] = useState<AppointmentItem | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const rpId = user?.rp;
+  const pageSize = 10;
 
-  const { data: appointments = [], isLoading: isFetching, error } = useQuery<AppointmentItem[]>({
-    queryKey: ['userAppointments', rpId],
-    queryFn: () => fetchUserAppointments(rpId || ''),
-    enabled: !!rpId,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Debounce search to avoid too many API calls
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, debouncedSearch]);
+
+  const { data: appointmentsData, isLoading: isFetching, error, refetch } = useUserAppointments(
+    rpId || '',
+    getStatusParam(activeTab),
+    debouncedSearch || undefined,
+    currentPage,
+    pageSize
+  );
+
+  const appointments = appointmentsData?.results || [];
+  const totalCount = appointmentsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const cancelMutation = useMutation({
     mutationFn: ({ appointment_id, reason }: { appointment_id: number; reason: string }) => 
       cancelAppointment(appointment_id, reason),
     onSuccess: () => {
+      console.log('Appointment cancelled successfully');
       queryClient.invalidateQueries({ queryKey: ['userAppointments'] });
       setShowCancelModal(false);
       setCancellationReason('');
       setSelectedItem(null);
+      setCancelError(null);
       Alert.alert('Success', 'Appointment cancelled successfully.');
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.detail || 'Failed to cancel appointment. Please try again.');
+      console.error('Cancel appointment error:', error);
+      
+      let errorMessage = 'Failed to cancel appointment. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        console.log('Error details:', { status, data });
+        
+        if (status === 400) {
+          errorMessage = data.detail || data.error || 'Invalid request. Please check your input.';
+        } else if (status === 404) {
+          errorMessage = 'Appointment not found. It may have been already cancelled.';
+        } else if (status === 403) {
+          errorMessage = 'You are not authorized to cancel this appointment.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (data.detail) {
+          errorMessage = data.detail;
+        }
+      } else if (error.request) {
+        errorMessage = 'No response from server. Please check your internet connection.';
+      } else {
+        errorMessage = error.message || 'An unexpected error occurred.';
+      }
+      
+      setCancelError(errorMessage);
     },
   });
 
-  const groupedAppointments = useMemo(() => {
-    return appointments.reduce((acc: Record<TabType, AppointmentItem[]>, item) => {
-      let tab: TabType;
-      switch (item.status.toLowerCase()) {
-        case 'pending':
-          tab = 'pending';
-          break;
-        case 'confirmed':
-          tab = 'confirmed';
-          break;
-        case 'completed':
-          tab = 'completed';
-          break;
-        case 'cancelled': case 'rejected':
-          tab = 'cancelled';
-          break;
-        default:
-          tab = 'pending';
-      }
-      if (!acc[tab]) acc[tab] = [];
-      acc[tab].push(item);
-      return acc;
-    }, { pending: [], confirmed: [], completed: [], cancelled: [] });
-  }, [appointments]);
+  // Get counts for each tab
+  const { data: allAppointmentsData } = useUserAppointments(
+    rpId || '',
+    undefined, // No status filter
+    undefined, // No search
+    1, // First page only for counts
+    1000 // Large page size to get all counts
+  );
 
-  const filteredAppointments = useMemo(() => {
-    let result = groupedAppointments[activeTab];
-
-    if (searchQuery) {
-      const lowerSearch = searchQuery.toLowerCase();
-      result = result.filter(item => 
-        item.chief_complaint?.toLowerCase().includes(lowerSearch) ||
-        item.scheduled_date.toLowerCase().includes(lowerSearch) ||
-        item.meridiem.toLowerCase().includes(lowerSearch)
-      );
-    }
-
-    result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    return result;
-  }, [groupedAppointments, activeTab, searchQuery]);
-
-  const counts = useMemo(() => ({
-    pending: groupedAppointments.pending.length,
-    confirmed: groupedAppointments.confirmed.length,
-    completed: groupedAppointments.completed.length,
-    cancelled: groupedAppointments.cancelled.length,
-  }), [groupedAppointments]);
+  const counts = {
+    pending: allAppointmentsData?.results.filter(a => a.status === 'pending').length || 0,
+    confirmed: allAppointmentsData?.results.filter(a => a.status === 'confirmed').length || 0,
+    completed: allAppointmentsData?.results.filter(a => a.status === 'completed').length || 0,
+    cancelled: allAppointmentsData?.results.filter(a => ['cancelled', 'rejected'].includes(a.status)).length || 0,
+    referred: allAppointmentsData?.results.filter(a => a.status === 'referred').length || 0,
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -368,11 +427,20 @@ const AppointmentTracker = () => {
     setRefreshing(false);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const isWithinCancellationPeriod = (scheduledDate: string): boolean => {
-    const appointmentDate = new Date(scheduledDate);
-    const today = new Date();
-    const daysUntilAppointment = differenceInDays(appointmentDate, today);
-    return daysUntilAppointment < 2;
+    try {
+      const appointmentDate = new Date(scheduledDate);
+      const today = new Date();
+      const daysUntilAppointment = differenceInDays(appointmentDate, today);
+      return daysUntilAppointment < 2;
+    } catch (error) {
+      console.error('Error calculating cancellation period:', error);
+      return false;
+    }
   };
 
   const handleCancelPress = (item: AppointmentItem) => {
@@ -385,10 +453,32 @@ const AppointmentTracker = () => {
       return;
     }
     setSelectedItem(item);
+    setCancelError(null);
+    setCancellationReason('');
     setShowCancelModal(true);
   };
 
-  if (isFetching) {
+  const handleConfirmCancel = () => {
+    if (!cancellationReason.trim()) {
+      setCancelError('Please provide a cancellation reason.');
+      return;
+    }
+    if (selectedItem) {
+      cancelMutation.mutate({
+        appointment_id: selectedItem.id,
+        reason: cancellationReason.trim(),
+      });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowCancelModal(false);
+    setCancellationReason('');
+    setSelectedItem(null);
+    setCancelError(null);
+  };
+
+  if (isFetching && !refreshing) {
     return <LoadingState />;
   }
 
@@ -429,11 +519,11 @@ const AppointmentTracker = () => {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search appointments..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -455,29 +545,28 @@ const AppointmentTracker = () => {
         {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
             <Text className="text-blue-800 text-sm font-medium">
-              Reminder: Appointments are at the Barangay Health Center. Arrive 15 minutes early.
+              Reminder: Arrive on time at the Barangay Health Center.
+            </Text>
+          </View>
+        )}
+        {activeTab === 'referred' && (
+          <View className="bg-purple-50 border-l-4 border-purple-400 px-4 py-3 mx-4 my-2 rounded-xl">
+            <Text className="text-purple-800 text-sm font-medium">
+              Note: Referred appointments require follow-up with the designated specialist or facility.
             </Text>
           </View>
         )}
 
         {/* Appointments List */}
-        {appointments.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <Calendar size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No appointments found</Text>
-            <Text className="text-gray-600 text-center mt-2 mb-8">
-              Start by scheduling a medical consultation.
-            </Text>
-          </View>
-        ) : (
+        <View className="flex-1">
           <FlatList
-            data={filteredAppointments}
-            keyExtractor={(item) => `appointment-${item.id}`}
+            data={appointments}
+            keyExtractor={(item) => `appointment-${item.id}-${currentPage}`}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
             windowSize={21}
             renderItem={({ item }) => (
               <AppointmentCard
@@ -489,41 +578,35 @@ const AppointmentTracker = () => {
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
                 <Calendar size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments in this category</Text>
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments found</Text>
                 <Text className="text-gray-500 text-center">
-                  {searchQuery
+                  {searchQuery || activeTab !== 'pending'
                     ? `No ${activeTab} appointments match your search.`
-                    : `No ${activeTab} appointments found.`}
+                    : 'Start by scheduling a medical consultation.'}
                 </Text>
               </View>
             )}
           />
-        )}
+          
+          {/* Pagination Controls */}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </View>
       </View>
 
+      {/* Cancel Modal */}
       <CancelModal
         visible={showCancelModal}
         item={selectedItem}
         cancellationReason={cancellationReason}
         setCancellationReason={setCancellationReason}
-        onConfirm={() => {
-          if (!cancellationReason.trim()) {
-            Alert.alert('Error', 'Please provide a cancellation reason.');
-            return;
-          }
-          if (selectedItem) {
-            cancelMutation.mutate({
-              appointment_id: selectedItem.id,
-              reason: cancellationReason.trim(),
-            });
-          }
-        }}
-        onClose={() => {
-          setShowCancelModal(false);
-          setCancellationReason('');
-          setSelectedItem(null);
-        }}
+        onConfirm={handleConfirmCancel}
+        onClose={handleCloseModal}
         isPending={cancelMutation.isPending}
+        error={cancelError}
       />
     </PageLayout>
   );

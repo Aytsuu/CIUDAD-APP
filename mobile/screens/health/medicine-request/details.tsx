@@ -17,11 +17,12 @@ type MedicineDetailsProps = {
 
 export default function MedicineDetailsScreen() {
   const params = useLocalSearchParams();
-  // Parse the medicineData string back into an object
   const medicine: MedicineDetailsProps | null = useMemo(() => {
-    if (params.medicineData) {
+     if (params.medicineData) {
       try {
-        return JSON.parse(params.medicineData as string);
+        const parsed = JSON.parse(params.medicineData as string);
+        console.log("🔍 Parsed Medicine Data:", parsed); // Debug log
+        return parsed;
       } catch (e) {
         console.error("Failed to parse medicineData param:", e);
         return null;
@@ -30,13 +31,20 @@ export default function MedicineDetailsScreen() {
     return null;
   }, [params.medicineData]);
 
+
   const [reason, setReason] = useState("");
 
   // Check if prescription is required based on med_type
   const requiresPrescription = medicine?.med_type === 'Prescription';
   
-  const handleAddToCart = () => {
-    if (!medicine) return; // Should not happen if medicine is loaded
+   const handleAddToCart = () => {
+    if (!medicine) return;
+
+    // Add validation for minv_id
+    if (!medicine.minv_id) {
+      Alert.alert("Error", "This medicine is not properly configured. Please select another medicine.");
+      return;
+    }
 
     if (!reason.trim()) {
       Alert.alert("Required Field", "Please provide a reason for requesting this medicine.");
@@ -56,7 +64,8 @@ export default function MedicineDetailsScreen() {
     };
 
     addToCart(itemToAdd);
-
+    console.log("➕ Adding to cart:", itemToAdd);
+    
     Alert.alert("Success", "Medicine added to your request", [
       { text: "Continue Browsing", onPress: () => router.back() },
       { text: "View Cart", onPress: () => router.push("/medicine-request/cart") },
@@ -143,7 +152,7 @@ export default function MedicineDetailsScreen() {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
+              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-[#2563EB]" : "bg-gray-400"}`}
               onPress={handleAddToCart}
               disabled={medicine.availableStock === 0}
             >

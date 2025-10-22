@@ -6,14 +6,15 @@ urlpatterns = [
     path("event-meeting/", CouncilSchedulingView.as_view(), name="council-event-meeting"),
     path("event-meeting/<int:ce_id>/", CouncilSchedulingDetailView.as_view(), name="council-event-meeting-detail"),
     path("event-meeting/<int:ce_id>/restore/", CouncilSchedulingRestoreView.as_view(), name="council-event-meeting-restore"),
-    path("attendees/", AttendeesView.as_view(), name="council-attendees"),
-    path("attendees/<int:atn_id>/", AttendeesDetailView.as_view(), name="council-attendees-detail"),
-    path("attendees/bulk/", AttendeesBulkView.as_view(), name="council-attendees-bulk"),
+    # path("attendees/", AttendeesView.as_view(), name="council-attendees"),
+    # path("attendees/<int:atn_id>/", AttendeesDetailView.as_view(), name="council-attendees-detail"),
+    # path("attendees/bulk/", AttendeesBulkView.as_view(), name="council-attendees-bulk"),
     path("attendance-sheets/", AttendanceSheetListView.as_view(), name="attendance-sheet-list"),
     path("attendance-sheets/<int:att_id>/", AttendanceSheetDetailView.as_view(), name="attendance-sheet-detail"),
     path("attendance-sheets/<int:att_id>/restore/", RestoreAttendanceView.as_view(), name="attendance-sheet-restore"),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
-    path('staff-attendance-ranking/', StaffAttendanceRankingView.as_view(), name='staff-attendance-ranking'),
+    path("event-meeting/years/", CouncilEventYearsView.as_view(), name="council-event-years"),
+    # path('staff-attendance-ranking/', StaffAttendanceRankingView.as_view(), name='staff-attendance-ranking'),
 
     # TEMPLATE
     path("template/", TemplateView.as_view(), name="document-template"),
@@ -33,7 +34,8 @@ urlpatterns = [
 
     # MINUTES OF MEETING
     # mobile and web
-    path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
+    path('minutes-of-meeting-active/', MinutesOfMeetingActiveView.as_view(), name="minutes-of-meeting-active"),
+    path('minutes-of-meeting-inactive/', MinutesOfMeetingInactiveView.as_view(), name="minutes-of-meeting-inactive"),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),
@@ -57,7 +59,7 @@ urlpatterns = [
     path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
     path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
     #APPROVED PROPOSALS
-    path('approved-proposals/', ApprovedGADProposalsView.as_view(), name='approved-gad-proposals'),
+    path('approved-proposals/', GADProposalsView.as_view(), name='approved-gad-proposals'),
 
         # ================================== ORDINANCE URLS (from secretary) =================================
     # Ordinance endpoints

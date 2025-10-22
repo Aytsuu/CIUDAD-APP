@@ -65,7 +65,6 @@ export const MedicineDisplay = ({
   autoFillReasons = true,
   readOnlyReasons = false,
   readonly = false,
-  // New props for backend pagination
   totalPages = 1,
   totalItems = 0,
   onSearch,

@@ -93,7 +93,6 @@ export const initialFormData: FormData = {
     date_completed: "",
   },
   status: "recorded",
-  type_of_feeding: "",
   tt_status: "",
   nutritionalStatus: {
     wfa: "",
@@ -202,6 +201,7 @@ chrecId: string;
 export interface BFCheck {
   ebf_id?: number;
   ebf_date: string;
+  type_of_feeding: string;
   created_at?: string;
   chhist?: number;
 }

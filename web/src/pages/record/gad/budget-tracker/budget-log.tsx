@@ -1,58 +1,51 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Search } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { BudgetLogTable } from "./budget-tracker-types";
 import { useGADBudgetLogs } from "./queries/BTFetchQueries";
 import { useParams } from "react-router-dom";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext"; 
+import { useEffect } from "react";
 
 function GADBudgetLogTable() {
   const { year } = useParams<{ year: string }>();
-  if (!year) {
-    return;
-  }
-  const { data: logs = [], isLoading, error } = useGADBudgetLogs(year);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const { showLoading, hideLoading } = useLoading();
 
-  const typeOptions = [
-    { id: "all", name: "All" },
-    { id: "Income", name: "Income" },
-    { id: "Expense", name: "Expense" },
-  ];
-
-  const sortedData = useMemo(() => {
-    return [...logs].sort((a, b) => {
-      // Sort by gbudl_created_at, newest first
-      return (
-        new Date(b.gbudl_created_at).getTime() -
-        new Date(a.gbudl_created_at).getTime()
-      );
-    });
-  }, [logs]);
-
-  const filteredData = sortedData.filter((log) => {
-    const matchesYear =
-      !year || new Date(log.gbudl_created_at).getFullYear().toString() === year;
-    const searchString = `${log.gbudl_id} ${log.gbud_exp_project || ""} ${
-      log.gbud_exp_particulars?.map((item) => item.name).join(" ") || ""
-    }`.toLowerCase();
-    const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    return matchesSearch && matchesYear;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  const { 
+    data: logsData, 
+    isLoading, 
+    error,
+    isFetching 
+  } = useGADBudgetLogs(
+    year || "", 
+    currentPage, 
+    pageSize, 
+    debouncedSearchQuery
   );
+
+  // Extract data from paginated response
+  const logs = logsData?.results || [];
+  const totalCount = logsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // =================== LOADING EFFECT ===================
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   const columns: ColumnDef<BudgetLogTable>[] = [
     {
@@ -122,9 +115,7 @@ function GADBudgetLogTable() {
 
         const prevAmount = row.original.gbudl_prev_amount;
 
-        // Show "-" if amount is null OR if prevAmount is 0 or null/undefined
         if (amount === null || !prevAmount) {
-          // This covers 0, null, undefined
           return <div className="text-center">-</div>;
         }
 
@@ -158,19 +149,17 @@ function GADBudgetLogTable() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
-
   if (error) {
-    return <div className="text-red-500">Error loading budget logs</div>;
+    return (
+      <LayoutWithBack
+        title={`Budget Logs${year ? ` for ${year}` : ""}`}
+        description="View budget logs"
+      >
+        <div className="text-red-500 text-center py-8">
+          Error loading budget logs: {error.message}
+        </div>
+      </LayoutWithBack>
+    );
   }
 
   return (
@@ -186,18 +175,13 @@ function GADBudgetLogTable() {
               size={17}
             />
             <Input
-              placeholder="Search..."
+              placeholder="Search by project name or particulars..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <SelectLayout
-              className="bg-white"
-              label=""
-              placeholder="Filter by Type"
-              options={typeOptions}
-              value={typeFilter}
-              onChange={(value) => setTypeFilter(value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
             />
           </div>
         </div>
@@ -213,33 +197,63 @@ function GADBudgetLogTable() {
                 onChange={(e) => {
                   const value = +e.target.value;
                   setPageSize(value >= 1 ? value : 1);
-                  setCurrentPage(1);
+                  setCurrentPage(1); // Reset to first page when changing page size
                 }}
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+          <div className="overflow-x-auto min-h-[400px] relative">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
+                <Spinner size="lg" />
+                Loading records...
+              </div>
+            ) : (
+              <>
+                <DataTable 
+                  columns={columns} 
+                  data={logs} 
+                />
+                {isFetching && (
+                  <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center gap-2 text-gray-500">
+                    <Spinner size="lg" />
+                    Loading records...
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-            <p className="text-xs sm:text-sm text-darkGray">
-              Showing {(currentPage - 1) * pageSize + 1}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
-            </p>
-            {filteredData.length > 0 && (
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => {
-                  setCurrentPage(page);
-                }}
-              />
+            {isLoading ? (
+              <Spinner size="sm" />
+            ) : (
+              <>
+                <p className="text-xs sm:text-sm text-darkGray">
+                  Showing {(currentPage - 1) * pageSize + 1}-
+                  {Math.min(currentPage * pageSize, totalCount)} of{" "}
+                  {totalCount} rows
+                </p>
+                {totalCount > 0 && totalPages > 1 && (
+                  <PaginationLayout
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => {
+                      setCurrentPage(page);
+                    }}
+                  />
+                )}
+              </>
             )}
           </div>
+
+          {!isLoading && logs.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              {searchQuery ? "No budget logs found matching your search" : "No budget logs found"}
+            </div>
+          )}
         </div>
       </div>
     </LayoutWithBack>

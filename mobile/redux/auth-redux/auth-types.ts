@@ -34,7 +34,7 @@ export interface SignupCredentials {
 }
 
 export interface TokenResponse {
-    access_token: string;
+    access: string;
     refresh: string;
     user: User;
 }

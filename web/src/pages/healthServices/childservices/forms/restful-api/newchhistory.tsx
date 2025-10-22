@@ -54,7 +54,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         place_of_delivery_type: submittedData.placeOfDeliveryType,
         pod_location: submittedData.placeOfDeliveryLocation,
         mother_occupation: submittedData.motherOccupation,
-        type_of_feeding: submittedData.type_of_feeding,
         father_occupation: submittedData.fatherOccupation,
         birth_order: submittedData.birth_order,
         newborn_screening: submittedData.dateNewbornScreening,

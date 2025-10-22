@@ -30,6 +30,7 @@ class MedConsultAppointment(models.Model):
     
     class Meta:
         db_table = "medconsult_appointment"
+        
 class PhilHealthLaboratory(models.Model):
     lab_id = models.BigAutoField(primary_key=True)
     
@@ -166,4 +167,3 @@ class DateSlots(models.Model):
     @property
     def pm_available_slots(self):
         return max(0, self.pm_max_slots - self.pm_current_bookings)
-

@@ -19,9 +19,13 @@ export const createPatients = async (patientData: any) => {
 
 export const registerPatient = async (patientData: any) => {
     try {
-        const res = await api2.post("medicine/register-patient/", patientData);
+        const endpoint = patientData.mode === 'consultation' 
+            ? "patientrecords/patient/view/create/" 
+            : "medicine/register-patient/";
+        
+        const res = await api2.post(endpoint, patientData);
         if (res.status !== 201) {
-            throw new Error("Failed to register patient");
+            throw new Error(`Failed to register patient in ${patientData.mode || 'medicine'} mode`);
         }
         console.log(res);
         return res.data;
@@ -30,6 +34,5 @@ export const registerPatient = async (patientData: any) => {
         throw error;
     }
 }
-
 
 

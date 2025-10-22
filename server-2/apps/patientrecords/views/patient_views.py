@@ -639,7 +639,6 @@ def check_or_create_patient(request):
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):
     try:
-        # First, check if resident exists
         try:
             resident = ResidentProfile.objects.get(rp_id=rp_id)
         except ResidentProfile.DoesNotExist:
@@ -691,8 +690,26 @@ def get_appointments_by_resident_id(request, rp_id):
             print(f"Error serializing med consult appointments: {str(e)}")
             med_consult_data = []
 
+        # Manual serialization for prenatal appointments to avoid date serialization issues
         try:
-            prenatal_data = PrenatalRequestAppointmentSerializer(prenatal_appointments, many=True).data
+            prenatal_data = []
+            for appointment in prenatal_appointments:
+                prenatal_data.append({
+                    'par_id': appointment.par_id,
+                    'requested_at': appointment.requested_at.isoformat() if appointment.requested_at else None,
+                    'requested_date': appointment.requested_date.isoformat() if appointment.requested_date else None,
+                    'approved_at': appointment.approved_at.isoformat() if appointment.approved_at else None,
+                    'cancelled_at': appointment.cancelled_at.isoformat() if appointment.cancelled_at else None,
+                    'completed_at': appointment.completed_at.isoformat() if appointment.completed_at else None,
+                    'rejected_at': appointment.rejected_at.isoformat() if appointment.rejected_at else None,
+                    'missed_at': appointment.missed_at.isoformat() if appointment.missed_at else None,
+                    'reason': appointment.reason,
+                    'status': appointment.status,
+                    'status_display': appointment.get_status_display(),
+                    'is_overdue': appointment.is_overdue(),
+                    'rp_id': appointment.rp_id_id,
+                    'pat_id': appointment.pat_id_id if appointment.pat_id else None
+                })
         except Exception as e:
             print(f"Error serializing prenatal appointments: {str(e)}")
             prenatal_data = []
@@ -755,7 +772,6 @@ class AllAppointmentsView(generics.ListAPIView):
                      queryset=PersonalAddress.objects.select_related('add__sitio'))
         )
 
-        # Apply filters (similar to AllFollowUpVisitsView)
         if status_param and status_param.lower() != 'all':
             normalized_status = status_param.lower()
             follow_qs = follow_qs.filter(followv_status__iexact=normalized_status)

@@ -152,7 +152,7 @@ class ExclusiveBFCheck(models.Model):
     ebf_date = models.CharField(max_length=100, blank=True, null=True)  # Date of the check
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='exclusive_bf_checks')
     created_at = models.DateTimeField(auto_now_add=True)
-
+    type_of_feeding=models.CharField(max_length=100, blank=True, null=True)
     class Meta:
         db_table = 'exclusive_bf_check'
 

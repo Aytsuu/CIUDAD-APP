@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UseFormHandleSubmit, Control } from "react-hook-form";
+import { UseFormHandleSubmit, Control, useWatch } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -32,6 +32,13 @@ export const VitalSignFormCard = ({
   isReadOnly = false,
   allowNotesEdit = false
 }: VitalSignFormCardProps) => {
+  // Watch the is_opt field to conditionally show remarks
+  const isOptChecked = useWatch({
+    control,
+    name: "is_opt",
+    defaultValue: false
+  });
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="space-y-4">
@@ -98,24 +105,37 @@ export const VitalSignFormCard = ({
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormTextArea 
-            control={control} 
-            name="remarks" 
-            label="Remarks" 
-            placeholder="Enter remarks" 
-            rows={2} 
-            readOnly={isReadOnly}
-          />
-          <FormTextArea 
-            control={control} 
-            name="notes" 
-            label="Notes" 
-            placeholder="Enter notes" 
-            rows={2} 
-            readOnly={!allowNotesEdit && isReadOnly}
-          />
-        </div>
+        {isOptChecked ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormTextArea 
+              control={control} 
+              name="remarks" 
+              label="Remarks" 
+              placeholder="Enter remarks" 
+              rows={2} 
+              readOnly={isReadOnly}
+            />
+            <FormTextArea 
+              control={control} 
+              name="notes" 
+              label="Notes" 
+              placeholder="Enter notes" 
+              rows={2} 
+              readOnly={!allowNotesEdit && isReadOnly}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            <FormTextArea 
+              control={control} 
+              name="notes" 
+              label="Notes" 
+              placeholder="Enter notes" 
+              rows={2} 
+              readOnly={!allowNotesEdit && isReadOnly}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormDateTimeInput 
@@ -180,7 +200,20 @@ export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; 
         </div>
       </div>
 
-      {data.remarks && (
+      {data.is_opt && (
+        <div className="border-t pt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-4 w-4 rounded bg-blue-100 flex items-center justify-center">
+              <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium text-blue-700">OPT Tracking Enabled</span>
+          </div>
+        </div>
+      )}
+
+      {data.remarks && data.is_opt && (
         <div className="border-t pt-3">
           <div className="text-sm text-gray-600">Remarks</div>
           <p className="text-sm whitespace-pre-wrap">{data.remarks}</p>

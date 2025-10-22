@@ -22,7 +22,7 @@ export const addSupportDocument = async (gprId: number, files: MediaItem[]) => {
       files: files.map((file) => ({
         name: file.name || `file_${Date.now()}`,
         type: file.type || "image/jpeg",
-        file: file.file!, // Type assertion: guaranteed by validFiles filter
+        file: file.file!, 
         path: `uploads/${file.name || `file_${Date.now()}`}`,
         psd_is_archive: false,
       })),

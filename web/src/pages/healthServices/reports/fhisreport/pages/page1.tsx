@@ -9,7 +9,7 @@ export default function Page1({ state, onNext }: Page1Props) {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Page 1: Monthly Overview</h2>
           <p className="text-gray-600">Working with: <strong>{state.monthName}</strong></p>
-        </div>
+        </div>  
         
         <div className="flex-1">
           <div className="bg-blue-50 p-6 rounded-lg mb-6">

@@ -12,6 +12,8 @@ type FileData = {
 
 type ExtendedIllegalDump = z.infer<typeof IllegalDumpResSchema> & {
   files: FileData[];
+  rp_id: string | undefined;
+  phone: string | undefined;
 };
 
 
