@@ -5,8 +5,9 @@ import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/button/submit-button";
+import axios from "axios";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================

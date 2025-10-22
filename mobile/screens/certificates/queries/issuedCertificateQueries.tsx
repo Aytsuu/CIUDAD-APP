@@ -20,31 +20,46 @@ export interface IssuedCertificate {
 }
 
 
-export const getIssuedCertificates = async (): Promise<IssuedCertificate[]> => {
+export const getIssuedCertificates = async (
+  search?: string,
+  page?: number,
+  pageSize?: number,
+  purpose?: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<{results: IssuedCertificate[], count: number, next: string | null, previous: string | null}> => {
   try {
     console.log('Fetching issued certificates with web backend mapping...');
-    const rawData = await getIssuedCertificatesAPI();
+    const rawData = await getIssuedCertificatesAPI(search, page, pageSize, purpose, dateFrom, dateTo);
     
-    
-    const mapped: IssuedCertificate[] = (rawData || []).map((item: any) => {
+    const mapped: IssuedCertificate[] = (rawData.results || []).map((item: any) => {
       return {
         ic_id: item.ic_id,
         requester: item.requester,
         dateIssued: item.dateIssued,
         purpose: item.purpose,
-       
         original_certificate: item.original_certificate || undefined,
       } as IssuedCertificate;
     });
     
     console.log('Web backend mapped issued certificates:', mapped);
-    return mapped;
+    return {
+      results: mapped,
+      count: rawData.count,
+      next: rawData.next,
+      previous: rawData.previous
+    };
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error in issued certificate queries:', error.response?.data || error.message);
     if (error.response?.status === 500) {
       console.log('No issued certificates found, returning empty array');
-      return [];
+      return {
+        results: [],
+        count: 0,
+        next: null,
+        previous: null
+      };
     }
     throw error;
   }

@@ -14,6 +14,8 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input'
 import { FormSelect } from '@/components/ui/form/form-select';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { useUpdateAssignmentCollectorsAndSchedule } from './queries/garbagePickupStaffUpdateQueries';
+import { LoadingState } from '@/components/ui/loading-state';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function EditAssignmentForm() {
     const params = useLocalSearchParams();
@@ -25,6 +27,17 @@ export default function EditAssignmentForm() {
     const {data: drivers = [], isPending: pendingDrivers} = useGetDrivers()
     const {data: collectors = [], isPending: pendingCollectors} = useGetCollectors()
     const {mutate: updateAssignment, isPending} = useUpdateAssignmentCollectorsAndSchedule();
+
+    const { control, handleSubmit } = useForm({
+      resolver: zodResolver(EditAcceptPickupRequestSchema),
+      defaultValues: {
+        driver: String(params.driver_id),
+        collectors: collectorIds,
+        truck: String(params.truck_id),
+        date: String(params.date),
+        time: String(params.time),
+      }
+    });
 
     const collectorOptions = collectors.map(collector => ({
         id: collector.id,  
@@ -41,16 +54,23 @@ export default function EditAssignmentForm() {
         value: String(truck.truck_id)
     }));
 
-    const { control,  handleSubmit } = useForm({
-      resolver: zodResolver(EditAcceptPickupRequestSchema),
-      defaultValues: {
-        driver: String(params.driver_id),
-        collectors: collectorIds,
-        truck: String(params.truck_id),
-        date: String(params.date),
-        time: String(params.time),
-      }
-    });
+    if(pendingTrucks || pendingDrivers || pendingCollectors){
+        return(
+        <_ScreenLayout
+            customLeftAction={
+                <TouchableOpacity onPress={() => router.back()}>
+                <ChevronLeft size={30} className="text-black" />
+                </TouchableOpacity>
+            }
+            headerBetweenAction={<Text className="text-[13px]">Accept Garbage Pickup Request</Text>}
+            showExitButton={false}
+        >
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
+        </_ScreenLayout>
+        )
+    }
     
     const onSubmit = (values: z.infer<typeof EditAcceptPickupRequestSchema>) => {
          updateAssignment({
@@ -64,7 +84,6 @@ export default function EditAssignmentForm() {
                 collectors: values.collectors
             }
         })
-    
     };
 
     return (
@@ -76,12 +95,10 @@ export default function EditAssignmentForm() {
         }
         headerBetweenAction={<Text className="text-[13px]">Accept Garbage Pickup Request</Text>}
         showExitButton={false}
-        loading={pendingTrucks || pendingDrivers || pendingCollectors || isPending}
-        loadingMessage={pendingTrucks || pendingDrivers || pendingCollectors ? 'Loading...' : 'Submitting...'}
         >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             <View className="mb-8">
-            <View className="space-y-4">
+            <View className="space-y-4 p-6">
 
                 <FormSelect
                     control = {control}
@@ -132,6 +149,9 @@ export default function EditAssignmentForm() {
             </View>
             </View>
         </ScrollView>
+
+        <LoadingModal visible={isPending} />
+        
         </_ScreenLayout>
     );
 }

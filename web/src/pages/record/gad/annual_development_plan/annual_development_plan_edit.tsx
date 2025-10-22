@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useUpdateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combo-box-search";
 import { getStaffList, getAnnualDevPlanYears, getAnnualDevPlansByYear, getAnnualDevPlanById } from "./restful-api/annualGetAPI";
@@ -225,7 +225,7 @@ export default function AnnualDevelopmentPlanEdit() {
     try {
       const { dev_gad_budget, ...formData } = data;
       if (!selectedPlanId) {
-        toast.error("Please select a plan to update.");
+        showErrorToast("Please select a plan to update.");
         return;
       }
       await updateMutation.mutateAsync({ 
@@ -233,11 +233,11 @@ export default function AnnualDevelopmentPlanEdit() {
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any,
         budgetItems: budgetItems as BudgetItemType[],
       });
-      toast.success("Annual development plan updated successfully!");
+      showSuccessToast("Annual development plan updated successfully!");
       navigate(-1);
     } catch (error) {
       console.error("Error updating annual development plan:", error);
-      toast.error("Failed to update annual development plan");
+      showErrorToast("Failed to update annual development plan");
     } finally {
       setIsLoading(false);
     }
@@ -424,7 +424,7 @@ export default function AnnualDevelopmentPlanEdit() {
                     
                   }
                 } catch (err) {
-                  toast.error('Failed to load plan');
+                  showErrorToast('Failed to load plan');
                 }
               }}
               className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-60"

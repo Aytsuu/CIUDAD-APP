@@ -476,10 +476,10 @@ export const generateDisbursementPdf = async (
 
   // Right side payment details
   const paymentRightX = margin + containerWidth - 200;
-  doc.text(`Check No.: ${data.dis_checknum || "________________"}`, paymentRightX, paymentY + 20);
-  doc.text(`Bank Name: ${data.dis_bank || "________________"}`, paymentRightX, paymentY + 35);
-  doc.text(`Date: ${data.dis_paydate || "________________"}`, paymentRightX + 100, paymentY + 20);
-  doc.text(`O.R No.: ${data.dis_or_num || "________________"}`, paymentRightX, paymentY + 50);
+  doc.text(`Check No.: ${data.dis_checknum }`, paymentRightX, paymentY + 20);
+  doc.text(`Bank Name: ${data.dis_bank }`, paymentRightX, paymentY + 35);
+  doc.text(`Date: ${data.dis_paydate }`, paymentRightX + 100, paymentY + 20);
+  doc.text(`O.R No.: ${data.dis_or_num }`, paymentRightX, paymentY + 50);
 
   // Accounting entries section
   const accountingY = paymentY + paymentHeight;

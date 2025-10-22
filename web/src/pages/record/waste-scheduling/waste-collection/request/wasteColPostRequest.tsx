@@ -1,5 +1,4 @@
 import { api } from '@/api/api';
-import { formatDate } from '@/helpers/dateHelper';
 
 
 
@@ -7,7 +6,7 @@ import { formatDate } from '@/helpers/dateHelper';
 export const wasteColData = async (collectionInfo: Record<string, any>) => {
     try {
         console.log({
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
@@ -18,7 +17,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
         });
 
         const res = await api.post('waste/waste-collection-sched/', {
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,
@@ -69,6 +68,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
 
 export const addAssCollector = async (wc_num: number, wstp_id: string) => {
     try {
+
         const res = await api.post('waste/waste-ass-collectors/', {
             wc_num: wc_num,
             wstp: wstp_id
@@ -79,3 +79,19 @@ export const addAssCollector = async (wc_num: number, wstp_id: string) => {
         throw err;
     }
 }
+
+
+
+//WASTE COLLECTION ANNOUNCEMENT
+export const createCollectionReminders = async () => {
+  try {
+ 
+
+    console.log("NISUDDD AS ANNOUNCEMENT.....")
+    const res = await api.post('waste/create-collection-reminders/');
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};

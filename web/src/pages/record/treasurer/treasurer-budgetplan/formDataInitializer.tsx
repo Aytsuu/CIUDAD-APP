@@ -1,4 +1,8 @@
- export const initialFormData1 = {
+import { BudgetPlanStep2Schema } from "@/form-schema/treasurer/budgetplan-schema"
+import {z} from "zod"
+
+export const initialFormData1 = (): z.infer<typeof BudgetPlanStep2Schema> => {
+  return {
     honorariaOfficials: "",
     cashOfficials: "",
     midBonusOfficials: "",
@@ -17,34 +21,10 @@
     qrfFund: "",
     disasterTraining: "",
     disasterSupplies: "",
-    gadProg: "",
-    seniorProg: "",
     disasterProg: "",
-};
-
-export const initialFormData2 = {
-    travelingExpenses: "",
-    trainingExpenses: "",
-    officeExpenses: "",
-    accountableExpenses: "",
-    medExpenses: "",
-    waterExpenses: "",
-    electricityExpenses: "",
-    telephoneExpenses: "",
-    officeMaintenance: "",
-    vehicleMaintenance: "",
-    fidelityBond: "",
-    insuranceExpense: "",
     gadProg: "",
     seniorProg: "",
-    juvJustice: "",
-    badacProg: "",
-    nutritionProg: "",
-    aidsProg: "",
-    assemblyExpenses: "",
-    capitalOutlays: "",
-};
+  }
+}
 
 
-export type BudgetPlanPage1FormData = typeof initialFormData1;
-export type BudgetPlanPage2FormData = typeof initialFormData2;

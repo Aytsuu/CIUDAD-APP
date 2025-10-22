@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import date
 from abstract_classes import AbstractModels
+from abstract_classes import AbstractModels
 
 class ReportType(AbstractModels):
     rt_id = models.BigAutoField(primary_key=True)
@@ -48,7 +49,6 @@ class AcknowledgementReport(models.Model):
   ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
-  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:

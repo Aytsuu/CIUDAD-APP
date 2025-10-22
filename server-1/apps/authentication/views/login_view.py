@@ -106,27 +106,31 @@ class MobileLoginView(APIView):
             
             user = None
             
-            # Authenticate using phone or email
+            # Authenticate using phone or email - always get full user object
             if phone and not email:
                 logger.info(f"Authenticating with phone: {phone}")
                 try:
-                    user_account = Account.objects.get(phone=phone)
-                    if user_account.check_password(password):
-                        # Verify user is active before proceeding
-                        if user_account.is_active:
-                            user = user_account
-                        else:
+                    user = Account.objects.filter(phone=phone).first()
+                    if user and user.check_password(password):
+                        if not user.is_active:
                             return Response(
                                 {'error': 'Account is disabled'},
                                 status=status.HTTP_401_UNAUTHORIZED
                             )
+                        # Ensure we have the full object with related data
+                        user = Account.objects.select_related('rp').get(pk=user.pk)
+                    else:
+                        user = None
                 except Account.DoesNotExist:
                     pass 
                     
             elif email and not phone:
                 logger.info(f"Authenticating with email: {email}")
-                user = authenticate(request, username=email, password=password)
-                
+                # Authenticate first, then get full user object
+                auth_user = authenticate(request, username=email, password=password)
+                if auth_user:
+                    # Get the full user object with related data
+                    user = Account.objects.select_related('rp').get(pk=auth_user.pk)
             else:
                 return Response(
                     {'error': 'Please provide either email or phone, not both'},

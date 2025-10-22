@@ -35,13 +35,13 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
-import { team_router } from "./team-router";
+import { team_router } from "./team_router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
+import { healthreports_router } from "./health-reports-router";
 import { medicalConsultation } from "./med-consultation";
-import {healthreports_router} from "./health-reports-router";
+import { NotificationRouter } from "./notification-router";
 import TrackerMap from "@/pages/map/TrackerMap";
-import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -226,7 +226,7 @@ export const main_router: RouteObject[] = [
       ...template_router, 
       ...healthreports_router,
       ...medicalConsultation,
-      ...bhw_daily_notes_router
+      ...NotificationRouter,
       ])
     }
 ]

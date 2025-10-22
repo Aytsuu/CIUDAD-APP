@@ -1,11 +1,11 @@
 import { api } from "@/api/api";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { addAssCollector } from "../request/wasteColPostRequest";
 import { updateWasteColData } from "../request/wasteColPutRequest";
 import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 
 type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
@@ -22,15 +22,11 @@ export const useUpdateWasteSchedule = () => {
       updateWasteColData(wc_num, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Schedule updated successfully", {
-        id: "updateWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 4000
-      });
+      showSuccessToast("Schedule updated successfully");
     },
     onError: (err) => {
       console.error("Error updating schedule:", err);
-      toast.error("Failed to update schedule.");
+      showErrorToast("Failed to update schedule.");
     }
   });
 };
@@ -76,15 +72,12 @@ export const useUpdateCollectors = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Schedule updated successfully", {
-        id: "updateWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000
-      });
+
+      showSuccessToast("Schedule updated successfully");
     },
     onError: (err) => {
       console.error("Error updating collectors:", err);
-      toast.error("Failed to update collectors.");
+      showErrorToast("Failed to update collectors.");
     }
   });
 };

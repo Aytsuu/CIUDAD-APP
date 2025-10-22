@@ -9,6 +9,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import SignInSchema from "@/form-schema/sign-in-schema";
+import { getMessaging, getToken } from "firebase/messaging";
+import { app } from "@/firebase";
+import { FCMTokenPOST } from "../rest-api/FCMTokenPOST";
 
 interface PasswordEntryProps {
   userId: string;
@@ -52,8 +55,26 @@ export default function PasswordEntry({ method, contact }: PasswordEntryProps) {
       };
 
       await login(credentials);
-      toast.success("Successfully signed in!");
-      form.reset();
+
+      // Request notification permission
+      const permission = await Notification.requestPermission();
+      if(permission === "granted")
+        try{
+          const messaging = getMessaging(app);
+          const vapidKey = "";
+          const fcmToken = await getToken(messaging, {vapidKey});
+
+          if (fcmToken) {
+            console.log("Token generated in frontend: ",fcmToken)
+            await FCMTokenPOST(fcmToken);
+            toast.success("Successfully signed in!");
+            form.reset();
+          }
+        } catch (err) {
+          console.error("Error fetching FCM token: ", err)
+        } else {
+          toast.info("Notifications blocked by user");
+        }
       // onSuccess();
     } catch (error: any) {
       console.error("Password verification error:", error);

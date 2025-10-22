@@ -1,27 +1,95 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getServiceChargeReqDetails, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
-    getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
+import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getSummonCaseDetail, getSummonTemplate, getSuppDoc, getSummonDates, 
+    getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail} from "../requestAPI/summonGetAPI";
+import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList } from "../summon-types";
 
-export type SummonCaseList = {
-    sr_id: string;
-    sr_code: string;
-    complainant_names: string[];
-    accused_names: string[];
-    accused_addresses: string[],
-    complainant_addresses: string[];
-    incident_type: string;
-    sr_case_status: string;
-    decision_date: string;
-    comp_id: string;
-}
 
-export const useGetSummonCaseList = () => {
-    return useQuery<SummonCaseList[]>({
-        queryKey: ['summonCases'],
-        queryFn: getSummonCaseList,
+export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    return useQuery<{results: SummonCaseList[], count: number}>({
+        queryKey: ['summonCases', page, pageSize, searchQuery, statusFilter],
+        queryFn:() => getSummonCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
     })
 }
+
+export const useGetCouncilCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    return useQuery<{results: SummonCaseList[], count: number}>({
+        queryKey: ['councilCases', page, pageSize, searchQuery, statusFilter],
+        queryFn:() => getCouncilCaseList(page, pageSize, searchQuery, statusFilter),
+        staleTime: 5000,
+    })
+}
+
+export const useGetLuponCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    return useQuery<{results: SummonCaseList[], count: number}>({
+        queryKey: ['luponCases', page, pageSize, searchQuery, statusFilter],
+        queryFn:() => getLuponCaseList(page, pageSize, searchQuery, statusFilter),
+        staleTime: 5000,
+    })
+}
+
+export const useGetSummonCaseDetails = (sc_id: string) => {
+    return useQuery<SummonCaseDetails>({
+        queryKey: ['summonCaseDetails', sc_id],
+        queryFn: () => getSummonCaseDetail(sc_id),
+        staleTime: 5000,
+        enabled: !!sc_id, 
+    });
+}
+
+export const useGetCouncilCaseDetails = (sc_id: string) => {
+    return useQuery<SummonCaseDetails>({
+        queryKey: ['councilCaseDetails', sc_id],
+        queryFn: () => getCouncilCaseDetail(sc_id),
+        staleTime: 5000,
+        enabled: !!sc_id, 
+    });
+}
+
+export const useGetLuponCaseDetails = (sc_id: string) => {
+    return useQuery<SummonCaseDetails>({
+        queryKey: ['luponCaseDetails', sc_id],
+        queryFn: () => getLuponCaseDetail(sc_id),
+        staleTime: 5000,
+        enabled: !!sc_id, 
+    });
+}
+
+export const useGetSummonDates = () => {
+    return useQuery<SummonDates[]>({
+        queryKey: ['summonDates'],
+        queryFn: getSummonDates,
+        staleTime: 5000
+    })
+}
+
+
+export const useGetSummonTimeSlots = (sd_id: number) => {
+    return useQuery<SummonTimeSlots[]>({
+        queryKey: ['summonTimeSlots', sd_id],
+        queryFn: () => getSummonTimeSlots(sd_id),
+        staleTime: 5000
+    })
+}
+
+
+export const useGetScheduleList = (sc_id: string) => {
+     return useQuery<ScheduleList[]>({
+        queryKey: ['schedList', sc_id],
+        queryFn: () => getSummonScheduleList(sc_id),
+        enabled: !!sc_id, 
+        staleTime: 5000,
+    });
+}
+  
+
+
+
+
+
+
+
+
 
 export type SupportingDoc = {
   ssd_id: number;
@@ -40,31 +108,8 @@ export const useGetSummonSuppDoc = (ss_id: string) => {
     })
 }
 
-export type ScheduleList = {
-    ss_id: string;
-    ss_mediation_level: string;
-    ss_is_rescheduled: boolean;
-    ss_reason: string;
-    hearing_date: string;
-    hearing_time: string;
-    supporting_docs: SupportingDoc[];
-}
-
 export type ResidentProfileBase = {
   [key: string]: any;
-};
-
-export type Complainant = {
-  cpnt_id: number;
-  cpnt_name: string;
-  rp_id: number | null;
-  res_profile: ResidentProfileBase | null;
-};
-
-export type Accused = {
-  acsd_id: number;
-  acsd_name: string;
-  res_profile: ResidentProfileBase | null;
 };
 
 export type Complaint = {
@@ -88,104 +133,47 @@ export type ServiceChargeReqDetails = {
 export const useGetServiceChargeReqDetails = (sr_id: string) => {
     return useQuery<ServiceChargeReqDetails[]>({
         queryKey: ['serviceChargeDetails', sr_id],
-        queryFn: () => getServiceChargeReqDetails(sr_id),
+        queryFn: () => getSummonCaseDetail(sr_id),
         enabled: !!sr_id, 
         staleTime: 5000,
     });
 }
 
-export const useGetScheduleList = (sr_id: string) => {
-     return useQuery<ScheduleList[]>({
-        queryKey: ['schedList', sr_id],
-        queryFn: () => getSummonScheduleList(sr_id),
-        enabled: !!sr_id, 
-        staleTime: 5000,
-    });
-}
-  
 
-export type SummonDates = {
-    sd_id: number;
-    sd_date: string;
+
+
+
+
+export type ComplaintFile = {
+    comp_file_id: string;
+    comp_file_name: string;
+    comp_file_type: string;
+    comp_file_url: string;
 }
 
-export const useGetSummonDates = () => {
-    return useQuery<SummonDates[]>({
-        queryKey: ['summonDates'],
-        queryFn: getSummonDates,
-        staleTime: 5000
-    })
+export type Complainant = {
+    cpnt_id: string;
+    cpnt_name: string;
+    cpnt_gender: string;
+    cpnt_age: string;
+    cpnt_number: string;
+    cpnt_relation_to_respondent: string;
+    cpnt_address: string;
+    rp_id: string;
 }
 
-
-export type SummonTimeSlots = {
-    st_id?: number;
-    st_start_time: string;
-    sd_id?: number;
-    st_is_booked?: boolean;
+export type Accused = {
+    acsd_id: string;
+    acsd_name: string;
+    acsd_age: string;
+    acsd_gender: string;
+    acsd_description: string;
+    acsd_address: string;
 }
 
-export const useGetSummonTimeSlots = (sd_id: number) => {
-    return useQuery<SummonTimeSlots[]>({
-        queryKey: ['summonTimeSlots', sd_id],
-        queryFn: () => getSummonTimeSlots(sd_id),
-        staleTime: 5000
-    })
-}
-
-export type SummonReqPendingList = {
-    sr_id: string;
-    sr_req_date: string;
-    comp_id: string;
-    complainant_names: string[]
-    incident_type: string;
-    accused_names: string [];
-}
-
-export const useGetSummonReqPendingList = () => {
-    return useQuery<SummonReqPendingList[]>({
-        queryKey: ['summonPendingReq'],
-        queryFn: getSummonReqPendingList,
-        staleTime: 5000
-    })
-}
-
-export type SummonReqRejectedList = {
-    sr_id: string;
-    sr_req_date: string;
-    comp_id: string;
-    complainant_names: string[]
-    incident_type: string;
-    accused_names: string [];
-    rejection_reason: string;
-    decision_date: string;
-}
-
-export const useGetSummonReqRejectedList = () => {
-    return useQuery<SummonReqRejectedList[]>({
-        queryKey: ['summonRejectedReq'],
-        queryFn: getSummonReqRejectedList,
-        staleTime: 5000
-    })
-}
-
-export type SummonReqAcceptedList = {
-    sr_id: string;
-    sr_req_date: string;
-    comp_id: string;
-    complainant_names: string[]
-    incident_type: string;
-    accused_names: string [];
-    rejection_reason: string;
-    decision_date: string;
-}
-
-export const useGetSummonReqAcceptedList = () => {
-    return useQuery<SummonReqAcceptedList[]>({
-        queryKey: ['summonAcceptedReq'],
-        queryFn: getSummonReqAcceptedList,
-        staleTime: 5000
-    })
+export type Staff = {
+    staff_id: string;
+    staff_name: string;
 }
 
 export type ComplaintDetails = {
@@ -195,9 +183,12 @@ export type ComplaintDetails = {
     comp_location: string;
     comp_datetime: string;
     comp_created_at: string;
-    complainant: string [];
-    accused_persons: string [];
-    complaint_files: string [];
+    comp_is_archive: boolean;
+    comp_status: string;
+    complainant: Complainant[];  
+    accused: Accused[];          
+    complaint_files: ComplaintFile[];  
+    staff: Staff | null;
 }
 
 export const useGetComplaintDetails = (comp_id: string) => {
@@ -321,11 +312,3 @@ export type CaseDetails = {
     case_activities: CaseActivity[];
 };
 
-export const useGetCaseDetails = (srId: string) => {
-    return useQuery<CaseDetails>({
-        queryKey: ['caseDetails', srId],
-        queryFn: () => getCaseDetails(srId),
-        enabled: !!srId, 
-        staleTime: 5000,
-    });
-};

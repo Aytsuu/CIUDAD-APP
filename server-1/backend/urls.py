@@ -23,6 +23,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import *
+from apps.authentication.views.web_views import CookieTokenRefreshView
 from django.http import JsonResponse
 
 def health_check(request):
@@ -30,7 +31,7 @@ def health_check(request):
 
 urlpatterns = [
     # path('api/token/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # path('api/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls), 
     path('account/', include("apps.account.urls")),
     path('waste/', include('apps.waste.urls')),

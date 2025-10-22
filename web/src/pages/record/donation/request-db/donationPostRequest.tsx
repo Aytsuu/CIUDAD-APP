@@ -12,6 +12,7 @@ export const postdonationreq = async (donationInfo: Record<string, any>) => {
       don_category: donationInfo.don_category,
       don_date: formatDate(donationInfo.don_date),
       staff: donationInfo.staff,
+      don_status: donationInfo.don_status,
     });
 
     return res.data.don_num;

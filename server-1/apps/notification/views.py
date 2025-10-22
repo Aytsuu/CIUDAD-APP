@@ -1,72 +1,95 @@
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import Notification, Recipient
-from .serializers import NotificationSerializer
-from rest_framework.decorators import api_view
-from django.utils import timezone
-from utils.supabase_client import supabase
-from django.conf import settings
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .models import Notification, Recipient, FCMToken
+from .serializers import NotificationSerializer, FCMTokenSerializer, RecipientSerializer
+from .notifications import send_push_notification
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+import logging
 
-class UserNotificationListView(generics.ListAPIView):
-    serializer_class = NotificationSerializer
+logger = logging.getLogger(__name__)
+
+class RegisterFCMTokenView(generics.CreateAPIView):
+    serializer_class = FCMTokenSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        fcm_token = serializer.validated_data['fcm_token']
+        fcm_device_id = serializer.validated_data['fcm_device_id']
+        
+        obj, created = FCMToken.objects.update_or_create(
+            acc=request.user,
+            fcm_device_id=fcm_device_id,
+            defaults={'fcm_token': fcm_token}
+        )
+        return Response(FCMTokenSerializer(obj).data, status=status.HTTP_201_CREATED)
+        
+class NotificationListView(generics.ListAPIView):
+    serializer_class = RecipientSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Get notifications where user is a recipient
-        return Notification.objects.filter(
-            recipients__acc=self.request.user
-        ).order_by('-notif_created_at')
+        user_rp = getattr(self.request.user, "rp", None)
 
-class NotificationCreateView(generics.CreateAPIView):
-    serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated]
+        if not user_rp:
+            return Recipient.objects.none()
 
-    def perform_create(self, serializer):
-        notification = serializer.save(sender=self.request.user)
-        
-        # Add recipients (example - adjust as needed)
-        recipients = self.request.data.get('recipients', [])
-        for acc_id in recipients:
-            Recipient.objects.create(notif=notification, acc_id=acc_id)
-        
-        # Sync to Supabase
-        notification.push_to_supabase()
-
-class NotificationMarkAsReadView(generics.UpdateAPIView):
-    queryset = Notification.objects.all()
-    serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def update(self, request, *args, **kwargs):
-        notification = self.get_object()
-        recipient = notification.recipients.filter(acc=request.user).first()
-        
-        if not recipient:
-            return Response(
-                {"error": "Not authorized to mark this notification as read"},
-                status=status.HTTP_403_FORBIDDEN
+        return (
+            Recipient.objects.filter(rp=user_rp)
+            .select_related(
+                "notif",         
+                "notif__sender",   
+                "rp",             
+                "rp__per"          
             )
-        
-        recipient.is_read = True
-        recipient.read_at = timezone.now()
-        recipient.save()
-        
-        # Update main notification if all recipients read it
-        if not notification.recipients.filter(is_read=False).exists():
-            notification.is_read = True
-            notification.read_at = timezone.now()
-            notification.save()
-        
-        # Sync to Supabase
-        notification.push_to_supabase()
-        
-        return Response(self.get_serializer(notification).data)
+            .order_by("-notif__notif_created_at")
+        )
 
-@api_view(['GET'])
-def unread_count(request):
-    count = Recipient.objects.filter(
-        acc=request.user,
-        is_read=False
-    ).count()
-    return Response({'unread_count': count})
+class BulkMarkAsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        notif_ids = request.data.get('notification_ids', [])
+        
+        user_rp = getattr(request.user, "rp", None)
+        
+        try:
+            updated_count = Recipient.objects.filter(
+                notif_id__in=notif_ids,
+                rp=user_rp,
+                is_read=False
+            ).update(is_read=True)
+            
+            return Response({'message': "Notifications marked as read successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error in BulkMarkAsReadView: {str(e)}")
+            return Response({'error': 'An error occurred while updating notifications.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SingleMarkAsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        notif_id = request.data.get('notification_id')
+        
+        user_rp = getattr(request.user, "rp", None)
+        
+        try:
+            updated_count = Recipient.objects.filter(
+                notif_id__in=notif_id,
+                rp=user_rp,
+                is_read=False
+            ).update(is_read=True)
+            
+            return Response({'message': "Notifications marked as read successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error in BulkMarkAsReadView: {str(e)}")
+            return Response({'error': 'An error occurred while updating notifications.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

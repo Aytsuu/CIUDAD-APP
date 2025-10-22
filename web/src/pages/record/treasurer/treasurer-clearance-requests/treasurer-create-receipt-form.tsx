@@ -68,6 +68,16 @@ import { Loader2 } from "lucide-react";
        hasDisabilityEligible
      )
    );
+   
+   // Check if resident is eligible for free service (voter_id, senior, or disabled)
+   // These residents don't need discounts since they already get free service
+   const isEligibleForFreeService = Boolean(
+     effectiveIsResident && (
+       voter_id !== null && voter_id !== undefined ||
+       isSeniorEligible ||
+       hasDisabilityEligible
+     )
+   );
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -76,8 +86,8 @@ import { Loader2 } from "lucide-react";
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: effectiveIsResident ? "N/A" : "", 
-            inv_amount: effectiveIsResident ? (isFree ? "0" : (rate || "0")) : "",
+            inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
+            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : (rate || ""),
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
             cr_id: effectiveIsResident ? id.toString() : undefined,
@@ -97,7 +107,7 @@ import { Loader2 } from "lucide-react";
                     // Just update the existing payment request status to Paid
                     console.log('[Receipt onSubmit] updating service charge status to Paid');
                     await updateServiceChargeStatus({ 
-                        sr_id: id, 
+                        pay_id: spay_id, 
                         data: { 
                             status: "Paid" 
                         } 
@@ -110,14 +120,16 @@ import { Loader2 } from "lucide-react";
                         console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
                     } else {
                         console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                        await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                        const newPaymentRequest = await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                        const newSpayId = newPaymentRequest?.spay_id || newPaymentRequest?.pay_id;
+                        
                         // Auto-mark summon as Accepted
                         await acceptSummon(id.toString());
                         
                         // Update status to "Paid" - backend will generate sr_code automatically
                         console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
-                            sr_id: id, 
+                            pay_id: newSpayId, 
                             data: { 
                                 status: "Paid" 
                             } 
@@ -245,15 +257,15 @@ import { Loader2 } from "lucide-react";
                         )}
                     </div>
                     
-                    {/* Discount Button (hidden for free/voter requests) */}
-                    {!isFree && !isAlreadyPaid && (
+                    {/* Discount Button (disabled for residents with free service eligibility) */}
+                    {!isAlreadyPaid && (
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={nat_col === "Service Charge"}
+                            disabled={nat_col === "Service Charge" || isEligibleForFreeService}
                             className={`
                                 flex items-center gap-2 border-green-500 
-                                ${nat_col === "Service Charge" 
+                                ${nat_col === "Service Charge" || isEligibleForFreeService
                                 ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
                                 : "text-green-600 hover:bg-green-50 hover:text-green-700"}
                             `}
@@ -264,8 +276,8 @@ import { Loader2 } from "lucide-react";
                     )}
                 </div>
 
-                {/* Only show these fields if NOT resident */}
-                {!is_resident && (
+                {/* Show these fields if NOT resident OR if resident but not eligible for free service */}
+                {(!is_resident || (is_resident && !isEligibleForFreeService)) && (
                 <>
                     <FormField
                     control={form.control}
@@ -340,7 +352,7 @@ import { Loader2 } from "lucide-react";
                 <div className="flex justify-end gap-3 mt-6">
                 <Button 
                     type="submit" 
-                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
+                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
                     {isPending || isAcceptPending || isAcceptNonResPending ? (
@@ -350,7 +362,7 @@ import { Loader2 } from "lucide-react";
                         </div>
                     ) : isAlreadyPaid ? (
                         "Cannot Proceed"
-                    ) : is_resident ? (
+                    ) : (is_resident && isEligibleForFreeService) ? (
                         "Accept"
                     ) : (
                         "Create Receipt"
@@ -365,6 +377,3 @@ import { Loader2 } from "lucide-react";
 }
 
 export default ReceiptForm;
-
-
-

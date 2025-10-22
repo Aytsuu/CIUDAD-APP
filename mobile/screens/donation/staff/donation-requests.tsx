@@ -1,17 +1,42 @@
 import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelpers";
 
-export const getdonationreq = async () => {
-    try {
-        const res = await api.get('donation/donation-record/');
-        
-        // Handle empty/undefined responses
-        const data = res.data?.data ?? res.data ?? [];
-        return Array.isArray(data) ? data : [];
-    } catch (err) {
-        console.error("API Error:", err);
-        return [];  // Always return an array
+export const getdonationreq = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  category?: string,
+  status?: string
+): Promise<{ results: any[]; count: number }> => {
+  try {
+    const params: any = {
+      page,
+      page_size: pageSize
+    };
+    
+    if (searchQuery) params.search = searchQuery;
+    if (category && category !== 'all') params.category = category;
+    if (status && status !== 'all') params.status = status;
+    
+    const res = await api.get('donation/donation-record/', { params });
+    
+    // Handle paginated response
+    if (res.data.results !== undefined) {
+      return {
+        results: res.data.results || [],
+        count: res.data.count || 0
+      };
     }
+    
+    // Fallback for non-paginated response
+    const data = res.data?.data ?? res.data ?? [];
+    return {
+      results: Array.isArray(data) ? data : [],
+      count: Array.isArray(data) ? data.length : 0
+    };
+  } catch (err) {
+    return { results: [], count: 0 };
+  }
 };
 
 export const getPersonalList = async () => {
@@ -27,17 +52,6 @@ export const getPersonalList = async () => {
 
 export const postdonationreq= async (donationInfo: Record<string, any>) => {
     try {
-
-        console.log({
-            don_num: donationInfo.don_num,
-            don_donor: donationInfo.don_donor,
-            don_item_name: donationInfo.don_item_name,
-            don_qty: donationInfo.don_qty,
-            don_description: donationInfo.don_description,
-            don_category: donationInfo.don_category,
-            don_date: formatDate(donationInfo.don_date),  
-        });
-
         const res = await api.post('donation/donation-record/', {
             don_num: donationInfo.don_num,
             don_donor: donationInfo.don_donor,
@@ -46,6 +60,8 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
             don_date: formatDate(donationInfo.don_date), 
+            don_status: donationInfo.don_status,
+            staff: donationInfo.staff,
         });
 
         return res.data.don_num;
@@ -63,7 +79,10 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
             don_qty: donationInfo.don_qty,
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
-            don_date: formatDate(donationInfo.don_date), // Use the formatted date
+            don_date: formatDate(donationInfo.don_date),
+            don_status: donationInfo.don_status,
+            don_dist_head: donationInfo.don_dist_head,
+            don_dist_date: donationInfo.don_dist_date,
         });
 
         return res.data;
@@ -72,3 +91,13 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
         console.error(err);
     }
 }
+
+export const getStaffList = async () => {
+  try {
+    const res = await api.get('donation/dist/staff/');
+    const data = res.data?.data ?? res.data ?? [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
+};

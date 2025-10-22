@@ -40,13 +40,42 @@ export interface IssuedBusinessPermit {
     };
 }
 
-// Fetch business permits
-export const getBusinessPermits = async (): Promise<BusinessPermit[]> => {
+// Fetch business permits with search and pagination - matching web version
+export const getBusinessPermits = async (
+    search?: string,
+    page?: number,
+    pageSize?: number,
+    status?: string,
+    paymentStatus?: string,
+    businessType?: string
+): Promise<{results: BusinessPermit[], count: number, next: string | null, previous: string | null}> => {
     try {
-        console.log('Making request to /clerk/business-permit/');
-        const res = await api.get('/clerk/business-permit/');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (page) params.append('page', page.toString());
+        if (pageSize) params.append('page_size', pageSize.toString());
+        if (status) params.append('status', status);
+        if (paymentStatus) params.append('payment_status', paymentStatus);
+        if (businessType) params.append('business_type', businessType);
+        
+        const queryString = params.toString();
+        const url = `/clerk/business-permit/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
         console.log('API Response:', res.data);
-        return res.data;
+        
+        // Handle both paginated and non-paginated responses
+        if (res.data.results) {
+            return res.data;
+        } else {
+            return {
+                results: res.data,
+                count: res.data.length,
+                next: null,
+                previous: null
+            };
+        }
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching business permits:', error);
@@ -73,19 +102,53 @@ export const getBusinessPermitById = async (bpId: string): Promise<BusinessPermi
     }
 };
 
-// Fetch issued business permits
-export const getIssuedBusinessPermits = async (): Promise<IssuedBusinessPermit[]> => {
+// Fetch issued business permits with search and pagination - matching web version
+export const getIssuedBusinessPermits = async (
+    search?: string,
+    page?: number,
+    pageSize?: number,
+    purpose?: string,
+    dateFrom?: string,
+    dateTo?: string
+): Promise<{results: IssuedBusinessPermit[], count: number, next: string | null, previous: string | null}> => {
     try {
-        console.log('Making request to /clerk/issued-business-permits/');
-        const res = await api.get('/clerk/issued-business-permits/');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (page) params.append('page', page.toString());
+        if (pageSize) params.append('page_size', pageSize.toString());
+        if (purpose) params.append('purpose', purpose);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        
+        const queryString = params.toString();
+        const url = `/clerk/issued-business-permits/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
         console.log('API Response:', res.data);
-        return res.data || [];
+        
+        // Handle both paginated and non-paginated responses
+        if (res.data.results) {
+            return res.data;
+        } else {
+            return {
+                results: res.data || [],
+                count: res.data?.length || 0,
+                next: null,
+                previous: null
+            };
+        }
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching issued business permits:', error);
         if (error.response?.status === 500) {
             console.log('No issued business permits found, returning empty array');
-            return [];
+            return {
+                results: [],
+                count: 0,
+                next: null,
+                previous: null
+            };
         }
         throw error;
     }

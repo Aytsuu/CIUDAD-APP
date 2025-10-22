@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, FormProvider } from 'react-hook-form';
 import { complaintFormSchema } from '@/form-schema/complaint-schema';
 import { z } from 'zod';
 
@@ -15,7 +15,7 @@ export const ComplaintFormProvider = ({
 }) => {
   return (
     <FormContext.Provider value={methods}>
-      {children}
+      <FormProvider {...methods}>{children}</FormProvider>
     </FormContext.Provider>
   );
 };

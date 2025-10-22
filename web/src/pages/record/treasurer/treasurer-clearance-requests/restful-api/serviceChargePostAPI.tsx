@@ -6,9 +6,9 @@ export interface UpdateServiceChargeStatusRequest {
 }
 
 export const updateServiceChargeStatus = async (
-  sr_id: string | number,
+  pay_id: string | number,
   data: UpdateServiceChargeStatusRequest
 ) => {
-  const response = await api.put(`clerk/update-summon-request/${sr_id}/`, data);
+  const response = await api.put(`clerk/treasurer/service-charge-payment/${pay_id}/`, data);
   return response.data;
 };

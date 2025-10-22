@@ -12,7 +12,7 @@ interface DisplayBreakDownProps{
 function DisplayBreakdown({balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome}: DisplayBreakDownProps){
     const style = {
         container: "p-5 border rounded-md border-[2px] border-lightBlue drop-shadow flex flex-col gap-4",
-        text: "text-blue font-bold"
+        text: "text-primary font-bold"
     }
 
     return(

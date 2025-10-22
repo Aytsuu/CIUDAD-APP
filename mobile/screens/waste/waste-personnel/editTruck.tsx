@@ -13,6 +13,7 @@ import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function WasteTruckEdit() {
   const router = useRouter();
@@ -73,22 +74,25 @@ export default function WasteTruckEdit() {
   };
 
   // Handle loading state
-  if (isTruckLoading) {
+    if (isTruckLoading) {
     return (
       <ScreenLayout
         customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
-     ><Text>Loading...</Text></ScreenLayout>
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+        showExitButton={false}
+        headerAlign="left"
+        scrollable={true}
+        keyboardAvoiding={true}
+        contentPadding="medium"
+      >
+        <View className="flex-1 justify-center items-center">
+          <LoadingState/>
+        </View>
+      </ScreenLayout>
     );
   }
 
@@ -119,7 +123,7 @@ export default function WasteTruckEdit() {
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      headerBetweenAction={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
       showExitButton={false}
       headerAlign="left"
       scrollable={true}
@@ -177,7 +181,7 @@ export default function WasteTruckEdit() {
       }
       stickyFooter={true}
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
         <View className="space-y-4">
         <View className="relative ">
           <FormInput
