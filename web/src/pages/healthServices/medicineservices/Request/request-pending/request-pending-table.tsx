@@ -3,13 +3,14 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, FileInput, Loader2 } from "lucide-react";
+import { Search, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestPendingColumns } from "./columns";
 import { usePendingMedRequest } from "../queries/fetch";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function PendingConfirmation() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,17 +31,7 @@ export default function PendingConfirmation() {
     };
   }, [searchQuery]);
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-    refetch
-  } = usePendingMedRequest(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-    dateFilter // Pass date filter to the server
-  );
+  const { data: apiResponse, isLoading, error, refetch } = usePendingMedRequest(currentPage, pageSize, debouncedSearch, dateFilter);
 
   // Extract data from paginated response
   const medicineRequests = apiResponse?.results || [];
@@ -128,10 +119,7 @@ export default function PendingConfirmation() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
+           <TableLoading/>
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
               <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>

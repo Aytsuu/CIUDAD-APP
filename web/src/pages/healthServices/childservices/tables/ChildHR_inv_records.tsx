@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { useChildHealthHistory, useNutriotionalStatus } from "../forms/queries/fetchQueries";
@@ -20,6 +20,7 @@ import { GrowthChart } from "./growth-chart";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { processHistoryData } from "./formattedData";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
+import TableLoading from "../../table-loading";
 
 export default function InvChildHealthRecords() {
   const location = useLocation();
@@ -276,16 +277,7 @@ export default function InvChildHealthRecords() {
             </ProtectedComponentButton>
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+        <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}- {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records

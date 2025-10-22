@@ -2,23 +2,21 @@ import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Loader2, Search, Users, Home, UserCheck, FileInput } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
-import { calculateAge } from "@/helpers/ageCalculator";
+import { Search, Users, Home, UserCheck, FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
-import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useCombinedHealthRecords } from "../queries/fetch";
+import TableLoading from "../../table-loading";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCombinedConsultationColumns } from "./columns/combineconsult-col";
 
 export default function ForwardedCombinedHealthRecordsTable() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || "";
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +27,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
   const { showLoading, hideLoading } = useLoading();
 
   const { data: combinedData, isLoading: combinedLoading } = useCombinedHealthRecords(staffId, debouncedSearchQuery, recordTypeFilter, currentPage, pageSize);
+  const columns = useCombinedConsultationColumns();
 
   // Reset to first page when search or filter changes
   useEffect(() => {
@@ -39,213 +38,6 @@ export default function ForwardedCombinedHealthRecordsTable() {
     setPageSize(newPageSize >= 1 ? newPageSize : 1);
     setCurrentPage(1);
   };
-
-  const columns: ColumnDef<any>[] = [
-    {
-      accessorKey: "record_type",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Record Type <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize text-center">{row.original.record_type.replace("-", " ")}</div>
-    },
-    {
-      accessorKey: "patient_info",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient Info <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const data = row.original.data;
-        let patientDetails = null;
-
-        if (row.original.record_type === "child-health") {
-          patientDetails = data.chrec_details?.patrec_details?.pat_details;
-        } else {
-          patientDetails = data.patrec_details?.patient_details;
-        }
-
-        const personalInfo = patientDetails?.personal_info || {};
-        const fullName = `${personalInfo.per_lname || ""}, ${personalInfo.per_fname || ""} ${personalInfo.per_mname || ""}`.trim();
-
-        return (
-          <div className="flex flex-col min-w-[200px]">
-            <div className="font-medium">{fullName}</div>
-            <div className="text-sm text-gray-500">
-              {personalInfo.per_sex}, {personalInfo.per_dob ? calculateAge(personalInfo.per_dob) : "N/A"}
-            </div>
-            <div className="text-xs text-gray-500">ID: {patientDetails?.pat_id || "N/A"}</div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "details",
-      header: "Record Details",
-      cell: ({ row }) => {
-        const data = row.original.data;
-
-        if (row.original.record_type === "child-health") {
-          return (
-            <div className="grid grid-cols-1 gap-1 text-sm min-w-[180px]">
-              <div>UFC No: {data.chrec_details?.ufc_no || "N/A"}</div>
-              <div>TT Status of Mother: {data.tt_status || "N/A"}</div>
-            </div>
-          );
-        } else {
-          return (
-            <div className="grid grid-cols-1 gap-1 text-sm min-w-[200px]">
-              <div>Chief Complaint: {data.medrec_chief_complaint || "N/A"}</div>
-              <div>Status: {data.medrec_status || "N/A"}</div>
-            </div>
-          );
-        }
-      }
-    },
-    {
-      accessorKey: "vital_signs",
-      header: "Vital Signs",
-      cell: ({ row }) => {
-        const data = row.original.data;
-
-        if (row.original.record_type === "child-health") {
-          const vitalSigns = data.child_health_vital_signs?.[0];
-          const bmDetails = vitalSigns?.bm_details;
-          const temp = vitalSigns?.temp;
-
-          return (
-            <div className="text-sm min-w-[180px]">
-              {temp && <div>Temp: {temp}°C</div>}
-              {bmDetails && (
-                <>
-                  <div>Height: {bmDetails.height || "N/A"} cm</div>
-                  <div>Weight: {bmDetails.weight || "N/A"} kg</div>
-                  <div>WFA: {bmDetails.wfa || "N/A"}</div>
-                  <div>LHFA: {bmDetails.lhfa || "N/A"}</div>
-                </>
-              )}
-            </div>
-          );
-        } else {
-          const vitalSigns = data.vital_signs || {};
-          const bmiDetails = data.bmi_details || {};
-
-          return (
-            <div className="text-sm min-w-[180px]">
-              <div>
-                BP: {vitalSigns.vital_bp_systolic || "N/A"}/{vitalSigns.vital_bp_diastolic || "N/A"}
-              </div>
-              <div>Temp: {vitalSigns.vital_temp || "N/A"}°C</div>
-              <div>Pulse: {vitalSigns.vital_pulse || "N/A"}</div>
-              <div>RR: {vitalSigns.vital_RR || "N/A"}</div>
-              <div>Height: {bmiDetails.height || "N/A"} cm</div>
-              <div>Weight: {bmiDetails.weight || "N/A"} kg</div>
-            </div>
-          );
-        }
-      }
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const data = row.original.data;
-        let address = null;
-
-        if (row.original.record_type === "child-health") {
-          address = data.chrec_details?.patrec_details?.pat_details?.address;
-        } else {
-          address = data.patrec_details?.patient_details?.address;
-        }
-
-        return <div className="w-[200px] break-words text-sm">{address?.full_address || "No address provided"}</div>;
-      }
-    },
-    {
-      accessorKey: "created_at",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Created At <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => <div className="text-sm">{row.original.data.created_at ? new Date(row.original.data.created_at).toLocaleDateString() : "N/A"}</div>
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const data = row.original.data;
-        let patientData = null;
-
-        if (row.original.record_type === "child-health") {
-          const patDetails = data.chrec_details?.patrec_details?.pat_details;
-          const personalInfo = patDetails?.personal_info || {};
-          const address = patDetails?.address || {};
-
-          patientData = {
-            pat_id: patDetails?.pat_id,
-            pat_type: patDetails?.pat_type,
-            age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
-            addressFull: address.full_address,
-            address: {
-              add_street: address.add_street,
-              add_barangay: address.add_barangay,
-              add_city: address.add_city,
-              add_province: address.add_province,
-              add_sitio: address.add_sitio
-            },
-            households: patDetails?.households || [],
-            personal_info: personalInfo
-          };
-        } else {
-          const patDetails = data.patrec_details?.patient_details;
-          const personalInfo = patDetails?.personal_info || {};
-          const address = patDetails?.address || {};
-
-          patientData = {
-            pat_id: data.patrec_details?.pat_id,
-            pat_type: patDetails?.pat_type,
-            age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
-            addressFull: address.full_address,
-            address: {
-              add_street: address.add_street,
-              add_barangay: address.add_barangay,
-              add_city: address.add_city,
-              add_province: address.add_province,
-              add_sitio: address.add_sitio
-            },
-            households: patDetails?.households || [],
-            personal_info: personalInfo
-          };
-        }
-
-        return (
-          <div className="flex justify-center gap-2">
-            <ViewButton
-              onClick={() => {
-                navigate(row.original.record_type === "child-health" ? "/referred-patients/child" : "/referred-patients/adult", {
-                  state: {
-                    patientData,
-                    // Pass only the current row's data instead of combinedData
-                    recordData: row.original.data,
-                    recordType: row.original.record_type,
-                    // For child health, pass the specific checkup data
-                    ...(row.original.record_type === "child-health" ? { checkupData: row.original.data } : { MedicalConsultation: row.original.data })
-                  }
-                });
-              }}
-            />
-          </div>
-        );
-      }
-    }
-  ];
 
   useEffect(() => {
     if (combinedLoading) {
@@ -286,58 +78,14 @@ export default function ForwardedCombinedHealthRecordsTable() {
   return (
     <MainLayoutComponent title="Medical Consultation" description="Forwarded records for Medical Consultation">
       <div className="w-full h-full flex flex-col">
-        {/* Summary Cards - Improved from reference design */}
+        {/* Enhanced Card Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Total Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-full mr-4">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Records</p>
-                <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-            </div>
-          </div>
-
-          {/* Resident Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full mr-4">
-                <Home className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Residents</p>
-                <p className="text-2xl font-bold text-gray-800">{residents}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-            </div>
-          </div>
-
-          {/* Transient Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full mr-4">
-                <UserCheck className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Transients</p>
-                <p className="text-2xl font-bold text-gray-800">{transients}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-            </div>
-          </div>
+          <EnhancedCardLayout title="Total Records" description="All health consultation records" value={totalCount} valueDescription="Total records" icon={<Users className="h-6 w-6 text-blue-600" />} cardClassName="border-blue-100" />
+          <EnhancedCardLayout title="Residents" description="Resident consultation records" value={residents} valueDescription="Resident records" icon={<Home className="h-6 w-6 text-green-600" />} cardClassName="border-green-100" />
+          <EnhancedCardLayout title="Transients" description="Transient consultation records" value={transients} valueDescription="Transient records" icon={<UserCheck className="h-6 w-6 text-purple-600" />} cardClassName="border-purple-100" />
         </div>
 
-        {/* Filters Section - Improved styling */}
+        {/* Filters Section */}
         <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
@@ -360,8 +108,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
           </div>
         </div>
 
-        <div className="h-full w-full ">
-          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+        <div className="h-full w-full">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(+e.target.value)} min="1" />
@@ -384,18 +132,9 @@ export default function ForwardedCombinedHealthRecordsTable() {
             </div>
           </div>
 
-          <div className="bg-white w-full overflow-x-auto border">
-            {combinedLoading ? (
-              <div className="w-full h-[100px] flex items-center text-gray-500 justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading...</span>
-              </div>
-            ) : (
-              <DataTable columns={columns} data={combinedData?.results || []} />
-            )}
-          </div>
+          <div className="bg-white w-full overflow-x-auto border">{combinedLoading ? <TableLoading /> : <DataTable columns={columns} data={combinedData?.results || []} />}</div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white  border">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {(combinedData?.results || []).length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
             </p>

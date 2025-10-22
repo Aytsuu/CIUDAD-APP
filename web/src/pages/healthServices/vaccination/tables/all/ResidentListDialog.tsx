@@ -4,7 +4,6 @@ import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Search, ArrowUpDown, Users, UserCheck, UserX, Download, Filter } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useUnvaccinatedResidentsDetails } from "../../queries/fetch";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 interface ResidentData {
   rp_id: string;
@@ -542,10 +542,7 @@ export function ResidentListSection() {
 
         {/* Data Table */}
         {isLoading ? (
-          <div className="w-full h-[200px] flex flex-col items-center justify-center bg-gray-50 rounded-lg">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 mt-3 text-gray-600">Loading residents...</span>
-          </div>
+          <TableLoading/>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden border border-gray-200 rounded-lg">
             <div className="bg-white w-full overflow-auto flex-1">

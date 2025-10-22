@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft, Pill, AlertCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -13,6 +13,7 @@ import { medicineRecordColumns } from "./columns/inv-med-col";
 import { useIndividualMedicineRecords } from "../queries/fetch";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { serializePatientData } from "@/helpers/serializePatientData";
+import TableLoading from "../../table-loading";
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
@@ -177,10 +178,7 @@ export default function IndivMedicineRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading medicine records...</span>
-              </div>
+              <TableLoading/>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
                 <AlertCircle className="h-5 w-5 mr-2" />

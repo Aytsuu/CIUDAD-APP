@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, ChevronLeft, AlertCircle, Loader2, Syringe } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft, AlertCircle, Syringe } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -15,6 +15,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
@@ -201,10 +202,7 @@ export default function IndivVaccinationRecords() {
 
         <div className="bg-white w-full overflow-x-auto border">
           {isVaccinationRecordsLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading vaccination records...</span>
-            </div>
+          <TableLoading/>
           ) : isVaccinationRecordsError ? (
             <div className="p-4 flex items-center gap-2 text-red-500">
               <AlertCircle className="h-5 w-5" />

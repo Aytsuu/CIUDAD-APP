@@ -8,7 +8,7 @@ export const useProcessingMedrequest = (page: number = 1, pageSize: number = 10,
   });
 };
 
-export const usePendingMedRequest = (page: number, pageSize: number, search: string, dateFilter: string) => {
+export const usePendingMedRequest = (page?: number, pageSize?: number, search?: string, dateFilter?: string) => {
   return useQuery<any>({
     queryKey: ["pendingmedrequest", page, pageSize, search, dateFilter],
     queryFn: () => getMedicineRequestPending(page, pageSize, search, dateFilter)

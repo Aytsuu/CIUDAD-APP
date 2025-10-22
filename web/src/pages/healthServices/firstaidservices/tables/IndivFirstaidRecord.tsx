@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowUpDown, Search, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -15,6 +15,7 @@ import { FirstAidRecord } from "../types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { firstAidColumns } from "./columns/indiv-records-col";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import TableLoading from "../../table-loading";
 
 export default function IndivFirstAidRecords() {
   const location = useLocation();
@@ -219,10 +220,7 @@ export default function IndivFirstAidRecords() {
 
         <div className="bg-white w-full overflow-x-auto border">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
+            <TableLoading/>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
               <span>Error loading data. Please try again.</span>

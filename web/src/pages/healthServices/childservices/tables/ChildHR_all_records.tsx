@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Search, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Search, Users, Home, UserCheck } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
@@ -20,6 +20,7 @@ import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import { formatChildHealthData } from "./formattedData";
+import TableLoading from "../../table-loading";
 
 export default function AllChildHealthRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -290,10 +291,7 @@ export default function AllChildHealthRecords() {
 
           <div className="bg-white w-full overflow-x-auto border">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading...</span>
-              </div>
+             <TableLoading/>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
                 <span>Error loading data. Please try again.</span>

@@ -3,8 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Loader2, Search, FileInput, Users, Home, UserCheck } from "lucide-react";
+import { Search, FileInput, Users, Home, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
@@ -13,11 +12,12 @@ import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
-import ViewButton from "@/components/ui/view-button";
-import { useNavigate } from "react-router-dom";
-
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { api2 } from "@/api/api";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import TableLoading from "../../table-loading";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useScheduledVaccinationColumns } from "./columns/scheduledvac-col";
 
 export const getScheduledVaccinations = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {
   try {
@@ -34,6 +34,7 @@ export const getScheduledVaccinations = async (assigned_to: string, search = "",
     throw error;
   }
 };
+
 export default function ForwardedScheduledVaccinationsTables() {
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id;
@@ -46,15 +47,10 @@ export default function ForwardedScheduledVaccinationsTables() {
   const [totalCount, setTotalCount] = useState(0);
   const [residentCount, setResidentCount] = useState(0);
   const [transientCount, setTransientCount] = useState(0);
-  const navigate = useNavigate();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const {
-    data: vaccinationData,
-    isLoading,
-    
-  } = useQuery({
+  const { data: vaccinationData, isLoading } = useQuery({
     queryKey: ["scheduledVaccination", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
     queryFn: () => getScheduledVaccinations(staff_id!, debouncedSearchQuery, patientType, currentPage, pageSize),
     refetchOnMount: true,
@@ -62,6 +58,9 @@ export default function ForwardedScheduledVaccinationsTables() {
     gcTime: 600000,
     enabled: !!staff_id
   });
+
+  const { showLoading, hideLoading } = useLoading();
+  const columns = useScheduledVaccinationColumns();
 
   const formatVaccinationData = useCallback((): VaccinationRecord[] => {
     if (!vaccinationData?.results) return [];
@@ -141,8 +140,6 @@ export default function ForwardedScheduledVaccinationsTables() {
     calculateCounts();
   }, [calculateCounts]);
 
-  const { showLoading, hideLoading } = useLoading();
-
   useEffect(() => {
     if (isLoading) {
       showLoading();
@@ -155,8 +152,6 @@ export default function ForwardedScheduledVaccinationsTables() {
     setCurrentPage(1);
   }, [debouncedSearchQuery, patientType]);
 
- 
-
   const handlePatientTypeChange = (value: string) => {
     setPatientType(value);
     setCurrentPage(1);
@@ -166,131 +161,6 @@ export default function ForwardedScheduledVaccinationsTables() {
     setPageSize(newPageSize >= 1 ? newPageSize : 1);
     setCurrentPage(1);
   };
-
-  const columns: ColumnDef<VaccinationRecord>[] = [
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const patient = row.original.patient?.personal_info;
-        const fullName = `${patient?.per_lname || ""}, ${patient?.per_fname || ""} ${patient?.per_mname || ""}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-gray-500">
-                {patient?.per_sex || ""}, {patient?.per_dob ? calculateAge(patient.per_dob).toString() : "N/A"}
-              </div>
-              <div className="text-xs text-gray-400">{row.original.patient?.personal_info?.per_id || ""}</div>
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "vaccine",
-      header: "Vaccine",
-      cell: ({ row }) => (
-        <div className="flex flex-col min-w-[150px]">
-          <div className="font-medium">{row.original.vaccine_name || "N/A"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "dose",
-      header: "Dose",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <div className="text-sm text-gray-500">{String(row.original.vachist_doseNo) === "1" ? "1st dose" : String(row.original.vachist_doseNo) === "2" ? "2nd dose" : String(row.original.vachist_doseNo) === "3" ? "3rd dose" : `${String(row.original.vachist_doseNo) || ""}th dose`}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "vital_signs",
-      header: "Vital Signs",
-      cell: ({ row }) => {
-        const vital = row.original.vital_signs || {};
-        return (
-          <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
-            <div>
-              BP: {vital.vital_bp_systolic || "N/A"}/{vital.vital_bp_diastolic || "N/A"}
-            </div>
-            <div>Temp: {vital.vital_temp || "N/A"}°C</div>
-            <div>Pulse: {vital.vital_pulse || "N/A"}</div>
-            <div>o2: {vital.vital_o2 || "N/A"}</div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => {
-        const address = row.original.patient?.address;
-        return (
-          <div className="flex justify-start px-2">
-            <div className="w-[200px] break-words">{[address?.add_street, address?.add_barangay, address?.add_city, address?.add_province].filter(Boolean).join(", ") || "No address provided"}</div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "Sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center px-2">
-          <div>{row.original.patient?.address?.add_sitio || "No address provided"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const patient = row.original.patient?.personal_info;
-        const address = row.original.patient?.address;
-        return (
-          <div className="flex justify-center gap-2">
-            <ViewButton
-              onClick={() => {
-              navigate("/scheduled-vaccine", {
-                state: {
-                Vaccination: row.original,
-                patientData: {
-                  patrec_id: row.original.patrec_id || "",
-                  pat_id: row.original.patient?.pat_id || "",
-                  pat_type: row.original.patient?.pat_type || "",
-                  age: patient?.per_dob ? calculateAge(patient.per_dob).toString() : "N/A",
-                  addressFull: address?.full_address || [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province].filter(Boolean).join(", ") || "No address provided",
-                  address: {
-                  add_street: address?.add_street || "",
-                  add_barangay: address?.add_barangay || "",
-                  add_city: address?.add_city || "",
-                  add_province: address?.add_province || "",
-                  add_sitio: address?.add_sitio || ""
-                  },
-                  households: [{ hh_id: row.original.patient?.households?.[0]?.hh_id || "N/A" }],
-                  personal_info: {
-                  per_fname: patient?.per_fname || "",
-                  per_mname: patient?.per_mname || "",
-                  per_lname: patient?.per_lname || "",
-                  per_dob: patient?.per_dob || "",
-                  per_sex: patient?.per_sex || ""
-                  }
-                }
-                }
-              });
-              }}
-            />
-          </div>
-        );
-      }
-    }
-  ];
 
   const currentData = formatVaccinationData();
 
@@ -307,51 +177,11 @@ export default function ForwardedScheduledVaccinationsTables() {
 
   return (
     <MainLayoutComponent title="Scheduled Vaccinations" description="Manage and view scheduled vaccinations for patients.">
+      {/* Enhanced Card Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full mr-4">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Records</p>
-              <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full mr-4">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Residents</p>
-              <p className="text-2xl font-bold text-gray-800">{residentCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-full mr-4">
-              <UserCheck className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transients</p>
-              <p className="text-2xl font-bold text-gray-800">{transientCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-          </div>
-        </div>
+        <EnhancedCardLayout title="Total Scheduled" description="All scheduled vaccinations" value={totalCount} valueDescription="Total records" icon={<Users className="h-6 w-6 text-blue-600" />} cardClassName="border-blue-100" />
+        <EnhancedCardLayout title="Residents" description="Scheduled for residents" value={residentCount} valueDescription="Resident records" icon={<Home className="h-6 w-6 text-green-600" />} cardClassName="border-green-100" />
+        <EnhancedCardLayout title="Transients" description="Scheduled for transients" value={transientCount} valueDescription="Transient records" icon={<UserCheck className="h-6 w-6 text-purple-600" />} cardClassName="border-purple-100" />
       </div>
 
       <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
@@ -398,16 +228,7 @@ export default function ForwardedScheduledVaccinationsTables() {
             </DropdownMenu>
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+        <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
