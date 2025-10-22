@@ -541,6 +541,16 @@ class PatientSerializer(serializers.ModelSerializer):
                     except Exception:
                         current_role = ''
 
+                    # Get total children count (DEPENDENT + INDEPENDENT)
+                    fam_id = current_composition.fam_id
+                    total_children = FamilyComposition.objects.filter(
+                        fam_id=fam_id,
+                        fc_role__in=['DEPENDENT', 'INDEPENDENT', 'Dependent', 'Independent', 'dependent', 'independent']
+                    ).count()
+                    
+                    if total_children > 0:
+                        additional_info['total_children'] = total_children
+
                     # If current patient is MOTHER, get child dependents
                     if current_role == 'mother':
                         child_dependents = self._get_child_dependents(obj, current_composition)
@@ -549,7 +559,6 @@ class PatientSerializer(serializers.ModelSerializer):
 
                     # If not father role, fetch mother TT status
                     if current_role != 'father':
-                        fam_id = current_composition.fam_id
                         all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
                         mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
                         if mother_comp:
@@ -581,6 +590,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
                         if latest_prenatal:
                             additional_info['latest_pf_id'] = latest_prenatal.pf_id
+                            additional_info['pregnancy_id'] = latest_pregnancy.pregnancy_id
                             
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
@@ -693,10 +703,10 @@ class PatientSerializer(serializers.ModelSerializer):
             child_dependents = []
             fam_id = mother_composition.fam_id
             
-            # Get all children (SON/DAUGHTER) in this family
+            # Get all children (DEPENDENT and INDEPENDENT) in this family
             child_compositions = FamilyComposition.objects.filter(
                 fam_id=fam_id,
-                fc_role__in=['DEPENDENT']
+                fc_role__in=['DEPENDENT', 'INDEPENDENT', 'Dependent', 'Independent', 'dependent', 'independent']
             ).select_related('rp', 'rp__per')
             
             for child_comp in child_compositions:
@@ -739,8 +749,7 @@ class PatientSerializer(serializers.ModelSerializer):
                                 'ufc_no': chrec.ufc_no,
                                 'family_no': chrec.family_no,
                                 'fam_id': str(fam_id),
-                                'pregnancy_id':chrec.pregnancy_id,
-                                
+                                'pregnancy_id': chrec.pregnancy_id,
                             }
                             child_dependents.append(child_info)
             

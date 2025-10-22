@@ -199,7 +199,6 @@ export const childColumns: ColumnDef<any>[] = [
               navigate(`/services/childhealthrecords/records`, {
                 state: {
                   ChildHealthRecord: row.original,
-                  mode: "addnewchildhealthrecord",
                 },
               })
             }
