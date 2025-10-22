@@ -23,14 +23,15 @@ interface SelectProps{
   value: string,
   onChange: (value: string) => void
   withRest?: boolean;
+  valueLabel?: string
 }
  
-export function SelectLayout({ placeholder, label, className, options, value, withRest=true, onChange }: SelectProps) {
+export function SelectLayout({ placeholder, label, className, options, value, withRest=true, valueLabel, onChange }: SelectProps) {
 
   return (
       <Select value={value} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
-              <SelectValue placeholder={placeholder} />
+              <p className="text-sm text-gray-600">{valueLabel && valueLabel}: </p><SelectValue placeholder={placeholder} />
           </SelectTrigger> 
           <SelectContent>
               <SelectGroup>
