@@ -117,7 +117,7 @@ export default function MOMEdit() {
       }
       stickyFooter={true}
     >
-      <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
         <View className="mb-8 space-y-4">
           <FormInput
             control={control}

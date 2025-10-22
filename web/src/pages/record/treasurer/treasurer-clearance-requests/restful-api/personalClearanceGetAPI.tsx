@@ -1,20 +1,66 @@
 import { api } from "@/api/api";
 
 
-export const getPersonalClearances = async () => {
+export const getPersonalClearances = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
     try {
-        const response = await api.get('/clerk/personal-clearances/');
-        return response.data
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        
+        const queryString = params.toString();
+        const url = `/clerk/personal-clearances/${queryString ? '?' + queryString : ''}`;
+        
+        const response = await api.get(url);
+        return response.data;
     } catch (error: any) {
         console.error("Failed to fetch personal clearances:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearances");
     }
 };
 
-// Fetch personal clearances from TREASURER endpoint (alternative)
-export const getPersonalClearancesFromTreasurer = async () => {
+// Fetch personal clearances from TREASURER endpoint (alternative) with search and pagination
+export const getPersonalClearancesFromTreasurer = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string, startDate?: string, endDate?: string) => {
     try {
-        const response = await api.get('/treasurer/clearance-request/');
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        if (startDate) {
+            params.append('start_date', startDate);
+        }
+        if (endDate) {
+            params.append('end_date', endDate);
+        }
+        
+        const queryString = params.toString();
+        const url = `/treasurer/clearance-request/${queryString ? '?' + queryString : ''}`;
+        
+        const response = await api.get(url);
         return response.data;
     } catch (error: any) {
         console.error("Failed to fetch personal clearances from treasurer:", error);
@@ -93,12 +139,32 @@ export const createPaymentIntent = async (crId: string) => {
 };
 
 
-export const getNonResidentCertReq = async () => {
-    try{
-        const res = await api.get('/clerk/nonresident-personal-clearance/')
-
-        return res.data
-    }catch(err){
-        console.error(err)
+export const getNonResidentCertReq = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
+    try {
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        
+        const queryString = params.toString();
+        const url = `/clerk/nonresident-personal-clearance/${queryString ? '?' + queryString : ''}`;
+        
+        const response = await api.get(url);
+        return response.data;
+    } catch (error: any) {
+        console.error("Failed to fetch non-resident certificate requests:", error);
+        throw new Error(error.response?.data?.detail || "Failed to fetch non-resident certificate requests");
     }
 }

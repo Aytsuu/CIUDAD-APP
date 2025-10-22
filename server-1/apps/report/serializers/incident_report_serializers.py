@@ -48,17 +48,12 @@ class IRCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = IncidentReport
     fields = ['ir_add_details','ir_type', 'ir_date', 'ir_time', 'ir_involved', 
-              'ir_other_type', 'ir_area', 'rp', 'files']
+              'ir_other_type', 'ir_severity', 'ir_area', 'rp', 'files']
 
   def create(self, validated_data):
     report_type = validated_data.pop('ir_type', None)
     other_report_type = validated_data.pop('ir_other_type', None)
     files = validated_data.pop('files', [])
-    print(report_type)
-    # ir_time = validated_data.get('ir_time')
-    # if isinstance(ir_time, str):
-    #   parsed_time = datetime.datetime.strptime(ir_time, "%I:%M %p").time()
-    #   validated_data['ir_time'] = parsed_time
       
     if other_report_type:
       existing_rep_type = ReportType.objects.filter(rt_label=other_report_type).first()
@@ -79,7 +74,8 @@ class IRCreateSerializer(serializers.ModelSerializer):
       print(existing_rep_type)
       validated_data['rt'] = existing_rep_type
 
-    incident_report = IncidentReport.objects.create(**validated_data)
+    incident_report = IncidentReport(**validated_data)
+    incident_report.save()
 
     if files:
       report_files = []

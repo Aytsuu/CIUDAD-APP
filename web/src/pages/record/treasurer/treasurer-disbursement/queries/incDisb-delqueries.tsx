@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { 
   archiveDisbursementVoucher, 
   restoreDisbursementVoucher,
@@ -30,22 +29,15 @@ export const useArchiveDisbursementVoucher = () => {
       
       return { previousVouchers };
     },
-    onError: (error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
+    onError: (_error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
       if (context?.previousVouchers) {
         queryClient.setQueryData(["disbursementVouchers"], context.previousVouchers);
       }
-      toast.error("Failed to archive disbursement voucher", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to archive disbursement voucher");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disbursementVouchers"] });
-      toast.success("Disbursement voucher archived successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Disbursement voucher archived successfully");
     }
   });
 };
@@ -69,22 +61,15 @@ export const useRestoreDisbursementVoucher = () => {
       
       return { previousVouchers };
     },
-    onError: (error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
+    onError: (_error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
       if (context?.previousVouchers) {
         queryClient.setQueryData(["disbursementVouchers"], context.previousVouchers);
       }
-      toast.error("Failed to restore disbursement voucher", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to restore disbursement voucher");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disbursementVouchers"] });
-      toast.success("Disbursement voucher restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Disbursement voucher restored successfully");
     }
   });
 };
@@ -104,22 +89,15 @@ export const usePermanentDeleteDisbursementVoucher = () => {
       
       return { previousVouchers };
     },
-    onError: (error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
+    onError: (_error: Error, _disNum: string, context?: { previousVouchers?: any }) => {
       if (context?.previousVouchers) {
         queryClient.setQueryData(["disbursementVouchers"], context.previousVouchers);
       }
-      toast.error("Failed to permanently delete disbursement voucher", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to permanently delete disbursement voucher");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disbursementVouchers"] });
-      toast.success("Disbursement voucher permanently deleted", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Disbursement voucher permanently deleted");
     }
   });
 };
@@ -133,16 +111,10 @@ export const useDeleteDisbursementFile = () => {
     },
     onSuccess: (_data, variables: FileMutationVariables) => {
       queryClient.invalidateQueries({ queryKey: ["disbursementFiles", variables.disNum] });
-      toast.success("Disbursement file deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Disbursement file deleted successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete disbursement file", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to delete disbursement file");
     },
   });
 };
@@ -156,16 +128,10 @@ export const useArchiveDisbursementFile = () => {
     },
     onSuccess: (_data, variables: FileMutationVariables) => {
       queryClient.invalidateQueries({ queryKey: ["disbursementFiles", variables.disNum] });
-      toast.success("Disbursement file archived successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Disbursement file archived successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to archive disbursement file", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to archive disbursement file");
     },
   });
 };
@@ -179,16 +145,10 @@ export const useRestoreDisbursementFile = () => {
     },
     onSuccess: (_data, variables: FileMutationVariables) => {
       queryClient.invalidateQueries({ queryKey: ["disbursementFiles", variables.disNum] });
-      toast.success("Disbursement file restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Disbursement file restored successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to restore disbursement file", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to restore disbursement file");
     },
   });
 };

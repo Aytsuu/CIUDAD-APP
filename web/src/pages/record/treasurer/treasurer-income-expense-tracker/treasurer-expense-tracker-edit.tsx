@@ -13,7 +13,7 @@ import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useUpdateIncomeExpense } from "./queries/treasurerIncomeExpenseUpdateQueries";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -64,9 +64,9 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
 
 
     const { data: budgetItems = [] } = useBudgetItems(years);
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;    
     
@@ -166,25 +166,64 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
         }
                 
         const particularAccBudget = selectedParticular.proposedBudget;
-        const subtractedAmount = particularAccBudget - parseFloat(values.iet_amount);
-        const subtractedActualAmount = particularAccBudget - actualAmount;
+        // const subtractedAmount = particularAccBudget - parseFloat(values.iet_amount);
+        // const subtractedActualAmount = particularAccBudget - actualAmount;
 
-    
-        if (subtractedAmount < 0) {
-            form.setError("iet_amount", {
-                type: "manual",
-                message: `Insufficient Balance`,
-            });
-            return
+        if(Number(values.iet_actual_amount) > 0){
+
+            if(prevActualAmount == 0){ // if bag o pa mag add og actual expense
+                const budget = prevAmount + particularAccBudget;
+                const subtractedActualAMT = budget - Number(values.iet_actual_amount);
+
+                if (subtractedActualAMT < 0) {
+                    form.setError("iet_actual_amount", {
+                        type: "manual",
+                        message: `Insufficient Balance`,
+                    });
+                    return
+                }  
+            }            
+            else{ // if mo update sa actual expense
+                const budget = prevActualAmount + particularAccBudget;                
+                const subtractedActualAMT = budget - Number(values.iet_actual_amount);            
+                
+                if (subtractedActualAMT < 0) {
+                    form.setError("iet_actual_amount", {
+                        type: "manual",
+                        message: `Insufficient Balance`,
+                    });
+                    return
+                }              
+            }
         }
+        else{
+            const budget = prevAmount + particularAccBudget;
+            const subtractAMT = budget - parseFloat(values.iet_amount);
+
+            if (subtractAMT < 0) {
+                form.setError("iet_amount", {
+                    type: "manual",
+                    message: `Insufficient Balance`,
+                });
+                return
+            }
+        }
+    
+        // if (subtractedAmount < 0) {
+        //     form.setError("iet_amount", {
+        //         type: "manual",
+        //         message: `Insufficient Balance`,
+        //     });
+        //     return
+        // }
         
-        if (subtractedActualAmount < 0) {
-            form.setError("iet_actual_amount", {
-                type: "manual",
-                message: `Insufficient Balance`,
-            });
-            return
-        }     
+        // if (subtractedActualAmount < 0) {
+        //     form.setError("iet_actual_amount", {
+        //         type: "manual",
+        //         message: `Insufficient Balance`,
+        //     });
+        //     return
+        // }     
 
         if(!values.iet_additional_notes){
             values.iet_additional_notes = "None";

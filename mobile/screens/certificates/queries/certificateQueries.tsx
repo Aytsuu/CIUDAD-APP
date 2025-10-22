@@ -31,12 +31,18 @@ export interface MarkCertificateVariables {
   staff_id?: string;
 }
 
-export const getCertificates = async (): Promise<Certificate[]> => {
+export const getCertificates = async (
+  search?: string,
+  page?: number,
+  pageSize?: number,
+  status?: string,
+  paymentStatus?: string,
+  purpose?: string
+): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
-    const rawData = await getCertificatesAPI();
-    const raw = rawData as any[];
+    const rawData = await getCertificatesAPI(search, page, pageSize, status, paymentStatus, purpose);
     
-    const mapped: Certificate[] = (raw || []).map((item: any) => {
+    const mapped: Certificate[] = (rawData.results || []).map((item: any) => {
       return {
         cr_id: item.cr_id,
         resident_details: item.resident_details || null,
@@ -61,7 +67,12 @@ export const getCertificates = async (): Promise<Certificate[]> => {
     });
     
     console.log('Web backend mapped certificates:', mapped);
-    return mapped;
+    return {
+      results: mapped,
+      count: rawData.count,
+      next: rawData.next,
+      previous: rawData.previous
+    };
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error in certificate queries:', error.response?.data || error.message);

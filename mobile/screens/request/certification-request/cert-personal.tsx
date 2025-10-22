@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { useAddPersonalCertification } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/api/api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const CertForm: React.FC = () => {
   const router = useRouter();
@@ -18,20 +19,20 @@ const CertForm: React.FC = () => {
   // Debug: Inspect what useAuth provides
   useEffect(() => {
     try {
-      console.log("[AuthContext] resident rp_id:", user?.resident?.rp_id);
-      console.log("[AuthContext] resident voter_id:", user?.resident?.voter_id, "type:", typeof user?.resident?.voter_id);
+      console.log("[AuthContext] resident rp_id:", user?.rp);
+      console.log("[AuthContext] resident voter_id:", user?.personal?.voter_id, "type:", typeof user?.personal?.voter_id);
     } catch (e) {}
   }, [user]);
 
   // Minimal local fix: fetch voter status by rp_id (best-effort)
   useEffect(() => {
-    const rpId = user?.resident?.rp_id;
+    const rpId = user?.rp;
     // If auth already carries a voter indicator, use it
-    if (user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined) {
+    if (user?.personal?.voter_id !== null && user?.personal?.voter_id !== undefined) {
       setHasVoterId(true);
       return;
     }
-    if ((user as any)?.resident?.voter) {
+    if ((user as any)?.personal?.voter) {
       setHasVoterId(true);
       return;
     }
@@ -60,7 +61,7 @@ const CertForm: React.FC = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.resident?.rp_id, user?.resident?.voter_id]);
+  }, [user?.rp, user?.personal?.voter_id]);
 
   // Debug: Log resolved hasVoterId
   useEffect(() => {
@@ -68,7 +69,6 @@ const CertForm: React.FC = () => {
   }, [hasVoterId]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   
@@ -101,7 +101,7 @@ const CertForm: React.FC = () => {
     
     const result = CertificationRequestSchema.safeParse({
       cert_type: "personal",
-      requester: user?.resident?.rp_id || "", 
+      requester: user?.rp || "", 
       purposes: [purpose], 
     });
     if (!result.success) {
@@ -112,12 +112,11 @@ const CertForm: React.FC = () => {
     const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
     
     
-    const isEligibleForFreeCert = user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined;
-    const reqAmount = isEligibleForFreeCert ? 0 : (selectedPurpose?.pr_rate || 0);
+    const isEligibleForFreeCert = user?.personal?.voter_id !== null && user?.personal?.voter_id !== undefined;
     
     addPersonalCert.mutate({
       cert_type: "personal",
-      requester: user?.resident?.rp_id || "", 
+      requester: user?.rp || "", 
       purposes: [purpose], 
       pr_id: selectedPurposeId, // Add the purpose ID
     });
@@ -126,8 +125,8 @@ const CertForm: React.FC = () => {
   // Show loading screen while auth or purposes are loading
   if (isLoading || isLoadingPurposes) {
     return (
-      <_ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity 
             onPress={() => router.back()} 
             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -135,22 +134,17 @@ const CertForm: React.FC = () => {
             <Ionicons name="chevron-back" size={20} color="#374151" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-        customRightAction={<View className="w-10 h-10" />}
+        headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">
-            {isLoading ? 'Loading user data...' : 'Loading purposes...'}
-          </Text>
-        </View>
-      </_ScreenLayout>
+        <LoadingState />
+      </PageLayout>
     );
   }
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -158,10 +152,10 @@ const CertForm: React.FC = () => {
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {/* Loading Overlay */}
         {addPersonalCert.status === 'pending' && (
           <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
@@ -235,7 +229,7 @@ const CertForm: React.FC = () => {
         </Text>
       </TouchableOpacity>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 };
 

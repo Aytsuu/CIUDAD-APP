@@ -27,6 +27,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
+      don_status: "Stashed",
       staff: user?.staff?.staff_id || null,
     },
   });
@@ -58,13 +59,22 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+    <div className="flex flex-col min-h-0 h-auto p-2 rounded-lg overflow-auto">
       <div className="grid gap-4">
         <Form {...form}>
           <form
             onSubmit={(e) => e.preventDefault()}
             className="flex flex-col gap-4"
           >
+            {/* Donation Date */}
+            <FormDateTimeInput
+              control={form.control}
+              name="don_date"
+              type="date"
+              label="Donation Date"
+              readOnly={false}
+            />
+
             <ComboboxInput
               value={form.watch("don_donor")}
               options={personalList}
@@ -152,17 +162,8 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
               readOnly={false}
             />
 
-            {/* Donation Date */}
-            <FormDateTimeInput
-              control={form.control}
-              name="don_date"
-              type="date"
-              label="Donation Date"
-              readOnly={false}
-            />
-
             {/* Submit Button */}
-            <div className="mt-8 flex justify-end gap-3">
+            <div className="mt-8 flex justify-end gap-3 mb-2">
               <ConfirmationModal
                 trigger={
                   <Button type="button" className="" disabled={isPending}>

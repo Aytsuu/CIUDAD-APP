@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "187309470053",
+    "project_id": "ciudad-app",
+    "storage_bucket": "ciudad-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187309470053:android:9866f3df6718fafc0bf18c",
+        "android_client_info": {
+          "package_name": "com.aytsuu.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE7xTRvsugVCMINVX5VD0kaNhx3a8Hysw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

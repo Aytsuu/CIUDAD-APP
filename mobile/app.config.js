@@ -21,7 +21,8 @@ export default () => ({
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      package: "com.aytsuu.mobile"
+      package: "com.aytsuu.mobile",
+      "googleServicesFile": "./google-services.json",
     },
     web: {
       bundler: "metro",
@@ -62,6 +63,7 @@ export default () => ({
           isAccessMediaLocationEnabled: true
         }
       ],
+      "@react-native-firebase/app",
       [
         "expo-build-properties",
         {
@@ -70,7 +72,7 @@ export default () => ({
             suppressNativeLinking: ["react-native-worklets"],
           }
         }
-      ]
+      ],
     ],
     experiments: {
       typedRoutes: true

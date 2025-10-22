@@ -217,7 +217,7 @@ class WasteTruck(models.Model):
 
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
-    wc_date = models.DateField(null=True)
+    wc_day = models.CharField(max_length=200, default="None")    
     wc_time = models.TimeField(null=True)
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)
@@ -247,8 +247,7 @@ class WasteCollector(models.Model):
 
     class Meta:
         db_table = 'waste_collector'
-
-
+        
 class GarbagePickupRequestFile(models.Model):
     gprf_id = models.BigAutoField(primary_key=True)
     gprf_name = models.CharField(max_length=255)
@@ -269,27 +268,31 @@ class Garbage_Pickup_Request(models.Model):
     garb_req_status = models.CharField(max_length=20, null=False)
     garb_additional_notes = models.TextField()
     garb_created_at = models.DateTimeField(default=datetime.now)
+
     rp = models.ForeignKey(
-        'profiling.ResidentProfile', 
+        'profiling.ResidentProfile',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='garbage_requests'
     )
-    
+
     gprf = models.ForeignKey(
         'GarbagePickupRequestFile',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='gprf_id'
+        db_column='gprf_id',
+        related_name='garbage_requests'
     )
-    
+
     sitio_id = models.ForeignKey(
         'profiling.Sitio',
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        db_column='sitio_id'
+        db_column='sitio_id',
+        related_name='garbage_requests'
     )
 
     class Meta:
@@ -301,97 +304,111 @@ class Garbage_Pickup_Request(models.Model):
         super().save(*args, **kwargs)
 
     def generate_custom_id(self):
-        current_year = datetime.now().year % 100  
+        current_year = datetime.now().year % 100
         year_suffix = f"-{current_year:02d}"
-        
+
         try:
             current_year_ids = Garbage_Pickup_Request.objects.filter(
                 garb_id__endswith=year_suffix
             )
-            
             if current_year_ids.exists():
                 max_id = 0
                 for obj in current_year_ids:
                     try:
-                        numeric_part = obj.garb_id[3:8] 
+                        numeric_part = obj.garb_id[3:8]
                         numeric_value = int(numeric_part)
                         if numeric_value > max_id:
                             max_id = numeric_value
                     except (ValueError, IndexError):
                         continue
-                
                 next_number = max_id + 1
             else:
                 next_number = 0
-                
         except ObjectDoesNotExist:
             next_number = 0
-        
+
         number_part = f"{next_number:05d}"
-        
         return f"GPR{number_part}{year_suffix}"
 
     def get_resident_name(self):
         return str(self.rp.per) if self.rp and self.rp.per else "Unknown"
-    
+
+
 class Pickup_Request_Decision(models.Model):
     dec_id = models.BigAutoField(primary_key=True)
     dec_reason = models.TextField(null=True, blank=True)
     dec_date = models.DateTimeField(default=datetime.now)
+
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
-        db_column='garb_id' 
+        db_column='garb_id',
+        related_name='pickup_decisions'
     )
+
     staff_id = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='staff_id'
+        db_column='staff_id',
+        related_name='pickup_decisions'
     )
-    
 
     class Meta:
         db_table = 'pickup_request_decision'
-    
+
+
 class Pickup_Assignment(models.Model):
     pick_id = models.BigAutoField(primary_key=True)
     pick_date = models.DateField(default=date.today)
     pick_time = models.TimeField(default=current_time)
+
     truck_id = models.ForeignKey(
-        WasteTruck, 
+        'WasteTruck',
         on_delete=models.CASCADE,
-        db_column='truck_id' 
+        db_column='truck_id',
+        related_name='assignments'
     )
+
     wstp_id = models.ForeignKey(
-        WastePersonnel,
+        'WastePersonnel',
         on_delete=models.CASCADE,
-        db_column='wstp_id' 
+        db_column='wstp_id',
+        related_name='assignments_as_driver'
     )
+
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
-        db_column='garb_id' 
+        db_column='garb_id',
+        related_name='pickup_assignments'
     )
+
     class Meta:
         db_table = 'pickup_assignment'
 
+
 class Assignment_Collector(models.Model):
     acl_id = models.BigAutoField(primary_key=True)
+
     wstp_id = models.ForeignKey(
-        WastePersonnel, 
+        'WastePersonnel',
         on_delete=models.CASCADE,
-        db_column='wstp_id' 
+        db_column='wstp_id',
+        related_name='collector_assignments'
     )
+
     pick_id = models.ForeignKey(
-        Pickup_Assignment, 
+        Pickup_Assignment,
         on_delete=models.CASCADE,
-        db_column='pick_id' 
+        db_column='pick_id',
+        related_name='collectors'
     )
 
     class Meta:
         db_table = 'assignment_collector'
+
 
 class Pickup_Confirmation(models.Model):
     conf_id = models.BigAutoField(primary_key=True)
@@ -399,13 +416,15 @@ class Pickup_Confirmation(models.Model):
     conf_staff_conf = models.BooleanField(blank=True)
     conf_staff_conf_date = models.DateTimeField(default=datetime.now)
     conf_resident_conf_date = models.DateTimeField(null=True, blank=True)
+
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
-        db_column='garb_id' 
+        db_column='garb_id',
+        related_name='pickup_confirmation'
     )
 
-    class Meta: 
+    class Meta:
         db_table = "pickup_confirmation"
 
 

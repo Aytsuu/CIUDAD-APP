@@ -7,7 +7,6 @@ from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
 
-
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
@@ -80,7 +79,6 @@ INSTALLED_APPS = [
     'apps.gad',
     'apps.clerk',
     'apps.landing',
-    'backend.firebase.notifications',
     'apps.act_log',
     
 ]
@@ -187,7 +185,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 

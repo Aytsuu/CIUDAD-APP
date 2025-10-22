@@ -1,42 +1,41 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { DonorSelect } from "../personalizedCompo/search_input";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ChevronLeft } from "lucide-react-native";
-import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
+import {ClerkDonateViewSchema} from "@/form-schema/donate-create-form-schema";
 import {
   useGetDonations,
   useUpdateDonation,
-  useGetPersonalList,
+  useGetPersonalList, useGetStaffList
 } from "./donation-queries";
 import { Donation } from "../donation-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { StaffSelect } from "../personalizedCompo/staff_select";
 
 const DonationView = () => {
   const router = useRouter();
   const { don_num } = useLocalSearchParams();
-  const { data: donations = [] } = useGetDonations();
+  const { data: donationsData = { results: [], count: 0 }, isLoading } = useGetDonations();
   const { data: personalList = [] } = useGetPersonalList();
   const updateDonationMutation = useUpdateDonation();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const donation = donations.find(
-    (d: Donation) => d.don_num === don_num
-  );
+  const { data: staffList = [] } = useGetStaffList();
+  
+  // Extract the donations array from the data structure
+  const donations = donationsData.results || [];
+  const donation = donations.find((d: Donation) => d.don_num === don_num);
 
   const { control, handleSubmit, watch, setValue, reset } = useForm({
-    resolver: zodResolver(ClerkDonateCreateSchema),
+    resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
       don_donor: "",
       per_id: null as number | null,
@@ -45,6 +44,9 @@ const DonationView = () => {
       don_description: undefined,
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
+      don_status: undefined,
+      don_dist_head: null,
+      don_dist_date: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -57,7 +59,9 @@ const DonationView = () => {
         don_category: donation.don_category || "",
         don_description: donation.don_description || undefined,
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
-        per_id: donation.per_id || null,
+        don_status: donation.don_status,
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
   }, [donation, reset]);
@@ -78,6 +82,9 @@ const DonationView = () => {
         don_category: formData.don_category,
         don_description: formData.don_description || null,
         don_date: formData.don_date,
+        don_status: formData.don_status,
+         don_dist_head: formData.don_dist_head || null,
+        don_dist_date: formData.don_dist_date || null,
       };
 
       await updateDonationMutation.mutateAsync({
@@ -86,7 +93,7 @@ const DonationView = () => {
       });
 
       setIsEditing(false);
-    }  finally {
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -113,44 +120,131 @@ const DonationView = () => {
         don_category: donation.don_category || "",
         don_description: donation.don_description || undefined,
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
-        per_id: donation.per_id || null,
+        don_status: donation.don_status || undefined,
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
     setIsEditing(false);
   };
 
-  const moneyType = watch("don_item_name");
-
-  if (!donation) {
+  if (isLoading) {
     return (
-      <ScreenLayout
-        header="Donation Not Found"
-        description={`Donation with ID ${don_num} not found`}
-        showBackButton
-        onBackPress={() => router.back()}
-      >
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-lg text-gray-600">Donation not found</Text>
-        </View>
-      </ScreenLayout>
-    );
-  }
-
-  return (
-    <PageLayout
+      <>
+        <PageLayout
           leftAction={
             <TouchableOpacity onPress={() => router.back()}>
               <ChevronLeft size={30} color="black" className="text-black" />
             </TouchableOpacity>
           }
-          headerTitle={<Text>{isEditing ? "Edit Donation" : "View Donation"}</Text>}
-          rightAction={
-            <TouchableOpacity>
-              <ChevronLeft size={30} color="black" className="text-white" />
-            </TouchableOpacity>
-          }
+          headerTitle={<Text>View Donation</Text>}
+          rightAction={<View></View>}
         >
-      <View className="space-y-4 p-4 flex-1">
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-lg text-gray-600">Loading donation details...</Text>
+          </View>
+        </PageLayout>
+        <LoadingModal visible={true} />
+      </>
+    );
+  }
+
+  return (
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Donation" : "View Donation"}</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
+      footer={<View>
+          {isEditing ? (
+            <>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
+                  onPress={handleCancel}
+                >
+                  <Text className="text-primaryBlue text-base font-semibold text-center">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity
+                      className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
+                      disabled={isSubmitting}
+                    >
+                      <Text className="text-white text-base font-semibold text-center">
+                        {isSubmitting ? "Saving" : "Save"}
+                      </Text>
+                      {isSubmitting && (
+                        <Loader2
+                          size={16}
+                          color="white"
+                          className="ml-2 animate-spin"
+                        />
+                      )}
+                    </TouchableOpacity>
+                  }
+                  title="Confirm Changes"
+                  description="Are you sure you want to save these changes?"
+                  actionLabel="Save"
+                  onPress={handleSubmit(handleSave)}
+                  loading={isSubmitting}
+                />
+              </View>
+            </>
+          ) : (
+           (
+              <TouchableOpacity
+                className="bg-primaryBlue py-3 rounded-lg"
+                onPress={() => setIsEditing(true)}
+              >
+                <Text className="text-white text-base font-semibold text-center">
+                  Edit
+                </Text>
+              </TouchableOpacity>
+            )
+          )}
+        </View>}
+    >
+      <View className="space-y-4 p-4 flex-1 px-6">
+        <Text className="text-sm font-medium mb-1">Condition</Text>
+        <FormSelect
+          control={control}
+          name="don_status"
+          options={[
+            { label: "Stashed", value: "Stashed" },
+            { label: "Allotted", value: "Allotted" },
+          ]}
+        />
+        {!isEditing && (
+          <TouchableOpacity
+            className="absolute top-0 left-0 right-0 bottom-0"
+            style={{ backgroundColor: "transparent" }}
+            onPress={() => {}}
+          />
+        )}
+
+        <View className="relative">
+          <Text className="text-sm font-medium mb-1">Donation Date</Text>
+          <FormDateInput control={control} name="don_date" />
+          {!isEditing && (
+            <TouchableOpacity
+              className="absolute top-0 left-0 right-0 bottom-0"
+              style={{ backgroundColor: "transparent" }}
+              onPress={() => {}}
+            />
+          )}
+        </View>
+
         <View className="relative">
           <Text className="text-sm font-medium mb-1">Donor Name</Text>
           <DonorSelect
@@ -174,7 +268,7 @@ const DonationView = () => {
           )}
         </View>
 
-        <View className="relative">
+        <View className="relative mt-4">
           <Text className="text-sm font-medium mb-1">Category</Text>
           <FormSelect
             control={control}
@@ -210,41 +304,41 @@ const DonationView = () => {
         </View>
 
         <View className="relative">
-              <Text className="text-sm font-medium mb-1">
-                {isMonetary ? "Money Type" : "Item Name"}
-              </Text>
-              {!isEditing ? (
-                <FormInput
-                  control={control}
-                  name="don_item_name"
-                  placeholder={isMonetary ? "Money Type" : "Item Name"}
-                  editable={false}
-                />
-              ) : isMonetary ? (
-                <FormSelect
-                  control={control}
-                  name="don_item_name"
-                  options={[
-                    { label: "Cash", value: "Cash" },
-                    { label: "Cheque", value: "Cheque" },
-                    { label: "E-money", value: "E-money" },
-                  ]}
-                />
-              ) : (
-                <FormInput
-                  control={control}
-                  name="don_item_name"
-                  placeholder="Enter item name"
-                />
-              )}
-              {!isEditing && (
-                <TouchableOpacity
-                  className="absolute top-0 left-0 right-0 bottom-0"
-                  style={{ backgroundColor: "transparent" }}
-                  onPress={() => {}}
-                />
-              )}
-            </View>
+          <Text className="text-sm font-medium mb-1">
+            {isMonetary ? "Money Type" : "Item Name"}
+          </Text>
+          {!isEditing ? (
+            <FormInput
+              control={control}
+              name="don_item_name"
+              placeholder={isMonetary ? "Money Type" : "Item Name"}
+              editable={false}
+            />
+          ) : isMonetary ? (
+            <FormSelect
+              control={control}
+              name="don_item_name"
+              options={[
+                { label: "Cash", value: "Cash" },
+                { label: "Cheque", value: "Cheque" },
+                { label: "E-money", value: "E-money" },
+              ]}
+            />
+          ) : (
+            <FormInput
+              control={control}
+              name="don_item_name"
+              placeholder="Enter item name"
+            />
+          )}
+          {!isEditing && (
+            <TouchableOpacity
+              className="absolute top-0 left-0 right-0 bottom-0"
+              style={{ backgroundColor: "transparent" }}
+              onPress={() => {}}
+            />
+          )}
+        </View>
 
         <View className="relative">
           <Text className="text-sm font-medium mb-1">
@@ -281,9 +375,16 @@ const DonationView = () => {
           )}
         </View>
 
-        <View className="relative">
-          <Text className="text-sm font-medium mb-1">Donation Date</Text>
-          <FormDateInput control={control} name="don_date" />
+        <View className="relative mt-1">
+          <Text className="text-sm font-medium mb-1">Distribution Head</Text>
+          <StaffSelect
+            placeholder="Select distribution head..."
+            staff={staffList}
+            selectedStaff={watch("don_dist_head")}
+            onSelect={(staffName) => {
+              setValue("don_dist_head", staffName);
+            }}
+          />
           {!isEditing && (
             <TouchableOpacity
               className="absolute top-0 left-0 right-0 bottom-0"
@@ -292,53 +393,16 @@ const DonationView = () => {
             />
           )}
         </View>
-
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          {isEditing ? (
-            <>
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
-                onPress={handleCancel}
-              >
-                <Text className="text-primaryBlue text-base font-semibold text-center">Cancel</Text>
-              </TouchableOpacity>
-
-              <ConfirmationModal
-                trigger={
-                  <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
-                    disabled={isSubmitting}
-                  >
-                    <Text className="text-white text-base font-semibold text-center">
-                      {isSubmitting ? "Saving" : "Save"}
-                    </Text>
-                    {isSubmitting && (
-                      <Loader2
-                        size={16}
-                        color="white"
-                        className="ml-2 animate-spin"
-                      />
-                    )}
-                  </TouchableOpacity>
-                }
-                title="Confirm Changes"
-                description="Are you sure you want to save these changes?"
-                actionLabel="Save"
-                onPress={handleSubmit(handleSave)}
-                loading={isSubmitting}
-              />
-              </View>
-            </>    
-          ) : (
-             moneyType !== "E-money" && (
+        
+        <View className="relative">
+          <Text className="text-sm font-medium mb-1">Distribution Date</Text>
+          <FormDateInput control={control} name="don_dist_date" />
+          {!isEditing && (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-lg"
-              onPress={() => setIsEditing(true)}
-            >
-              <Text className="text-white text-base font-semibold text-center">Edit</Text>
-            </TouchableOpacity>
-             )
+              className="absolute top-0 left-0 right-0 bottom-0"
+              style={{ backgroundColor: "transparent" }}
+              onPress={() => {}}
+            />
           )}
         </View>
       </View>

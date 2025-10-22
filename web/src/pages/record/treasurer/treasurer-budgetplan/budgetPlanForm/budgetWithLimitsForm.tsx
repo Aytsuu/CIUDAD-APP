@@ -12,8 +12,6 @@ const styles = {
 
 interface budgetPlanWithLimitsProps {
   form: UseFormReturn<z.infer<typeof BudgetPlanStep2Schema>>
-  updateFormData: (data: Partial<z.infer<typeof BudgetPlanStep2Schema>>) => void
-  onNext: () => void
 }
 
 function CreateBudgetWithLimits({

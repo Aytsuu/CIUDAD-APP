@@ -15,7 +15,8 @@ export const MediaUpload = ({
   viewMode = 'grid',
   acceptableFiles = 'all',
   onRemoveMedia,
-  hideRemoveButton = false
+  hideRemoveButton = false,
+  readOnly = false
 }: {
   title: string;
   description: string;
@@ -28,6 +29,7 @@ export const MediaUpload = ({
   acceptableFiles?: "all" | "document" | "image" | "video";
   onRemoveMedia?: (id: string) => void;
   hideRemoveButton?: boolean;
+  readOnly?: boolean;
 }) => {
   
   const { handleFileChange, handleRemoveMedia } = useInstantFileUpload({
@@ -50,6 +52,7 @@ export const MediaUpload = ({
   };
 
   const handleAddMediaClick = () => {
+    if (readOnly) return;
     fileInputRef.current?.click();
   };
 
@@ -130,7 +133,8 @@ export const MediaUpload = ({
               )}
             </div>
           ))}
-
+        
+        {!readOnly && (
           <div
             onClick={!isMaxFilesReached ? handleAddMediaClick : undefined}
             className={cn(
@@ -149,6 +153,7 @@ export const MediaUpload = ({
               {isMaxFilesReached ? "Maximum reached" : "Add Media"}
             </p>
           </div>
+          )}
         </div>
       ) : (
         <div className="space-y-2 mb-4">
@@ -221,6 +226,7 @@ export const MediaUpload = ({
             </div>
           ))}
 
+          {!readOnly && (
           <div
             onClick={!isMaxFilesReached ? handleAddMediaClick : undefined}
             className={cn(
@@ -249,6 +255,7 @@ export const MediaUpload = ({
               </p>
             </div>
           </div>
+          )}
         </div>
       )}
 
@@ -259,7 +266,7 @@ export const MediaUpload = ({
         accept={fileAccepted[acceptableFiles]}
         multiple={maxFiles != 1}
         className="hidden"
-        disabled={isMaxFilesReached}
+        disabled={isMaxFilesReached || readOnly}
       />
     </div>
   );

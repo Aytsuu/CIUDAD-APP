@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useCreateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combo-box-search";
 import { getStaffList } from "./restful-api/annualGetAPI";
@@ -192,11 +192,11 @@ export default function AnnualDevelopmentPlanCreate() {
         budgetItems: budgetItems as BudgetItemType[], 
         resPersons: resPersonsArray 
       });
-      toast.success("Annual development plan created successfully!");
+      showSuccessToast("Annual development plan created successfully!");
       navigate(-1);
     } catch (error) {
       console.error("Error creating annual development plan:", error);
-      toast.error("Failed to create annual development plan");
+      showErrorToast("Failed to create annual development plan");
     } finally {
       setIsLoading(false);
     }

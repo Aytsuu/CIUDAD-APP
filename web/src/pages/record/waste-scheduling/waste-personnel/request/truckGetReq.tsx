@@ -1,57 +1,7 @@
 import { api } from "@/api/api";
-import { Personal, Position, ResidentProfile, Staff, WastePersonnel, Truck } from "../waste-personnel-types";
+import { WastePersonnel, Trucks } from "../waste-personnel-types";
 
-function isPersonal(data: any): data is Personal {
-  const isValid = data && (typeof data.per_id === "number" || typeof data.per_id === "string");
-  if (!isValid) {
-  }
-  return isValid;
-}
-
-function isPosition(data: any): data is Position {
-  const isValid = data && (typeof data.pos_id === "number" || typeof data.pos_id === "string");
-  if (!isValid) {
-  }
-  return isValid;
-}
-
-function isResidentProfile(data: any): data is ResidentProfile {
-  const isValid = data && isPersonal(data.personal);
-  if (!isValid) {
-  }
-  return isValid;
-}
-
-function isStaff(data: any): data is Staff {
-  if (!data) {
-    return false;
-  }
-  if (typeof data.staff_id !== "string") {
-    return false;
-  }
-  if (!isResidentProfile(data.profile)) {
-    return false;
-  }
-  if (!isPosition(data.position)) {
-    return false;
-  }
-  return true;
-}
-
-function isWastePersonnel(data: any): data is WastePersonnel {
-  if (!data) {
-    return false;
-  }
-  if (typeof data.wstp_id !== "number") {
-    return false;
-  }
-  if (!isStaff(data.staff)) {
-    return false;
-  }
-  return true;
-}
-
-function isTruck(data: any): data is Truck {
+function isTruck(data: any): data is Trucks {
   const isValid = data &&
     typeof data.truck_id === "number" &&
     typeof data.truck_plate_num === "string" &&
@@ -62,113 +12,81 @@ function isTruck(data: any): data is Truck {
   return isValid;
 }
 
-export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
+export const getAllPersonnel = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  position?: string
+): Promise<{ results: WastePersonnel[]; count: number }> => {
   try {
-    const response = await api.get(
-      "waste/waste-personnel/?expand=staff.profile.personal,staff.position,staff.manager.profile.personal/"
-    );
-    const personnelData = response.data;
-    if (!Array.isArray(personnelData)) {
-      throw new Error(`Expected array of personnel, got: ${JSON.stringify(personnelData)}`);
+    const params: any = {
+      page,
+      page_size: pageSize
+    };
+    
+    if (searchQuery) params.search = searchQuery;
+    if (position) params.position = position;
+    
+    const response = await api.get("waste/waste-personnel/", { params });
+    
+    // Handle paginated response
+    if (response.data.results !== undefined) {
+      const returnData = {
+        results: response.data.results || [],
+        count: response.data.count || 0
+      };
+
+      return returnData;
     }
-    const filteredData = personnelData.filter(isWastePersonnel);
-    return filteredData.map(person => ({
-      ...person,
-      wstp_id: person.wstp_id,
-      staff: {
-        ...person.staff,
-        profile: {
-          ...person.staff.profile,
-          personal: {
-            ...person.staff.profile.personal,
-            dob: formatDate(person.staff.profile.personal?.dob)
-          }
-        }
-      }
-    }));
+    
+    // Handle non-paginated response
+    const fallbackData = {
+      results: response.data || [],
+      count: response.data?.length || 0
+    };
+    return fallbackData;
   } catch (error) {
     throw error;
   }
 };
 
-export const getPersonnelByPosition = async (positionTitle: string): Promise<WastePersonnel[]> => {
+export const getAllTrucks = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  isArchive?: boolean
+): Promise<{ results: Trucks[]; count: number }> => {
   try {
-    const response = await api.get(
-      `waste/waste-personnel/?position=${positionTitle}&expand=staff.profile.person,staff.position/`
-    );
-    const personnelData = response.data?.data || response.data;
-    
-    if (!Array.isArray(personnelData)) {
-      throw new Error("Expected array of personnel");
-    }
-    
-    return personnelData
-      .filter(isWastePersonnel)
-      .map(person => ({
-         ...person,
-      staff: {
-        ...person.staff,
-        profile: {
-          ...person.staff.profile,
-          personal: {
-            ...person.staff.profile.personal,
-            dob: formatDate(person.staff.profile.personal?.dob)
-          }
-        }
-      }
-    }));
-  } catch (error) {
-    throw new Error(`Failed to fetch ${positionTitle} personnel`);
-  }
-};
-
-export const getPersonnelById = async (wstp_id: number): Promise<WastePersonnel> => {
-  try {
-    const response = await api.get(
-      `waste/waste-personnel/${wstp_id}/?expand=staff.profile.person,staff.position,staff.manager.profile.person/`
-    );
-    
-    if (!isWastePersonnel(response.data)) {
-      throw new Error("Invalid personnel data format");
-    }
-    
-    return {
-      ...response.data,
-      staff: {
-        ...response.data.staff,
-        profile: {
-          ...response.data.staff.profile,
-          personal: {
-            ...response.data.staff.profile.personal,
-            dob: formatDate(response.data.staff.profile.personal.dob)
-          }
-        }
-      }
+    const params: any = {
+      page,
+      page_size: pageSize
     };
-  } catch (error) {
-    throw new Error(`Failed to fetch personnel ${wstp_id}`);
-  }
-};
-
-export const getAllTrucks = async (): Promise<Truck[]> => {
-  try {
-    const response = await api.get("waste/waste-trucks/");
-    const trucksData = response.data?.data || response.data;
+    
+    if (searchQuery) params.search = searchQuery;
+    if (isArchive !== undefined) params.is_archive = isArchive;
+    
+    const response = await api.get("waste/waste-trucks/", { params });
+    const trucksData = response.data.results || response.data;
+    
     if (!Array.isArray(trucksData)) {
       throw new Error("Expected array of trucks");
     }
-    return trucksData
-      .filter(isTruck)
-      .map(truck => ({
-        ...truck,
-        truck_last_maint: formatDate(truck.truck_last_maint)
-      }));
+    
+    return {
+      results: trucksData
+        .filter(isTruck)
+        .map(truck => ({
+          ...truck,
+          truck_last_maint: formatDate(truck.truck_last_maint)
+        })),
+      count: response.data.count || trucksData.length
+    };
   } catch (error) {
     throw new Error("Failed to fetch trucks");
   }
 };
 
-export const getTruckById = async (truck_id: number): Promise<Truck> => {
+export const getTruckById = async (truck_id: number): Promise<Trucks> => {
   try {
     const response = await api.get(`waste/waste-trucks/${truck_id}/`);
 

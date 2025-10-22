@@ -4,67 +4,72 @@ import {
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
+  ScrollView
 } from 'react-native';
 import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
 import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
+import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
+
 
 export default function WasteIllegalDumping() {
-  const { data: fetchedData = [], isLoading, isError, refetch } = useWasteReport();
   const [selectedFilterId, setSelectedFilterId] = useState("0");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = React.useState<boolean>(false);  
   const [activeTab, setActiveTab] = useState<'pending' | 'resolved' | 'cancelled'>('pending');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Map tab to status value for backend
+  const getStatusParam = (tab: string) => {
+    if (tab === "pending") return "pending";
+    if (tab === "resolved") return "resolved";
+    if (tab === "cancelled") return "cancelled";
+    return "";
+  };
+
+  // Fetch data with backend filtering and pagination
+  // Using large page size (1000) to get all data like in Resolution mobile
+  const { data: wasteReportData = { results: [], count: 0 }, isLoading, isError, refetch } = useWasteReport(
+    1, // page
+    1000, // pageSize - large number to get all data
+    debouncedSearchQuery, 
+    selectedFilterId,
+    getStatusParam(activeTab)
+  );
+
+  // Extract the actual data array from paginated response
+  const fetchedData = wasteReportData.results || [];
 
   const filterOptions = [
     { id: "0", name: "All Report Matter" },
-    { id: "1", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
-    { id: "2", name: "Urinating, defecating, spitting in a public place" },
-    { id: "3", name: "Dirty frontage and immediate surroundings for establishment owners" },
-    { id: "4", name: "Improper and untimely stacking of garbage outside residences or establishment" },
-    { id: "5", name: "Obstruction (any dilapidated appliance, vehicle, etc., display of merchandise illegal structure along sidewalk)" },
-    { id: "6", name: "Dirty public utility vehicles, or no trash can or receptacle" },
-    { id: "7", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
-    { id: "8", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
+    { id: "Littering, Illegal dumping, Illegal disposal of garbage", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
+    { id: "Urinating, defecating, spitting in a public place", name: "Urinating, defecating, spitting in a public place" },
+    { id: "Dirty frontage and immediate surroundings for establishment owners", name: "Dirty frontage and immediate surroundings for establishment owners" },
+    { id: "Improper and untimely stacking of garbage outside residences or establishment", name: "Improper and untimely stacking of garbage outside residences or establishment" },
+    { id: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)", name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
+    { id: "Dirty public utility vehicles, or no trash can or receptacle", name: "Dirty public utility vehicles, or no trash can or receptacle" },
+    { id: "Spilling, scattering, littering of wastes by public utility vehicles", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
+    { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
 
-  // Filter reports based on tab, filters, and search
-  const filteredData = useMemo(() => {
-    let result = fetchedData;
+  // const handleSearchChange = (text: string) => {
+  //   setSearchQuery(text);
+  // };
 
-    // Filter by active tab
-    if (activeTab === 'pending') {
-      result = result.filter(item => 
-        item.rep_status !== 'resolved' && item.rep_status !== 'cancelled'
-      );
-    } else if (activeTab === 'resolved') {
-      result = result.filter(item => item.rep_status === 'resolved');
-    } else if (activeTab === 'cancelled') {
-      result = result.filter(item => item.rep_status === 'cancelled');
-    }
+  const handleFilterChange = (value: string) => {
+    setSelectedFilterId(value);
+  };
 
-    // Filter by selected matter
-    if (selectedFilterId !== "0") {
-      const selectedFilterName = filterOptions.find(option => option.id === selectedFilterId)?.name || "";
-      result = result.filter(item =>
-        item.rep_matter.trim().toLowerCase() === selectedFilterName.trim().toLowerCase()
-      );
-    }
-
-    // Filter by search
-    if (searchQuery) {
-      result = result.filter(item =>
-        Object.values(item).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    return result;
-  }, [fetchedData, selectedFilterId, searchQuery, activeTab]);
+  const handleTabChange = (val: string) => {
+    setActiveTab(val as 'pending' | 'resolved' | 'cancelled');
+  };
 
   const handleView = async (item: any) => {
     router.push({
@@ -93,6 +98,15 @@ export default function WasteIllegalDumping() {
     refetch();
   };
 
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
+    
+
   const renderReportCard = (item: WasteReport) => (
     <Pressable
       key={item.rep_id}
@@ -100,21 +114,21 @@ export default function WasteIllegalDumping() {
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
       <View className="flex-row justify-between items-start mb-3">
-        <Text className="font-semibold text-xl">Report #{item.rep_id}</Text>
+        <Text className="font-semibold text-xl text-primaryBlue">Report No. {item.rep_id}</Text>
         <View className="flex-row items-center">
           {item.rep_status === "resolved" ? (
-            <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
+            <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
               <CheckCircle size={12} color="#22c55e" />
               <Text className="text-green-600 text-sm font-medium ml-1">Resolved</Text>
             </View>
           ) : item.rep_status === "cancelled" ? (
-            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full">
+            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
               <XCircle size={12} color="#ef4444" />
               <Text className="text-red-600 text-sm font-medium ml-1">Cancelled</Text>
             </View>
           ) : (
-            <View className="flex-row items-center bg-yellow-50 px-2 py-1 rounded-full">
-              <Text className="text-yellow-600 text-sm font-medium">Pending</Text>
+            <View className="flex-row items-center bg-blue-100 px-2 py-1 rounded-full border border-primaryBlue">
+              <Text className="text-primaryBlue text-sm font-medium">In progress</Text>
             </View>
           )}
         </View>
@@ -142,12 +156,12 @@ export default function WasteIllegalDumping() {
         </Text>
       </View>
 
-      {item.rep_status === "cancelled" && (
+      {item.rep_status === "cancelled" && item.rep_cancel_reason && (
         <View className="mb-4">
           <Text className="text-base font-semibold">Cancel Reason:</Text>
-          <Text>{item.rep_cancel_reason}</Text>              
+          <Text>{item.rep_cancel_reason}</Text>
         </View>
-      )}         
+      )}
 
       <View className="self-end">
         <SquareArrowOutUpRight size={16} color="#00A8F0" />
@@ -176,24 +190,6 @@ export default function WasteIllegalDumping() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Illegal Dumping Reports</Text>}
-        rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" />}
-      >
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-        </View>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout
       leftAction={
@@ -201,75 +197,88 @@ export default function WasteIllegalDumping() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Illegal Dumping Reports</Text>}
-      rightAction={<View className="w-10 h-10 rounded-full items-center justify-center" />}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Illegal Dumping Reports</Text>}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      wrapScroll={false}
     >
-      <View className="flex-1 px-4">
-        {/* Search and Filters */}
-        <View className="mb-4">
-          <View className="relative mb-3">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="pl-10 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar - Conditionally rendered */}
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}} // Can leave empty since you're using debounce
+          />
+        )}
+
+        {/*TABS*/}
+        <View className="bg-white border-b border-gray-200 mb-4">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {[
+              { key: "pending", label: "Reports" },
+              { key: "resolved", label: "Resolved" },
+              { key: "cancelled", label: "Cancelled" },
+            ].map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => handleTabChange(tab.key)}
+                className={`flex-1 px-4 py-4 items-center border-b-2 ${
+                  activeTab === tab.key ? "border-blue-500" : "border-transparent"
+                }`}
+              >
+                <Text className={`text-sm font-medium ${activeTab === tab.key ? "text-blue-600" : "text-gray-500"}`}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>      
+
+        <View className="flex-1 px-6">
+          {/* Filters only - Search moved to top */}
+          <View className="mb-4">
+            <SelectLayout
+              placeholder="Select report matter"
+              options={filterOptions.map(({ id, name }) => ({ value: id, label: name }))}
+              selectedValue={selectedFilterId}
+              onSelect={(option) => handleFilterChange(option.value)}
+              className="bg-white"
             />
           </View>
 
-          <SelectLayout
-            placeholder="Select report matter"
-            options={filterOptions.map(({ id, name }) => ({ value: id, label: name }))}
-            selectedValue={selectedFilterId}
-            onSelect={(option) => setSelectedFilterId(option.value)}
-            className="bg-white"
-          />
-        </View>
+          {/* Tab Content */}
+          <View className="mb-2">
+            <Text className="text-sm text-gray-500">
+              {fetchedData.length} report{fetchedData.length !== 1 ? 's' : ''} found
+            </Text>
+          </View>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'pending' | 'resolved' | 'cancelled')} className="flex-1">
-          <TabsList className="bg-blue-50 mb-5 mt-2 flex-row justify-between">
-            <TabsTrigger
-              value="pending"
-              className={`flex-1 mx-1 ${activeTab === 'pending' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'pending' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Reports</Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="resolved"
-              className={`flex-1 mx-1 ${activeTab === 'resolved' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'resolved' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Resolved</Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="cancelled"
-              className={`flex-1 mx-1 ${activeTab === 'cancelled' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'cancelled' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Cancelled</Text>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Shared FlatList for all tabs */}
-          <TabsContent value={activeTab} className="flex-1">
-            <View className="mb-2">
-              <Text className="text-sm text-gray-500">
-                {filteredData.length} report{filteredData.length !== 1 ? 's' : ''} found
-              </Text>
-            </View>
+          {isLoading ? (
+            renderLoadingState()               
+          ) : (
             <FlatList
-              data={filteredData}
+              data={fetchedData}
               renderItem={({ item }) => renderReportCard(item)}
               keyExtractor={(item) => item.rep_id.toString()}
               contentContainerStyle={{ paddingBottom: 20 }}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View className="py-8 items-center">
-                  <Text className="text-gray-500 text-center">No reports found</Text>
+                  <Text className="text-gray-500 text-center">
+                    No {activeTab} reports found
+                  </Text>
                 </View>
               }
             />
-          </TabsContent>
-        </Tabs>
+          )}       
+        </View>
       </View>
     </PageLayout>
   );

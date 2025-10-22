@@ -6,17 +6,14 @@ import { z } from "zod"
 import PermitClearanceFormSchema from "@/form-schema/permitClearance-schema";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { createPermitClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/permitClearancePostAPI";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search";
 import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
-import { useGetAnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
-import { FormSelect } from "@/components/ui/form/form-select";
-
-
+import { useGetAnnualGrossSalesActive, type AnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
 
 interface PermitClearanceFormProps {
     onSuccess?: () => void;
@@ -29,88 +26,108 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const staffId = user?.staff?.staff_id as string | undefined;
     
     
-    // Add error handling for the queries
-    const { data: businesses = [], isLoading: businessLoading, error: businessError } = useGetBusinesses();
-    const { data: permitPurposes = [], isLoading: purposesLoading, error: purposesError } = useGetPermitPurposes();
-    const { data: residents = [], isLoading: residentLoading} = useGetResidents();
-    const { data: grossSales = [], isLoading: _grossSalesLoading } = useGetAnnualGrossSales();
     
-    // Log any errors
-    if (businessError) {
-        console.error("Business loading error:", businessError);
-    }
-    if (purposesError) {
-        console.error("Purposes loading error:", purposesError);
-    }
+    const { data: businesses = [], isLoading: businessLoading } = useGetBusinesses();
+    const { data: permitPurposes = [], isLoading: purposesLoading } = useGetPermitPurposes();
+    const { data: residents = [], isLoading: residentLoading} = useGetResidents();
+    const { data: grossSales = { results: [], count: 0 }, isLoading: _grossSalesLoading } = useGetAnnualGrossSalesActive();
+    
 
-    // fetches only records where the archive status is false
-    const annualGrossSalesOptions = grossSales
-    .filter(grossSales => grossSales.ags_is_archive === false)
-    .map(grossSales => ({
-        id: grossSales.ags_id.toString(),
-        name: `₱${grossSales.ags_minimum} - ₱${grossSales.ags_maximum}`
-    }));
     
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
         resolver: zodResolver(PermitClearanceFormSchema),
         defaultValues: {
             serialNo: "",
-            businessName: "",
+            businessName: "", 
             requestor: "",
             address: "",
             grossSales: "",
-            purposes: "",
+            purposes: "", 
             rp_id: "",
         },
     })
 
-    // Function to get business address when business is selected
-    const getBusinessAddress = (businessValue: string) => {
-        console.log("getBusinessAddress called with businessValue:", businessValue);
-        console.log("Available businesses:", businesses);
-        
-        
-        let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
-        
-        // If not found by ID, try to find by name
-        if (!selectedBusiness) {
-            selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
-        }
-        
-        console.log("Selected business:", selectedBusiness);
-        
-        const address = selectedBusiness?.bus_location || selectedBusiness?.address || '';
-        console.log("Resolved address:", address);
-        
-        return address;
+    
+    const getBusinessById = (businessId: string) => {
+        return businesses.find((business: any) => business.bus_id === businessId);
     }
 
-    // Function to get business requestor when business is selected
-    // const getBusinessRequestor = (businessValue: string) => {
-    //     console.log("getBusinessRequestor called with businessValue:", businessValue);
+    // Function to get business address when business is selected
+    const getBusinessAddress = (businessId: string) => {
+        const selectedBusiness = getBusinessById(businessId);
+        return selectedBusiness?.bus_location || selectedBusiness?.address || '';
+    }
+
+    // Function to get business display name
+    const getBusinessDisplayName = (businessId: string) => {
+        const selectedBusiness = getBusinessById(businessId);
+        return selectedBusiness?.bus_name || '';
+    }
+
+    // Function to get matching annual gross sales rate based on business ID
+    const getMatchingGrossSalesRate = (businessId: string) => {
+        const selectedBusiness = getBusinessById(businessId);
         
-    //     // Try to find by ID first
-    //     let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
+        if (!selectedBusiness || !selectedBusiness.bus_gross_sales) {
+            return null;
+        }
         
-    //     // If not found by ID, try to find by name
-    //     if (!selectedBusiness) {
-    //         selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
-    //     }
+        const businessGrossSales = Number(selectedBusiness.bus_gross_sales);
         
-    //     console.log("Selected business for requestor:", selectedBusiness);
+        // Filter only active (non-archived) rates
+        const activeRates = grossSales?.results?.filter((rate: AnnualGrossSales) => !rate.ags_is_archive) || [];
         
-    //     const requestor = selectedBusiness?.requestor || '';
-    //     console.log("Resolved requestor:", requestor);
+        // Find exact matching annual gross sales range
+        const matchingRate = activeRates.find((rate: AnnualGrossSales) => 
+            businessGrossSales >= Number(rate.ags_minimum) && 
+            businessGrossSales <= Number(rate.ags_maximum)
+        );
         
-    //     return requestor;
-    // }
+        if (matchingRate) {
+            return {
+                id: matchingRate.ags_id.toString(),
+                name: `₱${Number(matchingRate.ags_minimum).toLocaleString()} - ₱${Number(matchingRate.ags_maximum).toLocaleString()}`,
+                rate: matchingRate.ags_rate
+            };
+        }
+        
+        const sortedRates = [...activeRates].sort((a, b) => Number(a.ags_minimum) - Number(b.ags_minimum));
+        
+        for (const rate of sortedRates) {
+            const min = Number(rate.ags_minimum);
+            const max = Number(rate.ags_maximum);
+            
+            if (businessGrossSales < min && Math.abs(businessGrossSales - min) <= 1) {
+                return {
+                    id: rate.ags_id.toString(),
+                    name: `₱${min.toLocaleString()} - ₱${max.toLocaleString()} (Closest Range)`,
+                    rate: rate.ags_rate
+                };
+            }
+        }
+        
+        // If business exceeds highest range, use highest available
+        const highestRate = activeRates.reduce((highest, current) => 
+            Number(current.ags_maximum) > Number(highest.ags_maximum) ? current : highest
+        , activeRates[0]);
+        
+        if (highestRate && businessGrossSales > Number(highestRate.ags_maximum)) {
+            return {
+                id: highestRate.ags_id.toString(),
+                name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()}`,
+                rate: highestRate.ags_rate
+            };
+        }
+        
+        return null;
+    }
 
     const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
             setIsSubmitting(true);
             
             if (!staffId) {
-                toast.error("Missing staff ID. Please re-login and try again.");
+                showErrorToast("Missing staff ID. Please re-login and try again.");
                 return;
             }
 
@@ -118,34 +135,24 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                 ...values
             };
             
-            console.log("Permit Clearance Data:", payload);
-            
-         
             await createPermitClearance(payload, staffId);
-            console.log("Permit clearance created successfully");
             
-            toast.success("Permit clearance created successfully!");
+            showSuccessToast("Permit clearance created successfully!");
             
-      
             form.reset();
-            
-           
             await queryClient.invalidateQueries({ queryKey: ["permitClearances"] });
             
-        
             if (onSuccess) {
                 onSuccess();
             }
             
         } catch (error) {
             console.error('Error creating permit clearance:', error);
-            toast.error("Failed to create permit clearance. Please try again.");
+            showErrorToast("Failed to create permit clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
-    
-    console.log("PermitClearanceForm rendering", { businesses, permitPurposes, businessLoading, purposesLoading });
     
     return(
         <Form {...form}>
@@ -173,37 +180,94 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                 <FormLabel>Business Name</FormLabel>
                                 <FormControl>
                                     <ComboboxInput
-                                        value={field.value}
+                                        value={getBusinessDisplayName(field.value) || field.value}
                                         options={businesses}
                                         isLoading={businessLoading}
                                         label=""
                                         placeholder="Search business"
                                         emptyText="No businesses found"
-                                        onSelect={(value: string, selectedOption: any) => {
-                                            console.log("Business selected with value:", value);
-                                            console.log("Selected option:", selectedOption);
-                                            field.onChange(value);
+                                        onSelect={(_value: string, selectedOption: any) => {
+                                            const businessId = selectedOption?.bus_id || '';
                                             
-                                           
-                                            let selectedBusiness = businesses.find((business: any) => business.bus_id === value);
+                                            // Store the business ID in the field (not the display name)
+                                            field.onChange(businessId);
                                             
-                                          
-                                            if (!selectedBusiness) {
-                                                selectedBusiness = businesses.find((business: any) => business.bus_name === value);
-                                            }
+                                            const selectedBusiness = getBusinessById(businessId);
                                             
-                                            console.log("Found selected business:", selectedBusiness);
                                             if (selectedBusiness) {
                                                 const address = selectedBusiness.bus_location || selectedBusiness.address || '';
                                                 form.setValue("address", address);
                                                 
-                                               
-                                                const requestor = selectedBusiness.requestor || '';
-                                              
-                                                form.setValue("requestor", requestor);
+                                                // Fetch business owner using br_id or rp_id
+                                                const fetchBusinessOwner = async () => {
+                                                    try {
+                                                        let ownerInfo = null;
+                                                        let ownerRpId = null;
+                                                        
+                                                        // First, try to get owner from the business data directly
+                                                        if (selectedBusiness.requestor) {
+                                                            ownerInfo = selectedBusiness.requestor;
+                                                            
+                                                            // If we have rp_id, use it directly
+                                                            if (selectedBusiness.rp_id) {
+                                                                ownerRpId = selectedBusiness.rp_id;
+                                                            }
+                                                        }
+                                                        // If no direct requestor info, try to find in residents list
+                                                        else if (selectedBusiness.rp_id || selectedBusiness.rp) {
+                                                            const residentId = selectedBusiness.rp_id || selectedBusiness.rp;
+                                                            
+                                                            // Find the resident in the residents list
+                                                            const owner = residents.find((resident: any) => 
+                                                                resident.rp_id === residentId
+                                                            );
+                                                            
+                                                            if (owner) {
+                                                                ownerInfo = owner.full_name;
+                                                                ownerRpId = owner.rp_id;
+                                                            }
+                                                        }
+                                                        // Try br_id as fallback
+                                                        else if (selectedBusiness.br_id) {
+                                                            // Find the resident in the residents list using br_id
+                                                            const owner = residents.find((resident: any) => 
+                                                                resident.rp_id === selectedBusiness.br_id
+                                                            );
+                                                            if (owner) {
+                                                                ownerInfo = owner.full_name;
+                                                                ownerRpId = owner.rp_id;
+                                                            }
+                                                        }
+                                                        
+                                                        // Set the requestor field and rp_id
+                                                        if (ownerInfo) {
+                                                            form.setValue("requestor", ownerInfo);
+                                                            if (ownerRpId) {
+                                                                form.setValue('rp_id', ownerRpId);
+                                                            }
+                                                        } else {
+                                                            // Clear the fields and let user manually select
+                                                            form.setValue("requestor", "");
+                                                            form.setValue('rp_id', "");
+                                                        }
+                                                    } catch (error) {
+                                                        console.error("Error fetching business owner:", error);
+                                                        form.setValue("requestor", "");
+                                                        form.setValue('rp_id', "");
+                                                    }
+                                                };
+                                                
+                                                fetchBusinessOwner();
+
+                                                // Auto-match gross sales rate using business ID
+                                                const matchingRate = getMatchingGrossSalesRate(businessId);
+                                                if (matchingRate) {
+                                                    form.setValue("grossSales", matchingRate.id.toString());
+                                                }
                                             }
                                         }}
                                         onCustomInput={(value: string) => {
+                                            // For custom input, we'll store the display value
                                             field.onChange(value);
                                         }}
                                         displayKey="bus_name"
@@ -215,16 +279,53 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}>
                     </FormField>
 
-                    <div className="grid grid-cols-2 gap-5 w-full">
-                        <FormSelect
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                        <FormField
                             control={form.control}
                             name="grossSales"
-                            options={annualGrossSalesOptions}
-                            // isLoading={grossSalesLoading}
-                            label="Annual Gross Sales"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Annual Gross Sales</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            {...field} 
+                                            value={getMatchingGrossSalesRate(form.watch("businessName"))?.name || ''}
+                                            placeholder="Select a business to auto-fill the rate" 
+                                            className="w-full bg-gray-50" 
+                                            readOnly
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-
                         <FormField
+                            control={form.control}
+                            name="grossSales"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Amount to be Paid</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            {...field} 
+                                            value={getMatchingGrossSalesRate(form.watch("businessName"))?.rate ? 
+                                                `₱${Number(getMatchingGrossSalesRate(form.watch("businessName"))?.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                                                ''
+                                            }
+                                            placeholder="Select a business to auto-fill the rate" 
+                                            className="w-full bg-gray-50" 
+                                            readOnly
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    {/* Requestor field - full width */}
+                    <FormField
                         control={form.control}
                         name="requestor"
                         render={({ field }) => (
@@ -237,7 +338,10 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                          options={residents}
                                          isLoading={residentLoading}
                                          label=""
-                                         placeholder="Search resident by name"
+                                         placeholder={form.watch("businessName") ? 
+                                             "No owner found for this business - please select manually" : 
+                                             "Search resident by name"
+                                         }
                                          emptyText="No residents found"
                                          onSelect={(value: string, item: any) => {
                                              field.onChange(value);
@@ -255,9 +359,8 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
-                        )}>
-                        </FormField>        
-                    </div>
+                        )}
+                    />
 
                     {/* Display business address automatically */}
                     <FormField
@@ -280,42 +383,52 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}
                     />
 
-                                         <div className="relative mb-8">       
-                         <FormField
-                              control={form.control}
-                              name="purposes"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <FormLabel>Select purpose(s):</FormLabel>
-                                      <FormControl>
-                                          <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
-                                             <ComboboxInput
-                                                  value={field.value || ''}
-                                                  options={permitPurposes
-                                                      .filter((purpose: any) => purpose.pr_category === 'Permit Clearance')
-                                                      .map((purpose: any) => ({
-                                                          id: purpose.pr_id,
-                                                          name: purpose.pr_purpose
-                                                      }))}
-                                                  isLoading={purposesLoading}
-                                                  label=""
-                                                  placeholder="Select purpose..."
-                                                  emptyText="No purposes found"
-                                                  onSelect={(value: string, _: any) => {
-                                                      field.onChange(value);
-                                                  }}
-                                                  onCustomInput={(value: string) => {
-                                                      field.onChange(value);
-                                                  }}
-                                                  displayKey="name"
-                                                  valueKey="id"
-                                              />
-                                         </div>
-                                     </FormControl>
-                                     <FormMessage className="mt-2" />
-                                 </FormItem>
-                             )}
-                         />
+                    <div className="relative mb-8">       
+                        <FormField
+                             control={form.control}
+                             name="purposes"
+                             render={({ field }) => {
+                                 // Find the selected purpose to get its name for display
+                                 const selectedPurpose = permitPurposes.find((purpose: any) => 
+                                     purpose.pr_id?.toString() === field.value?.toString()
+                                 );
+                                 const displayValue = selectedPurpose?.pr_purpose || '';
+                                 
+                                 return (
+                                     <FormItem>
+                                         <FormLabel>Select purpose(s):</FormLabel>
+                                         <FormControl>
+                                             <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
+                                                <ComboboxInput
+                                                     value={displayValue}
+                                                     options={permitPurposes
+                                                         .filter((purpose: any) => purpose.pr_category === 'Business Permit' || purpose.pr_category === 'Barangay Permit')
+                                                         .map((purpose: any) => ({
+                                                             id: purpose.pr_id,
+                                                             name: purpose.pr_purpose
+                                                         }))}
+                                                     isLoading={purposesLoading}
+                                                     label=""
+                                                     placeholder="Select purpose..."
+                                                     emptyText="No purposes found"
+                                                     onSelect={(_value: string, selectedOption: any) => {
+                                                         const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
+                                                         field.onChange(purposeId.toString());
+                                                     }}
+                                                     onCustomInput={(value: string) => {
+                                                         // For custom input, store the display value
+                                                         field.onChange(value);
+                                                     }}
+                                                     displayKey="name"
+                                                     valueKey="id"
+                                                 />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="mt-2" />
+                                    </FormItem>
+                                 );
+                             }}
+                        />
                      </div>
 
                     <div className="flex justify-end">

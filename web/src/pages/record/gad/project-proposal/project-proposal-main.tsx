@@ -21,6 +21,8 @@ import {
   useGetProjectProposals,
   useGetProjectProposal,
   useGetSupportDocs,
+  useGetProjectProposalYears,
+  useGetProjectProposalGrandTotal 
 } from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
@@ -30,7 +32,7 @@ import {
   useArchiveSupportDocument,
   useRestoreSupportDocument,
 } from "./queries/projprop-delqueries";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import {
   Dialog,
@@ -43,35 +45,26 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { DocumentCard } from "./projpropsupp-docs-modal";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
 
 function GADProjectProposal() {
-  const filter = [
-    { id: "All", name: "All" },
-  ];
-
-  const {
-    data: projects = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useGetProjectProposals();
   const { mutate: deleteProject } = usePermanentDeleteProjectProposal();
   const { mutate: deleteSupportDoc } = useDeleteSupportDocument();
   const { mutate: archiveProject } = useArchiveProjectProposal();
   const { mutate: restoreProject } = useRestoreProjectProposal();
   const { mutate: archiveSupportDoc } = useArchiveSupportDocument();
   const { mutate: restoreSupportDoc } = useRestoreSupportDocument();
-
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const { data: grandTotalData } = useGetProjectProposalGrandTotal();
+  const grandTotal = grandTotalData?.grand_total || 0;
+  const [selectedYear, setSelectedYear] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
-    null
-  );
+  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
@@ -82,6 +75,26 @@ function GADProjectProposal() {
   const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
   const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
+  const { data: availableYears = [] } = useGetProjectProposalYears();
+  const { showLoading, hideLoading } = useLoading();
+  const yearFilterOptions = [
+    { id: "All", name: "All Years" },
+    ...availableYears.map((year) => ({
+      id: year.toString(),
+      name: year.toString(),
+    })),
+  ];
+  const { data, isLoading, isError, error, refetch } = useGetProjectProposals(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    viewMode === "archived",
+    selectedYear !== "All" ? selectedYear : undefined
+  );
+
+  const projects = data?.results || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -96,10 +109,10 @@ function GADProjectProposal() {
     });
 
   useEffect(() => {
-  if (isSuppDocDialogOpen) {
-    setSelectedSuppDocs(supportDocs);
-  }
-}, [supportDocs, isSuppDocDialogOpen]);
+    if (isSuppDocDialogOpen) {
+      setSelectedSuppDocs(supportDocs);
+    }
+  }, [supportDocs, isSuppDocDialogOpen]);
 
   useEffect(() => {
     if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {
@@ -107,29 +120,24 @@ function GADProjectProposal() {
     }
   }, [detailedProject, selectedProject]);
 
-  const filteredProjects = (projects as ProjectProposal[])
-    .filter((_project: ProjectProposal) => {
-      if (selectedFilter === "All") return true;
-      return false;
-    })
-    .filter((project: ProjectProposal) => {
-      return viewMode === "active"
-        ? project.gprIsArchive === false
-        : project.gprIsArchive === true;
-    })
-    .filter((project: ProjectProposal) => {
-      const title = project.projectTitle?.toLowerCase() || "";
-      const background = project.background?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return title.includes(search) || background.includes(search);
-    });
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredProjects.length / pageSize);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value);
+    setCurrentPage(1);
+  };
+
+  const handleViewModeChange = (value: string) => {
+    setViewMode(value as "active" | "archived");
+    setCurrentPage(1);
+  };
 
   const handleDelete = (gprId: number) => {
     setIsDeleting(true);
@@ -238,52 +246,6 @@ function GADProjectProposal() {
     );
   };
 
-  // Calculate total budget of all displayed projects
-  const totalBudget = filteredProjects.reduce((sum, project) => {
-    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
-
-    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-      const paxCount = typeof item.pax === 'string' 
-        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
-        : 1;
-      return projectSum + (paxCount * amount);
-    }, 0);
-
-    return sum + projectTotal;
-  }, 0);
-
-  if (isLoading) {
-    return (
-      <div className="bg-snow w-full h-full p-4">
-        <div className="flex flex-col gap-3 mb-4">
-          <Skeleton className="h-8 w-1/4 opacity-30" />
-          <Skeleton className="h-5 w-2/3 opacity-30" />
-        </div>
-        <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
-            <div className="flex flex-row gap-2 justify-center items-center">
-              <Skeleton className="h-5 w-12 opacity-30" />
-              <Skeleton className="h-10 w-32 opacity-30" />
-            </div>
-            <Skeleton className="h-10 w-24 opacity-30" />
-          </div>
-          <Skeleton className="h-10 w-48 opacity-30" />
-        </div>
-        <div className="flex flex-col mt-4 gap-4">
-          {[...Array(3)].map((_, index: number) => (
-            <Skeleton
-              key={index}
-              className="h-32 w-full opacity-30 rounded-lg"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (isError) {
     return (
       <div className="text-red-500 p-4">
@@ -292,8 +254,16 @@ function GADProjectProposal() {
     );
   }
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
   return (
-    <div className="bg-snow w-full h-full p-4">
+    <div className="w-full h-full">
       <div className="flex flex-col gap-3 mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
           <div>GAD Project Proposal</div>
@@ -316,17 +286,17 @@ function GADProjectProposal() {
               placeholder="Search..."
               className="pl-10 w-full bg-white text-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
           <div className="flex flex-row gap-2 justify-center items-center">
             <Label>Filter: </Label>
             <SelectLayout
               className="bg-white"
-              options={filter}
-              placeholder="Filter"
-              value={selectedFilter}
-              onChange={(value: string) => setSelectedFilter(value)}
+              options={yearFilterOptions}
+              placeholder="Year"
+              value={selectedYear}
+              onChange={handleYearChange}
             />
           </div>
           {viewMode === "active" && (
@@ -354,177 +324,196 @@ function GADProjectProposal() {
 
         <Tabs
           value={viewMode}
-          onValueChange={(value) => setViewMode(value as "active" | "archived")}
+          onValueChange={handleViewModeChange}
           className="w-auto"
         >
           <TabsList>
             <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
+            <TabsTrigger value="archived"><div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div></TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       {/* Dynamic Total Budget Display */}
-      <div className="flex justify-between mt-2 mb-2">
-        <div className="bg-white border px-4 py-2 rounded-lg">
-          <span className="font-medium text-black">
-            Grand Total:{" "}
-            <span className="font-bold text-green-700">
-              ₱{new Intl.NumberFormat('en-US', { 
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2 
-              }).format(totalBudget)}
+      {!isLoading && (
+        <div className="flex justify-between mt-2 mb-2">
+          <div className="bg-white border px-4 py-2 rounded-lg">
+            <span className="font-medium text-black">
+              Grand Total:{" "}
+              <span className="font-bold text-green-700">
+                ₱
+                {new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(grandTotal)}
+              </span>
             </span>
-          </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col gap-4">
-        {paginatedProjects.length === 0 && (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
+            <Spinner size="lg" />
+            Loading project proposals...
+          </div>
+        ) : projects.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} project proposals
             found.
           </div>
-        )}
-        {paginatedProjects.map((project: ProjectProposal, index: number) => {
-          return (
-            <CardLayout
-              key={project.gprId || index}
-              title={
-                <div className="flex flex-row justify-between items-center">
-                  <div className="w-full">
-                    {project.projectTitle || "Untitled"}
-                  </div>
-                  <div className="flex gap-2">
-                    <Eye
-                      className="text-gray-500 hover:text-blue-600 cursor-pointer"
-                      size={20}
-                      onClick={() => handleViewProject(project)}
-                    />
-                    {viewMode === "active" ? (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <Archive
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Archive Project Proposal"
-                          description="Are you sure you want to archive this project proposal?"
-                          actionLabel="Archive"
-                          onClick={() => handleArchive(project.gprId)}
-                          type="warning"
+        ) : (
+          <>
+            {projects.map((project: ProjectProposal, index: number) => {
+              return (
+                <CardLayout
+                  key={project.gprId || index}
+                  title={
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="w-full">
+                        {project.projectTitle || "Untitled"}
+                      </div>
+                      <div className="flex gap-2">
+                        <Eye
+                          className="text-gray-500 hover:text-blue-600 cursor-pointer"
+                          size={20}
+                          onClick={() => handleViewProject(project)}
                         />
-                      </>
-                    ) : (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <ArchiveRestore
-                              className="text-gray-500 hover:text-green-600 cursor-pointer"
-                              size={20}
+                        {viewMode === "active" ? (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <Archive
+                                  className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Archive Project Proposal"
+                              description="Are you sure you want to archive this project proposal?"
+                              actionLabel="Archive"
+                              onClick={() => handleArchive(project.gprId)}
+                              type="warning"
                             />
-                          }
-                          title="Restore Project Proposal"
-                          description="Are you sure you want to restore this project proposal?"
-                          actionLabel="Restore"
-                          onClick={() => handleRestore(project.gprId)}
-                          type="success"
-                        />
-                        <ConfirmationModal
-                          trigger={
-                            <Trash
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
+                          </>
+                        ) : (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <ArchiveRestore
+                                  className="text-gray-500 hover:text-green-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Restore Project Proposal"
+                              description="Are you sure you want to restore this project proposal?"
+                              actionLabel="Restore"
+                              onClick={() => handleRestore(project.gprId)}
+                              type="success"
                             />
-                          }
-                          title="Permanently Delete Project Proposal"
-                          description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
-                          actionLabel={isDeleting ? "Deleting..." : "Delete"}
-                          onClick={() => handleDelete(project.gprId)}
-                          type="destructive"
-                        />
-                      </>
-                    )}
-                  </div>
-                </div>
-              }
-              description={
-                <div className="space-y-2">
-                  <div className="line-clamp-2 text-sm text-gray-600">
-                    {project.background || "No background provided"}
-                  </div>
-                  <div className="text-left mt-1">
-                    <span className="text-xs text-gray-500">
-                      Date: {project.date || "No date provided"}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 underline">
-                       Total Budget: ₱{
-                          project.budgetItems && project.budgetItems.length > 0
-                            ? new Intl.NumberFormat('en-US', { 
-                                style: 'decimal', 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              }).format(
-                                project.budgetItems.reduce((grandTotal, item) => {
-                                  const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-                                  const paxCount = typeof item.pax === 'string' 
-                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                            <ConfirmationModal
+                              trigger={
+                                <Trash
+                                  className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Permanently Delete Project Proposal"
+                              description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
+                              actionLabel={
+                                isDeleting ? "Deleting..." : "Delete"
+                              }
+                              onClick={() => handleDelete(project.gprId)}
+                              type="destructive"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  }
+                  description={
+                    <div className="space-y-2">
+                      <div className="line-clamp-2 text-sm text-gray-600">
+                        {project.background || "No background provided"}
+                      </div>
+                      <div className="text-left mt-1">
+                        <span className="text-xs text-gray-500">
+                          Date: {project.date || "No date provided"}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500 underline">
+                        Total Budget: ₱
+                        {project.budgetItems && project.budgetItems.length > 0
+                          ? new Intl.NumberFormat("en-US", {
+                              style: "decimal",
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(
+                              project.budgetItems.reduce((grandTotal, item) => {
+                                const amount =
+                                  typeof item.amount === "string"
+                                    ? parseFloat(item.amount) || 0
+                                    : item.amount || 0;
+                                const paxCount =
+                                  typeof item.pax === "string"
+                                    ? parseInt(item.pax) ||
+                                      (item.pax.includes("pax")
+                                        ? parseInt(item.pax) || 1
+                                        : 1)
                                     : 1;
-                                  return grandTotal + (paxCount * amount);
-                                }, 0)
-                              )
-                            : "N/A"
-                        }
-                    </span>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex flex-col gap-1">
+                                return grandTotal + paxCount * amount;
+                              }, 0)
+                            )
+                          : "N/A"}
+                      </span>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex flex-col gap-1"></div>
+                        <div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewSupportingDocs(project)}
+                            className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
+                          >
+                            View Supporting Docs
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewSupportingDocs(project)}
-                        className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
-                      >
-                        View Supporting Docs
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              }
-              content={null}
-              cardClassName="w-full border p-4"
-              titleClassName="text-lg font-semibold text-darkBlue2"
-              contentClassName="text-sm text-darkGray"
-            />
-          );
-        })}
+                  }
+                  content={null}
+                  cardClassName="w-full border p-4"
+                  titleClassName="text-lg font-semibold text-darkBlue2"
+                  contentClassName="text-sm text-darkGray"
+                />
+              );
+            })}
 
-        {/* Pagination Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
-            {filteredProjects.length} rows
-          </p>
-          {filteredProjects.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-              }}
-            />
-          )}
-        </div>
+            {/* Pagination Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+              <p className="text-xs sm:text-sm text-darkGray">
+                Showing{" "}
+                {projects.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                rows
+              </p>
+              {totalPages > 1 && (
+                <PaginationLayout
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
-          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+          <DialogHeader className="p-4 bg-background border-b rounded sticky top-0 z-50">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-left">
                 {selectedProject?.projectTitle || "Project Proposal"}
@@ -534,8 +523,7 @@ function GADProjectProposal() {
                   variant="outline"
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
-                  disabled={
-                    selectedProject?.gprIsArchive === true}
+                  disabled={selectedProject?.gprIsArchive === true}
                 >
                   <Edit size={16} /> Edit
                 </Button>
@@ -577,7 +565,11 @@ function GADProjectProposal() {
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="archived">
+                <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div>
+                </TabsTrigger>
             </TabsList>
 
             <TabsContent value="active" className="flex-1 overflow-y-auto p-4">
@@ -594,8 +586,7 @@ function GADProjectProposal() {
                       <DocumentCard
                         key={doc.psd_id}
                         doc={doc}
-                        showActions={
-                          selectedProject?.gprIsArchive === false }
+                        showActions={selectedProject?.gprIsArchive === false}
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onArchive={() => handleArchiveDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}
@@ -626,8 +617,7 @@ function GADProjectProposal() {
                       <DocumentCard
                         key={doc.psd_id}
                         doc={doc}
-                        showActions={
-                          selectedProject?.gprIsArchive === false }
+                        showActions={selectedProject?.gprIsArchive === false}
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onRestore={() => handleRestoreDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}

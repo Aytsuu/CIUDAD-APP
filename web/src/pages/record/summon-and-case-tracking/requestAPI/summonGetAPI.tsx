@@ -1,8 +1,64 @@
 import { api } from "@/api/api";
 
-export const getSummonCaseList = async () => {
+export const getSummonCaseList = async (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
     try{
-        const res = await api.get('clerk/summon-case-list/')
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (statusFilter && statusFilter !== "All") {
+                params.status = statusFilter;
+        }
+
+        const res = await api.get('clerk/summon-case-list/', {
+            params
+        })
+        console.log(res.data)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getCouncilCaseList = async (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    try{
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (statusFilter && statusFilter !== "All") {
+                params.status = statusFilter;
+        }
+
+        const res = await api.get('clerk/council-case-list/', {
+            params
+        })
+        console.log(res.data)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getLuponCaseList = async (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    try{
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (statusFilter && statusFilter !== "All") {
+                params.status = statusFilter;
+        }
+
+        const res = await api.get('clerk/lupon-case-list/', {
+            params
+        })
         console.log(res.data)
         return res.data
     }catch(err){
@@ -11,19 +67,36 @@ export const getSummonCaseList = async () => {
 }
 
 
-export const getServiceChargeReqDetails = async (sr_id: string) => {
+export const getSummonCaseDetail = async (sc_id: string) => {
     try{
-        const res = await api.get(`clerk/service-charge-request-details/${sr_id}/`)
+        const res = await api.get(`clerk/summon-case-detail/${sc_id}/`)
         return res.data
     }catch(err){
         console.error(err)
     }
 }
 
-
-export const getSummonScheduleList = async (sr_id: string) => {
+export const getCouncilCaseDetail = async (sc_id: string) => {
     try{
-        const res = await api.get( `clerk/summon-schedule-list/${sr_id}/`)
+        const res = await api.get(`clerk/council-case-detail/${sc_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getLuponCaseDetail = async (sc_id: string) => {
+    try{
+        const res = await api.get(`clerk/lupon-case-detail/${sc_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getSummonScheduleList = async (sc_id: string) => {
+    try{
+        const res = await api.get( `clerk/summon-schedule-list/${sc_id}/`)
         return res.data
     }catch(err){
         console.error(err)
@@ -85,56 +158,12 @@ export const getSummonTimeSlots = async(sd_id: number) => {
 }
 
 
-export const getSummonReqPendingList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-pending-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-export const getSummonReqRejectedList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-rejected-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-
-export const getSummonReqAcceptedList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-accepted-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-
 export const getComplaintDetails = async (comp_id: string) => {
     try{
-        const res = await api.get(`/complaint/${comp_id}/`)
+        const res = await api.get(`/clerk/view-complaint/${comp_id}/`)
 
         return res.data
     }catch(err){
-        console.error(err)
-    }
-}
-
-
-// ================ MIGHT DELETE LATER ===================
-
-export const getCaseDetails = async (srId: string) => {
-    try{
-        const res = await api.get(`clerk/case-details/${srId}/`)
-
-        console.log('complainants', res.data.complainant)
-
-        return res.data
-    } catch(err){
         console.error(err)
     }
 }

@@ -14,9 +14,10 @@ import { useState } from "react";
 import { useInsertMinutesOfMeeting } from "./queries/MOMInsertQueries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
-
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MOMCreate(){
+    const {user} = useAuth()
     const router = useRouter();
     const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting()
     const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
@@ -37,6 +38,7 @@ export default function MOMCreate(){
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
+            staff_id: user?.staff?.staff_id
          }
     })
 
@@ -87,7 +89,7 @@ export default function MOMCreate(){
                     </Button>
             }
         >
-            <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                 <View className="mb-8">
                     <View className="space-y-4">
 
@@ -141,7 +143,6 @@ export default function MOMCreate(){
                                 <MediaPicker
                                     selectedImages={selectedImages}
                                     setSelectedImages={setSelectedImages}
-                                    multiple={true}
                                 />
                             </View>
                     </View>

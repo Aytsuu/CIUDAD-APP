@@ -14,7 +14,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
        files: MediaItem[];
     }) => {
       // Validate remaining balance for Expense
-      if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
+      if (data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString());
         if (!currentYearBudget) {
           throw new Error("No budget found for the selected year");
@@ -74,6 +74,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],
       });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       
       toast.success('Budget entry created successfully');
     },

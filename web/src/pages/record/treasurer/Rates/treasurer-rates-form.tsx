@@ -48,7 +48,7 @@ function RatesForm() {
             onClick={() => setActiveTab("page4")}
             className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-xs sm:text-sm flex items-center justify-center"
           >
-           Business Permits
+           Barangay Permits
           </TabsTrigger>
         </TabsList>
         <div>
