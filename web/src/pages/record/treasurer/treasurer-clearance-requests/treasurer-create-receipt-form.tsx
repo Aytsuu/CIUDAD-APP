@@ -88,7 +88,7 @@ import { Loader2 } from "lucide-react";
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
             inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
-            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : (rate || ""),
+            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "" : (rate || ""),
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
             cr_id: effectiveIsResident ? id.toString() : undefined,
@@ -161,7 +161,7 @@ import { Loader2 } from "lucide-react";
             const values = form.getValues();
             const payload: any = {
                 inv_date: new Date().toISOString(),
-                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
+                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '')),
                 inv_nat_of_collection: values.inv_nat_of_collection,
                 inv_serial_num: values.inv_serial_num || 'N/A',
             };
@@ -220,7 +220,7 @@ import { Loader2 } from "lucide-react";
         if (!amountPaid) return false;
         const amount = Number(amountPaid);
         
-        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "0");
+        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "");
         return amount > 0 && amount < targetAmount;
     };
 
@@ -264,7 +264,7 @@ import { Loader2 } from "lucide-react";
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-base text-primary font-semibold mt-1">{`₱${isFree ? '0' : rate}`}</p>
+                        <p className="text-base text-primary font-semibold mt-1">{isFree ? 'Free' : `₱${rate}`}</p>
                     </div>
                     </div>
                 </CardContent>
@@ -354,15 +354,15 @@ import { Loader2 } from "lucide-react";
                     )}
                     />
 
-                    {purpose && (discountedAmount || rate) && Number(form.watch("inv_amount")) > 0 && 
-                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "0") && (
+                    {purpose && (discountedAmount || rate) && form.watch("inv_amount") && Number(form.watch("inv_amount")) > 0 && 
+                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "") && (
                     <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                         <div className="flex justify-between text-sm border-t pt-2">
                         <span className="font-semibold">Change:</span>
                         <span className="text-green-600 font-semibold">
                             ₱{(
-                            (Number(form.watch("inv_amount")) || 0) - 
-                            parseFloat(discountedAmount || rate || "0")
+                            Number(form.watch("inv_amount")) - 
+                            parseFloat(discountedAmount || rate || "")
                             ).toLocaleString('en-US', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
