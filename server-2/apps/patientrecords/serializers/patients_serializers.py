@@ -646,8 +646,20 @@ class PatientSerializer(serializers.ModelSerializer):
                         ).order_by('-created_at').first()
 
                         if latest_prenatal:
-                            additional_info['latest_pf_id'] = latest_prenatal.pf_id
-                            additional_info['pregnancy_id'] = latest_pregnancy.pregnancy_id
+                            # Build latest_pregnancy structure with pregnancy_id, pf_id, and ppr_id
+                            pregnancy_data = {
+                                'pregnancy_id': latest_pregnancy.pregnancy_id,
+                                'pf_id': latest_prenatal.pf_id,
+                            }
+                            
+                            # Fetch ppr_id from PostpartumRecord if exists
+                            postpartum_record = PostpartumRecord.objects.filter(
+                                pregnancy_id=latest_pregnancy
+                            ).order_by('-created_at').first()
+                            if postpartum_record:
+                                pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                            
+                            additional_info['latest_pregnancy'] = pregnancy_data
                             
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
@@ -686,9 +698,20 @@ class PatientSerializer(serializers.ModelSerializer):
                                             print(f"🔍 Found mother prenatal: {mother_prenatal}")
                                             
                                             if mother_prenatal:
-                                                additional_info['mother_latest_pf_id'] = mother_prenatal.pf_id
-                                                additional_info['mother_pregnancy_id'] = mother_pregnancy.pregnancy_id
-                                                print(f"✅ Added mother_pregnancy_id: {mother_pregnancy.pregnancy_id}")
+                                                pregnancy_data = {
+                                                    'pregnancy_id': mother_pregnancy.pregnancy_id,
+                                                    'pf_id': mother_prenatal.pf_id,
+                                                }
+                                                
+                                                # fetch ppr_id from PostpartumRecord if exists
+                                                postpartum_record = PostpartumRecord.objects.filter(
+                                                    pregnancy_id=mother_pregnancy
+                                                ).order_by('-created_at').first()
+                                                if postpartum_record:
+                                                    pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                                                
+                                                additional_info['mother_latest_pregnancy'] = pregnancy_data
+                                                print(f"✅ Added mother_latest_pregnancy: {pregnancy_data}")
 
                                                 
                                                 mother_prenatal_care = PrenatalCare.objects.filter(
@@ -751,8 +774,19 @@ class PatientSerializer(serializers.ModelSerializer):
                         ).order_by('-created_at').first()
 
                         if latest_prenatal:
-                            additional_info['latest_pf_id'] = latest_prenatal.pf_id
-                            additional_info['pregnancy_id'] = latest_pregnancy.pregnancy_id
+                            pregnancy_data = {
+                                'pregnancy_id': latest_pregnancy.pregnancy_id,
+                                'pf_id': latest_prenatal.pf_id,
+                            }
+                            
+                            # fetch ppr_id from PostpartumRecord if exists
+                            postpartum_record = PostpartumRecord.objects.filter(
+                                pregnancy_id=latest_pregnancy
+                            ).order_by('-created_at').first()
+                            if postpartum_record:
+                                pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                            
+                            additional_info['latest_pregnancy'] = pregnancy_data
                             
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
