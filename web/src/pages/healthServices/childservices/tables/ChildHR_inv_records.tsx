@@ -85,7 +85,7 @@ export default function InvChildHealthRecords() {
       personalInfo,
       address,
       motherInfo,
-      fatherInfo
+      fatherInfo,
     });
 
     const transformedData = {
@@ -128,7 +128,7 @@ export default function InvChildHealthRecords() {
       birth_order: chrecDetails?.birth_order?.toString() || childData?.birth_order?.toString() || "",
 
       // Additional fields
-      chrec_id: childData?.chrec_id || chrecId
+      chrec_id: childData?.chrec_id || chrecId,
     };
 
     console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
@@ -152,7 +152,9 @@ export default function InvChildHealthRecords() {
 
   const filteredData = useMemo(() => {
     return processedHistoryData.filter((item: any) => {
-      const findingsText = item.findings ? `${item.findings.subj_summary || ""} ${item.findings.obj_summary || ""} ${item.findings.assessment_summary || ""} ${item.findings.plantreatment_summary || ""}` : "";
+      const findingsText = item.findings
+        ? `${item.findings.subj_summary || ""} ${item.findings.obj_summary || ""} ${item.findings.assessment_summary || ""} ${item.findings.plantreatment_summary || ""}`
+        : "";
       return (
         item.age.toString().includes(searchQuery) ||
         item.wt.toString().includes(searchQuery) ||
@@ -192,9 +194,9 @@ export default function InvChildHealthRecords() {
             originalRecord: latestRecord,
             patientData: transformChildData,
             chrecId: chrecId,
-            mode: "addnewchildhealthrecord"
-          }
-        }
+            mode: "addnewchildhealthrecord",
+          },
+        },
       });
     }
   };
@@ -266,7 +268,9 @@ export default function InvChildHealthRecords() {
                   <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
                     {isLatestRecordImmunizationOrCheckup ? (
                       <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                        <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                        <span className="text-sm font-medium">
+                          {latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}
+                        </span>
                       </div>
                     ) : (
                       <Button onClick={navigateToUpdateLatest}>New record</Button>

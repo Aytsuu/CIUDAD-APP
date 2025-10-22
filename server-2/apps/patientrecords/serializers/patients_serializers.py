@@ -237,12 +237,16 @@ class PatientSerializer(serializers.ModelSerializer):
                                 fp_type = latest_fp_record.fp_type_set.first()
                                 family_planning_method = fp_type.fpt_method_used if fp_type else None
 
+                        # Get address information for this family head
+                        address_info = self._get_family_head_address(composition.rp)
+
                         family_heads[role] = {
                             'rp_id': composition.rp.rp_id,
                             'role': composition.fc_role,
                             'personal_info': PersonalSerializer(personal, context=self.context).data,
                             'composition_id': composition.fc_id,
-                            'family_planning_method': family_planning_method
+                            'family_planning_method': family_planning_method,
+                            'address': address_info
                         }
                 
                 return {
@@ -521,6 +525,59 @@ class PatientSerializer(serializers.ModelSerializer):
                 'reason': f'Error in medical records check: {str(e)}'
             }
 
+    def _get_family_head_address(self, rp):
+        """
+        Helper method to get address information for a family head (resident profile).
+        Similar to the main get_address method but for family head members.
+        """
+        try:
+            # First try to get personal address
+            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=rp.per).first()
+            if personal_address and personal_address.add:
+                address = personal_address.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+
+            # Fallback to household address
+            household = Household.objects.select_related('add', 'add__sitio').filter(rp=rp).first()
+            if household and household.add:
+                address = household.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+
+            return None
+            
+        except Exception as e:
+            print(f"Error retrieving family head address for rp_id {rp.rp_id}: {str(e)}")
+            return None
         
     def get_additional_info(self, obj):
         try:
@@ -605,26 +662,34 @@ class PatientSerializer(serializers.ModelSerializer):
                         current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
                         if current_composition:
                             current_role = (current_composition.fc_role or '').strip().lower()
+                            print(f"🔍 Patient {obj.pat_id} role: {current_role}")
                             if current_role not in ['mother', 'father']:
                                 fam_id = current_composition.fam_id
                                 all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
                                 mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
+                                print(f"🔍 Found mother composition: {mother_comp}")
                                 
                                 if mother_comp and mother_comp.rp:
                                     mother_patient = Patient.objects.filter(rp_id=mother_comp.rp).first()
+                                    print(f"🔍 Found mother patient: {mother_patient}")
                                     if mother_patient:
                                         mother_pregnancy = Pregnancy.objects.filter(
                                             pat_id=mother_patient,
                                             status='active'
                                         ).order_by('-created_at').first()
+                                        print(f"🔍 Found mother pregnancy: {mother_pregnancy}")
                                         
                                         if mother_pregnancy:
                                             mother_prenatal = Prenatal_Form.objects.filter(
                                                 pregnancy_id=mother_pregnancy
                                             ).order_by('-created_at').first()
+                                            print(f"🔍 Found mother prenatal: {mother_prenatal}")
                                             
                                             if mother_prenatal:
                                                 additional_info['mother_latest_pf_id'] = mother_prenatal.pf_id
+                                                additional_info['mother_pregnancy_id'] = mother_pregnancy.pregnancy_id
+                                                print(f"✅ Added mother_pregnancy_id: {mother_pregnancy.pregnancy_id}")
+
                                                 
                                                 mother_prenatal_care = PrenatalCare.objects.filter(
                                                     pf_id=mother_prenatal,
@@ -634,9 +699,22 @@ class PatientSerializer(serializers.ModelSerializer):
                                                 if mother_prenatal_care:
                                                     additional_info['mother_latest_aog_weeks'] = mother_prenatal_care.pfpc_aog_wks
                                                     additional_info['mother_latest_aog_days'] = mother_prenatal_care.pfpc_aog_days
+                                            else:
+                                                print("❌ No prenatal form found for mother pregnancy")
+                                        else:
+                                            print("❌ No active pregnancy found for mother")
+                                    else:
+                                        print("❌ No patient record found for mother")
+                                else:
+                                    print("❌ No mother composition found in family")
+                            else:
+                                print(f"❌ Patient role '{current_role}' is mother/father, skipping mother pregnancy lookup")
+                        else:
+                            print("❌ No current composition found for patient")
                 except Exception as e:
                     print(f"Error fetching AOG data for resident: {str(e)}")
 
+                print(f"🔍 Final additional_info for resident {obj.pat_id}: {additional_info}")
                 return additional_info if additional_info else None
 
             # Case 2: Transient patient
@@ -674,6 +752,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
                         if latest_prenatal:
                             additional_info['latest_pf_id'] = latest_prenatal.pf_id
+                            additional_info['pregnancy_id'] = latest_pregnancy.pregnancy_id
                             
                             latest_prenatal_care = PrenatalCare.objects.filter(
                                 pf_id=latest_prenatal,
