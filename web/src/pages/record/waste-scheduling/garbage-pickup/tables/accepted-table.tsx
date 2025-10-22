@@ -60,6 +60,7 @@ export default function AcceptedTable() {
   }
 
   const handleConfirm = (garb_id: string) => {
+    setViewDetailsRowId(null)
     confirm(garb_id)
   }
 
@@ -159,7 +160,7 @@ export default function AcceptedTable() {
 
                     <div className="flex flex-cols-2 gap-4 justify-end">
                       <ConfirmationModal
-                          trigger={
+                          trigger={ 
                              <div className="bg-green-600 flex p-3 items-center gap-2 justify-center hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors">
                                 <CheckCircle size={20} /> Confirm Completion
                               </div>
@@ -170,7 +171,7 @@ export default function AcceptedTable() {
                           onClick={() => handleConfirm(row.original.garb_id)}
                       />
                     </div>
-                  </div>
+                  </div> 
                 </div>
               }
               isOpen={viewDetailsRowId === row.original.garb_id}
