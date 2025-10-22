@@ -1,355 +1,251 @@
-// import { Tabs, TabsContent } from "@/components/ui/tabs"
-// import { SyringeIcon, Pill, Baby, Heart } from "lucide-react"
-// import { Button } from "@/components/ui/button"
-// import { Link } from "react-router-dom" // Use react-router-dom's Link
+// "use client";
 
-// // Define the ChildHealthRecord interface as it's used in InvChildHealthRecords
-// interface ChildHealthRecord {
-//   chrec_id: number
-//   pat_id: string
-//   fname: string
-//   lname: string
-//   mname: string
-//   sex: string
-//   age: string
-//   dob: string
-//   householdno: string
-//   street: string
-//   sitio: string
-//   barangay: string
-//   city: string
-//   province: string
-//   landmarks: string
-//   pat_type: string
-//   address: string // Full formatted address
-//   mother_fname: string
-//   mother_lname: string
-//   mother_mname: string
-//   mother_contact: string
-//   mother_occupation: string
-//   father_fname: string
-//   father_lname: string
-//   father_mname: string
-//   father_contact: string
-//   father_occupation: string
-//   family_no: string
-//   birth_weight: number
-//   birth_height: number
-//   type_of_feeding: string
-//   delivery_type: string
-//   place_of_delivery_type: string
-//   pod_location: string
-//   pod_location_details: string
-//   health_checkup_count: number
-//   birth_order: number
-//   tt_status: string
-// }
+// import React, { useState, useEffect, useMemo } from "react";
+// import { View, Text, FlatList, TouchableOpacity } from "react-native";
+// import { Link } from "expo-router";
+// import {
+//   Plus,
+//   ArrowUp,
+//   ArrowDown,
+//   ChevronLeft,
+//   ChevronRight,
+//   Search,
+//   Users,
+//   Home,
+//   UserCog,
+//   FileInput,
+// } from "lucide-react-native";
 
-// interface PatientLinkData {
-//   pat_id: string
-//   pat_type: string
-//   age: string
-//   addressFull: string
-//   address: {
-//     add_street: string
-//     add_barangay: string
-//     add_city?: string
-//     add_province: string
-//     add_sitio: string
-//   }
-//   households: Array<{ hh_id: string }>
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// import { usePatients } from "../restful-api/patientsrecord/queries/fetch";
+
+// type Report = {
+//   id: string;
+//   sitio: string;
+//   lastName: string;
+//   firstName: string;
+//   mi: string;
+//   type: string;
+//   noOfRecords?: number;
+// };
+
+// interface Patients {
+//   pat_id: string;
+//   pat_type: string;
 //   personal_info: {
-//     per_fname: string
-//     per_mname: string
-//     per_lname: string
-//     per_dob: string
-//     per_sex: string
-//   }
+//     per_fname: string;
+//     per_lname: string;
+//     per_mname: string;
+//   };
+//   address: {
+//     add_sitio?: string;
+//   };
 // }
 
-// interface MedicalHistoryTabProps {
-//   vaccinationCount: number | undefined
-//   medicineCount: number | undefined
-//   firstAidCount: number | undefined
-//   postpartumCount: number | undefined
-//   medicalconCount: number | undefined
-//   patientLinkData: PatientLinkData
-//   childHealthCount?: number | undefined
-//   childHealthRecords: ChildHealthRecord[]
-//   prenatalCount: number | undefined
-// }
+// const transformPatientsToReports = (patients: Patients[]): Report[] => {
+//   return patients.map((patient) => ({
+//     id: patient.pat_id.toString(),
+//     sitio: patient.address?.add_sitio || "N/A",
+//     lastName: patient.personal_info?.per_lname || "",
+//     firstName: patient.personal_info?.per_fname || "",
+//     mi: patient.personal_info?.per_mname || "N/A",
+//     type: patient.pat_type || "Resident",
+//   }));
+// };
 
-// export default function Records({
-//   vaccinationCount,
-//   medicineCount,
-//   firstAidCount,
-//   postpartumCount,
-//   medicalconCount,
-//   patientLinkData,
-//   childHealthCount,
-//   childHealthRecords, // This is the array of formatted records
-//   prenatalCount, 
-// }: MedicalHistoryTabProps) {
-//   // Determine if there's at least one child health record to pass
-//   const firstChildHealthRecord = childHealthRecords.length > 0 ? childHealthRecords[0] : null
+// // Custom pagination component for mobile
+// const CustomPagination = ({
+//   currentPage,
+//   totalPages,
+//   onPageChange,
+// }: {
+//   currentPage: number;
+//   totalPages: number;
+//   onPageChange: (page: number) => void;
+// }) => (
+//   <View className="flex flex-row items-center justify-center gap-x-2">
+//     <Button
+//       variant="outline"
+//       size="icon"
+//       onPress={() => onPageChange(currentPage - 1)}
+//       disabled={currentPage === 1}
+//     >
+//       <ChevronLeft className="h-4 w-4" />
+//     </Button>
+//     <Text className="text-sm font-semibold">
+//       {currentPage} of {totalPages}
+//     </Text>
+//     <Button
+//       variant="outline"
+//       size="icon"
+//       onPress={() => onPageChange(currentPage + 1)}
+//       disabled={currentPage === totalPages}
+//     >
+//       <ChevronRight className="h-4 w-4" />
+//     </Button>
+//   </View>
+// );
 
-//   // Check if all service counts are zero or undefined
-//   const hasNoRecords = 
-//     (!vaccinationCount || vaccinationCount === 0) &&
-//     (!medicineCount || medicineCount === 0) &&
-//     (!firstAidCount || firstAidCount === 0) &&
-//     (!postpartumCount || postpartumCount === 0) &&
-//     (!medicalconCount || medicalconCount === 0) &&
-//     (!childHealthCount || childHealthCount === 0) &&
-//     (!prenatalCount || prenatalCount === 0);
+// export default function PatientsRecord() {
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [pageSize, setPageSize] = useState(10);
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [filteredData, setFilteredData] = useState<Report[]>([]);
+//   const { data: patientData, isLoading } = usePatients();
+
+//   const transformedPatients = useMemo(() => {
+//     if (!patientData) return [];
+//     return transformPatientsToReports(patientData);
+//   }, [patientData]);
+
+//   const totalPatients = transformedPatients.length;
+//   const residents = transformedPatients.filter((p) =>
+//     p.type.includes("Resident")
+//   ).length;
+//   const transients = transformedPatients.filter((p) =>
+//     p.type.includes("Transient")
+//   ).length;
+//   const residentPercentage =
+//     totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
+//   const transientPercentage =
+//     totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
+
+//   useEffect(() => {
+//     const filtered = transformedPatients.filter((report) => {
+//       const searchText =
+//         `${report.id} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.type}`.toLowerCase();
+//       return searchText.includes(searchQuery.toLowerCase());
+//     });
+//     setFilteredData(filtered);
+//     setCurrentPage(1); // Reset to first page on search
+//   }, [searchQuery, transformedPatients]);
+
+//   const totalPages = Math.ceil(filteredData.length / pageSize);
+//   const startIndex = (currentPage - 1) * pageSize;
+//   const endIndex = startIndex + pageSize;
+//   const currentData = filteredData.slice(startIndex, endIndex);
 
 //   return (
-//     <Tabs defaultValue="medical">
-//       <TabsContent value="medical" className="mt-0">
-//         <CardLayout
-//           title="All Services Records "
-//           description="Patient's records for all services are listed below. Click on the 'View Details' button to see more information about each service."
-//           content={
-//             <div className="space-y-6">
-//               {hasNoRecords ? (
-//                 <div className="p-6 text-center bg-gray-50 rounded-lg border border-gray-200">
-//                   <h3 className="text-lg font-semibold text-gray-700">No Records Found</h3>
-//                   <p className="text-sm text-gray-500 mt-2">
-//                   There are currently no records available for this patient. Please check back later or add new records.
-//                   </p>
-//                   <div className="mt-4">
-                 
-//                   </div>
-//                 </div>
-//               ) : (
-//                 <>
-//                   {vaccinationCount !== 0 && (
-//                     <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-sky-100">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 bg-blue-100 rounded-lg">
-//                             <SyringeIcon className="w-5 h-5 text-blue-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Vaccination</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">
-//                                 {vaccinationCount !== undefined ? vaccinationCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link
-//                           to="/invVaccinationRecord"
-//                           state={{ params: { patientData: patientLinkData } }}
-//                           className="transition-transform hover:scale-105"
-//                         >
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {medicineCount !== 0 && (
-//                     <div className="p-4 rounded-lg border border-purple-200">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 rounded-lg">
-//                             <Pill className="w-5 h-5 text-purple-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Medicine</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-//                                 {medicineCount !== undefined ? medicineCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link to="/IndivMedicineRecord" state={{ params: { patientData: patientLinkData } }}>
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {firstAidCount !== 0 && (
-//                     <div className="p-4 rounded-lg border border-purple-200">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 rounded-lg">
-//                             <Pill className="w-5 h-5 text-purple-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">First Aid</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-//                                 {firstAidCount !== undefined ? firstAidCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link to="/indiv-firstaid-records" state={{ params: { patientData: patientLinkData } }}>
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {medicalconCount !== 0 && (
-//                     <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 bg-green-100 rounded-lg">
-//                             <Pill className="w-5 h-5 text-green-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Medical Consultation</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-green-200 px-2 py-1 rounded-md">
-//                                 {medicalconCount !== undefined ? medicalconCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link to="/invMedicalRecord" state={{ params: { patientData: patientLinkData } }}>
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {postpartumCount !== 0 && (
-//                     <div className="p-4 rounded-lg border border-pink-200 bg-pink-100">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 rounded-lg bg-pink-200">
-//                             <Baby className="w-5 h-5 text-pink-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Postpartum Care</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-pink-200 px-2 py-1 rounded-md">
-//                                 {postpartumCount !== undefined ? postpartumCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Maternal Services</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link 
-//                           to="/maternalindividualrecords" 
-//                           state={{ params: { patientData: patientLinkData } }}
-//                           className="transition-transform hover:scale-105"
-//                         >
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {childHealthCount !== 0 && (
-//                     <div className="p-4 rounded-lg border border-pink-200">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 rounded-lg">
-//                             <Baby className="w-5 h-5 text-pink-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Child Health Record</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
-//                                 {childHealthCount !== undefined ? childHealthCount : "0"} Records
-//                               </span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link
-//                           to="/child-health-records"
-//                           state={{ ChildHealthRecord: firstChildHealthRecord }} // Pass the single record
-//                         >
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-//                             disabled={!firstChildHealthRecord} // Disable if no record to pass
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                   {prenatalCount !== 0 && (
-//                     <div className="p-4 rounded-lg border border-red-200 bg-red-100">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center space-x-3">
-//                           <div className="p-2 rounded-lg bg-red-200">
-//                             <Heart className="w-5 h-5 text-red-600" />
-//                           </div>
-//                           <div>
-//                             <h3 className="text-lg font-semibold text-gray-900">Prenatal Care</h3>
-//                             <div className="flex items-center space-x-4 mt-1">
-//                               <span className="text-sm text-gray-600 bg-red-200 px-2 py-1 rounded-md">
-//                                 {prenatalCount !== undefined ? prenatalCount : "0"} Records
-//                               </span>
-//                               <span className="text-sm text-gray-500">Maternal Services</span>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <Link 
-//                           to="/maternalindividualrecords" 
-//                           state={{ params: { patientData: patientLinkData } }}
-//                           className="transition-transform hover:scale-105"
-//                         >
-//                           <Button
-//                             variant="outline"
-//                             size="sm"
-//                             className="h-10 px-6 bg-white border-red-300 text-red-700 font-medium"
-//                           >
-//                             View Details
-//                           </Button>
-//                         </Link>
-//                       </div>
-//                     </div>
-//                   )}
-//                 </>
-//               )}
-//             </div>
-//           }
-//           cardClassName="border shadow-sm rounded-md"
-//           headerClassName="pb-3 border-b"
-//           contentClassName="pt-4"
+//     <View className="flex-1 p-4 bg-background">
+//       {/* Back button and title (adapted from LayoutWithBack) */}
+//       <View className="flex-row items-center justify-between mb-6">
+//         <View>
+//           <Text className="text-2xl font-bold">Patients Records</Text>
+//           <Text className="text-sm text-muted-foreground">
+//             Manage and view patients information
+//           </Text>
+//         </View>
+//       </View>
+
+//       {/* Stats Cards */}
+//       <View className="flex-row justify-between mb-4">
+//         <Card className="flex-1 mx-1">
+//           <CardHeader>
+//             <Text className="text-sm font-semibold">Total Patients</Text>
+//             <Text className="text-xs text-muted-foreground">
+//               All registered patients
+//             </Text>
+//           </CardHeader>
+//           <CardContent className="flex flex-row items-center justify-between">
+//             <Text className="text-3xl font-bold">{totalPatients}</Text>
+//             <Users size={24} className="text-muted-foreground" />
+//           </CardContent>
+//         </Card>
+//       </View>
+
+//       {/* Search and Filter */}
+//       <View className="relative w-full mb-4">
+//         <View className="flex-row gap-x-2">
+//           <View className="relative flex-1">
+//             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={20} />
+//             <Input
+//               placeholder="Search..."
+//               className="pl-10 w-full"
+//               value={searchQuery}
+//               onChangeText={setSearchQuery}
+//             />
+//           </View>
+//           <DropdownMenu>
+//             <DropdownMenuTrigger asChild>
+//               <Button variant="outline" className="w-24">
+//                 <Text>Filter</Text>
+//               </Button>
+//             </DropdownMenuTrigger>
+//             <DropdownMenuContent className="w-40">
+//               <DropdownMenuItem onPress={() => setFilteredData(transformedPatients)}>
+//                 <Text>All</Text>
+//               </DropdownMenuItem>
+//               <DropdownMenuItem onPress={() => setFilteredData(transformedPatients.filter(p => p.type.includes("Resident")))}>
+//                 <Text>Resident</Text>
+//               </DropdownMenuItem>
+//               <DropdownMenuItem onPress={() => setFilteredData(transformedPatients.filter(p => p.type.includes("Transient")))}>
+//                 <Text>Transient</Text>
+//               </DropdownMenuItem>
+//             </DropdownMenuContent>
+//           </DropdownMenu>
+//         </View>
+//       </View>
+
+//         <FlatList
+//           data={currentData}
+//           keyExtractor={(item) => item.id}
+//           renderItem={({ item }) => (
+//             <Card className="mb-4">
+//               <CardHeader>
+//                 <CardTitle>{`${item.firstName} ${item.mi} ${item.lastName}`}</CardTitle>
+//                 <CardDescription>Patient ID: {item.id}</CardDescription>
+//               </CardHeader>
+//               <CardContent className="space-y-2">
+//                 <View>
+//                   <Text className="font-semibold">Sitio:</Text>
+//                   <Text>{item.sitio}</Text>
+//                 </View>
+//                 <View>
+//                   <Text className="font-semibold">Type:</Text>
+//                   <Text>{item.type}</Text>
+//                 </View>
+//                 <View>
+//                   <Text className="font-semibold">Records:</Text>
+//                   {/* NOTE: You need to implement PatientRecordCount for React Native */}
+//                   {/* <PatientRecordCount patientId={item.id} /> */}
+//                 </View>
+//                 <RouterLink
+//         to={`/view-patients-record/${row.getValue("id")}`}
+//         state={{ patientId: row.getValue("id") }}
+//       >
+//         <Button variant="outline">View</Button>
+//       </RouterLink>
+//                   <Button className="mt-2 w-full">
+//                     <Text>View</Text>
+//                   </Button>
+//                 </Link>
+//               </CardContent>
+//             </Card>
+//           )}
 //         />
-//       </TabsContent>
-//     </Tabs>
-//   )
+
+//       {/* Pagination & Info */}
+//       <View className="flex-col items-center justify-between w-full py-3">
+//         <Text className="text-sm font-normal text-gray-500 mb-2">
+//           Showing{" "}
+//           {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+//           {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+//           {filteredData.length} patients
+//         </Text>
+//         <CustomPagination
+//           currentPage={currentPage}
+//           totalPages={totalPages}
+//           onPageChange={setCurrentPage}
+//         />
+//       </View>
+//     </View>
+//   );
 // }

@@ -167,7 +167,16 @@ export function AppSidebar() {
             title: "Report",
             url: "/",
             items: [
-              { title: "Incident", url: "/report/incident" },
+              { 
+                title: "Incident", 
+                url: "/report/incident",
+                items: [
+                  {
+                    title: "Securado",
+                    url: "/report/incident/securado"
+                  }
+                ]
+              },
               { title: "Acknowledgement", url: "/report/acknowledgement" },
               {
                 title: "Weekly Accomplishment",
@@ -178,9 +187,6 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator() ? [
-      {title: "Map", url: "/map"}
-    ] : []),
     ...(featureValidator("complaint")
       ? [
           {
@@ -326,7 +332,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -340,6 +346,10 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
+        {
+          title: "Maternal",
+          url: "/",
+        },
       ],
     }] : []),
     ...(featureValidator("referred patients") ? [{
@@ -350,29 +360,30 @@ export function AppSidebar() {
       title: "Services",
       url: "/",
       items: [
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Animal Bites", url: "/services/animalbites" },
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
-        { title: "Maternal", url: "/services/maternalrecords" },
+        { title: "Family Planning", url: "/services/familyplanning" },
+        { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
-          url: "/services/medical-consultation",
+          url: "/services/medical-consultation/records",
         },
-        { title: "Medicine", url: "/services/medicine" },
+        { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
     ...(featureValidator("inventory") ? [{
       title: "Inventory",
-      url: "/",
+      url:  "/" ,
       items: [
-        { title: "Inventory List", url: "/inventory/list" },
-        { title: "Inventory Stocks", url: "/inventory/stocks" },
+        { title: "Inventory List", url: "/inventory/list/medicine" },
+        { title: "Inventory Stocks", url: "/inventory-stocks/list/stocks/medicine" }
+
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
@@ -395,7 +406,7 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              { title: "All", url: "/profiling/all" },
+              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

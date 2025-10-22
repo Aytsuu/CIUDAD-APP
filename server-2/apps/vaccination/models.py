@@ -22,7 +22,6 @@ class VaccinationHistory(models.Model):
     vachist_status = models.CharField(max_length=100, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     date_administered=models.DateField()
-    assigned_to = models.PositiveIntegerField(null=True, blank=True)
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)  
     vital= models.ForeignKey( VitalSigns,  on_delete=models.CASCADE,  null=True,   blank=True,  related_name='vaccination_histories')
     vacrec = models.ForeignKey( VaccinationRecord,  on_delete=models.CASCADE, related_name='vaccination_histories' )
@@ -30,9 +29,10 @@ class VaccinationHistory(models.Model):
     vac =models.ForeignKey( VaccineList,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
     followv = models.ForeignKey( FollowUpVisit,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
     signature =models.TextField(default="", blank=True, null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='assigned_vaccination_histories', null=True, blank=True)
     class Meta:
         
         db_table = 'vaccination_history'
-      
+       
         
         

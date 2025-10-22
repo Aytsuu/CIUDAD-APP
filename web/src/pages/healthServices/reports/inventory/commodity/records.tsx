@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel } from "../../firstaid-report/export-report";
-import { ExportDropdown } from "../../firstaid-report/export-dropdown";
+import { exportToCSV, exportToExcel } from "../../export/export-report";
+import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
@@ -74,7 +74,7 @@ export default function MonthlyCommodityDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
-  // const handleExportPDF = () => exportToPDF(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  // const handleExportPDF = () => exportToPDF( `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
   // Print handler
   const handlePrint = () => {

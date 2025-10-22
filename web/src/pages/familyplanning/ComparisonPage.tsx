@@ -57,6 +57,7 @@ const YesNoCheckboxView: React.FC<YesNoCheckboxViewProps> = ({ value }) => (
 type FullFPRecordDetail = {
   fprecord_id: number;
   client_id: string;
+  avg_monthly_income_display: string;
   philhealth_id: string;
   fourps: boolean;
   plan_more_children: boolean;
@@ -173,12 +174,12 @@ type FullFPRecordDetail = {
   };
   fp_physical_exam: {
     fp_pe_id: number;
-    skinExamination: string;
-    conjunctivaExamination: string;
-    neckExamination: string;
-    breastExamination: string;
-    abdomenExamination: string;
-    extremitiesExamination: string;
+    skin_exam: string;
+    conjunctiva_exam: string;
+    neck_exam: string;
+    breast_exam: string;
+    abdomen_exam: string;
+    extremities_exam: string;
     fprecord_id: number;
     bm: number;
     vital: number;
@@ -220,13 +221,16 @@ type FullFPRecordDetail = {
   height: string;
   pulseRate: string;
   bloodPressure: string;
-  fp_pelvic_exam: null;
-  pelvicExamination: null;
+  fp_pelvic_exam: {
+pelvicExamination: null;
   cervicalConsistency: string | null;
   cervicalTenderness: boolean;
-  cervicalAdnexalMassTenderness: boolean;
+  cervicalAdnexal: boolean;
   uterinePosition: string | null;
   uterineDepth: string | null;
+    
+  };
+  
   fp_acknowledgement: {
     ack_id: number;
     client_name: string;
@@ -282,13 +286,13 @@ interface FieldRowProps {
 }
 
 const FieldRow: React.FC<FieldRowProps> = ({ label, values, isBoolean = false, isSignature = false, hasDifferences = false }) => {
-  const minWidth = 280 + (values.length * 300);
+  const minWidth = 200 + (values.length * 200);
   
   return (
     <div 
-      className="grid gap-6 py-3 border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+      className="grid gap-6 py-3 border-b border-gray-100 hover:bg-gray-50/50 transition-colors" 
       style={{ 
-        gridTemplateColumns: `minmax(280px, 1fr) repeat(${values.length}, minmax(300px, 1fr))`,
+        gridTemplateColumns: `minmax(200px, 1fr) repeat(${values.length}, minmax(200px, 1fr))`,
         minWidth: `${minWidth}px`
       }}
     >
@@ -500,8 +504,8 @@ const MultiRecordComparisonPage: React.FC = () => {
                 />
                 <FieldRow
                   label="Average Monthly Income"
-                  values={recordsToDisplay.map(r => r.avg_monthly_income)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.avg_monthly_income))}
+                  values={recordsToDisplay.map(r => r.avg_monthly_income_display)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.avg_monthly_income_display))}
                 />
                 <FieldRow
                   label="Occupation"
@@ -611,17 +615,17 @@ const MultiRecordComparisonPage: React.FC = () => {
                   isBoolean
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.smoker))}
                 />
-                <FieldRow
+                {/* <FieldRow
                   label="With disability?"
                   values={recordsToDisplay.map(r => r.medicalHistory.disability)}
                   isBoolean
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.disability))}
-                />
-                <FieldRow
+                /> */}
+                {/* <FieldRow
                   label="Disability Details"
                   values={recordsToDisplay.map(r => r.medicalHistory.disabilityDetails)}
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.disabilityDetails))}
-                />
+                /> */}
               </Section>
 
               {/* Obstetrical History */}
@@ -803,69 +807,74 @@ const MultiRecordComparisonPage: React.FC = () => {
                 />
                 <FieldRow
                   label="Skin Examination"
-                  values={recordsToDisplay.map(r => r.skinExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.skinExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.skin_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.skin_exam))}
                 />
                 <FieldRow
                   label="Conjunctiva Examination"
-                  values={recordsToDisplay.map(r => r.conjunctivaExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.conjunctivaExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.conjunctiva_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.conjunctiva_exam))}
                 />
                 <FieldRow
                   label="Neck Examination"
-                  values={recordsToDisplay.map(r => r.neckExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.neckExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.neck_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.neck_exam))}
                 />
                 <FieldRow
                   label="Breast Examination"
-                  values={recordsToDisplay.map(r => r.breastExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.breastExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.breast_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.breast_exam))}
                 />
                 <FieldRow
                   label="Abdomen Examination"
-                  values={recordsToDisplay.map(r => r.abdomenExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.abdomenExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.abdomen_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.abdomen_exam))}
                 />
                 <FieldRow
                   label="Extremities Examination"
-                  values={recordsToDisplay.map(r => r.extremitiesExamination)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.extremitiesExamination))}
+                  values={recordsToDisplay.map(r => r.fp_physical_exam.extremities_exam)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_physical_exam.extremities_exam))}
                 />
               </Section>
 
                {/* Pelvic Examination */}
               <Section
-                title="Pelvic Examination"
-                icon={<UserSquare size={20} className="text-indigo-600" />}
-              >
-                <FieldRow
-                  label="Cervical Consistency"
-                  values={recordsToDisplay.map(r => r.cervicalConsistency)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.cervicalConsistency))}
-                />
-                <FieldRow
-                  label="Cervical Tenderness"
-                  values={recordsToDisplay.map(r => r.cervicalTenderness)}
-                  isBoolean
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.cervicalTenderness))}
-                />
-                <FieldRow
-                  label="Cervical Adnexal Mass Tenderness"
-                  values={recordsToDisplay.map(r => r.cervicalAdnexalMassTenderness)}
-                  isBoolean
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.cervicalAdnexalMassTenderness))}
-                />
-                <FieldRow
-                  label="Uterine Position"
-                  values={recordsToDisplay.map(r => r.uterinePosition)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.uterinePosition))}
-                />
-                <FieldRow
-                  label="Uterine Depth"
-                  values={recordsToDisplay.map(r => r.uterineDepth)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.uterineDepth))}
-                />
-              </Section>
+  title="Pelvic Examination"
+  icon={<UserSquare size={20} className="text-indigo-600" />}
+>
+  <FieldRow
+    label="Pelvic Exam"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.pelvicExamination || null)}
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.pelvicExamination))}
+  />
+  <FieldRow
+    label="Cervical Consistency"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalConsistency || null)}
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalConsistency))}
+  />
+  <FieldRow
+    label="Cervical Tenderness"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalTenderness)}
+    isBoolean
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalTenderness))}
+  />
+  <FieldRow
+    label="Adnexal Mass / Tenderness"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalAdnexal)}
+    isBoolean
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.cervicalAdnexal))}
+  />
+  <FieldRow
+    label="Uterine Position"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.uterinePosition || null)}
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.uterinePosition))}
+  />
+  <FieldRow
+    label="Uterine Depth"
+    values={recordsToDisplay.map(r => r.fp_pelvic_exam?.uterineDepth || null)}
+    hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_pelvic_exam?.uterineDepth))}
+  />
+</Section>
 
 
               {/* Acknowledgement */}

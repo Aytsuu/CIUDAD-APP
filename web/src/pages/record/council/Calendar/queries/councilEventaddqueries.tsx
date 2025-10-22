@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { postCouncilEvent, postAttendanceSheet } from "../api/councilEventpostreq";
-import { CouncilEventInput, AttendanceSheetInput } from "../councilEventTypes";
+import { postCouncilEvent, postAttendee, postAttendanceSheet } from "../api/councilEventpostreq";
+import { CouncilEventInput, AttendeeInput, AttendanceSheetInput } from "../councilEventTypes";
 
 export const useAddCouncilEvent = () => {
   const queryClient = useQueryClient();
@@ -24,16 +24,16 @@ export const useAddCouncilEvent = () => {
   });
 };
 
-// export const useAddAttendee = () => {
-//   const queryClient = useQueryClient();
+export const useAddAttendee = () => {
+  const queryClient = useQueryClient();
   
-//   return useMutation({
-//     mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
-//     onSuccess: (_atn_id) => {
-//       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
-//     },
-//   });
-// };
+  return useMutation({
+    mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
+    onSuccess: (_atn_id) => {
+      queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
+    },
+  });
+};
 
 export const useAddAttendanceSheet = () => {
   const queryClient = useQueryClient();

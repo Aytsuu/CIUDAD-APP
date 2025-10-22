@@ -6,7 +6,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
 import { useDeletePurposeAndRate } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 
 export default function RatesPage4() {
   const router = useRouter();

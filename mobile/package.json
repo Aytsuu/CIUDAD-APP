@@ -35,9 +35,10 @@
       ]
     }
   },
-  "overrides": { "nativewind": { 
-    "react-native-css-interop": "0.1.22" 
-    } 
+  "overrides": {
+    "nativewind": {
+      "react-native-css-interop": "0.1.22"
+    }
   },
   "dependencies": {
     "@expo/cli": "^0.22.18",
@@ -112,6 +113,7 @@
     "react-hook-form": "^7.54.2",
     "react-native": "0.79.5",
     "react-native-calendars": "^1.1313.0",
+    "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-keychain": "^10.0.0",

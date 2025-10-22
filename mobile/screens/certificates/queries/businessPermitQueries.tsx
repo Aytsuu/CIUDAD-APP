@@ -1,9 +1,7 @@
 import { AxiosError } from "axios";
 import { 
   getBusinessPermits as getBusinessPermitsAPI, 
-  getIssuedBusinessPermits as getIssuedBusinessPermitsAPI,
-  BusinessPermit as APIBusinessPermit,
-  IssuedBusinessPermit as APIIssuedBusinessPermit
+  getIssuedBusinessPermits as getIssuedBusinessPermitsAPI
 } from "../restful-api/businessGetAPI";
 
 

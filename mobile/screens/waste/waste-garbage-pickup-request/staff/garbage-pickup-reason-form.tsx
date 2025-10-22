@@ -1,11 +1,11 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { RejectPickupRequestSchema } from '@/form-schema/waste/garbage-pickup-schema-staff';
-import { Form, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';

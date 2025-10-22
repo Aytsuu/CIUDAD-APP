@@ -13,17 +13,28 @@ export function FollowUpsCard({
   const [activeTab, setActiveTab] = useState<"pending" | "completed" | "missed">("pending");
   const [activeChildHealthTab, setActiveChildHealthTab] = useState<"pending" | "completed" | "missed">("pending");
 
+  // Helper function to determine if an item is missed
+  const isMissedItem = (item: any) => {
+    // Check if it has days_missed with a value (defaulters)
+    if (item.days_missed !== undefined && item.days_missed !== null && item.days_missed > 0) {
+      return true;
+    }
+    
+    // Check if it has a missed status
+    return item.missed_status === "missed" || item.followup_status === "missed";
+  };
+
   // Categorize follow-ups
   const categorizedFollowups = {
-    pending: followupVaccines.filter((v) => v.followup_status === "pending"),
+    pending: followupVaccines.filter((v) => v.followup_status === "pending" && !isMissedItem(v)),
     completed: followupVaccines.filter((v) => v.followup_status === "completed"),
-    missed: followupVaccines.filter((v) => v.missed_status === "missed" || v.followup_status === "missed"),
+    missed: followupVaccines.filter((v) => isMissedItem(v)),
   };
 
   const categorizedChildHealths = {
-    pending: childHealthFollowups.filter((v) => v.followup_status === "pending"),
+    pending: childHealthFollowups.filter((v) => v.followup_status === "pending" && !isMissedItem(v)),
     completed: childHealthFollowups.filter((v) => v.followup_status === "completed"),
-    missed: childHealthFollowups.filter((v) => v.missed_status === "missed" || v.followup_status === "missed"),
+    missed: childHealthFollowups.filter((v) => isMissedItem(v)),
   };
 
   const showFollowupSection = followupVaccines.length > 0;
@@ -41,19 +52,19 @@ export function FollowUpsCard({
     onClick,
   }: {
     active: boolean;
-    type: "pending" | "completed" | "defaulted";
+    type: "pending" | "completed" | "missed";
     count: number;
     onClick: () => void;
   }) => {
     const config = {
       pending: { icon: Clock, color: "blue" },
       completed: { icon: CheckCircle, color: "green" },
-      defaulted: { icon: AlertCircle, color: "red" },
+      missed: { icon: AlertCircle, color: "red" },
     }[type];
 
     return (
       <button
-      type="button"
+        type="button"
         onClick={onClick}
         className={`flex-1 py-2 text-sm flex flex-row justify-center items-center gap-2 transition-colors border-b-2 ${
           active
@@ -167,8 +178,7 @@ export function FollowUpsCard({
           <div
             className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
           >
-            {type === "completed" ? "Follow-Up" : "Follow-Up"}:{" "}
-            {item.followup_date ? formatDate(item.followup_date) : "N/A"}
+            Follow-Up: {item.followup_date ? formatDate(item.followup_date) : "N/A"}
           </div>
 
           {/* For completed items */}
@@ -180,24 +190,31 @@ export function FollowUpsCard({
             </div>
           )}
 
-          {/* For missed items */}
-          {type === "missed" && (
-            <>
-              {item.days_missed && (
-                <div
-                  className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
-                >
-                  Missed by: {item.days_missed} days
-                </div>
-              )}
-              <div
-                className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
-              >
-                {item.completed_at
-                  ? `Completed on: ${formatDate(item.completed_at)}`
-                  : "Not yet completed"}
-              </div>
-            </>
+          {/* For missed items with days_missed */}
+          {type === "missed" && item.days_missed && (
+            <div
+              className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
+            >
+              Missed by: {item.days_missed} days
+            </div>
+          )}
+
+          {/* For missed items without days_missed (status-based) */}
+          {type === "missed" && !item.days_missed && (
+            <div
+              className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
+            >
+              Status: Missed
+            </div>
+          )}
+
+          {/* Show completion status for missed items if completed */}
+          {type === "missed" && item.completed_at && (
+            <div
+              className={`px-3 py-1 text-xs rounded-full ${colorClass} border`}
+            >
+              Completed on: {formatDate(item.completed_at)}
+            </div>
           )}
         </div>
       </li>
@@ -214,7 +231,7 @@ export function FollowUpsCard({
               <Calendar1 className="h-5 w-5 text-blue-600" />
             </div>
             <h2 className="text-lg font-semibold text-gray-800">
-               Follow-ups
+              Follow-ups
             </h2>
           </div>
 
@@ -233,7 +250,7 @@ export function FollowUpsCard({
             />
             <TabButton
               active={activeTab === "missed"}
-              type="defaulted"
+              type="missed"
               count={categorizedFollowups.missed.length}
               onClick={() => setActiveTab("missed")}
             />
@@ -280,7 +297,7 @@ export function FollowUpsCard({
             />
             <TabButton
               active={activeChildHealthTab === "missed"}
-              type="defaulted"
+              type="missed"
               count={categorizedChildHealths.missed.length}
               onClick={() => setActiveChildHealthTab("missed")}
             />

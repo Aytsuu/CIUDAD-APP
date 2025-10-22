@@ -48,22 +48,24 @@ class PositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        for item in serializer.validated_data:
-            instance = Position(**item)
-            instance.save()
+        instances = [
+            Position(**item)
+            for item in serializer.validated_data
+        ]
+        created_instances = Position.objects.bulk_create(instances)
 
-        # Perform double query
-        double_queries = PostQueries()
-        response = double_queries.position(request.data)
-        if not response.ok:
-            try:
-                error_detail = response.json()
-            except ValueError:
-                error_detail = response.text
-            raise serializers.ValidationError({"error": error_detail})
-        
-        return Response(status=status.HTTP_201_CREATED)
-
+        if len(created_instances) > 0:
+            # Perform double query
+            double_queries = PostQueries()
+            response = double_queries.position(request.data)
+            if not response.ok:
+                try:
+                    error_detail = response.json()
+                except ValueError:
+                    error_detail = response.text
+                raise serializers.ValidationError({"error": error_detail})
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class PositionUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PositionBaseSerializer

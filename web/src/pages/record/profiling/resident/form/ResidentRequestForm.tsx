@@ -24,7 +24,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     [sitioList]
   );
 
-  console.log(params)
+  console.log(params.data)
 
   // ==================== SIDE EFFECTS ======================
   React.useEffect(() => {

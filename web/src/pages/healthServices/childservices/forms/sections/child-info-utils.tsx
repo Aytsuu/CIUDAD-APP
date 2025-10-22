@@ -1,9 +1,8 @@
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
-import type { Patient } from "@/components/ui/patientSearch";
-import { initialFormData } from "../muti-step-form/types";
+import { initialFormData } from "../multi-step-form/types";
 
-export const populatePatientData = (patient: Patient | null): Partial<FormData> => {
+export const populatePatientData = (patient: any | null): Partial<FormData> => {
   if (!patient) return initialFormData;
 
   const newFormData: Partial<FormData> = {
@@ -35,6 +34,7 @@ export const populatePatientData = (patient: Patient | null): Partial<FormData> 
     fatherdob: "",
     fatherAge: "",
     fatherOccupation: "",
+    tt_status: patient.family_head_info?.family_heads?.tt_status || ""
   };
 
   if (patient.personal_info?.per_dob) {

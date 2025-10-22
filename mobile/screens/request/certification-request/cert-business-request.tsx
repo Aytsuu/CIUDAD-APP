@@ -4,10 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
-import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
+import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 
@@ -32,9 +31,8 @@ const CertPermit: React.FC = () => {
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
-  const rp = (user as any)?.rp ?? "";
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    rp
+    user?.resident?.rp_id || ""
   );
   const businessData = businessResponse?.results || [];
 
@@ -45,7 +43,12 @@ const CertPermit: React.FC = () => {
       
       setBusinessName(business.bus_name || "");
       
-      const fullAddress = (business as any).bus_location || "";
+      const addressParts = [
+        business.bus_street,
+        business.sitio
+      ].filter(Boolean); 
+      
+      const fullAddress = addressParts.join(", ");
       setBusinessAddress(fullAddress || "Address not available");
       
       setGrossSales(business.bus_gross_sales?.toString() || "");
@@ -178,7 +181,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: rp,
+      rp_id: user?.resident?.rp_id || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -224,7 +227,7 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id, // Add the purpose and rates ID
-      rp_id: rp,
+      rp_id: user?.resident?.rp_id || "",
       req_amount: reqAmount, // Add the required amount field
       ags_id: agsId || undefined, // Add the annual gross sales ID
       previous_permit_image: previousPermitImage || undefined,
@@ -520,7 +523,7 @@ const CertPermit: React.FC = () => {
             </View>
 
             {/* Submit Button */}
-            {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || permitType === 'Business Clearance') ? (
+            {!isLoadingBusiness && !isLoading && (businessData.length > 0 || permitType === 'Business Clearance') ? (
               <TouchableOpacity
                 className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
                 activeOpacity={0.85}
@@ -534,7 +537,7 @@ const CertPermit: React.FC = () => {
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
                 <Text className="text-gray-500 font-semibold text-base">
-                  {Boolean(isLoading) ? 'Loading user data...' : 'Cannot Request Business Permit'}
+                  {isLoading ? 'Loading user data...' : 'Cannot Request Business Permit'}
                 </Text>
               </View>
             )}

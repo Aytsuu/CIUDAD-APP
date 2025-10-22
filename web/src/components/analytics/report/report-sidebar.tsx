@@ -28,6 +28,8 @@ const SEVERITY: any = {
 export const ReportSidebar = () => {
   const navigate = useNavigate();
   const { data: reportSidebar, isLoading } = useGetSidebarAnalytics();
+  const reports = reportSidebar?.data || [];
+  const total = reportSidebar?.count || 0;
 
   const handleClick = (ir_id: string) => {
     navigate("/report/incident/view", {
@@ -38,9 +40,7 @@ export const ReportSidebar = () => {
       },
     });
   };
-
-  console.log(reportSidebar)
-
+  
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none shadow-sm">
       {/* Content */}
@@ -56,9 +56,9 @@ export const ReportSidebar = () => {
               </div>
             ))}
           </div>
-        ) : reportSidebar?.length > 0 ? (
+        ) : total > 0 ? (
           <div>
-            {reportSidebar.map((data: Record<string, any>, index: number) => {
+            {reports.map((data: Record<string, any>, index: number) => {
               const severityConfig = SEVERITY[data.ir_severity];
               const SeverityIcon = severityConfig?.icon;
               
@@ -113,11 +113,11 @@ export const ReportSidebar = () => {
       </div>
 
       {/* Footer */}
-      {reportSidebar?.length > 0 && (
+      {total > 0 && (
         <div className="p-4 border-t border-gray-100">
           <Link to="/report/incident">
             <Button variant={"link"}>
-              View All Reports ({reportSidebar?.length > 100 ? "100+": reportSidebar.length})
+              View All Reports ({total > 100 ? "100+": total})
             </Button>
           </Link>
         </div>

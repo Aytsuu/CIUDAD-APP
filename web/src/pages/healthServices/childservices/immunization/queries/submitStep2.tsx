@@ -4,36 +4,19 @@ import { api2 } from "@/api/api";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 
-type ImmunizationMutationParams = {
-  data: any;
-  vaccines: any[];
-  existingVaccines: any[];
-  ChildHealthRecord: any;
-  staff_id: string | null;
-  pat_id: string;
-};
-
 export const useImmunizationMutations = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  const saveImmunizationData = async ({
-    data,
-    vaccines,
-    existingVaccines,
-    ChildHealthRecord,
-    staff_id,
-    pat_id,
-  }: ImmunizationMutationParams): Promise<any> => {
-    
+  const saveImmunizationData = async ({ data, vaccines, existingVaccines, ChildHealthRecord, vital_id, staff_id, pat_id }: any): Promise<any> => {
     // Prepare the payload for the Django API
     const payload = {
       data: {
-        notes: data.notes || '',
-        followUpVisit: data.followUpVisit || '',
-        follov_description: data.follov_description || ''
+        notes: data.notes || "",
+        followUpVisit: data.followUpVisit || "",
+        follov_description: data.follov_description || ""
       },
-      vaccines: vaccines.map(vaccine => ({
+      vital_id: vital_id,
+      vaccines: vaccines.map((vaccine: any) => ({
         vacStck_id: vaccine.vacStck_id,
         dose: vaccine.dose,
         totalDoses: vaccine.totalDoses,
@@ -43,7 +26,7 @@ export const useImmunizationMutations = () => {
         existingFollowvId: vaccine.existingFollowvId,
         vacrec: vaccine.vacrec
       })),
-      existingVaccines: existingVaccines.map(vaccine => ({
+      existingVaccines: existingVaccines.map((vaccine: any) => ({
         vac_id: vaccine.vac_id,
         dose: vaccine.dose,
         totalDoses: vaccine.totalDoses,
@@ -55,15 +38,15 @@ export const useImmunizationMutations = () => {
       staff_id,
       pat_id
     };
-    console.log(payload)
+    console.log(payload);
 
     // Make API call to Django backend
-    const response = await api2.post('child-health/immunization-save/', payload);
+    const response = await api2.post("child-health/immunization-save/", payload);
     return response.data;
   };
 
   return useMutation({
-    mutationFn: async (params: ImmunizationMutationParams) => {
+    mutationFn: async (params: any) => {
       const { data, vaccines, existingVaccines } = params;
 
       const hasVaccines = vaccines.length > 0;
@@ -86,19 +69,30 @@ export const useImmunizationMutations = () => {
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords", chrec_id] });
-      
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedResidents"] }); 
+      queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["antigentransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
+
+
+   
+
       navigate(-1);
       showSuccessToast("Immunization data saved successfully!");
     },
     onError: (error: any) => {
       console.error("Error saving immunization data:", error);
-      
+
       // Extract error message from response
-      const errorMessage = error?.response?.data?.error || 
-                          error?.message || 
-                          "Failed to save immunization data";
-      
+      const errorMessage = error?.response?.data?.error || error?.message || "Failed to save immunization data";
+
       showErrorToast(errorMessage);
-    },
+    }
   });
 };

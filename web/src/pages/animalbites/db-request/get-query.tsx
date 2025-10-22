@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId} from "../api/get-api" // Updated import
+import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId, getAnimalBitePatientSummary} from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 import { toast } from "sonner"
 import { submitAnimalBiteReferral } from "./postrequest"
@@ -21,6 +21,14 @@ export const usePatient = (patientId: string) => {
   })
 }
 
+export const useAnimalBitePatientDetails = () => {
+  return useQuery({
+    queryKey: ["animalbite-patients"],
+    queryFn: () => getAnimalBitePatientDetails(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
 export const useCreatePatient = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -31,6 +39,30 @@ export const useCreatePatient = () => {
   })
 }
 
+// export const useAnimalBitePatientCounts = () => {
+//   return useQuery({
+//     queryKey: ["animalbite-patient-counts"],
+//     queryFn: getAnimalBitePatientCounts,
+//     staleTime: 1000 * 60 * 1, // Cache for 1 minute, adjust as needed
+//   })
+// }
+
+export const useAnimalBitePatientSummary = () => {
+  return useQuery({
+    queryKey: ["animalbite-patient-summary"],
+    queryFn: () => getAnimalBitePatientSummary(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useAnimalBitePatientHistory = (patId: string) => {
+  return useQuery({
+    queryKey: ["animalbite-patient-history", patId],
+    queryFn: () => getPatientRecordsByPatId(patId),
+    enabled: !!patId, // Only run query if patId is available
+    staleTime: 1000 * 60 * 1, // Cache for 1 minute
+  })
+}
 
 
 export const useAnimalbiteDetails = () => {
@@ -49,10 +81,15 @@ export const useAnimalbiteReferrals = () => {
   })
 }
 
-export const useUniqueAnimalbitePatients = () => {
+export const useUniqueAnimalbitePatients = (params?: {
+  search?: string;
+  filter?: string;
+  page?: number;
+  limit?: number;
+}) => {
   return useQuery({
-    queryKey: ["unique-animalbite-patients"],
-    queryFn: getUniqueAnimalbitePatients,
+    queryKey: ["unique-animalbite-patients", params],
+    queryFn: () => getUniqueAnimalbitePatients(params),
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -100,24 +137,29 @@ export const useSubmitAnimalBiteReferralMutation = () => {
 
 export const useRefreshAllData = () => {
   const queryClient = useQueryClient()
+  const { toast } = useToastContext();
   return useMutation({
     mutationFn: async () => {
       // These functions are now updated to fetch appropriate data as per get-api.tsx
+      const patientSummary = await getUniqueAnimalbitePatients({ 
+        page: 1, 
+        limit: 20 
+      })
       const patientData = await getAnimalBitePatientDetails() // Fetches combined details
       const referralData = await getAnimalbiteReferrals() // Also fetches combined details
       const biteDetailsData = await getAnimalbiteDetails()
       const allPatientsData = await getAllPatients()
-   
 
       return {
+        patientSummary,
         patientData,
         referralData,
         biteDetailsData,
         allPatientsData,
-
       }
     },
     onSuccess: async (data) => {
+      queryClient.setQueryData(["animalbite-patient-summary"], data.patientSummary)
       queryClient.setQueryData(["animalbite-patients"], data.patientData)
       queryClient.setQueryData(["animalbite-referrals"], data.referralData)
       queryClient.setQueryData(["animalbite-details"], data.biteDetailsData)
@@ -128,4 +170,8 @@ export const useRefreshAllData = () => {
       toast.error(`Failed to refresh data: ${error.message}`)
     },
   })
+}
+
+function useToastContext(): { toast: any } {
+  throw new Error("Function not implemented.")
 }

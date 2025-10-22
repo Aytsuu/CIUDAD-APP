@@ -3,11 +3,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Users, Trash2, Edit2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { deleteAgeroup } from "./restful-api/api";
 import { useAgeGroups } from "./queries/fetch";
 import { AgeGroupForm } from "./AgeGroupForm";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+
 export type AgeGroupRecord = {
   id: string;
   agegroup_name: string;
@@ -23,7 +24,9 @@ export default function AgeGroup() {
   const [deleteConfirmation, setDeleteConfirmation] = React.useState<{
     isOpen: boolean;
     ageGroup: AgeGroupRecord | null;
-  }>({ isOpen: false, ageGroup: null });
+    isLoading: boolean;
+  }>({ isOpen: false, ageGroup: null, isLoading: false });
+  
   const [searchQuery, setSearchQuery] = React.useState("");
   const [modalState, setModalState] = React.useState<{
     isOpen: boolean;
@@ -52,13 +55,15 @@ export default function AgeGroup() {
 
   const filteredData = React.useMemo(() => {
     const ageGroups = formatAgeGroupData();
-    return ageGroups.filter((group) => group.agegroup_name.toLowerCase().includes(searchQuery.toLowerCase()) || group.time_unit.toLowerCase().includes(searchQuery.toLowerCase()));
+    return ageGroups.filter((group) => 
+      group.agegroup_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      group.time_unit.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }, [searchQuery, formatAgeGroupData]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAgeroup(id),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["ageGroups"] });
       const previousAgeGroups = queryClient.getQueryData<AgeGroupRecord[]>(["ageGroups"]);
       if (previousAgeGroups) {
         queryClient.setQueryData<AgeGroupRecord[]>(
@@ -67,31 +72,51 @@ export default function AgeGroup() {
         );
       }
       return { previousAgeGroups };
-        },
-        onError: (error, _, context) => {
+    },
+    onError: (error: any, _, context) => {
       console.error("Error deleting age group:", error);
-      toast.error("Error deleting age group. Please try again.");
+      
+      // Handle the specific protected error
+      if (error.response?.status === 409) {
+        const errorData = error.response.data;
+        toast.error(
+          `Cannot delete age group: ${errorData.message}`,
+          {
+            description: errorData.details,
+            duration: 5000
+          }
+        );
+      } else if (error instanceof Error) {
+        toast.error(`Error deleting age group: ${error.message}`);
+      } else {
+        toast.error("Error deleting age group. Please try again.");
+      }
+      
       if (context?.previousAgeGroups) {
         queryClient.setQueryData(["ageGroups"], context.previousAgeGroups);
       }
-        },
-        onSettled: () => {
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["ageGroups"] });
-      toast.success("Age group deleted successfully!");
+      setDeleteConfirmation(prev => ({ ...prev, isLoading: false }));
     }
   });
 
   const handleDelete = async () => {
     if (!deleteConfirmation.ageGroup?.id) return;
+    
+    setDeleteConfirmation(prev => ({ ...prev, isLoading: true }));
+    
     try {
       await deleteMutation.mutateAsync(deleteConfirmation.ageGroup.id);
+      toast.success("Age group deleted successfully!");
     } finally {
-      setDeleteConfirmation({ isOpen: false, ageGroup: null });
+      setDeleteConfirmation({ isOpen: false, ageGroup: null, isLoading: false });
     }
   };
 
   const startDelete = (ageGroup: AgeGroupRecord) => {
-    setDeleteConfirmation({ isOpen: true, ageGroup });
+    setDeleteConfirmation({ isOpen: true, ageGroup, isLoading: false });
   };
 
   const openAddModal = () => {
@@ -118,6 +143,10 @@ export default function AgeGroup() {
     });
   };
 
+  const handleCancelDelete = () => {
+    setDeleteConfirmation({ isOpen: false, ageGroup: null, isLoading: false });
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center">
@@ -138,7 +167,13 @@ export default function AgeGroup() {
     <LayoutWithBack title="Age Groups" description="Manage age groups for health services">
       <div className="bg-zinc-50 flex gap-4 py-4 px-4 border">
         <div className="mb-6 relative w-full ">
-          <input type="text" placeholder="Search age groups..." className="w-full p-2 pl-10 border rounded-md" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Search age groups..." 
+            className="w-full p-2 pl-10 border rounded-md" 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
+          />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         </div>
         <Button className="flex items-center" aria-label="Add new age group" onClick={openAddModal}>
@@ -149,7 +184,9 @@ export default function AgeGroup() {
 
       <div className="bg-white rounded-lg overflow-hidden">
         <div className="px-6 py-4 bg-gray-50 border-b">
-          <h2 className="text-lg font-semibold text-blue-800 bg-blue-100 w-60 rounded-full text-center">Total Age Groups ({filteredData.length})</h2>
+          <h2 className="text-lg font-semibold text-blue-800 bg-blue-100 w-60 rounded-full text-center">
+            Total Age Groups ({filteredData.length})
+          </h2>
         </div>
 
         {filteredData.length === 0 ? (
@@ -176,11 +213,23 @@ export default function AgeGroup() {
                     </p>
                   </div>
                   <div className="flex space-x-2 ml-4">
-                    <Button variant="outline" size="sm" className="p-2" onClick={() => openEditModal(ageGroup)} aria-label={`Edit ${ageGroup.agegroup_name} age group`}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="p-2" 
+                      onClick={() => openEditModal(ageGroup)} 
+                      aria-label={`Edit ${ageGroup.agegroup_name} age group`}
+                    >
                       <Edit2 className="h-4 w-4" />
                     </Button>
 
-                    <Button variant="outline" size="sm" onClick={() => startDelete(ageGroup)} className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50" aria-label={`Delete ${ageGroup.agegroup_name} age group`}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => startDelete(ageGroup)} 
+                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50" 
+                      aria-label={`Delete ${ageGroup.agegroup_name} age group`}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -191,12 +240,17 @@ export default function AgeGroup() {
         )}
       </div>
 
-      <ConfirmationDialog
-        isOpen={deleteConfirmation.isOpen}
-        onOpenChange={(open) => setDeleteConfirmation((prev) => ({ ...prev, isOpen: open }))}
+      <ConfirmationModal
+        open={deleteConfirmation.isOpen}
+        onOpenChange={(open) => setDeleteConfirmation(prev => ({ ...prev, isOpen: open }))}
         title="Delete Age Group"
         description={`Are you sure you want to delete "${deleteConfirmation.ageGroup?.agegroup_name}"? This action cannot be undone.`}
-        onConfirm={handleDelete}
+        onClick={handleDelete}
+        onCancel={handleCancelDelete}
+        actionLabel={deleteConfirmation.isLoading ? "Deleting..." : "Delete"}
+        cancelLabel="Cancel"
+        variant="destructive"
+        showCloseButton={true}
       />
 
       <AgeGroupForm isOpen={modalState.isOpen} onClose={closeModal} mode={modalState.mode} ageGroupData={modalState.ageGroup} />

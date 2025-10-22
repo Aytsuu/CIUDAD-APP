@@ -237,7 +237,7 @@ export default function TbSurveilanceForm({
                 All family members have been added
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {availableMembers.map((member: any) => {
                   const isSelected = selectedMember === member.displayId;
                   return (
@@ -264,7 +264,7 @@ export default function TbSurveilanceForm({
                             <p className="text-xs text-gray-500">ID: {member.displayId}</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-black">
                           {member.fc_role || 'Family Member'}
                         </div>
                       </div>
@@ -308,6 +308,7 @@ export default function TbSurveilanceForm({
                 { id: "Government", name: "Government Hospital" },
                 { id: "Private Hospital", name: "Private Hospital" },
                 { id: "Others", name: "Others" },
+
               ]}
             />
             
@@ -325,17 +326,17 @@ export default function TbSurveilanceForm({
               control={form.control} 
               name={`${prefix}.new.tbSurveilanceSchema.noOfDaysTakingMeds`}
               label="No. of Days Taking Meds"
+              type="number"
             />
             <FormSelect 
               control={form.control} 
               name={`${prefix}.new.tbSurveilanceSchema.tbStatus`} 
               label="TB Status"
               options={[
-                { id: "Positive", name: "Positive" },
-                { id: "Negative", name: "Negative" },
-                { id: "Under Treatment", name: "Under Treatment" },
-                { id: "Treatment Completed", name: "Treatment Completed" },
-                { id: "Defaulted", name: "Defaulted" },
+                { id: "TREATMENT ONGOING", name: "Treatment Ongoing" },
+                { id: "COMPLETED", name: "Completed" },
+                { id: "NOT COMPLETED", name: "Not Completed" },
+
               ]}
             />
            

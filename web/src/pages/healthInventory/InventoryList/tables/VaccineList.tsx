@@ -2,14 +2,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useAntigen } from "../queries/Antigen/fetch-queries";
 import { useDeleteAntigen } from "../queries/Antigen/delete-queries";
 import { VaccineModal } from "../Modal/VaccineModal";
 import { VaccineColumns } from "./columns/VaccineCol";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function VaccineList() {
   // Pagination and search state
@@ -86,6 +87,45 @@ export default function VaccineList() {
 
   const displayData = useMemo(() => formatVaccineData(), [formatVaccineData]);
 
+  // Export functionality
+  const prepareExportData = () => {
+    return displayData.map((vaccine: any) => ({
+      "Vaccine Name": vaccine.vaccineName,
+      "Vaccine Type": vaccine.vaccineType,
+      "Age Group": vaccine.ageGroup,
+      "Number of Doses": vaccine.noOfDoses,
+      "Dose Schedule":
+      vaccine.doseDetails.length === 0
+        ? "N/A"
+        : vaccine.vaccineType === "Routine"
+        ? `Every ${vaccine.doseDetails[0]?.interval} ${vaccine.doseDetails[0]?.unit}`
+        : [
+          `Dose 1: Starts at ${vaccine.ageGroup}`,
+          ...vaccine.doseDetails
+          .filter((dose: any) => dose.doseNumber > 1)
+          .map(
+            (dose: any) =>
+            `Dose ${dose.doseNumber}: After ${dose.interval} ${dose.unit}`
+          ),
+        ].join("; "),
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `vaccine_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `vaccine_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `vaccine_list_${new Date().toISOString().slice(0, 10)}`, "Vaccine List");
+  };
+
   // Get pagination info
   const paginationInfo = useMemo(() => {
     if (vaccineData?.results?.pagination) {
@@ -108,7 +148,7 @@ export default function VaccineList() {
     if (recordToDelete) {
       deleteVaccineMutation.mutate({
         vaccineId: vaccineToDelete,
-        category: recordToDelete.category
+        category: "vaccine"
       });
     }
     setIsDeleteConfirmationOpen(false);
@@ -181,20 +221,10 @@ export default function VaccineList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" }
-            ]}
-          />
+          <div>
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+          </div>
         </div>
-
         <div className="bg-white w-full overflow-x-auto">
           {isLoadingVaccines ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">

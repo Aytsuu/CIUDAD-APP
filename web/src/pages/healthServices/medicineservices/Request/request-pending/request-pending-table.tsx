@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { medicineRequestPendingColumns } from "./columns";
 import { usePendingMedRequest } from "../queries/fetch";
 
-export default function PendingCnfirmation() {
+export default function PendingConfirmation() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -87,7 +87,7 @@ export default function PendingCnfirmation() {
 
         <div className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto" asChild>
-            <Link to="/medicine-request-form">New Request</Link>
+            <Link to="/services/medicine/form">New Request</Link>
           </Button>
         </div>
       </div>

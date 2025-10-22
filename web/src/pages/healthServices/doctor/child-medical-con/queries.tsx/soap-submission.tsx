@@ -11,9 +11,10 @@ export const useSubmitSoapForm = () => {
 
   return useMutation({
     mutationFn: async ({ formData, checkupData, staffId }: any) => {
+      console.log("Submitting SOAP form with data:", formData, checkupData, staffId);
       const payload = {
         staff_id: staffId,
-        patrec_id: checkupData?.patrec,
+        patrec_id: checkupData?.chrec_details?.patrec,
         chhist_id: checkupData?.chhist_id,
         chvital_id: checkupData?.child_health_vital_signs?.[0]?.chvital_id,
 
@@ -48,11 +49,22 @@ export const useSubmitSoapForm = () => {
       const response = await createchildSoapForm(payload);
       return response; // This will be passed to onSuccess
     },
-    onSuccess: (data) => {
-      console.log("SOAP form created successfully:", data);
+    onSuccess: () => {
       showSuccessToast("SOAP Form submitted successfully");
       queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
       queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
+      queryClient.invalidateQueries({ queryKey: ["consultationHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingSoapForms"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      
       navigate(-1);
     },
     onError: (error: Error) => {

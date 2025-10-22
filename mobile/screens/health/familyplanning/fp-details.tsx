@@ -1,17 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { View, Text, ScrollView, TouchableOpacity, Dimensions,Image } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { useLocalSearchParams, router } from "expo-router"
-import { Activity, AlertCircle, ArrowLeft, Baby, Calendar, Clock, CreditCard, Droplets, FileText, GraduationCap, Heart, Loader2, MapPin, Ruler, Scale, Stethoscope, TrendingUp, User, UserCheck } from "lucide-react-native"
+import { Activity, AlertCircle, ArrowLeft, Baby, Calendar, Clock, CreditCard, Droplets, FileText, GraduationCap, Heart, MapPin, Ruler, Scale, Stethoscope, TrendingUp, User, UserCheck } from "lucide-react-native"
 import { FPRecordData } from "../admin/admin-familyplanning/FPRecordData"
 import { getFPCompleteRecord } from "../admin/admin-familyplanning/GetRequest"
 import { LoadingState } from "@/components/ui/loading-state"
 
 export default function MyFpRecordDetailScreen() {
+    const params = useLocalSearchParams<{ fprecordId: string; pat_id?: string }>();
 const { fprecordId } = useLocalSearchParams()
 const windowWidth = Dimensions.get("window").width
+const patIdFromParams = params.pat_id;
+
+  console.log("[DEBUG] fp-details patIdFromParams:", patIdFromParams);
 
 const {
 data: recordData,
@@ -210,7 +214,7 @@ switch (selectedTab) {
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Average Monthly Income</Text>
                         <Text className="text-sm font-medium text-gray-900">
-                            {recordData.avg_monthly_income?.toLocaleString() ?? "Not specified"}
+                            {recordData.avg_monthly_income_display?.toLocaleString() ?? "Not specified"}
                         </Text>
                     </View>
                 </View>
@@ -308,7 +312,7 @@ switch (selectedTab) {
                         </View>
                         <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
                             <Heart size={20} color="#3B82F6" />
-                            <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.livingChildren ?? "0"}</Text>
+                            <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.numOfLivingChildren ?? "0"}</Text>
                             <Text className="text-sm text-gray-500 text-center mt-1">Living Children</Text>
                         </View>
                     </View>
@@ -365,22 +369,22 @@ switch (selectedTab) {
                 </View>
                 <View className="flex-row items-center justify-between mb-4">
                     <Text className="text-sm text-gray-500">Abnormal Discharge:</Text>
-                    <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                        <Text className="text-xs font-medium">{recordData.risk_sti?.abnormalDischarge ? "Yes" : "No"}</Text>
+                    <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                        <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.abnormalDischarge ? "Yes" : "No"}</Text>
                     </View>
                 </View>
-                {recordData.risk_sti?.abnormalDischarge && (
+                {recordData.sexuallyTransmittedInfections?.abnormalDischarge && (
                     <View className="flex-row items-center justify-between mb-4">
                         <Text className="text-sm text-gray-500">Discharge from:</Text>
                         <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-                            <Text className="text-xs font-medium">{recordData.risk_sti?.dischargeFrom ?? "N/A"}</Text>
+                            <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.dischargeFrom ?? "N/A"}</Text>
                         </View>
                     </View>
                 )}
                 <View className="flex-row items-center justify-between mb-4">
                     <Text className="text-sm text-gray-500">Sores:</Text>
-                    <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.sores ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                        <Text className="text-xs font-medium">{recordData.risk_sti?.sores ? "Yes" : "No"}</Text>
+                    <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.sores ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                        <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.sores ? "Yes" : "No"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-center justify-between mb-4">
@@ -506,7 +510,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Skin Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.skinExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.skin_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
@@ -515,7 +519,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Conjunctiva Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.conjunctivaExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.conjunctiva_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
@@ -524,7 +528,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Neck Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.neckExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.neck_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
@@ -533,7 +537,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Breast Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.breastExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.breast_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
@@ -542,7 +546,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Abdomen Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.abdomenExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.abdomen_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
@@ -551,7 +555,7 @@ switch (selectedTab) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-sm text-gray-500 mb-1">Extremities Examination</Text>
-                        <Text className="text-sm font-medium text-gray-900">{recordData.extremitiesExamination ?? "N/A"}</Text>
+                        <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.extremities_exam ?? "N/A"}</Text>
                     </View>
                 </View>
                 <View className="border-t border-gray-100 pt-4 mt-2">
@@ -816,7 +820,7 @@ return (
 <View className="flex-1 bg-gray-50">
     {/* Header Section */}
     <View className="bg-blue-600 px-6 pt-16 pb-8">
-        <View className="flex-row items-center mb-4">
+        <View className="flex-row items-center ">
             <TouchableOpacity
                 onPress={() => router.back()}
                 className="mr-4 w-10 h-10 bg-white/20 rounded-full items-center justify-center"

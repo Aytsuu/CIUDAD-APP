@@ -46,30 +46,23 @@ class ARTableSerializer(serializers.ModelSerializer):
     return ARFileBaseSerializer(files, many=True).data
 
 class ARCreateSerializer(serializers.ModelSerializer):
+  rt = serializers.CharField()
   ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
+  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), write_only=True, required=False)
   files = FileInputSerializer(write_only=True, required=False, many=True)
 
   class Meta:
     model = AcknowledgementReport
     fields = ['ar_id', 'ar_title', 'ar_result', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 'ar_created_at', 
-              'ar_time_completed', 'ar_area', 'ar_action_taken', 'ir', 'staff', 'files'] 
+              'ar_time_completed', 'ar_area', 'ar_action_taken', 'ir', 'rt', 'staff', 'files'] 
     extra_kwargs = {
       'ar_id' : {'read_only': True}
     }
   
   @transaction.atomic
   def create(self, validated_data):
-    incident_report = validated_data.get('ir', None)
     files = validated_data.pop('files', [])
 
-    # if incident_report:
-    #   is_archive = {
-    #     'ir_is_archive': True
-    #   }
-    #   archive_ir = IRBaseSerializer(incident_report, data=is_archive, partial=True)
-    #   if archive_ir.is_valid():
-    #     archive_ir.save()
-    
     instance = AcknowledgementReport(**validated_data)
     instance.save()
     

@@ -200,7 +200,66 @@ class ObstetricalHistoryForFpSerializer(serializers.ModelSerializer):
         ]
 
 
-        
+class OverallFPRecordSerializer(serializers.ModelSerializer):
+    """
+    Refactored to take the LATEST FP_Record instance and derive patient details.
+    """
+    patient_id = serializers.CharField(source='pat.pat_id', read_only=True)
+    fprecord_id = serializers.IntegerField(read_only=True)
+    patient_type = serializers.CharField(source='pat.pat_type', read_only=True)
+    
+    # Derived fields to match the old frontend output
+    patient_name = serializers.SerializerMethodField()
+    patient_age = serializers.SerializerMethodField()
+    sex = serializers.SerializerMethodField()
+    client_type = serializers.SerializerMethodField()
+    subtype = serializers.SerializerMethodField()
+    method_used = serializers.SerializerMethodField()
+    record_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FP_Record
+        fields = [
+            'fprecord_id', 'patient_id', 'patient_name', 'patient_age', 'sex', 
+            'client_type', 'subtype', 'patient_type', 'method_used', 
+            'created_at', 'record_count'
+        ]
+
+    def _get_fp_type_instance(self, obj: FP_Record):
+        # We assume 'fp_type_set' is prefetched (done in views.py refactor)
+        return obj.fp_type_set.first()
+
+    def get_patient_name(self, obj: FP_Record) -> str:
+        # Replicates the logic from the old _build_patient_entry
+        patient = obj.pat
+        if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
+            personal = patient.rp_id.per
+            return f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
+        elif patient.pat_type == "Transient" and patient.trans_id:
+            transient = patient.trans_id
+            return f"{transient.tran_lname}, {transient.tran_fname} {transient.tran_mname or ''}".strip()
+        return ""
+
+    def get_patient_age(self, obj):
+        dob = None
+        if obj.pat.pat_type == 'Resident' and obj.pat.rp_id and obj.pat.rp_id.per:
+            dob = obj.pat.rp_id.per.per_dob
+        elif obj.pat.pat_type == 'Transient' and obj.pat.trans_id:
+            dob = obj.pat.trans_id.tran_dob
+        if dob:
+            today = date.today()
+            return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        return None
+
+    def get_sex(self, obj):
+        if obj.pat.pat_type == 'Resident' and obj.pat.rp_id and obj.pat.rp_id.per:
+            return obj.pat.rp_id.per.per_sex or "Unknown"
+        elif obj.pat.pat_type == 'Transient' and obj.pat.trans_id:
+            return obj.pat.trans_id.tran_sex or "Unknown"
+        return "Unknown"
+
+    def get_record_count(self, obj:FP_Record) -> int:
+        return FP_Record.objects.filter(pat=obj.pat).count()
 
 class PatientComprehensiveFpSerializer(serializers.ModelSerializer):
     client_id = serializers.CharField(source='client_id', read_only=True)

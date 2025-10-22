@@ -20,14 +20,7 @@ class UserAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserAccountSerializer
 
     def update(self, request, *args, **kwargs):
-        password = request.data.get('password', None)
         instance = self.get_object()
-
-        if password:
-            instance.set_password(password)
-            instance.save()
-            return Response(data=password, status=status.HTTP_200_OK)
-        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

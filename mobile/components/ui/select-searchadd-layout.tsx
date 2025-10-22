@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, FlatList } from 'react-native';
-import { ChevronDown, X, Plus, Check } from 'lucide-react-native';
+import { ChevronDown, X, Plus } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 
 interface Option {

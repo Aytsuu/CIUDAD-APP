@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { useQuery, useMutation, useQueryClient  } from "@tanstack/react-query";
+import { useMutation, useQueryClient  } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { updateWasteReport } from "../request/illegal-dump-put-request";
 import { uploadResolvedImage } from "../request/illegal-dump-put-request";
@@ -14,7 +13,7 @@ type FileData = {
 };
 
 
-export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => {
+export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 
@@ -71,7 +70,7 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
 
 // =========================================== RESIDENT ========================================
 
-export const useUpdateWasteResReport = (rep_id: string, onSuccess?: () => void) => {
+export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 

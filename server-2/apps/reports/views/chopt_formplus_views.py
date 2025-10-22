@@ -120,7 +120,7 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
             'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
             Prefetch(
-                'pat__rp_id__per__personaladdress_set',
+                'pat__rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_personal_addresses'
             ),
@@ -187,6 +187,9 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                     child_fname = personal_info.get('per_fname', '')
                     child_mname = personal_info.get('per_mname', '')
                     child_lname = personal_info.get('per_lname', '')
+                    child_fname = child_fname if child_fname else ''
+                    child_mname = child_mname if child_mname else ''
+                    child_lname = child_lname if child_lname else ''
                     child_name = f"{child_fname} {child_mname} {child_lname}".strip()
 
                     

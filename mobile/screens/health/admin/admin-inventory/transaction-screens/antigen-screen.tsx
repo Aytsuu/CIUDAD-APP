@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
-// import { Skeleton } from "@/components/ui/skeleton";
 import { useAntigenTransactions } from "../restful-api/transaction/fetchqueries";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // Define types based on API response
 interface AntigenTransaction {
@@ -56,11 +56,7 @@ export default function AntigenListScreen() {
 
   // Loading state
   if (isLoading) {
-    return (
-      <View className="w-full h-full p-4">
-        <Text>Loading...</Text>
-      </View>
-    );
+    return <LoadingState/>
   }
 
   // Error state
@@ -111,14 +107,7 @@ export default function AntigenListScreen() {
 
   return (
     <View className="flex-1 p-4 bg-gray-50">
-      <View className="mb-4">
-        <TextInput
-          className="w-full h-10 border border-gray-300 rounded-md px-3"
-          placeholder="Search by item name, action, or staff..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+     
 
       <View className="bg-white rounded-md shadow-sm p-4">
         <View className="flex-row justify-between items-center mb-3">

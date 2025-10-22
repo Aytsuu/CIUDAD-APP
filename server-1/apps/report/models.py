@@ -10,7 +10,7 @@ class ReportType(AbstractModels):
     class Meta:
       db_table = 'report_type'
 
-class IncidentReport(AbstractModels):
+class IncidentReport(models.Model):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
   ir_time = models.TimeField(null=True)
@@ -34,7 +34,7 @@ class IncidentReport(AbstractModels):
   class Meta:
     db_table = 'incident_report'
 
-class AcknowledgementReport(AbstractModels):
+class AcknowledgementReport(models.Model):
   ar_id = models.BigAutoField(primary_key=True)
   ar_title = models.CharField(max_length=500)
   ar_date_started = models.DateField()
@@ -48,6 +48,7 @@ class AcknowledgementReport(AbstractModels):
   ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
+  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
@@ -64,7 +65,7 @@ class ARFile(models.Model):
   class Meta:
     db_table = 'ar_file'
 
-class WeeklyAccomplishmentReport(AbstractModels):
+class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
   war_created_for = models.DateField(default=date.today)
@@ -100,16 +101,15 @@ class IncidentReportFile(models.Model):
   irf_type = models.CharField(max_length=50)
   irf_path = models.CharField(max_length=100)
   irf_url = models.URLField()
-  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, related_name='report_files')
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'incident_report_file'
 
-class ReportTemplate(AbstractModels):
+class ReportTemplate(models.Model):
   rte_id = models.BigAutoField(primary_key=True)
   rte_logoLeft = models.URLField(null=True)
   rte_logoRight = models.URLField(null=True)
-  rte_logoTop = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
   rte_prepared_by = models.CharField(max_length=100, null=True)

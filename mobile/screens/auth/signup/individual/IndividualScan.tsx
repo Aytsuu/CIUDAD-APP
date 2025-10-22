@@ -8,7 +8,6 @@ import {
   useAddRequest,
   useAddBusinessRespondent,
 } from "../../queries/authPostQueries";
-import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 import { View, Text } from "react-native";
 import { Button } from "@/components/ui/button";

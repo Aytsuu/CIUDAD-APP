@@ -1,7 +1,7 @@
 import React, { useState, useCallback, memo, useMemo } from "react";
 import { TouchableOpacity, View, Text, ScrollView, Alert, ActivityIndicator, StatusBar, Modal, Platform,} from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import { ChevronLeft, Calendar as CalendarIcon, Clock, Info, CheckCircle, AlertCircle, Scale, Send, Phone, Mail, MapPin, X,} from "lucide-react-native";
+import { ChevronLeft, Calendar as CalendarIcon, Clock, Info, CheckCircle, AlertCircle, Send, Phone, Mail, MapPin, X,} from "lucide-react-native";
 import { router } from "expo-router";
 import { useGetSummonDates, useGetSummonTimeSlots, type SummonTimeSlots } from "../queries/summonFetchQueries";
 

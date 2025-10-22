@@ -29,10 +29,9 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
   const location = useLocation();
   const navigate = useNavigate();
   const [supplyName, setSupplyName] = useState<string>("");
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
-
 
   const locationInitialData = location.state?.initialData as ImmunizationData;
   const effectiveInitialData = initialData || locationInitialData;
@@ -75,7 +74,7 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
 
     const currentName = data.imz_name?.trim()?.toLowerCase() || "";
     const originalName = effectiveInitialData.supplyName?.trim()?.toLowerCase() || "";
-    
+
     return currentName !== originalName;
   };
 
@@ -172,11 +171,7 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
             </Button>
             <ConfirmationModal
               trigger={
-                <Button 
-                  type="submit" 
-                  className="w-full sm:w-auto" 
-                  disabled={isSubmitting || (mode === "edit" && effectiveInitialData && !hasChanges(form.watch())) || !isFormValid}
-                >
+                <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || (mode === "edit" && effectiveInitialData && !hasChanges(form.watch())) || !isFormValid}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -4,7 +4,7 @@ from apps.administration.serializers.staff_serializers import StaffBaseSerialize
 from apps.patientrecords.serializers.patients_serializers import PatientRecordSerializer,PatientSerializer
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
 from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializerBase
-from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementBaseSerializer,BodyMeasurementSerializer
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.medicineservices.serializers import MedicineRequestSerializer
 from apps.vaccination.serializers import VaccinationHistorySerializerBase
@@ -18,10 +18,21 @@ class ChildHealthrecordSerializerBase(serializers.ModelSerializer):
         
 class ChildHealthrecordSerializer(serializers.ModelSerializer):
     patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
+    latest_child_history_date = serializers.SerializerMethodField()
+    
     class Meta:
         model = ChildHealthrecord
         fields = '__all__'
 
+    def get_latest_child_history_date(self, obj):
+        # Get the most recent child health history date for this record
+        latest_history = ChildHealth_History.objects.filter(
+            chrec=obj
+        ).order_by('-created_at').first()
+        
+        if latest_history and latest_history.created_at:
+            return latest_history.created_at
+        return None
 
 class ChildHealthHistorySerializerBase(serializers.ModelSerializer):
     class Meta:
@@ -65,6 +76,12 @@ class LatestVitalBMSerializer(serializers.Serializer):
     vital_created_at = serializers.DateTimeField(source='vital.created_at')
      
    
+class ChildHealthNotesBaseSerializer(serializers.ModelSerializer):
+    followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)
+    class Meta:
+            model = ChildHealthNotes
+            fields = '__all__'
+        
 class ChildHealthNotesSerializer(serializers.ModelSerializer):
     chhist_details = ChildHealthHistorySerializerBase(source='chhist', read_only=True)
     followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)
@@ -132,7 +149,7 @@ class NutritionalStatusSerializerBase(serializers.ModelSerializer):
 
 class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
     find_details = FindingSerializer(source='find', read_only=True)
-    bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
+    bm_details = BodyMeasurementBaseSerializer(source='bm', read_only=True)
     temp = serializers.CharField(source='vital.vital_temp', read_only=True)
     class Meta:
         model = ChildHealthVitalSigns

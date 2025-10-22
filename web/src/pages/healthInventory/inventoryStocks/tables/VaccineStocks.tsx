@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
+import { Search, Plus, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -16,6 +16,8 @@ import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast } from "@/components/ui/toast";
 import WastedModal from "../addstocksModal/WastedModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export function isVaccine(record: any): record is { type: "vaccine" } {
   return record?.type === "vaccine";
@@ -78,6 +80,136 @@ export default function CombinedStockTable() {
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
+  };
+
+  
+
+  // Corrected prepareExportData function
+const prepareExportData = () => {
+  return stockData.map((item: any) => {
+    const expired = item.isExpired;
+    const isLow = item.isLowStock;
+    const isOutOfStock = item.isOutOfStock;
+    const isNear = item.isNearExpiry;
+    
+    // Calculate Qty Used based on type
+    let qtyUsed = 0;
+    let qtyUsedUnit = "";
+    const availQty = Number(item.availableStock) || 0;
+    
+    if (item.type === "vaccine") {
+      if (item.solvent === "diluent") {
+        qtyUsed = Number(item.qty_number) - availQty - (item.wastedDose || 0);
+        qtyUsedUnit = "containers";
+      } else {
+        qtyUsed = Number(item.qty_number) * Number(item.dose_ml) - availQty - (item.wastedDose || 0);
+        qtyUsedUnit = "doses";
+      }
+    } else if (item.type === "supply") {
+      if (item.imzStck_unit === "boxes") {
+        qtyUsed = Number(item.qty_number) * Number(item.imzStck_pcs) - availQty - (item.wastedDose || 0);
+        qtyUsedUnit = "pcs";
+      } else {
+        qtyUsed = Number(item.qty_number) - availQty - (item.wastedDose || 0);
+        qtyUsedUnit = "pcs";
+      }
+    }
+
+    // Format Available Stock based on type
+    let availableStockDisplay = "";
+    if (item.type === "vaccine") {
+      if (item.solvent?.toLowerCase() === "diluent") {
+        availableStockDisplay = `${item.availableStock} containers`;
+      } else {
+        const dosesPerVial = item.dose_ml || 1;
+        const availableDoses = item.availableStock;
+        const fullVials = Math.ceil(availableDoses / dosesPerVial);
+        availableStockDisplay = `${fullVials} vial${fullVials !== 1 ? 's' : ''} (${availableDoses} dose${availableDoses !== 1 ? 's' : ''})`;
+      }
+    } else if (item.type === "supply") {
+      if (item.imzStck_unit === "boxes") {
+        const pcsPerBox = item.imzStck_pcs || 1;
+        const availablePcs = item.availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcsPerBox);
+        const remainingPcs = availablePcs % pcsPerBox;
+        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pc${availablePcs !== 1 ? 's' : ''})`;
+      } else {
+        availableStockDisplay = `${item.availableStock} pc${item.availableStock !== 1 ? 's' : ''}`;
+      }
+    } else {
+      availableStockDisplay = `${item.availableStock}`;
+    }
+
+    // Determine status
+    let status = "Normal";
+    if (expired) {
+      status = "Expired";
+    } else if (isOutOfStock) {
+      status = "Out of Stock";
+    } else if (isLow) {
+      status = "Low Stock";
+    } else if (isNear) {
+      status = "Near Expiry";
+    }
+
+    // Add status indicators to fields
+    if (expired) {
+      availableStockDisplay += " (Expired)";
+    } else {
+      if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+      if (isLow) availableStockDisplay += " (Low Stock)";
+    }
+
+    const baseData = {
+      "Date": item.created_at ? new Date(item.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }) : "N/A",
+      "Batch Number": item.batchNumber || "N/A",
+      "Item Details": item.item?.antigen || "Unknown Item",
+      "Total Qty": `${item.qty || "0"}${expired ? " (Expired)" : ""}`,
+      "Available Stock": availableStockDisplay,
+      "Qty Used": `${qtyUsed} ${qtyUsedUnit}`,
+      "Wasted Units": item.wastedDose || 0,
+      "Expiry Date": `${item.expiryDate || "N/A"}${expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}`,
+      "Status": status
+    };
+
+    // Add type-specific additional information
+    if (item.type === "vaccine") {
+      return {
+        ...baseData,
+        "Item Details": `${item.item?.antigen || "Unknown Item"}${item.item?.dosage ? ` - ${item.item.dosage} ${item.item.unit || ""}` : ""}${expired ? " (Expired)" : ""}`,
+      };
+    }
+
+    if (item.type === "supply") {
+      return {
+        ...baseData,
+        "Unit Type": item.imzStck_unit || "pcs",
+        "Pieces per Box": item.imzStck_pcs || 1
+      };
+    }
+
+    return baseData;
+  });
+};
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `antigen_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `antigen_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `antigen_stocks_${new Date().toISOString().slice(0, 10)}`, "Antigen Stocks Report");
   };
 
   const confirmuseArchiveAntigenStocks = async () => {
@@ -179,10 +311,10 @@ export default function CombinedStockTable() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="min-w-[200px]" align="end">
-              <DropdownMenuItem onSelect={() => navigate("/addVaccineStock")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
+              <DropdownMenuItem onSelect={() => navigate("/inventory-stocks/list/stocks/antigen/vaccine/add")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
                 Vaccine
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate("/addImzSupplyStock")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
+              <DropdownMenuItem onSelect={() => navigate("/inventory-stocks/list/stocks/immunization-supply/add")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
                 Immunization Supplies
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -208,19 +340,12 @@ export default function CombinedStockTable() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-transparent">
-                  <FileInput />
-                  Export Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown 
+              onExportCSV={handleExportCSV} 
+              onExportExcel={handleExportExcel} 
+              onExportPDF={handleExportPDF} 
+              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
+            />
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { UseFormReturn } from 'react-hook-form';
 import { ComplaintFormData } from '@/form-schema/complaint-schema';
 import { CheckCircle, User, UserX, FileText, Edit } from 'lucide-react-native';

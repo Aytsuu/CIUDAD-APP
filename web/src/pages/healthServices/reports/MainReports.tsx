@@ -1,9 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button/button";
-
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Activity, Syringe, Eye, Pill, Box, Users, ClipboardList, Search } from "lucide-react";
+import { Activity, Syringe, Eye, Pill, Box, Users, ClipboardList, Search, Heart } from "lucide-react";
 import { FaBandAid } from "react-icons/fa";
 import { Link } from "react-router";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
@@ -12,7 +11,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 export default function HealthcareReports() {
-  const [activeTab, setActiveTab] = useState<"all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis">("all");
   const [searchTerm, setSearchTerm] = useState("");
 
   const bhwReport = [
@@ -20,9 +19,17 @@ export default function HealthcareReports() {
       title: "BHW Report",
       icon: <Activity className="w-6 h-6 text-green-600" />,
       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-      description: "Monthly report of Barangay Health Workers activities and achievements",
-      link: "#"
-    }
+      description:
+        "Monthly report of Barangay Health Workers activities and achievements",
+      link: "/bhw-monthly-reports",
+    },
+    {
+  title: "Family Planning Monthly Report",
+  icon: <ClipboardList className="w-6 h-6 text-purple-600" />,
+  bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+  description: "Monthly report of family planning service provision and statistics",
+  link: "/familyplanning/report"
+},
   ];
 
   const recipientLists = [
@@ -31,21 +38,21 @@ export default function HealthcareReports() {
       icon: <Syringe className="w-6 h-6 text-red-600" />,
       bgColor: "bg-gradient-to-br from-red-50 to-purple-50",
       description: "Monthly report of vaccination recipients",
-      link: "/monthly-vaccine-records"
+      link: "/reports/monthly-vaccination"
     },
     {
       title: "Medicine Recipient List",
       icon: <Pill className="w-6 h-6 text-sky-600" />,
       bgColor: "bg-gradient-to-br from-sky-50 to-blue-50",
       description: "Monthly report of medicine recipients",
-      link: "/monthly-medicine-records"
+      link: "/reports/monthly-medicine"
     },
     {
       title: "First Aid Recipient List",
       icon: <FaBandAid className="w-6 h-6 text-red-600" />,
       bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
       description: "Monthly report of first aid recipients",
-      link: "/monthly-firstaid-records"
+      link: "/reports/monthly-firstaid"
     },
     {
       title: "New Children 0-5 Years Old List",
@@ -76,7 +83,7 @@ export default function HealthcareReports() {
       icon: <Box className="w-6 h-6 text-indigo-600" />,
       bgColor: "bg-gradient-to-br from-indigo-50 to-blue-50",
       description: "Monthly report of commodity inventory status",
-      link: "/commodity-inventory-reports"
+      link: "/reports/inventory/monthly-commodity"
     },
     {
       title: "EPI Inventory and Utilization",
@@ -128,11 +135,25 @@ export default function HealthcareReports() {
     }
   ];
 
-  const allReports = [...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports];
+  const fhisReports = [
+    {
+      title: "FHIS Monthly Report",
+      icon: <Heart className="w-6 h-6 text-pink-600" />,
+      bgColor: "bg-gradient-to-br from-pink-50 to-rose-50",
+      description: "Monthly Field Health Services Information System report",
+      link: "/reports/fhis-monthly-records"
+    },
+   
+  ];
+
+  const allReports = [...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports, ...fhisReports];
 
   const filterReports = (reports: any[]) => {
     if (!searchTerm) return reports;
-    return reports.filter((report) => report.title.toLowerCase().includes(searchTerm.toLowerCase()) || report.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    return reports.filter((report) => 
+      report.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      report.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
   const renderCard = (card: any, index: any) => (
@@ -141,7 +162,9 @@ export default function HealthcareReports() {
       contentClassName="flex flex-col flex-grow p-5"
       title={
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 ${card.bgColor} rounded-lg flex items-center justify-center`}>{card.icon}</div>
+          <div className={`w-10 h-10 ${card.bgColor} rounded-lg flex items-center justify-center`}>
+            {card.icon}
+          </div>
           <div>
             <span className="text-lg font-medium text-gray-800">{card.title}</span>
           </div>
@@ -161,7 +184,19 @@ export default function HealthcareReports() {
     />
   );
 
-  const TabButton = ({ active, type, icon: Icon, count, onClick }: { active: boolean; type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist"; icon: React.ComponentType<{ className?: string }>; count: number; onClick: () => void }) => {
+  const TabButton = ({ 
+    active, 
+    type, 
+    icon: Icon, 
+    count, 
+    onClick 
+  }: { 
+    active: boolean; 
+    type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis"; 
+    icon: React.ComponentType<{ className?: string }>; 
+    count: number; 
+    onClick: () => void; 
+  }) => {
     const config = {
       all: {
         color: "blue",
@@ -210,14 +245,46 @@ export default function HealthcareReports() {
         bgColor: "bg-indigo-100",
         textColorDark: "text-indigo-800",
         iconColor: "text-indigo-600"
+      },
+      fhis: {
+        color: "pink",
+        borderColor: "border-pink-600",
+        textColor: "text-pink-700",
+        bgColor: "bg-pink-100",
+        textColorDark: "text-pink-800",
+        iconColor: "text-pink-600"
       }
     }[type];
 
+    const getDisplayName = () => {
+      switch (type) {
+        case "all": return "All";
+        case "bhw": return "BHW";
+        case "recipients": return "Recipients";
+        case "inventory": return "Inventory";
+        case "opt": return "OPT";
+        case "masterlist": return "Masterlist";
+        case "fhis": return "FHIS";
+        default: return type;
+      }
+    };
+
     return (
-      <button type="button" onClick={onClick} className={`flex-1 py-3 text-sm flex flex-row justify-center items-center gap-2 transition-colors border-b-4 ${active ? `${config.borderColor} ${config.textColor} font-medium` : "border-transparent text-gray-600 hover:border-gray-300"}`}>
+      <button 
+        type="button" 
+        onClick={onClick} 
+        className={`
+          flex-1 min-w-0 py-3 px-1 text-xs sm:text-sm 
+          flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 
+          transition-colors border-b-4 
+          ${active ? `${config.borderColor} ${config.textColor} font-medium` : "border-transparent text-gray-600 hover:border-gray-300"}
+        `}
+      >
         <Icon className={`h-4 w-4 ${active ? config.iconColor : "text-gray-500"}`} />
-        <span className="capitalize">{type === "all" ? "All Reports" : type === "bhw" ? "BHW" : type === "recipients" ? "Recipients" : type === "inventory" ? "Inventory" : type === "opt" ? "OPT" : "Masterlist"}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${active ? `${config.bgColor} ${config.textColorDark}` : "bg-gray-200 text-gray-600"}`}>{count}</span>
+        <span className="capitalize text-center">{getDisplayName()}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${active ? `${config.bgColor} ${config.textColorDark}` : "bg-gray-200 text-gray-600"}`}>
+          {count}
+        </span>
       </button>
     );
   };
@@ -225,126 +292,216 @@ export default function HealthcareReports() {
   return (
     <MainLayoutComponent title="Healthcare Reports" description="Manage and view healthcare reports for various services">
       <Tabs value={activeTab} className="w-full">
-        <div className="flex gap-2 mb-2 bg-white rounded-md border border-gray-200 h-auto">
-          <TabButton active={activeTab === "all"} type="all" icon={ClipboardList} count={allReports.length} onClick={() => setActiveTab("all")} />
-          <TabButton active={activeTab === "bhw"} type="bhw" icon={Users} count={bhwReport.length} onClick={() => setActiveTab("bhw")} />
-          <TabButton active={activeTab === "recipients"} type="recipients" icon={Syringe} count={recipientLists.length} onClick={() => setActiveTab("recipients")} />
-          <TabButton active={activeTab === "inventory"} type="inventory" icon={Box} count={inventoryReports.length} onClick={() => setActiveTab("inventory")} />
-          <TabButton active={activeTab === "opt"} type="opt" icon={Activity} count={optReports.length} onClick={() => setActiveTab("opt")} />
-          <TabButton active={activeTab === "masterlist"} type="masterlist" icon={ClipboardList} count={masterlistReports.length} onClick={() => setActiveTab("masterlist")} />
+        {/* Mobile Responsive Tab Navigation */}
+        <div className="flex flex-wrap gap-1 mb-2 bg-white rounded-md border border-gray-200 h-auto overflow-hidden">
+          <TabButton 
+            active={activeTab === "all"} 
+            type="all" 
+            icon={ClipboardList} 
+            count={allReports.length} 
+            onClick={() => setActiveTab("all")} 
+          />
+          <TabButton 
+            active={activeTab === "bhw"} 
+            type="bhw" 
+            icon={Users} 
+            count={bhwReport.length} 
+            onClick={() => setActiveTab("bhw")} 
+          />
+          <TabButton 
+            active={activeTab === "recipients"} 
+            type="recipients" 
+            icon={Syringe} 
+            count={recipientLists.length} 
+            onClick={() => setActiveTab("recipients")} 
+          />
+          <TabButton 
+            active={activeTab === "inventory"} 
+            type="inventory" 
+            icon={Box} 
+            count={inventoryReports.length} 
+            onClick={() => setActiveTab("inventory")} 
+          />
+          <TabButton 
+            active={activeTab === "opt"} 
+            type="opt" 
+            icon={Activity} 
+            count={optReports.length} 
+            onClick={() => setActiveTab("opt")} 
+          />
+          <TabButton 
+            active={activeTab === "masterlist"} 
+            type="masterlist" 
+            icon={ClipboardList} 
+            count={masterlistReports.length} 
+            onClick={() => setActiveTab("masterlist")} 
+          />
+          <TabButton 
+            active={activeTab === "fhis"} 
+            type="fhis" 
+            icon={Heart} 
+            count={fhisReports.length} 
+            onClick={() => setActiveTab("fhis")} 
+          />
         </div>
 
         <div className="bg-white rounded-sm border border-gray-200 p-4 mb-8">
-          <TabsContent value="all" className="space-y-8">
-            <div className="flex justify-end">
-              {/* Search Bar */}
-              <div className="w-full sm:w-[50%] max-w-full sm:max-w-md relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input type="search" placeholder="Search reports..." className="pl-10 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
+          {/* Search Bar - Mobile Responsive */}
+          <div className="flex justify-end mb-6">
+            <div className="w-full sm:w-[50%] max-w-full sm:max-w-md relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input 
+                type="search" 
+                placeholder="Search reports..." 
+                className="pl-10 w-full" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+              />
             </div>
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <ClipboardList className="w-6 h-6 text-blue-600" />
+          </div>
+
+          {/* All Reports Tab */}
+          <TabsContent value="all" className="space-y-8">
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <ClipboardList className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">All Healthcare Reports</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">All Healthcare Reports</h2>
               </div>
               {filterReports(allReports).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(allReports).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(allReports).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No reports found matching your search</p>
                 </div>
               )}
             </div>
           </TabsContent>
 
+          {/* BHW Reports Tab */}
           <TabsContent value="bhw" className="space-y-8">
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <Users className="w-6 h-6 text-green-600" />
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                  <Users className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">BHW Reports</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">BHW Reports</h2>
               </div>
               {filterReports(bhwReport).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(bhwReport).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(bhwReport).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No BHW reports found matching your search</p>
                 </div>
               )}
             </div>
           </TabsContent>
 
+          {/* Recipient Lists Tab */}
           <TabsContent value="recipients" className="space-y-8">
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-                  <Syringe className="w-6 h-6 text-red-600" />
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                  <Syringe className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">Recipient Lists</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Recipient Lists</h2>
               </div>
               {filterReports(recipientLists).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(recipientLists).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(recipientLists).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No recipient lists found matching your search</p>
                 </div>
               )}
             </div>
           </TabsContent>
 
+          {/* Inventory Reports Tab */}
           <TabsContent value="inventory" className="space-y-8">
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Box className="w-6 h-6 text-amber-600" />
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <Box className="w-4 h-4 sm:w-6 sm:h-6 text-amber-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">Inventory Reports</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Inventory Reports</h2>
               </div>
               {filterReports(inventoryReports).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(inventoryReports).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(inventoryReports).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No inventory reports found matching your search</p>
                 </div>
               )}
             </div>
           </TabsContent>
 
+          {/* OPT Reports Tab */}
           <TabsContent value="opt" className="space-y-8">
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-emerald-600" />
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <Activity className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">OPT Reports</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">OPT Reports</h2>
               </div>
               {filterReports(optReports).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(optReports).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(optReports).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No OPT reports found matching your search</p>
                 </div>
               )}
             </div>
           </TabsContent>
 
+          {/* Masterlist Reports Tab */}
           <TabsContent value="masterlist" className="space-y-8">
-            <div className="bg-white p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <ClipboardList className="w-6 h-6 text-indigo-600" />
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <ClipboardList className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800">Masterlist Reports</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Masterlist Reports</h2>
               </div>
               {filterReports(masterlistReports).length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{filterReports(masterlistReports).map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(masterlistReports).map(renderCard)}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No masterlist reports found matching your search</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* FHIS Reports Tab */}
+          <TabsContent value="fhis" className="space-y-8">
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-xl flex items-center justify-center">
+                  <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-pink-600" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">FHIS Reports</h2>
+              </div>
+              {filterReports(fhisReports).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(fhisReports).map(renderCard)}
+                </div>
+              ) : (
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-gray-500">No FHIS reports found matching your search</p>
                 </div>
               )}
             </div>

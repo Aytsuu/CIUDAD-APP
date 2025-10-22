@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, X, CheckCircle2, Clock, AlertCircle, Calendar, ImageIcon } from "lucide-react";
+import React, { useState, useEffect, useCallback, useMemo } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Upload, X, CheckCircle2, Clock, AlertCircle, Calendar, ImageIcon } from "lucide-react"
+import { fileToBase64 } from "@/helpers/fileHelpers"
 
 // Types
 export interface LabImage {
@@ -17,14 +18,13 @@ export interface LabImage {
 }
 
 export interface LabResultData {
-  checked: boolean;
-  date: string;
-  toBeFollowed: boolean;
-  remarks?: string;
-  images: LabImage[];
-  // Backward compatibility fields
-  imageFile?: File | null;
-  imagePreview?: string;
+  checked: boolean
+  date: string
+  toBeFollowed: boolean
+  remarks?: string
+  images: LabImage[]
+  imageFile?: File | null
+  imagePreview?: string
 }
 
 export interface LabResults {
@@ -173,7 +173,7 @@ const ImageUploadSection = ({ labName, labData, onImageUpload, onImageRemove }: 
         <div className="space-y-4">
           <div className="flex justify-center">
             <Upload size={40} className="text-gray-400" />
-          </div>
+          </div>  
           <div>
             <p className="text-sm text-gray-600 mb-2">Drag and drop your lab result images here, or click to browse</p>
             <input type="file" accept="image/*" onChange={handleFileInput} className="hidden" id={`file-input-${labName}`} multiple />
@@ -186,7 +186,7 @@ const ImageUploadSection = ({ labName, labData, onImageUpload, onImageRemove }: 
         </div>
       </div>
 
-      {/* Uploaded Images Grid - Made more compact */}
+      {/* Uploaded Images Grid*/}
       {labData.images.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-2">
           {labData.images.map((image, index) => (
@@ -716,7 +716,7 @@ export const getLabResultsSummary = (labResults: LabResults) => {
     }, {} as any);
 };
 
-export const convertLabResultsToSchema = (labResults: LabResults) => {
+export const convertLabResultsToSchema = async (labResults: LabResults) => {
   const labTypeMapping = {
     urinalysis: "urinalysis",
     cbc: "cbc",
@@ -731,22 +731,29 @@ export const convertLabResultsToSchema = (labResults: LabResults) => {
     ogct100: "ogct_100gms"
   } as const;
 
-  return Object.entries(labResults)
-    .filter(([_, lab]) => lab.checked) // only checked labs
-    .map(([labName, lab]) => ({
+  const results = await Promise.all(
+   Object.entries(labResults)
+    .filter(([_, lab]) => lab.checked) 
+    .map(async ([labName, lab]) => ({
       lab_type: labTypeMapping[labName as keyof typeof labTypeMapping],
       resultDate: lab.date,
       toBeFollowed: lab.toBeFollowed,
       documentPath: lab.imageFile ? `lab_images/${labName}_${Date.now()}.${lab.imageFile.name.split(".").pop()}` : "",
-      remarks: lab.remarks || "",
-      images: lab.images.map((img) => ({
-        image_url: img.url || img.preview || "",
-        image_name: img.name || "",
-        image_type: img.type || "",
-        image_size: img.size || 0
-      })) // Ensure images array is passed
-    }));
-};
+      labRemarks: lab.remarks || "",
+      images: await Promise.all(
+        lab.images.map(async img => ({
+          image_url: await fileToBase64(img.file),
+          image_name: img.name,
+          image_type: img.type,
+          image_size: img.size,
+        }))
+      )
+      
+      // Ensure images array is passed
+    }))
+  )
+  return results
+}
 
 // Validation helper
 export const validateLabResults = (labResults: LabResults) => {

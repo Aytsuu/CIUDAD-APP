@@ -58,7 +58,7 @@ export const useGetPersonnelById = (wstp_id: number, options = {}) => {
 
 // Combined hook for all staff types
 export const useGetAllStaff = () => {
-  const positions = ["WASTE COLLECTOR", "WATCHMAN", "WASTE DRIVER"];
+  const positions = ["Waste Collector", "Watchman", "Waste Driver"];
   
   const queries = positions.map(position => ({
     queryKey: ["staff", position],

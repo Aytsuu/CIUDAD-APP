@@ -1,6 +1,6 @@
 import "@/global.css";
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Animated, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
 import { CAVIDCamHandle, CaptureAndVerifyID } from "./CaptureAndVerifyID";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LottieView from 'lottie-react-native';

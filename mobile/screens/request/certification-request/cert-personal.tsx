@@ -14,18 +14,27 @@ const CertForm: React.FC = () => {
   const router = useRouter();
   const {user, isLoading} = useAuth();
   const [hasVoterId, setHasVoterId] = useState<boolean>(false);
-  const [hasDisability, setHasDisability] = useState<boolean>(false);
-  const [isSenior, setIsSenior] = useState<boolean>(false);
   
-  // Debug: Inspect what useAuth provides (rp)
+  // Debug: Inspect what useAuth provides
   useEffect(() => {
     try {
-      console.log("[AuthContext] rp:", (user as any)?.rp);
+      console.log("[AuthContext] resident rp_id:", user?.resident?.rp_id);
+      console.log("[AuthContext] resident voter_id:", user?.resident?.voter_id, "type:", typeof user?.resident?.voter_id);
     } catch (e) {}
   }, [user]);
 
+  // Minimal local fix: fetch voter status by rp_id (best-effort)
   useEffect(() => {
-    const rpId = (user as any)?.rp;
+    const rpId = user?.resident?.rp_id;
+    // If auth already carries a voter indicator, use it
+    if (user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined) {
+      setHasVoterId(true);
+      return;
+    }
+    if ((user as any)?.resident?.voter) {
+      setHasVoterId(true);
+      return;
+    }
     if (!rpId) return;
     let cancelled = false;
     (async () => {
@@ -37,71 +46,26 @@ const CertForm: React.FC = () => {
         const match = items.find((r: any) => String(r?.rp_id) === String(rpId));
         if (!cancelled) {
           const v = match?.voter_id ?? match?.voter ?? match?.voterId ?? null;
-          const str = typeof v === 'string' ? v.trim().toLowerCase() : '';
-          const isVoter = v === true || v === 1 || str === 'yes' || str === 'true' || str === '1';
-          setHasVoterId(Boolean(isVoter));
-          // Disability: any non-empty, non-null string/value
-          const disabilityRaw = match?.per_disability;
-          const hasPwd = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
-          setHasDisability(Boolean(hasPwd));
-          // Senior: age >= 60 based on per_dob
-          const dobStr = match?.per_dob ? String(match?.per_dob) : '';
-          let senior = false;
-          if (dobStr) {
-            try {
-              const dob = new Date(dobStr);
-              if (!isNaN(dob.getTime())) {
-                const today = new Date();
-                let age = today.getFullYear() - dob.getFullYear();
-                const m = today.getMonth() - dob.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                senior = age >= 60;
-              }
-            } catch {}
-          }
-          setIsSenior(senior);
+          setHasVoterId(v !== null && v !== undefined && v !== 0 && v !== false);
         }
       } catch (_) {
         // Fallback: try profiling resident personal detail
         try {
           const resDetail = await api.get(`profiling/resident/personal/${rpId}/`);
           const data = resDetail?.data || {};
-          const v = data?.voter_id ?? data?.voter;
-          const str = typeof v === 'string' ? v.trim().toLowerCase() : '';
-          const isVoter = v === true || v === 1 || str === 'yes' || str === 'true' || str === '1';
-          if (!cancelled) {
-            setHasVoterId(Boolean(isVoter));
-            const disabilityRaw = data?.per_disability;
-            const hasPwd = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
-            setHasDisability(Boolean(hasPwd));
-            const dobStr = data?.per_dob ? String(data?.per_dob) : '';
-            let senior = false;
-            if (dobStr) {
-              try {
-                const dob = new Date(dobStr);
-                if (!isNaN(dob.getTime())) {
-                  const today = new Date();
-                  let age = today.getFullYear() - dob.getFullYear();
-                  const m = today.getMonth() - dob.getMonth();
-                  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                  senior = age >= 60;
-                }
-              } catch {}
-            }
-            setIsSenior(senior);
-          }
+          if (!cancelled) setHasVoterId(Boolean(data?.voter_id ?? data?.voter));
         } catch (_) {
           // remain false
         }
       }
     })();
     return () => { cancelled = true; };
-  }, [(user as any)?.rp]);
+  }, [user?.resident?.rp_id, user?.resident?.voter_id]);
 
-  // Debug: Log resolved eligibility flags
+  // Debug: Log resolved hasVoterId
   useEffect(() => {
-    console.log("[AuthContext] hasVoterId:", hasVoterId, "hasDisability:", hasDisability, "isSenior:", isSenior);
-  }, [hasVoterId, hasDisability, isSenior]);
+    console.log("[AuthContext] hasVoterId:", hasVoterId);
+  }, [hasVoterId]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -113,25 +77,17 @@ const CertForm: React.FC = () => {
   
 
   
-  const purposeOptions: DropdownOption[] = (() => {
-    const filtered = purposeData.filter((purpose: PurposeAndRate) => {
-      return !purpose.pr_is_archive &&
-             (purpose.pr_category === "Personal and Others" ||
+  const purposeOptions: DropdownOption[] = purposeData
+    .filter((purpose: PurposeAndRate) => {
+      return !purpose.pr_is_archive && 
+             (purpose.pr_category === "Personal and Others" || 
               purpose.pr_category === "Personal" ||
-              String(purpose.pr_category || '').toLowerCase().includes("personal"));
-    });
-    const seen = new Set<string>();
-    const unique = filtered.filter((p: PurposeAndRate) => {
-      const key = String(p.pr_purpose || '').trim();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    return unique.map((purpose: PurposeAndRate) => ({
-      label: String(purpose.pr_purpose || '').trim(),
-      value: String(purpose.pr_purpose || '').trim()
+              purpose.pr_category.toLowerCase().includes("personal"));
+    })
+    .map((purpose: PurposeAndRate) => ({
+      label: `${purpose.pr_purpose}`,
+      value: purpose.pr_purpose
     }));
-  })();
 
   
   const handleSubmit = () => {
@@ -143,10 +99,9 @@ const CertForm: React.FC = () => {
       return;
     }
     
-    const rp = (user as any)?.rp ?? "";
     const result = CertificationRequestSchema.safeParse({
       cert_type: "personal",
-      requester: rp, 
+      requester: user?.resident?.rp_id || "", 
       purposes: [purpose], 
     });
     if (!result.success) {
@@ -157,11 +112,12 @@ const CertForm: React.FC = () => {
     const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
     
     
-    const reqAmount = (hasVoterId || hasDisability || isSenior) ? 0 : (selectedPurpose?.pr_rate || 0);
+    const isEligibleForFreeCert = user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined;
+    const reqAmount = isEligibleForFreeCert ? 0 : (selectedPurpose?.pr_rate || 0);
     
     addPersonalCert.mutate({
       cert_type: "personal",
-      requester: rp, 
+      requester: user?.resident?.rp_id || "", 
       purposes: [purpose], 
       pr_id: selectedPurposeId, // Add the purpose ID
     });
@@ -219,6 +175,10 @@ const CertForm: React.FC = () => {
         </View>
       )}
 
+
+      
+
+      
       {error && (
         <Text className="text-red-500 mb-2 text-sm">{error}</Text>
       )}
@@ -247,8 +207,8 @@ const CertForm: React.FC = () => {
         {/* Removed payment mode field */}
       </View>
 
-      {/* Amount Display - show only if not free by voter/disability/senior */}
-      {personalType && !(hasVoterId || hasDisability || isSenior) && (
+      {/* Amount Display - show only for residents without voter_id */}
+      {personalType && !hasVoterId && (
         <View className="rounded-lg p-4 mb-6 mt-4 bg-blue-50 border border-blue-200">
           <View className="flex-row items-center mb-2">
             <Ionicons name="information-circle" size={16} color="#2563EB" />
@@ -271,7 +231,7 @@ const CertForm: React.FC = () => {
         disabled={addPersonalCert.status === 'pending' || !!isLoading}
       >
         <Text className="text-white font-semibold text-base">
-          {addPersonalCert.status === 'pending' ? 'Submitting...' : !!isLoading ? 'Loading...' : 'Submit Request'}
+          {addPersonalCert.status === 'pending' ? 'Submitting...' : isLoading ? 'Loading...' : 'Submit Request'}
         </Text>
       </TouchableOpacity>
       </View>

@@ -10,8 +10,184 @@ from rest_framework.decorators import api_view
 from .models import *
 from apps.patientrecords.models import Patient, PatientRecord 
 # from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
+from django.db.models import Count, Max, Subquery, OuterRef, F, Q
+from django.db.models.functions import Concat, Cast
+from rest_framework.pagination import PageNumberPagination
+from django.db.models.fields import CharField
 
-from django.db.models import F 
+
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit'  # Matches your frontend pageSize
+    max_page_size = 100
+
+
+class UniqueAnimalBitePatientsView(generics.ListAPIView):
+    serializer_class = AnimalBiteUniquePatientSerializer
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        queryset = PatientRecord.objects.filter(patrec_type="Animal Bites")
+
+        # Annotate latest referral and details from latest referral
+        latest_referral_pk = Subquery(
+            AnimalBite_Referral.objects.filter(patrec=OuterRef('pk')).order_by('-date').values('pk')[:1]
+        )
+        queryset = queryset.annotate(
+            latest_referral_pk=latest_referral_pk,
+            bite_count=Count('referrals', distinct=True),
+            latest_date=Max('referrals__date'),
+            latest_exposure=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_type')[:1]
+            ),
+            latest_site=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_site')[:1]
+            ),
+            latest_animal=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('biting_animal')[:1]
+            ),
+            latest_actions=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('actions_taken')[:1]
+            ),
+            latest_referredby=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('referredby')[:1]
+            ),
+        )
+
+        # Apply filter
+        filter_value = self.request.query_params.get('filter', 'all')
+        if filter_value != 'all':
+            if filter_value == 'bite':
+                queryset = queryset.filter(latest_exposure='Bite')
+            elif filter_value == 'non-bite':
+                queryset = queryset.filter(latest_exposure='Non-bite')
+            elif filter_value == 'resident':
+                queryset = queryset.filter(pat_id__pat_type='Resident')
+            elif filter_value == 'transient':
+                queryset = queryset.filter(pat_id__pat_type='Transient')
+
+        # Apply search - CORRECTED RELATIONSHIP PATHS
+        search = self.request.query_params.get('search', '')
+        if search:
+            # Create Q objects for both resident and transient patient name searches
+            resident_name_q = Q(
+                Q(pat_id__rp_id__per__per_fname__icontains=search) |
+                Q(pat_id__rp_id__per__per_lname__icontains=search) |
+                Q(pat_id__rp_id__per__per_mname__icontains=search)
+            )
+            
+            transient_name_q = Q(
+                Q(pat_id__trans_id__tran_fname__icontains=search) |
+                Q(pat_id__trans_id__tran_lname__icontains=search) |
+                Q(pat_id__trans_id__tran_mname__icontains=search)
+            )
+            
+            # Combine resident and transient name searches
+            name_q = resident_name_q | transient_name_q
+            
+            # Other field searches
+            other_fields_q = Q(
+                Q(pat_id__rp_id__per__per_sex__icontains=search) |
+                Q(pat_id__trans_id__tran_sex__icontains=search) |
+                Q(pat_id__pat_type__icontains=search) |
+                Q(latest_exposure__icontains=search) |
+                Q(latest_site__icontains=search) |
+                Q(latest_animal__icontains=search)
+            )
+            
+            # Combine all search conditions
+            queryset = queryset.filter(name_q | other_fields_q)
+
+        # Apply ordering (for sorting)
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            if ordering == 'patient':
+                # Order by resident last name first, then transient last name
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').asc(nulls_last=True),
+                    F('resident_fname').asc(nulls_last=True),
+                    F('transient_lname').asc(nulls_last=True),
+                    F('transient_fname').asc(nulls_last=True)
+                )
+            elif ordering == '-patient':
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').desc(nulls_last=True),
+                    F('resident_fname').desc(nulls_last=True),
+                    F('transient_lname').desc(nulls_last=True),
+                    F('transient_fname').desc(nulls_last=True)
+                )
+            elif ordering == 'patientType':
+                queryset = queryset.order_by('pat_id__pat_type')
+            elif ordering == '-patientType':
+                queryset = queryset.order_by(F('pat_id__pat_type').desc())
+            elif ordering == 'recordCount':
+                queryset = queryset.order_by('bite_count')
+            elif ordering == '-recordCount':
+                queryset = queryset.order_by(F('bite_count').desc())
+        else:
+            # Default ordering
+            queryset = queryset.order_by('-latest_date')
+
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        if request.query_params.get('export'):
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
+    
+class AnimalBiteStatsView(APIView):
+    def get(self, request):
+        qs = PatientRecord.objects.filter(patrec_type="Animal Bites")
+        total = qs.count()
+        residents = qs.filter(pat_id__pat_type="Resident").count()
+        transients = qs.filter(pat_id__pat_type="Transient").count()
+        resident_percentage = round((residents / total) * 100) if total > 0 else 0
+        transient_percentage = round((transients / total) * 100) if total > 0 else 0
+        return Response({
+            'total': total,
+            'residents': residents,
+            'transients': transients,
+            'residentPercentage': resident_percentage,
+            'transientPercentage': transient_percentage
+        })    
+    
+
+            
+class AnimalBiteReferralCountView(APIView):
+    def get(self, request, pat_id=None):
+        try:
+            if pat_id:
+                # Count referrals for a specific patient through patrec
+                count = AnimalBite_Referral.objects.filter(patrec__pat_id=pat_id).count()
+                return Response({
+                    'count': count,
+                    'pat_id': pat_id,
+                    'message': f'Animal bite referrals for patient {pat_id}: {count}'
+                }, status=status.HTTP_200_OK)
+            else:
+                # Count all referrals if no pat_id provided
+                count = AnimalBite_Referral.objects.count()
+                return Response({
+                    'count': count,
+                    'message': f'Total animal bite referrals: {count}'
+                }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AnimalBitePatientRecordCountView(APIView):
     def get(self, request):

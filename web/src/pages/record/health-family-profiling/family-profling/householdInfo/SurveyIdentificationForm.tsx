@@ -1,20 +1,23 @@
-import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react"
+import { useEffect, useImperativeHandle, forwardRef, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
-import { CalendarIcon, CheckCircle2, ClipboardCheck, Pencil, Trash2, User } from "lucide-react"
-
-import { Input } from "@/components/ui/input"
+import { CalendarIcon, CheckCircle2, ClipboardCheck, User } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
+import { Combobox } from "@/components/ui/combobox"
+import { Label } from "@/components/ui/label"
+import SignatureCanvas from "@/components/ui/signature-canvas"
 
 import { cn } from "@/lib/utils"
 import { surveyFormSchema } from "@/form-schema/family-profiling-schema"
 import type { SurveyFormData } from "@/form-schema/health-data-types"
 import { useAuth } from "@/context/AuthContext"
+import { useHealthStaffList } from "../../queries/administrationFetchQueries"
+import { formatHealthStaff } from "../../HealthStaffFormats"
 
 interface SurveyIdentificationFormProps {
   initialData?: Partial<SurveyFormData>
@@ -36,50 +39,55 @@ export interface SurveyIdentificationFormHandle {
 
 const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, SurveyIdentificationFormProps>(
   ({ initialData, respondentInfo, familyMembers }, ref) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [lastPos, setLastPos] = useState({ x: 0, y: 0 })
-
+  
   const { user } = useAuth()
+
+  // Fetch health staff data
+  const { data: healthStaffList } = useHealthStaffList()
+  
+  // Format health staff for combobox
+  const formattedHealthStaff = useMemo(() => formatHealthStaff(healthStaffList), [healthStaffList])
+
+  // Format family members for resident selection
+  const formattedFamilyMembers = useMemo(() => {
+    if (!familyMembers || !Array.isArray(familyMembers)) return []
+    
+    return familyMembers.map((member: any) => {
+      const rpId = member.rp_id || ""
+      const firstName = member.per?.per_fname || member.personal_info?.per_fname || ""
+      const lastName = member.per?.per_lname || member.personal_info?.per_lname || ""
+      const middleName = member.per?.per_mname || member.personal_info?.per_mname || ""
+      
+      let fullName = `${firstName} ${lastName}`.trim()
+      if (middleName) {
+        fullName = `${firstName} ${middleName} ${lastName}`.trim()
+      }
+      
+      return {
+        id: `${rpId} - ${fullName}`.toUpperCase(),
+        name: (
+          <div className="flex gap-2 items-center">
+            <span className="text-green-600 font-medium text-sm">
+              #{rpId}
+            </span>
+            <span className="text-sm">{fullName.toUpperCase()}</span>
+          </div>
+        ),
+      }
+    })
+  }, [familyMembers])
 
   // Debug logging
   useEffect(() => {
     console.log('SurveyIdentificationForm - User:', user);
     console.log('SurveyIdentificationForm - Staff:', user?.staff);
+    console.log('SurveyIdentificationForm - Staff Keys:', user?.staff ? Object.keys(user.staff) : 'No staff');
     console.log('SurveyIdentificationForm - Respondent Info:', respondentInfo);
     console.log('SurveyIdentificationForm - Family Members:', familyMembers);
-  }, [user, respondentInfo, familyMembers])
-
-  // Format staff display name
-  const getStaffDisplayName = () => {
-    if (!user?.staff) return ""
-    
-    // Try multiple possible data structures for staff
-    const staff = user.staff
-    
-    // Pattern 1: staff.staff_fname and staff.staff_lname (direct)
-    if (staff.staff_fname && staff.staff_lname) {
-      return `${staff.staff_id} - ${staff.staff_fname} ${staff.staff_lname}`
-    }
-    
-    // Pattern 2: staff.profile.personal.fname and staff.profile.personal.lname
-    if (staff.profile?.personal?.fname && staff.profile?.personal?.lname) {
-      return `${staff.staff_id || staff.id || ''} - ${staff.profile.personal.fname} ${staff.profile.personal.lname}`
-    }
-    
-    // Pattern 3: staff.per_fname and staff.per_lname
-    if (staff.per_fname && staff.per_lname) {
-      return `${staff.staff_id || staff.id || ''} - ${staff.per_fname} ${staff.per_lname}`
-    }
-    
-    // Pattern 4: staff.fname and staff.lname
-    if (staff.fname && staff.lname) {
-      return `${staff.staff_id || staff.id || ''} - ${staff.fname} ${staff.lname}`
-    }
-    
-    // Fallback - return just the ID if available
-    return staff.staff_id || staff.id || "Unknown Staff"
-  }
+    console.log('SurveyIdentificationForm - Formatted Family Members:', formattedFamilyMembers);
+    console.log('SurveyIdentificationForm - Health Staff List:', healthStaffList);
+    console.log('SurveyIdentificationForm - Formatted Health Staff:', formattedHealthStaff);
+  }, [user, respondentInfo, familyMembers, formattedFamilyMembers, healthStaffList, formattedHealthStaff])
 
   // Format respondent display name
   const getRespondentDisplayName = () => {
@@ -100,182 +108,79 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
     },
   })
 
+  // Helper function to extract staff name from the selected value
+  const extractStaffName = (selectedValue: string) => {
+    if (!selectedValue) return ""
+    // The format is "staff_id First Last", so we extract the name part
+    const parts = selectedValue.split(" ")
+    if (parts.length > 1) {
+      return parts.slice(1).join(" ") // Get everything after the first space (the name)
+    }
+    return selectedValue
+  }
+
+  // Helper function to extract resident name from the selected value  
+  const extractResidentName = (selectedValue: string) => {
+    if (!selectedValue) return ""
+    // The format is "resident_id - First Last", so we extract the part after the " - "
+    const parts = selectedValue.split(" - ")
+    if (parts.length > 1) {
+      return parts[1] // Get the name part
+    }
+    return selectedValue
+  }
+
   // Expose form data and validation to parent component
   useImperativeHandle(ref, () => ({
-    getFormData: () => form.getValues(),
-    isFormValid: () => form.formState.isValid
+    getFormData: () => {
+      const formValues = form.getValues()
+      console.log('SurveyIdentificationForm - getFormData called, raw values:', formValues);
+      
+      const extractedData = {
+        ...formValues,
+        filledBy: extractStaffName(formValues.filledBy), // Extract staff name
+        filledByName: formValues.filledBy, // Keep full value for display if needed
+        informant: extractResidentName(formValues.informant), // Extract resident name  
+        informantName: formValues.informant, // Keep full value for display if needed
+        checkedBy: extractStaffName(formValues.checkedBy), // Extract staff name
+        checkedByName: formValues.checkedBy // Keep full value for display if needed
+      }
+      
+      console.log('SurveyIdentificationForm - extracted data:', extractedData);
+      return extractedData;
+    },
+    isFormValid: () => {
+      const formValues = form.getValues();
+      const isValid = !!(
+        formValues.filledBy &&
+        formValues.informant &&
+        formValues.checkedBy &&
+        formValues.date &&
+        formValues.signature
+      );
+      
+      console.log('SurveyIdentificationForm - isFormValid check:', {
+        filledBy: !!formValues.filledBy,
+        informant: !!formValues.informant,
+        checkedBy: !!formValues.checkedBy,
+        date: !!formValues.date,
+        signature: !!formValues.signature,
+        isValid: isValid,
+        formState: form.formState.isValid
+      });
+      
+      return isValid;
+    }
   }), [form])
 
-  // Auto-populate staff and respondent information when component mounts or data changes
+  // Auto-populate informant with respondent info when component mounts or data changes
   useEffect(() => {
-    // Auto-populate filled by with current staff
-    const staffDisplayName = getStaffDisplayName()
-    if (staffDisplayName && !form.getValues("filledBy")) {
-      form.setValue("filledBy", staffDisplayName)
-    }
-
-    // Auto-populate informant with respondent info
+    // Auto-populate informant with respondent info if available
     const respondentDisplayName = getRespondentDisplayName()
     if (respondentDisplayName && !form.getValues("informant")) {
       form.setValue("informant", respondentDisplayName)
     }
-  }, [user, respondentInfo, form])
-
-  useEffect(() => {
-    const signatureValue = form.getValues("signature")
-    if (signatureValue && canvasRef.current) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        const img = new Image()
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0)
-        }
-        img.src = signatureValue
-        img.crossOrigin = "anonymous"
-      }
-    }
-  }, [form])
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    form.setValue("signature", "", {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true,
-    })
-  }
-
-  // Get mouse/touch position relative to canvas
-  const getPos = (e: MouseEvent | TouchEvent): { x: number; y: number } => {
-    const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
-
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
-    if (e.type.includes('touch')) {
-      const touch = (e as TouchEvent).touches[0] || (e as TouchEvent).changedTouches[0]
-      return {
-        x: (touch.clientX - rect.left) * scaleX,
-        y: (touch.clientY - rect.top) * scaleY,
-      }
-    } else {
-      const mouse = e as MouseEvent
-      return {
-        x: (mouse.clientX - rect.left) * scaleX,
-        y: (mouse.clientY - rect.top) * scaleY,
-      }
-    }
-  }
-
-  // Start drawing
-  const startDrawing = (e: MouseEvent | TouchEvent) => {
-    e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    setIsDrawing(true)
-    const pos = getPos(e)
-    setLastPos(pos)
-
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
-  }
-
-  // Draw on canvas
-  const draw = (e: MouseEvent | TouchEvent) => {
-    e.preventDefault()
-    if (!isDrawing) return
-
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    const pos = getPos(e)
-
-    ctx.lineWidth = 2
-    ctx.lineCap = "round"
-    ctx.strokeStyle = "#000000"
-
-    ctx.beginPath()
-    ctx.moveTo(lastPos.x, lastPos.y)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
-
-    setLastPos(pos)
-  }
-
-  // Stop drawing and save signature
-  const endDrawing = (e: MouseEvent | TouchEvent) => {
-    e.preventDefault()
-    if (!isDrawing) return
-
-    setIsDrawing(false)
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    // Convert canvas to base64 and save to form
-    const dataURL = canvas.toDataURL("image/png")
-    form.setValue("signature", dataURL, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true,
-    })
-  }
-
-  // Add event listeners to canvas
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    // Mouse events
-    const handleMouseDown = (e: MouseEvent) => startDrawing(e)
-    const handleMouseMove = (e: MouseEvent) => draw(e)
-    const handleMouseUp = (e: MouseEvent) => endDrawing(e)
-    const handleMouseLeave = (e: MouseEvent) => endDrawing(e)
-
-    // Touch events
-    const handleTouchStart = (e: TouchEvent) => startDrawing(e)
-    const handleTouchMove = (e: TouchEvent) => draw(e)
-    const handleTouchEnd = (e: TouchEvent) => endDrawing(e)
-
-    // Add event listeners
-    canvas.addEventListener("mousedown", handleMouseDown)
-    canvas.addEventListener("mousemove", handleMouseMove)
-    canvas.addEventListener("mouseup", handleMouseUp)
-    canvas.addEventListener("mouseleave", handleMouseLeave)
-
-    canvas.addEventListener("touchstart", handleTouchStart)
-    canvas.addEventListener("touchmove", handleTouchMove)
-    canvas.addEventListener("touchend", handleTouchEnd)
-
-    // Cleanup function
-    return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown)
-      canvas.removeEventListener("mousemove", handleMouseMove)
-      canvas.removeEventListener("mouseup", handleMouseUp)
-      canvas.removeEventListener("mouseleave", handleMouseLeave)
-
-      canvas.removeEventListener("touchstart", handleTouchStart)
-      canvas.removeEventListener("touchmove", handleTouchMove)
-      canvas.removeEventListener("touchend", handleTouchEnd)
-    }
-  }, [isDrawing, lastPos])
-
-  // Signature pad functions (startDrawing, draw, endDrawing) remain the same
+  }, [respondentInfo, form])
 
   return (
     <div className="w-full mx-auto px-8 py-6">
@@ -293,12 +198,24 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="font-medium">
-                      Filled by: 
+                      Profiled by: <span className="text-red-500">*</span>
                     </FormLabel>
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="Enter name" className="flex-1" {...field} />
+                        <Combobox
+                          options={formattedHealthStaff}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          placeholder="Select health staff"
+                          contentClassName="w-[24rem] max-h-60"
+                          triggerClassName="flex-1 h-10"
+                          emptyMessage={
+                            <div className="flex gap-2 justify-center items-center py-2">
+                              <Label className="font-normal text-[13px]">No health staff found.</Label>
+                            </div>
+                          }
+                        />
                       </FormControl>
                     </div>
                     <p className="text-xs text-muted-foreground ml-6">B/CHW</p>
@@ -318,7 +235,19 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                     <div className="flex items-center space-x-2">
                       <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="Enter informant name" className="flex-1" {...field} />
+                        <Combobox
+                          options={formattedFamilyMembers}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          placeholder="Select family member"
+                          contentClassName="w-[24rem] max-h-60"
+                          triggerClassName="flex-1 h-10"
+                          emptyMessage={
+                            <div className="flex gap-2 justify-center items-center">
+                              <Label className="font-normal text-[13px]">No family member found.</Label>
+                            </div>
+                          }
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -337,7 +266,19 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                     <div className="flex items-center space-x-2">
                       <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="Enter name" className="flex-1" {...field} />
+                        <Combobox
+                          options={formattedHealthStaff}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          placeholder="Select health staff"
+                          contentClassName="w-[24rem] max-h-60"
+                          triggerClassName="flex-1 h-10"
+                          emptyMessage={
+                            <div className="flex gap-2 justify-center items-center py-2">
+                              <Label className="font-normal text-[13px]">No health staff found.</Label>
+                            </div>
+                          }
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -388,46 +329,14 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                     <FormLabel className="font-medium">
                       Signature: <span className="text-red-500">*</span>
                     </FormLabel>
-                    <div className="border rounded-md p-2 bg-white">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                          <Pencil className="h-4 w-4 mr-1 text-primary" />
-                          <span className="text-sm text-muted-foreground">Sign below</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearSignature}
-                          className="h-8 px-2 text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Clear
-                        </Button>
-                      </div>
-
-                      <FormControl>
-                        <div className="border rounded-md border-dashed border-gray-300 bg-gray-50">
-                          <canvas
-                            ref={canvasRef}
-                            width={300}
-                            height={150}
-                            className="w-full touch-none cursor-crosshair"
-                            style={{
-                              touchAction: "none",
-                              background: "white",
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-
-                      {field.value && (
-                        <p className="text-xs text-green-600 mt-1 flex items-center">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Signature captured
-                        </p>
-                      )}
-                    </div>
+                    <FormControl>
+                      <SignatureCanvas
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        width={300}
+                        height={150}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

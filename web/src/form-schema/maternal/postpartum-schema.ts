@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
 export const PostPartumSchema = z.object({
+    pregnancy_id: z.string().optional(),
     mothersPersonalInfo: z.object({
         familyNo: z.string().optional(),
         motherLName: z.string().min(1, 'Last name is required'),
@@ -27,11 +29,11 @@ export const PostPartumSchema = z.object({
         attendedBy: z.string().optional(),
         outcome: z.string(),
         ttStatus: z.string(),
-        ironSupplement: z.string().date().optional(),
+        // ironSupplement: z.string().date().optional(),
         lochialDischarges: z.string(),
-        vitASupplement: z.string().date().optional(),
-        noOfPadPerDay: z.string(),
-        mebendazole: z.string().date().optional(),
+        // vitASupplement: z.string().date().optional(),
+        noOfPadPerDay: positiveNumberSchema.default(0),
+        // mebendazole: z.string().date().optional(),
         dateBfInitiated: z.string().date().optional(),
         timeBfInitiated: z.string().optional(),
         nextVisitDate: z.string().date().optional(),

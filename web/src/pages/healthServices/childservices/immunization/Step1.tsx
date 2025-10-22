@@ -31,7 +31,7 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
       <div className="space-y-6 p-6">
         <div className="flex justify-end gap-4 mb-4">
           <Link
-            to={`/child-health-records`}
+            to={`/services/childhealthrecords/records`}
             state={{
               ChildHealthRecord: ChildHealthRecord
             }}
@@ -43,7 +43,7 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
           </Link>
 
           <Link
-            to={`/child-health-record/form`}
+            to={`/services/childhealthrecords/form`}
             state={{
               params: {
                 ChildHealthRecord: ChildHealthRecord,

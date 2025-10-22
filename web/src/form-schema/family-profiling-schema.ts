@@ -176,9 +176,9 @@ export const nonCommunicableDiseaseFormSchema = z.object({
 
 // Survey Identification Form Schema
 export const surveyFormSchema = z.object({
-  filledBy: z.string().min(1, "Name is required"),
+  filledBy: z.string().min(1, "Health Staff is required"),
   informant: z.string().min(1, "Informant/Conforme name is required"),
-  checkedBy: z.string().min(1, "Checker name is required"),
+  checkedBy: z.string().min(1, "Health Staff is required"),
   date: z.date({
     required_error: "Date is required",
   }),

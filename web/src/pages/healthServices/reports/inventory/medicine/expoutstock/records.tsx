@@ -3,8 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../../../firstaid-report/export-report";
-import { ExportDropdown } from "../../../firstaid-report/export-dropdown";
+import { exportToCSV, exportToExcel, exportToPDF } from "../../../export/export-report";
+import { ExportDropdown } from "../../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import TableLayout from "@/components/ui/table/table-layout";
@@ -44,7 +44,7 @@ export default function MedicineProblemDetails() {
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return allProblemItems;
     const lower = searchTerm.toLowerCase();
-    return allProblemItems.filter((item) => item.med_name.toLowerCase().includes(lower) || item.status.toLowerCase().includes(lower));
+    return allProblemItems.filter((item:any) => item.med_name.toLowerCase().includes(lower) || item.status.toLowerCase().includes(lower));
   }, [allProblemItems, searchTerm]);
 
   // Pagination calculations
@@ -59,7 +59,7 @@ export default function MedicineProblemDetails() {
 
   // Prepare data for export
   const prepareExportData = () =>
-    filteredRecords.map((item) => ({
+    filteredRecords.map((item:any) => ({
       "Medicine Name": item.med_name,
       "Expiry Date": item.expiry_date,
       Received: item.received,
@@ -169,7 +169,7 @@ export default function MedicineProblemDetails() {
         ) : filteredRecords.length > 0 ? (
           <TableLayout
             header={tableHeader}
-            rows={paginatedRecords.map((item) => [item.med_name, item.expiry_date, item.received.toString(), item.closing_stock.toString(), item.dispensed.toString(), item.status])}
+            rows={paginatedRecords.map((item:any) => [item.med_name, item.expiry_date, item.received.toString(), item.closing_stock.toString(), item.dispensed.toString(), item.status])}
             tableClassName="w-full border rounded-lg"
             bodyCellClassName="border border-gray-600 text-center text-xs p-2"
             headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
@@ -197,7 +197,7 @@ export default function MedicineProblemDetails() {
             </tr>
           </thead>
           <tbody>
-            {filteredRecords.map((item, index) => (
+            {filteredRecords.map((item:any, index:any) => (
               <tr key={index}>
                 <td className="border border-gray-400 p-2">{item.med_name}</td>
                 <td className="border border-gray-400 p-2">{item.expiry_date}</td>

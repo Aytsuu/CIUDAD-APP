@@ -122,6 +122,11 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                     add.delete()
             
         return instance
+    
+class PersonalModificationBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonalModification
+        fields = '__all__'
 
 class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
     class Meta:

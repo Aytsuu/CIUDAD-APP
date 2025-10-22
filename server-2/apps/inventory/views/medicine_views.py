@@ -44,14 +44,19 @@ class MedicineInventoryView(generics.ListAPIView):
 
          
 class MedicineListAvailableTable(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         # Get current date for expiry comparison
         today = timezone.now().date()
         
-        # Get query parameters for filtering (simplified)
+        # Get query parameters for filtering
+        search_query = request.query_params.get('search', '').strip()
         med_type_filter = request.query_params.get('med_type', None)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
         
-        # Base queryset - get all medicines with available quantity calculation
+        # Base queryset with available quantity calculation
         medicines = Medicinelist.objects.annotate(
             total_qty_available=Sum(
                 'medicineinventory__minv_qty_avail',
@@ -60,33 +65,43 @@ class MedicineListAvailableTable(APIView):
             )
         ).prefetch_related(
             'medicineinventory_set__inv_id'
-        ).all()  # Get all medicines
+        ).all()
         
-        # Apply filters if provided
-        if med_type_filter:
+        # Apply search filter if provided
+        if search_query:
+            medicines = medicines.filter(
+                Q(med_name__icontains=search_query) |
+                Q(med_type__icontains=search_query) |
+                Q(medicineinventory__minv_form__icontains=search_query) |
+                Q(medicineinventory__minv_dsg_unit__icontains=search_query)
+            ).distinct()
+        
+        # Apply category filter if provided
+        if med_type_filter and med_type_filter != 'All':
             medicines = medicines.filter(med_type__icontains=med_type_filter)
         
-        # Prepare response data
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginator.page_size = page_size
+        paginated_medicines = paginator.paginate_queryset(medicines, request)
+        
+        # Prepare response data for paginated medicines only
         medicine_data = []
-        for medicine in medicines:
-            # Check if medicine has any available stock
+        for medicine in paginated_medicines:
             has_stock = medicine.total_qty_available and medicine.total_qty_available > 0
             
-          
-            
             if has_stock:
-                # Get all inventory items for this medicine that are not expired
                 inventory_items = []
                 for med_inv in medicine.medicineinventory_set.all():
                     if (med_inv.inv_id.expiry_date is None or 
                         med_inv.inv_id.expiry_date >= today) and \
                        med_inv.minv_qty_avail > 0:
                         
+                        # SIMPLE DEDUCTION: quantity_available minus temporary_deduction
+                        available_after_deduction = med_inv.minv_qty_avail - med_inv.temporary_deduction
+                        
                         inventory_items.append({
-                            'minv_id': med_inv.minv_id,
-                            'dosage': f"{med_inv.minv_dsg} {med_inv.minv_dsg_unit}",
-                            'form': med_inv.minv_form,
-                            'quantity_available': med_inv.minv_qty_avail,
+                            'quantity_available': available_after_deduction,  # Deducted value
                             'quantity_unit': med_inv.minv_qty_unit,
                             'expiry_date': med_inv.inv_id.expiry_date,
                             'inventory_type': med_inv.inv_id.inv_type
@@ -110,8 +125,17 @@ class MedicineListAvailableTable(APIView):
                     'status': 'No available stocks'
                 })
         
-        return Response({'medicines': medicine_data}, status=status.HTTP_200_OK)
-
+        if paginated_medicines is not None:
+            response = paginator.get_paginated_response(medicine_data)  # ← Pass medicine_data directly
+            print("🔍 Backend Response:", response.data)
+            return response
+        
+        return Response({
+            'medicines': medicine_data,
+            'count': len(medicine_data)
+        }, status=status.HTTP_200_OK)
+    
+    
 class MedicineListTable(generics.ListAPIView):
     serializer_class = MedicineListSerializers
     pagination_class = StandardResultsPagination
@@ -124,6 +148,9 @@ class MedicineListTable(generics.ListAPIView):
             queryset = queryset.filter(med_name__icontains=search_query)
         
         return queryset
+
+
+
 
 # For creating new medicines
 class MedicineCreateView(generics.ListCreateAPIView):
@@ -397,6 +424,8 @@ class MedicineStockCreate(APIView):
     def post(self, request, *args, **kwargs):
         try:
             data = request.data
+            print("STAFFACKERSS", data)
+
             
             # Step 1: Create Inventory
             inventory_data = self._prepare_inventory_data(data)
@@ -406,9 +435,9 @@ class MedicineStockCreate(APIView):
                 return Response({
                     'error': 'Inventory validation failed',
                     'details': inventory_serializer.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
+                }, status=status.HTTP_400_BAD_REQUEST) 
             
-            inventory = inventory_serializer.save()
+            inventory = inventory_serializer.save() 
             inv_id = inventory.inv_id
             
             # Step 2: Create MedicineInventory
@@ -476,6 +505,7 @@ class MedicineStockCreate(APIView):
             medicine_data = data.copy()
             medicine_data['inv_id'] = inv_id
         
+        
         # Validate medicineID
         medicine_id = medicine_data.get('medicineID')
         if not medicine_id:
@@ -504,9 +534,7 @@ class MedicineStockCreate(APIView):
         
         # Handle staff field
         staff = medicine_data.get('staff')
-        if staff:
-            medicine_data['staff'] = int(staff)
-        else:
+        if not staff:  # If staff is empty or None
             medicine_data['staff'] = None
         
         return medicine_data
@@ -551,6 +579,8 @@ class MedicineTransactionView(generics.ListCreateAPIView):
     
     
 # ============================TRANSACTION TABLE=================================
+
+
 class TableMedicineTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -568,6 +598,7 @@ class TableMedicineTransactionView(APIView):
                 'staff__rp__per'  # Add this to get the personal info
             ).all()
             
+            
             # Apply search filter if provided
             if search_query:
                 transactions = transactions.filter(
@@ -580,6 +611,7 @@ class TableMedicineTransactionView(APIView):
             
             # Format the data for response
             transaction_data = []
+
             
             for transaction in transactions:
                 # Get related inventory and medicine data
@@ -592,13 +624,14 @@ class TableMedicineTransactionView(APIView):
                 staff_name = "Managed by System"
                 if staff and staff.rp and staff.rp.per:
                     personal = staff.rp.per
+                    print("Persona",personal)
                     staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
                         staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                  
                 item_data = {
                     'mdt_id': transaction.mdt_id,
-                    'inv_id': inventory.inv_id if inventory else "N/A",
+                    'inv_id': inventory.inv_id if inventory else "N/A", 
                     'med_detail': {
                         'med_name': medicine.med_name if medicine else "Unknown Medicine",
                         'minv_dsg': medicine_inventory.minv_dsg if medicine_inventory else 0,
@@ -626,17 +659,17 @@ class TableMedicineTransactionView(APIView):
                 return Response(response.data)
             
             return Response({
-                'success': True,
+                'success': True, 
                 'results': transaction_data,
                 'count': len(transaction_data)
             }, status=status.HTTP_200_OK)
             
-        except Exception as e:
+        except Exception as e: 
             import traceback
             print(f"Error traceback: {traceback.format_exc()}")
             return Response({
                 'success': False,
-                'error': f'Error fetching medicine transactions: {str(e)}'
+                'error': f'Error fetching medicine transactions: {str(e)}' 
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

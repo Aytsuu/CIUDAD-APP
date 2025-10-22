@@ -1,4 +1,133 @@
 from .models import *
+from apps.healthProfiling.models import ResidentProfile
+from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
+
+def create_patient_and_record_for_health_profiling(rp_id, record_type=None, illness_name=None):
+    """
+    Utility function to automatically create Patient, PatientRecord, and MedicalHistory
+    for health profiling records (NCD, TB surveillance, etc.)
+    
+    Args:
+        rp_id (str): Resident Profile ID
+        record_type (str): Type of health record ('NCD', 'TB', etc.)
+        illness_name (str): Name of the illness/condition
+        
+    Returns:
+        tuple: (patient, patient_record, medical_history) or (None, None, None) if creation fails
+    """
+    try:
+        # Check if resident profile exists
+        try:
+            resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
+        except ResidentProfile.DoesNotExist:
+            logger.error(f"Resident profile with rp_id {rp_id} does not exist")
+            return None, None, None
+        
+        # Check if active patient already exists for this resident
+        existing_patient = Patient.objects.filter(
+            rp_id=resident_profile, 
+            pat_status='Active'
+        ).first()
+        
+        if existing_patient:
+            logger.info(f"Patient already exists for resident {rp_id}: {existing_patient.pat_id}")
+            patient = existing_patient
+        else:
+            # Create new patient
+            patient = Patient.objects.create(
+                pat_type='Resident',
+                pat_status='Active',
+                rp_id=resident_profile
+            )
+            logger.info(f"Created new patient for resident {rp_id}: {patient.pat_id}")
+        
+        # Check if health profiling patient record already exists
+        existing_record = PatientRecord.objects.filter(
+            pat_id=patient,
+            patrec_type='Health Profiling'
+        ).first()
+        
+        if existing_record:
+            logger.info(f"Health Profiling record already exists for patient {patient.pat_id}: {existing_record.patrec_id}")
+            patient_record = existing_record
+        else:
+            # Create new patient record for health profiling
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type='Health Profiling'
+            )
+            logger.info(f"Created new Health Profiling record for patient {patient.pat_id}: {patient_record.patrec_id}")
+        
+        # Create MedicalHistory record if illness information is provided
+        medical_history = None
+        if record_type and illness_name:
+            medical_history = create_medical_history_for_health_record(
+                patient_record, record_type, illness_name
+            )
+        
+        return patient, patient_record, medical_history
+        
+    except Exception as e:
+        logger.error(f"Error creating patient and record for resident {rp_id}: {str(e)}")
+        return None, None, None
+
+def create_medical_history_for_health_record(patient_record, record_type, illness_name):
+    """
+    Create MedicalHistory record for health profiling using EXISTING illness records only.
+    Does NOT create new illness records - only fetches from existing illness table data.
+    Uses case-insensitive search for illness names.
+    
+    Args:
+        patient_record (PatientRecord): The patient record
+        record_type (str): Type of health record ('NCD', 'TB')
+        illness_name (str): Name of the illness/condition (must exist in Illness table, case-insensitive)
+        
+    Returns:
+        MedicalHistory: The created or existing medical history record, or None if illness not found
+    """
+    try:
+        # Fetch existing illness record - DO NOT CREATE NEW
+        # Use case-insensitive search (iexact) to match regardless of capitalization
+        try:
+            illness = Illness.objects.get(illname__iexact=illness_name)
+            logger.info(f"Found existing illness record: {illness.illname} (ID: {illness.ill_id})")
+        except Illness.DoesNotExist:
+            logger.error(f"Illness '{illness_name}' does not exist in the Illness table (searched case-insensitively). Medical history not created.")
+            return None
+        except Illness.MultipleObjectsReturned:
+            # If multiple matches found, get the first one and log a warning
+            illness = Illness.objects.filter(illname__iexact=illness_name).first()
+            logger.warning(f"Multiple illness records found for '{illness_name}'. Using first match: {illness.illname} (ID: {illness.ill_id})")
+        
+        # Check if medical history already exists for this patient record and illness
+        existing_history = MedicalHistory.objects.filter(
+            patrec=patient_record,
+            ill=illness
+        ).first()
+        
+        if existing_history:
+            logger.info(f"Medical history already exists for patient record {patient_record.patrec_id} and illness {illness.illname}")
+            return existing_history
+        
+        # Create new medical history record with ill_date formatted as YYYY-MM-DD
+        current_date = timezone.now()
+        formatted_date = current_date.strftime('%Y-%m-%d')  # Format: YYYY-MM-DD
+        
+        medical_history = MedicalHistory.objects.create(
+            patrec=patient_record,
+            ill=illness,
+            ill_date=formatted_date  # Use ill_date instead of year, formatted as YYYY-MM-DD
+        )
+        
+        logger.info(f"Created medical history record {medical_history.medhist_id} for patient record {patient_record.patrec_id} with illness {illness.illname} (ID: {illness.ill_id}) on date {formatted_date}")
+        return medical_history
+        
+    except Exception as e:
+        logger.error(f"Error creating medical history: {str(e)}")
+        return None
 
  
 # utils/patient_utils.py
@@ -6,7 +135,7 @@ def get_completed_followup_visits(pat_id):
 
     try:
         # Get all patient records for this patient
-        patient_records = PatientRecord.objects.filter(pat_id=pat_id)
+        patient_records = PatientRecord.objects.filter(pat_id__pat_id=pat_id)
         
         # Get only completed follow-up visits associated with these patient records
         completed_visits = FollowUpVisit.objects.filter(
@@ -39,32 +168,42 @@ def get_pending_followup_visits(pat_id):
         print(f"Error fetching completed follow-up visits: {e}")
         return FollowUpVisit.objects.none()  # Return empty queryset on error
 
-
 def get_latest_height_weight(pat_id):
     try:
-        latest = BodyMeasurement.objects.filter(
-            patrec__pat_id=pat_id
-        ).order_by('-created_at').first()
-
-        # Check if a record was found AND if it has valid height/weight
-        if latest and latest.height is not None and latest.weight is not None:
-            # Optional: Check if values are positive numbers
-            try:
-                height_val = float(latest.height)
-                weight_val = float(latest.weight)
-                # If conversion is successful, return the data
-                return {
-                    'height': height_val,
-                    'weight': weight_val,
-                    'created_at': latest.created_at
-                }
-            except (TypeError, ValueError):
-                # Handle the case where height/weight are strings that can't be converted (e.g., "")
-                print(f"Error: Invalid height or weight value for record ID {latest.id}")
-                return None
-        else:
-            # Return None if no record found, or record has null height/weight
-            return None
+        # Get all records ordered by most recent first
+        all_records = BodyMeasurement.objects.filter(
+            pat_id=pat_id
+        ).order_by('-created_at')
+        
+        # Iterate through records to find the first one with valid height/weight
+        for record in all_records:
+            # Check if this record has valid height/weight
+            if record and record.height is not None and record.weight is not None:
+                # Try to convert to float to validate they're numbers
+                try:
+                    height_val = float(record.height)
+                    weight_val = float(record.weight)
+                    
+                    # Optional: Check if values are reasonable (positive numbers)
+                    if height_val > 0 and weight_val > 0:
+                        return {
+                            'height': height_val,
+                            'weight': weight_val,
+                            'created_at': record.created_at
+                        }
+                    else:
+                        print(f"Warning: Non-positive values for record ID {record.id}")
+                        continue  # Continue searching if values are not positive
+                        
+                except (TypeError, ValueError):
+                    # Handle the case where height/weight can't be converted to float
+                    print(f"Error: Invalid height or weight value for record ID {record.id}")
+                    continue  # Continue searching for valid record
+            
+        # If no valid record found after checking all
+        print(f"No valid height/weight records found for patient {pat_id}")
+        return None
+        
     except Exception as e:
         print("Error fetching height and weight:", e)
         return None
@@ -86,7 +225,6 @@ def get_latest_vital_signs(pat_id):
                 'oxygen_saturation': latest.vital_o2,
                 'pulse': latest.vital_pulse,
                 'created_at': latest.created_at,
-                'staff': latest.staff  # Include staff info if needed
             }
         else:
             return None

@@ -1,9 +1,9 @@
+// Updated useVaccinationMutation hook
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateVaccinationHistory } from "../restful-api/update";
-import { updateFollowUpVisit } from "../restful-api/update";
 import { toast } from "sonner";
 import { showSuccessToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
+import { api2 } from "@/api/api";
 
 interface VaccinationMutationParams {
   vaccination: any;
@@ -14,6 +14,7 @@ interface VaccinationMutationParams {
     followv_description: string;
   };
   patientId: string;
+  patrec_id: string;
 }
 
 export const useVaccinationMutation = () => {
@@ -21,52 +22,46 @@ export const useVaccinationMutation = () => {
   const navigate = useNavigate();
 
   const mutation = useMutation({
-    mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId }: VaccinationMutationParams) => {
+    mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId, patrec_id }: VaccinationMutationParams) => {
       console.log("Mutation called with:", {
         vaccinationId: vaccination?.vachist_id,
         previousVaccinationId: previousVaccination?.vachist_id,
         hasFollowUpData: !!followUpData,
-        patientId
+        patientId,
+        patrec_id
       });
 
-      // Check if previous vaccination has a follow-up visit
-      if (previousVaccination?.follow_up_visit) {
-        console.log("Updating previous follow-up visit with ID:", previousVaccination.follow_up_visit.followv_id);
-        await updateFollowUpVisit({
-          followv_id: String(previousVaccination.follow_up_visit.followv_id),
-          followv_status: "completed",
-          completed_at: new Date().toISOString().split("T")[0]
-        });
-        console.log("Previous follow-up visit updated successfully");
-      }
+      // Prepare the request data - DO NOT include followUpData at all if not needed
+      const requestData: any = {
+        vachist_id: vaccination.vachist_id,
+        patientId,
+        patrec_id
+      };
 
-      // Update current vaccination's follow-up if it exists
-      if (vaccination?.follow_up_visit && followUpData) {
-        const hasChanges = vaccination.follow_up_visit.followv_date !== followUpData.followv_date || vaccination.follow_up_visit.followv_status !== followUpData.followv_status || vaccination.follow_up_visit.followv_description !== followUpData.followv_description;
-
-        if (hasChanges) {
-          console.log("Updating current vaccination follow-up with data:", followUpData);
-
-          await updateFollowUpVisit({
-            followv_id: String(vaccination.follow_up_visit.followv_id),
-            followv_date: followUpData.followv_date,
-            followv_status: followUpData.followv_status,
-            followv_description: followUpData.followv_description
-          });
-          console.log("Current vaccination follow-up updated successfully");
-        } else {
-          console.log("No changes detected in follow-up data. Skipping update.");
+      // ONLY include followUpData if we have a valid date
+      if (followUpData?.followv_date && followUpData.followv_date.trim() !== "") {
+        try {
+          const formattedDate = new Date(followUpData.followv_date).toISOString().split("T")[0];
+          requestData.followUpData = {
+            followv_date: formattedDate,
+            followv_status: followUpData.followv_status || "pending",
+            followv_description: followUpData.followv_description || "No description provided"
+          };
+        } catch (error) {
+          console.error("Error formatting date:", error);
+          // If date formatting fails, don't include followUpData at all
         }
       }
 
-      // Update vaccination history status
-      console.log("Updating vaccination history status to completed");
-      await updateVaccinationHistory({
-        vachist_id: vaccination.vachist_id,
-        vachist_status: "completed"
-      });
+      console.log("Sending request data:", requestData);
 
-      return { success: true, patientId };
+      try {
+        const response = await api2.post("vaccination/vaccination-completion/", requestData);
+        return response.data;
+      } catch (error) {
+        console.error("Error during vaccination mutation:", error);
+        throw new Error("Failed to complete vaccination request.");
+      }
     },
     onSuccess: (result) => {
       // Invalidate relevant queries
@@ -78,13 +73,14 @@ export const useVaccinationMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupVaccines", patientId] });
       queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
-      navigate(-1);
+      queryClient.invalidateQueries({ queryKey: ["scheduledVaccination"] });
 
+      navigate(-1);
       showSuccessToast("Vaccination status updated successfully.");
     },
     onError: (error: Error) => {
       console.error("Error updating vaccination:", error);
-      toast.error("Failed to update vaccination status.");
+      toast.error(error.message || "Failed to update vaccination status.");
     }
   });
 

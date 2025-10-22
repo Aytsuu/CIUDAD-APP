@@ -84,6 +84,9 @@ export const transformApiDataToFormData = (apiData: any): FormData => {
     numOfLivingChildren: apiData.numOfLivingChildren || 0,
     plan_more_children: apiData.plan_more_children || false,
     avg_monthly_income: apiData.avg_monthly_income || "",
+    fp_type: apiData.fp_type || null,
+    fp_physical_exam: apiData.fp_physical_exam || null,
+    fp_pelvic_exam: apiData.fp_pelvic_exam || null,
 
     typeOfClient: apiData.typeOfClient || "",
     subTypeOfClient: apiData.subTypeOfClient || "",

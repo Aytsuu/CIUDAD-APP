@@ -141,7 +141,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({ fullHistoryDat
                           <div className="border-t border-black pt-2 mt-2">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-xs font-medium text-black">Follow-up:</span>
-                              <span className={`text-xs px-2 py-1 rounded ${followUpStatus === "completed" ? "bg-green-100 text-green-800" : followUpStatus === "missed" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}`}>{followUpStatus || "pending"}</span>
+                                <span className="text-xs px-2 py-1 rounded text-black">{followUpStatus || "pending"}</span>
                             </div>
 
                             {followUpDescription && (

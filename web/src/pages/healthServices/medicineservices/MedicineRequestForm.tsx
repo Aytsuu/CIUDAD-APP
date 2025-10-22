@@ -1,5 +1,5 @@
 // MedicineRequestForm.tsx - IMPROVED WITH IMAGE DISPLAY
-"use client";
+"  client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button/button";
@@ -14,13 +14,11 @@ import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
-import { FirstAidRequestSkeleton } from "../skeleton/firstmed-skeleton";
 import { MedicineRequestArraySchema, MedicineRequestArrayType } from "@/form-schema/medicineRequest";
-import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { MedicineRequestError } from "./medicine-error";
 import { SignatureFieldRef } from "../reports/firstaid-report/signature";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { MediaUploadType, MediaUpload } from "@/components/ui/media-upload";
 import { StatusIndicator } from "./StatusIndicator";
 import { MedicineSummaryModal } from "./MedicineSummaryModal";
@@ -32,13 +30,25 @@ export default function MedicineRequestForm() {
   const staffId = user?.staff?.staff_id || null;
   const mode = location.state?.params?.mode || "fromallrecordtable";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+
+  // UPDATED: Add state for medicine search and pagination
+  const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
+    page: 1,
+    pageSize: 10,
+    search: "",
+    is_temp: true // Changed to false for medicine request form
+  });
+
+  const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
+  const medicineStocksOptions = medicineData?.medicines || [];
+  const medicinePagination = medicineData?.pagination;
+
   const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  // const [currentPage, setCurrentPage] = useState(1);
+  // const itemsPerPage = 5;
   const { mutateAsync: submitMedicineRequest } = useMedicineRequestMutation();
   const signatureRef = useRef<SignatureFieldRef>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -55,6 +65,22 @@ export default function MedicineRequestForm() {
       files: []
     }
   });
+
+  // Add handlers for medicine search and pagination
+  const handleMedicineSearch = (searchTerm: string) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      search: searchTerm,
+      page: 1 // Reset to first page when searching
+    }));
+  };
+
+  const handleMedicinePageChange = (page: number) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      page
+    }));
+  };
 
   // Check if any selected medicine is a prescription type
   useEffect(() => {
@@ -97,11 +123,13 @@ export default function MedicineRequestForm() {
     form.setValue("files", files);
   }, [mediaFiles, form]);
 
+  
+
   const handleSignatureChange = useCallback((signature: string | null) => {
     setSignature(signature);
   }, []);
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+  const handlePatientSelect = (patient: any | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
     if (patient) {
@@ -113,10 +141,6 @@ export default function MedicineRequestForm() {
 
   const handleSelectedMedicinesChange = useCallback((updatedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]) => {
     setSelectedMedicines(updatedMedicines);
-  }, []);
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
   }, []);
 
   // Updated onSubmit function
@@ -151,7 +175,6 @@ export default function MedicineRequestForm() {
 
       try {
         await submitMedicineRequest({ data: requestData, staff_id: staffId });
-        showSuccessToast("Medicine request submitted successfully!");
         setShowSummaryModal(false);
         // Navigate or reset form as needed
       } catch (error: any) {
@@ -209,49 +232,61 @@ export default function MedicineRequestForm() {
       <CardLayout
         content={
           <>
-            {isMedicinesLoading ? (
-              <FirstAidRequestSkeleton mode={mode} />
-            ) : (
-              <div className="w-full py-6">
-                <div className="px-4">
-                  {mode === "fromallrecordtable" && <PatientSearch value={selectedPatientId} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelect} className="mb-4" />}
+            <div className="w-full py-6">
+              <div className="">
+                {mode === "fromallrecordtable" && <PatientSearch value={selectedPatientId} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelect} className="mb-4" />}
 
-                  {selectedPatientData && (
-                    <div className="mb-4">
-                      <PatientInfoCard patient={selectedPatientData} />
-                    </div>
-                  )}
-
-                  {mode === "fromindivrecord" && !selectedPatientData && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-                      <div className="flex items-center gap-3 mb-4">
-                        <AlertCircle className="h-4 w-4 text-red-500" />
-                        <Label className="text-base font-semibold text-red-500">No patient selected</Label>
-                      </div>
-                      <p className="text-sm text-gray-600">Please select a patient from the medicine records page first.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full overflow-x-auto">
-                  <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines} onSelectedMedicinesChange={handleSelectedMedicinesChange} itemsPerPage={itemsPerPage} currentPage={currentPage} onPageChange={handlePageChange} isLoading={isMedicinesLoading} />
-
-                  {/* Conditionally show MediaUpload only when prescription medicine is selected */}
-                  {hasPrescriptionMedicine && (
-                    <div className="w-full p-4">
-                      <MediaUpload title="Supporting Documents" description="Prescription medicine selected. Image upload is required." mediaFiles={mediaFiles} activeVideoId={activeVideoId} setActiveVideoId={setActiveVideoId} setMediaFiles={setMediaFiles} maxFiles={5} />
-                      {mediaFiles.length === 0 && <div className="mt-2 text-sm text-red-500">Image upload is required for prescription medicines.</div>}
-                    </div>
-                  )}
-
-                  <div className="px-3 pt-6">
-                    {!isMedicinesLoading && ((mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities) && (
-                      <MedicineRequestError mode={mode} selectedPatientData={selectedPatientData} selectedPatientId={selectedPatientId} selectedMedicinesLength={selectedMedicines.length} hasExceededStock={hasExceededStock} />
-                    )}
+                {selectedPatientData && (
+                  <div className="mb-4">
+                    <PatientInfoCard patient={selectedPatientData} />
                   </div>
+                )}
+
+                {mode === "fromindivrecord" && !selectedPatientData && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                      <Label className="text-base font-semibold text-red-500">No patient selected</Label>
+                    </div>
+                    <p className="text-sm text-gray-600">Please select a patient from the medicine records page first.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full overflow-x-auto ">
+                <MedicineDisplay
+                  medicines={medicineStocksOptions || []}
+                  initialSelectedMedicines={selectedMedicines}
+                  onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                  itemsPerPage={medicineSearchParams.pageSize}
+                  currentPage={medicineSearchParams.page}
+                  onPageChange={handleMedicinePageChange}
+                  onSearch={handleMedicineSearch}
+                  searchQuery={medicineSearchParams.search}
+                  totalPages={medicinePagination?.totalPages}
+                  totalItems={medicinePagination?.totalItems}
+                  isLoading={isMedicinesLoading}
+                />
+
+                {/* Conditionally show MediaUpload only when prescription medicine is selected */}
+                {hasPrescriptionMedicine && (
+                  <div className="w-full py-4">
+                    <MediaUpload title="Supporting Documents" 
+                    description="Prescription medicine selected. Image upload is required." 
+                    mediaFiles={mediaFiles} activeVideoId={activeVideoId} 
+                    setActiveVideoId={setActiveVideoId} 
+                    setMediaFiles={setMediaFiles} maxFiles={5} />
+                    {mediaFiles.length === 0 && <div className="mt-2 text-sm text-red-500">Image upload is required for prescription medicines.</div>}
+                  </div>
+                )}
+
+                <div className="pt-6">
+                  {!isMedicinesLoading && ((mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities) && (
+                    <MedicineRequestError mode={mode} selectedPatientData={selectedPatientData} selectedPatientId={selectedPatientId} selectedMedicinesLength={selectedMedicines.length} hasExceededStock={hasExceededStock} />
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
             {!isMedicinesLoading && selectedMedicines.length > 0 && (
               <div className=" gap-3 mt-5 mr-5">

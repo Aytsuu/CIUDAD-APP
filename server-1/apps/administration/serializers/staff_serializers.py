@@ -16,6 +16,7 @@ class StaffAccountSerializer(serializers.ModelSerializer):
   pos = serializers.CharField(source="pos.pos_title")
   assignments = serializers.SerializerMethodField()
 
+
   class Meta:
     model = Staff
     fields = ['staff_id', 'staff_type', 'pos', 'assignments']

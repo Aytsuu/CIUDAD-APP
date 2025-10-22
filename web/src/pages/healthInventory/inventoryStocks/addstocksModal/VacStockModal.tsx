@@ -1,4 +1,4 @@
-// src/features/Antigen/components/AddVaccineStock.tsx
+//// filepath: /c:/CIUDAD-APP/web/src/pages/healthInventory/inventoryStocks/addstocksModal/VacStockModal.tsx
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -20,13 +20,14 @@ import { useVacBatchNumber } from "../REQUEST/Antigen/restful-api/get";
 
 export default function AddVaccineStock() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id|| "";
+  const staff_id = user?.staff?.staff_id || "";
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
       vac_id: "",
       batchNumber: "",
       volume: undefined,
+      dose_ml: undefined,
       qty: undefined,
       expiry_date: "",
       solvent: "doses",
@@ -40,7 +41,7 @@ export default function AddVaccineStock() {
   const navigate = useNavigate();
   const solvent = form.watch("solvent");
   const vialBoxCount = form.watch("qty") || 0;
-  const dosesPcsCount = form.watch("volume") || 0;
+  const dosesPcsCount = form.watch("dose_ml") || 0;
   const totalDoses = solvent === "doses" ? vialBoxCount * dosesPcsCount : null;
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<VaccineStockType | null>(null);
@@ -51,7 +52,7 @@ export default function AddVaccineStock() {
     return batchNumbers.some((stock) => stock.batchNumber?.trim().toLowerCase() === newBatchNumber?.trim().toLowerCase());
   };
 
-  const onSubmit = async (data: VaccineStockType) => {
+  const onSubmitHandler = async (data: VaccineStockType) => {
     // Check if batch number is empty first
     if (!data.batchNumber.trim()) {
       form.setError("batchNumber", {
@@ -82,7 +83,7 @@ export default function AddVaccineStock() {
   return (
     <div className="w-full flex items-center justify-center ">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmitHandler)} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
           <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
           <hr className="mb-2" />
 
@@ -90,24 +91,18 @@ export default function AddVaccineStock() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Vaccine Name Combobox */}
               <div className="mt-2">
-                <Label className="block mb-2  text-black/70">Vaccine Name</Label>
+                <Label className="block mb-2 text-black/70">Vaccine Name</Label>
                 <div className="relative">
-                  <Combobox 
-                    options={vaccineOptions?.formatted || []} 
-                    value={
-                      // Find the formatted option that matches the stored vac_id
-                      vaccineOptions?.formatted?.find((option: any) => 
-                        option.id.startsWith(form.watch("vac_id") + ',')
-                      )?.id || ''
-                    }
+                  <Combobox
+                    options={vaccineOptions?.formatted || []}
+                    value={vaccineOptions?.formatted?.find((option: any) => option.id.startsWith(form.watch("vac_id") + ","))?.id || ""}
                     onChange={(value) => {
-                      // Extract only the vac_id from the concatenated value
-                      const vacId = (value ?? '').split(',')[0]; // Get the first part before the comma
+                      const vacId = (value ?? "").split(",")[0];
                       form.setValue("vac_id", vacId);
                     }}
-                    placeholder={isVaccinesLoading ? "Loading vaccines..." : "Select vaccine"} 
-                    emptyMessage="No available vaccines" 
-                    triggerClassName="w-full" 
+                    placeholder={isVaccinesLoading ? "Loading vaccines..." : "Select vaccine"}
+                    emptyMessage="No available vaccines"
+                    triggerClassName="w-full"
                   />
                 </div>
               </div>
@@ -118,20 +113,28 @@ export default function AddVaccineStock() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
               <FormSelect
-                control={form.control}
-                name="solvent"
-                label="Solvent Type"
-                options={[
-                  { id: "diluent", name: "Diluent" },
-                  { id: "doses", name: "Doses" }
-                ]}
+              control={form.control}
+              name="solvent"
+              label="Solvent Type"
+              options={[
+                { id: "diluent", name: "Diluent" },
+                { id: "doses", name: "Doses" }
+              ]}
               />
             </div>
+            <FormInput control={form.control} name="volume" label="Volume (ml)" type="number" />
+            <FormInput
+              control={form.control}
+              name="qty"
+              label={solvent === "diluent" ? "Number of Containers" : "Number of Vials"}
+              type="number"
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormInput control={form.control} name="qty" label={solvent === "doses" ? "Number of Vials" : "Number of Containers"} type="number" />
-              {solvent === "diluent" ? <FormInput control={form.control} name="volume" label="Dosage (ml)" type="number" /> : <FormInput control={form.control} name="volume" label="Doses per Vial" type="number" />}
-            </div>
+            {solvent === "doses" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormInput control={form.control} name="dose_ml" label="Dose" type="number" />
+              </div>
+            )}
 
             {solvent === "doses" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

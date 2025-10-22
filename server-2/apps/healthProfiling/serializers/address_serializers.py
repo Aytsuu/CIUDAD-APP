@@ -2,12 +2,7 @@ from rest_framework import serializers
 from ..models import *
 
 class AddressBaseSerializer(serializers.ModelSerializer):
-  sitio = serializers.PrimaryKeyRelatedField(
-    queryset=Sitio.objects.all(),
-    required=False,
-    allow_null=True,
-    pk_field=serializers.CharField()
-  )
+  sitio = serializers.CharField(source="sitio.sitio_name")
   add_id = serializers.IntegerField(read_only=False, required=False)
 
   class Meta:

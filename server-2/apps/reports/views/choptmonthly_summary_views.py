@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.db.models import (
     Case, When, F, CharField, Q, Prefetch, Count, Value
 )
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, Upper
 from django.utils import timezone
 
 # DRF imports
@@ -119,9 +119,6 @@ class OPTSummaryAllMonths(APIView):
 
 
 
-
-
-
 class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
     serializer_class = BodyMeasurementSerializer
     pagination_class = None
@@ -139,7 +136,7 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
     STATUS_CATEGORIES = {
         "WFA": ["N", "UW", "SUW", "OW"],
         "HFA": ["N", "ST", "SST", "T"],
-        "WFH": ["N", "W", "SW", "OW"]
+         "WFH": ["N", "W", "SW", "OW", "OB"]  # Added OB
     }
 
     def get_queryset(self):
@@ -155,22 +152,22 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
         except ValueError:
             return BodyMeasurement.objects.none()
 
-        # REMOVED the filter to include both residents and transients
+        # Updated annotation to handle all-caps gender values
         queryset = BodyMeasurement.objects.filter(
             created_at__gte=start_date,
             created_at__lte=end_date,
             is_opt=True
         ).annotate(
-            # Use Case/When to get gender from both resident and transient
+            # Use Upper to normalize gender values to uppercase
             sex=Case(
-                When(pat__pat_type='Resident', then=F('pat__rp_id__per__per_sex')),
-                When(pat__pat_type='Transient', then=F('pat__trans_id__tran_sex')),
-                default=Value('Unknown'),
+                When(pat__pat_type='Resident', then=Upper(F('pat__rp_id__per__per_sex'))),
+                When(pat__pat_type='Transient', then=Upper(F('pat__trans_id__tran_sex'))),
+                default=Value('UNKNOWN'),
                 output_field=CharField()
             )
         ).select_related(
            'pat',
-            'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         )
 
         sitio_search = self.request.query_params.get('sitio', '').strip()
@@ -227,7 +224,7 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
         for category, statuses in self.STATUS_CATEGORIES.items():
             report_data[category] = {
                 "age_groups": {},
-                "totals": {"Male": 0, "Female": 0}
+                "totals": {"Male": 0, "Female": 0}  # Keep as title case for reporting
             }
             
             for _, _, age_label in self.AGE_BUCKETS:
@@ -263,8 +260,12 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
                 continue
 
             sex = (obj.sex or "").strip()
-            if sex not in ["Male", "Female"]:
+            # Updated to check for uppercase values
+            if sex not in ["MALE", "FEMALE"]:
                 continue
+
+            # Convert to title case for consistent reporting
+            sex_display = sex.title()  # "MALE" -> "Male", "FEMALE" -> "Female"
 
             # Directly use the nutritional status object
             ns = obj
@@ -277,10 +278,11 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
                 }[category], None)
                 
                 if status_value in statuses:
-                    report_data[category]["age_groups"][age_bucket][status_value][sex] += 1
-                    report_data[category]["age_groups"][age_bucket]["Total"][sex] += 1
-                    report_data[category]["totals"][sex] += 1
-                    overall_totals[sex] += 1
+                    # Use sex_display for counting (title case)
+                    report_data[category]["age_groups"][age_bucket][status_value][sex_display] += 1
+                    report_data[category]["age_groups"][age_bucket]["Total"][sex_display] += 1
+                    report_data[category]["totals"][sex_display] += 1
+                    overall_totals[sex_display] += 1
 
         report_data["overall_totals"] = overall_totals
         return report_data

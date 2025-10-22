@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
-import { ExportDropdown } from "../firstaid-report/export-dropdown";
+import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
+import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
@@ -398,7 +398,7 @@ export default function SemiAnnualOPTDetails() {
                             {formatDate(item.date_of_birth)}
                           </td>
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
-                            {item.sex === "Male" ? "M" : item.sex === "Female" ? "F" : ""}
+                            {item.sex}
                           </td>
 
                           {/* 1st Weighing Age - from backend */}

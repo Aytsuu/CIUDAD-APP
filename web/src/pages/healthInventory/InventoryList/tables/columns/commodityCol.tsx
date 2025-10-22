@@ -16,17 +16,17 @@ export const CommodityColumns = (
   setModalMode: (mode: 'add' | 'edit') => void,
   setShowCommodityModal: (show: boolean) => void
 ): ColumnDef<CommodityRecords>[] => [
-  {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Commodity ID <ArrowUpDown size={15} />
-      </div>
-    ),
-  },
+  // {
+  //   accessorKey: "id",
+  //   header: "#",
+  //   cell: ({ row }) => (
+  //     <div className="flex justify-center">
+  //       <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+  //         {row.original.id}
+  //       </div>
+  //     </div>
+  //   ),
+  // },
   {
     accessorKey: "com_name",
     header: ({ column }) => (

@@ -1,10 +1,18 @@
 import { api2 } from "@/api/api"
 
+// interfaces
+export interface PatientFilters {
+  page?: number;
+	page_size?: number;
+	status?: string;
+	search?: string;
+}
+
 // fetch residents
 export const getResident = async () => {
 	 try {
-		  const res = await api2.get("/patientrecords/residents-available/")
-		  return res.data || [];
+		const res = await api2.get("/patientrecords/residents-available/")
+		return res.data || [];
 	 } catch (error) {
 		  console.error("Error fetching residents:", error);
         
@@ -15,19 +23,6 @@ export const getResident = async () => {
 		}
 	 }
 }
-
-
-// fetch patients
-export const getPatients = async () => {
-    try {
-        const res = await api2.get("patientrecords/patient/");
-        return res.data || []; 
-    } catch (error) {
-        console.error("Network Error:", error);
-        return []; 
-    }
-};
-
 
 // fetch patient details
 export const getPatientDetails = async (patientId: string) => {
@@ -47,40 +42,6 @@ export const getPatientDetails = async (patientId: string) => {
 	}
 }
 
-
-export interface AppointmentFilters {
-	page?: number;
-	page_size?: number;
-	status?: string;
-	search?: string;
-	time_frame?: string;
-}
-
-// fetch all follow-up visits
-export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => {
-  try {
-	const params = new URLSearchParams();
-
-	if(filters.page) params.append('page', filters.page.toString());
-	if(filters.page_size) params.append('page_size', filters.page_size.toString());
-	if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-	if(filters.search) params.append('search', filters.search);
-	if(filters.time_frame) params.append('time_frame', filters.time_frame);
-
-	const queryString = params.toString();
-	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
-		: "patientrecords/follow-up-visits-all/";
-
-    const res = await api2.get(url)
-    return res.data || {count: 0, next: null, previous: null, results: []}
-  } catch (error) {
-    console.error("Error fetching all follow-up visits:", error)
-    return {count: 0, next: null, previous: null, results: []}
-  }
-}
-
-
 // fetch all transient addresses
 export const getAllTransientAddresses = async () => {
 	try {
@@ -91,8 +52,6 @@ export const getAllTransientAddresses = async () => {
 		return []
 	}
 }
-
-
 
 
 
@@ -114,7 +73,7 @@ export const getAllTransientAddresses = async () => {
 
 export const getChildData = async (id: any): Promise<any> => {
 	try {
-		const res = await api2.get(`child-health/records/by-patient/${id}/`);
+		const res = await api2.get(`/child-health/records/by-patient/${id}/`);
 		if (res.status !== 200) {
 			throw new Error("Failed to fetch child data");
 		}
@@ -125,3 +84,16 @@ export const getChildData = async (id: any): Promise<any> => {
 		throw error;
 	}
 }
+
+
+
+export const getChildren = async (id:string) => {
+	try{
+		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
+		return res.data || [];
+	}catch(error){
+		console.error("Error fetching children:", error);
+		throw error;
+	}
+}
+	

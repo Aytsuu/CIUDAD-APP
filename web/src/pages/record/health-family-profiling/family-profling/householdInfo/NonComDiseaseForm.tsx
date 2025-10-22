@@ -1,7 +1,8 @@
 import React from "react";
-import { Form } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { z } from "zod";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useIllnessesList } from "../queries/profilingFetchQueries";
 
 export default function NonComDiseaseForm({
   residents,
@@ -25,17 +27,13 @@ export default function NonComDiseaseForm({
 }) {
   const [selectedMember, setSelectedMember] = React.useState<string>(""); // Changed to single selection
   
-  // Watch for "others" selections
-  const selectedComorbidities = form.watch(`${prefix}.new.ncdFormSchema.comorbidities`);
+  // Fetch illnesses list
+  const { data: illnessesList, isLoading: isLoadingIllnesses } = useIllnessesList();
+  
+  // Watch for "others" selection for lifestyle risk
   const selectedLifestyleRisk = form.watch(`${prefix}.new.ncdFormSchema.lifestyleRisk`);
   
-  // Clear "others" fields when selection changes
-  React.useEffect(() => {
-    if (selectedComorbidities !== "Others") {
-      form.setValue(`${prefix}.new.ncdFormSchema.comorbiditiesOthers`, "");
-    }
-  }, [selectedComorbidities, form, prefix]);
-
+  // Clear "others" field when lifestyle risk selection changes
   React.useEffect(() => {
     if (selectedLifestyleRisk !== "Others") {
       form.setValue(`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`, "");
@@ -136,6 +134,8 @@ export default function NonComDiseaseForm({
   const handleAddPatient = () => {
     const newPatient = form.getValues(`${prefix}.new`);
     
+    console.log('Attempting to add patient:', newPatient);
+    
     // Validate that required fields are filled
     if (!newPatient.id || !newPatient.lastName || !newPatient.firstName) {
       return; // Don't add incomplete records
@@ -143,19 +143,22 @@ export default function NonComDiseaseForm({
     
     // Validate NCD form fields when resident is selected
     const ncdData = newPatient.ncdFormSchema;
+    console.log('NCD Data validation check:', {
+      riskClassAgeGroup: ncdData?.riskClassAgeGroup,
+      comorbidities: ncdData?.comorbidities,
+      lifestyleRisk: ncdData?.lifestyleRisk,
+      inMaintenance: ncdData?.inMaintenance
+    });
+    
     if (!ncdData?.riskClassAgeGroup || !ncdData?.comorbidities || 
         !ncdData?.lifestyleRisk || !ncdData?.inMaintenance) {
       toast.error("Please fill all required NCD fields");
+      console.log('Validation failed - missing fields');
       return;
     }
 
-    // Validate "others" fields if "Others" is selected
-    if (ncdData.comorbidities === "Others" && !ncdData.comorbiditiesOthers?.trim()) {
-      toast.error("Please specify comorbidities");
-      return;
-    }
-
-    if (ncdData.lifestyleRisk === "Others" && !ncdData.lifestyleRiskOthers?.trim()) {
+    // Validate "others" field if "OTHERS" is selected for lifestyle risk (fixed to match uppercase value)
+    if (ncdData.lifestyleRisk === "OTHERS" && !ncdData.lifestyleRiskOthers?.trim()) {
       toast.error("Please specify lifestyle risk");
       return;
     }
@@ -166,7 +169,6 @@ export default function NonComDiseaseForm({
       ncdFormSchema: {
         riskClassAgeGroup: ncdData.riskClassAgeGroup,
         comorbidities: ncdData.comorbidities,
-        comorbiditiesOthers: ncdData.comorbiditiesOthers || "",
         lifestyleRisk: ncdData.lifestyleRisk,
         lifestyleRiskOthers: ncdData.lifestyleRiskOthers || "",
         inMaintenance: ncdData.inMaintenance
@@ -189,7 +191,6 @@ export default function NonComDiseaseForm({
       ncdFormSchema: {
         riskClassAgeGroup: "",
         comorbidities: "",
-        comorbiditiesOthers: "",
         lifestyleRisk: "",
         lifestyleRiskOthers: "",
         inMaintenance: ""
@@ -211,7 +212,7 @@ export default function NonComDiseaseForm({
           <div className="mb-6">
             <h3 className="font-medium text-base mb-3">Select Family Members</h3>
             {availableMembers.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {availableMembers.map((member: any) => {
                   const isSelected = selectedMember === member.displayId;
                   return (
@@ -238,7 +239,7 @@ export default function NonComDiseaseForm({
                             <p className="text-xs text-gray-500">ID: {member.displayId}</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-black">
                           {member.fc_role || 'Family Member'}
                         </div>
                       </div>
@@ -293,55 +294,59 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.riskClassAgeGroup`}
               label="Risk class by age/group"
               options={[
-                { id: "Newborn", name: "Newborn (0-28 days)" },
-                { id: "Infant", name: "Infant (20 days - 11 months)" },
-                { id: "Underfive", name: "Under five (1-4 years old)" },
-                { id: "Schoolaged", name: "School-aged (5-9 years old)" },
-                { id: "Adolecent", name: "Adolecent (10-19 years old)" },
-                { id: "Adult", name: "Adult (20-59 years old)" },
-                { id: "Seniorcitizen", name: "Senior Citizen (60+ years old)" },
+                { id: "NEWBORN", name: "Newborn (0-28 days)" },
+                { id: "INFANT", name: "Infant (20 days - 11 months)" },
+                { id: "UNDER FIVE", name: "Under five (1-4 years old)" },
+                { id: "SCHOOLAGED", name: "School-aged (5-9 years old)" },
+                { id: "ADOLESCENT", name: "Adolescent (10-19 years old)" },
+                { id: "ADULT", name: "Adult (20-59 years old)" },
+                { id: "SENIOR CITIZEN", name: "Senior Citizen (60+ years old)" },
               ]}
             />
-            <FormSelect
+            <FormField
               control={form.control}
               name={`${prefix}.new.ncdFormSchema.comorbidities`}
-              label="Comorbidities/Sakit Balation"
-              options={[
-                { id: "Hypertension", name: "HPN - Hypertension" },
-                { id: "Diabetes", name: "Diabetes" },
-                { id: "Asthma", name: "Bronchial Asthma" },
-                { id: "Dyslipidemia", name: "Dyslipedemia" },
-                { id: "CKD", name: "Chronic Kidney Disease" },
-                { id: "Cancer", name: "Cancer" },
-                { id: "MHI", name: "Mental Health Illness" },
-                { id: "Others", name: "Others" },
-              ]}
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Comorbidities/Sakit Balation</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={
+                          (illnessesList?.data || []).map((illness: any) => ({
+                            id: illness.illname,
+                            name: illness.illname
+                          }))
+                        }
+                        value={field.value || ""}
+                        onChange={(value) => {
+                          field.onChange(value || "");
+                        }}
+                        placeholder="Search or select illness..."
+                        emptyMessage={isLoadingIllnesses ? "Loading illnesses..." : "No illnesses found"}
+                        triggerClassName="w-full h-10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
-            
-            {/* Show "Others" input field when "Others" is selected for comorbidities */}
-            {selectedComorbidities === "Others" && (
-              <FormInput
-                control={form.control}
-                name={`${prefix}.new.ncdFormSchema.comorbiditiesOthers`}
-                label="Please specify comorbidities"
-                placeholder="Enter comorbidities"
-              />
-            )}
             
             <FormSelect
               control={form.control}
               name={`${prefix}.new.ncdFormSchema.lifestyleRisk`}
               label="Lifestyle Risk"
               options={[
-                { id: "Smoker", name: "Smoker" },
-                { id: "Alcoholic", name: "Alcoholic Beverage Drinking" },
-                { id: "None", name: "None" },
-                { id: "Others", name: "Others" },
+                { id: "SMOKER", name: "Smoker" },
+                { id: "ALCOHOLIC", name: "Alcoholic Beverage Drinking" },
+                { id: "NONE", name: "None" },
+                { id: "OTHERS", name: "Others" },
               ]}
             />
             
             {/* Show "Others" input field when "Others" is selected for lifestyle risk */}
-            {selectedLifestyleRisk === "Others" && (
+            {selectedLifestyleRisk === "OTHERS" && (
               <FormInput
                 control={form.control}
                 name={`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`}
@@ -354,8 +359,8 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.inMaintenance`}
               label="Naka Maintenance?"
               options={[
-                { id: "yes", name: "Yes" },
-                { id: "no", name: "No" },
+                { id: "YES", name: "Yes" },
+                { id: "NO", name: "No" },
               ]}
             />
            
