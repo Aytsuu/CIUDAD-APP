@@ -21,4 +21,3 @@ export const useMedicalHistoryChart = (month: string) => {
       queryFn: () => getVaccinationChart(month),
     });
   };
-

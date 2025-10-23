@@ -59,8 +59,8 @@ export default function FamilyPlanningForm({
 
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
-  
-  
+
+
   useEffect(() => {
     if (patientGender && !isPatientPreSelected) {
       form.setValue("gender", patientGender);
@@ -171,7 +171,7 @@ export default function FamilyPlanningForm({
       const patientData = response.data;
 
 
-      
+
       // Initialize default spouse info
       let spouseInfo = {
         s_lastName: "",
@@ -233,9 +233,9 @@ export default function FamilyPlanningForm({
         };
       }
 
-       const bodyMeasurementDate = bodyMeasurementsResponse.data?.body_measurement?.created_at || 
-                               personalResponse.data?.bodyMeasurementRecordedAt || 
-                               "";
+      const bodyMeasurementDate = bodyMeasurementsResponse.data?.body_measurement?.created_at ||
+        personalResponse.data?.bodyMeasurementRecordedAt ||
+        "";
 
 
       const newFormData = {
@@ -274,11 +274,11 @@ export default function FamilyPlanningForm({
       console.log("Final form data address:", newFormData.address); // Debug log
 
       console.log("Patient Details Response:", {
-    weight: newFormData.weight,
-    height: newFormData.height, 
-    bodyMeasurementRecordedAt: newFormData.bodyMeasurementRecordedAt,
-    fullResponse: newFormData
-});
+        weight: newFormData.weight,
+        height: newFormData.height,
+        bodyMeasurementRecordedAt: newFormData.bodyMeasurementRecordedAt,
+        fullResponse: newFormData
+      });
 
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);
@@ -292,7 +292,15 @@ export default function FamilyPlanningForm({
       toast.error("Failed to load patient details. Some information may be incomplete.");
     }
   };
-
+  useEffect(() => {
+    if (formData.obstetricalHistory?.numOfLivingChildren !== undefined) {
+      form.setValue("numOfLivingChildren", formData.obstetricalHistory.numOfLivingChildren);
+      updateFormData({
+        ...form.getValues(),
+        numOfLivingChildren: formData.obstetricalHistory.numOfLivingChildren,
+      });
+    }
+  }, [formData.obstetricalHistory?.numOfLivingChildren, form, updateFormData]);
   const dateOfBirth = form.watch("dateOfBirth")
   const spouseDOB = form.watch("spouse.s_dateOfBirth")
   const methodCurrentlyUsed = form.watch("methodCurrentlyUsed");
@@ -475,6 +483,65 @@ export default function FamilyPlanningForm({
       toast.error(errorMessage)
     }
   }
+
+  // Replace the entire Next button with this:
+  <Button
+    type="button"
+    onClick={async () => {
+      // First trigger validation for all fields
+      const isValid = await form.trigger(undefined, { shouldFocus: true })
+
+      if (isValid) {
+        const currentValues = form.getValues()
+
+        // Business logic checks
+        if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
+          toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
+          return
+        }
+
+        if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
+          toast.error("You cannot select the same method when changing methods. Please choose a different method.");
+          return;
+        }
+
+        if (isAgeInvalid) {
+          toast.error("Age is outside the allowed range for family planning");
+          return;
+        }
+
+        // If all validations pass, proceed
+        updateFormData(currentValues)
+        onNext2()
+      } else {
+        // Show specific error messages based on validation failures
+        const errors = form.formState.errors
+
+        // Check for specific field errors and show appropriate messages
+        if (errors.reasonForFP) {
+          toast.error(errors.reasonForFP.message || "Reason for Family Planning is required");
+        } else if (errors.subTypeOfClient) {
+          toast.error(errors.subTypeOfClient.message || "Sub Type of Client is required for Current Users");
+        } else if (errors.reason) {
+          toast.error(errors.reason.message || "Please specify the side effects");
+        } else if (errors.otherReasonForFP) {
+          toast.error(errors.otherReasonForFP.message || "Please specify the other reason");
+        } else if (errors.methodCurrentlyUsed) {
+          toast.error(errors.methodCurrentlyUsed.message || "Method is required");
+        } else if (errors.otherMethod) {
+          toast.error(errors.otherMethod.message || "Please specify the other method");
+        } else {
+          // General validation error
+          toast.error("Please fill in all required fields correctly.");
+        }
+      }
+    }}
+    disabled={isReadOnly || isAgeInvalid}
+  >
+    Next
+  </Button>
+
+
   const inputProps = {
     disabled: isReadOnly,
     readOnly: isReadOnly,
@@ -931,7 +998,6 @@ export default function FamilyPlanningForm({
                       {...inputProps}
                     />
                   )}
-
                 </div>
 
                 <div className="col-span-5">
@@ -948,7 +1014,7 @@ export default function FamilyPlanningForm({
                           </FormLabel>
                           <Combobox
                             options={commodities}
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={(value) => {
                               field.onChange(value)
                               if (value !== "Others") {
@@ -983,7 +1049,7 @@ export default function FamilyPlanningForm({
                           <FormLabel>Method Accepted (New Acceptor)</FormLabel>
                           <Combobox
                             options={commodities}
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={(value) => {
                               field.onChange(value)
                               if (value !== "others") {

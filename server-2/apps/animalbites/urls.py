@@ -21,4 +21,8 @@ urlpatterns = [
     path('count/<str:pat_id>/',AnimalBiteReferralCountView.as_view()),
     path('unique-patients/', UniqueAnimalBitePatientsView.as_view(), name='unique-animalbite-patients'),
     path('stats/', AnimalBiteStatsView.as_view(), name='animalbite-stats'),
+    
+    path('analytics/', get_animal_bite_analytics, name='animal-bite-analytics'),
+    path('analytics/<str:patient_id>/', get_animal_bite_patient_analytics, name='animal-bite-patient-analytics'),
+    
 ]

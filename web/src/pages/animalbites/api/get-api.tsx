@@ -1,5 +1,7 @@
 import { api2 } from "@/api/api"
 
+
+
 const handleApiError = (err: any, operation: string) => {
   if (err.response) {
     console.error(`❌ ${operation} API Error:`, err.response.data || err.message)
@@ -197,3 +199,40 @@ export const getPatientRecordsByReferralId = async (referralId: string) => {
     return []
   }
 }
+
+
+export const getAnimalBiteAnalytics = async (months: number = 12) => {
+  try {
+    console.log(`🔍 Fetching animal bite analytics for last ${months} months...`);
+    const res = await api2.get(`animalbites/analytics/?months=${months}`);
+    console.log("✅ Animal bite analytics fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, "Fetch Animal Bite Analytics");
+    return {
+      totalCases: 0,
+      biteCases: 0,
+      nonBiteCases: 0,
+      mostCommonAnimal: "N/A",
+      mostCommonSite: "N/A",
+      monthlyAverage: 0,
+      exposureTypes: [],
+      animalTypes: [],
+      monthlyTrends: [],
+      patientTypes: [],
+      exposureSites: []
+    };
+  }
+};
+
+export const getAnimalBitePatientAnalytics = async (patientId: string) => {
+  try {
+    console.log(`🔍 Fetching patient analytics for ${patientId}...`);
+    const res = await api2.get(`animalbites/analytics/${patientId}/`);
+    console.log("✅ Patient analytics fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, "Fetch Patient Analytics");
+    return null;
+  }
+};
