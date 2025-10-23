@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { getCertificates as getCertificatesAPI, Certificate as APICertificate } from "../restful-api/certificateGetAPI";
+import { getCertificates as getCertificatesAPI } from "../restful-api/certificateGetAPI";
 
 // Enhanced types for web backend compatibility
 export interface Certificate {

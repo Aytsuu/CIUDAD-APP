@@ -83,13 +83,14 @@ export function MonthInfoCard({ monthItem, navigateTo, className = "", disabled 
         {isCurrentMonth && <span className={` text-xs px-2 py-0.5 ${colors.currentBadge} rounded-full`}>(Current)</span>}
         {isFutureMonth && !disabled && <span className="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">Upcoming</span>}
       </h3>
-
-      <div className="text-center">
-        <div className={`inline-flex items-center px-3 py-1 ${colors.countBg} ${colors.countText} rounded-full text-xs font-medium`}>
-          <span className={`w-2 h-2 rounded-full mr-2 ${colors.countDot}`}></span>
-          {monthItem.total_items?.toLocaleString() || 0} {record_name || "records"}
+      {monthItem.total_items ? (
+        <div className="text-center">
+          <div className={`inline-flex items-center px-3 py-1 ${colors.countBg} ${colors.countText} rounded-full text-xs font-medium`}>
+        <span className={`w-2 h-2 rounded-full mr-2 ${colors.countDot}`}></span>
+        {monthItem.total_items.toLocaleString()} {record_name || "records"}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {!isDisabled && navigateTo && (
         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">

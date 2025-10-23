@@ -3,12 +3,10 @@ import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { router, Href } from "expo-router"; // Import Href
-import { Archive,Baby,Calendar,Dog,Heart,Pill,Stethoscope,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,NotebookPen,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
+import { Archive,Baby,Calendar,Dog,Heart,Pill,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import NotificationBadge from "./my-schedules/notifbadge";
-import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 
 const { width } = Dimensions.get("window");
 
@@ -56,22 +54,21 @@ const Homepage = () => {
   // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
 
   const modules: Module[] = [
-    { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
-    { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
-    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
-    { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
-    { name: "Medical Consultation", route: "(health)/medicine-request/my-requests" as Href, icon: Stethoscope },
-    { name: "Profiling", route: "admin/medicinerequest/medicinerequest" as Href, icon: UserRoundPlus },
-    { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
-    { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
-    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
-    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
-    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
-    { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
-    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
-
-    { name: "Medicine", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
-  ];
+  { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus }, 
+  { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
+  // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+  { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
+  { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
+  { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
+  
+  { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
+  { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
+  { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
+  { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
+  { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
+  { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
+  { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
+];
 
   const quickActions: QuickAction[] = [
     { title: "Request Medicine", route: "/medicine-request/med-request" as Href, icon: Pill, color: "#1E40AF", bgColor: "#1e40af" },
@@ -99,10 +96,6 @@ const Homepage = () => {
     },
   ];
 
-  const handleViewWeeklySchedule = () => {
-    router.push("/admin/scheduler/schedule-weekly" as Href);
-  };
-
   // Safe router push function
   const safeRouterPush = (route: Href) => {
     if (route) {
@@ -122,7 +115,7 @@ const Homepage = () => {
 
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
-          <Text className="text-white text-3xl font-PoppinsSemiBold">Welcome</Text>
+          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>
         <Image
@@ -206,7 +199,7 @@ const Homepage = () => {
               className="bg-blue-700 p-1 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
+              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My schedules</Text>
               {/* Notification Badge */}
               {/* <NotificationBadge count={pendingCount} showBadge={!isLoadingPending && pendingCount > 0} /> */}
             </TouchableOpacity>
@@ -217,7 +210,7 @@ const Homepage = () => {
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
-                    source={require("@/assets/images/Health/Home/Maternal.jpg")}
+                    source={require("@/assets/images/Health/Home/Maternal1.jpg")}
                     className="w-full h-full"
                     resizeMode="cover"
                   />
@@ -275,7 +268,7 @@ const Homepage = () => {
               })}
             </View>
           </View>
-        )} 
+         )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -239,4 +239,26 @@ export const createTBRecord = async (data: Record<string, any>) => {
   }
 };
 
+// ==================== DEPENDENTS UNDER FIVE ==================== (Status: New)
+export const createDependentUnderFive = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/dependent-under-five/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== FAMILY MEMBERS (Health) ====================
+export const getFamilyMembersHealth = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/family/${famId}/members/`);
+    // Some list endpoints may wrap in pagination; normalize to array
+    const data = res.data?.results || res.data || [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    throw err;
+  }
+};
+
 // ----------------------------------------------------------------------------------------------------------------------------

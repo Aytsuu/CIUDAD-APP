@@ -2,14 +2,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
 import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
 import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
 import { CommodityModal } from "../Modal/CommodityModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function CommodityList() {
   const [searchInput, setSearchInput] = useState("");
@@ -73,6 +74,31 @@ export default function CommodityList() {
   }, [commoditiesData]);
 
   const displayData = useMemo(() => formatCommodityData(), [formatCommodityData]);
+
+  // Export functionality
+  const prepareExportData = () => {
+    return displayData.map((commodity) => ({
+      "Commodity ID": commodity.id,
+      "Commodity Name": commodity.com_name,
+      "User Type": commodity.user_type,
+      "Gender Type": commodity.gender_type
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `commodity_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `commodity_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `commodity_list_${new Date().toISOString().slice(0, 10)}`, "Commodity List");
+  };
 
   const handleDelete = () => {
     if (comToDelete === null) return;
@@ -139,12 +165,7 @@ export default function CommodityList() {
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input 
-              placeholder="Search commodity name..." 
-              className="pl-10 bg-white w-full" 
-              value={searchInput} 
-              onChange={(e) => setSearchInput(e.target.value)} 
-            />
+            <Input placeholder="Search commodity name..." className="pl-10 bg-white w-full" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
           </div>
         </div>
         <Button onClick={handleAddNew}>
@@ -170,18 +191,9 @@ export default function CommodityList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" }
-            ]}
-          />
+          <div>
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+          </div>
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
@@ -208,33 +220,17 @@ export default function CommodityList() {
             <p className="text-xs sm:text-sm text-darkGray">
               Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, paginationInfo.totalCount)} of {paginationInfo.totalCount} rows
             </p>
-            {paginationInfo.totalPages > 1 && (
-              <PaginationLayout 
-                currentPage={currentPage} 
-                totalPages={paginationInfo.totalPages} 
-                onPageChange={handlePageChange} 
-              />
-            )}
+            {paginationInfo.totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={paginationInfo.totalPages} onPageChange={handlePageChange} />}
           </div>
         )}
       </div>
 
-      <ConfirmationDialog 
-        isOpen={isDeleteConfirmationOpen} 
-        onOpenChange={setIsDeleteConfirmationOpen} 
-        onConfirm={handleDelete} 
-        title="Delete Commodity" 
-        description="Are you sure you want to delete this commodity? This action cannot be undone." 
-      />
+      <ConfirmationDialog isOpen={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen} onConfirm={handleDelete} title="Delete Commodity" description="Are you sure you want to delete this commodity? This action cannot be undone." />
 
       {showCommodityModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <CommodityModal 
-              mode={modalMode} 
-              initialData={selectedCommodity ?? undefined} 
-              onClose={() => setShowCommodityModal(false)} 
-            />
+            <CommodityModal mode={modalMode} initialData={selectedCommodity ?? undefined} onClose={() => setShowCommodityModal(false)} />
           </div>
         </div>
       )}

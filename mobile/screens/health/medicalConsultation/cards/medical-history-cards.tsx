@@ -1,7 +1,7 @@
 // components/MedicalHistoryTab.tsx
 import React, { useMemo, useCallback, useState } from "react";
-import { View, TextInput, TouchableOpacity, FlatList, Modal, ScrollView } from "react-native";
-import { Search, HeartPulse, Calendar, X, AlertCircle, ChevronRight } from "lucide-react-native";
+import { View, TextInput, TouchableOpacity, FlatList, Modal } from "react-native";
+import { Search, HeartPulse, Calendar, X, ChevronRight } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ServiceTypeBadge } from "./service-type-badge";

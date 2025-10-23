@@ -368,7 +368,7 @@ export const FamilyPlanningView = () => {
                 <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
                 <InputLine
                   className="h-4 mt-1"
-                  value={recordData.obstetricalHistory?.numOfLivingChildren}
+                  value={recordData.obstetricalHistory?.numOfLivingChildren || recordData?.num_of_children}
                 />
               </div>
               <div>
@@ -1045,7 +1045,7 @@ export const FamilyPlanningView = () => {
       <div className="flex justify-end mt-4 no-print">
         <Button
           onClick={() =>
-            navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })
+            navigate("/services/familyplanning/view2", { state: { fprecordId: fprecordId } })
           }
         >
           Next (Side B)

@@ -6,30 +6,32 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
-import { usePostAnnouncement, usePostAnnouncementRecipient } from "./queries/announcementAddQueries";
+import {
+  usePostAnnouncement,
+  usePostAnnouncementRecipient,
+} from "./queries/announcementAddQueries";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { FileText, Calendar, Users, Send, MessageSquare } from "lucide-react";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import axios from "axios";
 import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { capitalize } from "@/helpers/capitalize";
-
-// Helpers
-function capitalizeWords(str: string) {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { useUpdateAnnouncement } from "./queries/announcementUpdateQueries";
+import { LoadButton } from "@/components/ui/button/load-button";
 
 function normalizeTitle(value: string) {
   return String(value || "")
@@ -54,8 +56,11 @@ function uniquePreserve<T>(items: T[], keyFn: (x: T) => string): T[] {
 const AnnouncementCreate = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state])
+  const data = React.useMemo(() => params?.data, [params])
 
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
 
@@ -89,153 +94,211 @@ const AnnouncementCreate = () => {
   const annType = form.watch("ann_type");
   const recipientType = form.watch("ar_category");
   const posCategory = form.watch("pos_category");
-  const posGroup = form.watch("pos_group");
 
   React.useEffect(() => {
-    if (recipientType !== "staff") {
-      form.setValue("ar_type", []);
-      form.setValue("pos_category", "");
-      form.setValue("pos_group", "");
+    if (recipientType !== "STAFF") {
+      form.reset((prev) => ({
+        ...prev,
+        ar_type: [],
+        pos_category: "",
+        pos_group: "",
+      }));
     }
-  }, [recipientType, form]);
+  }, [recipientType]);
+
+  React.useEffect(() => {
+    if (data) {
+      form.setValue("ann_type", data?.ann_type);
+      form.setValue("ann_title", data?.ann_title);
+      form.setValue("ann_details", data?.ann_details);
+      form.setValue("ar_category", data?.recipients?.ar_category);
+
+      if (data?.recipients?.ar_types?.length > 0) {
+        const types = data?.recipients?.ar_types;
+        const category = new Set(
+          positions
+            .filter((pos: any) => types.includes(pos.pos_title) == true)
+            .map((pos: any) => pos.pos_category)
+        );
+        console.log([...category][0]);
+        if ([...category].length > 0) {
+          form.setValue(
+            "pos_category",
+            [...category].length == 2 ? "ALL" : ([...category][0] as string)
+          );
+        }
+
+        form.setValue("ar_type", types);
+      }
+      form.setValue("ann_start_at", data?.ann_start_at?.slice(0, 16));
+      form.setValue("ann_end_at", data?.ann_end_at?.slice(0, 16));
+      form.setValue("ann_event_start", data?.ann_event_start?.slice(0, 16));  
+      form.setValue("ann_event_end", data?.ann_event_end?.slice(0, 16));
+      form.setValue("ann_to_sms", data?.ann_to_sms);
+      form.setValue("ann_to_email", data?.ann_to_email);
+    }
+  }, [data]);
+
+  console.log(form.getValues())
 
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
-  const { mutateAsync: postAnnouncementRecipient } = usePostAnnouncementRecipient();
-  const { data: positions = [] } = usePositions("Barangay Staff");
+  const { mutateAsync: postAnnouncementRecipient } =
+    usePostAnnouncementRecipient();
+  const { mutateAsync: updateAnnouncement } = useUpdateAnnouncement();
+  const { data: positions = [] } = usePositions();
 
   const categoryOptions = React.useMemo(() => {
-    const cats = positions.map((p: { pos_category: any }) => p.pos_category).filter(Boolean);
+    const cats = positions
+      .map((p: { pos_category: any }) => p.pos_category)
+      .filter(Boolean);
     const uniqueCats = Array.from(new Set(cats));
     return uniqueCats.map((cat) => ({
-      id: String(cat),
-      name: capitalizeWords(String(cat)),
+      id: cat as string,
+      name: cat as string,
     }));
   }, [positions]);
 
-  const groupOptions = React.useMemo(() => {
-    if (!posCategory) return [];
-    const groups = positions
-      .filter((p: { pos_category: string }) => p.pos_category === posCategory)
-      .map((p: { pos_group: any }) => p.pos_group)
-      .filter(Boolean);
-    const uniqueGroups = Array.from(new Set(groups));
-    return uniqueGroups.map((grp) => ({
-      id: String(grp),
-      name: capitalizeWords(String(grp)),
-    }));
-  }, [positions, posCategory]);
-
-  const positionsForGroup = React.useMemo(() => {
-    if (!posCategory || !posGroup) return [];
-    const filtered = positions.filter(
-      (p: { pos_category: string; pos_group: string }) =>
-        p.pos_category === posCategory && p.pos_group === posGroup
-    );
-    return uniquePreserve(filtered, (p: any) => normalizeTitle(p.pos_title));
-  }, [positions, posCategory, posGroup]);
-
-  const onSubmit = async (data: AnnouncementCreateFormValues) => {
-  try {
-    const cleanedData: Record<string, any> = {};
-    for (const key in data) {
-      const value = (data as any)[key];
-      cleanedData[key] = value !== "" && value !== undefined ? value : null;
+  const update = async () => {
+    if (!(await form.trigger(["ann_title", "ann_details"]))) {
+      showErrorToast("Please fill out all required fields");
+      return;
     }
 
-    let { ar_type, ar_category, pos_category, pos_group, ...announcementData } = cleanedData;
+    try {
+      setIsSubmitting(true);
+      const values = form.getValues();
+      const {
+        pos_group,
+        pos_category,
+        staff_group,
+        ar_category,
+        staff,
+        ...announcementData
+      } = values;
 
-    // Handle Event Type: Sync ann_end_at with ann_event_end if type is "event"
-    if (announcementData.ann_type === "event") {
-      if (announcementData.ann_event_end && !announcementData.ann_end_at) {
-        announcementData.ann_end_at = announcementData.ann_event_end;
-      }
-      if (!announcementData.ann_event_end && announcementData.ann_end_at) {
-        announcementData.ann_event_end = announcementData.ann_end_at;
-      }
-    }
-
-    // Handle Event & Public Types
-if (["event", "public"].includes(announcementData.ann_type)) {
-  if (announcementData.ann_event_end && !announcementData.ann_end_at) {
-    announcementData.ann_end_at = announcementData.ann_event_end;
-  }
-  if (!announcementData.ann_event_end && announcementData.ann_end_at) {
-    announcementData.ann_event_end = announcementData.ann_end_at;
-  }
-}
-
-// Public: strip recipients + notifications
-if (announcementData.ann_type === "public") {
-  announcementData.ar_category = null;
-  announcementData.ar_type = [];
-  announcementData.pos_category = null;
-  announcementData.pos_group = null;
-  announcementData.ann_to_sms = false;
-  announcementData.ann_to_email = false;
-}
-
-
-    // **Force Active if no scheduler provided**
-    if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
-      announcementData.ann_status = "Active";
-    }
-
-    if (Array.isArray(ar_type)) {
-      const origWithKey = (ar_type as string[]).map((t: string) => ({
-        orig: t,
-        key: normalizeTitle(t),
-      }));
-      const unique = uniquePreserve(origWithKey, (o) => o.key).map((o) => o.orig);
-      ar_type = unique;
-    }
-
-    if (mediaFiles.length > 0) {
-      const filesPayload = mediaFiles.map((file) => ({
+      const files = mediaFiles.map((file) => ({
         name: file.name,
         type: file.type,
-        file: file.url,
+        file: file.file,
       }));
-      announcementData.files = filesPayload;
-    }
 
-    const createdAnnouncement = await postAnnouncement(announcementData);
-
-    if (Array.isArray(ar_type) && ar_type.length > 0) {
-      const recipientsPayload = (ar_type as string[])
-        .filter(Boolean)
-        .map((type: string) => ({
-          ann: createdAnnouncement?.ann_id,
-          ar_type: capitalize(type.trim()),
-          ar_category: ar_category.trim(),
-        }));
-
-      await postAnnouncementRecipient({ recipients: recipientsPayload });
-    }
-
-    if (ar_category?.toLowerCase() === "resident") {
-      await postAnnouncementRecipient({
-        recipients: [
-          {
-            ann: createdAnnouncement?.ann_id,
-            ar_category: ar_category.trim(),
-          },
-        ],
+      await updateAnnouncement({
+        ann: data?.ann_id,
+        data: {
+          ...announcementData,
+          ...(files.length > 0 && { files: files }),
+        },
       });
+
+      showSuccessToast("Updated successfully");
+    } catch (err) {
+      showErrorToast("Failed to update. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const create = async () => {
+    if (!(await form.trigger(["ann_title", "ann_details"]))) {
+      showErrorToast("Please fill out all required fields");
+      return;
     }
 
-    form.reset({ ...defaultValues, staff: user?.staff?.staff_id || "" });
-    queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    navigate("/announcement");
+    try {
+      setIsSubmitting(true);
+      const data = form.getValues();
+      const cleanedData: Record<string, any> = {};
+      for (const key in data) {
+        const value = (data as any)[key];
+        cleanedData[key] = value !== "" && value !== undefined ? value : null;
+      }
 
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      console.error("Validation errors from backend:", error.response.data);
-    } else {
-      console.error("Unexpected error:", error);
+      let { ar_type, ar_category, pos_category, ...announcementData } =
+        cleanedData;
+
+      // Handle Event Type: Sync ann_end_at with ann_event_end if type is "event"
+      if (announcementData.ann_type === "EVENT") {
+        if (announcementData.ann_event_end && !announcementData.ann_end_at) {
+          announcementData.ann_end_at = announcementData.ann_event_end;
+        }
+        if (!announcementData.ann_event_end && announcementData.ann_end_at) {
+          announcementData.ann_event_end = announcementData.ann_end_at;
+        }
+      }
+
+      // Handle Event Types
+      if (["EVENT"].includes(announcementData.ann_type)) {
+        if (announcementData.ann_event_end && !announcementData.ann_end_at) {
+          announcementData.ann_end_at = announcementData.ann_event_end;
+        }
+        if (!announcementData.ann_event_end && announcementData.ann_end_at) {
+          announcementData.ann_event_end = announcementData.ann_end_at;
+        }
+      }
+
+      // **Force Active if no scheduler provided**
+      if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
+        announcementData.ann_status = "ACTIVE";
+      }
+
+      if (Array.isArray(ar_type)) {
+        const origWithKey = (ar_type as string[]).map((t: string) => ({
+          orig: t,
+          key: normalizeTitle(t),
+        }));
+        const unique = uniquePreserve(origWithKey, (o) => o.key).map(
+          (o) => o.orig
+        );
+        ar_type = unique;
+      }
+
+      if (mediaFiles.length > 0) {
+        const filesPayload = mediaFiles.map((file) => ({
+          name: file.name,
+          type: file.type,
+          file: file.file,
+        }));
+        announcementData.files = filesPayload;
+      }
+
+      const createdAnnouncement = await postAnnouncement({
+        ...announcementData,
+        staff: user?.staff?.staff_id,
+      });
+
+      if (Array.isArray(ar_type) && ar_type.length > 0) {
+        const recipientsPayload = (ar_type as string[])
+          .filter(Boolean)
+          .map((type: string) => ({
+            ann: createdAnnouncement?.ann_id,
+            ar_type: capitalize(type.trim()),
+            ar_category: ar_category.trim(),
+          }));
+
+        await postAnnouncementRecipient({ recipients: recipientsPayload });
+      }
+
+      if (ar_category?.toLowerCase() !== "staff") {
+        await postAnnouncementRecipient({
+          recipients: [
+            {
+              ann: createdAnnouncement?.ann_id,
+              ar_category: ar_category.trim(),
+            },
+          ],
+        });
+      }
+
+      form.reset(defaultValues);
+      setMediaFiles([]);
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      showSuccessToast("Announcement created");
+    } catch (error) {
+      showErrorToast("Failed to create a announcement. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  }
-};
-
+  };
 
   return (
     <LayoutWithBack
@@ -244,8 +307,7 @@ if (announcementData.ann_type === "public") {
     >
       <div className="max-w-4xl mx-auto">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
+          <form className="space-y-6">
             {/* Announcement Type */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -253,7 +315,9 @@ if (announcementData.ann_type === "public") {
                   <FileText className="h-5 w-5 text-gray-600" />
                   <CardTitle className="text-lg">Announcement Type</CardTitle>
                 </div>
-                <CardDescription>Select the type of your announcement</CardDescription>
+                <CardDescription>
+                  Select the type of your announcement
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <FormSelect
@@ -261,9 +325,8 @@ if (announcementData.ann_type === "public") {
                   name="ann_type"
                   label="Announcement Type"
                   options={[
-                    { id: "general", name: "General" },
-                    { id: "public", name: "Public" },
-                    { id: "event", name: "Event" },
+                    { id: "GENERAL", name: "GENERAL" },
+                    { id: "EVENT", name: "EVENT" },
                   ]}
                 />
               </CardContent>
@@ -276,9 +339,13 @@ if (announcementData.ann_type === "public") {
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-gray-600" />
-                      <CardTitle className="text-lg">Basic Information</CardTitle>
+                      <CardTitle className="text-lg">
+                        Basic Information
+                      </CardTitle>
                     </div>
-                    <CardDescription>Enter the main details of your announcement</CardDescription>
+                    <CardDescription>
+                      Enter the main details of your announcement
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormInput
@@ -287,111 +354,124 @@ if (announcementData.ann_type === "public") {
                       label="Announcement Title"
                       placeholder="Enter a clear and descriptive title"
                     />
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Announcement Details</label>
-                      <textarea
-                        {...form.register("ann_details")}
-                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                        placeholder="Provide detailed information about the announcement"
-                      />
-                      {form.formState.errors.ann_details && (
-                        <p className="text-sm text-red-500">{form.formState.errors.ann_details.message}</p>
-                      )}
+                    <FormTextArea
+                      control={form.control}
+                      name="ann_details"
+                      label="Announcement Details"
+                      placeholder="Provide details"
+                      rows={10}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Recipients */}
+                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-gray-600" />
+                      <CardTitle className="text-lg">Recipients</CardTitle>
                     </div>
+                    <CardDescription>
+                      Choose audience, positions, and age group
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormSelect
+                      control={form.control}
+                      name="ar_category"
+                      label="Target Audience"
+                      options={[
+                        { id: "RESIDENT", name: "RESIDENT ONLY" },
+                        { id: "STAFF", name: "STAFF ONLY" },
+                        { id: "PUBLIC", name: "PUBLIC" },
+                      ]}
+                    />
+                    {recipientType === "STAFF" && (
+                      <>
+                        <FormSelect
+                          control={form.control}
+                          name="pos_category"
+                          label="Category"
+                          options={[
+                            { id: "ALL", name: "ALL" },
+                            ...categoryOptions,
+                          ]}
+                        />
+                        {posCategory && (
+                          <FormComboCheckbox
+                            label="Positions"
+                            control={form.control}
+                            name="ar_type"
+                            options={positions
+                              .filter(
+                                (pos: any) =>
+                                  (pos.pos_category == posCategory ||
+                                    posCategory == "ALL") &&
+                                  pos.pos_title !== "ADMIN"
+                              )
+                              .map((pos: any) => ({
+                                id: pos.pos_title,
+                                name: pos.pos_title,
+                              }))}
+                          />
+                        )}
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
                 {/* Schedule */}
-<Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-  <CardHeader className="pb-4">
-    <div className="flex items-center gap-2">
-      <Calendar className="h-5 w-5 text-gray-600" />
-      <CardTitle className="text-lg">Schedule</CardTitle>
-    </div>
-    <CardDescription>
-      Set when your announcement will be active
-    </CardDescription>
-  </CardHeader>
+                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-gray-600" />
+                      <CardTitle className="text-lg">Schedule</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Set when your announcement will be active
+                    </CardDescription>
+                  </CardHeader>
 
-  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <FormDateTimeInput
-      control={form.control}
-      name="ann_start_at"
-      type="datetime-local"
-      label="Start Date & Time"
-    />
-
-    {["event", "public"].includes(annType) ? (
-      <>
-        <FormDateTimeInput
-          control={form.control}
-          name="ann_event_start"
-          type="datetime-local"
-          label="Event Start Date & Time"
-        />
-        <FormDateTimeInput
-          control={form.control}
-          name="ann_event_end"
-          type="datetime-local"
-          label="Event End Date & Time"
-        />
-      </>
-    ) : (
-      <FormDateTimeInput
-        control={form.control}
-        name="ann_end_at"
-        type="datetime-local"
-        label="End Date & Time"
-      />
-    )}
-  </CardContent>
-</Card>
-
-
-              {/* Recipients */}
-{["event", "general"].includes(annType) && (
-  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-    <CardHeader className="pb-4">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-gray-600" />
-        <CardTitle className="text-lg">Recipients</CardTitle>
-      </div>
-      <CardDescription>Choose audience, positions, and age group</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      <FormSelect
-        control={form.control}
-        name="ar_category"
-        label="Target Audience"
-        options={[
-          { id: "resident", name: "Resident" },
-          { id: "staff", name: "Staff" },
-        ]}
-      />
-      {recipientType === "staff" && (
-        <>
-          <FormSelect control={form.control} name="pos_category" label="Category" options={categoryOptions} />
-          {posCategory && (
-            <FormSelect control={form.control} name="pos_group" label="Group" options={groupOptions} />
-          )}
-          {posGroup && (
-            <FormComboCheckbox
-              label="Positions"
-              control={form.control}
-              name="ar_type"
-              options={positionsForGroup.map((pos: { pos_title: string }) => ({
-                id: pos.pos_title,
-                name: pos.pos_title,
-              }))}
-            />
-          )}
-        </>
-      )}
-    </CardContent>
-  </Card>
-)}
-
-
+                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {annType === "EVENT" ? (
+                      <>
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_start_at"
+                          type="datetime-local"
+                          label="Start Date & Time"
+                        />
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_event_start"
+                          type="datetime-local"
+                          label="Event Start"
+                        />
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_event_end"
+                          type="datetime-local"
+                          label="Event End"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_start_at"
+                          type="datetime-local"
+                          label="Start Date & Time"
+                        />
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_end_at"
+                          type="datetime-local"
+                          label="End Date & Time"
+                        />
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Media Upload */}
                 <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
@@ -400,7 +480,9 @@ if (announcementData.ann_type === "public") {
                       <FileText className="h-5 w-5 text-gray-600" />
                       <CardTitle className="text-lg">Media Upload</CardTitle>
                     </div>
-                    <CardDescription>Upload images or videos to include with your announcement</CardDescription>
+                    <CardDescription>
+                      Upload images or videos to include with your announcement
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <MediaUpload
@@ -410,40 +492,75 @@ if (announcementData.ann_type === "public") {
                       activeVideoId={activeVideoId}
                       setActiveVideoId={setActiveVideoId}
                       setMediaFiles={setMediaFiles}
+                      acceptableFiles="image"
                     />
                   </CardContent>
                 </Card>
 
-              {/* Notification Options */}
-{["event", "general"].includes(annType) && (
-  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-    <CardHeader className="pb-4">
-      <div className="flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-gray-600" />
-        <CardTitle className="text-lg">Notification Options</CardTitle>
-      </div>
-      <CardDescription>Choose how to notify recipients</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-2">
-          <input type="checkbox" id="ann_to_sms" {...form.register("ann_to_sms")} className="h-4 w-4" />
-          <label htmlFor="ann_to_sms" className="text-sm font-medium text-gray-700">Send SMS Notification</label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <input type="checkbox" id="ann_to_email" {...form.register("ann_to_email")} className="h-4 w-4" />
-          <label htmlFor="ann_to_email" className="text-sm font-medium text-gray-700">Send Email Notification</label>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                {/* Notification Options */}
+                {["EVENT", "GENERAL"].includes(annType) && (
+                  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-gray-600" />
+                        <CardTitle className="text-lg">
+                          Notification Options
+                        </CardTitle>
+                      </div>
+                      <CardDescription>
+                        Choose how to notify recipients
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center space-x-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="ann_to_sms"
+                            {...form.register("ann_to_sms")}
+                            className="h-4 w-4"
+                          />
+                          <label
+                            htmlFor="ann_to_sms"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Send SMS Notification
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="ann_to_email"
+                            {...form.register("ann_to_email")}
+                            className="h-4 w-4"
+                          />
+                          <label
+                            htmlFor="ann_to_email"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Send Email Notification
+                          </label>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Submit Button */}
-                <div className="flex justify-end pt-4">
-                  <Button type="submit">
-                    <Send className="h-4 w-4 mr-2" /> Create Announcement
+                <div className="flex justify-end pt-4 pb-8">
+                  {!isSubmitting ? (
+                    <Button type="button"
+                    onClick={() => {
+                      data ? update() : create()
+                    }}
+                  >
+                    <Send className="h-4 w-4 mr-2" /> {data ? "Update Announcement" : "Create Announcement"}
                   </Button>
+                  ) : (
+                    <LoadButton>
+                      {data ? "Saving..." : "Creating..."}
+                    </LoadButton>
+                  )}
                 </div>
               </>
             )}

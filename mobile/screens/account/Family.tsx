@@ -1,25 +1,204 @@
-import { useAuth } from "@/contexts/AuthContext"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import PageLayout from "@/screens/_PageLayout"
-import { router } from "expo-router"
-import { TouchableOpacity, View, Text, ScrollView } from "react-native"
-import { useGetResidentFamily } from "./queries/accountGetQueries"
-import { LoadingState } from "@/components/ui/loading-state"
-import { useGetFamilyMembers } from "../profiling/queries/profilingGetQueries"
-import { Home, User } from "lucide-react-native"
+import { useAuth } from "@/contexts/AuthContext";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import PageLayout from "@/screens/_PageLayout";
+import { router } from "expo-router";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { useGetResidentFamily } from "./queries/accountGetQueries";
+import { LoadingState } from "@/components/ui/loading-state";
+import { useGetFamilyMembers } from "../profiling/queries/profilingGetQueries";
+import { Home, Users } from "lucide-react-native";
+import { formatDate } from "@/helpers/dateHelpers";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import React from "react";
 
 export default () => {
   const { user } = useAuth();
-  const {data: familyData, isLoading: isLoadingFam} = useGetResidentFamily(user?.rp as string)
-  const {data: familyMembers, isLoading: isLoadingMembers} = useGetFamilyMembers(familyData?.fam_id)
-  
-  const members = familyMembers?.results || []
-  
-  console.log(familyData)
-  console.log(members)
-  
+  const {
+    data: familyData,
+    isLoading: isLoadingFam,
+    refetch: refetchFamily,
+  } = useGetResidentFamily(user?.rp as string);
+  const {
+    data: familyMembers,
+    isLoading: isLoadingMembers,
+    refetch: refetchMembers,
+  } = useGetFamilyMembers(familyData?.fam_id);
 
-  if(isLoadingFam || isLoadingMembers) return <LoadingState />
+  const members = familyMembers?.results || [];
+  const totalMembers = familyMembers?.count || 0;
+
+  const handleRefresh = () => {
+    refetchFamily();
+    refetchMembers();
+  };
+
+  const InfoRow = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string | number;
+  }) => (
+    <View className="py-3 border-b border-gray-100">
+      <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+      <Text className="text-gray-900 text-sm">{value}</Text>
+    </View>
+  );
+
+  const MemberCard = ({ member }: { member: any }) => (
+    <View className="py-3 border-b border-gray-100">
+      <View className="flex-row justify-between items-start mb-2">
+        <View className="flex-1">
+          <Text className="text-gray-900 font-medium text-sm">
+            {member.name}
+          </Text>
+          <Text className="text-blue-600 text-xs mt-0.5">{member.fc_role}</Text>
+        </View>
+        <Text className="text-gray-400 text-xs">{member.rp_id}</Text>
+      </View>
+      <View className="flex-row gap-4">
+        <Text className="text-gray-600 text-xs">{member.sex}</Text>
+        <Text className="text-gray-600 text-xs">{member.status}</Text>
+        {member.dob && (
+          <Text className="text-gray-600 text-xs">
+            {formatDate(member.dob, "short")}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+
+  const Details = React.memo(({ item }: { item: Record<string, any> }) => (
+    <View className="px-6">
+      {/* Family Header */}
+      <View className="pt-4 pb-6 border-b border-gray-100">
+        <View className="flex-row items-center mb-3">
+          <Home size={20} color="#3b82f6" />
+          <Text className="text-gray-900 font-semibold text-lg ml-2">
+            {item.fam_id}
+          </Text>
+        </View>
+        <View className="flex-row items-center gap-2">
+          <View className="bg-primaryBlue px-3 py-1 rounded-full">
+            <Text className="text-white text-xs">
+              {item.members} {item.members === 1 ? "member" : "members"}
+            </Text>
+          </View>
+          <View
+            className={`${
+              item.fam_indigenous === "YES" ? "bg-orange-500" : "bg-gray-200"
+            } px-3 py-1 rounded-full`}
+          >
+            <Text
+              className={`${
+                item.fam_indigenous === "YES" ? "text-white" : "text-gray-600"
+              } text-xs`}
+            >
+              {item.fam_indigenous === "YES" ? "Indigenous" : "Not Indigenous"}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Basic Information */}
+      <View className="py-4">
+        <Text className="text-gray-900 font-medium text-sm mb-3">
+          Family Details
+        </Text>
+        <InfoRow label="Family ID" value={item.fam_id} />
+        <InfoRow label="Household Number" value={item.household_no} />
+        <InfoRow
+          label="Location"
+          value={`SITIO ${item.sitio}${
+            item.street !== "N/A" ? `, ${item.street}` : ""
+          }`}
+        />
+        <InfoRow label="Building Status" value={item.fam_building || "N/A"} />
+        {item.fam_date_registered && (
+          <View className="py-3">
+            <Text className="text-gray-500 text-xs mb-1">Date Registered</Text>
+            <Text className="text-gray-900 text-sm">
+              {formatDate(item.fam_date_registered, "long")}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Family Heads */}
+      {(item.father || item.mother || item.guardian) && (
+        <View className="py-4">
+          <Text className="text-gray-900 font-medium text-sm mb-3">
+            Family Heads
+          </Text>
+          {item.father && <InfoRow label="Father" value={item.father} />}
+          {item.mother && <InfoRow label="Mother" value={item.mother} />}
+          {item.guardian && <InfoRow label="Guardian" value={item.guardian} />}
+        </View>
+      )}
+
+      {/* Family Members */}
+      {members.length > 0 && (
+        <View>
+          <Accordion type="single" className="border-0">
+            <AccordionItem value="family-members" className="border-0">
+              <AccordionTrigger className="py-3">
+                <View className="flex-row justify-between items-center flex-1 mr-2">
+                  <View className="flex-row items-center">
+                    <Users size={16} color="#374151" />
+                    <Text className="text-gray-900 font-medium text-sm ml-2">
+                      Family Members
+                    </Text>
+                  </View>
+                  {!isLoadingMembers && totalMembers > 0 && (
+                    <Text className="text-gray-500 text-xs">{totalMembers}</Text>
+                  )}
+                </View>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                {isLoadingMembers ? (
+                  <View className="items-center py-8">
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <Text className="text-gray-500 text-xs mt-2">
+                      Loading members...
+                    </Text>
+                  </View>
+                ) : members.length > 0 ? (
+                  <View className="max-h-96">
+                    {members.map((member: any, index: number) => (
+                      <MemberCard key={member.rp_id || index} member={member} />
+                    ))}
+                  </View>
+                ) : (
+                  <View className="items-center py-8">
+                    <Users size={40} color="#D1D5DB" />
+                    <Text className="text-gray-400 text-xs mt-3">
+                      No family members found
+                    </Text>
+                  </View>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </View>
+      )}
+    </View>
+  ));
+
+  if (isLoadingFam) {
+    return <LoadingState />;
+  }
 
   return (
     <PageLayout
@@ -31,115 +210,35 @@ export default () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-black text-[13px]">Family Information</Text>}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">Family Information</Text>
+      }
       rightAction={<View className="w-10 h-10" />}
+      wrapScroll={false}
     >
-      <ScrollView className="flex-1 px-4 pt-4">
-        {/* Family Overview Card */}
-        <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
-          <View className="flex-row items-center mb-3">
-            <Home size={18} color="#3b82f6" />
-            <Text className="text-base font-semibold text-gray-900 ml-2">
-              Family Details
-            </Text>
+      <FlatList
+        maxToRenderPerBatch={1}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        overScrollMode="never"
+        windowSize={1}
+        removeClippedSubviews
+        data={familyData ? [familyData] : []}
+        renderItem={({ item }) => <Details item={item} />}
+        keyExtractor={(item, index) => `family-${index}`}
+        refreshControl={
+          <RefreshControl
+            refreshing={false}
+            onRefresh={handleRefresh}
+            colors={["#0084f0"]}
+          />
+        }
+        ListEmptyComponent={
+          <View className="items-center justify-center py-12">
+            <Text className="text-gray-500 text-sm">No family registered</Text>
           </View>
-          
-          <View className="space-y-2">
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Family ID:</Text>
-              <Text className="text-sm text-gray-900 flex-1">{familyData?.fam_id}</Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Household:</Text>
-              <Text className="text-sm text-gray-900 flex-1">{familyData?.household_no}</Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Location:</Text>
-              <Text className="text-sm text-gray-900 flex-1">
-                {familyData?.street}, {familyData?.sitio}
-              </Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Building Status:</Text>
-              <Text className="text-sm text-gray-900 flex-1">{familyData?.fam_building}</Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Members:</Text>
-              <Text className="text-sm text-gray-900 flex-1">{familyData?.members}</Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Indigenous:</Text>
-              <Text className="text-sm text-gray-900 flex-1">{familyData?.fam_indigenous}</Text>
-            </View>
-            
-            <View className="flex-row">
-              <Text className="text-sm text-gray-500 w-32">Registered:</Text>
-              <Text className="text-sm text-gray-900 flex-1">
-                {new Date(familyData?.fam_date_registered).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Family Members Section */}
-        <Text className="text-base font-semibold text-gray-900 mb-3">Family Members</Text>
-        
-        {members.map((member: any) => (
-          <View 
-            key={member.rp_id}
-            className="bg-white rounded-lg p-3 mb-2 border border-gray-200"
-          >
-            <View className="flex-row items-center mb-2">
-              <User size={16} color="#6b7280" />
-              <Text className="text-sm font-semibold text-gray-900 ml-2 flex-1">
-                {member.name}
-              </Text>
-              <View className="bg-blue-50 px-2 py-1 rounded">
-                <Text className="text-xs font-medium text-blue-700">
-                  {member.fc_role}
-                </Text>
-              </View>
-            </View>
-            
-            <View className="flex-row flex-wrap">
-              <View className="flex-row mr-4 mb-1">
-                <Text className="text-xs text-gray-500">ID: </Text>
-                <Text className="text-xs text-gray-900">{member.rp_id}</Text>
-              </View>
-              
-              <View className="flex-row mr-4 mb-1">
-                <Text className="text-xs text-gray-500">Sex: </Text>
-                <Text className="text-xs text-gray-900">{member.sex}</Text>
-              </View>
-              
-              <View className="flex-row mr-4 mb-1">
-                <Text className="text-xs text-gray-500">DOB: </Text>
-                <Text className="text-xs text-gray-900">
-                  {new Date(member.dob).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </Text>
-              </View>
-              
-              <View className="flex-row mb-1">
-                <Text className="text-xs text-gray-500">Status: </Text>
-                <Text className="text-xs text-gray-900">{member.status}</Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+        }
+      />
     </PageLayout>
-  )
-}
+  );
+};

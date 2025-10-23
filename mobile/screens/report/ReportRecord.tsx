@@ -1,4 +1,3 @@
-import PageLayout from "@/screens/_PageLayout";
 import { TouchableOpacity, View, Text } from "react-native";
 import { User } from "../_Enums";
 import { router } from "expo-router";

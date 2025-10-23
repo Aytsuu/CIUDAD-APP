@@ -335,9 +335,7 @@ class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
             raise Exception("Invalid child health history ID provided")
         except MedicineRecord.DoesNotExist:
             raise Exception(f"Medicine record with ID {medrec_id} not found")
-            
-
-
+  
 class CreateMedicineRequestAllocationAPIView(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -412,10 +410,11 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     # Get the medicine inventory
                     medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
                     
-                    # Check if there's enough available stock
-                    if medicine_inventory.minv_qty_avail < medrec_qty:
+                    # Check if there's enough available stock (consider temporary deduction)
+                    available_stock = medicine_inventory.minv_qty_avail
+                    if available_stock < medrec_qty:
                         return Response({
-                            "error": f"Insufficient stock for {medicine_inventory.med_id.med_name}. Available: {medicine_inventory.minv_qty_avail}, Requested: {medrec_qty}"
+                            "error": f"Insufficient stock for {medicine_inventory.med_id.med_name}. Available: {available_stock}, Requested: {medrec_qty}"
                         }, status=status.HTTP_400_BAD_REQUEST)
                     
                     # Get and update request item
@@ -430,14 +429,6 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                         return Response({
                             "error": f"Medicine request item with ID {medreqitem_id} not found"
                         }, status=status.HTTP_404_NOT_FOUND)
-                
-                    # Create medicine allocation for app mode
-                    if mode == 'app':
-                        MedicineAllocation.objects.create(
-                            medreqitem=request_item,
-                            minv=medicine_inventory,
-                            allocated_qty=medrec_qty
-                        )
                     
                     # Create medicine record (use the patient_record created above)
                     medicine_record = MedicineRecord.objects.create(
@@ -469,15 +460,15 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     )
                     medicine_transactions.append(medicine_transaction)
                     
-                    # Update inventory based on mode
-                    if mode == 'walk-in':
-                        medicine_inventory.minv_qty_avail -= medrec_qty
-                        medicine_inventory.temporary_deduction -= medrec_qty
-                        medicine_inventory.save()
-                    else:
-                        medicine_inventory.minv_qty_avail -= medrec_qty
-
-                        medicine_inventory.save()
+                    # Update inventory - same logic for all modes
+                    medicine_inventory.minv_qty_avail -= medrec_qty
+                    medicine_inventory.temporary_deduction -= medrec_qty
+                    medicine_inventory.save()
+                    
+                    print(f"Updated inventory for {medicine_inventory.med_id.med_name}:")
+                    print(f"  Available: {medicine_inventory.minv_qty_avail}")
+                    print(f"  Temporary Deduction: {medicine_inventory.temporary_deduction}")
+                    print(f"  Mode: {mode}")
                     
                 except MedicineInventory.DoesNotExist:
                     return Response({
@@ -494,7 +485,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             
             response_data = {
                 "success": True,
-                "message": f"Medicine {'dispensing' if mode == 'walk-in' else 'allocation'} processed successfully",
+                "message": f"Medicine allocation processed successfully",
                 "medreq_id": medreq_id,
                 "mode": mode,
                 "medicine_records_created": len(medicine_records),
@@ -509,10 +500,8 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             print(f"Unexpected error: {str(e)}")
             return Response({
                 "error": f"An error occurred: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-    
-    
 #=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
 class CreateMedicineRequestProcessingView(generics.ListCreateAPIView): 
     serializer_class = MedicineRequestSerializer

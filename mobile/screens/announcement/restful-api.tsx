@@ -45,11 +45,8 @@ export const getAnnouncementRecipientRequest = async (ann_id: number) => {
 // Create announcement
 export const postAnnouncement = async (announcement: Record<string, any>) => {
   try {
-    const now = new Date().toISOString();
-
     const payload: Record<string, any> = {
       ...announcement,
-      ann_created_at: now,
       ann_event_start: announcement.ann_event_start || null,
       ann_event_end: announcement.ann_event_end || null,
     };
@@ -63,8 +60,6 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
     if (announcement.ann_end_at && announcement.ann_end_at.trim() !== "") {
       payload.ann_end_at = announcement.ann_end_at;
     }
-
-    console.log("Sending payload:", payload);
 
     const res = await api.post("announcement/create/", payload);
     return res.data;

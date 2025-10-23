@@ -63,6 +63,8 @@ class FamilyTableView(generics.ListCreateAPIView):
                 ),
                 Value('')
             )
+        ).filter(
+           members__gt=0
         ).only(
             'fam_id',
             'fam_date_registered',
@@ -91,9 +93,17 @@ class FamilyTableView(generics.ListCreateAPIView):
 class FamilyDataView(generics.RetrieveAPIView):
   permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer # To be modified
-  queryset = Family.objects.all()
   lookup_field = 'fam_id'
   
+  def get_queryset(self):
+    fam_id = self.kwargs['fam_id']
+    return Family.objects.filter(fam_id=fam_id)
+  
+class FamilyCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
+  serializer_class = FamilyCreateSerializer
+  queryset = Family.objects.all()
+
 class FamilyDataResidentSpecificView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = FamilyTableSerializer
@@ -113,11 +123,6 @@ class FamilyDataResidentSpecificView(generics.GenericAPIView):
 
         serializer = self.get_serializer(family)
         return Response(serializer.data)
-  
-class FamilyCreateView(generics.CreateAPIView):
-  permission_classes = [AllowAny]
-  serializer_class = FamilyCreateSerializer
-  queryset = Family.objects.all()
 
 class FamilyFilteredByHouseholdView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -126,7 +131,9 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
   
   def get_queryset(self):
     household_no = self.kwargs['hh']
-    return Family.objects.filter(hh=household_no)
+    return Family.objects.annotate(
+       members=Count('family_compositions')
+    ).filter(hh=household_no, members__gt=0)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny]
@@ -153,6 +160,3 @@ class VerifyFamily(APIView):
          return Response(status=status.HTTP_200_OK)
       
       return Response(status=status.HTTP_404_NOT_FOUND)
-
-         
-    

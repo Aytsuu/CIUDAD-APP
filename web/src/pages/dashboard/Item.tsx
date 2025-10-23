@@ -9,7 +9,6 @@ import { MedicineDistributionSidebar } from "@/components/analytics/health/medic
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
@@ -97,7 +96,7 @@ export const getItemsConfig = (
         card: [residents, families, households, businesses],
         sidebar: [
           {
-            title: "Recent Registration",
+            title: "Resident Registration",
             element: <ProfilingSidebar />,
           },
         ],
@@ -113,7 +112,7 @@ export const getItemsConfig = (
         ],
         sidebar: [
           {
-            title: "Recent Incident Reports",
+            title: "Incident Reports",
             element: <ReportSidebar />,
           },
         ],
@@ -245,29 +244,21 @@ export const getItemsConfig = (
           familyPlanning,
           maternal,
         ],
-        sidebar: [
-          {
-            title: "Most Requested Medicine",
-            element: <MedicineDistributionSidebar />,
-          },
-          {
-            title: "Most used FirstAid",
-            element: <FirstAidDistributionSidebar />,
-          },
-        ],
+
         chart: [
           {
-            title: "Growth",
+            title: "OPT",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
             title: "Medical History",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
-          {
-            title: "Vaccination",
-            element: <VaccineDistributionChart initialMonth={currentMonth} />,
-          },
+         
+        {
+          title: "Maternal",
+          element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
+        },
         ],
       },
 
@@ -282,8 +273,14 @@ export const getItemsConfig = (
             title: "Most used FirstAid",
             element: <FirstAidDistributionSidebar />,
           },
+          {
+            title:"Administered Vaccination",
+            element:<VaccinationDistributionSidebar />
+          }
         ],
+        
       },
+
     ];
     
   } else return []

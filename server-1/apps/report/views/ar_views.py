@@ -16,8 +16,12 @@ class ARTableView(generics.ListAPIView):
 
   def get_queryset(self):
     queryset = AcknowledgementReport.objects.all()
-
     search = self.request.query_params.get('search', '').strip()
+    status = self.request.query_params.get('status', None)
+
+    if status and status != "all":
+      queryset = queryset.filter(ar_status__iexact=status)
+
     if search:
       queryset = queryset.filter(
           Q(ar_id__icontains=search) |

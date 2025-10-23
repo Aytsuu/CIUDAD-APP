@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView } from "react-native";
+import { View, TouchableOpacity, TextInput, RefreshControl, ScrollView } from "react-native";
 import { Search, ChevronLeft, AlertCircle, HeartPulse, Users, Calendar, Syringe, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
@@ -322,9 +322,9 @@ export default function InvMedicalConRecords() {
 
           {/* Search Bar */}
           <View className="flex-row items-center space-x-2 mb-4">
-            <View className="flex-1 flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg">
+            <View className="flex-1 p-2 flex-row items-center  border border-gray-300 bg-gray-50 rounded-lg">
               <Search size={20} color="#6B7280" />
-              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by date, diagnosis, or findings..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={handleSearchChange} />
+              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={handleSearchChange} />
             </View>
           </View>
 

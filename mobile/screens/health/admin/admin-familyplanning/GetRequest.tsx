@@ -21,9 +21,9 @@ export interface FPPatientsCount {
   transient_fp_patients: number;
 }
 
-export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
+export const getFPPatientsCounts = async (params?: { search?: string }): Promise<FPPatientsCount> => {
   try {
-    const response = await api2.get("/familyplanning/patient-counts/"); // Adjust this URL if your Django URL pattern is different
+    const response = await api2.get("/familyplanning/patient-counts/", { params });
     return response.data;
   } catch (error) {
     console.error("Error fetching FP patient counts:", error);
@@ -37,6 +37,7 @@ export const getFPRecordsList = async (params: {
   page_size?: number;
   search?: string;
   client_type?: string;
+  patient_type?: string;
 }) => {
   try {
     const response = await api2.get("familyplanning/overall-records/", { params });

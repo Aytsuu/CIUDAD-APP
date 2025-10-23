@@ -2,14 +2,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useDeleteAntigen } from "../queries/Antigen/delete-queries";
 import AddImmunizationSupplies from "../Modal/ImmunizationSupplies";
 import { SupplyColumns } from "./columns/SupplyCol";
 import { useImzSupTable } from "../queries/Antigen/fetch-queries";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function SupplyList() {
   // Pagination and search state
@@ -48,12 +49,7 @@ export default function SupplyList() {
         return {
           id: item.imz_id,
           supplyName: item.imz_name,
-          vaccineType: "N/A",
-          ageGroup: "N/A",
-          doses: "N/A",
-          category: "supply",
-          noOfDoses: "N/A",
-          schedule: "N/A",
+
           doseDetails: []
         };
       })
@@ -61,6 +57,28 @@ export default function SupplyList() {
   }, [suppliesData]);
 
   const displayData = useMemo(() => formatSuppliesData(), [formatSuppliesData]);
+
+  // Export functionality
+  const prepareExportData = () => {
+    return displayData.map((supply: any) => ({
+      "Supply Name": supply.supplyName
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `immunization_supplies_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `immunization_supplies_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `immunization_supplies_${new Date().toISOString().slice(0, 10)}`, "Immunization Supplies List");
+  };
 
   // Get pagination info
   const paginationInfo = useMemo(() => {
@@ -157,18 +175,11 @@ export default function SupplyList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" }
-            ]}
-          />
+
+          <div>
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+
+          </div>
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

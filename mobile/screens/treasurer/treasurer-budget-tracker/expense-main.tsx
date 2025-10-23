@@ -13,7 +13,6 @@ import {
 import {
   X,
   Search,
-  Calendar,
   ChevronLeft,
   Plus,
   Archive,

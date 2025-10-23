@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-na
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { accused, complaintFormSchema, type ComplaintFormData } from '@/form-schema/complaint-schema';
+import { complaintFormSchema, type ComplaintFormData } from '@/form-schema/complaint-schema';
 import { Review } from './Review';
 import { Incident } from './IncidentDetails';
 import { Accused } from './Accused';

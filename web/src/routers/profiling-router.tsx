@@ -18,17 +18,17 @@ import PersonalHistoryView from "@/pages/record/profiling/resident/form/Personal
 import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
 import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
 import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
-import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
+// import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
 import BusinessHistoryView from "@/pages/record/profiling/business/BusinessHistoryView";
 import VoterRecords from "@/pages/record/profiling/voters/VoterRecords";
 import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const profiling_router = [
-  // All Records
-  {
-    path: "profiling/all",
-    element: <ProfilingAllRecords />
-  },
+  // // All Records
+  // {
+  //   path: "profiling/all",
+  //   element: <ProfilingAllRecords />
+  // },
 
   // Account
   {

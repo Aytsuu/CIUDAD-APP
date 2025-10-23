@@ -44,13 +44,22 @@ export const getMedicalRecord = async (params?: { page?: number; page_size?: num
     throw err;
   }
 };
-export const getConsultationHistory = async (patientId?: string, page?: number, pageSize?: number, searchQuery?: string): Promise<any> => {
+
+
+export const getConsultationHistory = async (
+  patientId?: string, 
+  page?: number, 
+  pageSize?: number, 
+  searchQuery?: string,
+  currentConsultationId?: number
+): Promise<any> => {
   try {
     const params = new URLSearchParams();
 
     if (page !== undefined) params.append("page", page.toString());
     if (pageSize !== undefined) params.append("page_size", pageSize.toString());
     if (searchQuery?.trim()) params.append("search", searchQuery.trim());
+    if (currentConsultationId !== undefined) params.append("current_consultation_id", currentConsultationId.toString());
 
     const url = `medical-consultation/view-medcon-record/${patientId ?? ""}/?${params.toString()}`;
     const response = await api2.get(url);
@@ -60,6 +69,9 @@ export const getConsultationHistory = async (patientId?: string, page?: number, 
     throw error;
   }
 };
+
+
+
 export const getMedConPHHistory =async(pat_id:string)=>{
   try {
     const response = await api2.get(`patientrecords/patientPHIllnessCheck/${pat_id}/`);
