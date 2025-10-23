@@ -569,6 +569,24 @@ class CancelCertificateView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+class CancelBusinessPermitView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, bpr_id):
+        try:
+            permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
+            permit.req_status = 'Cancelled'
+            permit.save(update_fields=['req_status'])
+            return Response({
+                'message': 'Cancelled',
+                'bpr_id': permit.bpr_id,
+                'req_status': permit.req_status
+            }, status=status.HTTP_200_OK)
+        except BusinessPermitRequest.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class IssuedCertificateListView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -1004,9 +1022,9 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
     def get_queryset(self):
         try:
             queryset = IssuedBusinessPermit.objects.select_related(
-                'permit_request__bus_id',
-                'permit_request__rp_id__per',
-                'permit_request__pr_id',
+                'bpr_id__bus_id',
+                'bpr_id__rp_id__per',
+                'bpr_id__pr_id',
                 'staff'
             ).all()
 
@@ -1015,17 +1033,17 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
             if search:
                 queryset = queryset.filter(
                     Q(ibp_id__icontains=search) |
-                    Q(permit_request__bus_permit_name__icontains=search) |
-                    Q(permit_request__rp_id__per__per_fname__icontains=search) |
-                    Q(permit_request__rp_id__per__per_lname__icontains=search) |
-                    Q(permit_request__pr_id__pr_purpose__icontains=search) |
+                    Q(bpr_id__bus_permit_name__icontains=search) |
+                    Q(bpr_id__rp_id__per__per_fname__icontains=search) |
+                    Q(bpr_id__rp_id__per__per_lname__icontains=search) |
+                    Q(bpr_id__pr_id__pr_purpose__icontains=search) |
                     Q(ibp_date_of_issuance__icontains=search)
                 )
 
             # Purpose filter - matching web version
             purpose_filter = self.request.query_params.get('purpose', None)
             if purpose_filter:
-                queryset = queryset.filter(permit_request__pr_id__pr_purpose=purpose_filter)
+                queryset = queryset.filter(bpr_id__pr_id__pr_purpose=purpose_filter)
 
             # Date range filter - matching web version
             date_from = self.request.query_params.get('date_from', None)
@@ -1087,7 +1105,7 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 )
             
             # Check if already issued
-            if IssuedBusinessPermit.objects.filter(permit_request=permit_request).exists():
+            if IssuedBusinessPermit.objects.filter(bpr_id=permit_request).exists():
                 return Response(
                     {"error": f"Business permit {bpr_id} is already issued"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -1097,7 +1115,6 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
             from apps.administration.models import Staff
             staff, created = Staff.objects.get_or_create(staff_id=staff_id)
             
-            # Update the original business permit request to Completed (mirror certificate flow)
             try:
                 if getattr(permit_request, 'req_status', None) != 'Completed':
                     permit_request.req_status = 'Completed'
@@ -1105,6 +1122,40 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                     if not getattr(permit_request, 'req_date_completed', None):
                         permit_request.req_date_completed = timezone.now().date()
                     permit_request.save(update_fields=['req_status', 'req_date_completed'])
+                    
+                    # Update business gross sales if this is a business clearance with new gross sales
+                    if (permit_request.bus_id and 
+                        permit_request.bus_clearance_gross_sales and 
+                        permit_request.pr_id and 
+                        permit_request.pr_id.pr_purpose and 
+                        'business clearance' in permit_request.pr_id.pr_purpose.lower()):
+                        
+                        try:
+                            from apps.profiling.models import Business
+                            business = Business.objects.get(bus_id=permit_request.bus_id.bus_id)
+                            old_gross_sales = business.bus_gross_sales
+                            business.bus_gross_sales = float(permit_request.bus_clearance_gross_sales)
+                            business.save(update_fields=['bus_gross_sales'])
+                            
+                            logger.info(f"Updated business {permit_request.bus_id.bus_id} gross sales from {old_gross_sales} to {permit_request.bus_clearance_gross_sales}")
+                            
+                            # Log the business gross sales update activity
+                            try:
+                                from apps.act_log.utils import create_activity_log
+                                create_activity_log(
+                                    act_type="Business Gross Sales Updated",
+                                    act_description=f"Business {permit_request.bus_id.bus_name} gross sales updated from ₱{old_gross_sales:,.2f} to ₱{permit_request.bus_clearance_gross_sales:,.2f} via business clearance completion",
+                                    staff=staff,
+                                    record_id=permit_request.bus_id.bus_id
+                                )
+                            except Exception as log_err:
+                                logger.error(f"Failed to log business gross sales update activity: {str(log_err)}")
+                                
+                        except Business.DoesNotExist:
+                            logger.error(f"Business {permit_request.bus_id.bus_id} not found for gross sales update")
+                        except Exception as bus_update_err:
+                            logger.error(f"Failed to update business gross sales: {str(bus_update_err)}")
+                            
             except Exception as update_err:
                 logger.error(f"Failed to update BusinessPermitRequest {bpr_id} to Completed: {str(update_err)}")
 
@@ -1128,7 +1179,7 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
             issued_permit = IssuedBusinessPermit.objects.create(
                 ibp_id=ibp_id,
                 ibp_date_of_issuance=timezone.now().date(),
-                permit_request=permit_request,
+                bpr_id=permit_request,
                 staff=staff
             )
             
@@ -1138,10 +1189,10 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 
                 if staff:
                     # Get business name and owner
-                    business_info = issued_permit.permit_request.bus_permit_name or "Unknown Business"
+                    business_info = issued_permit.bpr_id.bus_permit_name or "Unknown Business"
                     owner_name = "Unknown Owner"
-                    if issued_permit.permit_request.rp_id and issued_permit.permit_request.rp_id.per:
-                        per = issued_permit.permit_request.rp_id.per
+                    if issued_permit.bpr_id.rp_id and issued_permit.bpr_id.rp_id.per:
+                        per = issued_permit.bpr_id.rp_id.per
                         owner_name = f"{per.per_fname} {per.per_lname}"
                     
                     # Create activity log

@@ -361,13 +361,20 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
         # Verify the resident profile exists
         from apps.profiling.models import ResidentProfile
         try:
-            resident = ResidentProfile.objects.get(rp_id=rp_id_str)
+            resident = ResidentProfile.objects.select_related('per').get(rp_id=rp_id_str)
+            
+            # Check if the resident is deceased
+            if hasattr(resident, 'per') and resident.per and getattr(resident.per, 'per_is_deceased', False):
+                raise serializers.ValidationError("Deceased residents cannot request certificates")
+            
             return resident
         except ResidentProfile.DoesNotExist:
             raise serializers.ValidationError(f"Resident profile with ID {rp_id_str} does not exist")
         except ResidentProfile.MultipleObjectsReturned:
             # This shouldn't happen with primary key, but handle it
-            resident = ResidentProfile.objects.filter(rp_id=rp_id_str).first()
+            resident = ResidentProfile.objects.select_related('per').filter(rp_id=rp_id_str).first()
+            if resident and hasattr(resident, 'per') and resident.per and getattr(resident.per, 'per_is_deceased', False):
+                raise serializers.ValidationError("Deceased residents cannot request certificates")
             return resident
 
     def create(self, validated_data):
@@ -477,19 +484,13 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_amount_to_pay(self, obj):
         try:
-            # First check if req_amount is already set (this is the stored amount)
+    
             if hasattr(obj, 'req_amount') and obj.req_amount:
                 return float(obj.req_amount)
             
-            # If req_amount is not set, fetch from ags_id
             if obj.ags_id:
-                # Import Annual_Gross_Sales model to fetch the actual object
-                from apps.treasurer.models import Annual_Gross_Sales
-                try:
-                    ags_obj = Annual_Gross_Sales.objects.get(ags_id=obj.ags_id)
-                    return float(ags_obj.ags_rate) if ags_obj.ags_rate else 0.0
-                except Annual_Gross_Sales.DoesNotExist:
-                    return 0.0
+               
+                return float(obj.ags_id.ags_rate) if obj.ags_id.ags_rate else 0.0
             return 0.0
         except Exception as e:
             print(f"Error getting amount_to_pay: {str(e)}")
@@ -566,11 +567,11 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
     def get_business_name(self, obj):
         try:
             # Prefer explicit permit name if provided on the request (new businesses)
-            if obj.permit_request and getattr(obj.permit_request, 'bus_permit_name', None):
-                return obj.permit_request.bus_permit_name
+            if obj.bpr_id and getattr(obj.bpr_id, 'bus_permit_name', None):
+                return obj.bpr_id.bus_permit_name
             # Fallback to linked Business record name (existing businesses)
-            if obj.permit_request and getattr(obj.permit_request, 'bus_id', None) and getattr(obj.permit_request.bus_id, 'bus_name', None):
-                return obj.permit_request.bus_id.bus_name
+            if obj.bpr_id and getattr(obj.bpr_id, 'bus_id', None) and getattr(obj.bpr_id.bus_id, 'bus_name', None):
+                return obj.bpr_id.bus_id.bus_name
             return "Unknown"
         except Exception as e:
             logger.error(f"Error getting business name: {str(e)}")
@@ -578,8 +579,8 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_purpose(self, obj):
         try:
-            if obj.permit_request and getattr(obj.permit_request, 'pr_id', None):
-                return obj.permit_request.pr_id.pr_purpose
+            if obj.bpr_id and getattr(obj.bpr_id, 'pr_id', None):
+                return obj.bpr_id.pr_id.pr_purpose
             return None
         except Exception as e:
             logger.error(f"Error getting business permit purpose: {str(e)}")
@@ -587,7 +588,7 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_original_permit(self, obj):
         try:
-            pr = obj.permit_request
+            pr = obj.bpr_id
             if not pr:
                 return None
             return {

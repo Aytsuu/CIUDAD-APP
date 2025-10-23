@@ -1,13 +1,14 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from '@/screens/_PageLayout';
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { Search } from "lucide-react-native";
-import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
+import { useCertTracking, useCancelCertificate, useCancelBusinessPermit } from "./queries/certTrackingQueries";
 import { SearchInput } from "@/components/ui/search-input";
 import { LoadingState } from "@/components/ui/loading-state";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 export default function CertTrackingMain() {
   const router = useRouter();
@@ -15,35 +16,75 @@ export default function CertTrackingMain() {
 
   const { data, isLoading, isError } = useCertTracking(user?.rp || "");
   const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.rp || "");
+  const { mutate: cancelBusiness } = useCancelBusinessPermit(user?.rp || "");
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
   const [searchInputVal, setSearchInputVal] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showSearch, setShowSearch] = React.useState(false);
+  const [cancellingItemId, setCancellingItemId] = React.useState<string | null>(null);
 
   const getStatusBadge = (status?: string) => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("cancel")) {
+    const normalized = (status || "").toLowerCase().trim();
+    
+    // Check for cancelled status first
+    if (normalized.includes("cancel") || normalized.includes("rejected") || normalized.includes("declined")) {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Cancelled</Text>
     }
-    if (normalized.includes("progress") || normalized === "processing") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">In Progress</Text>
-    }
-    if (normalized.includes("complete") || normalized === "approved") {
+    
+    // Check for completed status
+    if (normalized.includes("complete") || normalized.includes("approved") || normalized.includes("issued") || normalized.includes("done")) {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Completed</Text>
     }
-    return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700">In Progress</Text>
+    
+    // Check for in progress status
+    if (normalized.includes("progress") || normalized.includes("processing") || normalized.includes("pending") || normalized.includes("submitted") || normalized.includes("under review")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">In Progress</Text>
+    }
+    
+    // Default to in progress for any other status
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">In Progress</Text>
   }
 
   const getNormalizedStatus = (status?: string): 'pending' | 'in_progress' | 'completed' | 'cancelled' => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("cancel")) return 'cancelled';
-    if (normalized.includes("progress") || normalized === "processing") return 'in_progress';
-    if (normalized.includes("complete") || normalized === "approved") return 'completed';
-    return 'pending';
+    const normalized = (status || "").toLowerCase().trim();
+    
+    // Check for cancelled status first
+    if (normalized.includes("cancel") || normalized.includes("rejected") || normalized.includes("declined")) {
+      return 'cancelled';
+    }
+    
+    // Check for completed status
+    if (normalized.includes("complete") || normalized.includes("approved") || normalized.includes("issued") || normalized.includes("done")) {
+      return 'completed';
+    }
+    
+    // Check for in progress status
+    if (normalized.includes("progress") || normalized.includes("processing") || normalized.includes("pending") || normalized.includes("submitted") || normalized.includes("under review")) {
+      return 'in_progress';
+    }
+    
+    // Default to in_progress for any other status (like "Pending", "Submitted", etc.)
+    return 'in_progress';
   }
 
-  const extractStatus = (item: any) => (item?.cr_req_status ?? item?.req_status ?? '').toString().trim();
+  const extractStatus = (item: any) => {
+    // Try multiple possible status fields
+    const status = item?.cr_req_status ?? 
+                   item?.req_status ?? 
+                   item?.status ?? 
+                   item?.request_status ?? 
+                   item?.permit_status ?? 
+                   '';
+    const extracted = status.toString().trim();
+    
+    // Debug logging to help understand what statuses we're getting
+    if (extracted) {
+      console.log('Extracted status:', extracted, 'for item:', item?.bpr_id || item?.cr_id);
+    }
+    
+    return extracted;
+  };
 
   const formatDate = (d?: string) => {
     if (!d) return '—';
@@ -65,14 +106,31 @@ export default function CertTrackingMain() {
   }
 
   const handleCancel = (item: any) => {
-    Alert.alert(
-      'Cancel Request',
-      'Are you sure you want to cancel this request?',
-      [
-        { text: 'No', style: 'cancel' },
-        { text: 'Yes', style: 'destructive', onPress: () => cancelCert(String(item?.cr_id)) }
-      ]
-    );
+    // Use cr_id for personal certificates, bpr_id for business permits
+    const itemId = item?.cr_id || item?.bpr_id;
+    setCancellingItemId(String(itemId));
+    
+    if (item?.cr_id) {
+      // Cancel personal certificate
+      cancelCert(String(itemId), {
+        onSuccess: () => {
+          setCancellingItemId(null);
+        },
+        onError: () => {
+          setCancellingItemId(null);
+        }
+      });
+    } else if (item?.bpr_id) {
+      // Cancel business permit
+      cancelBusiness(String(itemId), {
+        onSuccess: () => {
+          setCancellingItemId(null);
+        },
+        onError: () => {
+          setCancellingItemId(null);
+        }
+      });
+    }
   }
 
   const handleSearch = () => {
@@ -242,6 +300,29 @@ export default function CertTrackingMain() {
                           (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
                         return statusMatch && searchMatch;
                       })
+                      .sort((a: any, b: any) => {
+                        // Sort by status: In Progress first, then Completed, then Cancelled
+                        const statusOrder: Record<string, number> = { 
+                          'in_progress': 1, 
+                          'completed': 2, 
+                          'cancelled': 3,
+                          'pending': 1 // Treat pending as in_progress
+                        };
+                        const statusA = getNormalizedStatus(extractStatus(a));
+                        const statusB = getNormalizedStatus(extractStatus(b));
+                        
+                        const orderA = statusOrder[statusA] || 1;
+                        const orderB = statusOrder[statusB] || 1;
+                        
+                        if (orderA !== orderB) {
+                          return orderA - orderB;
+                        }
+                        
+                        // If same status, sort by date (newest first)
+                        const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
+                        const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
+                        return dateB.getTime() - dateA.getTime();
+                      })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
@@ -255,16 +336,28 @@ export default function CertTrackingMain() {
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
                           <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
+                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (item?.cr_id || item?.bpr_id) && (
                           <View className="mt-3">
-                            <TouchableOpacity
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity
+                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                                  className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
+                                  activeOpacity={0.8}
+                                >
+                                  <Text className="text-red-700 text-xs font-medium">
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id) ? 'Cancelling…' : 'Cancel Request'}
+                                  </Text>
+                                </TouchableOpacity>
+                              }
+                              title="Cancel Request"
+                              description="Are you sure you want to cancel this request? This action cannot be undone."
+                              actionLabel="Yes, Cancel"
+                              variant="destructive"
                               onPress={() => handleCancel(item)}
-                              disabled={isCancelling}
-                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
-                            </TouchableOpacity>
+                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                              loadingMessage="Cancelling request..."
+                            />
                           </View>
                         )}
                       </View>
@@ -300,6 +393,29 @@ export default function CertTrackingMain() {
                           (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
                         return statusMatch && searchMatch;
                       })
+                      .sort((a: any, b: any) => {
+                        // Sort by status: In Progress first, then Completed, then Cancelled
+                        const statusOrder: Record<string, number> = { 
+                          'in_progress': 1, 
+                          'completed': 2, 
+                          'cancelled': 3,
+                          'pending': 1 // Treat pending as in_progress
+                        };
+                        const statusA = getNormalizedStatus(extractStatus(a));
+                        const statusB = getNormalizedStatus(extractStatus(b));
+                        
+                        const orderA = statusOrder[statusA] || 1;
+                        const orderB = statusOrder[statusB] || 1;
+                        
+                        if (orderA !== orderB) {
+                          return orderA - orderB;
+                        }
+                        
+                        // If same status, sort by date (newest first)
+                        const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
+                        const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
+                        return dateB.getTime() - dateA.getTime();
+                      })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
@@ -308,21 +424,33 @@ export default function CertTrackingMain() {
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ibp_date_of_issuance)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_business_permit?.ibp_date_of_issuance || item?.req_date_completed)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
                           <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
+                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (item?.cr_id || item?.bpr_id) && (
                           <View className="mt-3">
-                            <TouchableOpacity
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity
+                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                                  className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
+                                  activeOpacity={0.8}
+                                >
+                                  <Text className="text-red-700 text-xs font-medium">
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id) ? 'Cancelling…' : 'Cancel Request'}
+                                  </Text>
+                                </TouchableOpacity>
+                              }
+                              title="Cancel Request"
+                              description="Are you sure you want to cancel this request? This action cannot be undone."
+                              actionLabel="Yes, Cancel"
+                              variant="destructive"
                               onPress={() => handleCancel(item)}
-                              disabled={isCancelling}
-                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
-                            </TouchableOpacity>
+                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                              loadingMessage="Cancelling request..."
+                            />
                           </View>
                         )}
                       </View>
