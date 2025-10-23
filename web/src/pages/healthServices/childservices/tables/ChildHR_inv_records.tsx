@@ -290,6 +290,30 @@ export default function InvChildHealthRecords() {
         </div>
       )}
       <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
+     <div className="flex justify-end mt-8">
+<ProtectedComponentButton exclude={["DOCTOR"]}>
+  <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
+    {latestRecord && !isLatestRecordFromToday && (
+      <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+        {isLatestRecordImmunizationOrCheckup ? (
+          <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+            <span className="text-sm font-medium">
+              {latestRecord.status === "immunization"
+                ? "This child is currently receiving an immunization."
+                : "This child is currently undergoing a health check-up."}
+            </span>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button onClick={navigateToUpdateLatest}>New Follow Up</Button>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</ProtectedComponentButton>
+     </div>
+     
       <div className="h-full w-full rounded-md mt-4">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
@@ -300,81 +324,55 @@ export default function InvChildHealthRecords() {
           <div className="flex gap-2">
             <ProtectedComponentButton exclude={["DOCTOR"]}>
               <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
-                {latestRecord && !isLatestRecordFromToday && (
-                  <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
-                    {isLatestRecordImmunizationOrCheckup ? (
-                      <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                        <span className="text-sm font-medium">
-                          {latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button onClick={navigateToUpdateLatest}>New record</Button>
-                        <Link
-                          to="/services/maternalindividualrecords"
-                          state={{
-                            params: {
-                              patientData: {
-                                pat_id: derivedChildData?.mother_pat_id || "",
-                                pat_type: "Resident",
-                                address: derivedChildData?.motherAddress,
-                                personal_info: {
-                                  per_fname: derivedChildData?.mother_fname || "",
-                                  per_lname: derivedChildData?.mother_lname || "",
-                                  per_mname: derivedChildData?.mother_mname || "",
-                                  per_sex: "FEMALE",
-                                  per_dob: derivedChildData?.mother_dob || "",
-                                  ageTime: "yrs",
-                                },
-                                pregnancy_id: derivedChildData?.pregnancy_id || "",
-                                rp_id: derivedChildData?.mother_rp_id || "",
-                                mode:"child"
-                              },
-                            },
-                          }}
-                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 hover:text-accent-foreground h-10 px-4 py-2"
-                        >
-                          <Heart className="w-4 h-4 mr-2" />
-                          Mother Records
-                        </Link>
-                      </div>
-                    )}
+              {latestRecord && !isLatestRecordFromToday && (
+                <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+                {isLatestRecordImmunizationOrCheckup ? (
+                  <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                  <span className="text-sm font-medium">
+                    {latestRecord.status === "immunization"
+                    ? "This child is currently receiving an immunization."
+                    : "This child is currently undergoing a health check-up."}
+                  </span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                  {derivedChildData?.pregnancy_id && (
+                    <Link
+                    to="/services/maternalindividualrecords"
+                    state={{
+                      params: {
+                      patientData: {
+                        pat_id: derivedChildData?.mother_pat_id || "",
+                        pat_type: "Resident",
+                        address: derivedChildData?.motherAddress,
+                        personal_info: {
+                        per_fname: derivedChildData?.mother_fname || "",
+                        per_lname: derivedChildData?.mother_lname || "",
+                        per_mname: derivedChildData?.mother_mname || "",
+                        per_sex: "FEMALE",
+                        per_dob: derivedChildData?.mother_dob || "",
+                        ageTime: "yrs",
+                        },
+                        pregnancy_id: derivedChildData?.pregnancy_id || "",
+                        rp_id: derivedChildData?.mother_rp_id || "",
+                        mode: "child",
+                      },
+                      },
+                    }}
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 hover:text-accent-foreground h-10 px-4 py-2"
+                    >
+                    <Heart className="w-4 h-4 mr-2" />
+                    View Mother's Maternal
+                    </Link>
+                  )}
                   </div>
                 )}
+                </div>
+              )}
               </div>
             </ProtectedComponentButton>
           </div>
         </div>
-
-        {/* Debug Info */}
-        {derivedChildData && (
-          <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded mx-4">
-            <p className="font-semibold mb-1">Parent Record Debug Info (Derived from API):</p>
-            <p>Child Pat ID: {derivedChildData?.pat_id || "N/A"}</p>
-            <p>
-              Child Name: {derivedChildData?.fname} {derivedChildData?.lname}
-            </p>
-            <hr className="my-2" />
-            <p className="font-medium">Mother</p>
-            <p>Mother Pat ID: {derivedChildData?.mother_pat_id || "N/A"}</p>
-            <p>
-              Mother Name: {derivedChildData?.mother_fname} {derivedChildData?.mother_lname}
-            </p>
-            <p>Pregnancy ID: {derivedChildData?.pregnancy_id || "N/A"}</p>
-            <p>Mother RP ID: {derivedChildData?.mother_rp_id || "N/A"}</p>
-            <p>Mother Address: {derivedChildData?.motherAddress?.full_address || "N/A"}</p>
-            <hr className="my-2" />
-            <p className="font-medium">Father</p>
-            <p>Father Pat ID: {derivedChildData?.father_pat_id || "N/A"}</p>
-            <p>
-              Father Name: {derivedChildData?.father_fname} {derivedChildData?.father_lname}
-            </p>
-            <p>Father RP ID: {derivedChildData?.father_rp_id || "N/A"}</p>
-            <p>Father Occupation: {derivedChildData?.father_occupation || "N/A"}</p>
-            <p>Father Address: {derivedChildData?.fatherAddress?.full_address || "N/A"}</p>
-          </div>
-        )}
 
         <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

@@ -36,6 +36,7 @@ export const BasicInfoSchema = z.object({
   residenceType: z.string().default("Resident"),
   address: z.string().optional(),
   landmarks: z.string().optional(),
+  pregnancy_id: z.string().optional(),
 })
 
 export const BFCheckSchema = z.object({
