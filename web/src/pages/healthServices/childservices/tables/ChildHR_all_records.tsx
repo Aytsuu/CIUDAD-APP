@@ -242,7 +242,7 @@ export default function AllChildHealthRecords() {
               />
             </div>
             <ProtectedComponentButton exclude={["DOCTOR"]}>
-              <div className="w-full sm:w-auto">
+                <div className="w-full sm:w-auto">
                 <Link
                   to="/services/childhealthrecords/form"
                   state={{
@@ -250,10 +250,15 @@ export default function AllChildHealthRecords() {
                       mode: "newchildhealthrecord"
                     }
                   }}
+                  onClick={() => {
+                    localStorage.removeItem("childHRFormData");
+                    localStorage.removeItem("childHRSelectedPatient");
+                    localStorage.removeItem("childHRSelectedPatientId");
+                  }}
                 >
                   <Button className="w-full sm:w-auto">New Record</Button>
                 </Link>
-              </div>
+                </div>
             </ProtectedComponentButton>
           </div>
         </div>

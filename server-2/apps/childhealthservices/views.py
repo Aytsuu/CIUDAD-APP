@@ -528,8 +528,8 @@ class ChildHealthPendingFollowUpView(APIView):
             # Get ChildHealthNotes for this record that have PENDING follow-up visits
             child_health_notes = ChildHealthNotes.objects.filter(
                 chhist__chrec=child_health_record,  # Link through chhist->chrec
-                followv__isnull=False,  # Only notes with follow-up visits
-                followv__followv_status='pending'  # Only pending status
+                # Only notes with follow-up visits
+                followv__followv_status__in=['pending', 'missed']  # Only pending or missed status
             ).select_related('followv', 'staff', 'chhist', 'chhist__chrec')
             
             # Group notes by their follow-up visit

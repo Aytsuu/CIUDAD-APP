@@ -35,7 +35,7 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     fatherdob: "",
     fatherAge: "",
     fatherOccupation: "",
-    tt_status: patient.family_head_info?.family_heads?.tt_status || ""
+    tt_status: patient.family_head_info?.family_heads?.tt_status || "",
   };
 
   if (patient.personal_info?.per_dob) {
