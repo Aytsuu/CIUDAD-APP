@@ -2978,3 +2978,66 @@ class FP_PregnancyCheckDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = FP_pregnancy_check.objects.all()
     lookup_field = "fp_pc_id"
 
+@api_view(["GET"])
+def check_and_notify_fp_followup(request, patient_id):
+    try:
+        patient = get_object_or_404(Patient, pat_id=patient_id)
+        today = timezone.now().date()
+        
+        # Get all FP records for this patient
+        fp_records = FP_Record.objects.filter(pat=patient)
+        
+        if not fp_records.exists():
+            return Response(
+                {"message": "No FP records found for this patient", "notification_created": False},
+                status=status.HTTP_200_OK
+            )
+        
+        notifications_created = []
+        
+        # Check each FP record for today's follow-ups
+        for fp_record in fp_records:
+            # Get assessment records with follow-up visits
+            assessments = FP_Assessment_Record.objects.filter(
+                fprecord=fp_record
+            ).select_related('followv')
+            
+            for assessment in assessments:
+                if assessment.followv and assessment.followv.followv_date == today:
+                    # Check if follow-up is still pending/scheduled
+                    if assessment.followv.followv_status in ['scheduled', 'pending']:
+                        # Create notification
+                        notification_created = create_fp_followup_notification(
+                            fp_record=fp_record,
+                            followup_date=assessment.followv.followv_date,
+                            status='today',
+                            sender=request.user if request.user.is_authenticated else None
+                        )
+                        
+                        if notification_created:
+                            notifications_created.append({
+                                "fprecord_id": fp_record.fprecord_id,
+                                "followup_date": assessment.followv.followv_date.isoformat(),
+                                "status": "notification_created"
+                            })
+        
+        return Response(
+            {
+                "message": f"Checked {len(fp_records)} FP records for today's follow-ups",
+                "notification_created": len(notifications_created) > 0,
+                "details": notifications_created
+            },
+            status=status.HTTP_200_OK
+        )
+        
+    except Patient.DoesNotExist:
+        return Response(
+            {"error": f"Patient with ID {patient_id} not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error in check_and_notify_fp_followup: {str(e)}")
+        return Response(
+            {"error": f"Error checking follow-ups: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
