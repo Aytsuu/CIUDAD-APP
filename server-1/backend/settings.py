@@ -79,7 +79,6 @@ INSTALLED_APPS = [
     'apps.gad',
     'apps.clerk',
     'apps.landing',
-    'backend.firebase.notifications',
     'apps.act_log',
     
 ]

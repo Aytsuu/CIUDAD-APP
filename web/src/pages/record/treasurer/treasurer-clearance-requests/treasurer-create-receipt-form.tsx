@@ -12,8 +12,7 @@ import { useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
 import { Loader2 } from "lucide-react";
-import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
-import { Loader2 } from "lucide-react";
+
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
    function ReceiptForm({
@@ -300,7 +299,6 @@ import { Loader2 } from "lucide-react";
                             onClick={onRequestDiscount}
                             >
                             Apply Discount
-                            </Button>
                             </Button>
                     )}
                 </div>

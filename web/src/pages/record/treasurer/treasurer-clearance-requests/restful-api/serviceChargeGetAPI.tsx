@@ -46,10 +46,8 @@ export type PurposeRate = {
   pr_category: string;
   pr_rate: string | number;
   pr_is_archive?: boolean;
-  pr_is_archive?: boolean;
 };
 
-// Use existing endpoint: /treasurer/purpose-and-rate/
 // Use existing endpoint: /treasurer/purpose-and-rate/
 export async function getServiceChargeRate(): Promise<PurposeRate | null> {
   const { data } = await api.get<PurposeRate[]>(
@@ -60,16 +58,7 @@ export async function getServiceChargeRate(): Promise<PurposeRate | null> {
     item.pr_purpose === 'Summons' && 
     item.pr_category === 'Service Charge' && 
     !item.pr_is_archive
-  const { data } = await api.get<PurposeRate[]>(
-    '/treasurer/purpose-and-rate/'
   );
-  // Filter for Service Charge purpose and return the first match
-  const serviceChargeRate = data?.find(item => 
-    item.pr_purpose === 'Summons' && 
-    item.pr_category === 'Service Charge' && 
-    !item.pr_is_archive
-  );
-  return serviceChargeRate ?? null;
   return serviceChargeRate ?? null;
 }
 
