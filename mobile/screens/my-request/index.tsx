@@ -18,6 +18,11 @@ export default () => {
      route: "/(my-request)/certification-tracking/certificate-request-tracker"
   },
   {
+    title: "Blotter Request",
+    description: "Monitor blotter request",
+    route: "/(my-request)/complaint-tracking/compMain"
+  },
+  {
     title: "Medicine Request",
      description: "Monitor your medicine requests.",
      route: "/(health)/medicine-request/my-requests"
