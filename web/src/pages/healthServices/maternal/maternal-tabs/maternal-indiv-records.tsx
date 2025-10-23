@@ -186,6 +186,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   };
 
   const latestFollowupVisit = getLatestFollowupVisit();
+  
   const nextFollowVisit = [...latestFollowupVisit]
     .filter((visit) => visit.followv_status === "pending") // Only show pending visits
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
@@ -398,9 +399,15 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     completePregnancy({ pat_id: selectedPatient.pat_id, pregnancy_id: pregnancyId });
   };
 
-  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
+  // mock up
+  const handleCompleteRecord = () => {
     // Implement as needed
   };
+
+  // original
+  // const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
+  //   // Implement as needed
+  // };
 
   const handlePregnancyLossRecord = (pregnancyId: string) => {
     if (!selectedPatient?.pat_id) return;
@@ -418,7 +425,6 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     }
   };
 
-  // Extract mode, patientData, and specificPregnancyId from props or location.state
   // Extract mode, patientData, and specificPregnancyId from props or location.state
   const params = location.state?.params;
   let patientData: any = undefined;
@@ -461,10 +467,9 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
                 <p className="text-xs text-darkGray sm:text-sm">Manage mother's individual maternal records</p>
               </div>
             </div>
-            <hr className="border-gray mb-5 sm:mb-8" />
+            <hr className="border-gray mb-5 sm:mb-6" />
           </div>
         )}
-        <hr className="border-gray mb-5 sm:mb-8" />
         <div className="w-full px-2 sm:px-4 md:px-6 bg-snow py-4">
           <div className="mb-5 gap-1">
             <PatientInfoCard patient={patientData} />

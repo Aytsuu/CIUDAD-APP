@@ -103,10 +103,6 @@ export default function PrenatalFormFirstPg({
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("");
   const [selectedIllnessId, setSelectedIllnessId] = useState<string>("");
 
-  // for vaccine useState
-  // const [, setNextVisitDate] = useState<string | null>(null);
-  // const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
-
   // patient data fetching
   const { data: illnessesData, refetch: illnessesRefetch } = useIllnessList(); // illness list
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId); //medical history
@@ -115,12 +111,11 @@ export default function PrenatalFormFirstPg({
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId); //body measurement
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId); //tt status
   const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ? selectedPatientId : "" ); //latest prenatal record
-  // const { data: vaccinesData, isLoading: isVacstckLoading } = fetchVaccinesWithStock(isFromIndividualRecord ? selectedPatientId : "");
 
   // add mutation hook
   const addIllnessMutation = useAddIllnessData();
 
-  // This function will only be called by form.handleSubmit if validation passes
+  // next button handler with validation
   const handleNext = async () => {
     const isValid = await trigger([
       "pat_id", // Ensure patient ID is validated

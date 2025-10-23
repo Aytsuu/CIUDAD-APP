@@ -406,10 +406,17 @@ export default function PrenatalFormSecPg({
                     ) : (
                       ttRecords
                         .sort((a, b) => {
-                          // Sort by date (most recent first)
-                          const dateA = a.ttDateGiven ? new Date(a.ttDateGiven).getTime() : 0
-                          const dateB = b.ttDateGiven ? new Date(b.ttDateGiven).getTime() : 0
-                          return dateB - dateA
+                          // Sort by TT status: TT5, TT4, TT3, TT2, TT1
+                          const ttOrder: Record<string, number> = {
+                            "TT5": 5,
+                            "TT4": 4,
+                            "TT3": 3,
+                            "TT2": 2,
+                            "TT1": 1,
+                          }
+                          const statusA = ttOrder[a.ttStatus || ""] || 0
+                          const statusB = ttOrder[b.ttStatus || ""] || 0
+                          return statusB - statusA
                         })
                         .map((record, index) => {
                           const statusBadge = getTTStatusBadge(record.ttStatus)
