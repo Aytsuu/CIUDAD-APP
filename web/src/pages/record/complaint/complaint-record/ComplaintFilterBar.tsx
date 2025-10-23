@@ -82,7 +82,7 @@ export default function ComplaintFilterBar({
               >
                 <FaRegQuestionCircle size={16} className="text-gray-400" />
                 <span>Request</span>
-                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
+                <span className="flex items-center justify-center h-6 font-semibold w-7 rounded-md bg-orange-100 text-red-500">
                   {buttons.requestCount || 0}
                 </span>
               </Button>

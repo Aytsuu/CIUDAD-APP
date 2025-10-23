@@ -1,27 +1,42 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import {
   User,
   Calendar,
   MapPin,
   Clock,
-  Edit2,
-  Forward,
   Phone,
   FileText,
   Download,
-  Printer,
 } from "lucide-react";
+import {
+  MdCheckCircle,
+  MdCancel,
+  MdTrendingUp,
+  MdAccessTimeFilled,
+} from "react-icons/md";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Loading from "@/components/ui/loading";
 import { Complainant, Accused, ComplaintFile } from "./complaint-type";
 import { useGetComplaintById } from "./api-operations/queries/complaintGetQueries";
+import { useUpdateComplaint } from "./api-operations/queries/complaintUpdateQueries";
+import { usePostRaiseIssue } from "./api-operations/queries/complaintPostQueries";
+import { ComplaintActionModal } from "./ComplaintActionModal";
+import { toast } from "sonner"; 
+
+type ActionType = "accept" | "reject" | "raise";
 
 export function ComplaintViewRecord() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState<ActionType | null>(null);
 
   // Get data from location state (from table link with state)
   const stateData = location.state?.complaint;
@@ -42,12 +57,88 @@ export function ComplaintViewRecord() {
     data: fetchedData,
     isLoading,
     isError,
+    refetch,
   } = useGetComplaintById(complaintId ?? "");
 
   // Use direct data if available, otherwise use fetched data
   const complaintData = complaintDataDirect || fetchedData;
 
-  // Loading state - this only show if actually fetching
+  // Mutation hooks
+  const updateComplaintMutation = useUpdateComplaint();
+  const raiseIssueMutation = usePostRaiseIssue();
+
+  // Handle action button clicks
+  const handleActionClick = (action: ActionType) => {
+    setCurrentAction(action);
+    setIsModalOpen(true);
+  };
+
+  // Handle modal confirmation
+  const handleConfirmAction = async (reason?: string) => {
+    if (!complaintData?.comp_id) {
+      toast.error("Invalid complaint ID");
+      return;
+    }
+
+    try {
+      const compId = Number(complaintData.comp_id);
+
+      // Handle different actions with appropriate API calls
+      switch (currentAction) {
+        case "accept":
+          await updateComplaintMutation.mutateAsync({
+            compId: compId,
+            payload: {
+              comp_status: "Accepted",
+            },
+          });
+          toast.success("Complaint accepted successfully");
+          navigate("/complaint")
+          break;
+
+        case "reject":
+          if (!reason) {
+            toast.error("Rejection reason is required");
+            return;
+          }
+          await updateComplaintMutation.mutateAsync({
+            compId: compId,
+            payload: {
+              comp_status: "Rejected",
+              rejection_reason: reason,
+            },
+          });
+          toast.success("Complaint rejected successfully");
+          navigate("/complaint");
+          break;
+
+        case "raise":
+          await raiseIssueMutation.mutateAsync(compId);
+          toast.success("Complaint raised successfully");
+          navigate("/complaint");
+          break;
+
+        default:
+          toast.error("Invalid action");
+          return;
+      }
+
+      setIsModalOpen(false);
+      await refetch();
+
+    } catch (error) {
+      console.error("Error processing action:", error);
+      toast.error(
+        `Failed to ${currentAction} complaint. Please try again.`
+      );
+    }
+  };
+
+  // Determine if any mutation is pending
+  const isProcessing = 
+    updateComplaintMutation.isPending || raiseIssueMutation.isPending;
+
+  // Loading state - this only shows if actually fetching
   if (isLoading && !hasDirectData) {
     return (
       <LayoutWithBack
@@ -79,29 +170,77 @@ export function ComplaintViewRecord() {
     return (
       <div className="">
         {/* Header */}
-        <div className="flex mb-4 justify-between items-center bg-blue-500 w-full h-16 rounded-lg px-4">
-          <div>
-            <p className="text-white font-normal text-sm">Confirmed by:</p>
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              className="gap-2 bg-transparent text-white"
-            >
-              <Forward className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 bg-transparent text-white"
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 bg-transparent text-white"
-            >
-              <Printer className="w-4 h-4" />
-            </Button>
+        <div className="flex mb-4 bg-white w-full h-24 rounded-lg">
+          <div className="flex justify-between items-center w-full p-4">
+            {/* Left section */}
+            <div className="flex items-center gap-4">
+              {complaintData.comp_status === "Pending" && (
+                <div className="flex bg-orange-100 rounded-lg w-9 h-9 justify-center items-center">
+                  <MdAccessTimeFilled size={24} className="text-red-500" />
+                </div>
+              )}
+
+              {complaintData.comp_status === "Raised" && (
+                <div className="flex bg-blue-100 rounded-lg w-9 h-9 justify-center items-center">
+                  <MdTrendingUp size={24} className="text-blue-500" />
+                </div>
+              )}
+
+              {complaintData.comp_status === "Accepted" && (
+                <div className="flex bg-green-100 rounded-lg w-9 h-9 justify-center items-center animate-bump">
+                  <MdCheckCircle size={24} className="text-green-500" />
+                </div>
+              )}
+
+              <div>
+                <h1 className="text-lg font-semibold text-gray-800">
+                  {complaintData.comp_status} Request
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {complaintData.comp_status === "Pending" &&
+                    "Blotter request awaiting review"}
+                  {complaintData.comp_status === "Raised" &&
+                    "Complaint undergoing process"}
+                  {complaintData.comp_status === "Accepted" && (
+                    <div>
+                      <p>Blotter has been accepted</p>
+                      <p>Confirmed by: {complaintData.staff} </p>
+                    </div>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            {complaintData.comp_status === "Pending" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleActionClick("accept")}
+                  disabled={isProcessing}
+                  className="bg-green-500 text-white px-4 py-1 rounded-md w-32 hover:bg-green-400 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MdCheckCircle /> Accept
+                </Button>
+                <Button
+                  onClick={() => handleActionClick("reject")}
+                  disabled={isProcessing}
+                  className="bg-red-500 text-white px-4 py-1 rounded-md w-32 hover:bg-red-400 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MdCancel /> Reject
+                </Button>
+              </div>
+            )}
+            {complaintData.comp_status === "Accepted" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleActionClick("raise")}
+                  disabled={isProcessing}
+                  className="bg-blue-500 text-white px-4 py-1 rounded-md w-32 hover:bg-blue-400 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MdTrendingUp /> Raise
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -139,7 +278,9 @@ export function ComplaintViewRecord() {
                     </p>
                     <p className="text-gray-900 flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-400" />
-                      {new Date(complaintData.comp_created_at).toLocaleString()}
+                      {new Date(
+                        complaintData.comp_created_at
+                      ).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -359,10 +500,18 @@ export function ComplaintViewRecord() {
     >
       <div className="flex">
         {/* Main Content */}
-        <div className="flex-1 overflow-auto px-10">
-          {renderContent()}
-        </div>
+        <div className="flex-1 overflow-auto px-10">{renderContent()}</div>
       </div>
+
+      {/* Action Modal */}
+      <ComplaintActionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        actionType={currentAction}
+        complaintId={complaintData?.comp_id || ""}
+        onConfirm={handleConfirmAction}
+        isLoading={isProcessing}
+      />
     </LayoutWithBack>
   );
 }

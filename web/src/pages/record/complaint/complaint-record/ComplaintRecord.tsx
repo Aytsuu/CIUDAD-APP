@@ -22,16 +22,16 @@ export default function ComplaintRecord() {
     setCurrentPage(1);
   }, [searchQuery, pageSize]);
 
-  // Filter for Filed and Raised complaints that are not archived
-  const filedAndRaisedComplaints = useMemo(() => {
+  // Filter for Accepted and Raised complaints that are not archived
+  const acceptedAndRaisedComplaints = useMemo(() => {
     return complaints.filter((c: Complaint) => 
-      (c.comp_status === 'Filed' || c.comp_status === 'Raised') && !c.comp_is_archive
+      (c.comp_status === 'Accepted' || c.comp_status === 'Raised') && !c.comp_is_archive
     );
   }, [complaints]);
 
   const filteredData = useMemo(() => {
-    return filterComplaints(filedAndRaisedComplaints, searchQuery);
-  }, [filedAndRaisedComplaints, searchQuery, timeFilter]);
+    return filterComplaints(acceptedAndRaisedComplaints, searchQuery);
+  }, [acceptedAndRaisedComplaints, searchQuery, timeFilter]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -65,7 +65,7 @@ export default function ComplaintRecord() {
           Blotter 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view filed and raised complaint
+          Manage and view accepted and raised complaints
         </p>
       </div>
       <hr className="pb-4" />

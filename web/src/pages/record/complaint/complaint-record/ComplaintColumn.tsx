@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Complaint } from "../complaint-type";
+import type { Complaint, Complainant, Accused } from "../complaint-type";
 import { Link } from "react-router";
-import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, AlertCircle, CircleChevronRight } from "lucide-react";
 import {
   MdCheckCircle,
@@ -14,14 +13,16 @@ import {
   MdHomeRepairService,
   MdVolumeUp,
   MdHelpOutline,
+  MdMoreHoriz
 } from "react-icons/md";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+
 
 // Interface for column options
 interface ComplaintColumnsOptions {
-  statusFilter?: string | null; // Status to display (e.g., "pending", "resolved", etc.)
+  statusFilter?: string | null; // Status to display (e.g., "pending", "accepted", etc.)
   showAllStatuses?: boolean; // If true, shows dynamic status based on data
 }
 
@@ -92,24 +93,42 @@ export const complaintColumns = (
       ),
       cell: ({ row }) => {
         const complainants = row.original.complainant;
-
+        console.log(JSON.stringify(complainants, null, 2));
         if (!complainants || complainants.length === 0) {
           return <div className="text-gray-500">Anonymous</div>;
         }
 
         const name = complainants[0].cpnt_name;
-        const firstComplainant =
-          name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() ||
-          "Anonymous";
+        const firstComplainant = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() || "Anonymous";
         const remainingCount = complainants.length - 1;
 
         return (
-          <div className="font-semibold text-gray-700 whitespace-nowrap">
-            {firstComplainant.toUpperCase()}
+          <div className="flex justify-between items-center font-semibold text-gray-700 whitespace-nowrap">
+            <div>{firstComplainant.toUpperCase()}</div>
             {remainingCount > 0 && (
-              <Badge className="bg-white text-black hover:bg-slate-100">
-                +{remainingCount}
-              </Badge>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
+                    <MdMoreHoriz/>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-2">
+                  <div className="flex flex-col gap-1">
+                    {complainants.slice(1).map((person: Complainant, idx: number) => (
+                      <div key={person.cpnt_id ?? idx} className="flex items-center justify-center gap-x-2  text-gray-700">
+                           <span>
+                            {person.rp_id ? (
+                              <div className="bg-green-500 px-4 py-1 rounded-full text-bold text-white"><p>Resident</p></div>
+                            ) : (
+                              <div className="bg-blue-500 px-4 py-1 rounded-full text-bold text-white"><p>Non-resident</p></div>
+                            )}
+                          </span>
+                        {person.cpnt_name.toUpperCase()}
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         );
@@ -139,17 +158,32 @@ export const complaintColumns = (
         const remainingCount = accusedPersons.length - 1;
 
         return (
-          <div className="font-semibold text-gray-700 whitespace-nowrap">
-            {firstAccused.toUpperCase()}
+          <div className="flex justify-between items-center font-semibold text-gray-700 whitespace-nowrap">
+            <div>{firstAccused.toUpperCase()}</div>
             {remainingCount > 0 && (
-              <TooltipLayout
-                trigger={
-                  <Badge className="bg-white text-black hover:bg-slate-100">
-                    +{remainingCount}
-                  </Badge>
-                }
-                content="...more"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                   <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
+                    <MdMoreHoriz/>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-2 w-full">
+                  <div className="flex flex-col gap-1">
+                     {accusedPersons.slice(1).map((person: Accused, idx: number) => (
+                      <div key={person.acsd_id ?? idx} className="flex items-center justify-center gap-x-2  text-gray-700">
+                          <span>
+                            {person.rp_id ? (
+                              <div className="bg-green-500 px-4 py-1 rounded-full text-bold text-white"><p>Resident</p></div>
+                            ) : (
+                              <div className="bg-blue-500 px-4 py-1 rounded-full text-bold text-white"><p>Non-resident</p></div>
+                            )}
+                          </span>
+                        {person.acsd_name.toUpperCase()}
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         );
@@ -203,6 +237,7 @@ export const complaintColumns = (
             ongoing: "bg-yellow-100 text-yellow-700",
             pending: "bg-orange-100 text-orange-700",
             raised: "bg-blue-100 text-blue-700",
+            accepted: "bg-green-100 text-green-700",
             filed: "bg-blue-100 text-blue-700",
             processing: "bg-yellow-100 text-yellow-700",
             settled: "bg-green-100 text-green-700",
@@ -214,6 +249,7 @@ export const complaintColumns = (
             ongoing: <MdTrendingUp size={18} />,
             pending: <MdAccessTimeFilled size={18} />,
             raised: <MdError size={18} />,
+            accepted: <MdCheckCircle size={18} />,
             filed: <MdCheckCircle size={18} />,
             processing: <MdTrendingUp size={18} />,
             settled: <MdCheckCircle size={18} />,
@@ -243,7 +279,7 @@ export const complaintColumns = (
           ongoing: "bg-yellow-100 text-yellow-700",
           pending: "bg-orange-100 text-orange-700",
           raised: "bg-blue-100 text-blue-700",
-          filed: "bg-blue-100 text-blue-700",
+          accepted: "bg-green-100 text-green-700",
           processing: "bg-yellow-100 text-yellow-700",
           settled: "bg-green-100 text-green-700",
         };
@@ -254,7 +290,7 @@ export const complaintColumns = (
           ongoing: <MdTrendingUp size={18} />,
           pending: <MdAccessTimeFilled size={18} />,
           raised: <MdError size={18} />,
-          filed: <MdCheckCircle size={18} />,
+          accepted: <MdCheckCircle size={18} />,
           processing: <MdTrendingUp size={18} />,
           settled: <MdCheckCircle size={18} />,
         };
@@ -317,8 +353,11 @@ export const resolvedComplaintColumns = () =>
 export const rejectedComplaintColumns = () => 
   complaintColumns({ statusFilter: "rejected", showAllStatuses: false });
 
-export const filedComplaintColumns = () => 
-  complaintColumns({ statusFilter: "filed", showAllStatuses: false });
+export const acceptedComplaintColumns = () => 
+  complaintColumns({ statusFilter: "accepted", showAllStatuses: false });
+
+export const raisedComplaintColumns = () => 
+  complaintColumns({ statusFilter: "raised", showAllStatuses: false });
 
 export const allComplaintColumns = () => 
   complaintColumns({ showAllStatuses: true });
