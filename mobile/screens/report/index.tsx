@@ -1,5 +1,5 @@
 import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image, InteractionManager} from "react-native"
-import { router, useRouter } from "expo-router"
+import { router } from "expo-router"
 import React from "react"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight"
@@ -12,7 +12,6 @@ import { Drawer } from "@/components/ui/drawer"
 import ReportRecord from "./ReportRecord"
 import ReportHistory from "./ReportHistory"
 import { NoAccessScreen } from "@/components/ui/feedback-screen"
-import { LoadingState } from "@/components/ui/loading-state"
 
 
 export default () => {

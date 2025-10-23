@@ -14,22 +14,29 @@ class IRBaseSerializer(serializers.ModelSerializer):
 class IRTableSerializer(serializers.ModelSerializer):
   ir_reported_by = serializers.SerializerMethodField()
   ir_time = serializers.SerializerMethodField()
-  ir_type = serializers.CharField(source="rt.rt_label")
+  ir_type = serializers.SerializerMethodField()
+  files = serializers.SerializerMethodField()
 
   class Meta: 
     model = IncidentReport
     fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
              'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
-             'files']
-    
+             'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
+             'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name']
+  
+  def get_ir_type(self, obj):
+    if obj.rt:
+      return obj.rt.rt_label
+
   def get_ir_time(self, obj):
     if obj.ir_time:
         return obj.ir_time.strftime("%I:%M %p")
     return None
   
   def get_ir_reported_by(self, obj):
-    info = obj.rp.per
-    return f"{info.per_lname}, {info.per_fname}" + \
+    if obj.rp:
+      info = obj.rp.per
+      return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
 
 class IRCreateSerializer(serializers.ModelSerializer):

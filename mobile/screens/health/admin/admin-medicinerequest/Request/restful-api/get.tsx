@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api";
-import { MedicineRequestPendingResponse } from "../types";
 
 
 export const getMedicineRequestProcessing = async () => {

@@ -9,19 +9,21 @@ import {
   Sheet,
 } from "./sheet";
 
-export function SheetLayout({trigger, title, description, content, footer} : {
+export function SheetLayout({trigger, title, description, content, footer, contentClassname, onOpenChange} : {
   trigger: React.ReactNode;
   title?: React.ReactNode;
   description?: React.ReactNode;
   content: React.ReactNode;
   footer?: React.ReactNode;
+  contentClassname?: string;
+  onOpenChange?: () => void;
 }) {
   return (
-    <Sheet>
+    <Sheet onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         {trigger}
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className={contentClassname}>
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>

@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router"
 import { ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, View, Text } from "react-native"
 import { useGetIncidentReport } from "../queries/reportFetch";
-import React, { act } from "react";
+import React from "react";
 import PageLayout from "@/screens/_PageLayout";
 import { Card } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";

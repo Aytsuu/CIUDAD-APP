@@ -7,6 +7,7 @@ urlpatterns = [
     path("<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
     # path("list/", AnnouncementView.as_view(), name="retrieve-announcements"),
     path('list/', AnnouncementListView.as_view(), name='announcements-list'),
+    path('<int:ann_id>/update/', AnnouncementUpdateView.as_view(), name="update-announcement"),
     
     # Recipients
     path("create-recipient/", AnnouncementRecipientView.as_view(), name="recipient"),

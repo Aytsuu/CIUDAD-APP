@@ -5,7 +5,7 @@ import logging
 
 # Django imports
 from django.db.models import (
-    Case, When, F, CharField, Q, Prefetch, Count, Subquery
+   OuterRef, Subquery, Q, Prefetch, Count, Subquery
 )
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404
@@ -30,17 +30,26 @@ from apps.inventory.models import *
 from apps.medicalConsultation.utils import apply_patient_type_filter
 
 
+
+
+
 class ChildHealthRecordsView(generics.ListAPIView):
     serializer_class = ChildHealthrecordSerializer
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        # Base queryset with annotations for health history count
+        # Subquery to get the latest child health history date for each record
+        latest_history_subquery = ChildHealth_History.objects.filter(
+            chrec=OuterRef('pk')
+        ).order_by('-created_at').values('created_at')[:1]
+
+        # Base queryset with annotations for health history count and latest date
         queryset = ChildHealthrecord.objects.annotate(
             health_checkup_count=Count(
                 'child_health_histories',
                 distinct=True
-            )
+            ),
+            latest_child_history_date=Subquery(latest_history_subquery)
         ).select_related(
             'patrec__pat_id',
             'patrec__pat_id__rp_id',
@@ -50,7 +59,10 @@ class ChildHealthRecordsView(generics.ListAPIView):
             'patrec__pat_id__rp_id__per__personal_addresses',
             'patrec__pat_id__rp_id__per__personal_addresses__add',
             'child_health_histories'
-        ).order_by('-created_at')
+        )
+
+        # Order by latest child health history date (most recent first) then by created_at
+        queryset = queryset.order_by('-latest_child_history_date', '-created_at')
         
         # Track if any filter is applied
         filters_applied = False
@@ -81,8 +93,6 @@ class ChildHealthRecordsView(generics.ListAPIView):
             queryset = apply_patient_type_filter(queryset, patient_type_search)
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
-        
-       
         
         return queryset
     
@@ -144,7 +154,6 @@ class ChildHealthRecordsView(generics.ListAPIView):
         
         return queryset.filter(combined_query).distinct()
     
-    
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
@@ -155,8 +164,6 @@ class ChildHealthRecordsView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
     serializer_class = ChildHealthHistorySerializer

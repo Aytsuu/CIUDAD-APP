@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { supabase}  from "@/lib/supabaseClient" 
 import FloatingAnnouncement from "./FloatingAnnouncement"
+import supabase from "@/supabase/supabase"
 
 export default function FloatingAnnouncementContainer() {
   const [announcement, setAnnouncement] = useState<any | null>(null)

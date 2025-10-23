@@ -36,21 +36,35 @@ class FamilyHealthProfilingDetailView(APIView):
             household_data = None
             if hasattr(family, 'hh') and family.hh:
                 household = family.hh
-                household_data = {
-                    'household_id': household.hh_id,
-                    'household_no': household.hh_id,  # Use hh_id as household_no
-                    'nhts_status': household.hh_nhts if hasattr(household, 'hh_nhts') else None,
-                    'date_registered': household.hh_date_registered if hasattr(household, 'hh_date_registered') else None,
-                    'address': {
-                        'sitio': household.add.sitio.sitio_name if household.add and household.add.sitio else None,
-                        'street': household.add.add_street if household.add else None,
-                        'barangay': household.add.add_barangay if household.add else None,
-                        'city': household.add.add_city if household.add else None,
-                        'province': household.add.add_province if household.add else None,
-                    } if hasattr(household, 'add') and household.add else None
-                }
-            
-            # Get family members
+            household_data = {
+                'household_id': household.hh_id,
+                'household_no': household.hh_id,  # Use hh_id as household_no
+                'nhts_status': household.hh_nhts if hasattr(household, 'hh_nhts') else None,
+                'date_registered': household.hh_date_registered if hasattr(household, 'hh_date_registered') else None,
+                'address': {
+                    'sitio': household.add.sitio.sitio_name if household.add and household.add.sitio else None,
+                    'street': household.add.add_street if household.add else None,
+                    'barangay': household.add.add_barangay if household.add else None,
+                    'city': household.add.add_city if household.add else None,
+                    'province': household.add.add_province if household.add else None,
+                } if hasattr(household, 'add') and household.add else None,
+                # Add household head information (the resident the household is registered to)
+                'head_resident': {
+                    'resident_id': household.rp.rp_id if household.rp else None,
+                    'personal_info': {
+                        'first_name': household.rp.per.per_fname if household.rp and household.rp.per else '',
+                        'middle_name': household.rp.per.per_mname if household.rp and household.rp.per else '',
+                        'last_name': household.rp.per.per_lname if household.rp and household.rp.per else '',
+                        'suffix': household.rp.per.per_suffix if household.rp and household.rp.per else '',
+                        'contact': household.rp.per.per_contact if household.rp and household.rp.per else '',
+                        'sex': household.rp.per.per_sex if household.rp and household.rp.per else '',
+                        'date_of_birth': household.rp.per.per_dob if household.rp and household.rp.per else None,
+                        'civil_status': household.rp.per.per_status if household.rp and household.rp.per else '',
+                        'education': household.rp.per.per_edAttainment if household.rp and household.rp.per else '',
+                        'religion': household.rp.per.per_religion if household.rp and household.rp.per else '',
+                    }
+                } if household.rp else None
+            }            # Get family members
             family_compositions = FamilyComposition.objects.filter(
                 fam=family
             ).select_related('rp__per').order_by('rp__per__per_fname')
@@ -58,6 +72,9 @@ class FamilyHealthProfilingDetailView(APIView):
             family_members = []
             resident_ids = []
             
+            # Import placed here to avoid circulars in type checkers
+            from ..models import Dependents_Under_Five
+
             for composition in family_compositions:
                 resident = composition.rp
                 resident_ids.append(resident.rp_id)
@@ -76,7 +93,8 @@ class FamilyHealthProfilingDetailView(APIView):
                             'health_risk_class': mother_health_info_obj.mhi_healthRisk_class,
                             'immunization_status': mother_health_info_obj.mhi_immun_status,
                             'family_planning_method': mother_health_info_obj.mhi_famPlan_method,
-                            'family_planning_source': mother_health_info_obj.mhi_famPlan_source
+                            'family_planning_source': mother_health_info_obj.mhi_famPlan_source,
+                            'lmp_date': mother_health_info_obj.mhi_lmp_date
                         }
                 
                 member_data = {
@@ -96,12 +114,26 @@ class FamilyHealthProfilingDetailView(APIView):
                     },
                     'health_details': {
                         'blood_type': health_details.per_add_bloodType if health_details else '',
-                        'philhealth_id': health_details.per_add_philhealth_id if health_details else '',
-                        'covid_vax_status': health_details.per_add_covid_vax_status if health_details else '',
                         'relationship_to_hh_head': health_details.per_add_rel_to_hh_head if health_details else ''
+                    },
+                    'per_additional_details': {
+                        'per_add_philhealth_id': health_details.per_add_philhealth_id if health_details else '',
+                        'per_add_covid_vax_status': health_details.per_add_covid_vax_status if health_details else ''
                     },
                     'mother_health_info': mother_health_info
                 }
+
+                # Attach under-five dependent health fields if available for this composition
+                try:
+                    duf = Dependents_Under_Five.objects.filter(rp=resident, fc=composition).first()
+                except Exception:
+                    duf = None
+                if duf:
+                    member_data['under_five'] = {
+                        'fic': duf.duf_fic,
+                        'nutritional_status': duf.duf_nutritional_status,
+                        'exclusive_bf': duf.duf_exclusive_bf,
+                    }
                 family_members.append(member_data)
             
             # Get environmental data (if household exists)
@@ -111,6 +143,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 water_supply = WaterSupply.objects.filter(hh=household).first()
                 if water_supply:
                     environmental_data['water_supply'] = {
+                        'id': water_supply.water_sup_id,  # Added ID for update operations
                         'type': water_supply.water_sup_type,
                         'connection_type': water_supply.water_conn_type,
                         'description': water_supply.water_sup_desc
@@ -120,7 +153,9 @@ class FamilyHealthProfilingDetailView(APIView):
                 sanitary_facility = SanitaryFacility.objects.filter(hh=household).first()
                 if sanitary_facility:
                     environmental_data['sanitary_facility'] = {
+                        'id': sanitary_facility.sf_id,  # Added ID for update operations
                         'facility_type': sanitary_facility.sf_type,  # Fixed: sf_type instead of sf_facility_type
+                        'description': sanitary_facility.sf_desc,    # Added: human-readable subtype description
                         'toilet_facility_type': sanitary_facility.sf_toilet_type  # Fixed: sf_toilet_type instead of sf_toilet_facility_type
                     }
                 
@@ -128,6 +163,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 solid_waste = SolidWasteMgmt.objects.filter(hh=household).first()
                 if solid_waste:
                     environmental_data['waste_management'] = {
+                        'id': solid_waste.swm_id,  # Added ID for update operations
                         'type': solid_waste.swn_desposal_type,  # Fixed: swn_desposal_type instead of swm_type
                         'description': solid_waste.swm_desc  # Fixed: swm_desc instead of checking for swm_others
                     }
@@ -185,10 +221,37 @@ class FamilyHealthProfilingDetailView(APIView):
             survey_data = None
             if survey_identification:
                 survey_serializer = SurveyIdentificationDetailSerializer(survey_identification)
+
+                # Try to fetch respondent (name + contact) linked to this family
+                try:
+                    from ..models import RespondentsInfo
+                    respondent = (
+                        RespondentsInfo.objects
+                        .filter(fam=family)
+                        .select_related('rp__per')
+                        .first()
+                    )
+                except Exception:
+                    respondent = None
+
+                respondent_name = None
+                respondent_contact = None
+                if respondent and getattr(respondent, 'rp', None) and getattr(respondent.rp, 'per', None):
+                    per = respondent.rp.per
+                    # Format: Lastname, Firstname Middlename (include suffix at the end if available)
+                    ln = per.per_lname or ''
+                    fn = per.per_fname or ''
+                    mn = per.per_mname or ''
+                    sx = per.per_suffix or ''
+                    name_core = f"{ln}, {fn}{(' ' + mn) if mn else ''}".strip()
+                    respondent_name = f"{name_core}{(' ' + sx) if sx else ''}".strip()
+                    respondent_contact = per.per_contact or ''
+
                 survey_data = {
                     'survey_id': survey_serializer.data['si_id'],
                     'filled_by': survey_serializer.data['si_filled_by'],
-                    'informant': survey_serializer.data['si_informant'],
+                    'informant': respondent_name or survey_serializer.data['si_informant'],
+                    'informant_contact': respondent_contact or '',
                     'checked_by': survey_serializer.data['si_checked_by'],
                     'date': survey_serializer.data['si_date'],
                     'signature': survey_serializer.data['si_signature'],

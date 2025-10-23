@@ -18,11 +18,4 @@ class BodyMeasurementSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BodyMeasurementSerializer(serializers.ModelSerializer):
-    pat_details = PatientSerializer(source='pat', read_only=True)
-    class Meta:
-        model = BodyMeasurement
-        fields = '__all__'
-
-
 

@@ -13,12 +13,10 @@ module.exports = {
 				poppins: [
 					'Poppins',
 					'sans-serif'
-				]
-			},
-			fontFamily: {
-				poppins: [
-					'Poppins',
-					'sans-serif'
+				],
+				canterbury: [
+					'Canterbury',
+					'serif'
 				]
 			},
 			colors: {

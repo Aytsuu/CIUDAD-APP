@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Dimensions, ActivityIndicator, Alert, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, Dimensions, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { TrendingUp, AlertCircle } from "lucide-react-native";
 import { format, parseISO } from "date-fns";

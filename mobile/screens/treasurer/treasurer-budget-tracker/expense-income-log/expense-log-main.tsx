@@ -5,22 +5,14 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  Modal,
-  Image,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
 import {
   Search,
-  ChevronLeft,
-  FileInput,
-  CircleAlert,
-  ArrowUpDown,
-  X
+  ChevronLeft
 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import PageLayout from '@/screens/_PageLayout';
 import { useExpenseLog, type ExpenseLog } from '../queries/income-expense-FetchQueries';

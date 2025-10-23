@@ -8,9 +8,8 @@ export interface PrenatalRecord {
   pat_id: string
   patrec_type: string
   pf_occupation: string
-  pf_lmp: string | null
   pf_edc: string | null
-  staff_id: string
+  assessed_by: string
   previous_complications: string | null
   spouse_data?: {
     spouse_type: string
@@ -37,7 +36,7 @@ export interface PrenatalRecord {
     obs_para: number | null
     obs_fullterm: number | null
     obs_preterm: number | null
-    obs_record_from: string | "Prenatal"
+    obs_lmp: string | null
   }
   medical_history?: Array<{
     year: number | null
@@ -59,7 +58,7 @@ export interface PrenatalRecord {
   tt_statuses: Array<{
     tts_status: string | null
     tts_date_given: string | null
-    // tts_tdap: boolean | null
+    vaccineType?: string  // Vaccine stock information for creating vaccination records
   }>
   lab_results_data: Array<{
     lab_type: string
@@ -117,6 +116,12 @@ export interface PrenatalRecord {
   }>
   vital_bp_systolic: number | null
   vital_bp_diastolic: number | null
+  selected_medicines?: Array<{
+    minv_id: string
+    medrec_qty: number
+    reason: string
+  }>
+  vacrec_totaldose?: number | null 
 }
 
 export const addPrenatalRecord = async (data: PrenatalRecord) => {

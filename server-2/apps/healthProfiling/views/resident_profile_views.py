@@ -103,6 +103,7 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
             filtered_residents = [
                 res for res in residents 
                 if res.rp_id not in
+                
                 [staff.staff_id for staff in staffs]
             ]
 

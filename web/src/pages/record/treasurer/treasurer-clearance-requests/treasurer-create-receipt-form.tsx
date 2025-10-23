@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
 import { Loader2 } from "lucide-react";
 
+
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
    function ReceiptForm({
     id,

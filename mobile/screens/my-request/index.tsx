@@ -1,7 +1,6 @@
 import { Text, View, TouchableOpacity } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import {ChevronRight} from "@/lib/icons/ChevronRight"
 
 export default () => {
@@ -24,14 +23,14 @@ export default () => {
      route: "/(health)/medicine-request/my-requests"
   },
   {
-    title: "Maternal Appointment",
-     description: "",
-     route: ""
+    title: "Prenatal Appointment",
+     description: "Monitor your prenatal appointments.",
+     route: "/(health)/maternal/my-appointments"
   },
   {
     title: "Medical Consultation Appointment",
-     description: "",
-     route: ""
+     description: "Monitor your medical consultation appointments",
+     route: "/(health)/medconsultation/my-medappointments"
   },
 ]
 

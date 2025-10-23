@@ -456,7 +456,7 @@ export const immunizationTrackingFields: any[] = [
                   <span className="font-semibold">Date:</span> {new Date(vachist.created_at).toLocaleDateString()}
                 </div>
                 <div>
-                  <span className="font-semibold">Age at vaccination:</span> {vachist.vachist_age}
+                  {/* <span className="font-semibold">Age at vaccination:</span> {vachist.vachist_age} */}
                 </div>
                 {/* {vachist.follow_up_visit && (
                   <div className=" bg-red-100 rounded-md p-1 text-red-500">
