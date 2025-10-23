@@ -148,7 +148,6 @@ export default function Dashboard() {
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
-                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
               </div>
             )}
             {cardsWithAccess.length > 0 && (
