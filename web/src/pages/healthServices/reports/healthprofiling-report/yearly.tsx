@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Folder, Calendar } from "lucide-react";
+import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
@@ -8,7 +8,7 @@ import { usePopulationYearlyRecords } from "./queries/fetchQueries";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useNavigate } from "react-router-dom";
+import { MonthInfoCard } from "../month-folder-component";
 
 interface YearRecord {
   year: string;
@@ -22,7 +22,6 @@ export default function YearlyPopulationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
 
   const { data: apiResponse, isLoading, error } = usePopulationYearlyRecords();
 
@@ -56,17 +55,6 @@ export default function YearlyPopulationRecords() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-
-  const handleYearClick = (yearRecord: YearRecord) => {
-    navigate("/health-family-profiling/records", {
-      state: {
-        year: yearRecord.year,
-        totalPopulation: yearRecord.total_population,
-        totalFamilies: yearRecord.total_families,
-        totalHouseholds: yearRecord.total_households,
-      },
-    });
-  };
 
   return (
     <LayoutWithBack 
@@ -134,55 +122,24 @@ export default function YearlyPopulationRecords() {
               ) : paginatedData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {paginatedData.map((record: YearRecord) => (
-                    <button
+                    <MonthInfoCard
                       key={record.year}
-                      onClick={() => handleYearClick(record)}
-                      className="group relative bg-gradient-to-br from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 p-6 rounded-xl border-2 border-violet-200 hover:border-violet-400 transition-all duration-300 hover:scale-105 hover:shadow-lg text-left"
-                    >
-                      <div className="flex flex-col gap-4">
-                        {/* Icon */}
-                        <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-violet-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                          <Calendar className="w-6 h-6 text-white" />
-                        </div>
-
-                        {/* Year */}
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-800">{record.year}</h3>
-                          <p className="text-sm text-gray-500 mt-1">Calendar Year</p>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Population:</span>
-                            <span className="font-semibold text-violet-600">
-                              {record.total_population?.toLocaleString() || 0}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Families:</span>
-                            <span className="font-semibold text-violet-600">
-                              {record.total_families?.toLocaleString() || 0}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Households:</span>
-                            <span className="font-semibold text-violet-600">
-                              {record.total_households?.toLocaleString() || 0}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Hover indicator */}
-                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
+                      monthItem={{
+                        month: record.year,
+                        month_name: record.year,
+                        total_items: record.total_population
+                      }}
+                      navigateTo={{
+                        path: "/health-family-profiling/records",
+                        state: {
+                          year: record.year,
+                          totalPopulation: record.total_population,
+                          totalFamilies: record.total_families,
+                          totalHouseholds: record.total_households,
+                        }
+                      }}
+                      record_name="population"
+                    />
                   ))}
                 </div>
               ) : (
