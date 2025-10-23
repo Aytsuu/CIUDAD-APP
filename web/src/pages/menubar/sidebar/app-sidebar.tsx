@@ -159,7 +159,7 @@ export function AppSidebar() {
   const barangayItems: BaseMenuItem[] = [
     {
       title: "Calendar",
-      url: "/waste-calendar-scheduling",
+      url: "/calendar-page",
     },
     ...(featureValidator("report")
       ? [
@@ -241,7 +241,7 @@ export function AppSidebar() {
             title: "Council",
             url: "/",
             items: [
-              { title: "Council Events", url: "/calendar-page" },
+              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },

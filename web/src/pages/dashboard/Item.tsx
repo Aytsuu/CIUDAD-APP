@@ -26,7 +26,16 @@ import { useCertificateSectionCards } from "@/components/analytics/certificate/c
 import { CertificatePurposeChart } from "@/components/analytics/certificate/certificate-purpose-chart";
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
-import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { ReactElement } from "react";
+
+type DashboardItem = {
+  dashboard: string;
+  card?: ReactElement[];
+  sidebar?: { title: string; element: ReactElement }[];
+  chart?: { title: string; element: ReactElement }[];
+  upcomingEvents?: ReactElement;
+};import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
@@ -43,9 +52,11 @@ export const getItemsConfig = (
   conciliationCards: ReturnType<typeof useConciliationSectionCards>,
   mediationCards: ReturnType<typeof useMediationSectionCards>,
   remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
-) => {
+  councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
+): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
+  const { upcomingEvents: councilUpcomingEvents } = councilEvents;
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -151,6 +162,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "COUNCIL",
+        upcomingEvents: councilUpcomingEvents,
       },
       {
         dashboard: "FINANCE",

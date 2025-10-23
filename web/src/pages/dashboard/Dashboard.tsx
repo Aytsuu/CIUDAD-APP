@@ -10,6 +10,7 @@ import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wast
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
+import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
@@ -34,9 +35,10 @@ export default function Dashboard() {
   const mediationCards = useMediationSectionCards();
   const remarkCard = useNoRemarksSectionCard();
 
+  const councilEvents = useCouncilUpcomingEvents();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents]
   );
 
   const validateFeature = (feature: string) => {
@@ -141,10 +143,14 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-            <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
-              <Label className="text-white text-xl">Upcoming Events</Label>
-  
-            </div>
+            {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
+              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+                <div className="mb-4">
+                  <Label className="text-white text-xl font-bold">Upcoming Events</Label>
+                </div>
+                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+              </div>
+            )}
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-2/3">
                 <div className="flex items-center justify-between mb-6">

@@ -10,6 +10,14 @@ export type Certificate = {
     per_lname: string;
     per_dob?: string;
     per_address?: string;
+    per_addresses?: Array<{
+      add_street?: string;
+      add_external_sitio?: string;
+      add_barangay?: string;
+      add_city?: string;
+      add_province?: string;
+    }>;
+    per_is_deceased?: boolean;
   } | null;
   req_pay_method: string;
   req_request_date: string;
@@ -52,29 +60,27 @@ export type NonResidentCertificate = {
 
 export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (page) params.append('page', page.toString());
-    if (pageSize) params.append('page_size', pageSize.toString());
-    if (status) params.append('status', status);
-    if (paymentStatus) params.append('payment_status', paymentStatus);
+    // Build query parameters for each API call (without pagination - we'll handle it client-side)
+    const buildParams = (includeStatus = true) => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      // Don't include page/pageSize - fetch all data and paginate client-side
+      if (includeStatus && status) params.append('status', status);
+      if (paymentStatus) params.append('payment_status', paymentStatus);
+      return params.toString();
+    };
     
-    const queryString = params.toString();
-    
-    // Fetch both resident and non-resident certificates
+    // Fetch both resident and non-resident certificates without pagination
     const [residentRes, nonResidentRes] = await Promise.all([
-      api.get(`/clerk/certificate/${queryString ? '?' + queryString : ''}`),
-      api.get(`/clerk/nonresident-personal-clearance/${queryString ? '?' + queryString : ''}`)
+      api.get(`/clerk/certificate/?${buildParams(true)}`),
+      api.get(`/clerk/nonresident-personal-clearance/?${buildParams(false)}`) // Don't include status filter for non-residents
     ]);
     
     const residentData = residentRes.data;
     const nonResidentData = nonResidentRes.data;
     
-    // Handle both paginated and non-paginated responses for residents
+    // Handle paginated responses properly
     const residentRaw = residentData.results || residentData;
-    
-    // Handle both paginated and non-paginated responses for non-residents
     const nonResidentRaw = nonResidentData.results || nonResidentData;
     
     // Map resident certificates
@@ -86,6 +92,7 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
           per_lname: item.resident_details.per_lname,
           per_dob: item.resident_details.per_dob,
           per_address: item.resident_details.per_address,
+          per_is_deceased: item.resident_details.per_is_deceased,
         } : null,
         req_pay_method: item.req_pay_method || 'Walk-in',
         req_request_date: item.cr_req_request_date,
@@ -134,53 +141,27 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
       } as Certificate;
     });
 
-    // Combine both types of certificates
-    let allCertificates = [...residentCertificates, ...nonResidentCertificates];
+    // Apply type filtering based on status parameter
+    let allCertificates: Certificate[] = [];
     
-    // Apply type filtering
     if (status && status !== "all") {
       if (status === "resident") {
-        allCertificates = allCertificates.filter(cert => !cert.is_nonresident);
+        allCertificates = residentCertificates;
       } else if (status === "nonresident") {
-        allCertificates = allCertificates.filter(cert => cert.is_nonresident);
+        allCertificates = nonResidentCertificates;
+      } else {
+        allCertificates = [...residentCertificates, ...nonResidentCertificates];
       }
+    } else {
+      allCertificates = [...residentCertificates, ...nonResidentCertificates];
     }
     
-    // Apply purpose filtering (case-insensitive)
+    // Apply purpose filtering (case-insensitive) - this should be done client-side since backend doesn't support it
     if (paymentStatus && paymentStatus !== "all") {
-      console.log('Filtering by purpose:', paymentStatus);
-      allCertificates = allCertificates.filter(cert => {
-        const purposeMatch = cert.req_purpose?.toLowerCase() === paymentStatus.toLowerCase();
-        console.log(`Certificate ${cert.cr_id}: purpose="${cert.req_purpose}" matches="${purposeMatch}"`);
-        return purposeMatch;
-      });
+      allCertificates = allCertificates.filter(cert => 
+        cert.req_purpose?.toLowerCase() === paymentStatus.toLowerCase()
+      );
     }
-    
-    // Apply search filtering
-    if (search) {
-      const searchLower = search.toLowerCase();
-      allCertificates = allCertificates.filter(cert => {
-        const firstName = cert.is_nonresident 
-          ? cert.nrc_requester?.split(' ')[0]?.toLowerCase() || ''
-          : cert.resident_details?.per_fname?.toLowerCase() || '';
-        const lastName = cert.is_nonresident 
-          ? cert.nrc_requester?.split(' ').slice(1).join(' ').toLowerCase() || ''
-          : cert.resident_details?.per_lname?.toLowerCase() || '';
-        const fullName = cert.is_nonresident 
-          ? cert.nrc_requester?.toLowerCase() || ''
-          : `${cert.resident_details?.per_fname || ''} ${cert.resident_details?.per_lname || ''}`.toLowerCase();
-        const purpose = cert.req_purpose?.toLowerCase() || '';
-        const crId = cert.cr_id?.toLowerCase() || '';
-        
-        return firstName.includes(searchLower) || 
-               lastName.includes(searchLower) || 
-               fullName.includes(searchLower) ||
-               purpose.includes(searchLower) ||
-               crId.includes(searchLower);
-      });
-    }
-    
-    const totalCount = allCertificates.length;
     
     // Sort by request date (newest first) with robust date parsing
     allCertificates.sort((a, b) => {
@@ -205,7 +186,11 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
       return dateDiff;
     });
     
-    // Apply pagination to combined results
+    // For now, return all results and let the frontend handle pagination
+    // This is because the backend pagination doesn't work well with combined results
+    const totalCount = allCertificates.length;
+    
+    // Apply client-side pagination
     const startIndex = ((page || 1) - 1) * (pageSize || 10);
     const endIndex = startIndex + (pageSize || 10);
     const paginatedResults = allCertificates.slice(startIndex, endIndex);
