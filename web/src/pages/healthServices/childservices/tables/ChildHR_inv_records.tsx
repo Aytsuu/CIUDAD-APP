@@ -1,11 +1,11 @@
-// use client";
+"use client";
+
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, Loader2 } from "lucide-react";
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ChevronLeft } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { useChildHealthHistory, useNutriotionalStatus } from "../forms/queries/fetchQueries";
@@ -16,9 +16,11 @@ import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
-import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { GrowthChart } from "./growth-chart";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { processHistoryData } from "./formattedData";
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
+import TableLoading from "../../table-loading";
 
 export default function InvChildHealthRecords() {
   const location = useLocation();
@@ -29,7 +31,7 @@ export default function InvChildHealthRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Add safe access to ChildHealthRecord properties
+  // Safe access to ChildHealthRecord properties
   const patId = childData?.pat_id || "";
   const dob = childData?.dob || "";
   const chrecId = childData?.chrec_id || "";
@@ -39,98 +41,107 @@ export default function InvChildHealthRecords() {
   const { data: historyData = [], isLoading: childHistoryLoading, isError, error } = useChildHealthHistory(chrecId);
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patId);
   const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError } = useNutriotionalStatus(patId);
+
   const isLoading = followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || childHistoryLoading;
 
   console.log("chhh", chrecId);
   console.log("childData", childData);
+  console.log("historyData", historyData);
+
   useEffect(() => {
     if (!chrecId) {
       console.error("ChildHealthRecord or chrec_id is missing from location state.");
     }
   }, [chrecId, navigate]);
 
-  // In your processedHistoryData useMemo
-  const processedHistoryData = useMemo(() => {
-    if (!historyData || historyData.length === 0) return [];
-    const mainRecord = historyData[0];
-    if (!mainRecord || !mainRecord.child_health_histories) {
-      return [];
+  // Transform child data from nested API structure - ONLY for ChildHealthRecordCard
+  const transformChildData = useMemo(() => {
+    console.log("🔄 TRANSFORMING CHILD DATA FOR CARD DISPLAY");
+
+    // Extract the first child health history to get patient details
+    const firstHistory = historyData?.[0];
+    if (!firstHistory) {
+      console.log("❌ No child health histories found - using original childData");
+      return childData; // Fallback to original childData
     }
-    const sortedHistories = [...mainRecord.child_health_histories].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return sortedHistories.map((record: any, index: number) => {
-      let bmi = "N/A";
-      let findingsData = {
-        subj_summary: "",
-        obj_summary: "",
-        assessment_summary: "",
-        plantreatment_summary: ""
-      };
 
-      // Extract findings from vital signs if available
-      if (record.child_health_vital_signs?.length > 0) {
-        const vital = record.child_health_vital_signs[0];
+    const chrecDetails = firstHistory.chrec_details;
+    const patrecDetails = chrecDetails?.patrec_details;
+    const patDetails = patrecDetails?.pat_details;
 
-        // Calculate BMI
-        if (vital.bm_details?.height && vital.bm_details?.weight) {
-          const heightInM = vital.bm_details.height / 100;
-          const bmiValue = (vital.bm_details.weight / (heightInM * heightInM)).toFixed(1);
-          bmi = bmiValue;
-        }
+    if (!patDetails) {
+      console.log("❌ No patient details found - using original childData");
+      return childData; // Fallback to original childData
+    }
 
-        // Extract findings data
-        if (vital.find_details) {
-          findingsData = {
-            subj_summary: vital.find_details.subj_summary || "",
-            obj_summary: vital.find_details.obj_summary || "",
-            assessment_summary: vital.find_details.assessment_summary || "",
-            plantreatment_summary: vital.find_details.plantreatment_summary || ""
-          };
-        }
-      }
+    const personalInfo = patDetails.personal_info || {};
+    const address = patDetails.address || {};
+    const familyHeadInfo = patDetails.family_head_info?.family_heads || {};
 
-      let latestNoteContent: string | null = null;
-      let followUpDescription = "";
-      let followUpDate = "";
-      let followUpStatus = "";
+    const motherInfo = familyHeadInfo.mother?.personal_info || {};
+    const fatherInfo = familyHeadInfo.father?.personal_info || {};
 
-      if (record.child_health_notes && record.child_health_notes.length > 0) {
-        const sortedNotes = [...record.child_health_notes].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        latestNoteContent = sortedNotes[0].chn_notes || null;
-
-        if (sortedNotes[0].followv_details) {
-          followUpDescription = sortedNotes[0].followv_details.followv_description || "";
-          followUpDate = sortedNotes[0].followv_details.followv_date || "";
-          followUpStatus = sortedNotes[0].followv_details.followv_status || "";
-        }
-      }
-
-      return {
-        chrec_id: mainRecord.chrec,
-        patrec: mainRecord.patrec_id,
-        status: record.status || "N/A",
-        chhist_id: record.chhist_id,
-        id: index + 1,
-        temp: record.child_health_vital_signs?.[0]?.temp || 0,
-        age: dob ? calculateAgeFromDOB(dob, record.created_at).ageString : "N/A", // Safe access
-        wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
-        ht: record.child_health_vital_signs?.[0]?.bm_details?.height || 0,
-        bmi,
-        latestNote: latestNoteContent,
-        followUpDescription,
-        followUpDate,
-        followUpStatus,
-        vaccineStat: record.tt_status || "N/A",
-        updatedAt: new Date(record.created_at).toLocaleDateString(),
-        rawCreatedAt: record.created_at,
-        // Add findings data
-        findings: findingsData,
-        hasFindings: !!findingsData.subj_summary || !!findingsData.obj_summary || !!findingsData.assessment_summary || !!findingsData.plantreatment_summary
-      };
+    console.log("👨‍👩‍👧‍👦 EXTRACTED PATIENT DATA:", {
+      personalInfo,
+      address,
+      motherInfo,
+      fatherInfo
     });
-  }, [historyData, dob]); // Use dob instead of childData.dob
+
+    const transformedData = {
+      // Patient basic info
+      pat_id: chrecDetails?.patient || patDetails.pat_id || patId,
+      fname: personalInfo?.per_fname || childData?.fname || "",
+      lname: personalInfo?.per_lname || childData?.lname || "",
+      mname: personalInfo?.per_mname || childData?.mname || "",
+      sex: personalInfo?.per_sex || childData?.sex || "",
+      dob: personalInfo?.per_dob || childData?.dob || "",
+      age: personalInfo?.per_dob ? calculateAgeFromDOB(personalInfo.per_dob).years.toString() : childData?.age || "",
+
+      // Mother info
+      mother_fname: motherInfo?.per_fname || childData?.mother_fname || "",
+      mother_lname: motherInfo?.per_lname || childData?.mother_lname || "",
+      mother_mname: motherInfo?.per_mname || childData?.mother_mname || "",
+      mother_occupation: chrecDetails?.mother_occupation || motherInfo?.per_occupation || childData?.mother_occupation || "",
+      mother_age: motherInfo?.per_dob ? calculateAgeFromDOB(motherInfo.per_dob).years.toString() : childData?.mother_age || "",
+
+      // Father info
+      father_fname: fatherInfo?.per_fname || childData?.father_fname || "",
+      father_lname: fatherInfo?.per_lname || childData?.father_lname || "",
+      father_mname: fatherInfo?.per_mname || childData?.father_mname || "",
+      father_age: fatherInfo?.per_dob ? calculateAgeFromDOB(fatherInfo.per_dob).years.toString() : childData?.father_age || "",
+      father_occupation: chrecDetails?.father_occupation || fatherInfo?.per_occupation || childData?.father_occupation || "",
+
+      // Address info
+      address: address?.full_address || childData?.address || "",
+      street: address?.add_street || childData?.street || "",
+      barangay: address?.add_barangay || childData?.barangay || "",
+      city: address?.add_city || childData?.city || "",
+      province: address?.add_province || childData?.province || "",
+      landmarks: chrecDetails?.landmarks || address?.add_landmarks || childData?.landmarks || "",
+
+      // Child health specific info
+      type_of_feeding: chrecDetails?.type_of_feeding || childData?.type_of_feeding || "",
+      delivery_type: chrecDetails?.place_of_delivery_type || childData?.delivery_type || "",
+      pod_location: chrecDetails?.pod_location || childData?.pod_location || "",
+      tt_status: familyHeadInfo?.tt_status || firstHistory?.tt_status || childData?.tt_status || "",
+      birth_order: chrecDetails?.birth_order?.toString() || childData?.birth_order?.toString() || "",
+
+      // Additional fields
+      chrec_id: childData?.chrec_id || chrecId
+    };
+
+    console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
+    return transformedData;
+  }, [historyData, childData, patId, chrecId]);
+
+  // Process the history data using a helper function - KEEP ORIGINAL LOGIC
+  const processedHistoryData = useMemo(() => {
+    return processHistoryData(historyData, dob);
+  }, [historyData, dob]);
 
   const latestRecord = useMemo(() => {
-    if (processedHistoryData.length === 0) return null;
+    if (!processedHistoryData || processedHistoryData.length === 0) return null;
     return processedHistoryData[0];
   }, [processedHistoryData]);
 
@@ -142,7 +153,6 @@ export default function InvChildHealthRecords() {
   const filteredData = useMemo(() => {
     return processedHistoryData.filter((item: any) => {
       const findingsText = item.findings ? `${item.findings.subj_summary || ""} ${item.findings.obj_summary || ""} ${item.findings.assessment_summary || ""} ${item.findings.plantreatment_summary || ""}` : "";
-
       return (
         item.age.toString().includes(searchQuery) ||
         item.wt.toString().includes(searchQuery) ||
@@ -159,12 +169,11 @@ export default function InvChildHealthRecords() {
 
   const isLatestRecordFromToday = useMemo(() => {
     if (!latestRecord || !latestRecord.rawCreatedAt) return false;
-
     const latestRecordDate = new Date(latestRecord.rawCreatedAt).toDateString();
     const currentDate = new Date().toDateString();
-
     return latestRecordDate === currentDate;
   }, [latestRecord]);
+
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
@@ -172,16 +181,17 @@ export default function InvChildHealthRecords() {
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
+  // Use transformChildData for navigation
   const navigateToUpdateLatest = () => {
-    if (latestRecord && childData) {
+    if (latestRecord && transformChildData) {
       navigate("/services/childhealthrecords/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
-            patId: childData?.pat_id,
+            patId: transformChildData.pat_id,
             originalRecord: latestRecord,
-            patientData: childData,
-            chrecId: chrecId, // Use the safe variable
+            patientData: transformChildData,
+            chrecId: chrecId,
             mode: "addnewchildhealthrecord"
           }
         }
@@ -189,7 +199,8 @@ export default function InvChildHealthRecords() {
     }
   };
 
-  const columns = useMemo(() => getChildHealthColumns(childData, nutritionalStatusData), [childData, nutritionalStatusData]);
+  // Use transformChildData for columns
+  const columns = useMemo(() => getChildHealthColumns(transformChildData, nutritionalStatusData), [transformChildData, nutritionalStatusData]);
 
   if (isError) {
     return (
@@ -202,7 +213,6 @@ export default function InvChildHealthRecords() {
     );
   }
 
-  // Add early return if childData is missing
   if (!childData) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center">
@@ -226,11 +236,9 @@ export default function InvChildHealthRecords() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
-
       <div className="mb-5">
-        <ChildHealthRecordCard child={childData} />
+        <ChildHealthRecordCard child={transformChildData} isLoading={childHistoryLoading} />
       </div>
-
       {isLoading ? (
         <VaccinationStatusCardsSkeleton />
       ) : (
@@ -238,15 +246,12 @@ export default function InvChildHealthRecords() {
           <div className="w-full">
             <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />
           </div>
-
           <div className="w-full">
             <FollowUpsCard childHealthFollowups={followUps} />
           </div>
         </div>
       )}
-
       <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
-
       <div className="h-full w-full rounded-md mt-4">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
@@ -255,9 +260,8 @@ export default function InvChildHealthRecords() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div className="flex gap-2">
-           
             <ProtectedComponentButton exclude={["DOCTOR"]}>
-              <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
                 {latestRecord && !isLatestRecordFromToday && (
                   <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
                     {isLatestRecordImmunizationOrCheckup ? (
@@ -273,20 +277,10 @@ export default function InvChildHealthRecords() {
             </ProtectedComponentButton>
           </div>
         </div>
-
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+        <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records
+            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}- {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records
           </p>
           <div className="w-full sm:w-auto flex justify-center">
             <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

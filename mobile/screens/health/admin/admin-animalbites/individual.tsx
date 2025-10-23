@@ -165,12 +165,12 @@ export default function AnimalBiteIndividualScreen() {
             <View className="bg-blue-600 p-6">
               <View className="flex-row items-center">
                 <View className="w-16 h-16 bg-white/20 rounded-full items-center justify-center mr-4">
-                  <Text className="text-white font-bold text-xl">
+                  <Text className="text-white font-bold text-lg">
                     {getPatientInitials(patientInfo.patient_fname, patientInfo.patient_lname)}
                   </Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white text-2xl font-bold mb-1">
+                  <Text className="text-white text-lg font-bold mb-1">
                     {patientInfo.patient_fname} {patientInfo.patient_mname} {patientInfo.patient_lname}
                   </Text>
                   <Text className="text-blue-100 text-sm">ID: {patientInfo.patient_id}</Text>
@@ -185,7 +185,7 @@ export default function AnimalBiteIndividualScreen() {
                   <User size={18} color="#6B7280" />
                   <Text className="text-gray-600 text-sm ml-2 font-medium">Age & Gender</Text>
                 </View>
-                <Text className="text-gray-800 font-bold text-lg">
+                <Text className="text-gray-800 font-bold text-md">
                   {patientInfo.patient_age} years old, {patientInfo.patient_sex}
                 </Text>
               </View>

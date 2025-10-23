@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Loader2, Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
+import { Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
@@ -323,31 +323,31 @@ const Overall: React.FC = () => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // Handle export - fetch all data for export
-  const handleExport = async () => {
-    try {
-      showLoading();
-      const params: any = {
-        export: true,
-      };
+  // const handleExport = async () => {
+  //   try {
+  //     showLoading();
+  //     const params: any = {
+  //       export: true,
+  //     };
 
-      if (debouncedSearchQuery) {
-        params.search = debouncedSearchQuery;
-      }
+  //     if (debouncedSearchQuery) {
+  //       params.search = debouncedSearchQuery;
+  //     }
 
-      if (filterValue !== "all") {
-        params.filter = filterValue;
-      }
+  //     if (filterValue !== "all") {
+  //       params.filter = filterValue;
+  //     }
 
-      const exportData = await getUniqueAnimalbitePatients(params);
-      return exportData;
-    } catch (err) {
-      console.error("Export error:", err);
-      toast.error("Failed to export data");
-      return [];
-    } finally {
-      hideLoading();
-    }
-  };
+  //     const exportData = await getUniqueAnimalbitePatients(params);
+  //     return exportData;
+  //   } catch (err) {
+  //     console.error("Export error:", err);
+  //     toast.error("Failed to export data");
+  //     return [];
+  //   } finally {
+  //     hideLoading();
+  //   }
+  // };
 
   return (
     <MainLayoutComponent title="Animal Bite Records" description="Manage and view animal bite records">
@@ -459,11 +459,11 @@ const Overall: React.FC = () => {
                       data={patients} 
                       filename="animal-bite-records" 
                       columns={exportColumns} 
-                      onClick={async () => {
-                        const exportData = await handleExport();
-                        // Update the data with full export results
-                        return exportData.results || [];
-                      }}
+                      // onClick={async () => {
+                      //   const exportData = await handleExport();
+                      //   // Update the data with full export results
+                      //   return exportData.results || [];
+                      // }}
                     />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -475,8 +475,7 @@ const Overall: React.FC = () => {
           <div className="bg-white w-full overflow-x-auto border">
             {loading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading animal bite records...</span>
+                  
               </div>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">

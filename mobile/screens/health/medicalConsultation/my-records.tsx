@@ -1,7 +1,6 @@
-"use client";
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView } from "react-native";
+import { View, TouchableOpacity, TextInput, RefreshControl, ScrollView } from "react-native";
 import { Search, ChevronLeft, AlertCircle, HeartPulse, Users, Calendar, Syringe, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";

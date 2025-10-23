@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye } from '@/lib/icons/Eye';  
 import { EyeOff } from '@/lib/icons/EyeOff';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToastContext } from '@/components/ui/toast';
 
 export default function ForgetPassword() {

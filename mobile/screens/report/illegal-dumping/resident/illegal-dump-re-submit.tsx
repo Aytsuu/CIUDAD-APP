@@ -16,11 +16,13 @@ import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
 
 export default function IllegalDumpResubmitForm() {
+  const {user} = useAuth()  
   const params = useLocalSearchParams();    
   const router = useRouter();
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
@@ -64,7 +66,7 @@ export default function IllegalDumpResubmitForm() {
   ];  
 
   const sitioOptions = fetchedSitio.map(sitio => ({
-    value: sitio.sitio_id,  
+    value: String(sitio.sitio_id),  
     label: sitio.sitio_name 
   }));
 
@@ -92,7 +94,9 @@ export default function IllegalDumpResubmitForm() {
 
     const allValues = {
       ...values,
-      files      
+      files,
+      rp_id: user?.rp,
+      phone: user?.phone      
     }
 
     addReport(allValues, {
@@ -180,8 +184,7 @@ export default function IllegalDumpResubmitForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={3}
+                limit={3}
               /> 
             </View>
 

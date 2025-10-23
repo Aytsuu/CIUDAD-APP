@@ -2,9 +2,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
@@ -16,12 +14,8 @@ import PageLayout from "@/screens/_PageLayout";
 import { formatDate } from "@/helpers/dateHelpers";
 import { formatCurrency } from "@/helpers/currencyFormat";
 import { useBusinessInfo } from "@/screens/business/queries/businessGetQueries";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+
+
 import { LoadingState } from "@/components/ui/loading-state";
 import ImageCarousel from "@/components/ui/imageCarousel";
 

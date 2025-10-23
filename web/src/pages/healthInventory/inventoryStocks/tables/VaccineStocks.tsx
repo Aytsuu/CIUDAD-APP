@@ -19,12 +19,7 @@ import WastedModal from "../addstocksModal/WastedModal";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
-export function isVaccine(record: any): record is { type: "vaccine" } {
-  return record?.type === "vaccine";
-}
-export function isSupply(record: any): record is { type: "supply" } {
-  return record?.type === "supply";
-}
+
 export default function CombinedStockTable() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");

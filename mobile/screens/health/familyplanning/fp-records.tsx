@@ -1,10 +1,9 @@
-"use client"
+// "use client"
 
 import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
-import { useQuery } from "@tanstack/react-query";
-import { FileText, Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
-import { router, useRouter } from "expo-router";
+import { Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";

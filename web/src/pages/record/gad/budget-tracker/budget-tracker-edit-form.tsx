@@ -18,11 +18,11 @@ import { useUpdateGADBudget } from "./queries/BTUpdateQueries";
 import GADAddEntrySchema, {
   FormValues,
 } from "@/form-schema/gad-budget-track-create-form-schema";
-import { GADEditEntryFormProps } from "./budget-tracker-types";
+import { GADEditEntryFormProps, BudgetYear } from "./budget-tracker-types";
 import { DateTimePicker } from "@/components/ui/form/form-datetime-picker";
 
 function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
-  const { year } = useParams<{ year: string }>();
+  const { year: gbudy_year } = useParams<{ year: string }>(); 
   const [isEditing, setIsEditing] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => []);
   const [selectedBudgetItems, setSelectedBudgetItems] = useState<
@@ -37,14 +37,21 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     useGetGADYearBudgets();
   const { data: budgetEntry, isLoading: entryLoading } =
     useGADBudgetEntry(gbud_num);
-  const { data: projectProposals } = useProjectProposalsAvailability(year);
-  const { mutate: updateBudget, isPending } = useUpdateGADBudget(
-    yearBudgets || []
-  );
+  const { data: projectProposals } =
+    useProjectProposalsAvailability(gbudy_year);
+  const yearBudgetsArray = yearBudgets?.results || [];
+
+  const { mutate: updateBudget, isPending } =
+    useUpdateGADBudget(yearBudgetsArray);
 
   const calculateRemainingBalance = (): number => {
-    if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    if (!yearBudgets || !gbudy_year) return 0;
+
+    // Access the results array from the paginated response
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === gbudy_year
+    );
+
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -76,25 +83,30 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
-    const matchingProject = projectProposals.find(
-      (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
-    );
-    const projectTitle = matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
+      const matchingProject = projectProposals.find(
+        (p) =>
+          p.dev_id === budgetEntry.dev &&
+          p.project_index === budgetEntry.gbud_project_index
+      );
+      const projectTitle =
+        matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
 
       let recordedItems: { name: string; pax: string; amount: number }[] = [];
-    if (budgetEntry.gbud_exp_particulars) {
-      if (typeof budgetEntry.gbud_exp_particulars === "string") {
-        try {
-          recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
-        } catch (e) {
-          console.error("Failed to parse gbud_exp_particulars:", budgetEntry.gbud_exp_particulars);
-          recordedItems = [];
+      if (budgetEntry.gbud_exp_particulars) {
+        if (typeof budgetEntry.gbud_exp_particulars === "string") {
+          try {
+            recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
+          } catch (e) {
+            console.error(
+              "Failed to parse gbud_exp_particulars:",
+              budgetEntry.gbud_exp_particulars
+            );
+            recordedItems = [];
+          }
+        } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
+          recordedItems = budgetEntry.gbud_exp_particulars;
         }
-      } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
-        recordedItems = budgetEntry.gbud_exp_particulars;
       }
-    }
-
 
       const formValues: FormValues = {
         gbud_datetime: formattedDate,
@@ -111,7 +123,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_remaining_bal: budgetEntry.gbud_remaining_bal
           ? Number(budgetEntry.gbud_remaining_bal)
           : 0,
-        gbudy: yearBudgets?.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
+        gbudy:
+          yearBudgets?.results?.find(
+            (b: BudgetYear) => b.gbudy_year === gbudy_year
+          )?.gbudy_num || 0,
         dev: budgetEntry.dev || 0,
         gbud_project_index: budgetEntry.gbud_project_index || 0,
       };
@@ -131,31 +146,41 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       setSelectedBudgetItems(recordedItems);
       setRecordedBudgetItems(recordedItems);
     }
-  }, [budgetEntry, yearBudgets, year, projectProposals]);
+  }, [budgetEntry, yearBudgets, gbudy_year, projectProposals]);
 
   const handleConfirmSave = (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
-    if (inputYear !== year) {
+    if (inputYear !== gbudy_year) {
       form.setError("gbud_datetime", {
         type: "manual",
-        message: `Date must be in ${year}`,
+        message: `Date must be in ${gbudy_year}`,
       });
       return;
     }
 
-    // Validate actual expense against remaining balance
-    if (values.gbud_actual_expense) {
-      const actualExpense = Number(values.gbud_actual_expense);
-      if (actualExpense > remainingBalance) {
+    // Get the current actual expense from the form
+    const currentActualExpense = Number(values.gbud_actual_expense) || 0;
+
+    // Get the original actual expense from the budget entry
+    const originalActualExpense = budgetEntry?.gbud_actual_expense
+      ? Number(budgetEntry.gbud_actual_expense)
+      : 0;
+
+    // Only validate if the actual expense has been CHANGED (increased)
+    if (currentActualExpense !== originalActualExpense) {
+      if (currentActualExpense > remainingBalance + originalActualExpense) {
         form.setError("gbud_actual_expense", {
           type: "manual",
-          message: `Actual expense exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
+          message: `Actual expense exceeds available balance. Maximum allowed: ₱${(
+            remainingBalance + originalActualExpense
+          ).toLocaleString()}`,
         });
         return;
       }
-      if (actualExpense < 0) {
+
+      if (currentActualExpense < 0) {
         form.setError("gbud_actual_expense", {
           type: "manual",
           message: `Actual expense cannot be negative`,
@@ -172,8 +197,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_exp_particulars: values.gbud_exp_particulars,
         gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_actual_expense: values.gbud_actual_expense,
-        gbud_reference_num: values.gbud_reference_num,
-        gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense || 0),
+        gbud_reference_num: values.gbud_reference_num || null,
+        gbud_remaining_bal:
+          remainingBalance - (values.gbud_actual_expense || 0),
         dev: values.dev,
         gbud_project_index: values.gbud_project_index,
       },
@@ -220,10 +246,15 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   if (!budgetEntry)
     return <div className="text-center py-8">No budget entry found.</div>;
 
-  const currentYearBudget = yearBudgets?.find((b) => b.gbudy_year === year);
+  const currentYearBudget = yearBudgets?.results?.find(
+    (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+  );
+
   const selectedProject = projectProposals?.find(
-  (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
-);
+    (p) =>
+      p.dev_id === budgetEntry.dev &&
+      p.project_index === budgetEntry.gbud_project_index
+  );
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
@@ -238,7 +269,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 <DateTimePicker
                   control={form.control}
                   name="gbud_datetime"
-                  label={`Date (${year} only)`}
+                  label={`Date (${gbudy_year} only)`}
                   readOnly={!isEditing}
                 />
               </div>
@@ -255,9 +286,12 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       onSelect={(value, item) => {
                         field.onChange(value);
                         if (item) {
-                        form.setValue("dev", item.dev_id);
-                        form.setValue("gbud_project_index", item.project_index);
-                       }
+                          form.setValue("dev", item.dev_id);
+                          form.setValue(
+                            "gbud_project_index",
+                            item.project_index
+                          );
+                        }
                       }}
                       readOnly={true}
                     />
@@ -282,9 +316,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                           <span className="text-sm text-gray-500 ml-2">
                             {item.pax}
                           </span>
-                          {selectedProject.recorded_items.includes(
-                            item.name
-                          )}
+                          {selectedProject.recorded_items.includes(item.name)}
                         </div>
                         <span>₱{item.amount.toLocaleString()}</span>
                       </div>
@@ -355,6 +387,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                   placeholder="Enter reference number"
                   readOnly={!isEditing}
                 />
+
                 {isEditing ? (
                   <MediaUpload
                     title="Supporting Documents"
@@ -364,31 +397,17 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     activeVideoId={activeVideoId}
                     setActiveVideoId={setActiveVideoId}
                   />
-                ) : mediaFiles.length > 0 ? (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">
-                      Supporting Doc(s)
-                    </label>
-                    {mediaFiles.map((file) => (
-                      <div key={file.id} className="border rounded-md p-2">
-                        <img
-                          src={file.url}
-                          onError={(e) => {
-                            console.error("Failed to load image:", {
-                              url: file.url,
-                              encoded: encodeURI(file.url || ""),
-                              decoded: decodeURI(file.url || ""),
-                            });
-                            e.currentTarget.src = "/placeholder.jpg";
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
                 ) : (
-                  <div className="p-2 border rounded text-sm text-gray-500">
-                    No supporting docs uploaded
-                  </div>
+                  <MediaUpload
+                    title="Supporting Documents"
+                    description="Uploaded proof of transaction"
+                    mediaFiles={mediaFiles}
+                    setMediaFiles={setMediaFiles}
+                    activeVideoId={activeVideoId}
+                    setActiveVideoId={setActiveVideoId}
+                    hideRemoveButton={true}
+                    readOnly={true}
+                  />
                 )}
               </>
             </div>
@@ -398,13 +417,16 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 <div className="flex justify-between">
                   <span className="font-medium">Current Budget:</span>
                   <span>
-                    ₱{currentYearBudget.gbudy_budget?.toLocaleString()}
+                    ₱{Number(currentYearBudget.gbudy_budget)?.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Total Expenses:</span>
                   <span>
-                    ₱{(currentYearBudget.gbudy_expenses || 0).toLocaleString()}
+                    ₱
+                    {Number(
+                      currentYearBudget.gbudy_expenses || 0
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between font-bold">

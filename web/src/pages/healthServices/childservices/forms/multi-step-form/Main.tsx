@@ -20,6 +20,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { useChildHealthHistory } from "../queries/fetchQueries";
 import { isToday } from "@/helpers/isToday";
 import StepIndicator from "./StepsIndicator";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function ChildHealthRecordForm() {
   const location = useLocation();
@@ -123,6 +124,7 @@ export default function ChildHealthRecordForm() {
       chhistRecord.exclusive_bf_checks?.map((check: any) => ({
         ebf_id: check.ebf_id,
         ebf_date: check.ebf_date,
+        type_of_feeding: check.type_of_feeding,
         created_at: check.created_at,
         chhist: check.chhist
       })) || [];
@@ -174,7 +176,7 @@ export default function ChildHealthRecordForm() {
       anemic: chhistRecord.anemic || initialFormData.anemic,
       birthwt: chhistRecord.birthwt || initialFormData.birthwt,
       status: chhistRecord.status || "recorded",
-      type_of_feeding: chrecDetails?.type_of_feeding || "",
+      // type_of_feeding: chrecDetails?.type_of_feeding || "",
       tt_status: chhistRecord.tt_status || "",
       nutritionalStatus: chhistRecord.nutritionalStatus || initialFormData.nutritionalStatus,
       vaccines: vaccinesFromApi,
@@ -284,6 +286,7 @@ export default function ChildHealthRecordForm() {
             history.exclusive_bf_checks?.map((check: any) => ({
               ebf_id: check.ebf_id,
               ebf_date: check.ebf_date,
+              type_of_feeding: check.type_of_feeding,
               created_at: check.created_at,
               chhist: check.chhist
             })) || [];
@@ -412,7 +415,7 @@ export default function ChildHealthRecordForm() {
   if (isLoading || isRecordLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <div className="text-gray-500">Loading record data...</div>
+        <TableLoading />
       </div>
     );
   }
@@ -481,12 +484,7 @@ export default function ChildHealthRecordForm() {
                 setSelectedPatientId={setSelectedPatientId}
               />
             )}
-            {currentPage === 2 && <ChildHRPage2 
-            onPrevious={() => setCurrentPage(1)} 
-             onNext={() => setCurrentPage(3)} 
-             selectedPatient={selectedPatient}
-             
-             updateFormData={updateFormData} formData={formData} historicalBFChecks={historicalBFChecks} mode={mode || "newchildhealthrecord"} />}
+            {currentPage === 2 && <ChildHRPage2 onPrevious={() => setCurrentPage(1)} onNext={() => setCurrentPage(3)} selectedPatient={selectedPatient} updateFormData={updateFormData} formData={formData} historicalBFChecks={historicalBFChecks} mode={mode || "newchildhealthrecord"} />}
             {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
             {currentPage === 4 && (
               <LastPage

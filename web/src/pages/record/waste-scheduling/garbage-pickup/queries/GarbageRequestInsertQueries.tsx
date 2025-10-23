@@ -24,8 +24,7 @@ export const useAddDecision = (onSuccess?: () => void) => {
                 showSuccessToast('Request rejected!')
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
                 toast.error(
                     "Failed to submit record. Please check the input data and try again.",
                     { duration: 2000 }
@@ -44,7 +43,7 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors || [],
+                collectors: values.loaders,
                 staff_id: values.staff_id
             }),
         onSuccess: () => {
@@ -55,8 +54,7 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
             showSuccessToast('Request Accepted!')
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error creating pickup assignment:", err);
+        onError: () => {
             showErrorToast( "Failed to create pickup assignment. Please check the input data and try again.")
         }
     });

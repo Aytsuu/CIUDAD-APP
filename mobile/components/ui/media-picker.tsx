@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Image,
   View,
@@ -28,7 +28,7 @@ export default function MediaPicker({
   limit?: number;
 }) {
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
       allowsEditing: limit == 1,
       aspect: [4, 3],
@@ -152,4 +152,3 @@ export default function MediaPicker({
     </View>
   );
 }
-

@@ -1,31 +1,25 @@
-import { z } from "zod";
 import { api } from "@/api/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToastContext } from "@/components/ui/toast";
-import { formatDate } from "@/helpers/dateHelpers";
-
-
 
 
 export const wasteColData = async (collectionInfo: Record<string, any>) => {
     try {
         console.log({
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
-            staff: collectionInfo.staff_id,
+            staff: collectionInfo.staff,
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver  // Store driver directly here
         });
 
         const res = await api.post('waste/waste-collection-sched/', {
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,
-            staff: collectionInfo.staff_id,
+            staff: collectionInfo.staff,
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver  // Store driver directly here
@@ -79,3 +73,16 @@ export const addAssCollector = async (wc_num: number, wstp_id: string) => {
         throw err;
     }
 }
+
+
+
+//WASTE COLLECTION ANNOUNCEMENT
+export const createCollectionReminders = async () => {
+  try {
+    const res = await api.post('waste/create-collection-reminders/');
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};

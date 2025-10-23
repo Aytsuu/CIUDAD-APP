@@ -3,9 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ColumnDef } from "@tanstack/react-table";
-import { useNavigate } from "react-router-dom";
-import { Search, ArrowUpDown, FileInput, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Search, FileInput, Users, Home, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -14,8 +12,11 @@ import { api2 } from "@/api/api";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/context/AuthContext";
-import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import TableLoading from "../../table-loading";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useChildImmunizationColumns } from "./columns/childimmunization-col";
 
 export const getChildHealthHistoryRecordRecords = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {
   try {
@@ -35,7 +36,7 @@ export const getChildHealthHistoryRecordRecords = async (assigned_to: string, se
 
 export default function ForwardedCHimmunizationTable() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id; // use this as assigned to parameter
+  const staff_id = user?.staff?.staff_id;
   const [searchQuery, setSearchQuery] = useState("");
   const [patientType, setPatientType] = useState("all");
   const [pageSize, setPageSize] = useState(10);
@@ -47,21 +48,17 @@ export default function ForwardedCHimmunizationTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const {
-    data: immunizationData,
-    isLoading,
-    
-  } = useQuery({
+  const { data: immunizationData, isLoading } = useQuery({
     queryKey: ["forwardedChildHealthHistoryRecord", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
     queryFn: () => getChildHealthHistoryRecordRecords(staff_id!, debouncedSearchQuery, patientType, currentPage, pageSize),
     refetchOnMount: true,
     staleTime: 300000,
     gcTime: 600000,
-    enabled: !!staff_id // Only run query if staff_id is available
+    enabled: !!staff_id
   });
 
   const { showLoading, hideLoading } = useLoading();
-  const navigate = useNavigate();
+  const columns = useChildImmunizationColumns();
 
   const formatRecordForTable = useCallback((): any[] => {
     if (!immunizationData?.results) return [];
@@ -117,16 +114,12 @@ export default function ForwardedCHimmunizationTable() {
     });
   }, [immunizationData]);
 
-  // Calculate counts from filtered data for accurate totals
   const calculateCounts = useCallback(() => {
     if (!immunizationData?.results) return;
 
     const results = immunizationData.results;
     const total = immunizationData.count || 0;
 
-    // Calculate resident and transient counts from all data (not just current page)
-    // Since we have pagination, we need to use the totals from backend if available
-    // or calculate from current page data
     let residents = 0;
     let transients = 0;
 
@@ -137,8 +130,6 @@ export default function ForwardedCHimmunizationTable() {
     });
 
     setTotalCount(total);
-    // For accurate counts, we should ideally get these from the backend
-    // For now, we'll use the current page data as an approximation
     setResidentCount(residents);
     setTransientCount(transients);
     setTotalPages(Math.ceil(total / pageSize));
@@ -156,7 +147,6 @@ export default function ForwardedCHimmunizationTable() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
-  // Reset to first page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, patientType]);
@@ -171,111 +161,8 @@ export default function ForwardedCHimmunizationTable() {
     setCurrentPage(1);
   };
 
-  const columns: ColumnDef<any>[] = [
-    {
-      accessorKey: "child",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Child <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "mother",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Mother <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName = `${row.original.mother_lname}, ${row.original.mother_fname} ${row.original.mother_mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">{row.original.address}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "family_no",
-      header: "Family No.",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.family_no || "N/A"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "delivery_type",
-      header: "Delivery Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full capitalize">{row.original.delivery_type?.toLowerCase() || "N/A"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "pat_type",
-      header: "Patient Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full capitalize">{row.original.pat_type?.toLowerCase() || "N/A"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
-            <ViewButton
-              onClick={() => {
-                navigate("/child-immunization", {
-                  state: {
-                    ChildHealthRecord: row.original,
-                    mode: "immunization"
-                  }
-                });
-              }}
-            />
-          </div>
-        </div>
-      )
-    }
-  ];
-
   const currentData = formatRecordForTable();
 
-  // Show loading or error state if staff_id is not available
   if (!staff_id) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -289,55 +176,11 @@ export default function ForwardedCHimmunizationTable() {
 
   return (
     <MainLayoutComponent title="Child Immunization" description="Forwarded records for child immunization">
-      {/* Summary Cards */}
+      {/* Enhanced Card Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Total Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full mr-4">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Records</p>
-              <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-          </div>
-        </div>
-
-        {/* Resident Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full mr-4">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Residents</p>
-              <p className="text-2xl font-bold text-gray-800">{residentCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-          </div>
-        </div>
-
-        {/* Transient Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-full mr-4">
-              <UserCheck className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transients</p>
-              <p className="text-2xl font-bold text-gray-800">{transientCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-          </div>
-        </div>
+        <EnhancedCardLayout title="Total Records" description="All child immunization records" value={totalCount} valueDescription="Total records" icon={<Users className="h-6 w-6 text-blue-600" />} cardClassName="border-blue-100" />
+        <EnhancedCardLayout title="Residents" description="Resident child records" value={residentCount} valueDescription="Resident records" icon={<Home className="h-6 w-6 text-green-600" />} cardClassName="border-green-100" />
+        <EnhancedCardLayout title="Transients" description="Transient child records" value={transientCount} valueDescription="Transient records" icon={<UserCheck className="h-6 w-6 text-purple-600" />} cardClassName="border-purple-100" />
       </div>
 
       {/* Filters Section */}
@@ -345,7 +188,7 @@ export default function ForwardedCHimmunizationTable() {
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search by name, family no, UFC no..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <Input placeholder="Search by name..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           <SelectLayout
             placeholder="Filter records"
@@ -387,16 +230,7 @@ export default function ForwardedCHimmunizationTable() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto border">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+        <div className="bg-white w-full overflow-x-auto border">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

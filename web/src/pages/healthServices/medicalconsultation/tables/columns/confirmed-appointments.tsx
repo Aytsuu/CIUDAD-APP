@@ -3,34 +3,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { formatDate,formatDateTime } from "@/helpers/dateHelper";
 
-// Safe date formatting function
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return "N/A";
-  try {
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString();
-  } catch {
-    return "Invalid Date";
-  }
-};
-
-// Safe date and time formatting function
-const formatDateTime = (dateString: string | null | undefined) => {
-  if (!dateString) return { date: "N/A", time: "" };
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return { date: "Invalid Date", time: "" };
-    }
-    return {
-      date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    };
-  } catch {
-    return { date: "Invalid Date", time: "" };
-  }
-};
 
 export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
   {
@@ -147,18 +122,18 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
       );
     }
   },
-  {
-    accessorKey: "status",
-    header: () => <div className="text-center">Status</div>,
-    size: 100,
-    cell: ({ row }) => (
-      <div className="flex justify-center py-2">
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 capitalize text-xs px-3 py-1">
-          {row.original.status }
-        </Badge>
-      </div>
-    )
-  },
+  // {
+  //   accessorKey: "status",
+  //   header: () => <div className="text-center">Status</div>,
+  //   size: 100,
+  //   cell: ({ row }) => (
+  //     <div className="flex justify-center py-2">
+  //       <Badge className="bg-green-100 text-green-800 hover:bg-green-100 capitalize text-xs px-3 py-1">
+  //         {row.original.status }
+  //       </Badge>
+  //     </div>
+  //   )
+  // },
   {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
@@ -166,7 +141,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const appointment = row.original;
-   
+    
       const appointmentData = {
         id: appointment.id,
         personal_info: appointment.personal_info,
@@ -179,15 +154,25 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
         archive_reason: appointment.archive_reason,
         rp: appointment.rp
       };
-     
+    
       return (
         <div className="flex justify-center py-2">
           <ViewButton
             onClick={() => {
-              navigate("/services/medical/appointments/view", {
+              navigate("/services/medical-consultation/appointments/form", {
                 state: {
                   params: {
-                    appointmentData
+                    // Transform appointment data to match what medical consultation expects
+                    patientData: {
+                      rp: appointment.rp, // Use rp ID as patient ID
+                      personal_info: appointment.personal_info,
+                      address: appointment.address,
+                      pat_type: "Resident", 
+                      age: calculateAge(appointment.personal_info?.per_dob), // You might need to calculate this
+                      householdno: appointment.rp?.householdno,
+                      additional_info: appointment.rp?.additional_info
+                    },
+                    appointmentData: appointmentData // Keep original appointment data if needed
                   }
                 }
               });

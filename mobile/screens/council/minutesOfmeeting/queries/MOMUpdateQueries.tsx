@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { restoreMinutesOfMeeting, archiveMinutesOfMeeting,  updateMinutesOfMeeting, handleMOMFileUpdates, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
+import { restoreMinutesOfMeeting, archiveMinutesOfMeeting,  updateMinutesOfMeeting, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
@@ -13,6 +13,8 @@ export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: (mom_id: string) => restoreMinutesOfMeeting(mom_id),
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
 
             toast.success('Record restored successfully')
@@ -34,6 +36,8 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: (mom_id: string) => archiveMinutesOfMeeting(mom_id),
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
 
             toast.success('Record is archived successfully')
@@ -80,6 +84,8 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
       return values.mom_id;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
+      queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
       queryClient.invalidateQueries({ queryKey: ['momRecords'] });
       queryClient.invalidateQueries({ queryKey: ['momFiles'] });
       queryClient.invalidateQueries({ queryKey: ['momSuppDocs'] });

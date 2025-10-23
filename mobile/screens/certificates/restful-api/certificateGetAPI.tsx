@@ -26,13 +26,42 @@ export interface Certificate {
         inv_nat_of_collection: string;
     };
 }
-// Fetch certificates
-export const getCertificates = async (): Promise<Certificate[]> => {
+// Fetch certificates with search and pagination - matching web version
+export const getCertificates = async (
+    search?: string, 
+    page?: number, 
+    pageSize?: number, 
+    status?: string, 
+    paymentStatus?: string,
+    purpose?: string
+): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
     try {
-        console.log('Making request to /clerk/certificate/');
-        const res = await api.get('/clerk/certificate/');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (page) params.append('page', page.toString());
+        if (pageSize) params.append('page_size', pageSize.toString());
+        if (status) params.append('status', status);
+        if (paymentStatus) params.append('payment_status', paymentStatus);
+        if (purpose) params.append('purpose', purpose);
+        
+        const queryString = params.toString();
+        const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
         console.log('API Response:', res.data);
-        return res.data;
+        
+        // Handle both paginated and non-paginated responses
+        if (res.data.results) {
+            return res.data;
+        } else {
+            return {
+                results: res.data,
+                count: res.data.length,
+                next: null,
+                previous: null
+            };
+        }
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching certificates:', error);

@@ -65,7 +65,6 @@ export default function ComplaintFilterBar({
         </div>
         <div className="flex gap-2">
           {buttons.filter && (
-            <Link to="/complaint/filter">
               <Button
                 variant="outline"
                 className="gap-2 text-darkGray hover:text-black"
@@ -73,7 +72,6 @@ export default function ComplaintFilterBar({
                 <ListFilterIcon size={16} className="text-gray-400" />
                 <span>Filter</span>
               </Button>
-            </Link>
           )}
           
           {buttons.request && (

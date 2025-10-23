@@ -59,24 +59,8 @@ export default function FamilyPlanningForm({
 
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
-  const patientId = formData?.pat_id
-  // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
-
-  // useEffect(() => {
-  //   if (obstetricalData?.livingChildren !== undefined) {
-  //     form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
-  //     updateFormData({
-  //       ...form.getValues(),
-  //       numOfLivingChildren: obstetricalData.livingChildren,
-  //       obstetricalHistory: {
-  //         ...form.getValues().obstetricalHistory,
-  //         numOfLivingChildren: obstetricalData.livingChildren,
-  //       },
-  //     })
-  //   }
-  // }, [obstetricalData, updateFormData])
-
-
+  
+  
   useEffect(() => {
     if (patientGender && !isPatientPreSelected) {
       form.setValue("gender", patientGender);
@@ -186,6 +170,8 @@ export default function FamilyPlanningForm({
       const response = await api2.get(`patientrecords/patient/${realPatId}/`);
       const patientData = response.data;
 
+
+      
       // Initialize default spouse info
       let spouseInfo = {
         s_lastName: "",
@@ -247,7 +233,11 @@ export default function FamilyPlanningForm({
         };
       }
 
-      // Build the form data with proper fallbacks
+       const bodyMeasurementDate = bodyMeasurementsResponse.data?.body_measurement?.created_at || 
+                               personalResponse.data?.bodyMeasurementRecordedAt || 
+                               "";
+
+
       const newFormData = {
         ...formData,
         ...patientData,
@@ -260,11 +250,11 @@ export default function FamilyPlanningForm({
         gender: patientData.personal_info?.per_sex || "",
         obstetricalHistory: {
           ...(obsHistoryResponse.data || {}),
-          livingChildren: obsHistoryResponse.data?.livingChildren || 0
+          numOfLivingChildren: obsHistoryResponse.data?.livingChildren || 0
         },
-        height: bodyMeasurementsResponse.data?.height || 0,
-        weight: bodyMeasurementsResponse.data?.weight || 0,
-        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
+        height: bodyMeasurementsResponse.data?.body_measurement?.height || 0,
+        weight: bodyMeasurementsResponse.data?.body_measurement?.weight || 0,
+        bodyMeasurementRecordedAt: bodyMeasurementDate,
         philhealthNo: personalResponse.data?.philhealthNo || "",
         nhts_status: personalResponse.data?.nhts_status || false,
         fourps: personalResponse.data?.fourps || false,
@@ -282,6 +272,13 @@ export default function FamilyPlanningForm({
       };
       console.log("New form data:", newFormData); // Debug log
       console.log("Final form data address:", newFormData.address); // Debug log
+
+      console.log("Patient Details Response:", {
+    weight: newFormData.weight,
+    height: newFormData.height, 
+    bodyMeasurementRecordedAt: newFormData.bodyMeasurementRecordedAt,
+    fullResponse: newFormData
+});
 
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);

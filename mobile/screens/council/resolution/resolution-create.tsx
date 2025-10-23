@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { z } from 'zod';
@@ -17,12 +17,15 @@ import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { useCreateResolution } from './queries/resolution-add-queries';
 import { useApprovedProposals } from './queries/resolution-fetch-queries';
 import { useResolution } from './queries/resolution-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
 }
 
 function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
+    const { user } = useAuth(); 
     const router = useRouter();
     const [selectedDocuments, setSelectedDocuments] = React.useState<DocumentItem[]>([]);
     const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([]);
@@ -31,8 +34,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
     
     // Fetch existing resolutions
-    const { data: resolutionData = [] } = useResolution();
+    const { data: resolutionData = { results: [], count: 0 } } = useResolution();    
     const { data: gadProposals = [] } = useApprovedProposals();
+
+    // Extract the actual data array from paginated response
+    const fetchedResolutions = resolutionData.results || [];    
 
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(() => {
@@ -76,11 +82,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
 
     // Extract resolution numbers from fetched data
     useEffect(() => {
-        if (resolutionData && resolutionData.length > 0) {
-            const numbers = resolutionData.map((resolution: any) => resolution.res_num);
+        if (fetchedResolutions && fetchedResolutions.length > 0) {
+            const numbers = fetchedResolutions.map((resolution: any) => resolution.res_num);
             setResolutionNumbers(numbers);
         }
-    }, [resolutionData]);
+    }, [fetchedResolutions]);
 
     // Check if GAD is selected
     const isGADSelected = selectedAreas.includes("gad");
@@ -135,7 +141,8 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
         const allValues = {
             ...values,
             resFiles,
-            resSuppDocs
+            resSuppDocs,
+            staff_id: user?.staff?.staff_id      
         };
 
         createResolution(allValues);
@@ -168,7 +175,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
 
     return (
         <_ScreenLayout
-            headerBetweenAction={<Text className="text-[13px]">Add New Resolution</Text>}
+            headerBetweenAction={<Text className="text-[13px]">Add Resolution</Text>}
             headerAlign="left"
             showBackButton={true}
             showExitButton={false}
@@ -184,7 +191,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             loadingMessage="Saving resolution..."
             footer={
                 <TouchableOpacity
-                    className="bg-primaryBlue py-3 rounded-md w-full items-center"
+                    className="bg-primaryBlue py-4 rounded-xl w-full items-center"
                     onPress={form.handleSubmit(onSubmit)}
                     disabled={isPending}
                 >
@@ -195,7 +202,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             }
             stickyFooter={true}
         >
-            <View className="w-full space-y-4 px-4 pt-5">
+            <View className="w-full space-y-4 px-6 pt-5">
                 {/* Tabs for New/Old Resolution */}
                 <View className="flex-row gap-2 mb-10">
                     <TabButton
@@ -272,8 +279,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
                     <MediaPicker
                         selectedImages={selectedImages}
                         setSelectedImages={setSelectedImages}
-                        multiple={true}
-                        maxImages={5}
+                        limit={5}
                     />    
                 </View>
             </View>

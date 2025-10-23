@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Trash2, X } from "lucide-react-native";
+import { ChevronLeft, CalendarClock, Clock, CheckCircle, XCircle, AlertCircle, X, CalendarCheck } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrenatalAppointmentRequests } from "./queries/fetch";
 import { useCancelPrenatalAppointment } from "./queries/update";
@@ -250,7 +250,7 @@ export default function MyPrenatalAppointments() {
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 4 }}
+            contentContainerStyle={{ paddingHorizontal: 2 }}
           >
             {[
               { key: 'all', label: 'All', count: appointments.length },
@@ -263,8 +263,8 @@ export default function MyPrenatalAppointments() {
               <TouchableOpacity
                 key={tab.key}
                 onPress={() => setStatusFilter(tab.key as any)}
-                className={`px-4 py-2 mx-1 rounded-md ${
-                  statusFilter === tab.key ? 'bg-blue-100 border border-blue-300' : 'bg-transparent'
+                className={`px-3 py-2 mx-1 ${
+                  statusFilter === tab.key ? 'border-b-2 border-blue-500' : 'bg-transparent'
                 }`}
                 activeOpacity={0.8}
               >
@@ -290,7 +290,7 @@ export default function MyPrenatalAppointments() {
         {/* Appointments List */}
         {filteredAppointments.length === 0 ? (
           <View className="bg-white rounded-xl p-8 items-center border border-gray-200">
-            <Calendar size={48} color="#9CA3AF" />
+            <CalendarClock size={48} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
               {statusFilter === 'all' ? 'No appointments found' : `No ${statusFilter} appointments`}
             </Text>
@@ -321,11 +321,26 @@ export default function MyPrenatalAppointments() {
 
                 <View className="space-y-2 gap-2">
                   <View className="flex-row items-center">
-                    <Calendar size={16} color="#6B7280" />
+                    <CalendarClock size={16} color="#6B7280" />
                     <Text className="text-gray-600 text-sm ml-2">
-                      Requested: {formatDate(appointment.requested_at)}
+                      Requested on: {formatDate(appointment.requested_at)}
                     </Text>
                   </View>
+
+                  <View className="flex-row items-center">
+                    <CalendarCheck size={16} color="#6B7280" />
+                    <Text className="text-gray-600 text-sm ml-2">
+                      Requested Date: {formatDate(appointment.requested_date)}
+                    </Text>
+                  </View>
+
+                   <View className="flex-row items-center">
+                    <Calendar size={16} color="#6B7280" />
+                    <Text className="text-gray-600 text-sm ml-2">
+                      Date of appointment: {formatDate(appointment.requested_date)}
+                    </Text>
+                  </View>
+
 
                   {appointment.approved_at && (
                     <View className="flex-row items-center">
@@ -373,7 +388,6 @@ export default function MyPrenatalAppointments() {
                   )}
                 </View>
 
-                {/* Action buttons for pending appointments */}
                 {appointment.status.toLowerCase() === 'pending' && (
                   <View className="flex-row space-x-2 mt-3">
                     <TouchableOpacity
@@ -391,7 +405,7 @@ export default function MyPrenatalAppointments() {
                           <Text className="text-gray-600 text-center font-medium ml-2">Cancelling...</Text>
                         </View>
                       ) : (
-                        <Text className="text-red-700 text-center font-medium">Cancel</Text>
+                        <Text className="text-white text-center font-medium">Cancel</Text>
                       )}
                     </TouchableOpacity>
                   </View>

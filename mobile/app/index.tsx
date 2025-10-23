@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 
 export default function Index() {
   const { user, isLoading } = useAuth();
@@ -17,6 +17,6 @@ export default function Index() {
   if (!user) {
     return <Redirect href="/(auth)" />;
   }
-  return <Redirect href="/(auth)" />;
-  // return <Redirect href="/(tabs)" />;
+  
+  return <Redirect href="/(tabs)" />;
 }

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, Linking, Image, Modal, Pressa
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import { useGetMinutesOfMeetingDetails, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
+import { useGetMinutesOfMeetingDetails } from "./queries/MOMFetchQueries";
 import { useLocalSearchParams } from "expo-router";
 import { Calendar, FileText, Target, Paperclip, Edit3, Archive, X, ChevronRight, ArchiveRestore, Trash } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -11,6 +11,7 @@ import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatAreaOfFocus } from "@/helpers/wordFormatter";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function MinutesOfMeetingView() {
     const router = useRouter();
@@ -23,6 +24,14 @@ export default function MinutesOfMeetingView() {
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{momsp_url: string, momsp_name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    if(isLoading || archivePending || deletePending || restorePending){
+        return(
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
+        )
+    }
 
     const handleFileOpen = async (url: string) => {
         if (!url) {
@@ -78,12 +87,10 @@ export default function MinutesOfMeetingView() {
             }
             headerBetweenAction={<Text className="text-[13px]">Minutes of Meeting Record</Text>}
             showExitButton={false}
-            loading={isLoading || archivePending || deletePending || restorePending}
-            loadingMessage={archivePending ? "Archiving meeting..." : deletePending? "Deleting meeting..." : restorePending? "Restoring Meeting": "Loading Details...."}
         >
             {momDetails && (
                 <>
-                    <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+                    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                         {/* Meeting Date Section */}
 
                          <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">

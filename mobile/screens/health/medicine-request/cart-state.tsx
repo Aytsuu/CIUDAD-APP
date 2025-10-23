@@ -27,7 +27,7 @@ interface CartState {
   uploadedFiles: UploadedFile[]; // Store uploaded files at cart level
 }
 
-let _globalCartState: CartState = {
+const _globalCartState: CartState = {
   items: [],
   uploadedFiles: [],
 };

@@ -1,12 +1,12 @@
+//// filepath: /c:/CIUDAD-APP/web/src/pages/healthServices/childservices/tables/ChildHR_all_records.tsx
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Search, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Search, Users, Home, UserCheck } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
@@ -19,6 +19,8 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+import { formatChildHealthData } from "./formattedData";
+import TableLoading from "../../table-loading";
 
 export default function AllChildHealthRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,13 +44,10 @@ export default function AllChildHealthRecords() {
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
     let query = debouncedSearchQuery || "";
-
-    // If sitios are selected, add them to the search query with COMMA separation
     if (selectedSitios.length > 0) {
       const sitioQuery = selectedSitios.join(",");
       query = query ? `${query},${sitioQuery}` : sitioQuery;
     }
-
     return query || undefined;
   }, [debouncedSearchQuery, selectedSitios]);
 
@@ -67,11 +66,7 @@ export default function AllChildHealthRecords() {
   const { data: apiResponse, isLoading, error } = useChildHealthRecords(queryParams);
 
   // Handle API response structure
-  const {
-    childRecords,
-    totalCount,
-    totalPages: apiTotalPages
-  } = useMemo(() => {
+  const { childRecords, totalCount, totalPages: apiTotalPages } = useMemo(() => {
     if (!apiResponse) {
       return { childRecords: [], totalCount: 0, totalPages: 1 };
     }
@@ -93,85 +88,26 @@ export default function AllChildHealthRecords() {
     }
   }, [apiResponse, pageSize]);
 
-  const formatChildHealthData = useCallback((): any[] => {
-    if (!childRecords || !Array.isArray(childRecords)) {
-      return [];
-    }
-
-    return childRecords.map((record: any) => {
-      const patrecDetails = record.patrec_details || {};
-      const patientDetails = patrecDetails.pat_details || {};
-      const personalInfo = patientDetails.personal_info || {};
-      const addressInfo = patientDetails.address || {};
-      const familyHeadInfo = patientDetails.family_head_info || {};
-      const familyHeads = familyHeadInfo.family_heads || {};
-      const motherInfo = familyHeads.mother?.personal_info || {};
-      const fatherInfo = familyHeads.father?.personal_info || {};
-
-      return {
-        chrec_id: record.chrec_id,
-        pat_id: patientDetails.pat_id || "",
-        fname: personalInfo.per_fname || "",
-        lname: personalInfo.per_lname || "",
-        mname: personalInfo.per_mname || "",
-        sex: personalInfo.per_sex || "",
-        age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
-        dob: personalInfo.per_dob || "",
-        householdno: patientDetails.households?.[0]?.hh_id || "",
-        address: addressInfo.full_address || "No address Provided",
-        sitio: addressInfo.add_sitio || "",
-        landmarks: addressInfo.add_landmarks || "",
-        pat_type: patientDetails.pat_type || "",
-        mother_fname: motherInfo.per_fname || "",
-        mother_lname: motherInfo.per_lname || "",
-        mother_mname: motherInfo.per_mname || "",
-        mother_contact: motherInfo.per_contact || "",
-        mother_occupation: motherInfo.per_occupation || record.mother_occupation || "",
-        father_fname: fatherInfo.per_fname || "",
-        father_lname: fatherInfo.per_lname || "",
-        father_mname: fatherInfo.per_mname || "",
-        father_contact: fatherInfo.per_contact || "",
-        father_occupation: fatherInfo.per_occupation || record.father_occupation || "",
-        family_no: record.family_no || "Not Provided",
-        birth_weight: record.birth_weight || 0,
-        birth_height: record.birth_height || 0,
-        type_of_feeding: record.type_of_feeding || "Unknown",
-        delivery_type: record.place_of_delivery_type || "",
-        place_of_delivery_type: record.place_of_delivery_type || "",
-        pod_location: record.pod_location || "",
-        pod_location_details: record.pod_location_details || "",
-        health_checkup_count: record.health_checkup_count || 0,
-        birth_order: record.birth_order || "",
-        tt_status: record.tt_status || "",
-        latest_child_history_date: record.latest_child_history_date || ""
-      };
-    });
+  // Use the separated helper to format data
+  const formattedData = useMemo(() => {
+    return formatChildHealthData(childRecords);
   }, [childRecords]);
 
-  const formattedData = formatChildHealthData();
   const totalPages = apiTotalPages || Math.ceil(totalCount / pageSize);
 
   // Calculate resident and transient counts
   const calculateCounts = useCallback(() => {
     if (!childRecords) return { residents: 0, transients: 0, totalCount: 0 };
-
     let residents = 0;
     let transients = 0;
-
     childRecords.forEach((record: any) => {
       const patrecDetails = record.patrec_details || {};
       const patientDetails = patrecDetails.pat_details || {};
       const patType = patientDetails.pat_type || "";
-
       if (patType === "Resident") residents++;
       if (patType === "Transient") transients++;
     });
-
-    return { 
-      residents, 
-      transients, 
-      totalCount: residents + transients 
-    };
+    return { residents, transients, totalCount: residents + transients };
   }, [childRecords]);
 
   const { residents, transients, totalCount: calculatedTotalCount } = calculateCounts();
@@ -193,7 +129,7 @@ export default function AllChildHealthRecords() {
     }
   };
 
-  // Export functionality - Same pattern as other modules
+  // Export functionality
   const prepareExportData = () => {
     return formattedData.map((record) => ({
       "Patient No": record.pat_id,
@@ -208,8 +144,7 @@ export default function AllChildHealthRecords() {
       "Mother's Occupation": record.mother_occupation || "N/A",
       "Father's Name": `${record.father_fname} ${record.father_mname || ""} ${record.father_lname}`.trim() || "N/A",
       "Father's Occupation": record.father_occupation || "N/A",
-      "Health Checkup Count": record.health_checkup_count,
-     
+      "Health Checkup Count": record.health_checkup_count
     }));
   };
 
@@ -244,7 +179,6 @@ export default function AllChildHealthRecords() {
               headerClassName="pb-2" 
               contentClassName="pt-0" 
             />
-
             <EnhancedCardLayout
               title="Resident Children"
               description="Children who are residents"
@@ -255,7 +189,6 @@ export default function AllChildHealthRecords() {
               headerClassName="pb-2"
               contentClassName="pt-0"
             />
-
             <EnhancedCardLayout
               title="Transient Children"
               description="Children who are transients"
@@ -275,7 +208,7 @@ export default function AllChildHealthRecords() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
               <Input 
-                placeholder="Search by name, family no, UFC no, address, or sitio..." 
+                placeholder="Search by name, address, or sitio..." 
                 className="pl-10 bg-white w-full" 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
@@ -308,7 +241,6 @@ export default function AllChildHealthRecords() {
                 className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
               />
             </div>
-
             <ProtectedComponentButton exclude={["DOCTOR"]}>
               <div className="w-full sm:w-auto">
                 <Link
@@ -359,10 +291,7 @@ export default function AllChildHealthRecords() {
 
           <div className="bg-white w-full overflow-x-auto border">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading...</span>
-              </div>
+             <TableLoading/>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
                 <span>Error loading data. Please try again.</span>

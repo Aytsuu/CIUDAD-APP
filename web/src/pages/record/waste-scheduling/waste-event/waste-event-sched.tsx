@@ -11,7 +11,7 @@ import WasteEventSchedSchema from '@/form-schema/waste-event-form-schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell } from 'lucide-react';
 import { createWasteEvent } from './queries/wasteEventQueries';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { FormSelect } from '@/components/ui/form/form-select';
@@ -21,10 +21,9 @@ const announcementOptions = [
     { id: "all", label: "All", checked: false },
     { id: "allbrgystaff", label: "All Barangay Staff", checked: false },
     { id: "residents", label: "Residents", checked: false },
-    { id: "wmstaff", label: "Waste Management Staff", checked: false },
-    { id: "drivers", label: "Drivers", checked: false },
-    { id: "collectors", label: "Collectors", checked: false },
-    { id: "watchmen", label: "Watchmen", checked: false },
+    { id: "wmstaff", label: "Waste Committee", checked: false },
+    { id: "drivers", label: "Driver Loader", checked: false },
+    { id: "collectors", label: "Loaders", checked: false },
 ];
 
 function WasteEventSched() {
@@ -53,7 +52,7 @@ function WasteEventSched() {
             const staffId = user?.staff?.staff_id;
             
             if (!staffId) {
-                toast.error("Staff information not available. Please log in again.");
+                showErrorToast("Staff information not available. Please log in again.");
                 return;
             }
 
@@ -72,19 +71,28 @@ function WasteEventSched() {
                 we_organizer: values.organizer,
                 we_invitees: values.invitees,
                 we_is_archive: false,
-                staff: staffId
+                staff: staffId,
+                // Include announcement data
+                selectedAnnouncements: values.selectedAnnouncements || [],
+                eventSubject: values.eventSubject || ''
             };
 
-            await createWasteEvent(eventData);
+            const response = await createWasteEvent(eventData);
             
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
+            queryClient.invalidateQueries({ queryKey: ['announcements'] });
             
-            toast.success("Event has been scheduled successfully!");
+            // Show appropriate success message
+            if (response?.announcement_created) {
+                showSuccessToast("Event scheduled and announcement sent successfully!");
+            } else {
+                showSuccessToast("Event has been scheduled successfully!");
+            }
 
             form.reset();
         } catch (error) {
             console.error('Error creating waste event:', error);
-            toast.error("Failed to schedule event. Please try again.");
+            showErrorToast("Failed to schedule event. Please try again.");
         }
     };
 
@@ -314,7 +322,7 @@ function WasteEventSched() {
                                     type="button" 
                                     variant="outline" 
                                     onClick={() => form.reset()}
-                                    className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 hover:border-yellow-500"
+                                    className="w-full sm:w-auto bg-amber-700 hover:bg-amber700 text-white"
                                 >
                                     Reset
                                 </Button>

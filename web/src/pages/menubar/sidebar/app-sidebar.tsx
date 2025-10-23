@@ -147,11 +147,11 @@ export function AppSidebar() {
   const [activeItem, setActiveItem] = useState<string>("");
 
   const featureValidator = (requiredFeature?: string) => {
-    if (!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin";
+    if (!requiredFeature) return user?.staff?.pos.toLowerCase() == "admin";
 
     return (
       user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) ||
-      user?.staff?.pos?.toLowerCase() == "admin"
+      user?.staff?.pos.toLowerCase() == "admin"
     );
   };
 
@@ -193,19 +193,34 @@ export function AppSidebar() {
       title: "Team",
       url: "/team",
     },
-    ...(featureValidator("summon & case tracker")
+    ...(featureValidator("council mediation")
       ? [
           {
-            title: "Summon & Case Tracker",
+            title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Request List", url: "/request-list" },
               { title: "Summon Calendar", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
         ]
       : []),
+    ...(featureValidator("summon remarks")
+      ? [
+          {
+            title: "Summon Remarks",
+            url: "/summon-remarks",
+          },
+        ]
+      : []),
+    ...(featureValidator("conciliation proceedings")
+    ? [
+        {
+          title: "Conciliation Proceedings",
+          url: "/conciliation-proceedings",
+        },
+      ]
+    : []),
     ...(featureValidator("gad")
       ? [
           {
@@ -251,8 +266,8 @@ export function AppSidebar() {
                 url: "/treasurer-income-expense-main",
               },
               {
-                title: "Income & Disbursement",
-                url: "/treasurer-income-and-disbursement",
+                title: "Disbursement Voucher",
+                url: "/treasurer-disbursement",
               },
               {
                 title: "Payment Request",
@@ -326,7 +341,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -339,10 +354,6 @@ export function AppSidebar() {
         {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
-        },
-        {
-          title: "Maternal",
-          url: "/",
         },
       ],
     }] : []),
@@ -361,7 +372,7 @@ export function AppSidebar() {
         { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
-          url: "/services/medical-consultation",
+          url: "/services/medical-consultation/records",
         },
         { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
@@ -376,8 +387,8 @@ export function AppSidebar() {
 
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 

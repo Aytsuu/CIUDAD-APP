@@ -112,9 +112,15 @@ export function PatientSearch({
       toast.error(`Failed to load children patients: ${(error5YearsBelow as Error).message}`);
     }
   }, [isError, error, isError5YearsBelow, error5YearsBelow]);
-
+  
   const handlePatientSelection = useCallback(
     (id: string) => {
+      if (!id) {
+        onChange("");
+        onPatientSelect(null, "");
+        return;
+      }
+  
       onChange(id);
       const dataSource = ischildren ? patients5YearsBelowData?.default : patientsData?.default;
       const selectedPatient = dataSource?.find(
@@ -124,6 +130,7 @@ export function PatientSearch({
     },
     [patientsData?.default, patients5YearsBelowData?.default, onPatientSelect, onChange, ischildren]
   );
+  
 
   const currentData = ischildren ? patients5YearsBelowData : patientsData;
   const currentIsLoading = ischildren ? isLoading5YearsBelow : isLoading;

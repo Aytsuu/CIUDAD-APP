@@ -1,6 +1,6 @@
 import { useToastContext } from "@/components/ui/toast";
 import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resolution_create } from "../request/resolution-post-request";
 import { resolution_file_create } from "../request/resolution-post-request";
 import { resolution_supp_doc_create } from "../request/resolution-post-request";
@@ -15,6 +15,7 @@ type FileData = {
 type ExtendedResolution= z.infer<typeof resolutionFormSchema> & {
   resFiles: FileData[]; 
   resSuppDocs: FileData[]; 
+  staff_id: string;
 };
 
 

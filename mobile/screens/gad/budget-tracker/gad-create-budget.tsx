@@ -28,6 +28,7 @@ import BudgetTrackerSchema, {
 import PageLayout from "@/screens/_PageLayout";
 import { removeLeadingZeros } from "./gad-btracker-types";
 import { useAuth } from "@/contexts/AuthContext";
+import { BudgetYear } from "./gad-btracker-types";
 
 function GADAddEntryForm() {
   const { user } = useAuth();
@@ -52,17 +53,22 @@ function GADAddEntryForm() {
     isLoading: yearBudgetsLoading,
     refetch: refetchYearBudgets,
   } = useGetGADYearBudgets();
-  const { data: budgetEntries = [] } = useGADBudgets(year || "");
+  const { data: budgetEntriesData } = useGADBudgets(year || "");
+  const budgetEntries = budgetEntriesData?.results || [];
   const { data: projectProposals, isLoading: projectProposalsLoading } =
     useProjectProposalsAvailability(year);
-  const { mutate: createBudget } = useCreateGADBudget(
-    yearBudgets || [],
-    budgetEntries
-  );
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const {
+    mutate: createBudget,
+    isPending,
+    error: _createError,
+  } = useCreateGADBudget(yearBudgetsArray, budgetEntries);
 
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -91,7 +97,7 @@ function GADAddEntryForm() {
       gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
-      staff: user?.staff?.staff_id || null,
+      staff: user?.staff?.staff_id || '00001250924',
     },
     context: { calculateRemainingBalance },
   });
@@ -119,7 +125,9 @@ function GADAddEntryForm() {
 
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
         form.setValue("gbud_remaining_bal", calculateRemainingBalance());
@@ -306,9 +314,41 @@ useEffect(() => {
       }
       headerTitle={<Text>Create Budget Entry</Text>}
       rightAction={<View />}
+      footer={ <View >
+        <TouchableOpacity
+          className="bg-blue-500 py-3 rounded-lg"
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={
+            isSubmitting ||
+            !form.formState.isValid ||
+            (!hasUnrecordedItems())
+          }
+        >
+          <View className="flex-row justify-center items-center">
+            <Text className="text-white text-base font-semibold">
+              {isSubmitting ? "Saving..." : "Save Entry"}
+            </Text>
+            {isSubmitting && (
+              <ActivityIndicator size="small" color="white" className="ml-2" />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {!form.formState.isValid && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Please fill out all required fields correctly
+          </Text>
+        )}
+
+        {!hasUnrecordedItems() && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Note: Add at least one new budget item to save
+          </Text>
+        )}
+      </View>}
     >
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 p-4 px-6"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="space-y-4">
@@ -464,8 +504,7 @@ useEffect(() => {
                 <MediaPicker
                   selectedImages={mediaFiles}
                   setSelectedImages={setMediaFiles}
-                  multiple={true}
-                  maxImages={5}
+                  limit={5}
                 />
               </View>
         </View>
@@ -579,40 +618,6 @@ useEffect(() => {
           )}
         </View>
       </Modal>
-
-      {/* Submit Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <TouchableOpacity
-          className="bg-blue-500 py-3 rounded-lg"
-          onPress={form.handleSubmit(onSubmit)}
-          disabled={
-            isSubmitting ||
-            !form.formState.isValid ||
-            (!hasUnrecordedItems())
-          }
-        >
-          <View className="flex-row justify-center items-center">
-            <Text className="text-white text-base font-semibold">
-              {isSubmitting ? "Saving..." : "Save Entry"}
-            </Text>
-            {isSubmitting && (
-              <ActivityIndicator size="small" color="white" className="ml-2" />
-            )}
-          </View>
-        </TouchableOpacity>
-
-        {!form.formState.isValid && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            Please fill out all required fields correctly
-          </Text>
-        )}
-
-        {!hasUnrecordedItems() && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            Note: Add at least one new budget item to save
-          </Text>
-        )}
-      </View>
     </PageLayout>
   );
 }

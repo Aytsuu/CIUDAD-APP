@@ -5,7 +5,6 @@ import {api} from "@/api/api";
 
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
-        let staff = "00004250910";
 
 
         console.log("\nRESOLUTION CREATED MOBILE: ",{
@@ -15,7 +14,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
             gpr_id: resolutionInfo.gpr_id,
-            staff: staff,
+            staff: resolutionInfo.staff_id
         })
 
         const res = await api.post('council/resolution/',{
@@ -25,7 +24,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
             gpr_id: resolutionInfo.gpr_id,
-            staff: staff,
+            staff: resolutionInfo.staff_id
         })
 
         return res.data.res_num;

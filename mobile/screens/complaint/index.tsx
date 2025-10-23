@@ -1,333 +1,253 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  Modal,
-  FlatList,
-  ActivityIndicator,
-  TextInput,
-  StatusBar,
-  Alert,
-} from "react-native";
-import _ScreenLayout from "../_ScreenLayout";
-import { router } from "expo-router";
-import {
-  ChevronLeft,
-  Plus,
-  Info,
-  Search,
-  AlertTriangle,
-  HelpCircle,
-  Users,
-} from "lucide-react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
+import ScreenLayout from "../_ScreenLayout";
 import { getComplaintLists } from "./queries/ComplaintGetQueries";
-// import DateFormatter from "@/components/DateFormatter";
-import ComplaintActionsDrawer from "./ComplaintActionsDrawer";
-import { InfoModal } from "./Modals/InfoModal";
-import { ActionSelectionModal } from "./Modals/ActionSelectionModal";
-import { ComplaintIcon } from "./ComplaintIcon";
+import { router } from "expo-router";
+import { ChevronLeft, MoreVertical } from "lucide-react-native";
+import { SearchWithTabs } from "./SearchWithTabs";
+import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
+import { LoadingState } from "@/components/ui/loading-state";
 
-const ComplaintListScreen = () => {
-  const [infoVisible, setInfoVisible] = useState(false);
-  const [searchVisible, setSearchVisible] = useState(false);
+interface ComplaintItem {
+  comp_id: string;
+  comp_allegation: string;
+  cpnt_name: string;
+  comp_location: string;
+  comp_status: "Pending" | "Resolved" | "Raised";
+  comp_datetime: string;
+  comp_incident_type: string;
+}
+
+export default function ComplaintLists() {
+  const { data: complaintList, isLoading, isError } = getComplaintLists();
   const [searchQuery, setSearchQuery] = useState("");
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
-  const [actionModalVisible, setActionModalVisible] = useState(false);
-  const { data, isLoading, isError, refetch } = getComplaintLists();
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeStatus, setActiveStatus] = useState("all");
+  console.log(JSON.stringify(complaintList, null, 2));
+  // Calculate status counts
+  const statusCounts = useMemo(() => {
+    if (!complaintList) return { all: 0, pending: 0, resolved: 0, raised: 0 };
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  }, [refetch]);
+    return {
+      all: complaintList.length,
+      pending: complaintList.filter(
+        (item: ComplaintItem) => item.comp_status === "Pending"
+      ).length,
+      resolved: complaintList.filter(
+        (item: ComplaintItem) => item.comp_status === "Resolved"
+      ).length,
+      raised: complaintList.filter(
+        (item: ComplaintItem) => item.comp_status === "Raised"
+      ).length,
+    };
+  }, [complaintList]);
 
-  const filteredData = useMemo(() => {
-    if (!data || !Array.isArray(data)) return [];
-    if (!searchQuery.trim()) return data;
+  // Define tabs with counts
+  const tabs = [
+    { id: "all", label: "All", count: statusCounts.all },
+    { id: "pending", label: "Pending", count: statusCounts.pending },
+    { id: "resolved", label: "Resolved", count: statusCounts.resolved },
+    { id: "raised", label: "Raised", count: statusCounts.raised },
+  ];
 
-    const query = searchQuery.toLowerCase().trim();
-    return data.filter((item: any) => {
-      const complainantNames = (item.complainant || [])
-        .map((c: any) => c.cpnt_name || "")
-        .join(" ")
-        .toLowerCase();
-      const incidentType = (item.comp_incident_type || "").toLowerCase();
+  // Filter complaints based on search and status
+  const filteredComplaints = useMemo(() => {
+    if (!complaintList) return [];
 
-      return complainantNames.includes(query) || incidentType.includes(query);
-    });
-  }, [data, searchQuery]);
+    let filtered = complaintList;
 
-  const stableData = useMemo(() => filteredData, [filteredData]);
-
-  const handleComplaintPress = useCallback((item: any) => {
-    setSelectedComplaint(item);
-    setDrawerVisible(true);
-  }, []);
-
-  const handleTrackRequest = useCallback(() => {
-    if (selectedComplaint) {
-      router.push(`/complaint/${selectedComplaint.comp_id}` as any)
-    }
-  }, [selectedComplaint]);
-
-  const handleSummon = useCallback(() => {
-    if(selectedComplaint) {
-      router.push("/(complaint)/summon-payment")
-    }
-  }, [selectedComplaint])
-
-  const handleDeleteComplaint = useCallback(() => {
-    if (selectedComplaint) {
-      Alert.alert(
-        "Delete Complaint",
-        `Are you sure you want to delete this complaint: "${selectedComplaint.comp_incident_type}"?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: () => {
-              console.log("Deleting complaint:", selectedComplaint.comp_id);
-              Alert.alert("Success", "Complaint deleted successfully");
-            },
-          },
-        ]
+    if (activeStatus !== "all") {
+      filtered = filtered.filter(
+        (item: ComplaintItem) => item.comp_status.toLowerCase() === activeStatus
       );
     }
-  }, [selectedComplaint]);
 
-  const handleCloseDrawer = useCallback(() => {
-    setDrawerVisible(false);
-    setSelectedComplaint(null);
-  }, []);
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (item: ComplaintItem) =>
+          item.comp_incident_type
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          item.comp_allegation
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          item.comp_location.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: any; index: number }) => {
-      const currentDate = monthYear(item.comp_datetime);
-      const prevItem = index > 0 ? stableData[index - 1] : null;
-      const prevDate = prevItem
-        ? DateFormatter.monthYear(prevItem.comp_datetime)
-        : null;
-      const showDateHeader = currentDate !== prevDate;
+    return filtered;
+  }, [complaintList, activeStatus, searchQuery]);
 
-      const complainantNames =
-        item.complainant && item.complainant.length > 0
-          ? item.complainant.map((c: any) => c.cpnt_name).filter(Boolean).join(", ")
-          : "No Complainants";
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "bg-orange-100 text-orange-700";
+      case "Resolved":
+        return "bg-green-100 text-green-700";
+      case "Raised":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
 
-      const accusedNames =
-        item.accused && item.accused.length > 0
-          ? item.complainant.map((a: any) => a.acc_name).filter(Boolean).join(", ")
-          : "No Complainants";
+  const renderComplaintCard = ({ item }: { item: ComplaintItem }) => (
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: `/(my-request)/complaint-tracking/compMainView`,
+          params: { comp_id: item.comp_id },
+        })
+      }
+      className="bg-white rounded-xl p-4"
+    >
+      <View className="flex-row items-start justify-between">
+        <View className="flex-row flex-1">
+          <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mr-3 overflow-hidden">
+            {/* <Image
+              source={
+                user?.profile_image
+                  ? { uri: user.profile_image }
+                  : require("@/assets/images/Logo.png")
+              }
+              className="w-full h-full rounded-full"
+              style={{ backgroundColor: "#f3f4f6" }}
+            /> */}
+          </View>
 
-      const { icon: IconComponent, color: iconColor } = ComplaintIcon(item.comp_incident_type);
-
-      return (
-        <View>
-          {showDateHeader && (
-            <View className="bg-gray-50 px-4 py-2 mb-2 rounded-lg">
-              <Text className="text-gray-600 font-semibold text-sm uppercase tracking-wide">
-                {currentDate}
+          {/* Text Details */}
+          <View className="flex-1">
+            <View className="flex-row items-center">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mr-2">
+                {item.cpnt_name}
               </Text>
-            </View>
-          )}
 
-          <TouchableOpacity
-            className="bg-white p-4 mb-3 rounded-2xl border border-gray-100"
-            onPress={() => handleComplaintPress(item)}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row items-start justify-between">
-              <View className="flex-row items-center flex-1">
-                <View
-                  className="w-14 h-14 rounded-full items-center justify-center mr-4"
-                  style={{ backgroundColor: `${iconColor}15` }}
+              <View
+                className={`px-3 py-1 rounded-full ${
+                  getStatusColor(item.comp_status).split(" ")[0]
+                }`}
+              >
+                <Text
+                  className={`text-xs font-PoppinsMedium ${
+                    getStatusColor(item.comp_status).split(" ")[1]
+                  }`}
                 >
-                  <IconComponent size={26} color={iconColor} />
-                </View>
-
-                <View className="flex-1">
-                  <View className="flex flex-row justify-between mb-1">
-                    <Text
-                      className="text-gray-900 font-normal text-base leading-5 mb-1"
-                      numberOfLines={2}
-                    >
-                      {complainantNames}
-                    </Text>
-                    <Text className="text-xs bg-red-500 rounded-full px-2 py-1 text-white animate-ping-slow" >Pending</Text>
-                  </View>
-
-                  <View className="flex flex-row justify-between">
-                    <Text className="text-sm text-gray-500 font-normal">{accusedNames}</Text>
-                    {item.comp_location && (
-                      <Text
-                        className="text-xs text-gray-500 ml-2 flex-shrink leading-4"
-                        numberOfLines={1}
-                      >
-                        {DateFormatter.medium(item.comp_created_at)}
-                      </Text>
-                    )}
-                  </View>
-
-                  {complainantNames !== "No Complainants" && (
-                    <View className="flex-row items-center">
-                      <Users size={14} color="#6B7280" />
-                      <Text className="text-sm text-gray-500 ml-2 flex-shrink" numberOfLines={1}>
-                        {complainantNames}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                  {item.comp_status}
+                </Text>
               </View>
             </View>
-          </TouchableOpacity>
+
+            <Text
+              className="text-sm font-PoppinsRegular text-gray-500"
+              numberOfLines={1}
+            >
+              {item.comp_allegation} | {item.comp_location}
+            </Text>
+
+            {/* Status directly below details */}
+            <View className="flex-row items-center mt-2">
+              <Text className="text-xs font-PoppinsRegular text-gray-400">
+                {localDateFormatter(item.comp_datetime)}
+              </Text>
+            </View>
+          </View>
         </View>
-      );
-    },
-    [stableData, handleComplaintPress]
-  );
 
-  const keyExtractor = useCallback(
-    (item: any) => item.comp_id?.toString() || Math.random().toString(),
-    []
-  );
-
-  const toggleSearch = useCallback(() => {
-    setSearchVisible((prev) => {
-      if (prev) setSearchQuery("");
-      return !prev;
-    });
-  }, []);
-
-  const ListEmptyComponent = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center py-16">
-        <HelpCircle size={48} color="#D1D5DB" />
-        <Text className="text-gray-500 text-center mt-4 text-base font-medium">
-          {searchQuery.trim()
-            ? "No matching complaints found"
-            : "No complaints found"}
-        </Text>
-        <Text className="text-gray-400 text-center mt-2 text-sm px-8 leading-5">
-          {searchQuery.trim()
-            ? "Try adjusting your search terms"
-            : "Tap the + button below to file your first complaint"}
-        </Text>
-      </View>
-    ),
-    [searchQuery]
-  );
-
-  const leftAction = useMemo(
-    () => (
-      <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm">
-        <ChevronLeft size={24} color="#374151" />
-      </TouchableOpacity>
-    ),
-    []
-  );
-
-  const headerAction = useMemo(
-    () => (
-      <View className="flex-row items-center">
-        <Text className="text-lg font-semibold text-gray-900 mr-2">
-          Blotter Complaints
-        </Text>
-        <TouchableOpacity onPress={() => setInfoVisible(true)} className="p-1">
-          <Info size={20} color="#6B7280" />
+        {/* Right: More icon */}
+        <TouchableOpacity className="p-1">
+          <MoreVertical size={20} color="#9CA3AF" />
         </TouchableOpacity>
       </View>
-    ),
-    []
+
+      {/* Datetime - bottom right */}
+      <View className="items-end mt-2"></View>
+    </TouchableOpacity>
   );
 
-  const rightAction = useMemo(
-    () => (
-      <TouchableOpacity onPress={toggleSearch} className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm">
-        <Search size={20} color="#374151" />
-      </TouchableOpacity>
-    ),
-    [toggleSearch]
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View className="flex-1 items-center justify-center">
+          <LoadingState />
+        </View>
+      );
+    }
+
+    if (isError) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-red-500 font-PoppinsSemiBold text-lg mb-2">
+            Error Loading Data
+          </Text>
+          <Text className="text-gray-500 font-PoppinsRegular text-center">
+            Unable to load complaints. Please try again.
+          </Text>
+        </View>
+      );
+    }
+
+    if (!complaintList || complaintList.length === 0) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-gray-700 font-PoppinsSemiBold text-lg mb-2">
+            No Complaints
+          </Text>
+          <Text className="text-gray-500 font-PoppinsRegular text-center">
+            There are no complaints to display at the moment.
+          </Text>
+        </View>
+      );
+    }
+
+    if (filteredComplaints.length === 0) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <EmptyInbox />
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={filteredComplaints}
+        renderItem={renderComplaintCard}
+        keyExtractor={(item) => item.comp_id}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
-
-      {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-100" style={{ paddingTop: 50 }}>
-        <View className="flex-row items-center justify-between">
-          {leftAction}
-          {headerAction}
-          {rightAction}
-        </View>
-      </View>
-
-      {isLoading && !refreshing ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text className="text-gray-500 mt-4">Loading complaints...</Text>
-        </View>
-      ) : isError ? (
-        <View className="flex-1 justify-center items-center px-8">
-          <AlertTriangle size={48} color="#EF4444" />
-          <Text className="text-red-600 text-center text-lg font-medium mt-4">
-            Failed to load complaints
-          </Text>
-          <Text className="text-gray-500 text-center mt-2">
-            Please check your connection and try again
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={stableData}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          ListEmptyComponent={ListEmptyComponent}
-          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
+    <ScreenLayout
+      customLeftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
+        >
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={
+        <Text className="text-md font-PoppinsRegular text-gray-900">
+          Blotter
+        </Text>
+      }
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 bg-white">
+        <SearchWithTabs
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={() => {}}
+          tabs={tabs}
+          activeTab={activeStatus}
+          onTabChange={setActiveStatus}
+          showTabCounts={true}
+          searchPlaceholder="Search complaints..."
         />
-      )}
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        onPress={() => setActionModalVisible(true)}
-        className="absolute bottom-6 right-6 w-20 h-20 bg-blue-600 rounded-full items-center justify-center"
-      >
-        <Plus size={24} color="white" />
-      </TouchableOpacity>
-
-      {/* Action Selection Modal */}
-      <ActionSelectionModal
-        visible={actionModalVisible}
-        onClose={() => setActionModalVisible(false)}
-      />
-
-      {/* Complaint Actions Drawer */}
-      <ComplaintActionsDrawer
-        visible={drawerVisible}
-        onClose={handleCloseDrawer}
-        onTrackRequest={handleTrackRequest}
-        onSummon ={handleSummon}
-        onDelete={handleDeleteComplaint}
-        complaintTitle={selectedComplaint?.comp_incident_type}
-      />
-
-      {/* Info Modal */}
-      <InfoModal
-        visible={infoVisible}
-        onClose={() => setInfoVisible(false)}
-        title="Blotter Complaints"
-        description="Report incidents or file complaints regarding disturbances, conflicts, or any issues within the community."
-        buttonText="Confirm"
-        buttonColor="bg-blue-600"
-      />
-    </View>
+        {renderContent()}
+      </View>
+    </ScreenLayout>
   );
-};
-
-export default memo(ComplaintListScreen);
+}

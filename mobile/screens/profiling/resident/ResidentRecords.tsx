@@ -11,7 +11,6 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
 import { useResidentsTable } from "../queries/profilingGetQueries";
-import { Card } from "@/components/ui/card";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "../../_PageLayout";

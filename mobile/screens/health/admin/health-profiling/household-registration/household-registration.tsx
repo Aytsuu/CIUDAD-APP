@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";

@@ -1,19 +1,20 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { RejectPickupRequestSchema } from '@/form-schema/waste/garbage-pickup-schema-staff';
-import { Form, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import z from "zod";
 import { useAddDecision } from './queries/garbagePickupStaffInsertQueries';
-
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RejectGarbagePickupForm() {
+    const {user} = useAuth()
     const params = useLocalSearchParams();
     const garb_id = params.garb_id || '';
     const router = useRouter();
@@ -23,6 +24,7 @@ export default function RejectGarbagePickupForm() {
       resolver: zodResolver(RejectPickupRequestSchema),
       defaultValues: {
         reason: '',
+        staff_id: user?.staff?.staff_id
       }
     });
     
@@ -47,7 +49,7 @@ export default function RejectGarbagePickupForm() {
         >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             <View className="mb-8">
-            <View className="space-y-4">
+            <View className="space-y-4 p-6">
                 <FormInput
                 control={control}
                 label="Reason"

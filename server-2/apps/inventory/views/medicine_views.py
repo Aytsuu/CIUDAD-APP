@@ -97,16 +97,17 @@ class MedicineListAvailableTable(APIView):
                         med_inv.inv_id.expiry_date >= today) and \
                        med_inv.minv_qty_avail > 0:
                         
+                        # SIMPLE DEDUCTION: quantity_available minus temporary_deduction
                         available_after_deduction = med_inv.minv_qty_avail - med_inv.temporary_deduction
                         
                         inventory_items.append({
-                            'minv_id': med_inv.minv_id,
-                            'dosage': f"{med_inv.minv_dsg} {med_inv.minv_dsg_unit}",
-                            'form': med_inv.minv_form,
-                            'quantity_available': available_after_deduction,
+                            'minv_id': med_inv.minv_id,  # ✅ ADD THIS LINE - Include minv_id
+                            'quantity_available': available_after_deduction,  # Deducted value
                             'quantity_unit': med_inv.minv_qty_unit,
                             'expiry_date': med_inv.inv_id.expiry_date,
-                            'inventory_type': med_inv.inv_id.inv_type
+                            'inventory_type': med_inv.inv_id.inv_type,
+                            'dosage': med_inv.minv_dsg,  # ✅ Also add dosage if needed
+                            'form': med_inv.minv_form,   # ✅ Also add form if needed
                         })
                 
                 medicine_data.append({
@@ -128,7 +129,7 @@ class MedicineListAvailableTable(APIView):
                 })
         
         if paginated_medicines is not None:
-            response = paginator.get_paginated_response(medicine_data)  # ← Pass medicine_data directly
+            response = paginator.get_paginated_response(medicine_data)
             print("🔍 Backend Response:", response.data)
             return response
         
@@ -136,6 +137,7 @@ class MedicineListAvailableTable(APIView):
             'medicines': medicine_data,
             'count': len(medicine_data)
         }, status=status.HTTP_200_OK)
+    
     
     
 class MedicineListTable(generics.ListAPIView):

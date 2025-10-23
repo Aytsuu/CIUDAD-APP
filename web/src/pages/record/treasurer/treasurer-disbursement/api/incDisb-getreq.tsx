@@ -1,18 +1,51 @@
 import { api } from "@/api/api";
-import { DisbursementVoucher, DisbursementFile, Staff, DisbursementParams, DisbursementFileParams } from "../incDisb-types"
+import { DisbursementVoucher, DisbursementFile, Staff, DisbursementFileParams } from "../incDisb-types"
 
-
-
-export const getDisbursementVouchers = async (params: DisbursementParams = {}): Promise<DisbursementVoucher[]> => {
+export const getDisbursementVouchers = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  year?: string,
+  archive?: boolean
+): Promise<{ results: DisbursementVoucher[]; count: number }> => {
   try {
-    const queryParams = new URLSearchParams();
-    if (params.archive !== undefined) queryParams.append('archive', params.archive.toString());
-    if (params.year) queryParams.append('year', params.year);
+    const params: any = {
+      page,
+      page_size: pageSize,
+    };
     
-    const url = `treasurer/disbursement-vouchers/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    const res = await api.get(url);
-    return res.data?.data ?? res.data ?? [];
+    if (searchQuery) params.search = searchQuery;
+    if (year && year !== "all") params.year = year;
+    if (archive !== undefined) params.archive = archive;
+    
+    const res = await api.get('treasurer/disbursement-vouchers/', { params });
+    
+    // Handle paginated response
+    if (res.data.results) {
+      return {
+        results: res.data.results || [],
+        count: res.data.count || 0
+      };
+    }
+    
+    // Handle non-paginated response (fallback)
+    const data = res.data?.data ?? res.data ?? [];
+    return {
+      results: Array.isArray(data) ? data : [],
+      count: Array.isArray(data) ? data.length : 0
+    };
   } catch (err) {
+    console.error('Error fetching disbursement vouchers:', err);
+    return { results: [], count: 0 };
+  }
+};
+
+export const getDisbursementVoucherYears = async (): Promise<number[]> => {
+  try {
+    const res = await api.get('treasurer/disbursement-vouchers/years/');
+    return res.data || [];
+  } catch (err) {
+    console.error('Error fetching disbursement years:', err);
     return [];
   }
 };

@@ -8,19 +8,26 @@ export type Receipt = {
     inv_num: number;
     inv_serial_num: string;
     inv_date: string;
-    inv_amount: number;
-    inv_change: number;
+    inv_amount: string;
     inv_nat_of_collection: string;
+    inv_pay_method: string;
     inv_payor: string; // Added this field
+    inv_discount_reason: string;
+    inv_change?: string | number;
     // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;
 };
   
-export const useInvoiceQuery = () => {
-    return useQuery<Receipt[]>({
-        queryKey: ["invoices"], // Changed to simpler key
-        queryFn: getInvoice,
+export const useInvoiceQuery = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string, 
+    natureFilter?: string
+) => {
+    return useQuery<{ results: Receipt[]; count: number }>({
+        queryKey: ["invoices", page, pageSize, searchQuery, natureFilter],
+        queryFn: () => getInvoice(page, pageSize, searchQuery, natureFilter),
         staleTime: 1000 * 60 * 30,
     });
 };

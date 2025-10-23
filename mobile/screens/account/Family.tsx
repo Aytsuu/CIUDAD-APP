@@ -13,7 +13,7 @@ import {
 import { useGetResidentFamily } from "./queries/accountGetQueries";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useGetFamilyMembers } from "../profiling/queries/profilingGetQueries";
-import { Home, User, Users } from "lucide-react-native";
+import { Home, Users } from "lucide-react-native";
 import { formatDate } from "@/helpers/dateHelpers";
 import {
   Accordion,

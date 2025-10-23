@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api";
-import { th } from "date-fns/locale";
 
 export const getChildHealthRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   try {
@@ -102,3 +101,7 @@ export const getChildData = async (id: string, page?: number, pageSize?: number)
     throw error;
   }
 };
+
+
+
+

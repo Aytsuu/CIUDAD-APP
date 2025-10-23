@@ -16,7 +16,8 @@ export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
             toast.loading("Restoring record ...", { id: "restoreMOM" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['momRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
 
             toast.success('Record restored successfully', {
                 id: "restoreMOM",
@@ -45,7 +46,8 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
             toast.loading("Archiving record ...", { id: "archiveMOM" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['momRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
 
             toast.success('Record is archived successfully', {
                 id: "archiveMOM",
@@ -86,7 +88,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
         onMutate: () => {
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['momRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momFiles'] });
 
             showSuccessToast('Record updated successfully')

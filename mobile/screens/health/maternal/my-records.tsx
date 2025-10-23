@@ -15,7 +15,6 @@ import { PregnancyAccordion } from "../admin/admin-maternal/prenatal/pregnancy-a
 
 import { usePregnancyDetails } from "../admin/admin-maternal/queries/maternalFETCH"
 import { useAuth } from "@/contexts/AuthContext"
-import { useQuery } from "@tanstack/react-query"
 import { usePatientByResidentId } from "../patientchecker/queries"
 
 interface Patient {
@@ -209,7 +208,7 @@ export default function MyMaternalRecordScreen() {
     data: pregnancyData,
     isLoading: pregnancyDataLoading,
     refetch,
-  } = usePregnancyDetails(patId || "")
+  } = usePregnancyDetails(patId || "", 1, 10, "All", "")
 
   const getLatestFollowupVisit = () => {
     let followUpData = []

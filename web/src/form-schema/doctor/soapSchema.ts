@@ -32,6 +32,7 @@ export const soapSchema = z.object({
   staff_id: z.string().optional().default(''),
   medrec_id: z.string().optional().default(''),
   patrec_id: z.string().optional().default(''),
+  app_id: z.string().optional().default(''),
 
 
 

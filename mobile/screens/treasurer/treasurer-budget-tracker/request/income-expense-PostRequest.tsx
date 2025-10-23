@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { useState } from "react";
 import { parseFloatSafe } from "@/helpers/floatformatter";
 import { capitalize } from "@/helpers/capitalize";
 
@@ -8,18 +7,19 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
     try{
 
-        let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
+        const entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
         console.log({
             iet_datetime: incomeExpenseInfo.iet_datetime,
             iet_entryType: "Expense",
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
+            iet_check_num: incomeExpenseInfo.iet_check_num,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
             iet_is_archive: false,
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00004250910"
+            staff_id: incomeExpenseInfo.staff_id
         })
 
         const res = await api.post('treasurer/income-expense-tracking/',{
@@ -28,13 +28,14 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_datetime: incomeExpenseInfo.iet_datetime,
             iet_entryType: "Expense",
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
+            iet_check_num: incomeExpenseInfo.iet_check_num,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
             iet_actual_amount: parseFloatSafe(incomeExpenseInfo.iet_actual_amount),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             inv_num: "urlforInvNum",
             iet_receipt_image: "nothing",
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00004250910"
+            staff_id: incomeExpenseInfo.staff_id
 
         })
 
@@ -200,7 +201,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
             incp_id:  incomeInfo.inc_particulars,
-            staff_id: "00004250910"
+            staff_id: incomeInfo.staff_id
         })
 
         const res = await api.post('treasurer/income-tracking/',{
@@ -210,7 +211,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes || "None",
             incp_id:  parseInt(incomeInfo.inc_particulars),
-            staff_id: "00004250910"
+            staff_id: incomeInfo.staff_id
 
         })
 

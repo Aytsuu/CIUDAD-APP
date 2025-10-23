@@ -5,11 +5,11 @@ from apps.patientrecords.models import VitalSigns
 from apps.patientrecords.models import FollowUpVisit
 from apps.administration.models import Staff
 
-
+ 
 class VaccinationRecord(models.Model):
     vacrec_id = models.BigAutoField(primary_key=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vaccination_records',db_column='patrec_id')
-    vacrec_totaldose = models.PositiveIntegerField(default="0",blank=True, null=True)
+    vacrec_totaldose = models.PositiveIntegerField(default=0,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'vaccination_record'
@@ -18,7 +18,7 @@ class VaccinationRecord(models.Model):
 
 class VaccinationHistory(models.Model):
     vachist_id = models.BigAutoField(primary_key=True)
-    vachist_doseNo = models.PositiveIntegerField(default="0")
+    vachist_doseNo = models.PositiveIntegerField(default=0)
     vachist_status = models.CharField(max_length=100, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     date_administered=models.DateField()

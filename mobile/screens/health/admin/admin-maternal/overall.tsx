@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
 import { router } from "expo-router";
-import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, MapPinHouse, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, User, FileText, Users, MapPinHouse, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

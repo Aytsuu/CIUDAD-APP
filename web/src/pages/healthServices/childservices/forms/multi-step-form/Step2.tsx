@@ -15,6 +15,14 @@ import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-
 import { showErrorToast } from "@/components/ui/toast";
 
 export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formData, historicalBFChecks, mode }: Page2Props) {
+  // Separate form for BF check input
+  const bfInputForm = useForm({
+    defaultValues: {
+      currentBFDate: "",
+      currentFeedingType: ""
+    }
+  });
+
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
     mode: "onChange",
@@ -22,12 +30,10 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       ...formData,
       BFchecks: formData.BFchecks || [],
       dateNewbornScreening: formData.dateNewbornScreening || "",
-      type_of_feeding: formData.type_of_feeding || "",
       tt_status: formData.tt_status || "",
       newbornInitiatedbf: formData.newbornInitiatedbf
     }
   });
-  console.log("newbornInitiatedbf", form.getValues("newbornInitiatedbf"));
 
   useEffect(() => {
     console.log(historicalBFChecks);
@@ -37,9 +43,12 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
   const { errors, isValid, isSubmitting } = formState;
   const BFchecks = watch("BFchecks");
 
-  const [currentBFDate, setCurrentBFDate] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingHistoricalId, setEditingHistoricalId] = useState<number | null>(null);
+
+  // Watch BF input form values
+  const currentBFDate = bfInputForm.watch("currentBFDate");
+  const currentFeedingType = bfInputForm.watch("currentFeedingType");
 
   // Get current date in YYYY-MM format
   const getCurrentMonth = (): string => {
@@ -49,9 +58,9 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     return `${year}-${month}`;
   };
 
-  // Helper function to check if date is today (September 14, 2025)
+  // Helper function to check if date is today
   const isToday = (dateString: string): boolean => {
-    const today = new Date("2025-09-14T18:09:00-07:00"); // 06:09 PM PST
+    const today = new Date();
     const checkDate = new Date(dateString);
     return today.toDateString() === checkDate.toDateString();
   };
@@ -98,8 +107,12 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
   const handleAddDate = () => {
     if (!currentBFDate) {
-      console.log("No current BF date provided");
       showErrorToast("Please select a date");
+      return;
+    }
+
+    if (!currentFeedingType) {
+      showErrorToast("Please select a type of feeding");
       return;
     }
 
@@ -132,19 +145,20 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       }
 
       if (editingHistoricalId !== null) {
-        // Editing a historical record - add it to BFchecks with the ebf_id
+        // Editing a historical record
         const historicalCheck = historicalBFChecks.find((check) => check.ebf_id === editingHistoricalId);
         const updatedBFCheck = {
           ebf_id: editingHistoricalId,
           ebf_date: currentBFDate,
-          created_at: historicalCheck?.created_at || new Date("2025-09-14T18:09:00-07:00").toISOString(),
+          type_of_feeding: currentFeedingType,
+          created_at: historicalCheck?.created_at || new Date().toISOString(),
           chhist: historicalCheck?.chhist
         };
 
-        // Check if this historical check is already in BFchecks
         const existingIndex = currentBFChecks.findIndex((check) => check.ebf_id === editingHistoricalId);
-
-        const updatedBFChecks = existingIndex >= 0 ? currentBFChecks.map((check, i) => (i === existingIndex ? updatedBFCheck : check)) : [...currentBFChecks, updatedBFCheck];
+        const updatedBFChecks = existingIndex >= 0 
+          ? currentBFChecks.map((check, i) => (i === existingIndex ? updatedBFCheck : check)) 
+          : [...currentBFChecks, updatedBFCheck];
 
         setValue("BFchecks", updatedBFChecks, {
           shouldValidate: true,
@@ -156,11 +170,14 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
         // Create new BF check object
         const newBFCheck = {
           ebf_date: currentBFDate,
-          created_at: new Date("2025-09-14T18:09:00-07:00").toISOString()
+          type_of_feeding: currentFeedingType,
+          created_at: new Date().toISOString()
         };
 
         // Update BF checks array
-        const updatedBFChecks = editingIndex !== null ? currentBFChecks.map((check, i) => (i === editingIndex ? newBFCheck : check)) : [...currentBFChecks, newBFCheck];
+        const updatedBFChecks = editingIndex !== null 
+          ? currentBFChecks.map((check, i) => (i === editingIndex ? newBFCheck : check)) 
+          : [...currentBFChecks, newBFCheck];
 
         setValue("BFchecks", updatedBFChecks, {
           shouldValidate: true,
@@ -172,7 +189,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
       setEditingIndex(null);
       setEditingHistoricalId(null);
-      setCurrentBFDate("");
+      bfInputForm.reset();
     } catch (error) {
       console.error("Error adding BF date:", error);
       showErrorToast("Error adding BF date. Please try again.");
@@ -185,13 +202,15 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
     setEditingIndex(index);
     setEditingHistoricalId(null);
-    setCurrentBFDate(checkToEdit.ebf_date);
+    bfInputForm.setValue("currentBFDate", checkToEdit.ebf_date);
+    bfInputForm.setValue("currentFeedingType", checkToEdit.type_of_feeding || "");
   };
 
-  const handleEditHistoricalDate = (ebf_id: number, ebf_date: string) => {
+  const handleEditHistoricalDate = (ebf_id: number, ebf_date: string, type_of_feeding: string) => {
     setEditingHistoricalId(ebf_id);
     setEditingIndex(null);
-    setCurrentBFDate(ebf_date);
+    bfInputForm.setValue("currentBFDate", ebf_date);
+    bfInputForm.setValue("currentFeedingType", type_of_feeding || "");
   };
 
   const handleDeleteDate = (index: number) => {
@@ -205,14 +224,14 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
     if (editingIndex === index) {
       setEditingIndex(null);
-      setCurrentBFDate("");
+      bfInputForm.reset();
     }
   };
 
   const handleCancelEdit = () => {
     setEditingIndex(null);
     setEditingHistoricalId(null);
-    setCurrentBFDate("");
+    bfInputForm.reset();
   };
 
   const handlePrevious = () => {
@@ -235,7 +254,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
           noValidate
         >
           {/* Main Content Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Left Column - Medical Information */}
             <div className="space-y-6">
               {/* Newborn Screening Card */}
@@ -254,7 +273,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                       name="dateNewbornScreening"
                       label="Date of Newborn Screening"
                       type="date"
-                      max={new Date().toISOString().split("T")[0]} // Set max to today's date
+                      max={new Date().toISOString().split("T")[0]}
                     />
                     <FormMessage />
                     <FormField
@@ -263,9 +282,16 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                       render={({ field }) => (
                         <FormItem className="flex items-center space-x-3">
                           <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={mode === "addnewchildhealthrecord"} />
+                            <Checkbox 
+                              checked={field.value} 
+                              onCheckedChange={field.onChange} 
+                              className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                              disabled={mode === "addnewchildhealthrecord"} 
+                            />
                           </FormControl>
-                          <FormLabel className="text-sm font-medium text-gray-700">Is newborn Initiated on breastfeeding within 1 hour after birth?</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Is newborn Initiated on breastfeeding within 1 hour after birth?
+                          </FormLabel>
                         </FormItem>
                       )}
                     />
@@ -313,10 +339,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                 description=""
                 content={
                   <div className="space-y-6">
-                    <div className="mt-5">
-                      <FormSelect control={form.control} name="type_of_feeding" label="Type of feeding" options={type_of_feeding_options} />
-                    </div>
-
                     {/* BF Checks Form Field */}
                     <FormField
                       control={control}
@@ -327,40 +349,61 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
                           {/* Add/Edit Date Section */}
                           <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
-                            <div className="flex flex-col sm:flex-row gap-4 items-end">
-                              <div className="flex-1 min-w-0">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  {editingIndex !== null ? "Edit BF Date" : editingHistoricalId !== null ? "Edit Historical BF Date" : "Add BF Date"}
-                                  <span className="text-xs text-gray-500 block">Format: YYYY-MM (e.g., 2023-09)</span>
-                                  <span className="text-xs text-blue-500 block">Maximum allowed: {maxMonth}</span>
-                                </label>
-                                <input
-                                  type="month"
-                                  value={currentBFDate}
-                                  onChange={(e) => setCurrentBFDate(e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                  placeholder="YYYY-MM"
-                                  max={maxMonth} // Set maximum to current month
-                                />
+                            <div className="flex flex-col gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    {editingIndex !== null ? "Edit BF Date" : editingHistoricalId !== null ? "Edit Historical BF Date" : "Add BF Date"}
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={currentBFDate}
+                                    onChange={(e) => bfInputForm.setValue("currentBFDate", e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    placeholder="YYYY-MM"
+                                    max={maxMonth}
+                                  />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <FormSelect
+                                    control={bfInputForm.control}
+                                    name="currentFeedingType"
+                                    label="Type of Feeding"
+                                    options={type_of_feeding_options}
+                                  />
+                                </div>
                               </div>
-                              <Button type="button" onClick={handleAddDate} disabled={!currentBFDate} className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                                {editingIndex !== null || editingHistoricalId !== null ? (
-                                  <>
-                                    <Pencil className="h-4 w-4" />
-                                    Update
-                                  </>
-                                ) : (
-                                  <>
-                                    <Plus className="h-4 w-4" />
-                                    Add
-                                  </>
-                                )}
-                              </Button>
-                              {(editingIndex !== null || editingHistoricalId !== null) && (
-                                <Button type="button" onClick={handleCancelEdit} className="bg-gray-400 hover:bg-gray-300 px-4 py-2 rounded-lg">
-                                  Cancel
+
+                              <div className="flex gap-2">
+                                <Button 
+                                  type="button" 
+                                  onClick={handleAddDate} 
+                                  disabled={!currentBFDate || !currentFeedingType} 
+                                  className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                >
+                                  {editingIndex !== null || editingHistoricalId !== null ? (
+                                    <>
+                                      <Pencil className="h-4 w-4" />
+                                      Update
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="h-4 w-4" />
+                                      Add
+                                    </>
+                                  )}
                                 </Button>
-                              )}
+                                {(editingIndex !== null || editingHistoricalId !== null) && (
+                                  <Button 
+                                    type="button" 
+                                    onClick={handleCancelEdit} 
+                                    className="bg-gray-400 hover:bg-gray-300 px-4 py-2 rounded-lg"
+                                  >
+                                    Cancel
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <FormMessage />
@@ -368,7 +411,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                       )}
                     />
 
-                    {/* Previous BF Checks - ALL historical records with edit buttons */}
+                    {/* Previous BF Checks */}
                     {historicalBFChecks?.length > 0 && (
                       <div className="bg-gray-50 rounded-lg border border-gray-200">
                         <div className="bg-white px-4 py-3 border-b border-gray-200">
@@ -382,21 +425,35 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                             const isCreatedToday = check.created_at && isToday(check.created_at);
                             const modifiedCheck = (BFchecks ?? []).find((bfCheck) => bfCheck.ebf_id === check.ebf_id);
                             const displayDate = modifiedCheck ? modifiedCheck.ebf_date : check.ebf_date;
+                            const displayFeedingType = modifiedCheck ? modifiedCheck.type_of_feeding : check.type_of_feeding;
 
                             return (
-                              <div key={`hist-${check.ebf_id || index}`} className={`flex items-center justify-between p-3 bg-white rounded-lg border ${isCreatedToday ? "border-yellow-300" : "border-gray-200"} hover:shadow-sm`}>
-                                <div className="flex items-center gap-3">
-                                  <Calendar className={`h-4 w-4 ${isCreatedToday ? "text-yellow-600" : "text-blue-500"}`} />
-                                  <span className="text-sm font-medium">{displayDate}</span>
+                              <div 
+                                key={`hist-${check.ebf_id || index}`} 
+                                className={`flex items-center justify-between p-3 bg-white rounded-lg border ${isCreatedToday ? "border-yellow-300" : "border-gray-200"} hover:shadow-sm`}
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-3">
+                                    <Calendar className={`h-4 w-4 ${isCreatedToday ? "text-yellow-600" : "text-blue-500"}`} />
+                                    <span className="text-sm font-medium">{displayDate}</span>
+                                  </div>
+                                  <div className="ml-7 text-xs text-gray-600">
+                                    {type_of_feeding_options.find(opt => opt.id === displayFeedingType)?.name || displayFeedingType}
+                                  </div>
+                                  {check.created_at && (
+                                    <div className="ml-7 text-xs text-gray-400">
+                                      Created: {new Date(check.created_at).toLocaleDateString()}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500">Created at</span>
-                                  {check.created_at && <span className="text-xs text-gray-400">{new Date(check.created_at).toLocaleDateString()}</span>}
-
-                                  <Button type="button" onClick={() => check.ebf_id !== undefined && handleEditHistoricalDate(check.ebf_id, displayDate)} className="p-2 text-blue-500 bg-white hover:bg-blue-50" title="Edit BF check">
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                                <Button 
+                                  type="button" 
+                                  onClick={() => check.ebf_id !== undefined && handleEditHistoricalDate(check.ebf_id, displayDate, displayFeedingType || "")} 
+                                  className="p-2 text-blue-500 bg-white hover:bg-blue-50" 
+                                  title="Edit BF check"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
                               </div>
                             );
                           })}
@@ -404,7 +461,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                       </div>
                     )}
 
-                    {/* New BF Checks - Only show truly new ones (without ebf_id) */}
+                    {/* New BF Checks */}
                     {(BFchecks ?? []).filter((check) => !check.ebf_id).length > 0 && (
                       <div className="bg-green-50 rounded-lg border border-green-200">
                         <div className="bg-white px-4 py-3 border-b border-green-200">
@@ -418,17 +475,35 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                             .map((check, originalIndex) => ({ check, originalIndex }))
                             .filter(({ check }) => !check.ebf_id)
                             .map(({ check, originalIndex }) => (
-                              <div key={`new-${originalIndex}`} className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200 hover:shadow-sm">
-                                <div className="flex items-center gap-3">
-                                  <Calendar className="h-4 w-4 text-green-500" />
-                                  <span className="text-sm font-medium">{check.ebf_date}</span>
-                                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">New</span>
+                              <div 
+                                key={`new-${originalIndex}`} 
+                                className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200 hover:shadow-sm"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-3">
+                                    <Calendar className="h-4 w-4 text-green-500" />
+                                    <span className="text-sm font-medium">{check.ebf_date}</span>
+                                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">New</span>
+                                  </div>
+                                  <div className="ml-7 text-xs text-gray-600">
+                                    {type_of_feeding_options.find(opt => opt.id === check.type_of_feeding)?.name || check.type_of_feeding}
+                                  </div>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button type="button" onClick={() => handleEditDate(originalIndex)} className="p-2 text-blue-500 bg-white hover:bg-blue-50" title="Edit BF check">
+                                  <Button 
+                                    type="button" 
+                                    onClick={() => handleEditDate(originalIndex)} 
+                                    className="p-2 text-blue-500 bg-white hover:bg-blue-50" 
+                                    title="Edit BF check"
+                                  >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
-                                  <Button type="button" onClick={() => handleDeleteDate(originalIndex)} className="p-2 text-red-500 hover:bg-red-50 bg-white" title="Delete BF check">
+                                  <Button 
+                                    type="button" 
+                                    onClick={() => handleDeleteDate(originalIndex)} 
+                                    className="p-2 text-red-500 hover:bg-red-50 bg-white" 
+                                    title="Delete BF check"
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -453,7 +528,13 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
           {/* Navigation Buttons */}
           <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
-            <Button type="button" variant="outline" onClick={handlePrevious} className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent" disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handlePrevious} 
+              className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent" 
+              disabled={isSubmitting}
+            >
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>

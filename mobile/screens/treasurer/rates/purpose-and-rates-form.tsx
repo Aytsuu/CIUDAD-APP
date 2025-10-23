@@ -7,7 +7,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout'
 import { PurposeAndRatesSchema } from '@/form-schema/rates-form-schema'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronLeft, X } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useAddPurposeAndRate } from './queries/ratesInsertQueries'
 import z from "zod";
@@ -42,10 +42,10 @@ export default function PurposeAndRateCreateForm() {
             loading={isPending}
             loadingMessage='Submitting Record...'
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             
                 {/* Form Section */}
-                <View className="mb-8">
+                <View className="p-6">
 
                     <View className="space-y-4">
                         <FormInput

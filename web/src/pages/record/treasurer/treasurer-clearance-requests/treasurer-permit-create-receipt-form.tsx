@@ -25,7 +25,7 @@ type CertificateRequest = {
     pr_id?: number; // Purpose and Rate ID
     business_name?: string; // Business name for permit clearances
     req_amount?: number; // Add req_amount field for business clearance
-    req_sales_proof?: string; // Add gross sales range
+    // req_sales_proof field removed
 };
 
 
@@ -46,10 +46,6 @@ interface ReceiptFormProps {
 }
 
 
-function capitalizeFirst(str: string) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
 
 
 function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
@@ -57,6 +53,11 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
     const { mutate: receipt, isPending} = useAddReceipt(onSuccess)
     const { user } = useAuth();
     const staffId = user?.staff?.staff_id as string | undefined;
+
+    // Debug logging
+    console.log('ReceiptForm - certificateRequest:', certificateRequest);
+    console.log('ReceiptForm - business_name:', certificateRequest.business_name);
+    console.log('ReceiptForm - req_amount:', certificateRequest.req_amount);
 
    
     const { data: purposeAndRates = [] } = useQuery<PurposeAndRate[]>({
@@ -87,14 +88,14 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
             inv_serial_num: "", 
-            inv_amount: certificateRequest.req_amount ? certificateRequest.req_amount.toString() : "0.00",
+            inv_amount: certificateRequest.req_amount && certificateRequest.req_amount > 0 ? certificateRequest.req_amount.toString() : "0.00",
             inv_nat_of_collection: "Permit Clearance", 
         }
     });
 
     
     useEffect(() => {
-        if (certificateRequest.req_amount) {
+        if (certificateRequest.req_amount && certificateRequest.req_amount > 0) {
             form.setValue('inv_amount', certificateRequest.req_amount.toString());
         }
     }, [certificateRequest.req_amount, form]);
@@ -126,6 +127,9 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 
     // Check if request is already paid
     const isAlreadyPaid = certificateRequest.req_payment_status === "Paid";
+    
+    // Check if request is incomplete (no business linked or no amount)
+    const isIncomplete = !certificateRequest.req_amount || certificateRequest.req_amount <= 0;
 
     return(
         <Form {...form}>
@@ -142,6 +146,18 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                         </Card>
                     )}
 
+                    {/* Warning message if request is incomplete */}
+                    {isIncomplete && (
+                        <Card className="border-red-200 bg-red-50">
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-2 text-red-800">
+                                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    <p className="font-medium">This permit clearance request is incomplete. No business is linked and no amount is calculated. Please complete the request first before creating a receipt.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Display certificate details */}
                     <Card>
                         <CardHeader>
@@ -152,18 +168,20 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Business Name</label>
                                     <p className="text-base text-gray-900 font-medium mt-1">
-                                        {certificateRequest.business_name || `${certificateRequest.resident_details.per_fname} ${certificateRequest.resident_details.per_lname}`}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Request Type</label>
-                                    <p className="text-base text-gray-900 font-medium mt-1">
-                                        {capitalizeFirst(certificateRequest.req_type)}
+                                        {certificateRequest.business_name && 
+                                         certificateRequest.business_name !== "N/A" && 
+                                         certificateRequest.business_name !== "Unknown Business" &&
+                                         certificateRequest.business_name !== "No Business Linked"
+                                            ? certificateRequest.business_name 
+                                            : "No Business Linked - Please link a business first"
+                                        }
                                     </p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Purpose</label>
-                                    <p className="text-base text-gray-900 font-medium mt-1">{certificateRequest.req_purpose || 'General'}</p>
+                                    <p className="text-base text-gray-900 font-medium mt-1">
+                                        {selectedPurposeRate ? selectedPurposeRate.pr_purpose : certificateRequest.req_purpose || 'General'}
+                                    </p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Payment Status</label>
@@ -172,7 +190,10 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Amount</label>
                                     <p className="text-base text-blue-600 font-semibold mt-1">
-                                        {certificateRequest.req_amount ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₱0.00"}
+                                        {certificateRequest.req_amount && certificateRequest.req_amount > 0 
+                                            ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                            : "No amount calculated - Business not linked or purpose not selected"
+                                        }
                                     </p>
                                 </div>
                                 
@@ -193,9 +214,9 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                         placeholder="Enter receipt serial number" 
                                         onChange={(e) => field.onChange(e.target.value)}
                                         className="font-mono"
-                                        disabled={isAlreadyPaid}
-                                        readOnly={isAlreadyPaid}
-                                        style={isAlreadyPaid ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                                        disabled={isAlreadyPaid || isIncomplete}
+                                        readOnly={isAlreadyPaid || isIncomplete}
+                                        style={isAlreadyPaid || isIncomplete ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
                                     />
                                 </FormControl>
                              
@@ -235,6 +256,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                         
                                         placeholder="Enter amount" 
                                         className="w-full"
+                                        disabled={isAlreadyPaid || isIncomplete}
                                         onChange={(e) => {
                                             const amountPaid = parseFloat(e.target.value);
                                             field.onChange(amountPaid);
@@ -261,19 +283,13 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                     
 
                     <div className="flex justify-end gap-3 mt-6">
-                        {/* <Button 
-                            type="button" 
-                            variant="outline"
-                            onClick={onCancel || (() => navigate(-1))}
-                        >
-                            Cancel
-                        </Button> */}
+        
                                                  <Button 
                              type="submit" 
-                             disabled={isPending || isAlreadyPaid}
-                             className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
+                             disabled={isPending || isAlreadyPaid || isIncomplete}
+                             className={isAlreadyPaid || isIncomplete ? "opacity-50 cursor-not-allowed" : ""}
                          >
-                             {isPending ? "Creating..." : isAlreadyPaid ? "Cannot Create Receipt" : "Create Receipt"}
+                             {isPending ? "Creating..." : isAlreadyPaid ? "Cannot Create Receipt" : isIncomplete ? "Request Incomplete" : "Create Receipt"}
                          </Button>
                     </div>
                 </form>

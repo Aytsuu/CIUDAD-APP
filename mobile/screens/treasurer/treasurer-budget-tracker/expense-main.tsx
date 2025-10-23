@@ -13,7 +13,6 @@ import {
 import {
   X,
   Search,
-  Calendar,
   ChevronLeft,
   Plus,
   Archive,
@@ -26,16 +25,35 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import { useIncomeExpense } from './queries/income-expense-FetchQueries';
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useArchiveOrRestoreExpense } from './queries/income-expense-DeleteQueries';
 import { useDeleteIncomeExpense } from './queries/income-expense-DeleteQueries';
 import PageLayout from '@/screens/_PageLayout';
+import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
 
+
+const monthOptions = [
+  { id: "All", name: "All" },
+  { id: "01", name: "January" },
+  { id: "02", name: "February" },
+  { id: "03", name: "March" },
+  { id: "04", name: "April" },
+  { id: "05", name: "May" },
+  { id: "06", name: "June" },
+  { id: "07", name: "July" },
+  { id: "08", name: "August" },
+  { id: "09", name: "September" },
+  { id: "10", name: "October" },
+  { id: "11", name: "November" },
+  { id: "12", name: "December" }
+];
 
 
 const ExpenseTracking = () => {
@@ -45,40 +63,65 @@ const ExpenseTracking = () => {
   const totInc = parseFloat(params.totalInc as string) || 0;
 
   const [activeTab, setActiveTab] = useState('active');
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('All');
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<{ ief_url: string; ief_name: string }[]>([]);
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState('expense');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data: fetchedData = [], isLoading, isError, refetch } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
+  const { 
+    data: responseData = { results: [], count: 0 }, 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useIncomeExpense(
+    1, // page
+    1000, // pageSize - large number to get all data
+    year ? parseInt(year) : new Date().getFullYear(),
+    debouncedSearchQuery,
+    selectedMonth,
+    activeTab === 'archive' // Send archive status to backend
+  );
+
+
+  // Extract the actual data array (backend already filtered it)
+  const fetchedData = responseData.results || [];
+
+
   const { data: budgetItems = [] } = useBudgetItems(Number(year));
-  const { data: fetchedMain = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreExpense();
   const { mutate: deleteEntry, isPending: isDeletePending } = useDeleteIncomeExpense();
 
-  const matchedYearData = fetchedMain.find(item => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
+
 
   const trackingOptions = [
     { label: 'Income', value: 'income' },
     { label: 'Expense', value: 'expense' },
   ];
 
-  const filteredData = fetchedData.filter(row => {
-    if (activeTab === 'active' ? row.iet_is_archive === false : row.iet_is_archive === true) {
-      if (searchQuery) {
-        return Object.values(row)
-          .join(' ')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-      }
-      return true;
-    }
-    return false;
-  });
+  const monthFilterOptions = monthOptions.map(month => ({
+    label: month.name,
+    value: month.id
+  }));
+
+
+  // Handle search input change
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  // Handle month change
+  const handleMonthChange = (option: { label: string; value: string }) => {
+    setSelectedMonth(option.value);
+  };
 
   const handleTabSelect = (option: { label: string; value: string }) => {
     setSelectedTab(option.value);
@@ -99,6 +142,7 @@ const ExpenseTracking = () => {
       params: {
         iet_num: Number(item.iet_num),
         iet_serial_num: item.iet_serial_num || '',
+        iet_check_num: item.iet_check_num || '',
         iet_datetime: item.iet_datetime || '',
         iet_entryType: item.iet_entryType || 'Expense',
         iet_particular_id: String(item.exp_id),
@@ -209,8 +253,16 @@ const ExpenseTracking = () => {
     refetch();
   };
 
+  
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
+
   const renderItem = ({ item }: { item: any }) => (
-    <Card className="mb-4 border border-gray-200">
+    <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader className="flex-row justify-between items-center">
         <CardTitle className="text-lg text-[#2a3a61]">
           {new Date(item.iet_datetime).toLocaleString("en-US", {
@@ -339,233 +391,260 @@ const ExpenseTracking = () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="font-semibold text-lg text-[#2a3a61]">
+        <Text className="text-gray-900 text-[13px]">
           {year} Expense Tracking
         </Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
+      wrapScroll={false} 
     >
-      {isLoading || isArchivePending || isDeletePending ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-sm text-gray-500 mt-2">
-            {isArchivePending ? "Updating entry..." : 
-             isDeletePending ? "Deleting entry..." : 
-             "Loading..."}
-          </Text>
-        </View>
-      ) : (
-        <View className="flex-1">
+      <View className="flex-1">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}} // Can leave empty since you're using debounce
+          />
+        )}
 
-          {/* Search and Filters */}
-          <View className="px-4 pb-4">
-            <View className="flex-row items-center gap-2">
-              <View className="relative flex-1">
-                <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-                <TextInput
-                  placeholder="Search..."
-                  className="pl-4 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-              
-              <View className="w-[120px] pb-5">
-                <SelectLayout
-                  options={trackingOptions}
-                  className="h-8"
-                  selectedValue={selectedTab}
-                  onSelect={handleTabSelect}
-                  placeholder="Type"
-                  isInModal={false}
-                />
-              </View>
+        {/* Search and Filters */}
+        <View className="px-6 pb-4">
+          <View className="flex-row justify-between items-center gap-2 pb-6">
+            <View className="flex-1">
+              <SelectLayout
+                options={monthFilterOptions}
+                className="h-8 w-full"
+                selectedValue={selectedMonth}
+                onSelect={handleMonthChange}
+                placeholder="Select Month"
+                isInModal={false}
+              />
             </View>
             
-            <Button
-              onPress={handleCreate}
-              className="bg-primaryBlue mt-3"
-            >
-              <Text className="text-white text-[17px]">
-                <Plus size={16} color="white" className="mr-2" /> Create
-              </Text>
-            </Button>
+            <View className="flex-1">
+              <SelectLayout
+                options={trackingOptions}
+                className="h-8 w-full"
+                selectedValue={selectedTab}
+                onSelect={handleTabSelect}
+                placeholder="Type"
+                isInModal={false}
+              />
+            </View>
           </View>
 
-          {/* Tabs */}
-          <View className="px-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-blue-50 mb-3 mt-5 flex-row justify-between">
-                <TabsTrigger 
-                    value="active" 
-                    className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-                  >
-                    <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                      Active
-                    </Text>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="archive"
-                    className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-                  >
-                    <View className="flex-row items-center justify-center">
-                      <Archive 
-                        size={16} 
-                        className="mr-1" 
-                        color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'} 
-                      />
-                      <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
-                        Archive
-                      </Text>
-                    </View>
-                  </TabsTrigger>
-              </TabsList>
+          <Button
+            onPress={handleCreate}
+            className="bg-primaryBlue mt-2 rounded-xl"
+          >
+            <Text className="text-white text-[17px]">  Create </Text>
+          </Button>
+        </View>
 
-              <View className="flex-row justify-end mb-3">
-                <TouchableOpacity
-                  onPress={() => {
-                    router.push({
-                      pathname: '/(treasurer)/budget-tracker/budget-expense-log', // Update this path to your actual route
-                      params: {
-                        LogYear: year, // Pass any parameters you need
-                      }
-                    });
-                  }}
-                  className="bg-primaryBlue px-3 py-2 rounded-md" // Different color to distinguish from Create
+        {/* Tabs */}
+        <View className="px-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-blue-50 mb-3 mt-5 flex-row justify-between">
+              <TabsTrigger 
+                  value="active" 
+                  className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
                 >
-                  <Text className="text-white text-[17px]">
-                    <ClipboardCheck size={14} color="white"/>   Logs
+                  <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                    Active
                   </Text>
-                </TouchableOpacity>
-              </View>         
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="archive"
+                  className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                >
+                  <View className="flex-row items-center justify-center">
+                    <Archive 
+                      size={16} 
+                      className="mr-1" 
+                      color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'} 
+                    />
+                    <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
+                      Archive
+                    </Text>
+                  </View>
+                </TabsTrigger>
+            </TabsList>
 
-              {/* Active Entries */}
-              <TabsContent value="active">
+            <View className="flex-row justify-end mb-3">
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: '/(treasurer)/budget-tracker/budget-expense-log', // Update this path to your actual route
+                    params: {
+                      LogYear: year, // Pass any parameters you need
+                    }
+                  });
+                }}
+                className="bg-primaryBlue px-3 py-2 rounded-md" // Different color to distinguish from Create
+              >
+                <Text className="text-white text-[17px]">
+                  <ClipboardCheck size={14} color="white"/>   Logs
+                </Text>
+              </TouchableOpacity>
+            </View>         
+
+            {/* Active Entries */}
+            <TabsContent value="active">
+              {isLoading || isArchivePending || isDeletePending ? (
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
+              ) : (
                 <FlatList
-                  data={filteredData.filter(item => !item.iet_is_archive)}
+                  data={fetchedData} // No filtering needed - backend already sent active records
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
+                  showsVerticalScrollIndicator={false} 
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No active entries found
                     </Text>
-                  }
+                  }               
                 />
-              </TabsContent>
+              )}
+            </TabsContent>
 
-              {/* Archived Entries */}
-              <TabsContent value="archive">
+            {/* Archived Entries */}
+            <TabsContent value="archive">
+              {isLoading || isArchivePending || isDeletePending ? (
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
+              ) : (
                 <FlatList
-                  data={filteredData.filter(item => item.iet_is_archive)}
+                  data={fetchedData} // No filtering needed - backend already sent archived records
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
+                  showsVerticalScrollIndicator={false}                   
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No archived entries found
                     </Text>
                   }
                 />
-              </TabsContent>
-            </Tabs>
-          </View>
-
-          <Modal
-            visible={viewFilesModalVisible}
-            transparent={true}
-            onRequestClose={() => {
-              setViewFilesModalVisible(false);
-              setCurrentZoomScale(1); // Reset zoom when closing
-            }}
-          >
-            <View className="flex-1 bg-black/90">
-              {/* Header with close button and file name */}
-              <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
-                <Text className="text-white text-lg font-medium w-[90%]">
-                  {selectedFiles[currentIndex]?.ief_name || 'Document'}
-                </Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setViewFilesModalVisible(false);
-                    setCurrentZoomScale(1);
-                  }}
-                >
-                  <X size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Image with zoom capability */}
-              <ScrollView
-                className="flex-1"
-                maximumZoomScale={3}
-                minimumZoomScale={1}
-                zoomScale={currentZoomScale}
-                onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
-                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
-              >
-                <Image
-                  source={{ uri: selectedFiles[currentIndex]?.ief_url }}
-                  style={{ width: '100%', height: 400 }}
-                  resizeMode="contain"
-                />
-              </ScrollView>
-
-              {/* Pagination indicators at the bottom */}
-              {selectedFiles.length > 1 && (
-                <View className="absolute bottom-4 left-0 right-0 items-center">
-                  <View className="flex-row bg-black/50 rounded-full px-3 py-1">
-                    {selectedFiles.map((_, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => {
-                          setCurrentIndex(index);
-                          setCurrentZoomScale(1);
-                        }}
-                        className="p-1"
-                      >
-                        <View 
-                          className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'}`}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Navigation arrows for multiple files */}
-              {selectedFiles.length > 1 && (
-                <>
-                  {currentIndex > 0 && (
-                    <TouchableOpacity
-                      className="absolute left-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
-                      onPress={() => {
-                        setCurrentIndex(prev => prev - 1);
-                        setCurrentZoomScale(1);
-                      }}
-                    >
-                      <ChevronLeft size={24} color="white" />
-                    </TouchableOpacity>
-                  )}
-                  {currentIndex < selectedFiles.length - 1 && (
-                    <TouchableOpacity
-                      className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
-                      onPress={() => {
-                        setCurrentIndex(prev => prev + 1);
-                        setCurrentZoomScale(1);
-                      }}
-                    >
-                      <ChevronLeft size={24} color="white" className="rotate-180" />
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-            </View>
-          </Modal>
+              )}              
+            </TabsContent>
+          </Tabs>
         </View>
-      )}
+
+        <Modal
+          visible={viewFilesModalVisible}
+          transparent={true}
+          onRequestClose={() => {
+            setViewFilesModalVisible(false);
+            setCurrentZoomScale(1); // Reset zoom when closing
+          }}
+        >
+          <View className="flex-1 bg-black/90">
+            {/* Header with close button and file name */}
+            <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
+              <Text className="text-white text-lg font-medium w-[90%]">
+                {selectedFiles[currentIndex]?.ief_name || 'Document'}
+              </Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  setViewFilesModalVisible(false);
+                  setCurrentZoomScale(1);
+                }}
+              >
+                <X size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Image with zoom capability */}
+            <ScrollView
+              className="flex-1"
+              maximumZoomScale={3}
+              minimumZoomScale={1}
+              zoomScale={currentZoomScale}
+              onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+            >
+              <Image
+                source={{ uri: selectedFiles[currentIndex]?.ief_url }}
+                style={{ width: '100%', height: 400 }}
+                resizeMode="contain"
+              />
+            </ScrollView>
+
+            {/* Pagination indicators at the bottom */}
+            {selectedFiles.length > 1 && (
+              <View className="absolute bottom-4 left-0 right-0 items-center">
+                <View className="flex-row bg-black/50 rounded-full px-3 py-1">
+                  {selectedFiles.map((_, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => {
+                        setCurrentIndex(index);
+                        setCurrentZoomScale(1);
+                      }}
+                      className="p-1"
+                    >
+                      <View 
+                        className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'}`}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Navigation arrows for multiple files */}
+            {selectedFiles.length > 1 && (
+              <>
+                {currentIndex > 0 && (
+                  <TouchableOpacity
+                    className="absolute left-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                    onPress={() => {
+                      setCurrentIndex(prev => prev - 1);
+                      setCurrentZoomScale(1);
+                    }}
+                  >
+                    <ChevronLeft size={24} color="white" />
+                  </TouchableOpacity>
+                )}
+                {currentIndex < selectedFiles.length - 1 && (
+                  <TouchableOpacity
+                    className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                    onPress={() => {
+                      setCurrentIndex(prev => prev + 1);
+                      setCurrentZoomScale(1);
+                    }}
+                  >
+                    <ChevronLeft size={24} color="white" className="rotate-180" />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </View>
+        </Modal>
+      </View>
     </PageLayout>
   );
 };

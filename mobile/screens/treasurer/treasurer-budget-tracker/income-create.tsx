@@ -1,25 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronLeft } from 'lucide-react-native';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
-import { Textarea } from '@/components/ui/textarea';
 import { useIncomeParticular } from './queries/income-expense-FetchQueries';
 import { useCreateIncome } from './queries/income-expense-AddQueries';
 import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 // interface IncomeCreateFormProps {
@@ -29,6 +26,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 // }
 
 function IncomeCreateForm() {
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
@@ -54,9 +52,9 @@ function IncomeCreateForm() {
   });
 
   const { data: IncomeParticularItems = [] } = useIncomeParticular();
-  const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
   console.log("TOT INC HERE: ", totInc)
@@ -75,8 +73,8 @@ function IncomeCreateForm() {
     const yearIncome = Number(year);
     let totalIncome = 0.0;
 
-    let totIncome = Number(totInc);
-    let inc_amount = Number(values.inc_amount);
+    const totIncome = Number(totInc);
+    const inc_amount = Number(values.inc_amount);
     totalIncome = totIncome + inc_amount;
 
     if (inputYear !== yearIncome) {
@@ -94,7 +92,8 @@ function IncomeCreateForm() {
     const AllValues = {
       ...values,
       totalIncome,
-      year: Number(year)
+      year: Number(year),
+      staff_id: user?.staff?.staff_id    
     }
 
     // console.log("ALL INCOME: ", AllValues)
@@ -124,7 +123,7 @@ function IncomeCreateForm() {
 
       footer={
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
             >
               <Text className="text-white text-base font-semibold">Save Entry</Text>
@@ -132,7 +131,7 @@ function IncomeCreateForm() {
       }
       stickyFooter={true}
     >
-        <View className="w-full px-4 pt-5">
+        <View className="w-full px-6 pt-5">
 
             <FormDateAndTimeInput
               control={form.control}

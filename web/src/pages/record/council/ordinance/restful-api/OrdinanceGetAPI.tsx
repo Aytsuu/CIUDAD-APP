@@ -1,7 +1,5 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
-import type { AIAnalysisResponse } from "../services/HuggingFaceAIService";
-
 
 export interface Ordinance {
     ord_num: string;
@@ -14,19 +12,20 @@ export interface Ordinance {
     ord_repealed?: boolean;
     file?: any;
     staff?: any;
-    ord_parent?: string; // ord_num of the parent ordinance (if this is an amendment)
+    staff_id?: string;
+    ord_parent?: string;
     ord_is_ammend?: boolean;
     ord_ammend_ver?: number;
-    aiAnalysisResult?: AIAnalysisResponse;
+   
 }
 
-// New interface for grouped ordinances (folders)
+
 export interface OrdinanceFolder {
     id: string; // Unique identifier for the folder
     baseOrdinance: Ordinance; // The original ordinance
     amendments: Ordinance[]; // All amendments to this ordinance
     totalOrdinances: number; // Total count of ordinances in this folder
-    amendmentComparisonResult?: AIAnalysisResponse; // AI analysis result for comparing all amendments
+   
 }
 
 export interface SupplementaryDoc {
@@ -49,6 +48,28 @@ export const getAllOrdinances = async (): Promise<Ordinance[]> => {
     }
 };
 
+export const getOrdinancesPaginated = async (
+    page: number,
+    pageSize: number,
+    searchQuery?: string
+): Promise<{ results: Ordinance[]; count: number; total_pages: number }> => {
+    try {
+        const response = await api.get('/council/ordinance/', {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.error('Error fetching paginated ordinances:', error.response?.data);
+        }
+        throw error;
+    }
+};
+
 export const getOrdinanceById = async (id: string) => {
     try {
         const response = await api.get(`/council/ordinance/${id}/`);
@@ -61,17 +82,6 @@ export const getOrdinanceById = async (id: string) => {
     }
 };
 
-export const createOrdinance = async (data: Partial<Ordinance>) => {
-    try {
-        const response = await api.post('/council/ordinance/', data);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError) {
-            console.error('Error creating ordinance:', error.response?.data);
-        }
-        throw error;
-    }
-};
 
 export const updateOrdinance = async (id: string, data: Partial<Ordinance>) => {
     try {
@@ -121,17 +131,6 @@ export const getAllSupplementaryDocs = async () => {
     }
 };
 
-export const createSupplementaryDoc = async (data: Partial<SupplementaryDoc>) => {
-    try {
-        const response = await api.post('/council/ordinance-docs/', data);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError) {
-            console.error('Error creating supplementary document:', error.response?.data);
-        }
-        throw error;
-    }
-};
 
 export const archiveSupplementaryDoc = async (id: string) => {
     try {

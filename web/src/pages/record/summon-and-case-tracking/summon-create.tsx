@@ -12,43 +12,48 @@ import { useGetSummonTimeSlots } from "./queries/summonFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useGetScheduleList } from "./queries/summonFetchQueries";
+import { formatDate } from "@/helpers/dateHelper";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
-function CreateSummonSched({ sr_id, onSuccess }: {
-    sr_id: string;
+
+function CreateSummonSched({ sc_id, onSuccess }: {
+    sc_id: string;
     onSuccess: () => void
 }) {
     const [selectedDateId, setSelectedDateId] = useState<number | null>(null);
-    const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sr_id)
+    const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sc_id)
     const { data: dates = [], isLoading: isLoadingDates } = useGetSummonDates();
     const { data: timeslots = [], isLoading: isLoadingTimeslots } = useGetSummonTimeSlots(selectedDateId || 0);
-    const { mutate: addSched, isPending } = useAddSummonSchedule(onSuccess);
 
     const currentDateStr = new Date().toISOString().split('T')[0];
 
     function getMediationLevel(scheduleCount: number){
         if (scheduleCount === 0) {
-            return "1st MEDIATION";
+            return "1st Mediation";
         } else if (scheduleCount === 1) {
-            return "2nd MEDIATION";
+            return "2nd Mediation";
         } else if (scheduleCount === 2) {
-            return "3rd MEDIATION";
+            return "3rd Mediation";
         } else if (scheduleCount === 3) {
             return "1st Conciliation Proceedings";
-        } else if (scheduleCount === 4) {
+        } else if (scheduleCount === 4){
             return "2nd Conciliation Proceedings";
-        } else if (scheduleCount >= 5) {
+        } else if (scheduleCount === 5){
             return "3rd Conciliation Proceedings";
         }
-        return "1st MEDIATION"; // Default fallback
+        return "None"; 
     }
   
     const mediationLevel = getMediationLevel(scheduleList.length);
+    const isThirdMediation = scheduleList.length === 2; // Check if this is the 3rd mediation
+    const isConciliation = scheduleList.length >= 3; // Check if this is conciliation level
 
     const dateOptions = dates
         .filter(date => date.sd_date > currentDateStr)
         .map(date => ({
             id: String(date.sd_id),  
-            name: `${date.sd_date}`  
+            name: `${formatDate(date.sd_date, "long")}`  
         }));
 
     const form = useForm<z.infer<typeof SummonSchema>>({
@@ -56,14 +61,13 @@ function CreateSummonSched({ sr_id, onSuccess }: {
         defaultValues: {
             sd_id: "",
             st_id: "",
-            ss_mediation_level: mediationLevel,
-            sr_id: String(sr_id),
+            hs_level: mediationLevel,
+            sc_id: String(sc_id),
         },
     });
 
-    // Update form value when mediationLevel changes
     useEffect(() => {
-        form.setValue("ss_mediation_level", mediationLevel);
+        form.setValue("hs_level", mediationLevel);
     }, [mediationLevel, form]);
 
     const selectedDate = form.watch("sd_id");
@@ -85,6 +89,8 @@ function CreateSummonSched({ sr_id, onSuccess }: {
             name: `${formatTime(timeslot.st_start_time)}`
         }));
 
+    const { mutate: addSched, isPending } = useAddSummonSchedule(onSuccess);
+
     if (isLoadingDates || isLoadingSchedList) {
         return (
             <div className="p-4 border rounded-lg">
@@ -101,8 +107,8 @@ function CreateSummonSched({ sr_id, onSuccess }: {
     }
 
     const onSubmit = async (values: z.infer<typeof SummonSchema>) => {
-        console.log('Summonsched', values);
-        addSched(values);
+        const statusType = isConciliation ? "Lupon" : "Council";
+        addSched({ values, status_type: statusType });
     };
 
     return (
@@ -110,12 +116,26 @@ function CreateSummonSched({ sr_id, onSuccess }: {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <div className="space-y-4">
-                        {/* Display the determined mediation level */}
-                        <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
-                            <p className="text-sm font-medium text-blue-800">
-                                Mediation Level: <span className="font-bold">{mediationLevel}</span>
+                        {/* Display the determined level */}
+                        <div className={`p-3 rounded-md border ${
+                            isConciliation 
+                                ? "bg-purple-50 border-purple-200 text-purple-800" 
+                                : "bg-blue-50 border-blue-200 text-blue-800"
+                        }`}>
+                            <p className="text-sm font-medium">
+                                {isConciliation ? "Conciliation" : "Mediation"} Level: <span className="font-bold">{mediationLevel}</span>
                             </p>
                         </div>
+
+                        {/* Warning for third mediation */}
+                        {isThirdMediation && (
+                            <Alert className="bg-amber-50 border-amber-200">
+                                <InfoIcon className="h-4 w-4 text-amber-600" />
+                                <AlertDescription className="text-amber-800">
+                                    <strong>Final Mediation Notice:</strong> This is the final mediation session. If the case is not resolved during this period, it will be forwarded to the Office of Lupon Tagapamayapa for further action.
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
                         <FormSelect
                             control={form.control}
@@ -158,7 +178,7 @@ function CreateSummonSched({ sr_id, onSuccess }: {
                             type="submit" 
                             disabled={!selectedDateId || isLoadingTimeslots || timeSlotOptions.length === 0 || isPending} 
                         >
-                            {isPending? "Submitting...": "Submit"}
+                            {isPending ? "Submitting..." : "Submit"}
                         </Button>
                     </div>
                 </form>
@@ -168,3 +188,4 @@ function CreateSummonSched({ sr_id, onSuccess }: {
 }
 
 export default CreateSummonSched;
+

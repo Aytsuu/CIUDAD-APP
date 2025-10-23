@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider, Theme} from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider, Theme} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,11 +13,17 @@ import * as NavigationBar from 'expo-navigation-bar';
 import {Provider} from "react-redux"
 import { store, persistor } from '@/redux/store';
 import { PersistGate } from 'redux-persist/integration/react';
+import { useFCMToken } from '@/helpers/useFCMToken';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
   colors: NAV_THEME.light,
 };
+
+function FCMTokenInitializer (){
+  useFCMToken();
+  return null;
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -52,29 +58,32 @@ export default function RootLayout() {
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <ToastProvider>
-              <StatusBar backgroundColor="transparent" style='dark'/>
-              <Stack initialRouteName='(auth)'>
-                <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
-                <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
-                <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
-                <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
-                <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
-                <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
-                <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
-                <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
-              </Stack>
-            </ToastProvider>
+            <FCMTokenInitializer/>
+            <StatusBar backgroundColor="transparent" style="dark" />
+            <Stack initialRouteName='(auth)'>
+              <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
+              <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
+              <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
+            </Stack>
+          </ToastProvider>
           </QueryClientProvider>
         </PersistGate>
       </Provider>

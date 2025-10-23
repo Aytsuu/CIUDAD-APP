@@ -2,7 +2,7 @@
 
 import { Link } from "react-router";
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { ArrowUpDown, Search, AlertCircle, Loader2, FileText } from "lucide-react"
+import { ArrowUpDown, Search, AlertCircle, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
@@ -22,8 +22,9 @@ import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries
 import { useDebounce } from "@/hooks/use-debounce";
 import { capitalize } from "@/helpers/capitalize";
 
+import TableLoading from "../table-loading";
 
-// main component
+// main component           
 export default function ScheduleRecords() {
   type ScheduleRecord = {
     id: number;
@@ -431,9 +432,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
 
           <div className="w-full overflow-x-auto">
             {showLoadingState ? (
-              <div className="flex items-center justify-center min-h-20 overflow-x-auto gap-2">
-                <Loader2 className="h-6 w-6 animate-spin" /> Loading...
-              </div>
+             <TableLoading/>
             ) : transformedData.length > 0 ? (
               <DataTable columns={columns} data={transformedData} />
             ) : (

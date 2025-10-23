@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, Alert, ScrollView, Image } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Syringe, RefreshCw, Plus, FileText, Calendar } from "lucide-react-native";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView } from "react-native";
+import { Search, ChevronLeft, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { format, parseISO, isValid } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -12,7 +10,6 @@ import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinated
 import { PatientInfoCard } from "../admin/components/patientcards";
 import { VaccinationStatusCards } from "../admin/components/vaccination-status-cards";
 import { FollowUpsCard } from "../admin/components/followup-cards";
-import { SignatureModal } from "../admin/components/signature-modal";
 import { PaginationControls } from "../admin/components/pagination-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { serializePatientData, SerializedPatientData } from "./patientdata";

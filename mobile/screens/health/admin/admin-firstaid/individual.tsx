@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, TouchableOpacity, FlatList, TextInput, RefreshControl, Image } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Search, ChevronLeft, Heart, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { store } from './redux/store.tsx'
 import "./index.css";
 import App from "./App.tsx";
+import "./firebase.ts";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

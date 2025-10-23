@@ -7,7 +7,6 @@ import { SubmitButton } from "@/components/ui/button/submit-button";
 import { Plus } from "@/lib/icons/Plus";
 import { X } from "@/lib/icons/X";
 import { HousePlus } from "lucide-react-native";
-import { Card } from "@/components/ui/card";
 
 interface HouseholdFormProps {
   form: UseFormReturn<any>;

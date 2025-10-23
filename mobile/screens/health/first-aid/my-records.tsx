@@ -1,19 +1,17 @@
 // screens/first-aid/my-records.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   View, 
   ScrollView, 
   TouchableOpacity, 
-  ActivityIndicator, 
   RefreshControl,
   TextInput,
   Text
 } from "react-native";
-import { User, FileText, AlertCircle, Package, Clock, Heart, Search, ChevronLeft, Calendar, Shield, MapPin, RefreshCw } from "lucide-react-native";
+import { FileText, AlertCircle, Package, Heart, Search, ChevronLeft, Calendar, RefreshCw } from "lucide-react-native";
 
 import { router, useLocalSearchParams } from "expo-router";
-import { format } from "date-fns";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";

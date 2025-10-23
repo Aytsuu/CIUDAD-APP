@@ -1,6 +1,6 @@
 // Modified viewpage1.tsx
 import React, { useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, router } from "expo-router";
 import { getFPCompleteRecord } from "./GetRequest";

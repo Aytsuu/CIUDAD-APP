@@ -5,6 +5,7 @@ export type CouncilEvent = {
   ce_date: string;
   ce_time: string;
   ce_description: string;
+  ce_rows?: number;
   ce_is_archive: boolean;
   staff_id: string | null;
 };
@@ -15,6 +16,7 @@ export type CouncilEventInput = {
   ce_date: string | null;
   ce_time: string;
   ce_description: string;
+  ce_rows?: number; 
   ce_is_archive?: boolean;
   staff_id?: string | null;
 };
@@ -29,23 +31,23 @@ export type Attendance = {
   isArchived?: boolean;
 };
 
-export type Attendee = {
-  atn_id: number;
-  atn_name: string;
-  atn_designation: string;
-  atn_present_or_absent?: string;
-  ce_id: number;
-  staff_id: string | null;
-  composite_id: string;
-};
+// export type Attendee = {
+//   atn_id: number;
+//   atn_name: string;
+//   atn_designation: string;
+//   atn_present_or_absent?: string;
+//   ce_id: number;
+//   staff_id: string | null;
+//   composite_id: string;
+// };
 
-export type AttendeeInput = {
-  atn_name: string;
-  atn_designation: string;
-  atn_present_or_absent: string;
-  ce_id: number;
-  staff_id?: string | null;
-};
+// export type AttendeeInput = {
+//   atn_name: string;
+//   atn_designation: string;
+//   atn_present_or_absent: string;
+//   ce_id: number;
+//   staff_id?: string | null;
+// };
 
 export type AttendanceSheet = {
   att_id: number;
@@ -74,12 +76,11 @@ export type AttendanceRecord = {
   sheets: AttendanceSheet[];
 };
 
-
-export type Staff = {
-  staff_id: string;
-  full_name: string;
-  position_title: string;
-};
+// export type Staff = {
+//   staff_id: string;
+//   full_name: string;
+//   position_title: string;
+// };
 
 export interface EditEventFormProps {
   initialValues: {
@@ -89,6 +90,7 @@ export interface EditEventFormProps {
     ce_time: string;
     ce_place: string;
     ce_description: string;
+    ce_rows?: number;
     ce_is_archive?: boolean;
     staff_id?: string | null;
     attendees?: { name: string; designation: string; present_or_absent?: string }[];
@@ -105,6 +107,7 @@ export interface AttendeesProps {
 
 export interface AttendanceSheetViewProps {
   selectedAttendees?: { name: string; designation: string }[];
+  numberOfRows?: number; 
   activity?: string;
   date?: string;
   time?: string;

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleCheck } from "lucide-react-native";
 import {z} from "zod";
 import { addAnnualGrossSales, addPurposeAndRate } from "../restful-API/ratesPostAPI";
 import { AnnualGrossSalesSchema, PurposeAndRatesSchema } from "@/form-schema/rates-form-schema";
@@ -15,8 +14,9 @@ export const useAddAnnualGrossSales = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof AnnualGrossSalesSchema>) => 
             addAnnualGrossSales(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-
+                queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+                queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+                
                 toast.success('Record Submitted!')
                 onSuccess?.()
                 router.back()

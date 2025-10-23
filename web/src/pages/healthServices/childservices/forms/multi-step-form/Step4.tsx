@@ -1,3 +1,4 @@
+//// filepath: /c:/CIUDAD-APP/web/src/pages/healthServices/childservices/forms/multi-step-form/Step4.tsx
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ import { fetchDoctor, fetchMidwife } from "@/pages/healthServices/reports/firsta
 import { Combobox } from "@/components/ui/combobox";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
+import { useUpdateFollowupStatus } from "../queries/update";
 
 export default function LastPage({
   onPrevious,
@@ -41,6 +43,7 @@ export default function LastPage({
   passed_status,
   chrecId
 }: LastPageProps) {
+  // Local state for editing form
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
   const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<number | null>(null);
@@ -49,6 +52,11 @@ export default function LastPage({
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [allowNotesEdit, setAllowNotesEdit] = useState(false);
+  // NEW: pending followup updates stored here (keyed by followv_id)
+  const [pendingFollowupUpdates, setPendingFollowupUpdates] = useState<Record<number, string>>({});
+
+  // We'll use the updateFollowup mutation on final submit
+  const updateFollowupMutation = useUpdateFollowupStatus();
 
   // Fixed logic: allow notes edit when passed_status is NOT immunization
   useEffect(() => {
@@ -126,8 +134,8 @@ export default function LastPage({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: latestVitalsData?.weight || undefined, // ✅ Add optional chaining
-      ht: latestVitalsData?.height || undefined, // ✅ Add optional chaining
+      wt: latestVitalsData?.weight || undefined,
+      ht: latestVitalsData?.height || undefined,
       temp: latestVitalsData?.vital_temp,
       follov_description: "",
       followUpVisit: "",
@@ -143,8 +151,8 @@ export default function LastPage({
     defaultValues: {
       date: "",
       age: "",
-      wt: latestVitalsData?.weight || undefined, // ✅ Add optional chaining here too
-      ht: latestVitalsData?.height || undefined, // ✅ Add optional chaining here too
+      wt: latestVitalsData?.weight || undefined,
+      ht: latestVitalsData?.height || undefined,
       temp: latestVitalsData?.vital_temp,
       follov_description: "",
       followUpVisit: "",
@@ -197,10 +205,6 @@ export default function LastPage({
     return sorted[0];
   };
 
-  // const todaysHistoricalRecord = useMemo(() => {
-  //   return historicalVitalSigns.find((vital) => isToday(vital.date));
-  // }, [historicalVitalSigns]);
-
   const hasTodaysVitalSigns = useMemo(() => {
     const hasTodaysHistorical = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNew = newVitalSigns.some((vital) => isToday(vital.date));
@@ -215,10 +219,6 @@ export default function LastPage({
     }));
   }, [newVitalSigns, currentAge]);
 
-  // const shouldShowGeneralHealthSections = useMemo(() => {
-  //   return !hasTodaysVitalSigns;
-  // }, [hasTodaysVitalSigns]);
-
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
       return newVitalSigns[0];
@@ -226,11 +226,8 @@ export default function LastPage({
     return getLatestVitalSigns(historicalVitalSigns);
   }, [newVitalSigns, historicalVitalSigns]);
 
-  // FIXED: Simplified nutritional calculator condition
   const shouldShowNutritionalStatusCalculator = useMemo(() => {
-    // Basic data check - show if we have age, weight, and height
     const hasRequiredData = currentAge && latestOverallVitalSign?.wt !== undefined && latestOverallVitalSign?.ht !== undefined;
-
     return hasRequiredData;
   }, [currentAge, latestOverallVitalSign?.wt, latestOverallVitalSign?.ht]);
 
@@ -275,7 +272,6 @@ export default function LastPage({
 
   useEffect(() => {
     if (!initialFormData) return;
-
     const currentFormData = {
       ...formData,
       vitalSigns: newVitalSigns,
@@ -286,7 +282,6 @@ export default function LastPage({
       nutritionalStatus: nutritionalStatus,
       edemaSeverity: edemaSeverity
     };
-
     const hasChanges = JSON.stringify(currentFormData) !== JSON.stringify(initialFormData);
     setHasFormChanges(hasChanges);
   }, [formData, newVitalSigns, anemicData, birthwtData, selectedMedicines, currentStatus, nutritionalStatus, edemaSeverity, initialFormData]);
@@ -297,12 +292,10 @@ export default function LastPage({
         ...vital,
         age: vital.age || currentAge
       }));
-
       const hasChanges = JSON.stringify(updatedVitalSigns) !== JSON.stringify(newVitalSigns);
       if (hasChanges) {
         setNewVitalSigns(updatedVitalSigns);
       }
-
       setValue("vitalSigns", updatedVitalSigns);
       updateFormData({ vitalSigns: updatedVitalSigns });
     }
@@ -311,15 +304,13 @@ export default function LastPage({
   useEffect(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
-
     setShowVitalSignsForm(!hasTodaysHistoricalRecord && !hasTodaysNewRecord);
   }, [historicalVitalSigns, newVitalSigns]);
 
   useEffect(() => {
-    if (status === "immunization") {
+    if (currentStatus === "immunization") {
       setValue("status", "immunization");
     }
-
     updateFormData({
       anemic: anemicData,
       birthwt: birthwtData,
@@ -328,21 +319,18 @@ export default function LastPage({
       nutritionalStatus: nutritionalStatus,
       edemaSeverity: edemaSeverity
     });
-
     vitalSignForm.setValue("age", currentAge);
-
     setValue(
       "historicalSupplementStatuses",
       historicalSupplementStatusesProp.map((status) => ({
         date_completed: status.date_completed ?? undefined
       }))
     );
-
     if (currentAge && latestOverallVitalSign?.ht) {
       setValue("nutritionalStatus", { ...nutritionalStatus });
       updateFormData({ nutritionalStatus: { ...nutritionalStatus } });
     }
-  }, [status, currentAge, latestOverallVitalSign, historicalSupplementStatusesProp, setValue, updateFormData, vitalSignForm, anemicData, birthwtData, selectedMedicines, currentStatus, nutritionalStatus, edemaSeverity]);
+  }, [currentStatus, currentAge, latestOverallVitalSign, historicalSupplementStatusesProp, setValue, updateFormData, vitalSignForm, anemicData, birthwtData, selectedMedicines, nutritionalStatus, edemaSeverity]);
 
   const handleMedicineSelectionChange = (
     selectedMedicines: {
@@ -355,11 +343,8 @@ export default function LastPage({
       ...med,
       medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0
     }));
-
     setValue("medicines", updatedMedicines);
-    updateFormData({
-      medicines: updatedMedicines
-    });
+    updateFormData({ medicines: updatedMedicines });
   };
 
   const handleUpdateVitalSign = (index: number, values: VitalSignType) => {
@@ -377,7 +362,6 @@ export default function LastPage({
       ...values,
       age: values.age || currentAge
     };
-
     if (newVitalSigns.length > 0) {
       handleUpdateVitalSign(0, vitalSignWithAge);
     } else {
@@ -428,12 +412,31 @@ export default function LastPage({
     setEditingBirthWeightIndex(null);
   };
 
+  // NEW: Define a function to submit all pending followup updates
+  const submitFollowupUpdates = async () => {
+    const updates = Object.entries(pendingFollowupUpdates);
+    if (updates.length === 0) return;
+    const updatePromises = updates.map(async ([followvId, status]) => {
+      return updateFollowupMutation.mutateAsync({
+        followv_id: followvId.toString(),
+        status
+      });
+    });
+    await Promise.all(updatePromises);
+  };
+
+  // UPDATE: Make handleFormSubmit async and update followups on submit
   const handleFormSubmit = handleSubmit(
-    (data) => {
+    async (data) => {
       console.log("Submitting form data:", data);
       if (!canSubmit) {
         console.error("Cannot submit: No vital signs added or no changes detected");
         return;
+      }
+      try {
+        await submitFollowupUpdates();
+      } catch (error: any) {
+        console.error("Error updating followups:", error.message);
       }
       onSubmit(data);
     },
@@ -476,10 +479,7 @@ export default function LastPage({
               <pre className="mt-2 text-sm text-red-700">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-
-          {/* Pending Followups Section */}
-          <PendingFollowupsSection chrecId={chrecId || ""} />
-
+          <PendingFollowupsSection chrecId={chrecId || ""} pendingStatuses={pendingFollowupUpdates} onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))} />
           {/* Always show today's vital signs if they exist */}
           {hasTodaysVitalSigns && (
             <div className="pt-4">
@@ -505,7 +505,6 @@ export default function LastPage({
               </Form>
             </div>
           )}
-
           {/* Only show the form if no vital signs exist for today */}
           {showVitalSignsForm && !hasTodaysVitalSigns && (
             <div className="space-y-4">
@@ -525,22 +524,12 @@ export default function LastPage({
               </Form>
             </div>
           )}
-
-          {/* Show "Add New Vital Signs" button only when no today's record exists */}
-          {!showVitalSignsForm && !hasTodaysVitalSigns && (
-            <div className="flex justify-end">
-              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
-                Add New Vital Signs
-              </Button>
-            </div>
-          )}
-
           <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">Anemic and Birth Weight Status</h3>
             </div>
             <div className="space-y-6 p-6">
-              <div className="rounded-lg border border-gray-100  p-5">
+              <div className="rounded-lg border border-gray-100 p-5">
                 <div className="mb-4 flex items-center">
                   <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
                     <HeartPulse className="h-5 w-5 text-red-600" />
@@ -584,8 +573,7 @@ export default function LastPage({
               )}
             </div>
           </div>
-
-          {/* FIXED: Nutritional Status Calculator - now shows when data is available */}
+          {/* FIXED: Nutritional Status Calculator */}
           {shouldShowNutritionalStatusCalculator && (
             <div className="mb-10 rounded-lg border p-4">
               <h3 className="mb-4 text-lg font-bold">Nutritional Status</h3>
@@ -621,7 +609,6 @@ export default function LastPage({
               )}
             </div>
           )}
-
           {historicalSupplementStatusesProp && historicalSupplementStatusesProp.length > 0 && (
             <div className="overflow-hidden rounded-lg border">
               <div className="px-4 py-3">
@@ -630,19 +617,18 @@ export default function LastPage({
                   Historical Supplement Statuses (Anemia & Low Birth Weight)
                 </h3>
               </div>
-              <div className="">
+              <div>
                 <DataTable columns={historicalSupplementStatusColumns} data={historicalSupplementStatusesProp} />
               </div>
             </div>
           )}
-
           <div className="mb-10 rounded-lg border p-4">
             <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
               {isMedicinesLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <div className="text-center">
-                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 last:mx-auto"></div>
+                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
                     <p className="text-sm text-gray-600">Loading medicines...</p>
                   </div>
                 </div>
@@ -663,7 +649,6 @@ export default function LastPage({
               )}
             </div>
           </div>
-
           {passed_status !== "immunization" ? (
             <div className="mb-10 rounded-lg border bg-purple-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
@@ -700,49 +685,45 @@ export default function LastPage({
                 )}
               />
 
-{currentStatus === "check-up" && (
-  <div className="mt-6">
-    <Label className="block mb-2">Forward To Doctor</Label>
-    <div className="relative">
-      <Combobox
-        options={doctorOptions?.formatted || []}
-        value={selectedStaffId}
-        onChange={(value) => {
-          // Set the full id value for the combobox to display
-          setSelectedStaffId(value ?? "");
-          // Extract just the staff_id for your form
-          const staffId = value?.split("-")[0] || "";
-          setValue("selectedStaffId", staffId);
-        }}
-        placeholder={isDoctorLoading ? "Loading staff..." : "Select staff member"}
-        emptyMessage="No available staff members"
-        triggerClassName="w-full"
-      />
-    </div>
-  </div>
-)}
+              {currentStatus === "check-up" && (
+                <div className="mt-6">
+                  <Label className="block mb-2">Forward To Doctor</Label>
+                  <div className="relative">
+                    <Combobox
+                      options={doctorOptions?.formatted || []}
+                      value={selectedStaffId}
+                      onChange={(value) => {
+                        setSelectedStaffId(value ?? "");
+                        const staffId = value?.split("-")[0] || "";
+                        setValue("selectedStaffId", staffId);
+                      }}
+                      placeholder={isDoctorLoading ? "Loading staff..." : "Select staff member"}
+                      emptyMessage="No available staff members"
+                      triggerClassName="w-full"
+                    />
+                  </div>
+                </div>
+              )}
 
-{currentStatus === "immunization" && passed_status !== "immunization" && (
-  <div className="mt-6">
-    <Label className="block mb-2">Forward To</Label>
-    <div className="relative">
-      <Combobox
-        options={midwifeOptions?.formatted || []}
-        value={selectedStaffId}
-        onChange={(value) => {
-          // Set the full id value for the combobox to display
-          setSelectedStaffId(value ?? "");
-          // Extract just the staff_id for your form
-          const staffId = value?.split("-")[0] || "";
-          setValue("selectedStaffId", staffId);
-        }}
-        placeholder={isMidwifeLoading ? "Loading staff..." : "Select staff member"}
-        emptyMessage="No available staff members"
-        triggerClassName="w-full"
-      />
-    </div>
-  </div>
-)}
+              {currentStatus === "immunization" && passed_status !== "immunization" && (
+                <div className="mt-6">
+                  <Label className="block mb-2">Forward To</Label>
+                  <div className="relative">
+                    <Combobox
+                      options={midwifeOptions?.formatted || []}
+                      value={selectedStaffId}
+                      onChange={(value) => {
+                        setSelectedStaffId(value ?? "");
+                        const staffId = value?.split("-")[0] || "";
+                        setValue("selectedStaffId", staffId);
+                      }}
+                      placeholder={isMidwifeLoading ? "Loading staff..." : "Select staff member"}
+                      emptyMessage="No available staff members"
+                      triggerClassName="w-full"
+                    />
+                  </div>
+                </div>
+              )}
               {!currentStatus && <div className="mt-4 text-sm italic text-gray-500">Please select the purpose for this health record.</div>}
             </div>
           ) : (
@@ -753,7 +734,6 @@ export default function LastPage({
               </div>
             </div>
           )}
-
           <div className="flex w-full justify-end gap-2">
             <Button type="button" variant="outline" onClick={onPrevious} className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent">
               <ChevronLeft className="h-4 w-4" />

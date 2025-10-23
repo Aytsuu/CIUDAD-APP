@@ -5,11 +5,10 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { Pen, Trash, History, Search, ArrowUpDown } from 'lucide-react'
-import { useState } from "react"
-import { useGetAnnualGrossSales, type AnnualGrossSales } from "./queries/RatesFetchQueries"
+import { Pen, Trash, History, Search, ArrowUpDown, Archive } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { useGetAnnualGrossSalesActive, useGetAllAnnualGrossSales, type AnnualGrossSales } from "./queries/RatesFetchQueries"
 import { useDeleteAnnualGrossSales } from "./queries/RatesDeleteQueries"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import RatesEditFormPage1 from "./edit-forms/rates-edit-form-1"
 import { formatTimestamp } from "@/helpers/timestampformatter"
@@ -17,28 +16,75 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import React from "react"
-
+import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
 
 function RatesPage1() {
+    const { showLoading, hideLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
 
-    // Search + Pagination for Active
+    // Search + Pagination for Active Tab
     const [searchQueryActive, setSearchQueryActive] = useState("")
-    const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
+    const [pageSizeActive, setPageSizeActive] = useState(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
+    const debouncedSearchQueryActive = useDebounce(searchQueryActive, 300)
 
-    // Search + Pagination for History
+    // Search + Pagination for History Tab
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
-    const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)
+    const [pageSizeHistory, setPageSizeHistory] = useState(10)
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
+    const debouncedSearchQueryHistory = useDebounce(searchQueryHistory, 300)
 
-    const { data: fetchedData = [], isLoading } = useGetAnnualGrossSales()
+    // Fetch data for active tab
+    const { 
+        data: activeData = { results: [], count: 0 }, 
+        isLoading: isLoadingActive 
+    } = useGetAnnualGrossSalesActive(
+        currentPageActive, 
+        pageSizeActive, 
+        debouncedSearchQueryActive
+    )
+
+    // Fetch data for history tab
+    const { 
+        data: historyData = { results: [], count: 0 }, 
+        isLoading: isLoadingHistory 
+    } = useGetAllAnnualGrossSales(
+        currentPageHistory, 
+        pageSizeHistory, 
+        debouncedSearchQueryHistory
+    )
+
     const { mutate: deleteAnnualGrossSales } = useDeleteAnnualGrossSales()
 
     const handleDelete = (agsId: number) => deleteAnnualGrossSales(agsId)
+
+    const activePlans = activeData.results || []
+    const activeTotalCount = activeData.count || 0
+
+    const historyPlans = historyData.results || []
+    const historyTotalCount = historyData.count || 0
+
+    // Loading management
+    useEffect(() => {
+        if ((activeTab === "active" && isLoadingActive) || (activeTab === "all" && isLoadingHistory)) {
+            showLoading()
+        } else {
+            hideLoading()
+        }
+    }, [isLoadingActive, isLoadingHistory, activeTab, showLoading, hideLoading])
+
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setCurrentPageActive(1)
+    }, [debouncedSearchQueryActive, pageSizeActive])
+
+    useEffect(() => {
+        setCurrentPageHistory(1)
+    }, [debouncedSearchQueryHistory, pageSizeHistory])
 
     const formatNumber = (value: string) => `₱${Number(value).toLocaleString(undefined, {
         minimumFractionDigits: 2,
@@ -46,29 +92,12 @@ function RatesPage1() {
     })}`
 
     const getLastMaxRange = () => {
-        const activeItems = fetchedData.filter(row => !row.ags_is_archive)
-        if (activeItems.length === 0) return "0"
-        const sorted = [...activeItems].sort((a, b) => b.ags_maximum - a.ags_maximum)
+        if (activePlans.length === 0) return "0"
+        const sorted = [...activePlans].sort((a, b) => b.ags_maximum - a.ags_maximum)
         return sorted[0].ags_maximum
     }
 
     const lastMaxRange = getLastMaxRange()
-
-    const filterAndPaginate = (rows: AnnualGrossSales[], search: string, page: number, pageSize: number) => {
-        const filtered = rows.filter(row => {
-            const text = `${row.ags_minimum} ${row.ags_maximum} ${row.ags_rate} ${formatTimestamp(row.ags_date)}`.toLowerCase()
-            return text.includes(search.toLowerCase())
-        })
-        const total = filtered.length
-        const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
-        return { filtered, paginated, total }
-    }
-
-    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
-        filterAndPaginate(fetchedData.filter(row => !row.ags_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
-
-    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
-        filterAndPaginate(fetchedData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const sharedColumns: ColumnDef<AnnualGrossSales>[] = [
         {
@@ -92,7 +121,7 @@ function RatesPage1() {
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    Date Created/Updated
+                    Date Created
                     <ArrowUpDown size={14} />
                 </div>
             ),
@@ -158,10 +187,6 @@ function RatesPage1() {
     const historyColumns: ColumnDef<AnnualGrossSales>[] = [
         ...sharedColumns,
         {
-            accessorKey: "staff_name",
-            header: "Created/Updated By"
-        },
-        {
             accessorKey: "ags_is_archive",
             header: "Status",
             cell: ({ row }) => {
@@ -173,16 +198,22 @@ function RatesPage1() {
                     </div>
                 )
             }
+        },
+        {
+            accessorKey: "staff_name",
+            header: "Created By"
         }
     ]
 
-    if (isLoading) {
+    // Loading state for initial load
+    if ((activeTab === "active" && isLoadingActive && activePlans.length === 0) || 
+        (activeTab === "all" && isLoadingHistory && historyPlans.length === 0)) {
         return (
-            <div className="w-full h-full">
-                <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-                <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-                <Skeleton className="h-10 w-full mb-4 opacity-30" />
-                <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="md" />
+                <span className="ml-2 text-gray-600">
+                    {activeTab === "active" ? "Loading..." : "Loading history..."}
+                </span>
             </div>
         )
     }
@@ -201,10 +232,11 @@ function RatesPage1() {
                             </TabsTrigger>
                         </TabsList>
 
+                        {/* ACTIVE TAB - Keeping exact same layout as before */}
                         <TabsContent value="active">
                             <div className="flex flex-col gap-4">
-                                {/* Search & Size */}
-                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                {/* Search & Size - Same layout as before */}
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                                         <div className="relative w-full sm:w-64">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -235,12 +267,12 @@ function RatesPage1() {
 
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                            <Select value={pageSizeActive.toString()} onValueChange={(value) => {
-                                                setPageSizeActive(Number.parseInt(value))
-                                                setCurrentPageActive(1)
-                                            }}>
+                                        <Select value={pageSizeActive.toString()} onValueChange={(value) => {
+                                            setPageSizeActive(Number.parseInt(value))
+                                            setCurrentPageActive(1)
+                                        }}>
                                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                                            <SelectValue />
+                                                <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="5">5</SelectItem>
@@ -248,33 +280,51 @@ function RatesPage1() {
                                                 <SelectItem value="25">25</SelectItem>
                                                 <SelectItem value="50">50</SelectItem>
                                                 <SelectItem value="100">100</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            </SelectContent>
+                                        </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
 
-                                <DataTable columns={activeColumns} data={paginatedActive} />
+                                {/* Content */}
+                                {activePlans.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                            {searchQueryActive ? "No active annual gross sales found" : "No active annual gross sales yet"}
+                                        </h3>
+                                        <p className="text-gray-500 mb-4">
+                                            {searchQueryActive
+                                                ? `No active annual gross sales match "${searchQueryActive}". Try adjusting your search.`
+                                                : "Active annual gross sales will appear here once created."}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <DataTable columns={activeColumns} data={activePlans} />
 
-                                <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
-                                    <p className="text-gray-600">
-                                        Showing {(currentPageActive - 1) * pageSizeActive + 1}-
-                                        {Math.min(currentPageActive * pageSizeActive, totalActive)} of {totalActive} rows
-                                    </p>
-                                    {totalActive > 0 && (
-                                        <PaginationLayout
-                                            currentPage={currentPageActive}
-                                            totalPages={Math.ceil(totalActive / pageSizeActive)}
-                                            onPageChange={setCurrentPageActive}
-                                        />
-                                    )}
-                                </div>
+                                        <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
+                                            <p className="text-gray-600">
+                                                Showing {(currentPageActive - 1) * pageSizeActive + 1}-
+                                                {Math.min(currentPageActive * pageSizeActive, activeTotalCount)} of {activeTotalCount} rows
+                                            </p>
+                                            {activeTotalCount > 0 && (
+                                                <PaginationLayout
+                                                    currentPage={currentPageActive}
+                                                    totalPages={Math.ceil(activeTotalCount / pageSizeActive)}
+                                                    onPageChange={setCurrentPageActive}
+                                                />
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </TabsContent>
 
+                        {/* HISTORY TAB - Keeping exact same layout as before */}
                         <TabsContent value="all">
                             <div className="flex flex-col gap-4">
-                                {/* Search & Size */}
+                                {/* Search & Size - Same layout as before */}
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -290,12 +340,12 @@ function RatesPage1() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                            <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
-                                                setPageSizeHistory(Number.parseInt(value))
-                                                setCurrentPageHistory(1)
-                                            }}>
+                                        <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
+                                            setPageSizeHistory(Number.parseInt(value))
+                                            setCurrentPageHistory(1)
+                                        }}>
                                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                                            <SelectValue />
+                                                <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="5">5</SelectItem>
@@ -303,27 +353,44 @@ function RatesPage1() {
                                                 <SelectItem value="25">25</SelectItem>
                                                 <SelectItem value="50">50</SelectItem>
                                                 <SelectItem value="100">100</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            </SelectContent>
+                                        </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
 
-                                <HistoryTable columns={historyColumns} data={paginatedHistory} />
+                                {/* Content */}
+                                {historyPlans.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                            {searchQueryHistory ? "No history found" : "No history yet"}
+                                        </h3>
+                                        <p className="text-gray-500 mb-4">
+                                            {searchQueryHistory
+                                                ? `No history matches "${searchQueryHistory}". Try adjusting your search.`
+                                                : "History will appear here once records are created."}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <HistoryTable columns={historyColumns} data={historyPlans} />
 
-                                <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
-                                    <p className="text-gray-600">
-                                        Showing {(currentPageHistory - 1) * pageSizeHistory + 1}-
-                                        {Math.min(currentPageHistory * pageSizeHistory, totalHistory)} of {totalHistory} rows
-                                    </p>
-                                    {totalHistory > 0 && (
-                                        <PaginationLayout
-                                            currentPage={currentPageHistory}
-                                            totalPages={Math.ceil(totalHistory / pageSizeHistory)}
-                                            onPageChange={setCurrentPageHistory}
-                                        />
-                                    )}
-                                </div>
+                                        <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
+                                            <p className="text-gray-600">
+                                                Showing {(currentPageHistory - 1) * pageSizeHistory + 1}-
+                                                {Math.min(currentPageHistory * pageSizeHistory, historyTotalCount)} of {historyTotalCount} rows
+                                            </p>
+                                            {historyTotalCount > 0 && (
+                                                <PaginationLayout
+                                                    currentPage={currentPageHistory}
+                                                    totalPages={Math.ceil(historyTotalCount / pageSizeHistory)}
+                                                    onPageChange={setCurrentPageHistory}
+                                                />
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </TabsContent>
                     </Tabs>

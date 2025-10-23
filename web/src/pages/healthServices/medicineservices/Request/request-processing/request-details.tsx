@@ -32,7 +32,8 @@ export default function MedicineRequestDetail() {
   const request = location.state?.params?.request as any;
   console.log("mrfreq", request);
   console.log("personal info", patientData);
-  // const status = request.mode;
+
+  const isAppMode = request?.mode === "app"; // Check if mode is app
 
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -78,7 +79,7 @@ export default function MedicineRequestDetail() {
   useEffect(() => {
     const patientData = patientExists as any;
     if (patientData?.exists && patientData?.pat_id) {
-      setCurrentPatId(patientData.pat_id);
+      setCurrentPatId(patientData.pat_id || request.pat_id || null);
     }
   }, [patientExists]);
 
@@ -97,15 +98,28 @@ export default function MedicineRequestDetail() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const tableData = medicineData.flatMap((medicine: any) =>
-    medicine.request_items.map((item: any) => ({
-      ...item,
-      med_name: medicine.med_name,
-      med_type: medicine.med_type,
-      total_available_stock: medicine.total_available_stock,
-      med_id: medicine.med_id,
-      reason: item.reason || "No reason provided",
-      medreq_id: item.medreq_id
-    }))
+    medicine.request_items.map((item: any) => {
+      // For app mode, use the sum of allocated quantities instead of medreqitem_qty
+      const displayQuantity = isAppMode ? item.allocations?.reduce((sum: number, alloc: any) => sum + (alloc.allocated_qty || 0), 0) || 0 : item.medreqitem_qty || 0;
+
+      return {
+        ...item,
+        med_name: medicine.med_name,
+        med_type: medicine.med_type,
+        total_available_stock: medicine.total_available_stock,
+        med_id: medicine.med_id,
+        reason: item.reason || "No reason provided",
+        medreq_id: item.medreq_id,
+        // Include allocation data if available
+        allocations: item.allocations || [],
+        total_allocated_qty: item.total_allocated_qty || 0,
+        remaining_qty: item.remaining_qty || item.medreqitem_qty,
+        is_fully_allocated: item.is_fully_allocated || false,
+        // Use allocated quantity sum for display in app mode
+        display_quantity: displayQuantity,
+        medreqitem_qty: displayQuantity // Override the original quantity for display
+      };
+    })
   );
 
   // Calculate the actual count of confirmed items
@@ -142,23 +156,93 @@ export default function MedicineRequestDetail() {
     }
   };
 
-
+  // Create medicine mapping - different logic for app mode vs non-app mode
   const createMedicineMapping = () => {
-    if (!medicineStocksOptions || !medicineData?.length) {
+    if (!medicineData?.length) {
       return [];
     }
-  
+
+    // APP MODE: Create mapping from allocations
+    if (isAppMode) {
+      console.log("=== Creating medicine mapping for APP MODE ===");
+      const mappedMedicines: any = [];
+
+      medicineData.forEach((confirmedMedicine: any) => {
+        const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
+
+        confirmedItems.forEach((item: any) => {
+          if (item.allocations && item.allocations.length > 0) {
+            item.allocations.forEach((allocation: any) => {
+              const uniqueId = `${confirmedMedicine.med_id}_${allocation.minv_id}_${item.medreqitem_id}_alloc_${allocation.alloc_id}`;
+
+              // Extract detailed information from minv_details and inv_details
+              const minvDetails = allocation.minv_details || {};
+              const invDetails = allocation.inv_details || {};
+
+              const mappedItem = {
+                id: uniqueId,
+                display_id: `${allocation.minv_name || confirmedMedicine.med_name} (Inv ID: ${allocation.inv_id})`,
+                med_name: confirmedMedicine.med_name,
+                med_type: confirmedMedicine.med_type,
+                medreqitem_id: item.medreqitem_id,
+                requested_qty: allocation.allocated_qty,
+                confirmed_reason: item.reason || "No reason provided",
+                request_item: item,
+                confirmed_medicine: confirmedMedicine,
+                original_stock_id: allocation.minv_id,
+                // Use detailed information from minv_details
+                name: allocation.minv_name || confirmedMedicine.med_name,
+                dosage: minvDetails.minv_dsg ? `${minvDetails.minv_dsg} ${minvDetails.minv_dsg_unit || ""}` : "N/A",
+                form: minvDetails.minv_form || "N/A",
+                avail: minvDetails.minv_qty_avail || allocation.allocated_qty,
+                unit: minvDetails.minv_qty_unit || "pcs",
+                // Use expiry from inv_details
+                expiry: invDetails.expiry_date || null,
+                inv_id: allocation.inv_id || allocation.minv_id,
+                preFilledReason: item.reason || "No reason provided",
+                defaultQuantity: allocation.allocated_qty,
+                has_minv_id: true,
+                minv_id: allocation.minv_id,
+                selection_type: "allocation",
+                allocation_id: allocation.alloc_id,
+                created_at: allocation.created_at,
+                // Additional details for display
+                pcs_per_box: minvDetails.minv_pcs || 0,
+                total_quantity: minvDetails.minv_qty || 0,
+                wasted: minvDetails.wasted || 0,
+                temporary_deduction: minvDetails.temporary_deduction || 0,
+                is_archived: invDetails.is_archived || false,
+                // Mark as auto-selected for MedicineDisplay
+                is_auto_selected: true
+              };
+
+              mappedMedicines.push(mappedItem);
+              console.log(`Mapped allocation ${allocation.alloc_id}:`, mappedItem);
+            });
+          }
+        });
+      });
+
+      console.log(`Total mapped medicines from allocations: ${mappedMedicines.length}`);
+      return mappedMedicines;
+    }
+
+    // NON-APP MODE: Original logic
+    if (!medicineStocksOptions) {
+      return [];
+    }
+
     const mappedMedicines: any = [];
-  
+
     // For each confirmed medicine request
     medicineData.forEach((confirmedMedicine: any) => {
       // Get the confirmed items for this medicine
       const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
-      
+
       confirmedItems.forEach((item: any) => {
         // Check if item has minv_id - if yes, use specific stock; if no, use general medicine stock
         const inventoryId = item.inventory?.minv_id || item.inventory?.id || item.minv_id;
-        
+
         if (inventoryId) {
           // CASE 1: Item has inventory ID - find specific stock
           const matchingStock = medicineStocksOptions.medicines.find((stock: any) => {
@@ -166,7 +250,7 @@ export default function MedicineRequestDetail() {
             const stockIdMatch = String(stock.id) === String(inventoryId) || String(stock.inv_id) === String(inventoryId);
             return medIdMatch && stockIdMatch;
           });
-  
+
           if (matchingStock) {
             const uniqueId = `${confirmedMedicine.med_id}_${matchingStock.id}_${item.medreqitem_id}`;
             const mappedItem = {
@@ -195,7 +279,8 @@ export default function MedicineRequestDetail() {
               // Include inventory data if available
               has_minv_id: true, // This item has specific inventory
               minv_id: inventoryId,
-              selection_type: "specific_stock" // Track how this was selected
+              selection_type: "specific_stock", // Track how this was selected
+              is_auto_selected: true
             };
             mappedMedicines.push(mappedItem);
             console.log(`Added specific stock for ${confirmedMedicine.med_name} with inventory ID: ${inventoryId}`);
@@ -203,11 +288,9 @@ export default function MedicineRequestDetail() {
         } else {
           // CASE 2: No inventory ID - show all available stocks for this medicine
           console.log(`No inventory ID found for ${confirmedMedicine.med_name}, showing all available stocks`);
-          
-          const availableStocks = medicineStocksOptions.medicines.filter((stock: any) => 
-            String(stock.med_id) === String(confirmedMedicine.med_id) && (stock.avail || 0) > 0
-          );
-  
+
+          const availableStocks = medicineStocksOptions.medicines.filter((stock: any) => String(stock.med_id) === String(confirmedMedicine.med_id) && (stock.avail || 0) > 0);
+
           if (availableStocks.length > 0) {
             availableStocks.forEach((stock: any, stockIndex: number) => {
               const uniqueId = `${confirmedMedicine.med_id}_${stock.id}_${item.medreqitem_id}_${stockIndex}`;
@@ -248,139 +331,191 @@ export default function MedicineRequestDetail() {
         }
       });
     });
-  
+
     console.log(`Total mapped medicines: ${mappedMedicines.length}`);
-    console.log(`Breakdown: ${mappedMedicines.filter((m:any) => m.selection_type === "specific_stock").length} specific stocks, ${mappedMedicines.filter((m:any) => m.selection_type === "general_stock").length} general stocks`);
-    
+    console.log(`Breakdown: ${mappedMedicines.filter((m: any) => m.selection_type === "specific_stock").length} specific stocks, ${mappedMedicines.filter((m: any) => m.selection_type === "general_stock").length} general stocks`);
+
     return mappedMedicines;
   };
 
-
   const enhancedMedicineStocks = createMedicineMapping();
 
-  // Improved auto-selection logic
+  // Improved auto-selection logic - handles both app mode and non-app mode
   useEffect(() => {
     console.log("=== Auto-selection useEffect triggered ===");
-    
+    console.log("Mode:", isAppMode ? "APP MODE" : "NON-APP MODE");
+
     // Check if we have all required data
     if (!medicineData || medicineData.length === 0) {
       console.log("No medicineData available");
       return;
     }
-    
-    if (!medicineStocksOptions || !medicineStocksOptions.medicines) {
-      console.log("No medicineStocksOptions available");
-      return;
-    }
-    
-    if (isLoading || isMedicinesLoading) {
+
+    if (isLoading) {
       console.log("Data still loading, skipping auto-selection");
       return;
     }
-    
+
     // Only run if we don't already have selected medicines
     if (selectedMedicines.length > 0) {
       console.log("Medicines already selected, skipping auto-selection");
       return;
     }
-    
+
     console.log("Starting auto-selection process...");
     console.log("Available medicine data:", medicineData);
-    console.log("Available stock options:", medicineStocksOptions.medicines);
-    
+
     const autoSelectedMedicines: any[] = [];
-    
-    medicineData.forEach((confirmedMedicine: any, medicineIndex: number) => {
-      console.log(`\n--- Processing medicine ${medicineIndex + 1}: ${confirmedMedicine.med_name} (ID: ${confirmedMedicine.med_id}) ---`);
-      
-      const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
-      console.log(`Found ${confirmedItems.length} confirmed items`);
-      
-      confirmedItems.forEach((item: any, itemIndex: number) => {
-        console.log(`\n  Processing item ${itemIndex + 1}:`, {
-          medreqitem_id: item.medreqitem_id,
-          quantity: item.medreqitem_qty,
-          reason: item.reason,
-          inventory: item.inventory
-        });
-        
-        // Check different possible structures for inventory ID
-        const inventoryId = item.inventory?.minv_id || item.inventory?.id || item.minv_id;
-        
-        if (!inventoryId) {
-          console.log(`  ❌ No inventory ID found for item ${item.medreqitem_id}`);
-          return;
-        }
-        
-        console.log(`  🔍 Looking for stock with ID: ${inventoryId} for medicine ID: ${confirmedMedicine.med_id}`);
-        
-        // Find matching stock in medicineStocksOptions
-        const matchingStock = medicineStocksOptions.medicines.find((stock: any) => {
-          const medIdMatch = String(stock.med_id) === String(confirmedMedicine.med_id);
-          const stockIdMatch = String(stock.id) === String(inventoryId) || String(stock.inv_id) === String(inventoryId);
-          
-          console.log(`    Checking stock ID ${stock.id}:`, {
-            stockMedId: stock.med_id,
-            stockId: stock.id,
-            stockInvId: stock.inv_id,
-            medIdMatch,
-            stockIdMatch
-          });
-          
-          return medIdMatch && stockIdMatch;
-        });
-        
-        if (matchingStock) {
-          console.log(`  ✅ Found matching stock:`, matchingStock);
-          
-          // Create the unique composite ID as used in enhancedMedicineStocks
-          const uniqueId = `${confirmedMedicine.med_id}_${matchingStock.id}_${item.medreqitem_id}`;
-          
-          const autoSelectedMedicine = {
-            minv_id: uniqueId, // Use the composite ID that MedicineDisplay expects
+
+    if (isAppMode) {
+      // APP MODE: Auto-select based on allocations
+      console.log("=== APP MODE: Processing allocations ===");
+
+      medicineData.forEach((confirmedMedicine: any, medicineIndex: number) => {
+        console.log(`\n--- Processing medicine ${medicineIndex + 1}: ${confirmedMedicine.med_name} (ID: ${confirmedMedicine.med_id}) ---`);
+
+        const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
+        console.log(`Found ${confirmedItems.length} confirmed items`);
+
+        confirmedItems.forEach((item: any, itemIndex: number) => {
+          console.log(`\n  Processing item ${itemIndex + 1}:`, {
             medreqitem_id: item.medreqitem_id,
-            med_name: confirmedMedicine.med_name,
-            med_id: confirmedMedicine.med_id,
-            original_stock_id: matchingStock.id,
-            medrec_qty: item.medreqitem_qty || 1,
-            reason: item.reason || "No reason provided",
-          };
-          
-          console.log(`  📦 Auto-selecting medicine:`, autoSelectedMedicine);
-          autoSelectedMedicines.push(autoSelectedMedicine);
-        } else {
-          console.log(`  ❌ No matching stock found for item ${item.medreqitem_id}`);
-          
-          // Debug: Show all available stocks for this medicine
-          const availableStocks = medicineStocksOptions.medicines.filter((stock: any) => 
-            String(stock.med_id) === String(confirmedMedicine.med_id)
-          );
-          console.log(`  Available stocks for medicine ${confirmedMedicine.med_id}:`, availableStocks);
-        }
+            quantity: item.medreqitem_qty,
+            reason: item.reason,
+            allocations: item.allocations
+          });
+
+          // Check if item has allocations
+          if (item.allocations && item.allocations.length > 0) {
+            console.log(`  Found ${item.allocations.length} allocation(s) for this item`);
+
+            // Process each allocation
+            item.allocations.forEach((allocation: any, allocIndex: number) => {
+              console.log(`    Processing allocation ${allocIndex + 1}:`, allocation);
+
+              const uniqueId = `${confirmedMedicine.med_id}_${allocation.minv_id}_${item.medreqitem_id}_alloc_${allocation.alloc_id}`;
+
+              const autoSelectedMedicine = {
+                minv_id: uniqueId,
+                medreqitem_id: item.medreqitem_id,
+                med_name: confirmedMedicine.med_name,
+                med_id: confirmedMedicine.med_id,
+                original_stock_id: allocation.minv_id,
+                medrec_qty: allocation.allocated_qty,
+                reason: item.reason || "No reason provided",
+                allocation_id: allocation.alloc_id,
+                is_from_allocation: true
+              };
+
+              console.log(`    ✅ Auto-selecting from allocation:`, autoSelectedMedicine);
+              autoSelectedMedicines.push(autoSelectedMedicine);
+            });
+          } else {
+            console.log(`  ⚠️ No allocations found for item ${item.medreqitem_id}`);
+          }
+        });
       });
-    });
-    
+    } else {
+      // NON-APP MODE: Auto-select based on inventory (original logic)
+      console.log("=== NON-APP MODE: Processing inventory ===");
+
+      if (!medicineStocksOptions || !medicineStocksOptions.medicines) {
+        console.log("No medicineStocksOptions available");
+        return;
+      }
+
+      if (isMedicinesLoading) {
+        console.log("Medicine stocks still loading");
+        return;
+      }
+
+      console.log("Available stock options:", medicineStocksOptions.medicines);
+
+      medicineData.forEach((confirmedMedicine: any, medicineIndex: number) => {
+        console.log(`\n--- Processing medicine ${medicineIndex + 1}: ${confirmedMedicine.med_name} (ID: ${confirmedMedicine.med_id}) ---`);
+
+        const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
+        console.log(`Found ${confirmedItems.length} confirmed items`);
+
+        confirmedItems.forEach((item: any, itemIndex: number) => {
+          console.log(`\n  Processing item ${itemIndex + 1}:`, {
+            medreqitem_id: item.medreqitem_id,
+            quantity: item.medreqitem_qty,
+            reason: item.reason,
+            inventory: item.inventory
+          });
+
+          const inventoryId = item.inventory?.minv_id || item.inventory?.id || item.minv_id;
+
+          if (!inventoryId) {
+            console.log(`  ❌ No inventory ID found for item ${item.medreqitem_id}`);
+            return;
+          }
+
+          console.log(`  🔍 Looking for stock with ID: ${inventoryId} for medicine ID: ${confirmedMedicine.med_id}`);
+
+          const matchingStock = medicineStocksOptions.medicines.find((stock: any) => {
+            const medIdMatch = String(stock.med_id) === String(confirmedMedicine.med_id);
+            const stockIdMatch = String(stock.id) === String(inventoryId) || String(stock.inv_id) === String(inventoryId);
+
+            console.log(`    Checking stock ID ${stock.id}:`, {
+              stockMedId: stock.med_id,
+              stockId: stock.id,
+              stockInvId: stock.inv_id,
+              medIdMatch,
+              stockIdMatch
+            });
+
+            return medIdMatch && stockIdMatch;
+          });
+
+          if (matchingStock) {
+            console.log(`  ✅ Found matching stock:`, matchingStock);
+
+            const uniqueId = `${confirmedMedicine.med_id}_${matchingStock.id}_${item.medreqitem_id}`;
+
+            const autoSelectedMedicine = {
+              minv_id: uniqueId,
+              medreqitem_id: item.medreqitem_id,
+              med_name: confirmedMedicine.med_name,
+              med_id: confirmedMedicine.med_id,
+              original_stock_id: matchingStock.id,
+              medrec_qty: item.medreqitem_qty || 1,
+              reason: item.reason || "No reason provided"
+            };
+
+            console.log(`  📦 Auto-selecting medicine:`, autoSelectedMedicine);
+            autoSelectedMedicines.push(autoSelectedMedicine);
+          } else {
+            console.log(`  ❌ No matching stock found for item ${item.medreqitem_id}`);
+
+            const availableStocks = medicineStocksOptions.medicines.filter((stock: any) => String(stock.med_id) === String(confirmedMedicine.med_id));
+            console.log(`  Available stocks for medicine ${confirmedMedicine.med_id}:`, availableStocks);
+          }
+        });
+      });
+    }
+
     console.log(`\n=== Auto-selection complete ===`);
     console.log(`Total medicines auto-selected: ${autoSelectedMedicines.length}`);
-    console.log('Auto-selected medicines:', autoSelectedMedicines);
-    
+    console.log("Auto-selected medicines:", autoSelectedMedicines);
+
     if (autoSelectedMedicines.length > 0) {
       setSelectedMedicines(autoSelectedMedicines);
     } else {
-      
-      // Additional debugging
       const totalConfirmedItems = medicineData.reduce((count: number, med: any) => {
         return count + (med.request_items?.filter((item: any) => item.status === "confirmed").length || 0);
       }, 0);
-      
+
       console.log("Debug summary:", {
+        mode: isAppMode ? "app" : "non-app",
         totalMedicines: medicineData.length,
         totalConfirmedItems,
-        totalStockOptions: medicineStocksOptions.medicines.length,
+        totalStockOptions: medicineStocksOptions?.medicines?.length || 0,
         selectedMedicinesLength: selectedMedicines.length
       });
     }
-  }, [medicineData, medicineStocksOptions, isLoading, isMedicinesLoading]); // Removed enhancedMedicineStocks from dependencies
+  }, [medicineData, medicineStocksOptions, isLoading, isMedicinesLoading, isAppMode]);
 
   // Helper function to find medicine data by the unique ID
   const getMedicineDataByUniqueId = (uniqueId: string) => {
@@ -502,7 +637,7 @@ export default function MedicineRequestDetail() {
               <CardTitle>
                 Medicine Requests <span className="bg-red-500 text-white rounded-full text-sm px-2"> {totalCount}</span>
               </CardTitle>
-              <CardDescription>Review confirmed medicine request items before confirmation</CardDescription>
+              <CardDescription>{isAppMode ? "Review medicine requests and their allocations" : "Review confirmed medicine request items before confirmation"}</CardDescription>
             </div>
             <div className="flex items-center gap-3">
               <Link
@@ -596,132 +731,35 @@ export default function MedicineRequestDetail() {
           </CardContent>
         </Card>
 
-        {/* Debug Component - Only in Development
-        {process.env.NODE_ENV === 'development' && (
-          <Card className="mt-4 border-yellow-200 bg-yellow-50">
-            <CardContent>
-              <h4 className="font-semibold mb-2 text-yellow-800">🐛 Auto-Selection Debug Info</h4>
-              
-              <div className="space-y-4 text-sm">
-                <div>
-                  <h5 className="font-semibold text-gray-700">Data Loading Status:</h5>
-                  <ul className="list-disc list-inside text-gray-600">
-                    <li>Medicine Data Loading: <span className={isLoading ? "text-red-600" : "text-green-600"}>{isLoading ? "Yes" : "No"}</span></li>
-                    <li>Medicine Stocks Loading: <span className={isMedicinesLoading ? "text-red-600" : "text-green-600"}>{isMedicinesLoading ? "Yes" : "No"}</span></li>
-                    <li>Medicine Data Length: <span className="text-blue-600">{medicineData.length}</span></li>
-                    <li>Stock Options Available: <span className="text-blue-600">{medicineStocksOptions?.medicines?.length || 0}</span></li>
-                    <li>Enhanced Stocks Length: <span className="text-blue-600">{enhancedMedicineStocks.length}</span></li>
-                    <li>Currently Selected: <span className="text-purple-600">{selectedMedicines.length}</span></li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Medicine Data Structure:</h5>
-                  {medicineData.map((med: any, index: number) => (
-                    <div key={index} className="ml-4 mb-3 p-2 bg-white rounded border">
-                      <div><strong>Medicine:</strong> {med.med_name} (ID: {med.med_id})</div>
-                      <div><strong>Confirmed Items:</strong></div>
-                      {med.request_items?.filter((item: any) => item.status === "confirmed").map((item: any, itemIndex: number) => (
-                        <div key={itemIndex} className="ml-4 p-1 bg-gray-100 rounded text-xs">
-                          <div>Item ID: {item.medreqitem_id}</div>
-                          <div>Quantity: {item.medreqitem_qty}</div>
-                          <div>Status: {item.status}</div>
-                          <div>Reason: {item.reason}</div>
-                          <div className="text-red-600">
-                            <strong>Inventory:</strong> {JSON.stringify(item.inventory, null, 2)}
-                          </div>
-                          <div className="text-purple-600">
-                            <strong>Has MinvId:</strong> {item.inventory?.minv_id ? `Yes (${item.inventory.minv_id})` : "No"}
-                          </div>
-                          <div className="text-blue-600">
-                            <strong>Will Show in Selection:</strong> {item.inventory?.minv_id ? "Yes" : "No"}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Items WITHOUT MinvId (Will be skipped):</h5>
-                  {medicineData.map((med: any, index: number) => {
-                    const itemsWithoutMinvId = med.request_items?.filter((item: any) => 
-                      item.status === "confirmed" && !item.inventory?.minv_id
-                    ) || [];
-                    
-                    if (itemsWithoutMinvId.length === 0) return null;
-                    
-                    return (
-                      <div key={index} className="ml-4 mb-3 p-2 bg-red-50 rounded border border-red-200">
-                        <div><strong>Medicine:</strong> {med.med_name} (ID: {med.med_id})</div>
-                        <div><strong>Items without MinvId:</strong></div>
-                        {itemsWithoutMinvId.map((item: any, itemIndex: number) => (
-                          <div key={itemIndex} className="ml-4 p-1 bg-red-100 rounded text-xs">
-                            <div>Item ID: {item.medreqitem_id}</div>
-                            <div>Quantity: {item.medreqitem_qty}</div>
-                            <div className="text-red-600">⚠️ No minv_id - Will be excluded from selection</div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Available Stock Options (First 3):</h5>
-                  {medicineStocksOptions?.medicines?.slice(0, 3).map((stock: any, index: number) => (
-                    <div key={index} className="ml-4 mb-2 p-2 bg-white rounded border text-xs">
-                      <div>Stock ID: {stock.id}</div>
-                      <div>Inv ID: {stock.inv_id}</div>
-                      <div>Med ID: {stock.med_id}</div>
-                      <div>Medicine: {stock.med_name}</div>
-                      <div>Available: {stock.avail}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Enhanced Medicine Stocks (First 3):</h5>
-                  {enhancedMedicineStocks.slice(0, 3).map((enhanced: any, index: number) => (
-                    <div key={index} className="ml-4 mb-2 p-2 bg-white rounded border text-xs">
-                      <div>Unique ID: {enhanced.id}</div>
-                      <div>Original Stock ID: {enhanced.original_stock_id}</div>
-                      <div>Med ID: {enhanced.med_id}</div>
-                      <div>Medicine: {enhanced.med_name}</div>
-                      <div>Request Item ID: {enhanced.medreqitem_id}</div>
-                      <div>Has MinvId: {enhanced.has_minv_id ? "Yes" : "No"}</div>
-                      <div>MinvId: {enhanced.minv_id}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )} */}
-
-        {/* Medicine Display */}
+        {/* Medicine Display - Show for both modes but with different behavior */}
         <Card className="mt-4">
           <CardContent>
             <div className="">
-              <h3 className="text-lg font-semibold mb-4 mt-3">Select Medicines to Process</h3>
+              <h3 className="text-lg font-semibold mb-4 mt-3">{isAppMode ? "Review Allocated Medicines" : "Select Medicines to Process"}</h3>
               {/* Show loading state */}
-              {isMedicinesLoading ? (
+              {(isAppMode ? isLoading : isMedicinesLoading) ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">Loading medicine inventory...</span>
+                  <span className="ml-2 text-gray-600">{isAppMode ? "Loading allocated medicines..." : "Loading medicine inventory..."}</span>
                 </div>
               ) : enhancedMedicineStocks.length === 0 ? (
                 <div className="flex items-center justify-center py-12 text-gray-500">
                   <AlertCircle className="h-8 w-8 mr-2" />
                   <div className="text-center">
-                    <div>No medicines available for processing</div>
+                    <div>{isAppMode ? "No allocated medicines found" : "No medicines available for processing"}</div>
                     <div className="text-sm mt-1">
-                      This could be because:
-                      <ul className="list-disc list-inside mt-2 text-xs">
-                        <li>No confirmed medicine requests have specific inventory assignments (minv_id)</li>
-                        <li>The assigned inventory stocks are not found in current stock</li>
-                        <li>Data is still loading</li>
-                      </ul>
+                      {isAppMode ? (
+                        <span>No allocations have been made for this medicine request yet.</span>
+                      ) : (
+                        <>
+                          This could be because:
+                          <ul className="list-disc list-inside mt-2 text-xs">
+                            <li>No confirmed medicine requests have specific inventory assignments (minv_id)</li>
+                            <li>The assigned inventory stocks are not found in current stock</li>
+                            <li>Data is still loading</li>
+                          </ul>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -735,7 +773,7 @@ export default function MedicineRequestDetail() {
                     currentPage={medicineDisplayPage}
                     onPageChange={setMedicineDisplayPage}
                     autoFillReasons={true}
-                    isLoading={isMedicinesLoading}
+                    isLoading={isAppMode ? isLoading : isMedicinesLoading}
                   />
 
                   <div className="mt-6">
@@ -744,40 +782,6 @@ export default function MedicineRequestDetail() {
                 </>
               )}
             </div>
-
-            {/* Debug info for selected medicines
-            {selectedMedicines.length > 0 && (
-              <div className="mt-4 p-4 bg-gray-100 rounded">
-                <h4 className="font-semibold mb-2">Selected Medicines Debug Info:</h4>
-                <div className="text-sm">
-                  {selectedMedicines.map((med, index) => (
-                    <div key={index} className="mb-2 p-2 bg-white rounded">
-                      <div>
-                        Medicine: <span className="font-semibold text-blue-600">{med.med_name || "Unknown"}</span>
-                      </div>
-                      <div>
-                        MinvId: <span className="text-gray-600">{med.minv_id}</span>
-                      </div>
-                      <div>
-                        Original Stock ID: <span className="text-purple-600">{med.original_stock_id}</span>
-                      </div>
-                      <div>
-                        Qty: <span className="text-green-600">{med.medrec_qty}</span>
-                      </div>
-                      <div>
-                        Reason: <span className="text-orange-600">{med.reason}</span>
-                      </div>
-                      <div>
-                        MedReqItem ID: <span className={med.medreqitem_id ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{med.medreqitem_id || "N/A"}</span>
-                      </div>
-                      <div>
-                        Auto-selected: <span className="text-blue-600">{med.inventory?.minv_id ? "Yes (by minv_id)" : "No"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )} */}
           </CardContent>
         </Card>
 
@@ -786,13 +790,14 @@ export default function MedicineRequestDetail() {
           <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
             {isPending ? (
               <>
+                {" "}
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Processing...
               </>
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Submit ({selectedMedicines.length})   
+                {isAppMode ? `Complete Request (${selectedMedicines.length})` : `Submit (${selectedMedicines.length})`}
               </>
             )}
           </Button>

@@ -70,7 +70,7 @@ export default function CreateBudgetPlanSuppDocs (){
                 </Button>
             }
         >
-            <SafeAreaView>
+            <SafeAreaView className="p-6">
                 <View className="mb-3 mt-3">
                 <Text className="text-[12px] font-PoppinsRegular pb-1">Add Supporting Documents for the Budget Plan</Text>
                 <MediaPicker

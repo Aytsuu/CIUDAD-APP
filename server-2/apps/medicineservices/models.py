@@ -45,11 +45,10 @@ class MedicineRequest(models.Model):
         
         super().save(*args, **kwargs)
     
-
     class Meta:
         db_table = 'medicine_request' 
-
-
+        
+        
 class MedicineRequestItem(models.Model):
     medreqitem_id = models.BigAutoField(primary_key=True)
     medreqitem_qty = models.PositiveIntegerField(default=0)

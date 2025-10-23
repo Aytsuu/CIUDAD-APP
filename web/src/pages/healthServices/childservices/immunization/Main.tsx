@@ -4,7 +4,6 @@ import PendingDisplayChildHealthRecord from "./Step1";
 import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Loader2 } from "lucide-react";
 import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
@@ -12,18 +11,17 @@ import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
-import { useLoading } from "@/context/LoadingContext";
 import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
+import TableLoading from "../../table-loading";
+
 
 export default function ChildImmunization() {
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
 
   const { ChildHealthRecord } = location.state || {};
-  console.log("sample", ChildHealthRecord);
   const pat_id = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_id?.toString() || "";
   const pat_dob = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
-  const { showLoading, hideLoading } = useLoading();
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
   const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
@@ -41,13 +39,6 @@ export default function ChildImmunization() {
   const { data: historyData, isLoading: isChildLoading, isError, refetch } = useChildHealthHistory(ChildHealthRecord?.record?.chrec);
   const isLoading = isChildLoading || isVaccinesLoading || isVaccinesListLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || followupLoading;
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
 
   useEffect(() => {
     const fetchVaccineHistory = async () => {
@@ -130,7 +121,7 @@ export default function ChildImmunization() {
     <LayoutWithBack title="Immunization" description="Manage immunization records for the child">
       {isLoading ? (
         <div className="w-full h-full px-6">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500 mx-auto mt-20" />
+          <TableLoading/>
           {isError && (
             <div className="flex justify-center mt-4">
               <Button onClick={() => refetch()}>Retry</Button>

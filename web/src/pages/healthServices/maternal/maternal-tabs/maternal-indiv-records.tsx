@@ -180,13 +180,11 @@ export default function MaternalIndivRecords() {
     let followUpData = [];
     
     if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
-      // Handle paginated response structure: { count, next, previous, results: [...] }
       const results = (pregnancyData as any).results;
       if (Array.isArray(results) && results.length > 0) {
         followUpData = results[0]?.follow_up || [];
       }
     } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
-      // Handle direct array response
       followUpData = pregnancyData[0]?.follow_up || [];
     }
     
@@ -213,14 +211,12 @@ export default function MaternalIndivRecords() {
 ): PregnancyGroup[] => {
   const grouped: Record<string, PregnancyGroup> = {}
 
-  // Add explicit checks for array and valid data
   if (!pregnancies || !Array.isArray(pregnancies) || pregnancies.length === 0) {
     console.log('No valid pregnancies data:', pregnancies);
     return []
   }
 
   pregnancies.forEach((pregnancy) => {
-    // Add null checks for pregnancy object
     if (!pregnancy || !pregnancy.pregnancy_id) {
       console.warn('Invalid pregnancy object:', pregnancy);
       return;
@@ -324,7 +320,6 @@ export default function MaternalIndivRecords() {
   return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
 }
 
-  // Helper to normalize backend status to UI-expected casing
   const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
   if (!statusRaw) return "Pregnancy Loss";
   const s = statusRaw.toLowerCase()
@@ -336,26 +331,22 @@ export default function MaternalIndivRecords() {
 // using memo for grouped pregnancies
 const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
   if (pregnancyData && selectedPatient) {
-    console.log('Raw pregnancyData:', pregnancyData); // Debug log
+    console.log('Raw pregnancyData:', pregnancyData); // debug
     
-    // Extract the results array from the paginated API response
     let pregnanciesArray: PregnancyDataDetails[] = [];
     
     if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
-      // Handle paginated response structure: { count, next, previous, results: [...] }
       const results = (pregnancyData as any).results;
       if (Array.isArray(results)) {
         pregnanciesArray = results;
       }
     } else if (Array.isArray(pregnancyData)) {
-      // Handle direct array response
       pregnanciesArray = pregnancyData;
     } else if (pregnancyData && typeof pregnancyData === 'object') {
-      // Handle single object response
       pregnanciesArray = [pregnancyData as PregnancyDataDetails];
     }
 
-    console.log('Processed pregnanciesArray:', pregnanciesArray); // Debug log
+    console.log('Processed pregnanciesArray:', pregnanciesArray); // debug
 
     return groupPregnancies(
       pregnanciesArray,

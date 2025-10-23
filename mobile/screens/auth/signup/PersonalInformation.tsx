@@ -1,7 +1,6 @@
 import "@/global.css"
 import React from "react"
 import { View, Text, TouchableOpacity } from "react-native"
-import _ScreenLayout from "@/screens/_ScreenLayout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { FormSelect } from "@/components/ui/form/form-select"

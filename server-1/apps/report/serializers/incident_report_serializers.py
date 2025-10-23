@@ -14,21 +14,29 @@ class IRBaseSerializer(serializers.ModelSerializer):
 class IRTableSerializer(serializers.ModelSerializer):
   ir_reported_by = serializers.SerializerMethodField()
   ir_time = serializers.SerializerMethodField()
-  ir_type = serializers.CharField(source="rt.rt_label")
+  ir_type = serializers.SerializerMethodField()
+  files = serializers.SerializerMethodField()
 
   class Meta: 
     model = IncidentReport
     fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
-             'ir_time', 'ir_date', 'ir_created_at', 'ir_reported_by']
-    
+             'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
+             'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
+             'ir_track_user_lng', 'ir_track_user_contact']
+  
+  def get_ir_type(self, obj):
+    if obj.rt:
+      return obj.rt.rt_label
+
   def get_ir_time(self, obj):
     if obj.ir_time:
         return obj.ir_time.strftime("%I:%M %p")
     return None
   
   def get_ir_reported_by(self, obj):
-    info = obj.rp.per
-    return f"{info.per_lname}, {info.per_fname}" + \
+    if obj.rp:
+      info = obj.rp.per
+      return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
 
 class IRCreateSerializer(serializers.ModelSerializer):
@@ -40,17 +48,12 @@ class IRCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = IncidentReport
     fields = ['ir_add_details','ir_type', 'ir_date', 'ir_time', 'ir_involved', 
-              'ir_other_type', 'ir_area', 'rp', 'files']
+              'ir_other_type', 'ir_severity', 'ir_area', 'rp', 'files']
 
   def create(self, validated_data):
     report_type = validated_data.pop('ir_type', None)
     other_report_type = validated_data.pop('ir_other_type', None)
     files = validated_data.pop('files', [])
-    print(report_type)
-    # ir_time = validated_data.get('ir_time')
-    # if isinstance(ir_time, str):
-    #   parsed_time = datetime.datetime.strptime(ir_time, "%I:%M %p").time()
-    #   validated_data['ir_time'] = parsed_time
       
     if other_report_type:
       existing_rep_type = ReportType.objects.filter(rt_label=other_report_type).first()
@@ -71,7 +74,8 @@ class IRCreateSerializer(serializers.ModelSerializer):
       print(existing_rep_type)
       validated_data['rt'] = existing_rep_type
 
-    incident_report = IncidentReport.objects.create(**validated_data)
+    incident_report = IncidentReport(**validated_data)
+    incident_report.save()
 
     if files:
       report_files = []

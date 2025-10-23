@@ -1,6 +1,73 @@
 import { api2 } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 
+
+export interface AppointmentItem {
+  id: number;
+  chief_complaint: string;
+  scheduled_date: string;
+  meridiem: string;
+  status: string;
+  created_at: string;
+  archive_reason?: string | null;
+}
+
+export interface AppointmentsResponse {
+  results: AppointmentItem[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+// API Functions
+export const getUserAppointments = async (
+  rpId: string, 
+  status?: string, 
+  search?: string,
+  page?: number, 
+  pageSize?: number
+): Promise<AppointmentsResponse> => {
+  if (!rpId) {
+    throw new Error('User ID is required');
+  }
+  
+  const params = new URLSearchParams();
+  params.append('rp_id', rpId);
+  params.append('include_archived', 'true'); // Always include archived for complete data
+  
+  if (status && status !== 'all') params.append('status', status);
+  if (search && search.trim()) params.append('search', search.trim());
+  if (page) params.append('page', page.toString());
+  if (pageSize) params.append('page_size', pageSize.toString());
+  
+  const response = await api2.get(`/medical-consultation/user-appointments/?${params.toString()}`);
+  
+  console.log('API Response (Filtered Appointments):', response.data);
+  
+  return {
+    results: response.data.results || [],
+    count: response.data.count || 0,
+    next: response.data.next || null,
+    previous: response.data.previous || null,
+  };
+};
+
+export const useUserAppointments = (
+  rpId: string, 
+  status?: string, 
+  search?: string,
+  page?: number, 
+  pageSize?: number
+) => {
+  return useQuery<AppointmentsResponse>({
+    queryKey: ['userAppointments', rpId, status, search, page, pageSize],
+    queryFn: () => getUserAppointments(rpId, status, search, page, pageSize),
+    enabled: !!rpId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+
 export const getConsultationHistory = async (patientId?: string, page?: number, pageSize?: number, searchQuery?: string): Promise<any> => {
     try {
       const params = new URLSearchParams();
@@ -112,4 +179,43 @@ export const usePrenatalPatientMedHistory = (patientId: string, search?: string)
         staleTime: 1000 * 60 * 5,
         // refetchOnWindowFocus: true,
     });
+};
+
+
+
+export const cancelAppointment = async (appointment_id: number, reason: string): Promise<void> => {
+  try {
+    console.log(`Cancelling appointment ${appointment_id} with reason:`, reason);
+    
+    const response = await api2.patch(
+      `/medical-consultation/cancel-appointment/${appointment_id}/`, 
+      { archive_reason: reason },
+      {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    
+    console.log('Cancel appointment response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error cancelling appointment:', error);
+    
+    // Detailed error logging
+    if (error.response) {
+      console.error('Server response error:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Request setup error:', error.message);
+    }
+    
+    throw error;
+  }
 };

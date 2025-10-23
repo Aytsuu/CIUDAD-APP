@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileInput,Loader2 } from "lucide-react";
+import { Search, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +12,9 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { getArchivedStockColumns  } from "./columns/AntigenCol";
 import { useAntigenSocks } from "../queries/fetch";
+import TableLoading from "@/pages/healthServices/table-loading";
 
-export default function CombinedStockTable() {
+export default function CombinedStockTableArchive() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,10 +114,7 @@ export default function CombinedStockTable() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading ...</span>
-            </div>
+           <TableLoading/>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
               <span className="ml-2">Error loading . Please check console.</span>

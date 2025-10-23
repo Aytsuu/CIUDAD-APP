@@ -10,7 +10,10 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
             don_qty: donationInfo.don_qty,
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
-            don_date: formatDate(donationInfo.don_date), // Use the formatted date
+            don_date: formatDate(donationInfo.don_date), 
+            don_status: donationInfo.don_status,
+            don_dist_head: donationInfo.don_dist_head,
+            don_dist_date: donationInfo.don_dist_date,
         });
 
         return res.data;

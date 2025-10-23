@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,6 @@ import {
 import { CompleteResidentProfilingSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { Button } from "@/components/ui/button";
 import { 
   AccountForm, 
   PersonalForm, 

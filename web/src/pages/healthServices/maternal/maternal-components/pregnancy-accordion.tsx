@@ -190,7 +190,6 @@ export function PregnancyAccordion({
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-3">
                   {sortedRecords.map((record, recordIndex) => {
-                    // const showUpdateButton = shouldShowUpdateButton(record, pregnancy, sortedRecords)
                     const showCompleteButton = shouldShowCompleteButton(record, pregnancy, sortedRecords)
                     const showPregnancyLossbutton = shouldShowPregnancyLossButton(record, pregnancy, sortedRecords)
                     const visitNumber = record.visitNumber || (sortedRecords.length - recordIndex)
@@ -220,15 +219,7 @@ export function PregnancyAccordion({
                                           patientData: selectedPatient, 
                                           recordId: record.id,
                                           pregnancyId: record.pregnancyId,
-                                          visitNumber: visitNumber,
-                                          ...(record.recordType === "Postpartum Care" && record.postpartum_assessment && {
-                                            postpartumRecord: {
-                                              ppr_id: record.id,
-                                              delivery_date: record.deliveryDate,
-                                              postpartum_assessment: record.postpartum_assessment
-                                            }
-                                          })
-                                          
+                                          visitNumber: visitNumber
                                         } 
                                       }}
                                     >
@@ -248,7 +239,6 @@ export function PregnancyAccordion({
                                         size="sm"
                                         className="h-8 bg-green-500 text-white border-green-200 hover:bg-green-400 hover:text-white"
                                         onClick={() => {
-                                          // For prenatal records, mark the pregnancy as complete
                                           if (record.recordType === "Prenatal" && onCompletePregnancy) {
                                             onCompletePregnancy(record.pregnancyId);
                                           } else {

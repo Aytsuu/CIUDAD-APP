@@ -1,7 +1,6 @@
 import { TouchableOpacity, View, Text } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { router } from "expo-router";
-import { ChevronRight } from "@/lib/icons/ChevronRight";
 import Phone from '@/assets/icons/essentials/phone.svg'
 import Mail from '@/assets/icons/essentials/mail.svg'
 import SecurityLock from '@/assets/icons/essentials/security-lock.svg'

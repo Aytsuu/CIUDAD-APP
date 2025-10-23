@@ -1099,8 +1099,8 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             print("No tt_statuses_data provided")
             return None
         
-        print(f"📋 Received tt_statuses_data: {tt_statuses_data}")
-        print(f"📋 User-provided total dose: {user_provided_total_dose}")
+        print(f"Received tt_statuses_data: {tt_statuses_data}")
+        print(f"User-provided total dose: {user_provided_total_dose}")
         
         try:
             # Filter TT records that have vaccine information
@@ -1131,15 +1131,15 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             )
             
             if created:
-                print(f"✅ Created new VaccinationRecord: {vaccination_record.vacrec_id}")
+                print(f"Created new VaccinationRecord: {vaccination_record.vacrec_id}")
                 if user_provided_total_dose:
                     print(f"   Using user-provided total dose: {user_provided_total_dose}")
             else:
-                print(f"♻️  Using existing VaccinationRecord: {vaccination_record.vacrec_id}")
+                print(f"Using existing VaccinationRecord: {vaccination_record.vacrec_id}")
             
             # CASE 1: Conditional vaccine
             if is_conditional_vaccine:
-                print(f"🔄 Processing CONDITIONAL vaccine: Target total dose = {user_provided_total_dose}")
+                print(f"Processing CONDITIONAL vaccine: Target total dose = {user_provided_total_dose}")
                 
                 # For conditional vaccines, we need to check existing history for the SAME vaccine type
                 
@@ -1155,7 +1155,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 specific_vac_id = None
                 if all_existing_history.exists():
                     specific_vac_id = all_existing_history.first().vacStck_id.vac_id.vac_id
-                    print(f"   🔍 Detected existing vaccine type: vac_id={specific_vac_id} (patient: pat_id={patient.pat_id}, across all services)")
+                    print(f"   Detected existing vaccine type: vac_id={specific_vac_id} (patient: pat_id={patient.pat_id}, across all services)")
                 
                 # Filter records by that specific vac_id to get accurate dose count FOR THIS PATIENT (across all services)
                 highest_dose = 0
@@ -1168,18 +1168,18 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     if vaccine_specific_history.exists():
                         highest_dose = vaccine_specific_history.first().vachist_doseNo
                         vaccine_name = vaccine_specific_history.first().vacStck_id.vac_id.vac_name
-                        print(f"   📊 Found {vaccine_specific_history.count()} existing record(s) for vaccine '{vaccine_name}' (vac_id: {specific_vac_id}), highest dose: {highest_dose} (across all services)")
+                        print(f"   Found {vaccine_specific_history.count()} existing record(s) for vaccine '{vaccine_name}' (vac_id: {specific_vac_id}), highest dose: {highest_dose} (across all services)")
                 else:
-                    print(f"   📊 No existing vaccination history records found with vaccine stock for patient (across all services)")
+                    print(f"   No existing vaccination history records found with vaccine stock for patient (across all services)")
                 
                 # If highest_dose = 1 and user_provided_total_dose = 3, create doses 2 and 3
                 doses_to_create = []
                 if user_provided_total_dose > highest_dose:
                     doses_to_create = range(highest_dose + 1, user_provided_total_dose + 1)
-                    print(f"   🔢 Will create doses: {list(doses_to_create)}")
+                    print(f"   Will create doses: {list(doses_to_create)}")
                 else:
-                    print(f"   ⚠️ User-provided total dose ({user_provided_total_dose}) is not greater than highest existing dose ({highest_dose})")
-                    print(f"   ℹ️ No new vaccination history records will be created")
+                    print(f"   User-provided total dose ({user_provided_total_dose}) is not greater than highest existing dose ({highest_dose})")
+                    print(f"   No new vaccination history records will be created")
                 
                 # Create the new VaccinationHistory records
                 created_count = 0
@@ -1199,22 +1199,22 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         assigned_to=None  # No assigned staff
                     )
                     created_count += 1
-                    print(f"   ✅ Created VaccinationHistory #{dose_number}: ID={vaccination_history.vachist_id} (conditional/placeholder)")
+                    print(f"   Created VaccinationHistory #{dose_number}: ID={vaccination_history.vachist_id} (conditional/placeholder)")
                 
                 # Update the total dose count
                 vaccination_record.vacrec_totaldose = user_provided_total_dose
                 vaccination_record.save()
-                print(f"✅ Set vacrec_totaldose to: {user_provided_total_dose}")
+                print(f"Set vacrec_totaldose to: {user_provided_total_dose}")
                 
                 if created_count > 0:
-                    print(f"✅ Conditional vaccine processing complete: {created_count} new placeholder record(s) created (total doses now: {user_provided_total_dose})")
+                    print(f"Conditional vaccine processing complete: {created_count} new placeholder record(s) created (total doses now: {user_provided_total_dose})")
                 else:
-                    print(f"✅ Conditional vaccine processing complete: No new records created (already at or above target dose)")
+                    print(f"Conditional vaccine processing complete: No new records created (already at or above target dose)")
                 
                 return vaccination_record
             
             # CASE 2: Regular vaccine with stock - Process actual vaccine administrations
-            print(f"💉 Processing REGULAR vaccines with stock: {len(tt_with_vaccines)} vaccine(s)")
+            print(f"Processing REGULAR vaccines with stock: {len(tt_with_vaccines)} vaccine(s)")
             for tt_data in tt_with_vaccines:
                 vaccine_type = tt_data.get('vaccineType', '')
                 tts_status = tt_data.get('tts_status', '')
@@ -1274,10 +1274,10 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     if existing_doses.exists():
                         highest_existing_dose = existing_doses.first().vachist_doseNo
                         dose_no = highest_existing_dose + 1
-                        print(f"   ✅ Next dose will be: {dose_no} (highest existing: {highest_existing_dose})")
+                        print(f"   Next dose will be: {dose_no} (highest existing: {highest_existing_dose})")
                     else:
                         dose_no = 1
-                        print(f"   ✅ Starting at dose: {dose_no} (no existing history)")
+                        print(f"   Starting at dose: {dose_no} (no existing history)")
                     
                     # Deduct stock
                     vaccine_stock.vacStck_qty_avail -= 1
@@ -1296,30 +1296,28 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         vac=None  # Set to NULL - vaccine is referenced through vacStck_id.vac_id relationship
                     )
                     
-                    print(f"   ✅ Created VaccinationHistory: {vaccination_history.vachist_id} for {vac_name} (vac_id: {current_vac_id}, Dose {dose_no}) with vac=NULL")
+                    print(f"   Created VaccinationHistory: {vaccination_history.vachist_id} for {vac_name} (vac_id: {current_vac_id}, Dose {dose_no}) with vac=NULL")
                     
                 except VaccineStock.DoesNotExist:
-                    print(f"   ❌ Vaccine stock not found for ID: {vacStck_id}")
+                    print(f"   Vaccine stock not found for ID: {vacStck_id}")
                     continue
                 except Exception as e:
-                    print(f"   ❌ Error processing vaccine {vaccine_type}: {str(e)}")
+                    print(f"   Error processing vaccine {vaccine_type}: {str(e)}")
                     continue
             
             # Update total doses for regular vaccines
-            # If user provided a total dose count, use it (conditional vaccines already handled above)
-            # Otherwise, auto-calculate based on vaccination history records
             if user_provided_total_dose is not None and not is_conditional_vaccine:
                 vaccination_record.vacrec_totaldose = user_provided_total_dose
-                print(f"✅ Set vacrec_totaldose to user-provided value: {user_provided_total_dose}")
+                print(f"Set vacrec_totaldose to user-provided value: {user_provided_total_dose}")
             elif not is_conditional_vaccine:
                 # Auto-calculate from vaccination history
                 vaccination_record.vacrec_totaldose = VaccinationHistory.objects.filter(
                     vacrec=vaccination_record
                 ).count()
-                print(f"✅ Auto-calculated vacrec_totaldose: {vaccination_record.vacrec_totaldose}")
+                print(f"Auto-calculated vacrec_totaldose: {vaccination_record.vacrec_totaldose}")
             
             vaccination_record.save()
-            print(f"✅ VaccinationRecord saved: vacrec_id={vaccination_record.vacrec_id}, total_dose={vaccination_record.vacrec_totaldose}")
+            print(f"VaccinationRecord saved: vacrec_id={vaccination_record.vacrec_id}, total_dose={vaccination_record.vacrec_totaldose}")
             
             return vaccination_record
             

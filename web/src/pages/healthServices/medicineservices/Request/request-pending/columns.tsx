@@ -1,119 +1,199 @@
-// components/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useState } from "react";
 import { DocumentModal } from "../../tables/columns/inv-med-col";
-import { ActionModal } from "./reject";
-import { Link } from "react-router-dom";
+import { ActionModal } from "./action";
+import { useNavigate } from "react-router-dom";
+import ViewButton from "@/components/ui/view-button";
+import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/helpers/dateHelper";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   {
+    id: "index",
+    header: () => <div className="text-center">#</div>,
+    size: 50,
+    cell: ({ row, table }) => {
+      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+    }
+  },
+  {
     accessorKey: "medreq_id",
-    header: "Request ID",
-    cell: ({ row }) => <span>MR{row.original.medreq_id.toString().padStart(5, "0")}</span>
+    header: ({ column }) => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        Request ID <ArrowUpDown size={15} />
+      </div>
+    ),
+    size: 120,
+    cell: ({ row }) => (
+      <div className="flex justify-center px-2 py-2">
+        <div className="text-center font-medium">MR{row.original.medreq_id.toString().padStart(5, "0")}</div>
+      </div>
+    )
   },
   {
     accessorKey: "personal_info",
-    header: "Patient Name",
+    header: () => <div className="text-center">Patient Information</div>,
+    size: 220,
     cell: ({ row }) => {
-      const { per_fname, per_mname, per_lname, per_suffix } = row.original.personal_info;
-      return `${per_fname} ${per_mname ? per_mname.charAt(0) + "." : ""} ${per_lname} ${per_suffix || ""}`.trim();
+      const personalInfo = row.original.personal_info || {};
+      const fullName = [personalInfo.per_lname, personalInfo.per_fname, personalInfo.per_mname, personalInfo.per_suffix].filter(Boolean).join(", ").trim() || "Unknown Patient";
+      const age = personalInfo.per_dob ? calculateAge(personalInfo.per_dob) : "N/A";
+      const sex = personalInfo.per_sex ? toTitleCase(personalInfo.per_sex) : "N/A";
+
+      return (
+        <div className="px-2 py-2">
+          <div className="text-center space-y-1">
+            <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
+              {fullName}
+            </div>
+            <div className="text-xs text-gray-400">
+              {sex} • {age} yrs
+            </div>
+          </div>
+        </div>
+      );
     }
   },
   {
-    accessorKey: "personal_info.per_contact",
-    header: "Contact Number"
+    accessorKey: "address",
+    header: () => <div className="text-center">Address</div>,
+    size: 250,
+    cell: ({ row }) => {
+      const address = row.original.address;
+      const addressText = address ? [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ") : "No address provided";
+      return (
+        <div className="px-2 py-2">
+          <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed" title={addressText}>
+            {addressText}
+          </div>
+        </div>
+      );
+    }
   },
   {
     accessorKey: "total_quantity",
-    header: "Total Items"
+    header: () => <div className="text-center">Total Items</div>,
+    size: 100,
+    cell: ({ row }) => (
+      <div className="text-center py-2">
+        <div className="font-semibold text-blue-600">{row.original.total_quantity || 0}</div>
+      </div>
+    )
   },
   {
     accessorKey: "requested_at",
-    header: "Request Date",
+    header: ({ column }) => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        Requested On <ArrowUpDown size={15} />
+      </div>
+    ),
+    size: 140,
     cell: ({ row }) => {
-      const date = new Date(row.original.requested_at);
-      return date.toLocaleDateString();
+      const { date, time } = formatDateTime(row.original.requested_at);
+      return (
+        <div className="text-center py-2">
+          <div className="font-medium text-gray-900 text-sm">{date}</div>
+          {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+        </div>
+      );
     }
   },
-
   {
     id: "actions",
-    header: "Actions",
-    cell: ({ row }) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link
-          to={`/medicine-request/pending-items`}
-          state={{
-            params: {
-              medreq_id: row.original.medreq_id, // Pass the entire row data if needed
-              patientData: {
-                pat_id: row.original.pat_id_value,
-                pat_type: row.original.pat_type,
-                age: row.original.age,
-                addressFull: row.original.address.full_address || "No address provided",
-                address: {
-                  add_street: row.original.address.add_street,
-                  add_barangay: row.original.address.add_barangay,
-                  add_city: row.original.address.add_city,
-                  add_province: row.original.address.add_province,
-                  add_sitio: row.original.address.add_sitio
-                },
-                households: [{ hh_id: row.original.householdno }],
-                personal_info: {
-                  per_fname: row.original.personal_info.per_fname,
-                  per_mname: row.original.personal_info.per_mname,
-                  per_lname: row.original.personal_info.per_lname,
-                  per_dob: row.original.personal_info.per_dob,
-                  per_sex: row.original.personal_info.per_sex
+    header: () => <div className="text-center">Actions</div>,
+    size: 100,
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const address = row.original.address || {};
+
+      return (
+        <div className="flex justify-center py-2">
+          <ViewButton
+            onClick={() => {
+              navigate(`/medicine-request/pending-items`, {
+                state: {
+                  params: {
+                    medreq_id: row.original.medreq_id,
+                    patientData: {
+                      pat_id: row.original.pat_id_value,
+                      pat_type: row.original.pat_type,
+                      age: row.original.age,
+                      addressFull: address.full_address || "No address provided",
+                      address: {
+                        add_street: address.add_street || "",
+                        add_barangay: address.add_barangay || "",
+                        add_city: address.add_city || "",
+                        add_province: address.add_province || "",
+                        add_sitio: address.add_sitio || ""
+                      },
+                      households: [{ hh_id: row.original.householdno }],
+                      personal_info: {
+                        per_fname: row.original.personal_info?.per_fname || "",
+                        per_mname: row.original.personal_info?.per_mname || "",
+                        per_lname: row.original.personal_info?.per_lname || "",
+                        per_dob: row.original.personal_info?.per_dob || "",
+                        per_sex: row.original.personal_info?.per_sex || ""
+                      }
+                    }
+                  }
                 }
-              }
-            }
-          }}
-        >
-          View Items
-        </Link>
-      </Button>
-    )
+              });
+            }}
+          />
+        </div>
+      );
+    }
   }
 ];
 
 export const pendingItemsColumns: ColumnDef<any>[] = [
   {
+    id: "index",
+    header: () => <div className="text-center">#</div>,
+    size: 50,
+    cell: ({ row, table }) => {
+      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+    }
+  },
+  {
     accessorKey: "medicine",
-    header: "Medicine Details",
+    header: () => <div className="text-center">Medicine Details</div>,
+    size: 250,
     cell: ({ row }) => (
-      <div className="flex justify-center items-center">
-        <div className="min-w-[250px] px-3 py-2">
+      <div className="px-3 py-2">
+        <div className="text-center space-y-1">
           <div className="font-semibold text-gray-900">{row.original.med_name || "No name provided"}</div>
-          <div> {row.original.med_type || "No type provided"}</div>
+          <div className="text-sm text-gray-600">{row.original.med_type || "No type provided"}</div>
         </div>
       </div>
     )
   },
   {
     accessorKey: "reason",
-    header: "Reason",
+    header: () => <div className="text-center">Reason</div>,
+    size: 250,
     cell: ({ row }) => (
-      <div className="min-w-[200px] max-w-[300px] px-3 py-2">
-        <div className="text-sm text-gray-700 line-clamp-3">{row.original.reason || "No reason provided"}</div>
+      <div className="px-3 py-2">
+        <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed line-clamp-3">{row.original.reason || "No reason provided"}</div>
       </div>
     )
   },
-
   {
     id: "documents",
-    header: "Documents",
+    header: () => <div className="text-center">Documents</div>,
+    size: 120,
     cell: ({ row }) => {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const files = row.original.medicine_files || [];
       const med_type = row.original.med_type || "Prescription";
-
-      // Only show documents for prescription type
       const isPrescription = med_type === "Prescription";
 
       return (
-        <div className="px-3 py-2 min-w-[120px]">
+        <div className="px-3 py-2 text-center">
           {isPrescription ? (
             files.length > 0 ? (
               <>
@@ -126,7 +206,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
               <span className="text-xs text-gray-400 italic">No documents</span>
             )
           ) : (
-            <span className="text-xs text-gray-400 italic"></span>
+            <span className="text-xs text-gray-400 italic">N/A</span>
           )}
         </div>
       );
@@ -134,47 +214,65 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
   },
   {
     id: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="min-w-[100px] px-3 py-2">
-        {row.original.status === "pending" && <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Pending</span>}
-        {row.original.status === "rejected" && <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Rejected</span>}
-        {row.original.status === "referred" && <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Referred</span>}
-        {row.original.status === "on referred" && <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">On Referred</span>}
-      </div>
-    )
+    header: () => <div className="text-center">Status</div>,
+    size: 120,
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const statusConfig = {
+        pending: { color: "bg-yellow-100 text-yellow-800 border-yellow-500", label: "Pending" },
+        rejected: { color: "bg-red-100 text-red-800 border-red-500", label: "Rejected" },
+        referred: { color: "bg-blue-100 text-blue-800 border-blue-500", label: "Referred" },
+        "on referred": { color: "bg-purple-100 text-purple-800 border-purple-500", label: "On Referred" }
+      };
+
+      const config = statusConfig[status as keyof typeof statusConfig] || {
+        color: "bg-gray-100 text-gray-800 border-gray-500",
+        label: status
+      };
+
+      return (
+        <div className="flex justify-center py-2">
+          <Badge variant="outline" className={`px-3 py-1 text-xs font-medium ${config.color}`}>
+            {config.label}
+          </Badge>
+        </div>
+      );
+    }
   },
   {
     id: "actions",
-    header: "Actions",
+    header: () => <div className="text-center">Actions</div>,
+    size: 200,
     cell: ({ row }) => {
       const [isActionModalOpen, setIsActionModalOpen] = useState(false);
       const [isReferOpen, setIsReferOpen] = useState(false);
       const status = row.original.status;
+      const files = row.original.medicine_files || [];
+      const med_type = row.original.med_type || "Prescription";
 
-      // Only show action buttons for pending items of type "Prescription"
+      const hasDocuments = med_type === "Prescription" && files.length > 0;
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-2 py-2">
           {status === "pending" ? (
             <>
-              {/* Refer Button */}
-              <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)}>
-                Refer Request
+              <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)} className="text-xs">
+                Refer
               </Button>
 
-              {/* ActionModal Button */}
-              <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
-                Reject Document
-              </Button>
-
-              {/* ActionModal Modal */}
-              <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+              {hasDocuments && (
+                <>
+                  <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
+                    Reject
+                  </Button>
+                  <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+                </>
+              )}
 
               <ActionModal isOpen={isReferOpen} onClose={() => setIsReferOpen(false)} data={row.original} mode="refer" />
             </>
           ) : (
-            <span className="text-xs text-gray-500 italic">{status !== "pending" ? "Action completed" : "Actions not available"}</span>
+            <span className="text-xs text-gray-500 italic">{status !== "pending" ? "Completed" : "N/A"}</span>
           )}
         </div>
       );

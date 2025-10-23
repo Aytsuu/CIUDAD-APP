@@ -25,6 +25,10 @@ export interface Medicine {
   original_stock_id?: string
   requested_qty?: number
   pending_reason?: string
+  // New field to track if medicine is from auto-selection
+  is_auto_selected?: boolean
+  selection_type?: string
+  allocation_id?: string
 }
 
 interface MedicineDisplayProps {
@@ -61,7 +65,6 @@ export const MedicineDisplay = ({
   autoFillReasons = true,
   readOnlyReasons = false,
   readonly = false,
-  // New props for backend pagination
   totalPages = 1,
   totalItems = 0,
   onSearch,
@@ -109,6 +112,14 @@ export const MedicineDisplay = ({
     [filteredMedicines],
   )
 
+  // Helper function to check if a medicine is auto-selected
+  const isMedicineAutoSelected = useCallback((medicineId: string) => {
+    const medicine = medicines.find(med => med.id === medicineId);
+    return medicine?.is_auto_selected || 
+           medicine?.selection_type === 'allocation' || 
+           medicine?.allocation_id != null;
+  }, [medicines]);
+
   const updateSelectedMedicines = useCallback(
     (updater: (prev: typeof internalSelectedMedicines) => typeof internalSelectedMedicines) => {
       if (readonly) return // Prevent updates in readonly mode
@@ -126,30 +137,44 @@ export const MedicineDisplay = ({
     (minv_id: string, isChecked: boolean, preFilledReason?: string) => {
       if (readonly) return // Prevent selection in readonly mode
       
+      // Don't allow unselecting auto-selected medicines
+      if (!isChecked && isMedicineAutoSelected(minv_id)) {
+        return;
+      }
+      
       updateSelectedMedicines((prev) => {
         if (isChecked) {
           const medicineExists = prev.some((med) => med.minv_id === minv_id)
           if (!medicineExists) {
+            const medicine = medicines.find(med => med.id === minv_id);
+            const isAutoSelected = isMedicineAutoSelected(minv_id);
             const reason = autoFillReasons && preFilledReason ? preFilledReason : ""
-            return [...prev, { minv_id, medrec_qty: 1, reason }]
+            // For auto-selected medicines, use the requested quantity, otherwise default to 1
+            const quantity = isAutoSelected ? (medicine?.requested_qty || 1) : 1;
+            return [...prev, { minv_id, medrec_qty: quantity, reason }]
           }
           return prev
         }
         return prev.filter((med) => med.minv_id !== minv_id)
       })
     },
-    [updateSelectedMedicines, autoFillReasons, readonly]
+    [updateSelectedMedicines, autoFillReasons, readonly, medicines, isMedicineAutoSelected]
   )
 
   const handleQuantityChange = useCallback(
     (minv_id: string, value: number) => {
       if (readonly) return // Prevent quantity changes in readonly mode
       
+      // Don't allow quantity changes for auto-selected medicines
+      if (isMedicineAutoSelected(minv_id)) {
+        return;
+      }
+      
       updateSelectedMedicines((prev) =>
         prev.map((med) => (med.minv_id === minv_id ? { ...med, medrec_qty: Math.max(0, value) } : med)),
       )
     },
-    [updateSelectedMedicines, readonly],
+    [updateSelectedMedicines, readonly, isMedicineAutoSelected],
   )
 
   const handleReasonChange = useCallback(
@@ -241,16 +266,6 @@ export const MedicineDisplay = ({
 
   // Calculate column span for empty state based on readonly mode
   const emptyStateColSpan = readonly ? 5 : 7
-
-  // Debug logging for troubleshooting
-  // console.log('MedicineDisplay Debug:', {
-  //   medicines: medicines,
-  //   totalItems: totalItems,
-  //   totalPages: totalPages,
-  //   currentPage: currentPage,
-  //   localSearchQuery: localSearchQuery,
-  //   isLoading: isLoading
-  // });
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
@@ -378,6 +393,7 @@ export const MedicineDisplay = ({
                 const lowStock = isLowStock(medicine.avail, medicine.unit, medicine.pcs_per_box || 0)
                 const hasPreFilledReason = autoFillReasons && !!medicine.preFilledReason
                 const isReasonReadOnly = readOnlyReasons && hasPreFilledReason
+                const isAutoSelected = isMedicineAutoSelected(medicine.id)
                 
                 // Use med_name if available (for enhanced mapping), otherwise fall back to name
                 const displayName = medicine.med_name || medicine.name
@@ -387,7 +403,7 @@ export const MedicineDisplay = ({
                     key={medicine.id}
                     className={`hover:bg-gray-50 transition-colors ${
                       !readonly && isSelected ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                    }`}
+                    } ${isAutoSelected && isSelected ? "bg-green-50 border-l-4 border-l-green-500" : ""}`}
                   >
                     {!readonly && (
                       <td className="px-6 py-4 text-center whitespace-nowrap">
@@ -396,9 +412,23 @@ export const MedicineDisplay = ({
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => handleMedicineSelection(medicine.id, e.target.checked, medicine.preFilledReason)}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
-                            disabled={medicine.avail <= 0}
+                            className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 ${
+                              isAutoSelected && isSelected ? 'cursor-not-allowed' : ''
+                            }`}
+                            disabled={medicine.avail <= 0 || (isAutoSelected && isSelected)}
+                            title={isAutoSelected && isSelected ? "This medicine is auto-allocated and cannot be unselected" : ""}
                           />
+                          {isAutoSelected && isSelected && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Auto-allocated medicine cannot be unselected</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </div>
                       </td>
                     )}
@@ -454,7 +484,7 @@ export const MedicineDisplay = ({
                                       handleQuantityChange(medicine.id, currentQty - 1)
                                     }
                                   }}
-                                  disabled={(selectedMedicine?.medrec_qty || 0) <= 0}
+                                  disabled={(selectedMedicine?.medrec_qty || 0) <= 0 || isAutoSelected}
                                 >
                                   <span className="text-lg">-</span>
                                 </Button>
@@ -462,13 +492,16 @@ export const MedicineDisplay = ({
                                   type="number"
                                   min="0"
                                   max={medicine.avail}
-                                  className="border rounded-lg px-3 py-1 w-20 text-center focus:ring-2"
+                                  className={`border rounded-lg px-3 py-1 w-20 text-center focus:ring-2 ${
+                                    isAutoSelected ? 'bg-gray-100 text-black cursor-not-allowed' : ''
+                                  }`}
                                   value={selectedMedicine?.medrec_qty || 0}
                                   onChange={(e) => {
                                     const value = Number.parseInt(e.target.value) || 0
                                     handleQuantityChange(medicine.id, value)
                                   }}
-                                  disabled={medicine.avail <= 0}
+                                  disabled={medicine.avail <= 0 || isAutoSelected}
+                                  readOnly={isAutoSelected}
                                 />
                                 <Button
                                   type="button"
@@ -481,15 +514,16 @@ export const MedicineDisplay = ({
                                       handleQuantityChange(medicine.id, currentQty + 1)
                                     }
                                   }}
-                                  disabled={(selectedMedicine?.medrec_qty || 0) >= medicine.avail || medicine.avail <= 0}
+                                  disabled={(selectedMedicine?.medrec_qty || 0) >= medicine.avail || medicine.avail <= 0 || isAutoSelected}
                                 >
                                   <span className="text-lg">+</span>
                                 </Button>
                               </div>
-                              {(selectedMedicine?.medrec_qty ?? 0) < 1 && (
+                             
+                              {(selectedMedicine?.medrec_qty ?? 0) < 1 && !isAutoSelected && (
                                 <span className="text-red-500 text-xs">Quantity must be more than zero</span>
                               )}
-                              {(selectedMedicine?.medrec_qty ?? 0) > medicine.avail && (
+                              {(selectedMedicine?.medrec_qty ?? 0) > medicine.avail && !isAutoSelected && (
                                 <span className="text-red-500 text-xs">
                                   Quantity exceeds available stock ({medicine.avail} {medicine.unit})
                                 </span>
@@ -512,17 +546,7 @@ export const MedicineDisplay = ({
                                 disabled={medicine.avail <= 0 || isReasonReadOnly}
                                 readOnly={isReasonReadOnly}
                               />
-                              {hasPreFilledReason && (
-                                <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                  <Info className="h-3 w-3" />
-                                  Reason pre-filled from request
-                                </div>
-                              )}
-                              {medicine.pending_reason && (
-                                <div className="text-xs text-blue-600 mt-1">
-                                  Pending reason: {medicine.pending_reason}
-                                </div>
-                              )}
+                             
                             </div>
                           )}
                         </td>

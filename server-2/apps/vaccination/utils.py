@@ -92,9 +92,7 @@ def get_patient_vaccines_with_followups(pat_id):
 
 
 
-
-
-
+# ...existing code...
 def get_child_followups(pat_id):
     # Get follow-ups from vaccination history
     history_records = VaccinationHistory.objects.filter(
@@ -112,8 +110,6 @@ def get_child_followups(pat_id):
         return [{"message": "No follow ups or pending follow-up visit data found for this patient."}]
 
     results = []
-
-    # Current date for comparison
     today = date.today()
 
     # Add from VaccinationHistory
@@ -122,13 +118,12 @@ def get_child_followups(pat_id):
         followup_date = followup.followv_date
         completed_at = getattr(followup, 'completed_at', None)
 
-        reference_date = completed_at if completed_at else today
-
+        # Only mark missed if NOT completed and past due
         missed_status = None
-        days_missed = 0
-        if followup_date and reference_date > followup_date:
+        days_missed = None
+        if followup_date and not completed_at and today > followup_date:
             missed_status = "missed"
-            days_missed = (reference_date - followup_date).days
+            days_missed = (today - followup_date).days
 
         results.append({
             'source': 'VaccinationHistory',
@@ -137,7 +132,7 @@ def get_child_followups(pat_id):
             'followup_status': followup.followv_status,
             'completed_at': completed_at,
             'missed_status': missed_status,
-            'days_missed': days_missed if missed_status else None,
+            'days_missed': days_missed,
         })
 
     # Add from ChildHealthNotes
@@ -146,13 +141,12 @@ def get_child_followups(pat_id):
         followup_date = followup.followv_date
         completed_at = getattr(followup, 'completed_at', None)
 
-        reference_date = completed_at if completed_at else today
-
+        # Only mark missed if NOT completed and past due
         missed_status = None
-        days_missed = 0
-        if followup_date and reference_date > followup_date:
+        days_missed = None
+        if followup_date and not completed_at and today > followup_date:
             missed_status = "missed"
-            days_missed = (reference_date - followup_date).days
+            days_missed = (today - followup_date).days
 
         results.append({
             'source': 'ChildHealthNotes',
@@ -161,11 +155,10 @@ def get_child_followups(pat_id):
             'followup_status': followup.followv_status,
             'completed_at': completed_at,
             'missed_status': missed_status,
-            'days_missed': days_missed if missed_status else None,
+            'days_missed': days_missed,
         })
 
     return results
-
 
 
 

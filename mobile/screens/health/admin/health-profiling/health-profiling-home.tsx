@@ -5,7 +5,6 @@ import {
   UserRoundPlus, 
   UsersRound, 
   Building, 
-  Store, 
   Plus, 
   ChevronLeft, 
   ChevronRight 

@@ -1,5 +1,4 @@
 import { useAuth } from "@/contexts/AuthContext";
-import PageLayout from "@/screens/_PageLayout";
 import { FlatList, RefreshControl, TouchableOpacity, View, Text } from "react-native";
 import { useGetIRHistory } from "./queries/reportFetch";
 import React from "react";
