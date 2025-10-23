@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus, ClockAlert } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus, ClockAlert, ChevronLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -24,14 +24,12 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 interface Patient {
   pat_id: string;
-  age: number;
   personal_info: {
     per_fname: string;
     per_lname: string;
     per_mname: string;
     per_sex: string;
     per_dob?: string;
-    ageTime?: "yrs";
   };
   address?: {
     add_street?: string;
@@ -44,6 +42,8 @@ interface Patient {
   };
   pat_type: string;
   patrec_type?: string;
+  pregnancy_id?: string;
+  mode?: "child" | "maternal";
 }
 
 // accordion data types
@@ -126,7 +126,7 @@ interface PregnancyDataDetails {
   }[];
 }
 
-export default function MaternalIndivRecords() {
+export default function MaternalIndivRecords({ patientDataProps }: { patientDataProps?: any }) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,6 +134,7 @@ export default function MaternalIndivRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const navigate = useNavigate();
 
   const location = useLocation();
   console.log("Location state:", location.state);
@@ -190,9 +191,16 @@ export default function MaternalIndivRecords() {
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
 
   useEffect(() => {
+    if (patientDataProps?.patientData.mode === "maternal") {
+      const patientData = patientDataProps.patientData;
+      setSelectedPatient(patientData);
+      return;
+    }
+
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatient(patientData);
+      return;
     }
   }, [location.state]);
 
@@ -410,18 +418,54 @@ export default function MaternalIndivRecords() {
     }
   };
 
+  // Extract mode, patientData, and specificPregnancyId from props or location.state
+  // Extract mode, patientData, and specificPregnancyId from props or location.state
   const params = location.state?.params;
-  const patientData = params?.patientData;
-  const mode = patientData?.mode;
-  const specificPregnancyId = patientData?.pregnancy_id;
+  let patientData: any = undefined;
+  let mode: string | undefined = undefined;
+  let specificPregnancyId: string | undefined = undefined;
 
-  if (mode === "child" && patientData && specificPregnancyId && pregnancyGroups.length > 0) {
+  if (patientDataProps?.patientData?.mode === "maternal") {
+    patientData = patientDataProps?.patientData;
+    mode = "maternal";
+    specificPregnancyId = patientData?.pregnancy_id;
+  } else if (params?.patientData) {
+    patientData = params.patientData;
+    mode = patientData?.mode;
+    specificPregnancyId = patientData?.pregnancy_id;
+  }
+
+  console.log("PapatientDataProps:", patientDataProps);
+  console.log("props mode", patientDataProps?.mode);
+
+  if ((mode === "child" || mode === "maternal") && patientData && specificPregnancyId && pregnancyGroups.length > 0) {
     // Find the specific pregnancy group
     const specificGroup = pregnancyGroups.find((group) => group.pregnancyId === specificPregnancyId);
 
     return (
-      <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
-        <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+      <div>
+        {patientDataProps?.patientData?.mode !== "maternal" && (
+          <div>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Button
+                className="self-start p-2 text-black"
+                variant={"outline"}
+                onClick={() => {
+                  navigate(-1);
+                }}
+              >
+                <ChevronLeft />
+              </Button>
+              <div className="mb-4 flex-col items-center">
+                <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">Maternal Record</h1>
+                <p className="text-xs text-darkGray sm:text-sm">Manage mother's individual maternal records</p>
+              </div>
+            </div>
+            <hr className="border-gray mb-5 sm:mb-8" />
+          </div>
+        )}
+        <hr className="border-gray mb-5 sm:mb-8" />
+        <div className="w-full px-2 sm:px-4 md:px-6 bg-snow py-4">
           <div className="mb-5 gap-1">
             <PatientInfoCard patient={patientData} />
           </div>
@@ -445,7 +489,7 @@ export default function MaternalIndivRecords() {
             )}
           </div>
         </div>
-      </LayoutWithBack>
+      </div>
     );
   }
 
