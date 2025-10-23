@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";
@@ -15,11 +15,20 @@ import ViewButton from "@/components/ui/view-button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 // Import the correct type from your API or shared types
 import type { IndividualFPRecordDetail } from "@/pages/familyplanning/request-db/GetRequest";
-// import { FollowUpTimeline } from "@/components/followup-timeline";
 import { PatientOverviewStats } from "@/components/patient-overviewStats";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog/alert-dialog";
 
 // Helper function to calculate days difference between dates
 const calculateDaysDifference = (dateString: string): number => {
@@ -36,17 +45,17 @@ const calculateDaysDifference = (dateString: string): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-// Function to check if follow-up should be disabled
-const shouldDisableFollowUp = (record: IndividualFPRecordDetail): { disabled: boolean; daysLeft: number } => {
+// UPDATED: Function to check if follow-up should show warning (but not be disabled)
+const shouldShowFollowUpWarning = (record: IndividualFPRecordDetail): { showWarning: boolean; daysLeft: number } => {
   if (!record.dateOfFollowUp) {
-    return { disabled: false, daysLeft: Infinity };
+    return { showWarning: false, daysLeft: Infinity };
   }
 
   const daysDifference = calculateDaysDifference(record.dateOfFollowUp);
-
-  // Disable if missed by more than 3 days
+  
+  // Show warning if missed by more than 3 days, but don't disable
   return {
-    disabled: daysDifference < -3,
+    showWarning: daysDifference < -3,
     daysLeft: daysDifference
   };
 };
@@ -146,7 +155,18 @@ const IndividualFamPlanningTable: React.FC = () => {
   const location = useLocation();
   const { patientId } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
-  // Removed unused currentTime state and its related logic
+  // const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
+  const [showFollowUpConfirm, setShowFollowUpConfirm] = useState(false);
+  const [selectedRecordForFollowUp, setSelectedRecordForFollowUp] = useState<IndividualFPRecordDetail | null>(null);
+
+  // Update time every minute for countdown
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 60000); // Update every minute
+
+  //   return () => clearInterval(timer);
+  // }, []);
 
   const {
     data: fpPatientRecords = [],
@@ -170,12 +190,12 @@ const IndividualFamPlanningTable: React.FC = () => {
     enabled: !!patientId
   });
 
-  const displayPatientName = useMemo(() => {
-    if (patientInfoForCard) {
-      return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""}${patientInfoForCard.personal_info.per_lname}`;
-    }
-    return "Loading patient name...";
-  }, [patientInfoForCard]);
+  // const displayPatientName = useMemo(() => {
+  //   if (patientInfoForCard) {
+  //     return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""}${patientInfoForCard.personal_info.per_lname}`;
+  //   }
+  //   return "Loading patient name...";
+  // }, [patientInfoForCard]);
 
   const handleCheckboxChange = (record: IndividualFPRecordDetail, isChecked: boolean) => {
     setSelectedRecords((prevSelected) => {
@@ -196,7 +216,19 @@ const IndividualFamPlanningTable: React.FC = () => {
     return selectedRecords.some((selected) => selected.fprecord === record.fprecord);
   };
 
+  // UPDATED: Follow-up function with confirmation for missed appointments
   const handleAddFollowUp = (record: IndividualFPRecordDetail) => {
+    const { showWarning } = shouldShowFollowUpWarning(record);
+    
+    if (showWarning) {
+      setSelectedRecordForFollowUp(record);
+      setShowFollowUpConfirm(true);
+    } else {
+      proceedWithFollowUp(record);
+    }
+  };
+
+  const proceedWithFollowUp = (record: IndividualFPRecordDetail) => {
     if (!record.fprecord) {
       toast.error("Record ID not found for follow-up.");
       return;
@@ -206,11 +238,17 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Patient Record not found for follow-up.");
       return;
     }
-    navigate(`/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`, {
-      state: {
-        gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
-      }
-    });
+  
+    navigate("/services/familyplanning/new-record", {
+  state: {
+    mode: "followup",
+    patientId: patientId, // passed in state, not URL
+    patrecId: record.patrec_id,
+    prefillFromFpRecord: record.fprecord,
+    gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
+    
+  }
+})
   };
 
   const handleCompareRecords = () => {
@@ -218,21 +256,29 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Please select at least two records to compare.");
       return;
     }
-    navigate("/familyplanning/compare-multiple", {
+    navigate("/services/familyplanning/compare-multiple", {
       state: { recordIds: selectedRecords.map((record) => record.fprecord) }
     });
   };
 
   const handleCreateNewRecord = () => {
-    if (!patientId) {
-      toast.error("Patient ID not found");
-      return;
-    }
-    navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`, {
-      state: { gender: patientInfoForCard?.personal_info.per_sex || "Unknown" }
-    });
-  };
-
+  if (!patientId) {
+    toast.error("Patient ID not found");
+    return;
+  }
+  
+  navigate("/services/familyplanning/new-record", {
+    state: { 
+      mode: "create", 
+      patientId: patientId,
+      isNewMethod: true, // NEW: Flag this as a new method
+      prefill: true,
+      gender: patientInfoForCard?.personal_info.per_sex || "Unknown" ,
+      patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined
+    },
+  });
+};
+  
   const groupedRecords = useMemo(() => {
     const groups: { [key: string]: IndividualFPRecordDetail[] } = {};
     fpPatientRecords.forEach((record) => {
@@ -342,13 +388,6 @@ const IndividualFamPlanningTable: React.FC = () => {
           return method === "Others" && otherMethod ? otherMethod : method || "N/A";
         }
       },
-      // {
-      //   accessorKey: "subtype",
-      //   header: "Subtype of Client",
-      //   cell: ({ row }) => {
-      //     return row.original.subtype || "N/A";
-      //   },
-      // },
       {
         accessorKey: "dateOfFollowUp",
         header: "Next Follow-up Visit",
@@ -375,7 +414,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         cell: ({ row }) => (
           <ViewButton
             onClick={() =>
-              navigate("/familyplanning/view", {
+              navigate("/services/familyplanning/view", {
                 state: { fprecordId: row.original.fprecord }
               })
             }
@@ -403,7 +442,9 @@ const IndividualFamPlanningTable: React.FC = () => {
   }
 
   // Calculate days left for the latest group
-  const latestGroupDaysLeft = groupedRecords.length > 0 ? shouldDisableFollowUp(groupedRecords[0][1][0]).daysLeft : Infinity;
+  const latestGroupDaysLeft = groupedRecords.length > 0 
+    ? shouldShowFollowUpWarning(groupedRecords[0][1][0]).daysLeft 
+    : Infinity;
 
   return (
     <div className="container mx-auto p-6 bg-gray-50 min-h-screen">
@@ -414,21 +455,20 @@ const IndividualFamPlanningTable: React.FC = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Family Planning History</h1>
-            <p className="text-gray-600">
-              {displayPatientName} (ID: {patientId})
-            </p>
+           
           </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleCompareRecords} disabled={selectedRecords.length < 2} className="text-white">
             <LayoutList className="h-5 w-5 mr-2" /> Compare Records ({selectedRecords.length})
           </Button>
-
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
-            <Button onClick={() => handleCreateNewRecord()} className="bg-green-600 hover:bg-green-700 text-white">
-              <Plus className="h-5 w-5 mr-2" /> New method for Patient
-            </Button>
-          </ProtectedComponentButton>
+          
+          <Button
+            onClick={() => handleCreateNewRecord()}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Plus className="h-5 w-5 mr-2" /> New method for Patient
+          </Button>
         </div>
       </div>
 
@@ -450,21 +490,25 @@ const IndividualFamPlanningTable: React.FC = () => {
               </li>
             ))}
           </ul>
-
-          {/* Countdown display for when follow-up will be disabled */}
+          
+          {/* Countdown display for when follow-up will show warning */}
           {latestGroupDaysLeft < 0 && latestGroupDaysLeft > -4 && (
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center">
               <Calendar className="h-4 w-4 text-amber-600 mr-2" />
-              <span className="text-amber-800 font-medium">Follow-up will be disabled after 3 days of inactivity & no new record is added.</span>
+              <span className="text-amber-800 font-medium">
+                Follow-up will show warning after 3 days of inactivity.
+              </span>
             </div>
           )}
 
-          {latestGroupDaysLeft <= -4 && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md flex items-center">
-              <MessageCircleWarning className="h-4 w-4 text-red-600 mr-2" />
-              <span className="text-red-800 font-medium">Follow-up has been disabled (missed by more than 3 days)</span>
+          {/* {latestGroupDaysLeft <= -4 && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center">
+              <MessageCircleWarning className="h-4 w-4 text-amber-600 mr-2" />
+              <span className="text-amber-800 font-medium">
+                Follow-up appointments are overdue but can still be created with confirmation.
+              </span>
             </div>
-          )}
+          )} */}
         </div>
       )}
 
@@ -477,8 +521,8 @@ const IndividualFamPlanningTable: React.FC = () => {
           <Accordion type="single" collapsible className="w-full">
             {groupedRecords.map(([patrecId, records], index) => {
               const isLatestGroup = index === 0; // First group is always the latest
-              const { disabled } = shouldDisableFollowUp(records[0]);
-
+              const { showWarning } = shouldShowFollowUpWarning(records[0]);
+              
               return (
                 <AccordionItem key={patrecId} value={patrecId}>
                   <AccordionTrigger className="hover:bg-gray-50 transition-colors">
@@ -493,22 +537,23 @@ const IndividualFamPlanningTable: React.FC = () => {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  handleAddFollowUp(records[0]);
-                                }}
-                                disabled={disabled}
-                                className={disabled ? "text-gray-400 cursor-not-allowed" : ""}
-                              >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Add Follow-up
-                              </Button>
+                              <div>
+                                <Button
+                                  size="sm"
+                                  onClick={(e:any) => {
+                                    e.stopPropagation();
+                                    handleAddFollowUp(records[0]);
+                                  }}
+                                  className={showWarning ? "bg-yellow-600 hover:bg-yellow-700 text-white" : ""}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" /> 
+                                  Add Follow-up
+                                </Button>
+                              </div>
                             </TooltipTrigger>
-                            {disabled && (
+                            {showWarning && (
                               <TooltipContent>
-                                <p>Follow-up disabled: Missed appointment by more than 3 days</p>
+                                <p>This follow-up is overdue. Continuing will create a late follow-up record.</p>
                               </TooltipContent>
                             )}
                           </Tooltip>
@@ -545,6 +590,30 @@ const IndividualFamPlanningTable: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Follow-up Confirmation Dialog */}
+      <AlertDialog open={showFollowUpConfirm} onOpenChange={setShowFollowUpConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Missed Follow-up Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              This follow-up appointment was missed (more than 3 days late). 
+              Proceeding will create a follow-up record anyway. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (selectedRecordForFollowUp) {
+                proceedWithFollowUp(selectedRecordForFollowUp);
+              }
+              setShowFollowUpConfirm(false);
+            }}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

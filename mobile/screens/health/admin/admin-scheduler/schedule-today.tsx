@@ -1,6 +1,6 @@
-// schedule-today.tsx (temporary test version)
+
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text as RNText, TouchableOpacity, ActivityIndicator } from 'react-native'; // Use raw RN Text
+import { View, Text as RNText, Text, TouchableOpacity, ActivityIndicator } from 'react-native'; // Use raw RN Text
 import { format } from 'date-fns';
 import { useGetScheduler, useGetServices } from './queries/schedulerFetchQueries';
 import { useRouter } from 'expo-router';
@@ -85,9 +85,9 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
 
   return (
     <View style={{ backgroundColor: '#FFFFFF', borderRadius: 8, margin: 2, elevation: 3 }}>
-      <View style={{ padding: 14, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
-        <RNText style={{ fontSize: 20, fontWeight: 'bold', color: '#1F2937' }}>Today's Schedule</RNText>
-        <RNText style={{ fontSize: 14, color: '#4B5563', marginTop: 4 }}>{format(new Date(), 'EEEE, MMM d')}</RNText>
+      <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-300">
+        <Text className="font-semibold text-lg text-gray-800">Today's Schedule</Text>
+        <Text className="text-sm">{format(new Date(), 'EEE, MMM d')}</Text>
       </View>
       <View style={{ padding: 14 }}>
         {scheduledServices.length > 0 ? (

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, Linking, Image, Modal, Pressa
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import { useGetMinutesOfMeetingDetails, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
+import { useGetMinutesOfMeetingDetails } from "./queries/MOMFetchQueries";
 import { useLocalSearchParams } from "expo-router";
 import { Calendar, FileText, Target, Paperclip, Edit3, Archive, X, ChevronRight, ArchiveRestore, Trash } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";

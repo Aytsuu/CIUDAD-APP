@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { View, Text, ScrollView, TouchableOpacity, Dimensions,Image } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { useLocalSearchParams, router } from "expo-router"
-import { Activity, AlertCircle, ArrowLeft, Baby, Calendar, Clock, CreditCard, Droplets, FileText, GraduationCap, Heart, Loader2, MapPin, Ruler, Scale, Stethoscope, TrendingUp, User, UserCheck } from "lucide-react-native"
+import { Activity, AlertCircle, ArrowLeft, Baby, Calendar, Clock, CreditCard, Droplets, FileText, GraduationCap, Heart, MapPin, Ruler, Scale, Stethoscope, TrendingUp, User, UserCheck } from "lucide-react-native"
 import { FPRecordData } from "../admin/admin-familyplanning/FPRecordData"
 import { getFPCompleteRecord } from "../admin/admin-familyplanning/GetRequest"
 import { LoadingState } from "@/components/ui/loading-state"

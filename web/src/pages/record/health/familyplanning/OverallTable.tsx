@@ -124,9 +124,7 @@ export default function FamPlanningTable() {
           return (
             <div className="flex flex-col min-w-[200px]">
               <div className="font-medium">
-                <Link to={`/familyplanning/patient/${record.patient_id}`} className="text-blue-600 hover:underline">
                   {record.patient_name || "No name available"}
-                </Link>
               </div>
               <div className="text-sm text-gray-600">
                 {record.patient_age ? `${record.patient_age} years` : "Age not available"}•{record.sex || "Gender not available"}
@@ -177,7 +175,7 @@ export default function FamPlanningTable() {
         cell: ({ row }) => (
           <ViewButton
             onClick={() =>
-              navigate("/familyplanning/individual", {
+              navigate("/services/familyplanning/records", {
                 state: { patientId: row.original.patient_id }
               })
             }
@@ -327,17 +325,17 @@ export default function FamPlanningTable() {
             <SelectLayout className="w-full md:w-[200px] bg-white" label="" placeholder="Select Type" options={clientTypeOptions} value={selectedFilter} onChange={handleFilterChange} />
           </div>
         </div>
-        <div className="flex justify-end">
+        {/* <div className="flex justify-end">
           <Link to={`/familyplanning/new-record`} state={{ gender: "Unknown" }}>
             <Button variant="default" className="flex items-center gap-2">
               New Record
             </Button>
           </Link>
-        </div>
+        </div> */}
 
         <ProtectedComponentButton exclude={["DOCTOR"]}>
           <div className="flex justify-end">
-            <Link to={`/familyplanning/new-record`} state={{ gender: "Unknown" }}>
+            <Link to={`/services/familyplanning/new-record`} state={{ gender: "Unknown" }}>
               <Button variant="default" className="flex items-center gap-2">
                 New Record
               </Button>

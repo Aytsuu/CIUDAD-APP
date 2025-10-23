@@ -24,7 +24,7 @@ class ReportsCount(APIView):
             medicine_records_count = MedicineRecord.objects.distinct('patrec_id__pat_id').count()
             firstaidrecord_count = FirstAidRecord.objects.count()
             medicalcon_count = MedicalConsultation_Record.objects.count()
-            vaccnerecord_count = VaccinationRecord.objects.count()
+            vaccnerecord_count = VaccinationHistory.objects.count()
             inv_medicine_count = MedicineInventory.objects.count()
             inv_vaccination = VaccineStock.objects.count()
             inv_immunization = ImmunizationStock.objects.count()
@@ -38,6 +38,11 @@ class ReportsCount(APIView):
                 mode='app',
                 items__status='pending'
             ).distinct().count()
+            
+            pending_appointments_count = MedConsultAppointment.objects.filter(status='pending').count()
+            confirmed_appointments_count = MedConsultAppointment.objects.filter(status='confirmed').count()
+            total_appointments_count = pending_appointments_count + confirmed_appointments_count
+            total_medicine_requests =  medrequest_count + apprequest_count
         
             # Total count
             antigen_count =  vaccine_count + immunization_count
@@ -65,7 +70,11 @@ class ReportsCount(APIView):
                     'family_planning_count': family_planning_count,
                     'animal_bites_count': animabites_count,
                     'medrequest_count': medrequest_count,
-                    'apprequest_count': apprequest_count
+                    'apprequest_count': apprequest_count,
+                    'total_medicine_requests': total_medicine_requests,
+                    'pending_appointments_count': pending_appointments_count,
+                    'confirmed_appointments_count': confirmed_appointments_count,
+                    'total_appointments_count': total_appointments_count,
                     
                     
                 }

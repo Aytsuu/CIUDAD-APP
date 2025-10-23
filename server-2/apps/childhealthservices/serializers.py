@@ -17,11 +17,22 @@ class ChildHealthrecordSerializerBase(serializers.ModelSerializer):
         fields = '__all__'
         
 class ChildHealthrecordSerializer(serializers.ModelSerializer):
-    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)     
+    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
+    latest_child_history_date = serializers.SerializerMethodField()
+    
     class Meta:
         model = ChildHealthrecord
         fields = '__all__'
- 
+
+    def get_latest_child_history_date(self, obj):
+        # Get the most recent child health history date for this record
+        latest_history = ChildHealth_History.objects.filter(
+            chrec=obj
+        ).order_by('-created_at').first()
+        
+        if latest_history and latest_history.created_at:
+            return latest_history.created_at
+        return None
 
 class ChildHealthHistorySerializerBase(serializers.ModelSerializer):
     class Meta:

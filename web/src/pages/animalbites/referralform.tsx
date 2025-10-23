@@ -162,7 +162,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     const realPatId = patIdMatch ? patIdMatch[1] : id.split(' ')[0]; 
 
     setSelectedPatientId(realPatId) 
-    
+    setSelectedPatientId(id);
     const selectedPatient = patientsData.find((p) => p.pat_id.toString() === realPatId)
     if (selectedPatient) {
       const personalInfo = selectedPatient.personal_info

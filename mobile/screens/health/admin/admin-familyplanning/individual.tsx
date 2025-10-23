@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-na
 import { useQuery } from "@tanstack/react-query";
 import { getFPCompleteRecord, getFPRecordsForPatient } from "./GetRequest";
 import {  FileText, Calendar, User, GitCompare, Loader2, AlertCircle,Stethoscope,ChevronRight,ChevronLeft} from "lucide-react-native";
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge";

@@ -19,22 +19,31 @@ export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
-  dateOfFollowUp: z.preprocess(
-    (arg) => (arg === "" ? null : arg),
-    z.union([
-      z.literal(null),
-      z.string().refine(
-        (dateString) => {
-          if (!dateString) return true; // Allow null/empty
-          const date = new Date(dateString);
-          return date > today && !isWeekend(date);
-        },
-        { 
-          message: "Follow-up date must be a future date and cannot be on weekends (Saturday or Sunday)" 
-        }
-      ),
-    ]),
-  ),
+dateOfFollowUp: z.preprocess(
+  (arg) => (arg === "" ? null : arg),
+  z.union([
+    z.literal(null),
+    z.string().refine(
+      (dateString) => {
+        if (!dateString) return true; // Allow null/empty
+        
+        const date = new Date(dateString);
+        date.setHours(0, 0, 0, 0); // Normalize time for comparison
+        
+        // Check if date is today or in the past
+        const isTodayOrPast = date <= today;
+        // Check if date is on weekend
+        const isOnWeekend = isWeekend(date);
+        
+        // Return false if date is today/past OR on weekend
+        return !isTodayOrPast && !isOnWeekend;
+      },
+      { 
+        message: "Follow-up date must be a future date, and cannot be on weekends" 
+      }
+    ),
+  ]).optional(),
+),
   bloodPressure: z.string().optional(),
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
@@ -55,7 +64,7 @@ const PregnancyCheckSchema = z.object({
 
 const FamilyPlanningBaseSchema = z.object({
   pat_id: z.string().optional(),
-  patrec_id: z.string().optional(),
+  patrec_id: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   // fpt_id: z.string().optional(),
   client_id: z.string().optional(),
   philhealthNo: z.string().optional(),
@@ -160,6 +169,7 @@ abdomenExamination: z.string().optional(),
 //     is_current: boolean;
 //   }>,
 
+  num_of_children: z.number().min(0).optional(),
   obstetricalHistory: z.object({
     g_pregnancies: z.coerce.number().min(0).default(0),
     p_pregnancies: z.coerce.number().min(0).default(0),
@@ -326,11 +336,10 @@ selectedIllnessIds:z.string().optional(),
   pregnancyCheck: PregnancyCheckSchema.optional(),
 });
 
-export const page1Schema = FamilyPlanningBaseSchema.pick({
+const page1BaseSchema = FamilyPlanningBaseSchema.pick({
   pat_id: true,
   patrec_id: true,
   client_id: true,
-  
   philhealthNo: true,
   nhts_status: true,
   fourps: true,
@@ -342,19 +351,80 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   educationalAttainment: true,
   occupation: true,
   address: true,
-  // spouse: false,
   numOfLivingChildren: true,
   plan_more_children: true,
   avg_monthly_income: true,
   typeOfClient: true,
   subTypeOfClient: true,
-  // reasonForFP: true,
-  // otherReasonForFP: true,
-  // reason: true, // For current user reason
-  // otherReason: true, // For current user reason specify
+  reasonForFP: true,
+  otherReasonForFP: true,
+  reason: true,
   methodCurrentlyUsed: true,
-  // otherMethod: true,
+  otherMethod: true,
 });
+
+// Create different validation rules based on mode
+export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup") => 
+  page1BaseSchema.superRefine((data, ctx) => {
+    // Skip validation for view mode
+    if (mode === "view") return;
+
+    // For followup mode, only validate basic required fields, not reason fields
+    if (mode === "followup") {
+      if (!data.methodCurrentlyUsed) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Method currently used is required",
+          path: ["methodCurrentlyUsed"]
+        });
+      }
+      
+      if (data.methodCurrentlyUsed === "Others" && !data.otherMethod) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the other method",
+          path: ["otherMethod"]
+        });
+      }
+      return; // Skip other validations for followup mode
+    }
+
+    // Enhanced validation for create/edit modes only
+    if (data.typeOfClient === "currentuser" && (data.subTypeOfClient === "changingmethod" || data.subTypeOfClient === "dropoutrestart" || data.subTypeOfClient === "changingclinic")) {
+      if (!data.reasonForFP) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reason is required",
+          path: ["reasonForFP"]
+        });
+      }
+      
+      if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the other reason",
+          path: ["otherReasonForFP"]
+        });
+      }
+      
+      if (data.reasonForFP === "sideeffects" && !data.reason) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify the side effects",
+          path: ["reason"]
+        });
+      }
+    }
+
+    if (data.methodCurrentlyUsed === "Others" && !data.otherMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please specify the other method",
+        path: ["otherMethod"]
+      });
+    }
+  });
+
 
 
 export const page2Schema = FamilyPlanningBaseSchema.pick({

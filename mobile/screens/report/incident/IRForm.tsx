@@ -1,6 +1,5 @@
 import React from "react"
-import _ScreenLayout from "@/screens/_ScreenLayout"
-import { Text, View, TouchableOpacity, ScrollView, Alert } from "react-native"
+import { Text, View, TouchableOpacity } from "react-native"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,7 +9,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Button } from "@/components/ui/button"
-import MediaPicker, { type MediaItem } from "@/components/ui/media-picker"
+import MediaPicker, { type MediaItem } from "@/components/ui/image-picker"
 import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
 import { useGetReportType } from "../queries/reportFetch"
@@ -103,7 +102,7 @@ export default function IncidentReportForm() {
   }, [isOtherTypeSelected])
 
   React.useEffect(() => {
-    if (selectedImages.length > 0) {
+    if (selectedImages?.length > 0) {
       setFormErrors((prev) => ({ ...prev, media: undefined }))
     }
   }, [selectedImages])
@@ -119,7 +118,7 @@ export default function IncidentReportForm() {
     const errors: FormErrors = {}
 
     // Validate media requirement
-    if (selectedImages.length === 0) {
+    if (selectedImages?.length === 0) {
       errors.media = "Attach at least one image to support your report"
     }
 
@@ -144,7 +143,7 @@ export default function IncidentReportForm() {
     const customErrors = validateCustomFields()
     setFormErrors(customErrors)
 
-    return isFormValid && Object.keys(customErrors).length === 0
+    return isFormValid && Object.keys(customErrors)?.length === 0
   }
 
   // ================= HANDLERS =================
@@ -157,7 +156,7 @@ export default function IncidentReportForm() {
       const formData = getValues()
       const { ir_time, ir_involved, ...restData } = formData
 
-      const files = selectedImages.map((media) => ({
+      const files = selectedImages?.map((media) => ({
         name: media.name,
         type: media.type,
         file: media.file,
@@ -323,8 +322,7 @@ export default function IncidentReportForm() {
         <MediaPicker
           selectedImages={selectedImages}
           setSelectedImages={setSelectedImages}
-          multiple={true}
-          maxImages={5}
+          limit={5}
         />
         {formErrors.media && (
           <View className="flex-row items-center mt-2">
@@ -332,7 +330,7 @@ export default function IncidentReportForm() {
             <Text className="text-red-500 text-xs">{formErrors.media}</Text>
           </View>
         )}
-        {selectedImages.length > 0 && (
+        {selectedImages?.length > 0 && (
           <Text className="text-xs text-gray-500 mt-2">
             {selectedImages.length} image{selectedImages.length !== 1 ? "s" : ""} selected
           </Text>

@@ -1,7 +1,6 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
 import { Controller, Control } from 'react-hook-form';
-import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
   control: Control<any>;

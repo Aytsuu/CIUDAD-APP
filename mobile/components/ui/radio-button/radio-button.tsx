@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View } from 'react-native';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from './radio-group';
+import { RadioGroupItem } from './radio-group';
 
 export default function RadioButton({
   value,

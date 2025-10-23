@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Count
+from django.db.models import Count, Case, When, Value
 from ..models import *
 from datetime import date, timedelta
 from django.db.models.functions import TruncDate
@@ -22,12 +22,19 @@ class CardAnalyticsView(APIView):
         return Response(card_data)
   
 class SidebarAnalyticsView(APIView):
-    def get(self, request, *args, **kwargs):
-        today = date.today()
-        three_days_ago = today - timedelta(days=3)
-        queryset = IncidentReport.objects.all()
-        
-        return Response(IRTableSerializer(queryset, many=True).data)
+  def get(self, request, *args, **kwargs):
+    queryset = IncidentReport.objects.filter(ir_is_tracker=False).annotate(
+      severity_order=Case(
+        When(ir_severity='HIGH', then=Value(1)),
+        When(ir_severity='MEDIUM', then=Value(2)),
+        When(ir_severity='LOW', then=Value(3)),
+      )
+    ).order_by('severity_order','-ir_created_at')
+
+    return Response({
+      'count': queryset.count(),
+      'data': IRTableSerializer(queryset[:3], many=True).data
+    })
   
 class ChartAnalyticsView(APIView):
     def get(self, request, *args, **kwargs):

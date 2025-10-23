@@ -19,50 +19,50 @@ from ..utils import *
 from ..double_queries import PostQueries
 import copy
 
-class AllRecordTableView(generics.GenericAPIView):
-  serializer_class = AllRecordTableSerializer
-  pagination_class = StandardResultsPagination
+# class AllRecordTableView(generics.GenericAPIView):
+#   serializer_class = AllRecordTableSerializer
+#   pagination_class = StandardResultsPagination
 
-  def get(self, request, *args, **kwargs):
-    search = request.query_params.get('search', '').strip()
+#   def get(self, request, *args, **kwargs):
+#     search = request.query_params.get('search', '').strip()
 
-    residents = [
-      {
-        'id': res.rp_id,
-        'lname': res.per.per_lname,
-        'fname': res.per.per_fname,
-        'mname': res.per.per_mname,
-        'suffix': res.per.per_suffix,
-        'sex': res.per.per_sex,
-        'date_registered': res.rp_date_registered,
-        'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
-        'type': 'Resident',
-      }
-      for res in ResidentProfile.objects.select_related('per').filter(
-          Q(per__per_fname__icontains=search) |
-          Q(per__per_lname__icontains=search) |
-          Q(per__per_mname__icontains=search) |
-          Q(per__per_suffix__icontains=search)
-      )
-    ]
-    respondents = [
-      {
-        'id': res.br_id,
-        'lname': res.br_lname,
-        'fname': res.br_fname,
-        'mname': res.br_mname,
-        'suffix': '',
-        'sex': res.br_sex,
-        'date_registered': res.br_date_registered,
-        'type': 'Business',
-      }
-      for res in BusinessRespondent.objects.all()
-    ]
+#     residents = [
+#       {
+#         'id': res.rp_id,
+#         'lname': res.per.per_lname,
+#         'fname': res.per.per_fname,
+#         'mname': res.per.per_mname,
+#         'suffix': res.per.per_suffix,
+#         'sex': res.per.per_sex,
+#         'date_registered': res.rp_date_registered,
+#         'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
+#         'type': 'Resident',
+#       }
+#       for res in ResidentProfile.objects.select_related('per').filter(
+#           Q(per__per_fname__icontains=search) |
+#           Q(per__per_lname__icontains=search) |
+#           Q(per__per_mname__icontains=search) |
+#           Q(per__per_suffix__icontains=search)
+#       )
+#     ]
+#     respondents = [
+#       {
+#         'id': res.br_id,
+#         'lname': res.br_lname,
+#         'fname': res.br_fname,
+#         'mname': res.br_mname,
+#         'suffix': '',
+#         'sex': res.br_sex,
+#         'date_registered': res.br_date_registered,
+#         'type': 'Business',
+#       }
+#       for res in BusinessRespondent.objects.all()
+#     ]
     
-    unified_data = residents + respondents
-    page = self.paginate_queryset(unified_data)
-    serializer = self.get_serializer(page, many=True)
-    return self.get_paginated_response(serializer.data)
+#     unified_data = residents + respondents
+#     page = self.paginate_queryset(unified_data)
+#     serializer = self.get_serializer(page, many=True)
+#     return self.get_paginated_response(serializer.data)
   
 
 class CompleteRegistrationView(APIView):
@@ -100,7 +100,6 @@ class CompleteRegistrationView(APIView):
 
     if account:
         self.create_account(account, rp)
-
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -271,5 +270,3 @@ class CompleteRegistrationView(APIView):
           BusinessFile.objects.bulk_create(business_files)
 
     return business
-
-  

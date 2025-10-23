@@ -1,4 +1,5 @@
 export interface FPRecordData {
+  num_of_children: string;
   client_id?: string;
   givenName?: string;
   lastName?: string;

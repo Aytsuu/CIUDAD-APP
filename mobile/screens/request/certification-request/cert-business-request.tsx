@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
-import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
+import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
@@ -640,7 +640,7 @@ const CertPermit: React.FC = () => {
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
                 <Text className="text-gray-500 font-semibold text-base">
-                  {Boolean(isLoading) ? 'Loading user data...' : 'Cannot Request Business Permit'}
+                  {isLoading ? 'Loading user data...' : 'Cannot Request Business Permit'}
                 </Text>
               </View>
             )}

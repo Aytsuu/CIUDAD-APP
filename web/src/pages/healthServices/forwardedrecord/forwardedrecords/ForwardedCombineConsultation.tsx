@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Loader2, Search, Users, Home, UserCheck, FileInput } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
+
 import { calculateAge } from "@/helpers/ageCalculator";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
@@ -16,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useCombinedHealthRecords } from "../queries/fetch";
 
 export default function ForwardedCombinedHealthRecordsTable() {
   const navigate = useNavigate();
@@ -28,21 +28,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
   const [recordTypeFilter, setRecordTypeFilter] = useState("all");
   const { showLoading, hideLoading } = useLoading();
 
-  // Fetch combined records
-  const { data: combinedData, isLoading: combinedLoading } = useQuery({
-    queryKey: ["combinedHealthRecords", debouncedSearchQuery, recordTypeFilter, currentPage, pageSize],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        search: debouncedSearchQuery,
-        record_type: recordTypeFilter,
-        page: currentPage.toString(),
-        page_size: pageSize.toString()
-      });
-
-      const response = await api2.get(`/medical-consultation/combined-health-records/${staffId}/?${params}`);
-      return response.data;
-    }
-  });
+  const { data: combinedData, isLoading: combinedLoading } = useCombinedHealthRecords(staffId, debouncedSearchQuery, recordTypeFilter, currentPage, pageSize);
 
   // Reset to first page when search or filter changes
   useEffect(() => {
@@ -113,7 +99,6 @@ export default function ForwardedCombinedHealthRecordsTable() {
             <div className="grid grid-cols-1 gap-1 text-sm min-w-[200px]">
               <div>Chief Complaint: {data.medrec_chief_complaint || "N/A"}</div>
               <div>Status: {data.medrec_status || "N/A"}</div>
-              <div>Age: {data.medrec_age || "N/A"}</div>
             </div>
           );
         }
@@ -299,9 +284,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
   const { residents, transients } = calculateCounts();
 
   return (
-   <MainLayoutComponent title="Medical Consultation" description="Forwarded records for Medical Consultation">
-     <div className="w-full h-full flex flex-col">
-        
+    <MainLayoutComponent title="Medical Consultation" description="Forwarded records for Medical Consultation">
+      <div className="w-full h-full flex flex-col">
         {/* Summary Cards - Improved from reference design */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Total Card */}
@@ -421,8 +405,6 @@ export default function ForwardedCombinedHealthRecordsTable() {
           </div>
         </div>
       </div>
-
-
-   </MainLayoutComponent>
+    </MainLayoutComponent>
   );
 }

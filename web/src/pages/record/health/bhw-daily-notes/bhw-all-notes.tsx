@@ -6,11 +6,15 @@ import { Link } from "react-router";
 import { Plus, Search } from "lucide-react";
 
 // components
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/table/data-table";
+import { noteColumns } from "./bhw-columns";
+
 
 interface NoteDiv {
+      no: number;
       date: string;
       description: string;
    }
@@ -19,33 +23,31 @@ export default function BHWAllNotes() {
 
    const [searchTerm, setSearchTerm] = useState("");
 
-   const dateString = (date:string) => {
-      return new Date(date).toLocaleDateString('en-PH', {
-         year: 'numeric',
-         month: 'long',
-         day: 'numeric',
-      })
-   }
-
    const mockData: NoteDiv[] = [
       {
+         no: 1,
          date: "2023-10-01",
          description: "Note content for October 1st"
       },
       {
+         no: 2,
          date: "2023-10-02",
          description: "Note content for October 2nd"
       },
       {
+         no: 3,
          date: "2023-10-03",
          description: "Note content for October 3rd"
       }
    ]
 
+   // sort notes by date descending (newest first)
+   const sortedNotes = [...mockData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
    return (
-      <LayoutWithBack 
-         title="BHW Daily Notes"
-         description="Manage and view all BHW daily notes"
+      <MainLayoutComponent 
+         title="Daily Notes"
+         description="Manage and view all daily notes"
       >
          <div className="w-full">
             <div className="flex flex-col md:flex-row gap-2 w-full">
@@ -68,16 +70,13 @@ export default function BHWAllNotes() {
                   </Button>
                </Link>
             </div>
-            
-            <div>
-               {mockData.map((note, index) => (
-                  <div key={index} className="border border-gray-300 p-4 rounded-lg mt-4">
-                     <div className="font-semibold">{dateString(note.date)}</div>
-                     <div className="text-gray-600">{note.description}</div>
-                  </div>
-               ))}
+
+            <div className="bg-white mt-4 p-2">
+               <div className="border rounded-md">
+                  <DataTable columns={noteColumns} data={sortedNotes} />
+               </div>
             </div>
          </div>
-      </LayoutWithBack>
+      </MainLayoutComponent>
    )
 }

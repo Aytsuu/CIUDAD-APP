@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Canterbury Font */
+@font-face {
+  font-family: 'Canterbury';
+  src: url('./assets/fonts/Canterbury.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Remove arrow icon for input type number */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
@@ -266,6 +275,10 @@ p[data-margin] {
 /* OTHER BUTTONS */
 .rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
   display: none !important;
+}
+
+.slope-right {
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
 }
 
 

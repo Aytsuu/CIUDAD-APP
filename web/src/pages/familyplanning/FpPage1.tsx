@@ -14,8 +14,7 @@ import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { api2 } from "@/api/api"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
+import { createPage1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 
 type Page1Props = {
   onNext2: () => void
@@ -37,6 +36,8 @@ function calculateAge(dateOfBirth: string): number {
   return age
 }
 
+
+
 export default function FamilyPlanningForm({
   onNext2,
   updateFormData,
@@ -50,7 +51,7 @@ export default function FamilyPlanningForm({
   const [originalClientType, setOriginalClientType] = useState<string | null>(null);
   const [originalMethod, setOriginalMethod] = useState<string | null>(null)
   const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema),
+    resolver: zodResolver(createPage1Schema(mode)),
     values: formData,
     mode: "onBlur",
   })
@@ -58,24 +59,22 @@ export default function FamilyPlanningForm({
 
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
-  const patientId = formData?.pat_id
-  const { data: obstetricalData } = useObstetricalHistoryData(patientId)
+  // const patientId = formData?.pat_id
+  // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
-
-
-  useEffect(() => {
-    if (obstetricalData?.livingChildren !== undefined) {
-      form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
-      updateFormData({
-        ...form.getValues(),
-        numOfLivingChildren: obstetricalData.livingChildren,
-        obstetricalHistory: {
-          ...form.getValues().obstetricalHistory,
-          numOfLivingChildren: obstetricalData.livingChildren,
-        },
-      })
-    }
-  }, [obstetricalData, updateFormData])
+  // useEffect(() => {
+  //   if (obstetricalData?.livingChildren !== undefined) {
+  //     form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
+  //     updateFormData({
+  //       ...form.getValues(),
+  //       numOfLivingChildren: obstetricalData.livingChildren,
+  //       obstetricalHistory: {
+  //         ...form.getValues().obstetricalHistory,
+  //         numOfLivingChildren: obstetricalData.livingChildren,
+  //       },
+  //     })
+  //   }
+  // }, [obstetricalData, updateFormData])
 
 
   useEffect(() => {
@@ -118,34 +117,34 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
           const response = await api2.get("patientrecords/patients/")
           const formattedPatients = response.data.map((patient: any) => {
-    const patientId = patient.pat_id?.toString() || "";
-    const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
-    
-    // CRITICAL CHANGE: Create a single searchable string for the ID
-    const searchableId = `${patientId} ${fullName}`; 
+            const patientId = patient.pat_id?.toString() || "";
+            const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
 
-    return {
-        // Use the searchable string as the 'id' which gets searched
-        id: searchableId, 
-        // The name can remain the JSX for display purposes
-        name: (
-            <>
-                <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
+            // CRITICAL CHANGE: Create a single searchable string for the ID
+            const searchableId = `${patientId} ${fullName}`;
+
+            return {
+              // Use the searchable string as the 'id' which gets searched
+              id: searchableId,
+              // The name can remain the JSX for display purposes
+              name: (
+                <>
+                  <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
                     {patientId}
-                </span>
-                {fullName}
-            </>
-        ),
-    };
-});
-setPatients(formattedPatients)
+                  </span>
+                  {fullName}
+                </>
+              ),
+            };
+          });
+          setPatients(formattedPatients)
 
         } catch (error) {
           console.error("Error fetching patients:", error)
@@ -179,8 +178,9 @@ setPatients(formattedPatients)
       toast.error("Please select a valid patient");
       return;
     }
-     const realPatId = id.split(' ')[0];
+    const realPatId = id.split(' ')[0];
     setSelectedPatientId(realPatId);
+    setSelectedPatientId(id);
     try {
       // Fetch basic patient data
       const response = await api2.get(`patientrecords/patient/${realPatId}/`);
@@ -231,22 +231,22 @@ setPatients(formattedPatients)
         api2.get(`familyplanning/last-previous-pregnancy/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
-      const [bodyMeasurementsResponse,obsHistoryResponse,lastPrevPregResponse,personalResponse] = await Promise.all(requests);
-      console.log("Body measurement: " ,bodyMeasurementsResponse)
+      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
+      console.log("Body measurement: ", bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
-        if (spouseData) {
-          spouseInfo = {
-            s_lastName: spouseData.spouse_lname || "",
-            s_givenName: spouseData.spouse_fname || "",
-            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-            s_dateOfBirth: spouseData.spouse_dob || "",
-            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-            s_occupation: spouseData.spouse_occupation || "",
-          };
-        }
-      
+      if (spouseData) {
+        spouseInfo = {
+          s_lastName: spouseData.spouse_lname || "",
+          s_givenName: spouseData.spouse_fname || "",
+          s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
+          s_dateOfBirth: spouseData.spouse_dob || "",
+          s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
+          s_occupation: spouseData.spouse_occupation || "",
+        };
+      }
+
       // Build the form data with proper fallbacks
       const newFormData = {
         ...formData,
@@ -366,25 +366,52 @@ setPatients(formattedPatients)
     const fetchCommodities = async () => {
       setLoadingCommodities(true);
       try {
-        const response = await api2.get("inventory/commoditylist/");
-        const allCommodities = response.data;
+        // First, get the initial page to know the total count and pages
+        const firstPageResponse = await api2.get("/inventory/commoditylist/");
+        const firstPageData = firstPageResponse.data;
 
+        const totalCount = firstPageData.count;
+        const pageSize = firstPageData.results.length;
+        const totalPages = Math.ceil(totalCount / pageSize);
+
+        console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
+
+        // Create array of promises for all pages
+        const pagePromises = [Promise.resolve(firstPageResponse)];
+
+        for (let page = 2; page <= totalPages; page++) {
+          pagePromises.push(api2.get(`/inventory/commoditylist/?page=${page}`));
+        }
+
+        // Fetch all pages concurrently
+        const responses = await Promise.all(pagePromises);
+
+        // Combine all results
+        const allCommodities = responses.flatMap(response =>
+          response.data.results || []
+        );
+
+        console.log("All commodities fetched:", allCommodities);
+        console.log("Total commodities count:", allCommodities.length);
+
+        // ... rest of the filtering and formatting logic remains the same
         let filteredCommodities = allCommodities;
 
-        // First filter by user type (New acceptor/Current user)
+        // Apply filters (same as above)
         if (typeOfClient === "newacceptor") {
           filteredCommodities = filteredCommodities.filter(
-            (com: { user_type: string }) => com.user_type === "New acceptor" || com.user_type === "Both"
+            (com: { user_type: string }) =>
+              com.user_type === "New acceptor" || com.user_type === "Both"
           );
         } else if (typeOfClient === "currentuser") {
           if (subTypeOfClient === "changingmethod") {
             filteredCommodities = filteredCommodities.filter(
-              (com: { user_type: string }) => com.user_type === "Current user" || com.user_type === "Both"
+              (com: { user_type: string }) =>
+                com.user_type === "Current user" || com.user_type === "Both"
             );
           }
         }
 
-        // Then filter by gender using the watched gender from the form (falls back to prop if needed)
         const effectiveGender = watchedGender || patientGender;
         if (effectiveGender) {
           const genderLower = effectiveGender.toLowerCase();
@@ -393,18 +420,18 @@ setPatients(formattedPatients)
             return comGender === "both" || comGender === genderLower;
           });
         }
-console.log("Gender type: ",effectiveGender)
-        // Format the commodities
-        const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
-          id: com.com_name,  // Use name as the value that gets stored
-          name: com.com_name, // Display name
+
+        // Format for combobox
+        const formattedCommodities = filteredCommodities.map((com: any) => ({
+          id: com.com_name,
+          name: com.com_name,
           user_type: com.user_type,
           gender_type: com.gender_type,
-          // Store the original ID for reference if needed
           originalId: com.com_id
         }));
 
         setCommodities(formattedCommodities);
+
       } catch (error) {
         console.error("Error fetching commodities:", error);
         toast.error("Failed to load commodity data");
@@ -419,7 +446,9 @@ console.log("Gender type: ",effectiveGender)
 
   const onSubmit = async (data: FormData) => {
     const currentValues = form.getValues()
+
     try {
+      // Business logic validations first
       if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
         toast.error("You cannot change the contraceptive method in this follow-up record. Please create a new record to switch methods.");
         return;
@@ -430,9 +459,15 @@ console.log("Gender type: ",effectiveGender)
         return;
       }
 
-      const validatedData = page1Schema.parse(data)
-      updateFormData(validatedData)
+      if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
+        toast.error("You cannot select the same method when changing methods. Please choose a different method.");
+        return;
+      }
+
+      // The schema validation should now work with mode-aware rules
+      updateFormData(data)
       onNext2()
+
     } catch (error) {
       console.error("Validation failed:", error)
       let errorMessage = "Please fill in all required fields correctly."
@@ -443,7 +478,6 @@ console.log("Gender type: ",effectiveGender)
       toast.error(errorMessage)
     }
   }
-
   const inputProps = {
     disabled: isReadOnly,
     readOnly: isReadOnly,
@@ -522,7 +556,7 @@ console.log("Gender type: ",effectiveGender)
                         <Label className="font-normal text-[13px]">
                           {loadingPatients ? "Loading..." : "No patient found."}
                         </Label>
-                        <Link to="/create-patients-record">
+                        <Link to="/patientrecords">
                           <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
                             Register New Patient
                           </Label>
@@ -558,7 +592,7 @@ console.log("Gender type: ",effectiveGender)
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormInput control={form.control} name="client_id" label="CLIENT ID:" {...inputProps} />
-              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps}  readOnly={true} />
+              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps} readOnly={true} />
 
               <FormField
                 control={form.control}
@@ -989,24 +1023,48 @@ console.log("Gender type: ",effectiveGender)
             </div>
 
             <div className="flex justify-end space-x-4">
+
               <Button
                 type="button"
                 onClick={async () => {
+                  // First trigger validation
                   const isValid = await form.trigger()
+
                   if (isValid) {
                     const currentValues = form.getValues()
+
+                    // Business logic checks
                     if (originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
                       toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
                       return
                     }
+
                     if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
                       toast.error("You cannot select the same method when changing methods. Please choose a different method.");
                       return;
                     }
+
+                    if (isAgeInvalid) {
+                      toast.error("Age is outside the allowed range for family planning");
+                      return;
+                    }
+
                     updateFormData(currentValues)
                     onNext2()
-                  } else if (isAgeInvalid){
-                    toast.error("Age is outside the allowed range for family planning");
+                  } else {
+                    // Show specific error messages based on mode
+                    const errors = form.formState.errors
+
+                    if (mode === "followup") {
+                      if (errors.methodCurrentlyUsed) {
+                        toast.error("Method currently used is required for follow-up visits.");
+                      } else if (form.watch("methodCurrentlyUsed") === "Others" && errors.otherMethod) {
+                        toast.error("Please specify the other method for follow-up visits.");
+                      }
+                    } else {
+                      // For create/edit modes, show general validation error
+                      toast.error("Please fill in all required fields correctly.");
+                    }
                   }
                 }}
                 disabled={isReadOnly || isAgeInvalid}

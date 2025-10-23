@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { getIssuedCertificates as getIssuedCertificatesAPI, IssuedCertificate as APIIssuedCertificate } from "../restful-api/issuedCertGetAPI";
+import { getIssuedCertificates as getIssuedCertificatesAPI } from "../restful-api/issuedCertGetAPI";
 
 
 export interface IssuedCertificate {

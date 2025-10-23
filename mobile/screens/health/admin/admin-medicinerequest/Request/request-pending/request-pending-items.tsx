@@ -3,16 +3,14 @@ import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { pendingItemsColumns } from "./columns";
 import { usePendingItemsMedRequest } from "../queries.tsx/fetch";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
-import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
 
 export default function MedicineRequestPendingItems() {

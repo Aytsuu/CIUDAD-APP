@@ -21,6 +21,7 @@ import LuponConciliationMain from "@/screens/summon/lupon-conciliation/lupon-con
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
 
+// Makes the Error Overlay dissapear
 if (__DEV__) {
   LogBox.ignoreAllLogs(true);
 }
