@@ -436,8 +436,7 @@ function BudgetTracker() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
             <SelectLayout
               className="bg-white"
               options={monthOptions}
@@ -445,6 +444,7 @@ function BudgetTracker() {
               value={selectedMonth}
               label="Month"
               onChange={handleMonthChange}
+              valueLabel="Filter"
             />
           </div>
           <Link to={`/gad-budget-log/${gbudy_year}`}>
