@@ -1,6 +1,3 @@
-# ---------------------------------------------------
-# PRODUCTION SERVER
-# ---------------------------------------------------
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
@@ -9,6 +6,7 @@ import os
 from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
+
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -81,6 +79,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.gad',
     'apps.clerk',
+    'apps.landing',
     'apps.act_log',
     
 ]
@@ -187,7 +186,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
     ],
 }
 

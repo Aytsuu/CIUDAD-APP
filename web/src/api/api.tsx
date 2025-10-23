@@ -9,6 +9,9 @@ import { setupApiInterceptor } from "./interceptor";
 //     "Accept": "application/json",
 //   },
 // });
+export const mapApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
 
 export const api = axios.create({
   baseURL: "http://localhost:8000",
