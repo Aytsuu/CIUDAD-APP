@@ -98,44 +98,6 @@ export const getAllFPRecordsForPatient = async (patrec_id: any) => {
 
   };  
 
-// // Updated getFPRecordsList to accept pagination and filter parameters
-// export const getFPRecordsList = async (params: GetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
-//   try {
-//     const response = await api2.get("familyplanning/overall-records/", { params });
-//     const { count, next, previous, results } = response.data;
-
-//     // The transformation logic here should match the FPRecord interface defined above
-//     // and the data structure returned by your Django backend's `list` method.
-//     const transformedResults: FPRecord[] = results.map((record: any) => {
-//       return {
-//         fprecord_id: record.fprecord_id,
-//         patient_id: record.patient_id,
-//         client_id: record.client_id || "N/A",
-//         patient_name: record.patient_name || "N/A",
-//         patient_age: record.patient_age || "N/A",
-//         patient_type: record.patient_type || "N/A",
-//         client_type: record.client_type || "N/A",
-//         method_used: record.method_used || "N/A",
-//         subtype: record.subtype || "N/A", // Ensure this matches the backend's output
-//         created_at: record.created_at || "N/A",
-//         sex: record.sex || "Unknown",
-//         record_count: record.record_count || 0,
-//       };
-//     });
-
-//     return {
-//       count,
-//       next,
-//       previous,
-//       results: transformedResults,
-//     };
-//   } catch (err) {
-//     console.error("Error fetching FP records for overall table:", err);
-//     // Return a default paginated structure on error
-//     return { count: 0, next: null, previous: null, results: [] };
-//   }
-// };
-
 export interface FullFPRecordDetail {
   fprecord_id: number;
   client_id: string;

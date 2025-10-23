@@ -5,7 +5,7 @@ from apps.patientrecords.models import *
 from apps.administration.models import *
 from apps.inventory.models import *
 from apps.healthProfiling.models import *
-from .shared_notification_utils import create_fp_followup_notification
+# from .shared_notification_utils import create_fp_followup_notification
 
 class FPRecordSerializer(serializers.ModelSerializer):
     patrec = serializers.PrimaryKeyRelatedField(queryset=PatientRecord.objects.all())
