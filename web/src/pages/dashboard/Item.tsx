@@ -25,6 +25,8 @@ import { DisbursementSidebar } from "@/components/analytics/treasurer/disburseme
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
 import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
+import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
+import { useAnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
 
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
@@ -55,6 +57,7 @@ export const getItemsConfig = (
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {accepted, rejected, completed, pending} = garbCards;
   const { cashDonations } = donationCards;
+const animalBiteCards = useAnimalBiteSectionCards();
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
     return [
@@ -150,6 +153,16 @@ export const getItemsConfig = (
         dashboard: "WASTE",
         card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed], 
       },
+      {
+        dashboard: "ANIMAL BITES",
+        card: [ animalBiteCards.totalCases,animalBiteCards.biteCases,animalBiteCards.commonAnimal,animalBiteCards.commonSite ],
+        chart: [
+          {
+            title: "Animal Bite Analytics",
+            element: <AnimalBiteAnalyticsCharts />,
+          },
+        ],
+      },
     ];
   }
 
@@ -195,6 +208,10 @@ export const getItemsConfig = (
         {
           title: "Maternal",
           element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
+        },
+        {
+          title: "Animal Bites",
+          element: <AnimalBiteAnalyticsCharts />,
         },
         ],
         sidebar:[
