@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, Users2, Loader2, Home, UserCheck } from "lucide-react";
+import { Search, Users2, Home, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useVaccinationRecords } from "../../queries/fetch";
@@ -18,6 +18,7 @@ import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFil
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -291,10 +292,7 @@ export default function AllVaccinationRecords() {
 
         <div className="bg-white w-full overflow-x-auto border">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
+            <TableLoading/>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
               <span>Error loading data. Please try again.</span>

@@ -1,23 +1,13 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Syringe, ChevronDown } from "lucide-react";
+import { AlertCircle, Loader2, Syringe, ChevronDown, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
-import {useVaccinationChart } from "./queries/chart";
-
+import { useVaccinationChart } from "./queries/chart";
 import { useState } from "react";
 import { Link } from "react-router";
+import { Button } from "@/components/ui/button/button";
 
-const COLORS = [
-  "#3b82f6", // Blue
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Violet
-  "#ec4899", // Pink
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#64748b" // Slate
-];
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#64748b"];
 
 export function VaccinationDistributionSidebar() {
   const initialMonth = format(new Date(), "yyyy-MM");
@@ -36,6 +26,14 @@ export function VaccinationDistributionSidebar() {
   const vaccinesToShow = showAll ? allVaccines : allVaccines.slice(0, 10);
   const totalVaccines = allVaccines.length;
   const totalDoses = allVaccines.reduce((sum, item) => sum + item.count, 0);
+
+  // Common link state for all vaccine cards and "View More" button
+  const getLinkState = (vaccineName?: string, itemCount?: number) => ({
+    vaccineName: vaccineName || "",
+    itemCount: itemCount || totalDoses,
+    month: initialMonth,
+    monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
+  });
 
   if (error) {
     return (
@@ -61,7 +59,7 @@ export function VaccinationDistributionSidebar() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : !data || allVaccines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center h-[300px] ">
+          <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">
             <div className="rounded-full bg-gray-100 p-3 mb-3">
               <Syringe className="h-6 w-6 text-gray-400" />
             </div>
@@ -76,17 +74,7 @@ export function VaccinationDistributionSidebar() {
                 const percentage = ((vaccine.count / totalDoses) * 100).toFixed(1);
 
                 return (
-                  <Link
-                    to="/reports/monthly-vaccination/records"
-                    state={{
-                      vaccineName: vaccine.name,
-                      itemCount: vaccine.count,
-                      month: initialMonth,
-                      monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
-                      // You can add any other relevant data here
-                    }}
-                    key={vaccine.name}
-                  >
+                  <Link key={vaccine.name} to="/reports/monthly-vaccination/records" state={getLinkState(vaccine.name, vaccine.count)}>
                     <div className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>
@@ -109,14 +97,16 @@ export function VaccinationDistributionSidebar() {
               })}
             </div>
 
-            {totalVaccines > 10 && (
-              <div className="text-center pt-4">
-                <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1">
-                  {showAll ? "Show Less" : `View All ${totalVaccines} Vaccines`}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
-                </button>
-              </div>
-            )}
+         
+            {/* View More Button - Always visible when data exists */}
+            <div className="pt-4 border-t border-gray-100 mt-4">
+              <Link to="/reports/monthly-vaccination/records" state={getLinkState()}>
+                <Button variant="link" className="w-full flex items-center justify-center gap-2 text-sm font-medium">
+                  View Monthly Administered Vaccines
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </>
         )}
       </CardContent>

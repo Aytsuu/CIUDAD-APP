@@ -13,6 +13,8 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
+import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
+import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
@@ -195,17 +197,27 @@ export const getItemsConfig = (
           element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
         },
         ],
+        sidebar:[
+          {
+            title: "Pending Medical Appointments",
+            element: <PendingMedicalAppointmentsSidebar />,
+          },
+          {
+            title: "Pending Medicine Requests",
+            element: <PendingMedicineRequestsSidebar />,
+          },
+        ]
       },
 
       {
         dashboard: "INVENTORY",
         sidebar: [
           {
-            title: "Most Requested Medicine",
+            title: "Medicine",
             element: <MedicineDistributionSidebar />,
           },
           {
-            title: "Most used FirstAid",
+            title: "FirstAid",
             element: <FirstAidDistributionSidebar />,
           },
           {

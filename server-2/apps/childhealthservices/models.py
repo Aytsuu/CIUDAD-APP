@@ -7,7 +7,7 @@ from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,Med
 from simple_history.models import HistoricalRecords
 from simple_history.utils import update_change_reason
 from django.conf import settings
-
+from apps.maternal.models import *
 
 # Create your models here.
 class ChildHealthrecord(models.Model):  
@@ -44,6 +44,7 @@ class ChildHealthrecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')
+    pregnancy = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     class Meta:
         db_table = 'child_healthrecord'
         ordering = ['-created_at']

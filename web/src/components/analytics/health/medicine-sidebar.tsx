@@ -1,10 +1,11 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Pill, ChevronDown } from "lucide-react";
+import { AlertCircle, Loader2, Pill, ChevronDown, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries";
 import { useState } from "react";
 import { Link } from "react-router";
+import { Button } from "@/components/ui/button/button";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -21,8 +22,7 @@ const COLORS = [
 export function MedicineDistributionSidebar() {
   const initialMonth = format(new Date(), "yyyy-MM");
   const { data, isLoading, error } = useMedicineChart(initialMonth);
-  // const currentDate = parseISO(`${initialMonth}-01`)
-  const [showAll, setShowAll] = useState(false);
+  const [showAll] = useState(false);
 
   // Transform and sort data
   const allMedicines = data?.medicine_counts
@@ -34,17 +34,21 @@ export function MedicineDistributionSidebar() {
 
   // Determine which medicines to show
   const medicinesToShow = showAll ? allMedicines : allMedicines.slice(0, 10);
-  const totalMedicines = allMedicines.length;
   const totalDoses = allMedicines.reduce((sum, item) => sum + item.count, 0);
+
+  // Common link state for all medicine cards and "View More" button
+  const getLinkState = (medicineName?: string, itemCount?: number) => ({
+    medicineName: medicineName || "",
+    itemCount: itemCount || totalDoses,
+    monthlyrcplist_id: data?.monthly_report_id,
+    month: initialMonth,
+    monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
+  });
 
   if (error) {
     return (
       <Card className="rounded-lg shadow-sm border-0">
         <CardHeader className="border-b border-gray-100 pb-3">
-          {/* <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <BarChart3 className="h-5 w-5 text-muted-foreground" />
-            Medicine Distribution
-          </CardTitle> */}
           <CardDescription>Error loading data</CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
@@ -65,7 +69,7 @@ export function MedicineDistributionSidebar() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : !data || allMedicines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center h-[300px] ">
+          <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">
             <div className="rounded-full bg-gray-100 p-3 mb-3">
               <Pill className="h-6 w-6 text-gray-400" />
             </div>
@@ -81,19 +85,11 @@ export function MedicineDistributionSidebar() {
 
                 return (
                   <Link
+                    key={medicine.name}
                     to="/reports/monthly-medicine/records"
-                    state={{
-                      // Pass the same state structure as your monthly records
-                      medicineName: medicine.name,
-                      itemCount: medicine.count,
-                      monthlyrcplist_id: data.monthly_report_id,
-                      month: initialMonth,
-                      monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
-                      // You can add any other relevant data here
-                    }}
+                    state={getLinkState(medicine.name, medicine.count)}
                   >
-                    {" "}
-                    <div key={medicine.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>
                           #{index + 1}
@@ -115,14 +111,20 @@ export function MedicineDistributionSidebar() {
               })}
             </div>
 
-            {totalMedicines > 10 && (
-              <div className="text-center pt-4">
-                <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1">
-                  {showAll ? "Show Less" : `View All ${totalMedicines} Medicines`}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
-                </button>
-              </div>
-            )}
+              
+
+            {/* View More Button - Always visible when data exists */}
+            <div className="pt-4 border-t border-gray-100 mt-4">
+              <Link to="/reports/monthly-medicine/records" state={getLinkState()}>
+                <Button 
+                  variant="link" 
+                  className="w-full flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  View Monthly Requested Medicines
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </>
         )}
       </CardContent>

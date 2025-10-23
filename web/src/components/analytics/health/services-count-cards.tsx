@@ -50,7 +50,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.child_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/child-health")
+          navigate("/services/childhealthrecords")
         }}
       />
     ),
@@ -60,7 +60,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.firstaid_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/first-aid")
+          navigate("/services/firstaid")
         }}
       />
     ),

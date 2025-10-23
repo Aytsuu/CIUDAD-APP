@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { ArrowUpDown, Search, FileInput, AlertCircle, Loader2, FileText } from "lucide-react"
+import { ArrowUpDown, Search, FileInput, AlertCircle, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { DataTable } from "@/components/ui/table/data-table"
@@ -22,6 +22,7 @@ import ScheduleTab from "./appointments-tab";
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 import ViewButton from "@/components/ui/view-button";
 import { useDebounce } from "@/hooks/use-debounce";
+import TableLoading from "../table-loading";
 
 // main component           
 export default function ScheduleRecords() {
@@ -421,9 +422,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
 
           <div className="w-full overflow-x-auto">
             {showLoadingState ? (
-              <div className="flex items-center justify-center min-h-20 overflow-x-auto gap-2">
-                <Loader2 className="h-6 w-6 animate-spin" /> Loading...
-              </div>
+             <TableLoading/>
             ) : transformedData.length > 0 ? (
               <DataTable columns={columns} data={transformedData} />
             ) : (

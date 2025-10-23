@@ -3,10 +3,11 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, TrendingUp } from "lucide-react";
+import { AlertCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface NutritionalStatusData {
   bm_id: number;
@@ -117,21 +118,48 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 mt-4">
-            <Button variant={selectedMetrics.height ? "default" : "outline"} size="sm" onClick={() => toggleMetric("height")} className="flex items-center gap-2 bg-sky-100 text-blue-600 hover:bg-slate-200">
+            <Button 
+              variant={selectedMetrics.height ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => toggleMetric("height")} 
+              className="flex items-center gap-2 bg-sky-100 text-blue-600 hover:bg-slate-200"
+              disabled={isLoading}
+            >
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               Height (cm)
             </Button>
-            <Button variant={selectedMetrics.weight ? "default" : "outline"} size="sm" onClick={() => toggleMetric("weight")} className="flex items-center gap-2">
+            <Button 
+              variant={selectedMetrics.weight ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => toggleMetric("weight")} 
+              className="flex items-center gap-2"
+              disabled={isLoading}
+            >
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               Weight (kg)
             </Button>
           </div>
-          <div className="text-sm text-gray-500">{chartData.length} measurements recorded</div>
+          {isLoading ? (
+            <Skeleton className="h-5 w-32" />
+          ) : (
+            <div className="text-sm text-gray-500">{chartData.length} measurements recorded</div>
+          )}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="space-y-4 h-[450px]">
+            {/* Chart skeleton */}
+            <Skeleton className="w-full h-[350px] rounded-lg" />
+
+            {/* Stats skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="text-center space-y-2">
+                  <Skeleton className="h-4 w-24 mx-auto" />
+                  <Skeleton className="h-6 w-16 mx-auto" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center h-[400px]">

@@ -19,6 +19,7 @@ urlpatterns = [
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patients/', PatientListView.as_view(), name='patient-list'),
+    path('children/',ChildPatientsWithoutRecordsView.as_view(), name='children-without-records'),
     path('patient/check-or-create/', check_or_create_patient, name='check-or-create-patient'), # for mobile prenatal appointment
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),

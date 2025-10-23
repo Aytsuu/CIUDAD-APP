@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Users2 } from "lucide-react";
+import { Search, Users2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUnvaccinatedVaccinesSummary } from "../../queries/fetch";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -12,6 +12,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 interface VaccineAgeGroup {
   age_group_id: number | string | null;
@@ -301,10 +302,7 @@ export default function UnvaccinatedResidents() {
 
       <div>
         {isLoading ? (
-          <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading...</span>
-          </div>
+         <TableLoading/>
         ) : isError ? (
           <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
             <span>Error loading data. Please try again.</span>

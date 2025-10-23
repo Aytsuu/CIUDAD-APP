@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { ChevronLeft, Heart } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { useChildHealthHistory, useNutriotionalStatus } from "../forms/queries/fetchQueries";
@@ -20,20 +20,20 @@ import { GrowthChart } from "./growth-chart";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 import { processHistoryData } from "./formattedData";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
+import TableLoading from "../../table-loading";
 
 export default function InvChildHealthRecords() {
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const [childData] = useState(ChildHealthRecord);
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Safe access to ChildHealthRecord properties
-  const patId = childData?.pat_id || "";
-  const dob = childData?.dob || "";
-  const chrecId = childData?.chrec_id || "";
+  // Safe access to ChildHealthRecord properties for initial API calls
+  const patId = ChildHealthRecord?.pat_id || "";
+  const dob = ChildHealthRecord?.dob || "";
+  const chrecId = ChildHealthRecord?.chrec_id || "";
 
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patId, dob);
   const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(patId);
@@ -44,8 +44,8 @@ export default function InvChildHealthRecords() {
   const isLoading = followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || childHistoryLoading;
 
   console.log("chhh", chrecId);
-  console.log("childData", childData);
-  console.log("historyData", historyData);
+  console.log("Original ChildHealthRecord:", ChildHealthRecord);
+  console.log("historyData:", historyData);
 
   useEffect(() => {
     if (!chrecId) {
@@ -53,90 +53,127 @@ export default function InvChildHealthRecords() {
     }
   }, [chrecId, navigate]);
 
-  // Transform child data from nested API structure - ONLY for ChildHealthRecordCard
-  const transformChildData = useMemo(() => {
-    console.log("🔄 TRANSFORMING CHILD DATA FOR CARD DISPLAY");
+  // Extract and derive child data from API response - robust to array/object and loading states
+  const derivedChildData = useMemo(() => {
+    if (!historyData) return null;
 
-    // Extract the first child health history to get patient details
-    const firstHistory = historyData?.[0];
-    if (!firstHistory) {
-      console.log("❌ No child health histories found - using original childData");
-      return childData; // Fallback to original childData
+    // historyData is expected to be an array with one element (the child record wrapper)
+    const childRecord = Array.isArray(historyData) ? historyData[0] : historyData;
+    if (!childRecord) {
+      console.log("No child record found yet.");
+      return null;
     }
 
-    const chrecDetails = firstHistory.chrec_details;
+    // First child health history entry (if any)
+    const firstHistory = childRecord?.child_health_histories?.[0];
+
+    // Try nested details if backend provided them; otherwise we’ll use fallbacks
+    const chrecDetails = firstHistory?.chrec_details;
     const patrecDetails = chrecDetails?.patrec_details;
     const patDetails = patrecDetails?.pat_details;
 
-    if (!patDetails) {
-      console.log("❌ No patient details found - using original childData");
-      return childData; // Fallback to original childData
-    }
+    const personalInfo = patDetails?.personal_info || {};
+    const address = patDetails?.address || {};
 
-    const personalInfo = patDetails.personal_info || {};
-    const address = patDetails.address || {};
-    const familyHeadInfo = patDetails.family_head_info?.family_heads || {};
+    // Potential family details (may be absent on this API)
+    const familyHeadInfo = patDetails?.family_head_info?.family_heads || patDetails?.family_head_info || patrecDetails?.family_head_info?.family_heads || patrecDetails?.family_head_info || {};
 
-    const motherInfo = familyHeadInfo.mother?.personal_info || {};
-    const fatherInfo = familyHeadInfo.father?.personal_info || {};
+    // Mother
+    const motherInfo = familyHeadInfo?.mother?.personal_info || familyHeadInfo?.mother || patDetails?.mother_info?.personal_info || patDetails?.mother_info || {};
+    const motherAddress = familyHeadInfo?.mother?.address || familyHeadInfo?.mother?.motherAddress || patDetails?.mother_info?.address || {};
 
-    console.log("👨‍👩‍👧‍👦 EXTRACTED PATIENT DATA:", {
-      personalInfo,
-      address,
-      motherInfo,
-      fatherInfo
-    });
+    // Father
+    const fatherInfo = familyHeadInfo?.father?.personal_info || familyHeadInfo?.father || patDetails?.father_info?.personal_info || patDetails?.father_info || {};
+    const fatherAddress = familyHeadInfo?.father?.address || familyHeadInfo?.father?.fatherAddress || patDetails?.father_info?.address || {};
+
+    const additionalInfo = patDetails?.additional_info || patrecDetails?.additional_info || chrecDetails?.additional_info || {};
+
+    // Build with safe fallbacks (prefer API, fallback to navigation state)
+    const resolvedDob = personalInfo?.per_dob || ChildHealthRecord?.dob || "";
+    const resolvedAge = resolvedDob ? calculateAgeFromDOB(resolvedDob).years.toString() : "";
 
     const transformedData = {
       // Patient basic info
-      pat_id: chrecDetails?.patient || patDetails.pat_id || patId,
-      fname: personalInfo?.per_fname || childData?.fname || "",
-      lname: personalInfo?.per_lname || childData?.lname || "",
-      mname: personalInfo?.per_mname || childData?.mname || "",
-      sex: personalInfo?.per_sex || childData?.sex || "",
-      dob: personalInfo?.per_dob || childData?.dob || "",
-      age: personalInfo?.per_dob ? calculateAgeFromDOB(personalInfo.per_dob).years.toString() : childData?.age || "",
+      pat_id: chrecDetails?.patient || patDetails?.pat_id || ChildHealthRecord?.pat_id || patId || "",
+      fname: personalInfo?.per_fname || ChildHealthRecord?.fname || "",
+      lname: personalInfo?.per_lname || ChildHealthRecord?.lname || "",
+      mname: personalInfo?.per_mname || ChildHealthRecord?.mname || "",
+      sex: personalInfo?.per_sex || ChildHealthRecord?.sex || "",
+      dob: resolvedDob,
+      age: resolvedAge,
 
       // Mother info
-      mother_fname: motherInfo?.per_fname || childData?.mother_fname || "",
-      mother_lname: motherInfo?.per_lname || childData?.mother_lname || "",
-      mother_mname: motherInfo?.per_mname || childData?.mother_mname || "",
-      mother_occupation: chrecDetails?.mother_occupation || motherInfo?.per_occupation || childData?.mother_occupation || "",
-      mother_age: motherInfo?.per_dob ? calculateAgeFromDOB(motherInfo.per_dob).years.toString() : childData?.mother_age || "",
+      mother_fname: motherInfo?.per_fname || "",
+      mother_lname: motherInfo?.per_lname || "",
+      mother_mname: motherInfo?.per_mname || "",
+      mother_occupation: childRecord?.mother_occupation || motherInfo?.per_occupation || "",
+      mother_dob: motherInfo?.per_dob || familyHeadInfo?.mother?.per_dob || patDetails?.mother_dob || "",
+      mother_rp_id: familyHeadInfo?.mother?.rp_id || motherInfo?.rp_id || patDetails?.mother_rp_id || familyHeadInfo?.rp_id || "",
+      mother_pat_id: additionalInfo?.mother_latest_pregnancy?.mother_pat_id || motherInfo?.pat_id || familyHeadInfo?.mother?.pat_id || patDetails?.mother_pat_id || chrecDetails?.mother_pat_id || "",
+      motherAddress: {
+        full_address:
+          motherAddress?.full_address ||
+          familyHeadInfo?.mother?.full_address ||
+          patDetails?.mother_address?.full_address ||
+          `${motherAddress?.add_street || ""} ${motherAddress?.add_barangay || ""} ${motherAddress?.add_city || ""} ${motherAddress?.add_province || ""}`.trim() ||
+          "",
+        add_street: motherAddress?.add_street || familyHeadInfo?.mother?.add_street || "",
+        add_barangay: motherAddress?.add_barangay || familyHeadInfo?.mother?.add_barangay || "",
+        add_city: motherAddress?.add_city || familyHeadInfo?.mother?.add_city || "",
+        add_province: motherAddress?.add_province || familyHeadInfo?.mother?.add_province || "",
+        add_sitio: motherAddress?.add_sitio || familyHeadInfo?.mother?.add_sitio || "",
+      },
 
+      address: address?.full_address || "",
+      landmarks: childRecord?.landmarks || "",
       // Father info
-      father_fname: fatherInfo?.per_fname || childData?.father_fname || "",
-      father_lname: fatherInfo?.per_lname || childData?.father_lname || "",
-      father_mname: fatherInfo?.per_mname || childData?.father_mname || "",
-      father_age: fatherInfo?.per_dob ? calculateAgeFromDOB(fatherInfo.per_dob).years.toString() : childData?.father_age || "",
-      father_occupation: chrecDetails?.father_occupation || fatherInfo?.per_occupation || childData?.father_occupation || "",
+      father_fname: fatherInfo?.per_fname || "",
+      father_lname: fatherInfo?.per_lname || "",
+      father_mname: fatherInfo?.per_mname || "",
+      father_occupation: childRecord?.father_occupation || fatherInfo?.per_occupation || "",
+      father_dob: fatherInfo?.per_dob || familyHeadInfo?.father?.per_dob || patDetails?.father_dob || "",
+      father_rp_id: familyHeadInfo?.father?.rp_id || fatherInfo?.rp_id || patDetails?.father_rp_id || "",
+      father_pat_id: fatherInfo?.pat_id || familyHeadInfo?.father?.pat_id || patDetails?.father_pat_id || "",
 
-      // Address info
-      address: address?.full_address || childData?.address || "",
-      street: address?.add_street || childData?.street || "",
-      barangay: address?.add_barangay || childData?.barangay || "",
-      city: address?.add_city || childData?.city || "",
-      province: address?.add_province || childData?.province || "",
-      landmarks: chrecDetails?.landmarks || address?.add_landmarks || childData?.landmarks || "",
+      fatherAddress: {
+        full_address:
+          fatherAddress?.full_address ||
+          familyHeadInfo?.father?.full_address ||
+          patDetails?.father_address?.full_address ||
+          `${fatherAddress?.add_street || ""} ${fatherAddress?.add_barangay || ""} ${fatherAddress?.add_city || ""} ${fatherAddress?.add_province || ""}`.trim() ||
+          "",
+        add_street: fatherAddress?.add_street || familyHeadInfo?.father?.add_street || "",
+        add_barangay: fatherAddress?.add_barangay || familyHeadInfo?.father?.add_barangay || "",
+        add_city: fatherAddress?.add_city || familyHeadInfo?.father?.add_city || "",
+        add_province: fatherAddress?.add_province || familyHeadInfo?.father?.add_province || "",
+        add_sitio: fatherAddress?.add_sitio || familyHeadInfo?.father?.add_sitio || "",
+      },
 
-      // Child health specific info
-      type_of_feeding: chrecDetails?.type_of_feeding || childData?.type_of_feeding || "",
-      delivery_type: chrecDetails?.place_of_delivery_type || childData?.delivery_type || "",
-      pod_location: chrecDetails?.pod_location || childData?.pod_location || "",
-      tt_status: familyHeadInfo?.tt_status || firstHistory?.tt_status || childData?.tt_status || "",
-      birth_order: chrecDetails?.birth_order?.toString() || childData?.birth_order?.toString() || "",
+      // Child health specific info (top-level fields from the wrapper object)
+      type_of_feeding: childRecord?.type_of_feeding || "",
+      delivery_type: childRecord?.place_of_delivery_type || "",
+      pod_location: childRecord?.pod_location || "",
+      tt_status: firstHistory?.tt_status || "",
+      birth_order: childRecord?.birth_order != null ? String(childRecord.birth_order) : "",
 
+      // Various possible paths for pregnancy
+      pregnancy_id: childRecord?.pregnancy || chrecDetails?.pregnancy || additionalInfo?.mother_latest_pregnancy?.pregnancy_id || patDetails?.pregnancy_id || motherInfo?.pregnancy_id || "",
       // Additional fields
-      chrec_id: childData?.chrec_id || chrecId
+      chrec_id: childRecord?.chrec_id || chrecId || "",
     };
 
-    console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
-    return transformedData;
-  }, [historyData, childData, patId, chrecId]);
+    // Debug output to verify mapping paths
+    console.log("Derived childRecord (wrapper):", childRecord);
+    console.log("First history entry:", firstHistory);
+    console.log("Final derived child data:", transformedData);
 
-  // Process the history data using a helper function - KEEP ORIGINAL LOGIC
+    return transformedData;
+  }, [historyData, ChildHealthRecord, patId, chrecId]);
+
+  // Process the history data using a helper function - keep original logic, guard shape
   const processedHistoryData = useMemo(() => {
-    return processHistoryData(historyData, dob);
+    const raw = Array.isArray(historyData) ? historyData : historyData ? [historyData] : [];
+    return processHistoryData(raw, dob);
   }, [historyData, dob]);
 
   const latestRecord = useMemo(() => {
@@ -151,7 +188,9 @@ export default function InvChildHealthRecords() {
 
   const filteredData = useMemo(() => {
     return processedHistoryData.filter((item: any) => {
-      const findingsText = item.findings ? `${item.findings.subj_summary || ""} ${item.findings.obj_summary || ""} ${item.findings.assessment_summary || ""} ${item.findings.plantreatment_summary || ""}` : "";
+      const findingsText = item.findings
+        ? `${item.findings.subj_summary || ""} ${item.findings.obj_summary || ""} ${item.findings.assessment_summary || ""} ${item.findings.plantreatment_summary || ""}`
+        : "";
       return (
         item.age.toString().includes(searchQuery) ||
         item.wt.toString().includes(searchQuery) ||
@@ -180,26 +219,26 @@ export default function InvChildHealthRecords() {
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
-  // Use transformChildData for navigation
+  // Use derivedChildData for navigation
   const navigateToUpdateLatest = () => {
-    if (latestRecord && transformChildData) {
+    if (latestRecord && derivedChildData) {
       navigate("/services/childhealthrecords/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
-            patId: transformChildData.pat_id,
+            patId: derivedChildData.pat_id,
             originalRecord: latestRecord,
-            patientData: transformChildData,
-            chrecId: chrecId,
-            mode: "addnewchildhealthrecord"
-          }
-        }
+            patientData: derivedChildData,
+            chrecId: derivedChildData.chrec_id || chrecId,
+            mode: "addnewchildhealthrecord",
+          },
+        },
       });
     }
   };
 
-  // Use transformChildData for columns
-  const columns = useMemo(() => getChildHealthColumns(transformChildData, nutritionalStatusData), [transformChildData, nutritionalStatusData]);
+  // Use derivedChildData for columns
+  const columns = useMemo(() => getChildHealthColumns(derivedChildData, nutritionalStatusData), [derivedChildData, nutritionalStatusData]);
 
   if (isError) {
     return (
@@ -212,10 +251,10 @@ export default function InvChildHealthRecords() {
     );
   }
 
-  if (!childData) {
+  if (!derivedChildData && !childHistoryLoading) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center">
-        <div className="text-red-500 mb-4">Child health record data is missing</div>
+        <div className="text-red-500 mb-4">Unable to load child health record data from API</div>
         <Button variant="outline" onClick={() => navigate(-1)}>
           Go Back
         </Button>
@@ -236,7 +275,7 @@ export default function InvChildHealthRecords() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
       <div className="mb-5">
-        <ChildHealthRecordCard child={transformChildData} isLoading={childHistoryLoading} />
+        <ChildHealthRecordCard child={derivedChildData} isLoading={childHistoryLoading} />
       </div>
       {isLoading ? (
         <VaccinationStatusCardsSkeleton />
@@ -265,10 +304,41 @@ export default function InvChildHealthRecords() {
                   <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
                     {isLatestRecordImmunizationOrCheckup ? (
                       <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                        <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                        <span className="text-sm font-medium">
+                          {latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}
+                        </span>
                       </div>
                     ) : (
-                      <Button onClick={navigateToUpdateLatest}>New record</Button>
+                      <div className="flex gap-2">
+                        <Button onClick={navigateToUpdateLatest}>New record</Button>
+                        <Link
+                          to="/services/maternalindividualrecords"
+                          state={{
+                            params: {
+                              patientData: {
+                                pat_id: derivedChildData?.mother_pat_id || "",
+                                pat_type: "Resident",
+                                address: derivedChildData?.motherAddress,
+                                personal_info: {
+                                  per_fname: derivedChildData?.mother_fname || "",
+                                  per_lname: derivedChildData?.mother_lname || "",
+                                  per_mname: derivedChildData?.mother_mname || "",
+                                  per_sex: "FEMALE",
+                                  per_dob: derivedChildData?.mother_dob || "",
+                                  ageTime: "yrs",
+                                },
+                                pregnancy_id: derivedChildData?.pregnancy_id || "",
+                                rp_id: derivedChildData?.mother_rp_id || "",
+                                mode:"child"
+                              },
+                            },
+                          }}
+                          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 hover:text-accent-foreground h-10 px-4 py-2"
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          Mother Records
+                        </Link>
+                      </div>
                     )}
                   </div>
                 )}
@@ -276,16 +346,37 @@ export default function InvChildHealthRecords() {
             </ProtectedComponentButton>
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+
+        {/* Debug Info */}
+        {derivedChildData && (
+          <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded mx-4">
+            <p className="font-semibold mb-1">Parent Record Debug Info (Derived from API):</p>
+            <p>Child Pat ID: {derivedChildData?.pat_id || "N/A"}</p>
+            <p>
+              Child Name: {derivedChildData?.fname} {derivedChildData?.lname}
+            </p>
+            <hr className="my-2" />
+            <p className="font-medium">Mother</p>
+            <p>Mother Pat ID: {derivedChildData?.mother_pat_id || "N/A"}</p>
+            <p>
+              Mother Name: {derivedChildData?.mother_fname} {derivedChildData?.mother_lname}
+            </p>
+            <p>Pregnancy ID: {derivedChildData?.pregnancy_id || "N/A"}</p>
+            <p>Mother RP ID: {derivedChildData?.mother_rp_id || "N/A"}</p>
+            <p>Mother Address: {derivedChildData?.motherAddress?.full_address || "N/A"}</p>
+            <hr className="my-2" />
+            <p className="font-medium">Father</p>
+            <p>Father Pat ID: {derivedChildData?.father_pat_id || "N/A"}</p>
+            <p>
+              Father Name: {derivedChildData?.father_fname} {derivedChildData?.father_lname}
+            </p>
+            <p>Father RP ID: {derivedChildData?.father_rp_id || "N/A"}</p>
+            <p>Father Occupation: {derivedChildData?.father_occupation || "N/A"}</p>
+            <p>Father Address: {derivedChildData?.fatherAddress?.full_address || "N/A"}</p>
+          </div>
+        )}
+
+        <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}- {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records

@@ -10,6 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestReferredColumns } from "./columns";
 import { useMedicineRequestStatuses } from "../queries/fetch";
+import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function ReferredRequest() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,10 +130,7 @@ export default function ReferredRequest() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
+           <TableLoading/>
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
               <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>

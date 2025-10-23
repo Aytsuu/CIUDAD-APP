@@ -25,15 +25,15 @@ export const getMedicineRequestProcessing = async (page:number, pageSize: number
 
 
 // api.ts
-export const getMedicineRequestPending = async (page: number = 1, pageSize: number, search: string = "", dateFilter: string ): Promise<any> => {
+export const getMedicineRequestPending = async (page?: number, pageSize?: number, search?: string, dateFilter?: string): Promise<any> => {
   try {
     const params = new URLSearchParams();
-    params.append("page", page.toString());
-    params.append("page_size", pageSize.toString());
+    if (page) params.append("page", page.toString());
+    if (pageSize) params.append("page_size", pageSize.toString());
     if (search) {
       params.append("search", search);
     }
-    if (dateFilter && dateFilter != "all") {
+    if (dateFilter && dateFilter !== "all") {
       params.append("date_filter", dateFilter);
     }
     const response = await api2.get(`/medicine/pending-medicine-request-table/?${params.toString()}`);
