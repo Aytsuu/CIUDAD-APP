@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
+import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -393,6 +391,7 @@ function IncomeTracking() {
                             className="bg-white w-full" 
                             placeholder="Month"
                             value={selectedMonth} 
+                            valueLabel={"Month"}
                             options={monthOptions}
                             onChange={handleMonthChange}
                         />
