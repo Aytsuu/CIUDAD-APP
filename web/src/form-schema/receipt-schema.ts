@@ -8,7 +8,7 @@ const DataRequirement = z.union([
         .refine((val) => val > -1, { message: "Value must be a positive number" }),
     z.number()
         .refine((val) => val > -1, { message: "Value must be a positive number" })
-]).transform((val) => String(val));
+]).transform((val) => val === 0 ? "" : String(val));
 
 // Function to create schema with rate validation
 export const createReceiptSchema = (requiredRate?: string) => {

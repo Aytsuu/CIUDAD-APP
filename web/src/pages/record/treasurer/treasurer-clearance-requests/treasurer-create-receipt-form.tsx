@@ -343,8 +343,7 @@ import { Loader2 } from "lucide-react";
                             }}
                             />
                         </FormControl>
-                        <FormMessage/>
-
+                        {/* <FormMessage/> */}
                         {isAmountInsufficient() && (
                             <div className="text-sm text-red-600 mt-1">
                             Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{discountedAmount || rate})
