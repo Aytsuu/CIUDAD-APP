@@ -196,7 +196,7 @@ export function AppSidebar() {
             title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Summon Calendar", url: "/summon-calendar" },
+              { title: "Date & Time Availability", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
