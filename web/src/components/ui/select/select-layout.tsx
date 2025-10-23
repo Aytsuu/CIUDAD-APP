@@ -31,7 +31,7 @@ export function SelectLayout({ placeholder, label, className, options, value, wi
   return (
       <Select value={value} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
-              <p className="text-sm text-gray-600">{valueLabel && valueLabel}: </p><SelectValue placeholder={placeholder} />
+              <p className="text-sm text-gray-600">{valueLabel && valueLabel + ": "} </p><SelectValue placeholder={placeholder} />
           </SelectTrigger> 
           <SelectContent>
               <SelectGroup>
