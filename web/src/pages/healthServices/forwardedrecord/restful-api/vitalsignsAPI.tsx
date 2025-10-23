@@ -20,4 +20,3 @@ export const updateVacRecord = async (vacrec_id: number) => {
   }
 };
 
-//   VaccinationRecord

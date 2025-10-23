@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -8,14 +8,13 @@ import IncomeExpenseFormSchema from './schema';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
-import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
-import { ChevronLeft, X, Loader2  } from 'lucide-react-native';
+import { ChevronLeft, Loader2  } from 'lucide-react-native';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
 

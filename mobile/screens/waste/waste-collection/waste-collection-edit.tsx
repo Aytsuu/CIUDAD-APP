@@ -225,7 +225,7 @@ function WasteColEdit() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -245,7 +245,7 @@ function WasteColEdit() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-md items-center flex-row justify-center"
                     disabled={isUpdating || isUpdatingCollectors}
                   >
                     {isUpdating || isUpdatingCollectors ? (

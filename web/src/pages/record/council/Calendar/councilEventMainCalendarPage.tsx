@@ -147,7 +147,7 @@ function CalendarPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
-                Loading council calendar...
+                Loading calendar...
               </div>
             ) : (
               <EventCalendar

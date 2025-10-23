@@ -463,7 +463,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # If the invoice is linked to a complaint
         if obj.pay_id is not None:
             try:
-                complaint = obj.pay_id.sr_id.comp_id
+                complaint = obj.pay_id.comp_id
                 complainants = complaint.complainant.all()
                 
                 if complainants.exists():

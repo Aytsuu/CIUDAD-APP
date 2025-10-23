@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, TouchableOpacity, FlatList, TextInput, RefreshControl, Image } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Search, ChevronLeft, Heart, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,7 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   };
 
   return (
-    <Card className="mb-4 bg-white border-slate-200">
+    <Card className="mb-4 bg-blue-100 border-slate-200">
       <CardContent className="p-4">
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1">
@@ -248,15 +248,13 @@ export default function IndivFirstAidRecords() {
           <PatientInfoCard patientData={patientData} />
         </View>
 
-        {/* <StatsCard count={firstAidCount} /> */}
-
         {/* Search Bar */}
         <View className="mx-4 mb-4">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-white rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-white rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -280,7 +278,7 @@ export default function IndivFirstAidRecords() {
               </Text>
               <Text className="text-gray-500 text-center">
                 {searchQuery
-                  ? "No records match your search criteria."
+                  ? ""
                   : "No first aid records available for this patient."}
               </Text>
             </View>

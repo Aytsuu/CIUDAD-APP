@@ -1,9 +1,8 @@
 // components/vaccination-status-cards.tsx
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView, Modal, FlatList } from "react-native";
+import { View, TouchableOpacity, Modal, FlatList } from "react-native";
 import { Syringe, CheckCircle, Clock, AlertCircle, X, ChevronRight } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
-import { LoadingState } from "@/components/ui/loading-state";
 
 interface VaccinationStatusCardsProps {
   unvaccinatedVaccines: any[];

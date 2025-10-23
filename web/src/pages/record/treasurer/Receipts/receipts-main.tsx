@@ -150,12 +150,13 @@ function ReceiptPage() {
             'barangay fiesta permit': 'bg-rose-100 text-rose-800 border-rose-300',
             'dwup': 'bg-pink-100 text-pink-800 border-pink-300',
             
-            // Personal & Miscellaneous - Pink/Rose variants
+            // Personal & Miscellaneous - Pink/Rose variants            
+            'burial': 'bg-rose-200 text-rose-900 border-rose-300',
             'cohabitation': 'bg-pink-100 text-pink-800 border-pink-300',
             'marriage certification': 'bg-rose-100 text-rose-800 border-rose-300',
             'good moral': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
             'indigency': 'bg-purple-100 text-purple-800 border-purple-300',
-            'indigency (for minors)': 'bg-violet-100 text-violet-800 border-violet-300',
+            'indigency (for minors)': 'bg-violet-100 text-violet-800 border-violet-300',    
           };
           
           // Exact match first
@@ -252,6 +253,7 @@ function ReceiptPage() {
             placeholder="Filter"
             options={filterOptions}
             value={selectedFilterId}
+            valueLabel={"Type"}
             onChange={handleFilterChange}
           />
         </div>

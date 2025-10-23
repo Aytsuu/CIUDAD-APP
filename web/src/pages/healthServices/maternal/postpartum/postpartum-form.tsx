@@ -142,7 +142,7 @@ export default function PostpartumFormFirstPg({
 
         setValue("mothersPersonalInfo.husbandLName", father?.per_lname)
         setValue("mothersPersonalInfo.husbandFName", father?.per_fname)
-        setValue("mothersPersonalInfo.husbandMName", father?.per_mname)
+        setValue("mothersPersonalInfo.husbandMName", father?.per_mname || "N/A")
         setValue("mothersPersonalInfo.husbandDob", father?.per_dob)
       } else if (!isResident && spouseInfo) {
         // For non-resident patients, spouse info comes directly

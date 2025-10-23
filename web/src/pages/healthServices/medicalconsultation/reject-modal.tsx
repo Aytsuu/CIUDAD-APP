@@ -99,14 +99,9 @@ export const RejectModal = ({ isOpen, onClose, appointmentId, patientName, onSuc
         <div className="p-6">
           <div className="mb-4 space-y-2">
             <Label className="text-sm font-medium text-gray-700">
-              Appointment: <span className="font-semibold text-gray-900">APT-{appointmentId}</span>
-            </Label>
-            <Label className="text-sm font-medium text-gray-700">
               Patient: <span className="font-semibold text-gray-900">{patientName}</span>
             </Label>
-            <Label className="text-sm font-medium text-gray-700">
-              Status: <span className="font-semibold text-red-600">{modalConfig.status.toUpperCase()}</span>
-            </Label>
+           
           </div>
 
           <Form {...form}>

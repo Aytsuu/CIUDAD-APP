@@ -1,6 +1,6 @@
 // components/ui/dropdown/dropdown-menu.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { useTailwind } from 'tailwind-rn';
 
 interface DropdownMenuProps {

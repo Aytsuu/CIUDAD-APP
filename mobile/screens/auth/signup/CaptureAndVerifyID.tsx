@@ -1,19 +1,15 @@
-import React from "react"
-import {
-  useCameraDevice,
-  Camera,
-} from "react-native-vision-camera";
+import React from "react";
+import { useCameraDevice, Camera } from "react-native-vision-camera";
 import { View, StyleSheet, Text } from "react-native";
 import { supabase } from "@/lib/supabase";
-import * as FileSystem from 'expo-file-system'
 import { postDocumentData } from "../rest-api/authPostAPI";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo from "@react-native-community/netinfo";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 export type CAVIDCamHandle = {
   capturePhoto: () => Promise<boolean | undefined>;
-}
+};
 
 // Configuration constants
 const MAX_RETRIES = 3;
@@ -27,20 +23,23 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
     const isActive = React.useRef<boolean>(true);
     const device = useCameraDevice("back");
     const camera = React.useRef<Camera>(null);
-    const [hasPermission, setHasPermission] = React.useState<boolean | null>(null);
-    const [connectionState, setConnectionState] = React.useState<string>('disconnected');
+    const [hasPermission, setHasPermission] = React.useState<boolean | null>(
+      null
+    );
+    const [connectionState, setConnectionState] =
+      React.useState<string>("disconnected");
     const [isOnline, setIsOnline] = React.useState(true);
 
     // Monitor actual network state
     React.useEffect(() => {
-      const unsubscribe = NetInfo.addEventListener(state => {
+      const unsubscribe = NetInfo.addEventListener((state) => {
         const online = state.isConnected ?? false;
         setIsOnline(online);
-        console.log('Network state:', online ? 'Online' : 'Offline');
+        console.log("Network state:", online ? "Online" : "Offline");
       });
 
       // Get initial state
-      NetInfo.fetch().then(state => {
+      NetInfo.fetch().then((state) => {
         setIsOnline(state.isConnected ?? false);
       });
 
@@ -50,7 +49,7 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
     React.useEffect(() => {
       const requestCameraPermission = async () => {
         const status = await Camera.requestCameraPermission();
-        setHasPermission(status === "granted")
+        setHasPermission(status === "granted");
       };
       requestCameraPermission();
     }, []);
@@ -61,38 +60,40 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
       maxRetries: number = MAX_RETRIES
     ): Promise<T> => {
       let lastError: Error;
-      
+
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           return await operation();
         } catch (error) {
           lastError = error as Error;
           console.log(`Attempt ${attempt}/${maxRetries} failed:`, error);
-          
+
           if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+            await new Promise((resolve) =>
+              setTimeout(resolve, RETRY_DELAY * attempt)
+            );
           }
         }
       }
-      
+
       throw lastError!;
     };
     // Monitor connection state
     React.useEffect(() => {
-      const channel = supabase.channel('connection-monitor');
-      
+      const channel = supabase.channel("connection-monitor");
+
       const subscription = channel
-        .on('system', { event: 'DISCONNECTED' }, () => {
-          setConnectionState('disconnected');
-          console.log('Disconnected from Supabase');
+        .on("system", { event: "DISCONNECTED" }, () => {
+          setConnectionState("disconnected");
+          console.log("Disconnected from Supabase");
         })
-        .on('system', { event: 'CONNECTED' }, () => {
-          setConnectionState('connected');
-          console.log('Connected to Supabase');
+        .on("system", { event: "CONNECTED" }, () => {
+          setConnectionState("connected");
+          console.log("Connected to Supabase");
         })
-        .on('system', { event: 'RECONNECT' }, () => {
-          setConnectionState('reconnecting');
-          console.log('Reconnecting to Supabase');
+        .on("system", { event: "RECONNECT" }, () => {
+          setConnectionState("reconnecting");
+          console.log("Reconnecting to Supabase");
         })
         .subscribe();
 
@@ -103,10 +104,13 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
 
     // Monitor network state
     React.useEffect(() => {
-      const unsubscribe = NetInfo.addEventListener(state => {
-        console.log('Network state:', state.isConnected ? 'Connected' : 'Disconnected');
+      const unsubscribe = NetInfo.addEventListener((state) => {
+        console.log(
+          "Network state:",
+          state.isConnected ? "Connected" : "Disconnected"
+        );
         if (!state.isConnected) {
-          console.log('No network connection');
+          console.log("No network connection");
         }
       });
 
@@ -130,38 +134,41 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
           // Capture photo
           const photo = await camera.current.takePhoto();
           const photoUri = `file://${photo?.path}`;
-          const base64Data = await FileSystem.readAsStringAsync(photoUri, {
-            encoding: FileSystem.EncodingType.Base64
-          });
+          // const compressedImage = await ImageManipulator.manipulateAsync(
+          //   photoUri,
+          //   [
+          //     // {
+          //     //   resize: { width: 800 },
+          //     // },
+          //   ],
+          //   { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+          // );
+          // const optimizedPhoto = compressedImage.uri;
 
           // Send data for processing
           try {
-            const values = type == "business" ? 
-                        getValues('businessRespondent') : 
-                        getValues('personalInfoSchema') as any
+            const values =
+              type == "business"
+                ? getValues("businessRespondent")
+                : (getValues("personalInfoSchema") as any);
 
-            switch(type) {
-              case 'business':
-                const busRespondentMatchID = await postDocumentData({
-                  lname: values.br_lname.toUpperCase().trim(),
-                  fname: values.br_fname.toUpperCase().trim(),
-                  ...(values.br_mname != "" && {mname: values.br_mname?.toUpperCase().trim()}),
-                  dob: values.br_dob,
-                  image: `data:image/jpeg;base64,${base64Data}`
-                });
-                
-                return busRespondentMatchID
-              default:
-                const residentMatchID = await postDocumentData({
-                  lname: values.per_lname.toUpperCase().trim(),
-                  fname: values.per_fname.toUpperCase().trim(),
-                  ...(values.per_mname != "" && {mname: values.per_mname?.toUpperCase().trim()}),
-                  dob: values.per_dob,
-                  image: `data:image/jpeg;base64,${base64Data}`
-                });
+            const formData = new FormData();
+            formData.append("image", {
+              uri: photoUri,
+              type: "image/jpeg",
+              name: "id_document.jpg",
+            } as any);
 
-                return residentMatchID
-            }
+            formData.append('lname', type == "business" ? values.br_lname.toUpperCase().trim() : values.per_lname.toUpperCase().trim())
+            formData.append('fname', type == "business" ? values.br_fname.toUpperCase().trim() : values.per_fname.toUpperCase().trim())
+            formData.append('dob', type == "business" ? values.br_dob.toUpperCase().trim() : values.per_dob.toUpperCase().trim())
+            if(type == "business" && values?.br_mname != "")
+              formData.append('mname', values.br_mname.toUpperCase().trim())
+            else if (values?.per_mname != "")
+              formData.append('mname', values.per_mname.toUpperCase().trim())
+
+            const result = await postDocumentData(formData)
+            return result;
 
           } catch (postError) {
             console.log("Error sending document data:", postError);
@@ -171,7 +178,7 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
           console.log("Capture and verification failed:", error);
           return false;
         }
-      }
+      },
     }));
 
     if (!device || !hasPermission) {
@@ -196,11 +203,13 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
           outputOrientation="device"
           enableZoomGesture={false}
         />
-        
+
         {/* Connection status indicator (optional) */}
         {!isOnline && (
           <View className="absolute top-10 right-10 bg-red-500 px-3 py-1 rounded">
-            <Text className="text-white text-xs">Offline - No internet connection</Text>
+            <Text className="text-white text-xs">
+              Offline - No internet connection
+            </Text>
           </View>
         )}
       </View>

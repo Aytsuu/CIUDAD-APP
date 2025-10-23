@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState,} from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import ReferralFormModal from "./referralform";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { getAnimalBitePatientDetails } from "./api/get-api";
+import { getUniqueAnimalbitePatients, getAnimalBiteStats } from "./api/get-api";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import ViewButton from "@/components/ui/view-button";
@@ -46,6 +46,13 @@ type PatientCountStats = {
   transientPercentage: number;
 };
 
+// type ApiResponse = {
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+//   results: UniquePatientDisplay[];
+// };
+
 const Overall: React.FC = () => {
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -59,6 +66,7 @@ const Overall: React.FC = () => {
   const [isReferralFormOpen, setIsReferralFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -73,44 +81,32 @@ const Overall: React.FC = () => {
     showLoading();
     setError(null);
     try {
-      const allRecords = await getAnimalBitePatientDetails();
-      console.log("Fetched records:", allRecords);
+      const params: any = {
+        page: currentPage,
+        limit: pageSize,
+      };
 
-      const patientGroups = new Map<string, any[]>();
+      // Add search parameter if search query exists
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
 
-      allRecords.forEach((record: any) => {
-        const patientId = record.patient_id;
-        if (!patientGroups.has(patientId)) {
-          patientGroups.set(patientId, []);
-        }
-        patientGroups.get(patientId)?.push(record);
-      });
+      // Add filter parameter if not "all"
+      if (filterValue !== "all") {
+        params.filter = filterValue;
+      }
 
-      const uniquePatients: UniquePatientDisplay[] = [];
+      console.log("Fetching records with params:", params);
+      const response = await getUniqueAnimalbitePatients(params);
+      console.log("Backend response:", response);
 
-      patientGroups.forEach((recordsForPatient, patientId) => {
-        const latestRecord = recordsForPatient[0];
-
-        if (latestRecord) {
-          uniquePatients.push({
-            id: patientId,
-            fname: latestRecord.patient_fname || "N/A",
-            lname: latestRecord.patient_lname || "N/A",
-            gender: latestRecord.patient_sex || "N/A",
-            age: latestRecord.patient_age?.toString() || "N/A",
-            date: latestRecord.referral_date,
-            transient: latestRecord.referral_transient,
-            patientType: latestRecord.patient_type || "N/A",
-            exposure: latestRecord.exposure_type,
-            siteOfExposure: latestRecord.exposure_site,
-            bitingAnimal: latestRecord.biting_animal,
-            actions_taken: latestRecord.actions_taken || "",
-            referredby: latestRecord.referredby || "",
-            recordCount: recordsForPatient.length
-          });
-        }
-      });
-      setPatients(uniquePatients);
+      if (response && response.results) {
+        setPatients(response.results);
+        setTotalCount(response.count || response.results.length);
+      } else {
+        setPatients([]);
+        setTotalCount(0);
+      }
     } catch (err) {
       console.error("Fetch error:", err);
       setError("Failed to load animal bite records. Please try again.");
@@ -121,47 +117,51 @@ const Overall: React.FC = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const stats = await getAnimalBiteStats();
+      return stats;
+    } catch (err) {
+      console.error("Stats fetch error:", err);
+      return {
+        total: 0,
+        residents: 0,
+        transients: 0,
+        residentPercentage: 0,
+        transientPercentage: 0
+      };
+    }
+  };
+
+  const [stats, setStats] = useState<PatientCountStats>({
+    total: 0,
+    residents: 0,
+    transients: 0,
+    residentPercentage: 0,
+    transientPercentage: 0
+  });
+
+  // Fetch data when dependencies change
   useEffect(() => {
     fetchAnimalBiteRecords();
+  }, [currentPage, pageSize, debouncedSearchQuery, filterValue]);
+
+  // Fetch stats on component mount
+  useEffect(() => {
+    const loadStats = async () => {
+      const statsData = await fetchStats();
+      setStats(statsData);
+    };
+    loadStats();
   }, []);
 
-  // Calculate patient statistics
-  const calculatePatientStats = useCallback((): PatientCountStats => {
-    const total = patients.length;
-    const residents = patients.filter((p) => p.patientType === "Resident").length;
-    const transients = patients.filter((p) => p.patientType === "Transient").length;
-    const residentPercentage = total > 0 ? Math.round((residents / total) * 100) : 0;
-    const transientPercentage = total > 0 ? Math.round((transients / total) * 100) : 0;
-
-    return {
-      total,
-      residents,
-      transients,
-      residentPercentage,
-      transientPercentage
-    };
-  }, [patients]);
-
-  const stats = calculatePatientStats();
-
-  // Filter and paginate data
-  const filteredPatients = useMemo(() => {
-    return patients.filter((p) => {
-      const searchTerms = `${p.fname} ${p.lname} ${p.age} ${p.gender} ${p.date} ${p.exposure} ${p.siteOfExposure} ${p.bitingAnimal} ${p.patientType}`.toLowerCase();
-      const matchesSearch = searchTerms.includes(debouncedSearchQuery.toLowerCase());
-      const matchesFilter = filterValue === "all" || (filterValue === "bite" && p.exposure === "Bite") || (filterValue === "non-bite" && p.exposure === "Non-bite") || (filterValue === "transient" && p.patientType === "Transient") || (filterValue === "resident" && p.patientType === "Resident");
-
-      return matchesSearch && matchesFilter;
-    });
-  }, [patients, debouncedSearchQuery, filterValue]);
-
-  // Pagination
-  const paginatedPatients = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredPatients.slice(startIndex, startIndex + pageSize);
-  }, [filteredPatients, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(filteredPatients.length / pageSize);
+  // Refresh stats when new records are added
+  const handleReferralFormClose = () => {
+    setIsReferralFormOpen(false);
+    fetchAnimalBiteRecords();
+    // Refresh stats as well
+    fetchStats().then(setStats);
+  };
 
   // Table columns with sorting and ViewButton
   const columns: ColumnDef<UniquePatientDisplay>[] = [
@@ -180,7 +180,6 @@ const Overall: React.FC = () => {
               <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
               <div className="text-sm text-darkGray">
                 {p.gender}, {p.age} years old
-                {p.recordCount > 1 && <span className="ml-2 bg-green-100 text-green-800 text-sm font-bold p-1 rounded">{p.recordCount} records</span>}
               </div>
             </div>
           </div>
@@ -200,19 +199,6 @@ const Overall: React.FC = () => {
         </div>
       )
     },
-    // {
-    //   accessorKey: "date",
-    //   header: ({ column }) => (
-    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-    //       Date <ArrowUpDown size={15} />
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[100px] px-2">
-    //       <div className="text-center w-full">{row.original.date}</div>
-    //     </div>
-    //   )
-    // },
     {
       accessorKey: "exposure",
       header: ({ column }) => (
@@ -252,7 +238,6 @@ const Overall: React.FC = () => {
         </div>
       )
     },
-
     {
       accessorKey: "actions_taken",
       header: "Actions Taken",
@@ -278,7 +263,7 @@ const Overall: React.FC = () => {
       accessorKey: "norecords",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          No if Records <ArrowUpDown size={15} />
+          No of Records <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
@@ -292,25 +277,25 @@ const Overall: React.FC = () => {
       header: "Action",
       cell: ({ row }) => {
         const p = row.original;
-        const patientData = {
-          pat_id: p.id,
-          pat_type: p.patientType,
-          age: p.age,
-          personal_info: {
-            per_fname: p.fname,
-            per_lname: p.lname,
-            per_sex: p.gender
-          }
-        };
 
         return (
           <ViewButton
             onClick={() => {
-              navigate(`/Animalbite_individual/${p.id}`, {
+              const patientData = {
+                pat_id: p.id,
+                pat_type: p.patientType,
+                age: p.age,
+                personal_info: {
+                  per_fname: p.fname,
+                  per_lname: p.lname,
+                  per_sex: p.gender
+                }
+              };
+
+              navigate("/services/animalbites/records", {
                 state: {
-                  params: {
-                    patientData
-                  }
+                  patientId: p.id,
+                  patientData
                 }
               });
             }}
@@ -335,10 +320,34 @@ const Overall: React.FC = () => {
     { key: "referredby", header: "Referred By" }
   ];
 
-  const handleReferralFormClose = () => {
-    setIsReferralFormOpen(false);
-    fetchAnimalBiteRecords();
-  };
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Handle export - fetch all data for export
+  // const handleExport = async () => {
+  //   try {
+  //     showLoading();
+  //     const params: any = {
+  //       export: true,
+  //     };
+
+  //     if (debouncedSearchQuery) {
+  //       params.search = debouncedSearchQuery;
+  //     }
+
+  //     if (filterValue !== "all") {
+  //       params.filter = filterValue;
+  //     }
+
+  //     const exportData = await getUniqueAnimalbitePatients(params);
+  //     return exportData;
+  //   } catch (err) {
+  //     console.error("Export error:", err);
+  //     toast.error("Failed to export data");
+  //     return [];
+  //   } finally {
+  //     hideLoading();
+  //   }
+  // };
 
   return (
     <MainLayoutComponent title="Animal Bite Records" description="Manage and view animal bite records">
@@ -386,14 +395,19 @@ const Overall: React.FC = () => {
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search by patient name, exposure type, biting animal..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Input 
+                placeholder="Search by patient name, exposure type, biting animal..." 
+                className="pl-10 bg-white w-full" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
             </div>
             <SelectLayout
               placeholder="Filter records"
               label=""
               className="bg-white w-full sm:w-48"
               options={[
-                { id: "all", name: "All Records" },
+                { id: "all", name: "All" },
                 { id: "bite", name: "Bite" },
                 { id: "non-bite", name: "Non-bite" },
                 { id: "resident", name: "Resident" },
@@ -441,7 +455,16 @@ const Overall: React.FC = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem>
-                    <ExportButton data={filteredPatients} filename="animal-bite-records" columns={exportColumns} />
+                    <ExportButton 
+                      data={patients} 
+                      filename="animal-bite-records" 
+                      columns={exportColumns} 
+                      // onClick={async () => {
+                      //   const exportData = await handleExport();
+                      //   // Update the data with full export results
+                      //   return exportData.results || [];
+                      // }}
+                    />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -460,17 +483,21 @@ const Overall: React.FC = () => {
                 <span>{error}</span>
               </div>
             ) : (
-              <DataTable columns={columns} data={paginatedPatients} />
+              <DataTable columns={columns} data={patients} />
             )}
           </div>
 
           {/* Pagination */}
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {paginatedPatients.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredPatients.length)} of {filteredPatients.length} rows
+              Showing {patients.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => setCurrentPage(page)} />
+              <PaginationLayout 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={(page) => setCurrentPage(page)} 
+              />
             </div>
           </div>
         </div>
@@ -488,6 +515,7 @@ const Overall: React.FC = () => {
               onAddPatient={(newPatient) => {
                 console.log("New patient added:", newPatient);
                 fetchAnimalBiteRecords();
+                fetchStats().then(setStats);
               }}
             />
           }

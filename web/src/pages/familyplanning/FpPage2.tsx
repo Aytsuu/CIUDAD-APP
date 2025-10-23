@@ -55,7 +55,7 @@ export default function FamilyPlanningForm2({
   // NEW: Fetch illnesses from database
   const { data: illnesses = [], isLoading: isLoadingIllnesses } = useQuery<Illness[]>({
     queryKey: ["illnesses"],
-    queryFn: () => fetchIllnesses("FP")
+    queryFn: () => fetchIllnesses("FP"), 
   })
 
   const form = useForm<FormData>({
@@ -291,7 +291,7 @@ export default function FamilyPlanningForm2({
                   ))
                   : " "}
 
-                {/* <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
                   <div className="flex space-x-7">
                     <div className="flex items-center space-x-2">
@@ -311,7 +311,7 @@ export default function FamilyPlanningForm2({
                       <Label>No</Label>
                     </div>
                   </div>
-                </div> */}
+                </div>
 
                 {form.watch("medicalHistory.disability") && (
                   <FormField

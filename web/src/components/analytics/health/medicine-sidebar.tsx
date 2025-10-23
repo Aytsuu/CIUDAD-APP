@@ -80,7 +80,19 @@ export function MedicineDistributionSidebar() {
                 const percentage = ((medicine.count / totalDoses) * 100).toFixed(1);
 
                 return (
-                  <Link to="/inventory/stocks">
+                  <Link
+                    to="/reports/monthly-medicine/records"
+                    state={{
+                      // Pass the same state structure as your monthly records
+                      medicineName: medicine.name,
+                      itemCount: medicine.count,
+                      monthlyrcplist_id: data.monthly_report_id,
+                      month: initialMonth,
+                      monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
+                      // You can add any other relevant data here
+                    }}
+                  >
+                    {" "}
                     <div key={medicine.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>

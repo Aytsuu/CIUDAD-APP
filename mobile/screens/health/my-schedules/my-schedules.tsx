@@ -1,25 +1,16 @@
 import React, { useState, useMemo } from "react"
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
-import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, MapPin, RefreshCw } from "lucide-react-native"
+import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, RefreshCw } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
-import { useAppointmentsByResidentId } from "./fetch"
+import { useAppointmentsByResidentId, CombinedAppointmentsResponse } from "./fetch"
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
 
 type ScheduleRecord = {
   id: number
-  // patient: {
-  //   firstName: string
-  //   lastName: string
-  //   middleName: string
-  //   gender: string
-  //   age: number
-  //   ageTime: string
-  //   patientId: string
-  // }
   scheduledDate: string
   purpose: string
   status: "Pending" | "Completed" | "Missed"
@@ -120,6 +111,23 @@ const AppointmentCard: React.FC<{
     }
   }
 
+  // Get appointment type badge
+  const getAppointmentTypeBadge = (type: string) => {
+    const typeConfig = {
+      'Follow-up': { color: 'text-blue-700', bgColor: 'bg-blue-100', borderColor: 'border-blue-200' },
+      'Consultation': { color: 'text-green-700', bgColor: 'bg-green-100', borderColor: 'border-green-200' },
+      'Prenatal': { color: 'text-purple-700', bgColor: 'bg-purple-100', borderColor: 'border-purple-200' },
+    }[type] || { color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-200' };
+
+    return (
+      <View className={`px-2 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+        <Text className={`text-xs font-semibold ${typeConfig.color}`}>
+          {type}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <TouchableOpacity
       className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
@@ -136,14 +144,14 @@ const AppointmentCard: React.FC<{
               </View>
               <View className="flex-1">
                 <Text className="font-semibold text-lg text-gray-900">
-                  Appointment: {appointment.id}
+                  {appointment.patrecType} Appointment
                 </Text>
+                {/* <Text className="text-sm text-gray-500">ID: {appointment.id}</Text> */}
               </View>
+              <StatusBadge status={actualStatus} />
             </View>
           </View>
-          <View className="items-end">
-            <StatusBadge status={actualStatus} />
-          </View>
+         
         </View>
       </View>
 
@@ -161,18 +169,6 @@ const AppointmentCard: React.FC<{
             Purpose: <Text className="font-medium text-gray-900">{appointment.purpose}</Text>
           </Text>
         </View>
-        {/* <View className="flex-row items-center mb-3">
-          <User size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Patient Type: <Text className="font-medium text-gray-900">{appointment.type}</Text>
-          </Text>
-        </View> */}
-        {/* <View className="flex-row items-center">
-          <MapPin size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Location: <Text className="font-medium text-gray-900">{appointment.sitio || "N/A"}</Text>
-          </Text>
-        </View> */}
       </View>
     </TouchableOpacity>
   )
@@ -185,9 +181,11 @@ export default function MyAppointmentsScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("pending")
 
-  const { data: appointments = [], isLoading, isError, refetch } = useAppointmentsByResidentId(
-    rp_id || ""
-  )
+  const { data: appointments = {
+    follow_up_appointments: [],
+    med_consult_appointments: [],
+    prenatal_appointments: []
+  }, isLoading, isError, refetch } = useAppointmentsByResidentId(rp_id || "")
 
   // Utility functions
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
@@ -204,54 +202,95 @@ export default function MyAppointmentsScreen() {
     return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
   }
 
-  // Transform API data to match ScheduleRecord type (for logged-in user only)
   const userAppointments = useMemo(() => {
-    if (!appointments || appointments.length === 0) {
+    // Type guard to ensure appointments has the correct structure
+    const apptData = appointments as CombinedAppointmentsResponse;
+    
+    if (!apptData || (
+      apptData.follow_up_appointments.length === 0 && 
+      apptData.med_consult_appointments.length === 0 && 
+      apptData.prenatal_appointments.length === 0
+    )) {
       console.warn("No appointments data")
       return []
     }
 
+    console.log("Raw appointments data:", apptData)
 
-  
+    const transformed: ScheduleRecord[] = []
 
-    const transformed = appointments.map((visit: any) => {
-      console.log("Processing visit:", visit)
-      try {
-        const record: ScheduleRecord = {
-          id: visit.followv_id || 0,
-          // patient: {
-          //   firstName: user?.resident?.per_fname || user?.resident?.firstName || "Unknown",
-          //   lastName: user?.resident?.per_lname || user?.resident?.lastName || "Unknown",
-          //   middleName: user?.resident?.per_mname || user?.resident?.middleName || "",
-          //   gender: user?.resident?.per_sex || user?.resident?.gender || "Unknown",
-         
-          //   patientId: rp_id || "", // Use rp_id as patientId for consistency
-          // },
-          scheduledDate: visit.followv_date || "",
-          purpose: visit.followv_description || "Follow-up Visit",
-          status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-          sitio: "", // Default; response lacks address—fetch separately if needed
-          type: "Resident", // Assuming resident user
-          patrecType: "Follow-up",
+    // Process follow-up appointments
+    if (apptData.follow_up_appointments && apptData.follow_up_appointments.length > 0) {
+      apptData.follow_up_appointments.forEach((visit: any) => {
+        try {
+          const record: ScheduleRecord = {
+            id: visit.followv_id || visit.id || 0,
+            scheduledDate: visit.followv_date || "",
+            purpose: visit.followv_description || "Follow-up Visit",
+            status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+            sitio: "", // Default; response lacks address
+            type: "Resident",
+            patrecType: "Follow-up",
+          }
+          console.log("Transformed follow-up record:", record)
+          transformed.push(record)
+        } catch (error) {
+          console.error("Error transforming follow-up visit data:", error, visit)
         }
+      })
+    }
 
-        console.log("Transformed record:", record)
-        return record
-      } catch (error) {
-        console.error("Error transforming visit data:", error, visit)
-        return null
-      }
-    }).filter(Boolean)
+    // Process medical consultation appointments
+    if (apptData.med_consult_appointments && apptData.med_consult_appointments.length > 0) {
+      apptData.med_consult_appointments.forEach((consult: any) => {
+        try {
+          const record: ScheduleRecord = {
+            id: consult.id || 0,
+            scheduledDate: consult.scheduled_date || "",
+            purpose: consult.chief_complaint || "Medical Consultation",
+            status: (consult.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+            sitio: "", // Default; response lacks address
+            type: "Resident",
+            patrecType: "Consultation",
+          }
+          console.log("Transformed consultation record:", record)
+          transformed.push(record)
+        } catch (error) {
+          console.error("Error transforming consultation data:", error, consult)
+        }
+      })
+    }
 
-    console.log("Transformed user appointments:", transformed)
+    // Process prenatal appointments
+    if (apptData.prenatal_appointments && apptData.prenatal_appointments.length > 0) {
+      apptData.prenatal_appointments.forEach((prenatal: any) => {
+        try {
+          const record: ScheduleRecord = {
+            id: prenatal.par_id || 0,
+            scheduledDate: prenatal.requested_at || "", // Using requested_at as scheduled date
+            purpose: prenatal.reason || "Prenatal Check-up",
+            status: (prenatal.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+            sitio: "", 
+            type: "Resident",
+            patrecType: "Prenatal",
+          }
+          console.log("Transformed prenatal record:", record)
+          transformed.push(record)
+        } catch (error) {
+          console.error("Error transforming prenatal data:", error, prenatal)
+        }
+      })
+    }
+
+    console.log("All transformed appointments:", transformed)
     return transformed
-  }, [appointments, rp_id, user])
+  }, [appointments])
 
   // Filter and sort appointments based on search and active tab
   const filteredAppointments = useMemo(() => {
-    let result = userAppointments
-      .map((appt:any) => ({ ...appt, status: getAppointmentStatus(appt.scheduledDate, appt.status) }))
-      .filter((appt:any) => {
+    const result = userAppointments
+      .map((appt: any) => ({ ...appt, status: getAppointmentStatus(appt.scheduledDate, appt.status) }))
+      .filter((appt: any) => {
         if (activeTab === 'pending' && appt.status !== 'Pending') return false
         if (activeTab === 'completed' && appt.status !== 'Completed') return false
         if (activeTab === 'missed' && appt.status !== 'Missed') return false
@@ -259,18 +298,16 @@ export default function MyAppointmentsScreen() {
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase()
           return (
-            `${appt.patient.firstName} ${appt.patient.lastName}`.toLowerCase().includes(query) ||
-            appt.patient.patientId.toLowerCase().includes(query) ||
             appt.purpose.toLowerCase().includes(query) ||
             appt.scheduledDate.toLowerCase().includes(query) ||
-            appt.sitio.toLowerCase().includes(query)
+            appt.patrecType.toLowerCase().includes(query)
           )
         }
         return true
       })
 
     // Sort by date descending
-    result.sort((a:any, b:any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
+    result.sort((a: any, b: any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
 
     return result
   }, [userAppointments, searchQuery, activeTab])
@@ -294,7 +331,6 @@ export default function MyAppointmentsScreen() {
     setRefreshing(false)
   }, [refetch])
 
- 
   if (isLoading) { return <LoadingState/> }
 
   if (isError) {
@@ -387,8 +423,7 @@ export default function MyAppointmentsScreen() {
                   onPress={() => console.log("")}
                 />
               ) 
-            }
-          }
+            }}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
                 <Calendar size={48} color="#D1D5DB" />

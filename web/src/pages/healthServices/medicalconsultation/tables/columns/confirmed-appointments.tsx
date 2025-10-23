@@ -3,7 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
-
+import { calculateAge } from "@/helpers/ageCalculator";
 // Safe date formatting function
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return "N/A";
@@ -166,7 +166,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const appointment = row.original;
-   
+    
       const appointmentData = {
         id: appointment.id,
         personal_info: appointment.personal_info,
@@ -179,15 +179,25 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
         archive_reason: appointment.archive_reason,
         rp: appointment.rp
       };
-     
+    
       return (
         <div className="flex justify-center py-2">
           <ViewButton
             onClick={() => {
-              navigate("/services/medical/appointments/view", {
+              navigate("/services/medical-consultation/appointments/form", {
                 state: {
                   params: {
-                    appointmentData
+                    // Transform appointment data to match what medical consultation expects
+                    patientData: {
+                      rp: appointment.rp, // Use rp ID as patient ID
+                      personal_info: appointment.personal_info,
+                      address: appointment.address,
+                      pat_type: "Resident", // Default type
+                      age: calculateAge(appointment.personal_info?.per_dob), // You might need to calculate this
+                      householdno: appointment.rp?.householdno,
+                      additional_info: appointment.rp?.additional_info
+                    },
+                    appointmentData: appointmentData // Keep original appointment data if needed
                   }
                 }
               });

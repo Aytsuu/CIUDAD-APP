@@ -296,7 +296,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
             if stock_count > 0:
                 return Response(
                     {
-                        "error": f"Cannot delete vaccine. It has {stock_count} stock record(s) associated with it.",
+                        "error": f"Cannot delete vaccine it has record(s) associated with it.",
                         "stock_records_count": stock_count,
                         "message": "Please remove all stock records first before deleting this vaccine."
                     },
@@ -308,7 +308,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
             if vaccination_history_count > 0:
                 return Response(
                     {
-                        "error": f"Cannot delete vaccine. It has {vaccination_history_count} vaccination history record(s) associated with it.",
+                        "error": f"Cannot delete vaccine.  record(s) associated with it.",
                         "vaccination_history_count": vaccination_history_count,
                         "message": "This vaccine has been used in vaccination records and cannot be deleted."
                     },
@@ -519,9 +519,8 @@ class VaccineStockCreate(APIView):
         # Calculate quantities
         solvent_type = vaccine_data.get('solvent', 'diluent')
         qty = int(vaccine_data.get('qty', 0))
-        volume = vaccine_data.get('volume', vaccine_data.get('dose_ml', 0))
-        dose_ml = int(volume) if volume else 0
-        
+        dose_ml = int(vaccine_data.get('dose_ml', 0))  
+              
         vaccine_data.update({
             'qty': qty,
             'dose_ml': dose_ml,
@@ -753,7 +752,7 @@ class CombinedStockTable(APIView):
                         'category': 'Vaccine',
                         'item': {
                             'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
-                            'dosage': stock.dose_ml,
+                            'dosage': stock.volume,
                             'unit': 'ml',
                         },
                         'qty': f"{stock.qty} vials ({total_doses} doses)",

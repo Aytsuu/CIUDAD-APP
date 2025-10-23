@@ -1,6 +1,5 @@
 import React from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import AccountDetails from "../account/AccountDetails";
 import { useAddAccount } from "../../queries/authPostQueries";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";

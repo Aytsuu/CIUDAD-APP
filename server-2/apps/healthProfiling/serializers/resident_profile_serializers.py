@@ -153,12 +153,17 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
+    per_add_bloodType = serializers.SerializerMethodField()
+    per_add_philhealth_id = serializers.SerializerMethodField()
+    per_add_covid_vax_status = serializers.SerializerMethodField()
+    # fam_id = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
                   'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
-                    'per_addresses', 'per_age', 'rp_date_registered', 'registered_by']
+                    'per_addresses', 'per_age', 'rp_date_registered', 'registered_by', 
+                    'per_add_bloodType', 'per_add_philhealth_id', 'per_add_covid_vax_status']
         read_only_fields = fields
 
     def get_per_age(self, obj):
@@ -175,6 +180,27 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
         addresses = [pa.add for pa in per_addresses.select_related('add')]
         return AddressBaseSerializer(addresses, many=True).data
 
+    def get_per_add_bloodType(self, obj):
+        try:
+            health_details = HealthRelatedDetails.objects.filter(rp=obj).first()
+            return health_details.per_add_bloodType if health_details else None
+        except:
+            return None
+    
+    def get_per_add_philhealth_id(self, obj):
+        try:
+            health_details = HealthRelatedDetails.objects.filter(rp=obj).first()
+            return health_details.per_add_philhealth_id if health_details else None
+        except:
+            return None
+    
+    def get_per_add_covid_vax_status(self, obj):
+        try:
+            health_details = HealthRelatedDetails.objects.filter(rp=obj).first()
+            return health_details.per_add_covid_vax_status if health_details else None
+        except:
+            return None
+
     def get_registered_by(self, obj):
         staff = obj.staff
         if staff:
@@ -183,6 +209,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
             fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
             fam_id = fam.fam.fam_id if fam else ""
             personal = staff.rp.per
+            middle = f" {personal.per_mname}" if personal.per_mname else ""
             staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
             return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"

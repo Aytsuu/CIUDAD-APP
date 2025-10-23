@@ -36,7 +36,7 @@ const carousel = [
 ];
 
 export default function App() {
-  const { user, isLoading, loginLoading } = useAuth();
+  const { isAuthenticated, loginLoading } = useAuth();
 
   const { toast } = useToastContext();
   const router = useRouter();
@@ -55,7 +55,10 @@ export default function App() {
   const handleLogin = useMemo(() => () => router.push("/(auth)/loginscreen"), [router]);
 
   if (showIntro) {
-    return <IntroScreen onAnimationFinish={() => setShowIntro(false)} />;
+    return <IntroScreen onAnimationFinish={() => {
+      if (isAuthenticated) handleLogin();
+      setShowIntro(false);
+    }} />;
   }
 
   return (

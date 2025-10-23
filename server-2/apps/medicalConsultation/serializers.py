@@ -3,42 +3,115 @@ from .models import *
 from datetime import date
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
-from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementBaseSerializer
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.patientrecords.models import *
 from apps.administration.serializers.staff_serializers import *  
 from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 from apps.administration.models import *
+from apps.maternal.serializers.serializer import *
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     patient_details = PatientSerializer(source='*', read_only=True)
-    medicalrec_count = serializers.IntegerField(read_only=True)  # ✅ Add this line
+    medicalrec_count = serializers.IntegerField(read_only=True)
+    latest_consultation_date = serializers.SerializerMethodField()
  
     class Meta:
         model = Patient
         fields = "__all__"
+      
+    def get_latest_consultation_date(self, obj):
+        # Get the most recent medical consultation date for this patient
+        latest_consultation = MedicalConsultation_Record.objects.filter(
+            patrec__pat_id=obj.pat_id
+        ).order_by('-created_at').first()
         
+        if latest_consultation and latest_consultation.created_at:
+            return latest_consultation.created_at
+        return None
+      
+      
+class PhilHealthLaboratorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhilHealthLaboratory
+        fields = '__all__'
+
+class PhilhealthDetailsSerializer(serializers.ModelSerializer):
+    # Nested serializers for foreign keys
+    tts_details = serializers.SerializerMethodField()
+    obs_details = serializers.SerializerMethodField()
+    lab_details = PhilHealthLaboratorySerializer(source='lab', read_only=True)
     
-# serializers.py
+    class Meta:
+        model = PhilhealthDetails
+        fields = '__all__'
+    
+    def get_tts_details(self, obj):
+        if obj.tts:
+            return TTStatusCreateSerializer(obj.tts).data
+        return None
+    
+    def get_obs_details(self, obj):
+        if obj.obs:
+            return ObstetricalHistoryCreateSerializer(obj.obs).data
+        return None
+
 class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
+    # Core nested serializers
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
-    bmi_details = BodyMeasurementSerializer(source='bm', read_only=True)
+    bmi_details = BodyMeasurementBaseSerializer(source='bm', read_only=True)
     find_details = FindingSerializer(source='find', read_only=True)
     patrec_details = PatientMedConsultationRecordSerializer(source='patrec.pat_id', read_only=True)
     staff_details = StaffMinimalSerializer(source='staff', read_only=True)
+    assigned_to_details = StaffMinimalSerializer(source='assigned_to', read_only=True)
+    
+    # PhilHealth nested serializers
+    philhealth_details = PhilhealthDetailsSerializer(read_only=True)
     
     # Add formatted date for easier searching
     formatted_date = serializers.SerializerMethodField()
     
     class Meta:
         model = MedicalConsultation_Record
-        fields = '__all__'
+        fields = [
+            'medrec_id',
+            'medrec_status',
+            'medrec_chief_complaint',
+            'created_at',
+            'updated_at',
+            'patrec',
+            'vital',
+            'bm',
+            'find',
+            'medreq',
+            'staff',
+            'assigned_to',
+            'is_phrecord',
+            'app_id',
+            
+            # Nested fields
+            'vital_signs',
+            'bmi_details',
+            'find_details',
+            'patrec_details',
+            'staff_details',
+            'assigned_to_details',
+            'philhealth_details',
+            'formatted_date',
+        ]
     
     def get_formatted_date(self, obj):
         return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
-    
-# serializers.py
-# serializers.py
 
+    def to_representation(self, instance):
+        """Custom representation to handle PhilHealth details"""
+        data = super().to_representation(instance)
+        
+        # If it's not a PhilHealth record, remove philhealth_details
+        if not instance.is_phrecord:
+            data.pop('philhealth_details', None)
+        
+        return data
+    
 class MedicalConsultationCreateSerializer(serializers.Serializer):
     pat_id = serializers.IntegerField()
     vital_bp_systolic = serializers.CharField(required=False, allow_blank=True)

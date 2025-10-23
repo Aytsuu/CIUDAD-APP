@@ -12,16 +12,18 @@ import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Logout from '@/assets/icons/essentials/logout.svg'
 import Settings from '@/assets/icons/essentials/settings.svg'
 import UserLock from '@/assets/icons/essentials/user-lock.svg'
-import Star from '@/assets/icons/essentials/star.svg'
-import Service from '@/assets/icons/essentials/service.svg'
 import House from '@/assets/icons/essentials/house.svg'
 import UserGorup from '@/assets/icons/essentials/user-group.svg'
 import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
+import StaffCard from '@/assets/icons/essentials/staff-card.svg'
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { Drawer } from "@/components/ui/drawer";
+import React from "react";
 
 export default () => {
   const { user, isLoading, logout } = useAuth();
+  const [showStaffCard, setShowStaffCard] = React.useState<boolean>(false);
   const { toast } = useToastContext();
 
   const menuItems = [
@@ -46,16 +48,16 @@ export default () => {
       icon: House,
       route: "/(account)/house"
     },
-    {
-      name: "Rate our app",
-      icon: Star,
-      route: "/(account)/app-rating"
-    },
-    {
-      name: "Support",
-      icon: Service,
-      route: "/(account)/support"
-    },
+    // {
+    //   name: "Rate our app",
+    //   icon: Star,
+    //   route: "/(account)/app-rating"
+    // },
+    // {
+    //   name: "Support",
+    //   icon: Service,
+    //   route: "/(account)/support"
+    // },
     {
       name: "Settings",
       icon: Settings,
@@ -75,9 +77,16 @@ export default () => {
   
   return (
     <PageLayout 
-      leftAction={<View className="w-10 h-10" />}
       headerTitle={<Text className="text-gray-900 text-[13px]">Account</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={<View className="w-10 h-10 flex-row items-center">
+        {user?.staff && (
+          <TouchableOpacity
+            onPress={() => setShowStaffCard(true)}
+          >
+            <StaffCard width={40} height={25}/>
+          </TouchableOpacity>
+        )}
+      </View>}
     >
       <View className="flex-1 px-6 py-2">
         <View className="flex-row border-b border-gray-100 pb-3 gap-4">
@@ -144,7 +153,12 @@ export default () => {
             variant="destructive" 
             onPress={handleSignOut}
           />
-          
+          <Drawer 
+            visible={showStaffCard}
+            onClose={() => setShowStaffCard(false)}
+          >
+            <View></View>
+          </Drawer>
         </View>
       </View>
     </PageLayout>

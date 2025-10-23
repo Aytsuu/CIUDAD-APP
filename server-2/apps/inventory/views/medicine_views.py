@@ -44,14 +44,19 @@ class MedicineInventoryView(generics.ListAPIView):
 
          
 class MedicineListAvailableTable(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         # Get current date for expiry comparison
         today = timezone.now().date()
         
-        # Get query parameters for filtering (simplified)
+        # Get query parameters for filtering
+        search_query = request.query_params.get('search', '').strip()
         med_type_filter = request.query_params.get('med_type', None)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
         
-        # Base queryset - get all medicines with available quantity calculation
+        # Base queryset with available quantity calculation
         medicines = Medicinelist.objects.annotate(
             total_qty_available=Sum(
                 'medicineinventory__minv_qty_avail',
@@ -60,33 +65,43 @@ class MedicineListAvailableTable(APIView):
             )
         ).prefetch_related(
             'medicineinventory_set__inv_id'
-        ).all()  # Get all medicines
+        ).all()
         
-        # Apply filters if provided
-        if med_type_filter:
+        # Apply search filter if provided
+        if search_query:
+            medicines = medicines.filter(
+                Q(med_name__icontains=search_query) |
+                Q(med_type__icontains=search_query) |
+                Q(medicineinventory__minv_form__icontains=search_query) |
+                Q(medicineinventory__minv_dsg_unit__icontains=search_query)
+            ).distinct()
+        
+        # Apply category filter if provided
+        if med_type_filter and med_type_filter != 'All':
             medicines = medicines.filter(med_type__icontains=med_type_filter)
         
-        # Prepare response data
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginator.page_size = page_size
+        paginated_medicines = paginator.paginate_queryset(medicines, request)
+        
+        # Prepare response data for paginated medicines only
         medicine_data = []
-        for medicine in medicines:
-            # Check if medicine has any available stock
+        for medicine in paginated_medicines:
             has_stock = medicine.total_qty_available and medicine.total_qty_available > 0
             
-          
-            
             if has_stock:
-                # Get all inventory items for this medicine that are not expired
                 inventory_items = []
                 for med_inv in medicine.medicineinventory_set.all():
                     if (med_inv.inv_id.expiry_date is None or 
                         med_inv.inv_id.expiry_date >= today) and \
                        med_inv.minv_qty_avail > 0:
                         
+                        # SIMPLE DEDUCTION: quantity_available minus temporary_deduction
+                        available_after_deduction = med_inv.minv_qty_avail - med_inv.temporary_deduction
+                        
                         inventory_items.append({
-                            'minv_id': med_inv.minv_id,
-                            'dosage': f"{med_inv.minv_dsg} {med_inv.minv_dsg_unit}",
-                            'form': med_inv.minv_form,
-                            'quantity_available': med_inv.minv_qty_avail,
+                            'quantity_available': available_after_deduction,  # Deducted value
                             'quantity_unit': med_inv.minv_qty_unit,
                             'expiry_date': med_inv.inv_id.expiry_date,
                             'inventory_type': med_inv.inv_id.inv_type
@@ -110,8 +125,17 @@ class MedicineListAvailableTable(APIView):
                     'status': 'No available stocks'
                 })
         
-        return Response({'medicines': medicine_data}, status=status.HTTP_200_OK)
-
+        if paginated_medicines is not None:
+            response = paginator.get_paginated_response(medicine_data)  # ← Pass medicine_data directly
+            print("🔍 Backend Response:", response.data)
+            return response
+        
+        return Response({
+            'medicines': medicine_data,
+            'count': len(medicine_data)
+        }, status=status.HTTP_200_OK)
+    
+    
 class MedicineListTable(generics.ListAPIView):
     serializer_class = MedicineListSerializers
     pagination_class = StandardResultsPagination

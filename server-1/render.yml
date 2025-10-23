@@ -36,3 +36,9 @@ services:
       # Static Files
       - key: STATIC_URL
         value: "/static/"
+
+      # EMAIL
+      - key: EMAIL_HOST_USER
+        value: "ciudadofficial2025@gmail.com"
+      - key: EMAIL_HOST_PASSWORD
+        value: "ngnr gtpw nhfo whvv"

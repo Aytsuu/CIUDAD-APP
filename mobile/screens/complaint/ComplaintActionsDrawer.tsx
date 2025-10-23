@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   Animated,
-  Dimensions,
   PanResponder,
 } from "react-native";
 import { Trash2, Eye, X, Gavel } from "lucide-react-native";

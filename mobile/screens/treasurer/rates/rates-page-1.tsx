@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeleteAnnualGrossSales } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';

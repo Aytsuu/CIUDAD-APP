@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { formatDate } from "@/helpers/dateHelper";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -157,16 +158,16 @@ const PersonalInfoForm = ({
       )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true}/>
+        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true} noSpecialChars/>
       </div>
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormSelect control={control} name={`${prefix}per_sex`} label="Sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
-        <FormDateTimeInput control={control} name={`${prefix}per_dob`} label="Date of Birth" type="date" readOnly={isReadOnly} />
+        <FormDateTimeInput control={control} name={`${prefix}per_dob`} label="Date of Birth" type="date" readOnly={isReadOnly} max={formatDate(new Date()) as string}/>
         <FormSelect control={control} name={`${prefix}per_status`} label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
         <FormInput control={control} name={`${prefix}per_contact`} label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
       </div>

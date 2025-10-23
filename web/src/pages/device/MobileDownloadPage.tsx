@@ -2,14 +2,7 @@ import React from 'react';
 
 const MobileDownloadPage: React.FC = () => {
   const handleDownload = () => {
-    window.location.href = 'https://drive.google.com/file/d/1iKXyQLFXsNgqePynS768_KBsOdrswAM4/view?usp=drive_link';
-  };
-
-  const handleContinueToWebsite = () => {
-    // You can implement logic to hide the mobile page temporarily
-    // For example, using localStorage to remember user's choice
-    localStorage.setItem('hideMobilePrompt', 'true');
-    window.location.reload();
+    window.location.href = 'https://drive.google.com/file/d/1B3YFKTchZ7YBloeG5r65zmnuxUf0svHo/view?usp=sharing';
   };
 
   return (
@@ -53,14 +46,6 @@ const MobileDownloadPage: React.FC = () => {
             </svg>
             Download Mobile App
           </div>
-        </button>
-
-        {/* Continue to Website Button */}
-        <button
-          onClick={handleContinueToWebsite}
-          className="w-full border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium py-3 px-6 rounded-xl transition-all duration-200 mb-8"
-        >
-          Continue to Website
         </button>
 
         {/* Features List */}

@@ -15,12 +15,12 @@ import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fet
 import { useLoading } from "@/context/LoadingContext";
 import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
 
+
 export default function ChildImmunization() {
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
 
   const { ChildHealthRecord } = location.state || {};
-  console.log("sample", ChildHealthRecord);
   const pat_id = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_id?.toString() || "";
   const pat_dob = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
   const { showLoading, hideLoading } = useLoading();

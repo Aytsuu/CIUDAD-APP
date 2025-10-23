@@ -59,7 +59,7 @@ export const getStaffList = async () => {
 
 export const getDoctorList = async () => {
   try {
-    const response = await api2.get("/administration/doctorstaff/");
+    const response = await api2.get("/administration/doctorlist/");
     return response.data;
   } catch (error) {
     console.error("Error fetching staff list:", error);
@@ -68,4 +68,13 @@ export const getDoctorList = async () => {
 };
 
 
+export const getMidwifeList = async () => {
+  try {
+    const response = await api2.get("/administration/midwife/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staff list:", error);
+    throw error;
+  }
+};
 
