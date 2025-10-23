@@ -1,13 +1,9 @@
-#KANI 2ND
-
-from rest_framework import serializers, generics
-from rest_framework import serializers, generics
+from rest_framework import serializers
 from .models import *
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from utils.supabase_client import upload_to_storage
 from .models import WasteTruck
-from apps.profiling.models import Sitio
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
 
@@ -242,7 +238,23 @@ class WastePersonnelSerializer(serializers.ModelSerializer):
 class WasteTruckSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteTruck
-        fields = '__all__' 
+        fields = [
+            'truck_id',
+            'truck_plate_num',
+            'truck_model',
+            'truck_capacity',
+            'truck_status',
+            'truck_last_maint',
+            'truck_is_archive',
+            'truck_track_device',
+            'truck_track_device_lat',
+            'truck_track_device_lng',
+            'staff'
+        ]
+        extra_kwargs = {
+            'truck_track_device_lat': {'read_only': True},
+            'truck_track_device_lng': {'read_only': True},
+        }
 
 class SitioSerializer(serializers.ModelSerializer):
     class Meta:

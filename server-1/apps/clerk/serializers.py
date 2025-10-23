@@ -253,6 +253,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     'per_lname': obj.rp_id.per.per_lname,
                     'per_dob': dob_value,
                     'per_address': address_str,
+                    'per_is_deceased': getattr(obj.rp_id.per, 'per_is_deceased', False),
                     'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }
             return None

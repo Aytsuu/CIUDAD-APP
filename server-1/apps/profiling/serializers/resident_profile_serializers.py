@@ -139,6 +139,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
     per_disability = serializers.CharField(source="per.per_disability")
+    per_is_deceased = serializers.BooleanField(source="per.per_is_deceased")
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
@@ -147,7 +148,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = ['rp_id','per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability', 'per_is_deceased',
                     'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by']
         read_only_fields = fields
 

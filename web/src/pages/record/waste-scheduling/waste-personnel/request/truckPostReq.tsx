@@ -10,6 +10,7 @@ export const postWasteTruck = async (truckInfo: Record<string, any>) => {
       truck_capacity: parseInt(truckInfo.truck_capacity),
       truck_status: truckInfo.truck_status || "operational",
       truck_last_maint: formatDate(truckInfo.truck_last_maint || new Date()),
+      truck_track_device: truckInfo.truck_track_device || null,
       staff: truckInfo.staff,
     };
     const res = await api.post("waste/waste-trucks/", payload);

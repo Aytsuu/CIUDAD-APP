@@ -26,7 +26,16 @@ import { useCertificateSectionCards } from "@/components/analytics/certificate/c
 import { CertificatePurposeChart } from "@/components/analytics/certificate/certificate-purpose-chart";
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
+import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { ReactElement } from "react";
 
+type DashboardItem = {
+  dashboard: string;
+  card?: ReactElement[];
+  sidebar?: { title: string; element: ReactElement }[];
+  chart?: { title: string; element: ReactElement }[];
+  upcomingEvents?: ReactElement;
+};
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -38,9 +47,11 @@ export const getItemsConfig = (
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
   certificateCards: ReturnType<typeof useCertificateSectionCards>,
-) => {
+  councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
+): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
+  const { upcomingEvents: councilUpcomingEvents } = councilEvents;
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -134,6 +145,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "COUNCIL",
+        upcomingEvents: councilUpcomingEvents,
       },
       {
         dashboard: "FINANCE",
