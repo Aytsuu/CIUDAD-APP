@@ -31,7 +31,7 @@ import os
 
 # Initialize Firebase Admin SDK
 if not firebase_admin._apps:
-    cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "..", "..", "firebase", "firebase-key.json"))
+    cred = credentials.Certificate("firebase/firebase-key.json")
     firebase_admin.initialize_app(cred)
     
 def send_push_notification(token, title, message, data=None):
