@@ -46,6 +46,7 @@ export default function WasteTruckEdit() {
     truck_last_maint: truck?.truck_last_maint
       ? truck.truck_last_maint.split('T')[0]
       : new Date().toISOString().split('T')[0],
+    truck_track_device: truck?.truck_track_device,
   };
 
   // Populate form with truck data
@@ -59,6 +60,7 @@ export default function WasteTruckEdit() {
         truck_last_maint: truck.truck_last_maint
           ? truck.truck_last_maint.split('T')[0]
           : new Date().toISOString().split('T')[0],
+        truck_track_device: truck.truck_track_device,
       });
     }
   }, [truck, reset]);
@@ -73,8 +75,11 @@ export default function WasteTruckEdit() {
     } 
   };
 
+  // Check if truck is archived
+  const isArchived = truck?.truck_is_archive === true;
+
   // Handle loading state
-    if (isTruckLoading) {
+  if (isTruckLoading) {
     return (
       <ScreenLayout
         customLeftAction={
@@ -132,13 +137,21 @@ export default function WasteTruckEdit() {
       loadingMessage="Updating truck..."
       footer={
         <View className="px-4 pb-4">
-          {!isEditing ? (
+          {/* Hide Edit button if truck is archived */}
+          {!isEditing && !isArchived ? (
             <Button
               onPress={() => setIsEditing(true)}
               className="bg-primaryBlue py-3 rounded-lg"
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
             </Button>
+          ) : !isEditing && isArchived ? (
+            // Show message if truck is archived (optional)
+            <View className="bg-gray-200 py-3 rounded-lg">
+              <Text className="text-gray-600 text-base font-semibold text-center">
+                Disposed trucks cannot be edited
+              </Text>
+            </View>
           ) : (
             <View className="flex-row gap-2">
               <Button
@@ -182,6 +195,15 @@ export default function WasteTruckEdit() {
       stickyFooter={true}
     >
       <View className="flex-1 px-6">
+        {/* Show archived badge if truck is archived */}
+        {isArchived && (
+          <View className="bg-gray-200 px-3 py-2 rounded-lg mb-4">
+            <Text className="text-gray-600 text-sm font-semibold text-center">
+              This truck is marked as disposed
+            </Text>
+          </View>
+        )}
+        
         <View className="space-y-4">
         <View className="relative ">
           <FormInput
@@ -189,7 +211,7 @@ export default function WasteTruckEdit() {
             name="truck_plate_num"
             label="Plate Number"
             placeholder="Enter plate number"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -199,7 +221,7 @@ export default function WasteTruckEdit() {
             name="truck_model"
             label="Model"
             placeholder="Enter truck model"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -210,7 +232,7 @@ export default function WasteTruckEdit() {
             label="Capacity (tons)"
             placeholder="Enter capacity in tons"
             keyboardType="numeric"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -223,7 +245,7 @@ export default function WasteTruckEdit() {
               { label: 'Operational', value: 'Operational' },
               { label: 'Maintenance', value: 'Maintenance' },
             ]}
-            disabled={!isEditing}
+            disabled={!isEditing || isArchived} // Disable if archived
           />
         </View>
 
@@ -232,7 +254,17 @@ export default function WasteTruckEdit() {
             control={control}
             name="truck_last_maint"
             label="Last Maintenance"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
+          />
+        </View>
+
+        <View className="relative">
+          <FormInput
+            control={control}
+            name="truck_track_device"
+            label="Tracking Device ID"
+            placeholder="Enter tracking device ID (optional)"
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
       </View>
