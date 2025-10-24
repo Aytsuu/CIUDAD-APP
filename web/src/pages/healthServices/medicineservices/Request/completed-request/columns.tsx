@@ -124,7 +124,7 @@ export const medicineRequestCompletedColumns: ColumnDef<any>[] = [
                   params: {
                     medreq_id: row.original.medreq_id,
                     patientData: {
-                      pat_id: row.original.pat_id_value,
+                      pat_id: row.original.pat_id,
                       pat_type: row.original.pat_type,
                       age: row.original.age,
                       addressFull: address.full_address || "No address provided",
@@ -260,7 +260,6 @@ export const completedDetailsIColumns: ColumnDef<any>[] = [
       size: 120,
       cell: ({ row }) => {
         const allocated = row.original.total_allocated_qty || 0;
-        const requested = row.original.total_requested_qty || 0;
   
         return (
           <div className="text-center py-2">

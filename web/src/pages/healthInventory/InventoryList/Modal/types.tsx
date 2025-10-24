@@ -26,6 +26,18 @@ export const vaccineTypes = [
   { id: "conditional", name: "Conditional" }
 ];
 
+export const formMedOptions = [
+  { id: "tablet", name: "tablet" },
+  { id: "capsule", name: "capsule" },
+];
+
+
+
+export const dosageUnitOptions = [
+    { id: "mg", name: "mg" },
+    { id: "ml", name: "ml" },
+  ]
+
 export interface DoseDetail {
   id?: number;
   doseNumber: number;

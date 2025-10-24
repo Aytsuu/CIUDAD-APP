@@ -52,8 +52,6 @@ export default function MedicineRequestDetail() {
 
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
   const { data: apiResponse, isLoading, error: confirmedRequestError } = usePendingItemsMedRequest(request.medreq_id, currentPage, pageSize);
-
-  // Check if patient exists using your existing hook
   const { data: patientExists, isLoading: isCheckingPatient, refetch: refetchPatientExists } = useCheckPatientExists(request.rp_id);
 
   // Helper functions to determine patient status
@@ -110,6 +108,9 @@ export default function MedicineRequestDetail() {
         med_id: medicine.med_id,
         reason: item.reason || "No reason provided",
         medreq_id: item.medreq_id,
+        med_dsg: medicine.med_dsg || "",
+        med_form: medicine.med_form || "",
+        med_dsg_unit: medicine.med_dsg_unit || "",
         // Include allocation data if available
         allocations: item.allocations || [],
         total_allocated_qty: item.total_allocated_qty || 0,
@@ -117,7 +118,7 @@ export default function MedicineRequestDetail() {
         is_fully_allocated: item.is_fully_allocated || false,
         // Use allocated quantity sum for display in app mode
         display_quantity: displayQuantity,
-        medreqitem_qty: displayQuantity // Override the original quantity for display
+        medreqitem_qty: displayQuantity, // Override the original quantity for display
       };
     })
   );
@@ -138,7 +139,7 @@ export default function MedicineRequestDetail() {
         pat_status: "active",
         rp_id: request.rp_id,
         personal_info: request.personal_info,
-        pat_type: "Resident"
+        pat_type: "Resident",
       });
 
       if (!response.pat_id) {
@@ -192,8 +193,8 @@ export default function MedicineRequestDetail() {
                 original_stock_id: allocation.minv_id,
                 // Use detailed information from minv_details
                 name: allocation.minv_name || confirmedMedicine.med_name,
-                dosage: minvDetails.minv_dsg ? `${minvDetails.minv_dsg} ${minvDetails.minv_dsg_unit || ""}` : "N/A",
-                form: minvDetails.minv_form || "N/A",
+                dosage: allocation.minv_dsg ? `${allocation.minv_dsg} ${allocation.minv_dsg_unit || ""}` : "N/A",
+                form: allocation.minv_form || "N/A",
                 avail: minvDetails.minv_qty_avail || allocation.allocated_qty,
                 unit: minvDetails.minv_qty_unit || "pcs",
                 // Use expiry from inv_details
@@ -213,7 +214,7 @@ export default function MedicineRequestDetail() {
                 temporary_deduction: minvDetails.temporary_deduction || 0,
                 is_archived: invDetails.is_archived || false,
                 // Mark as auto-selected for MedicineDisplay
-                is_auto_selected: true
+                is_auto_selected: true,
               };
 
               mappedMedicines.push(mappedItem);
@@ -267,8 +268,8 @@ export default function MedicineRequestDetail() {
               original_stock_id: matchingStock.id,
               // Add these properties that MedicineDisplay expects
               name: confirmedMedicine.med_name,
-              dosage: matchingStock.dosage || "N/A",
-              form: matchingStock.form || "N/A",
+              dosage: confirmedMedicine.dosage || `${confirmedMedicine?.med_dsg || 0} ${confirmedMedicine?.med_dsg_unit || ""}`.trim(),
+              form: confirmedMedicine.med_form || "",
               avail: matchingStock.avail || 0,
               unit: matchingStock.unit || "pcs",
               expiry: matchingStock.expiry,
@@ -280,7 +281,7 @@ export default function MedicineRequestDetail() {
               has_minv_id: true, // This item has specific inventory
               minv_id: inventoryId,
               selection_type: "specific_stock", // Track how this was selected
-              is_auto_selected: true
+              is_auto_selected: true,
             };
             mappedMedicines.push(mappedItem);
             console.log(`Added specific stock for ${confirmedMedicine.med_name} with inventory ID: ${inventoryId}`);
@@ -308,8 +309,8 @@ export default function MedicineRequestDetail() {
                 original_stock_id: stock.id,
                 // Add these properties that MedicineDisplay expects
                 name: confirmedMedicine.med_name,
-                dosage: stock.dosage || "N/A",
-                form: stock.form || "N/A",
+                dosage: `${confirmedMedicine?.med_dsg || 0} ${confirmedMedicine?.med_dsg_unit || ""}`.trim(),
+                form: confirmedMedicine?.med_form || "",
                 avail: stock.avail || 0,
                 unit: stock.unit || "pcs",
                 expiry: stock.expiry,
@@ -320,7 +321,7 @@ export default function MedicineRequestDetail() {
                 // No specific inventory assignment
                 has_minv_id: false,
                 minv_id: null,
-                selection_type: "general_stock" // Track how this was selected
+                selection_type: "general_stock", // Track how this was selected
               };
               mappedMedicines.push(mappedItem);
               console.log(`Added general stock for ${confirmedMedicine.med_name} from stock ID: ${stock.id}`);
@@ -333,7 +334,11 @@ export default function MedicineRequestDetail() {
     });
 
     console.log(`Total mapped medicines: ${mappedMedicines.length}`);
-    console.log(`Breakdown: ${mappedMedicines.filter((m: any) => m.selection_type === "specific_stock").length} specific stocks, ${mappedMedicines.filter((m: any) => m.selection_type === "general_stock").length} general stocks`);
+    console.log(
+      `Breakdown: ${mappedMedicines.filter((m: any) => m.selection_type === "specific_stock").length} specific stocks, ${
+        mappedMedicines.filter((m: any) => m.selection_type === "general_stock").length
+      } general stocks`
+    );
 
     return mappedMedicines;
   };
@@ -382,7 +387,7 @@ export default function MedicineRequestDetail() {
             medreqitem_id: item.medreqitem_id,
             quantity: item.medreqitem_qty,
             reason: item.reason,
-            allocations: item.allocations
+            allocations: item.allocations,
           });
 
           // Check if item has allocations
@@ -404,7 +409,7 @@ export default function MedicineRequestDetail() {
                 medrec_qty: allocation.allocated_qty,
                 reason: item.reason || "No reason provided",
                 allocation_id: allocation.alloc_id,
-                is_from_allocation: true
+                is_from_allocation: true,
               };
 
               console.log(`    ✅ Auto-selecting from allocation:`, autoSelectedMedicine);
@@ -442,7 +447,7 @@ export default function MedicineRequestDetail() {
             medreqitem_id: item.medreqitem_id,
             quantity: item.medreqitem_qty,
             reason: item.reason,
-            inventory: item.inventory
+            inventory: item.inventory,
           });
 
           const inventoryId = item.inventory?.minv_id || item.inventory?.id || item.minv_id;
@@ -463,7 +468,7 @@ export default function MedicineRequestDetail() {
               stockId: stock.id,
               stockInvId: stock.inv_id,
               medIdMatch,
-              stockIdMatch
+              stockIdMatch,
             });
 
             return medIdMatch && stockIdMatch;
@@ -481,7 +486,7 @@ export default function MedicineRequestDetail() {
               med_id: confirmedMedicine.med_id,
               original_stock_id: matchingStock.id,
               medrec_qty: item.medreqitem_qty || 1,
-              reason: item.reason || "No reason provided"
+              reason: item.reason || "No reason provided",
             };
 
             console.log(`  📦 Auto-selecting medicine:`, autoSelectedMedicine);
@@ -512,7 +517,7 @@ export default function MedicineRequestDetail() {
         totalMedicines: medicineData.length,
         totalConfirmedItems,
         totalStockOptions: medicineStocksOptions?.medicines?.length || 0,
-        selectedMedicinesLength: selectedMedicines.length
+        selectedMedicinesLength: selectedMedicines.length,
       });
     }
   }, [medicineData, medicineStocksOptions, isLoading, isMedicinesLoading, isAppMode]);
@@ -543,10 +548,14 @@ export default function MedicineRequestDetail() {
           medreqitem_id: medicineData.medreqitem_id,
           med_name: medicineData.med_name,
           med_id: medicineData.med_id,
+          med_type: medicineData.med_type,
+          med_dsg: medicineData.dosage,
+          med_form: medicineData.form,
+          med_dsg_unit: medicineData.dsg_unit,
           original_stock_id: medicineData.original_stock_id,
           minv_id: selectedMed.minv_id, // Keep the unique ID as minv_id
           medrec_qty: quantity, // Use autofilled quantity
-          reason: reason // Use existing reason or auto-fill from confirmed data
+          reason: reason, // Use existing reason or auto-fill from confirmed data
         };
       }
 
@@ -581,8 +590,8 @@ export default function MedicineRequestDetail() {
         minv_id: med.original_stock_id || med.minv_id, // Use original stock ID for API
         medrec_qty: med.medrec_qty,
         medreqitem_id: med.medreqitem_id,
-        reason: med.reason // Include reason in payload
-      }))
+        reason: med.reason, // Include reason in payload
+      })),
     };
 
     console.log("Sending payload:", payload);
@@ -654,7 +663,7 @@ export default function MedicineRequestDetail() {
                         add_barangay: patientData.address.add_barangay,
                         add_city: patientData.address.add_city,
                         add_province: patientData.address.add_province,
-                        add_sitio: patientData.address.add_sitio
+                        add_sitio: patientData.address.add_sitio,
                       },
                       households: [{ hh_id: patientData.householdno }],
                       personal_info: {
@@ -662,10 +671,10 @@ export default function MedicineRequestDetail() {
                         per_mname: patientData.personal_info.per_mname,
                         per_lname: patientData.personal_info.per_lname,
                         per_dob: patientData.personal_info.per_dob,
-                        per_sex: patientData.personal_info.per_sex
-                      }
-                    }
-                  }
+                        per_sex: patientData.personal_info.per_sex,
+                      },
+                    },
+                  },
                 }}
               >
                 <Button size="sm">
@@ -787,7 +796,12 @@ export default function MedicineRequestDetail() {
 
         {/* Action Button */}
         <div className="flex justify-end mt-4">
-          <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
+          <Button
+            onClick={processMedicineAllocation}
+            disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature}
+            size="lg"
+            className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
+          >
             {isPending ? (
               <>
                 {" "}

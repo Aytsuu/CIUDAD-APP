@@ -382,11 +382,17 @@ class MedicineRequestPendingItemsTableView(APIView):
                     med_id = item.med.med_id
                     med_name = item.med.med_name
                     med_type = item.med.med_type
+                    med_dsg = item.med.med_dsg
+                    med_form = item.med.med_form
+                    med_dsg_unit = item.med.med_dsg_unit
                 # If med is null, try to get from minv_id__med_id
                 elif item.minv_id and item.minv_id.med_id:
                     med_id = item.minv_id.med_id.med_id
                     med_name = item.minv_id.med_id.med_name
                     med_type = item.minv_id.med_id.med_type
+                    med_dsg = item.minv_id.med_id.med_dsg
+                    med_form = item.minv_id.med_id.med_form
+                    med_dsg_unit = item.minv_id.med_id.med_dsg_unit
                  
                 # Get formatted patient name
                 patient_name = "Unknown Patient"
@@ -412,6 +418,9 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'med_id': med_id,
                         'med_name': med_name,
                         'med_type': med_type,
+                        'med_dsg': med_dsg,
+                        'med_form': med_form,
+                        'med_dsg_unit': med_dsg_unit,
                         'patient_name': patient_name,
                         'request_items': []
                     }
@@ -477,12 +486,14 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'minv_id': allocation.minv.minv_id,
                         'inv_id': allocation.minv.inv_id.inv_id if allocation.minv.inv_id else None,
                         'minv_name': allocation.minv.med_id.med_name if allocation.minv.med_id else "Unknown",
+                        'minv_type': allocation.minv.med_id.med_type if allocation.minv.med_id else "Unknown",
+                        'minv_dsg': allocation.minv.med_id.med_dsg if allocation.minv.med_id else "",
+                        'minv_form': allocation.minv.med_id.med_form if allocation.minv.med_id else "",
+                        'minv_dsg_unit': allocation.minv.med_id.med_dsg_unit if allocation.minv.med_id else "",
                         'allocated_qty': allocation.allocated_qty,
                         'created_at': allocation.created_at,
                         'minv_details': {
-                            'minv_dsg': allocation.minv.minv_dsg,
-                            'minv_dsg_unit': allocation.minv.minv_dsg_unit,
-                            'minv_form': allocation.minv.minv_form,
+                          
                             'minv_qty': allocation.minv.minv_qty,
                             'minv_qty_unit': allocation.minv.minv_qty_unit,
                             'minv_pcs': allocation.minv.minv_pcs,

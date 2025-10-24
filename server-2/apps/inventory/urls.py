@@ -115,7 +115,7 @@ urlpatterns = [
     
     
     path('medicine-avaiable-records/', MedicineListAvailableTable.as_view(), name='medicine-available'),
-    
+
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
     path('firstaid/records/<str:month>/', MonthlyFirstAidRecordsDetailAPIView.as_view(), name='firstaid-monthly-records'),
     path('firstaid-expired-out-of-stock-summary/', FirstAidExpiredOutOfStockSummaryAPIView.as_view(), name='firstaid-expired-out-of-stock-summary'),

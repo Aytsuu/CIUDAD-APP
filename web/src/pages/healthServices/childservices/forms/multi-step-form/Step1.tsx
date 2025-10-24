@@ -25,8 +25,8 @@ export default function ChildHRPage1({
   updateFormData,
   formData,
   mode,
-  // Remove selectedPatient, setSelectedPatient, selectedPatientId, setSelectedPatientId from props
-}: Page1Props) {
+}: // Remove selectedPatient, setSelectedPatient, selectedPatientId, setSelectedPatientId from props
+Page1Props) {
   const isAddNewMode = mode === "addnewchildhealthrecord";
 
   // Use localStorage for formData, maternal checkbox, selected patient, and selected patient ID
@@ -101,6 +101,10 @@ export default function ChildHRPage1({
       updateFormData({});
       setLocalFormData({} as FormData);
       setLinkMother(false);
+      localStorage.removeItem("childHRFormData");
+      localStorage.removeItem("childHRSelectedPatient");
+      localStorage.removeItem("childHRSelectedPatientId");
+      
     }
   };
 
@@ -119,14 +123,6 @@ export default function ChildHRPage1({
     } catch (error) {
       console.error("Form submission error:", error);
     }
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleSubmit(onSubmitForm, (errors) => {
-      console.error("Form validation errors:", errors);
-    })(e);
   };
 
   // --- Maternal Info Logic ---
@@ -169,6 +165,15 @@ export default function ChildHRPage1({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linkMother, hasPregnancyId]);
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Submitting form step1...", form.getValues());
+    handleSubmit(onSubmitForm, (errors) => {
+      console.error("Form validation errors:", errors);
+    })(e);
+  };
+
   return (
     <>
       <Form {...form}>
@@ -193,29 +198,14 @@ export default function ChildHRPage1({
         )}
 
         <form onSubmit={handleFormSubmit} className="space-y-6" noValidate>
-          <div className="flex w-full flex-wrap gap-4">
-            <div className="flex justify-end gap-4 w-full">
-              <FormInput control={control} name="residenceType" label="Residence Type" type="text" readOnly={isAddNewMode || !!selectedPatient} className="w-[200px]" />
-            </div>
-            <div className="flex justify-end gap-4 w-full">
-              <FormInput control={control} name="familyNo" label="Family No:" type="text" className="w-[200px]" />
-              <FormInput control={control} name="ufcNo" label="UFC No:" type="text" className="w-[200px]" />
-            </div>
-          </div>
-
           {/* Checkbox to link mother and show maternal record */}
           {hasPregnancyId && (
-            <div className="mb-4 flex flex-col gap-2 border border-pink-200 bg-pink-50 rounded-md p-4">
-              <label className="flex items-center gap-2 text-pink-700 font-medium cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={linkMother}
-                  onChange={(e) => setLinkMother(e.target.checked)}
-                  className="accent-pink-500"
-                />
+            <div className="mb-4 flex flex-col gap-2 border border- bg-snow rounded-md p-4">
+              <label className="flex items-center gap-2 font-medium cursor-pointer text-blue-600">
+                <input type="checkbox" checked={linkMother} onChange={(e) => setLinkMother(e.target.checked)} className="accent-blue-500" />
                 Link Mother: {motherPersonalInfo.per_lname}, {motherPersonalInfo.per_fname}
                 {motherPersonalInfo.per_mname ? ` ${motherPersonalInfo.per_mname}` : ""}
-                <span className="ml-2 font-normal text-xs">
+                <span className="ml-2 font-normal  bg-blue-600 text-white px-2 py-1 rounded-md text-sm">
                   Pregnancy ID: <span className="font-mono">{motherLatestPregnancy.pregnancy_id}</span>
                 </span>
               </label>
@@ -226,6 +216,15 @@ export default function ChildHRPage1({
               )}
             </div>
           )}
+          <div className="flex w-full flex-wrap gap-4">
+            <div className="flex justify-end gap-4 w-full">
+              <FormInput control={control} name="residenceType" label="Residence Type" type="text" readOnly={isAddNewMode || !!selectedPatient} className="w-[200px]" />
+            </div>
+            <div className="flex justify-end gap-4 w-full">
+              <FormInput control={control} name="familyNo" label="Family No:" type="text" className="w-[200px]" />
+              <FormInput control={control} name="ufcNo" label="UFC No:" type="text" className="w-[200px]" />
+            </div>
+          </div>
 
           <ChildInfoSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} placeOfDeliveryType={placeOfDeliveryType} />
           <MotherInfoSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} />

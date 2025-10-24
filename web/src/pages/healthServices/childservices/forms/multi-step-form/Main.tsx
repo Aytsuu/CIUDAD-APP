@@ -64,7 +64,6 @@ export default function ChildHealthRecordForm() {
   const updatechildhealthrecordmutation = useUpdateChildHealthRecordMutation();
   const { data: childHealthRecord, isLoading: isRecordLoading, error: recordError } = useChildHealthHistory(chrecId);
 
-
   useEffect(() => {
     if (currentPage > 1) {
       setCompletedSteps((prev) => {
@@ -76,6 +75,25 @@ export default function ChildHealthRecordForm() {
       });
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    // Only clear if the page is loaded as a reload (not SPA navigation)
+    if (window.performance) {
+      // For most browsers
+      const navigationEntries = window.performance.getEntriesByType && window.performance.getEntriesByType("navigation");
+      let navType;
+      if (navigationEntries && navigationEntries.length > 0 && "type" in navigationEntries[0]) {
+        navType = (navigationEntries[0] as PerformanceNavigationTiming).type;
+      } else {
+        navType = (window.performance as any).navigation?.type;
+      }
+      if (navType === "reload" || navType === 1) {
+        localStorage.removeItem("childHRFormData");
+        localStorage.removeItem("childHRSelectedPatient");
+        localStorage.removeItem("childHRSelectedPatientId");
+      }
+    }
+  }, []);
 
   const handleStepClick = (stepId: number) => {
     if (stepId <= currentPage || completedSteps.includes(stepId)) {
@@ -373,6 +391,7 @@ export default function ChildHealthRecordForm() {
   const handleSubmit = async (submittedData: FormData) => {
     setIsSubmitting(true);
     setError(null);
+    console.log("child display submit:", submittedData);
 
     try {
       const dataToSubmit = {

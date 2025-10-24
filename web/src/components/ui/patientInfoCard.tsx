@@ -65,7 +65,9 @@ const getGenderIcon = (gender?: string) => {
 
 const makeAddress = (p: Patient) => {
   if (p.addressFull && p.addressFull.trim()) return toTitleCase(p.addressFull);
-  const parts = [p.address?.add_street, p.address?.add_barangay, p.address?.add_city, p.address?.add_province].filter((part) => part && String(part).trim() && String(part).toLowerCase() !== "no data").map((s) => toTitleCase(String(s).trim()));
+  const parts = [p.address?.add_street, p.address?.add_barangay, p.address?.add_city, p.address?.add_province]
+    .filter((part) => part && String(part).trim() && String(part).toLowerCase() !== "no data")
+    .map((s) => toTitleCase(String(s).trim()));
   return parts.length ? parts.join(", ") : "No address provided";
 };
 
@@ -167,7 +169,9 @@ export const PatientInfoCard = ({ patient, isLoading = false }: PatientInfoCardP
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-gray-600">ID: {patient.pat_id}</span>
               <span className="text-gray-300">•</span>
-              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${patient.pat_type?.toLowerCase() === "resident" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{patient.pat_type ? toTitleCase(patient.pat_type) : "Unknown"}</span>
+              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${patient.pat_type?.toLowerCase() === "resident" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                {patient.pat_type ? toTitleCase(patient.pat_type) : "Unknown"}
+              </span>
             </div>
           </div>
         </div>
@@ -183,10 +187,11 @@ export const PatientInfoCard = ({ patient, isLoading = false }: PatientInfoCardP
           {/* Row 2: Date of Birth */}
           <InfoItem label="Date of Birth" value={dob} icon={Calendar} color="text-blue-600" />
 
-          {/* Row 3: Full Address spans both columns */}
-          <InfoItem label="Full Address" value={address} icon={MapPin} color="text-orange-600" />
-          <InfoItem label="Sitio" value={sitio} icon={Map} color="text-red-600" />
-
+          <div className="flex flex-row gap-8">
+            {/* Row 3: Full Address spans both columns */}
+            <InfoItem label="Full Address" value={address} icon={MapPin} color="text-orange-600" />
+            <InfoItem label="Sitio" value={sitio} icon={Map} color="text-red-600" />
+          </div>
 
           {/* Row 4: Sitio */}
         </div>

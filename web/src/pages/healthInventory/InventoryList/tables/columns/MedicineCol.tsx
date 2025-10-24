@@ -3,21 +3,14 @@ import { Button } from "@/components/ui/button/button";
 import { Edit, Trash, ArrowUpDown } from "lucide-react";
 
 
-export type MedicineRecords = {
-  id: string;
-  medicineName: string;
-  cat_id: string;
-  cat_name: string;
-  med_type: string;
-};
 
 export const Medcolumns = (
   setMedToDelete: (id: string) => void,
   setIsDeleteConfirmationOpen: (isOpen: boolean) => void,
-  setSelectedMedicine: (medicine: MedicineRecords) => void,
+  setSelectedMedicine: (medicine: any) => void,
   setModalMode: (mode: 'add' | 'edit') => void,
   setShowMedicineModal: (show: boolean) => void
-): ColumnDef<MedicineRecords>[] => [
+): ColumnDef<any>[] => [
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -30,15 +23,26 @@ export const Medcolumns = (
     ),
   },
   {
-    accessorKey: "medicineName",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Medicine Name <ArrowUpDown size={15} />
+    accessorKey: "med_name",
+    header:"medicine",
+    cell: ({ row }) => (
+      <div className="flex flex-col justify-center px-2">
+        <div className="font-medium">
+            {row.original.med_name?.toUpperCase()}
+        </div>
+        <div className="text-sm text-gray-500 flex justify-center items-center gap-1">
+          <span>{row.original.med_dsg || ""}</span>
+          <span>{(row.original.med_dsg_unit || "").toLowerCase()}</span>
+          {row.original.med_form && (
+            <>
+              <span className="mx-1">·</span>
+              <span>{row.original.med_form}</span>
+            </>
+          )}
+        </div>
       </div>
     ),
+
   },
   { accessorKey: "med_type", header: "Medicine type" },
   { accessorKey: "cat_name", header: "Category" },

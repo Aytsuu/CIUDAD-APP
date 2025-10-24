@@ -207,6 +207,9 @@ export const confirmedItemsColumns: ColumnDef<any>[] = [
         <div className="px-3 py-2">
           <div className="text-center space-y-1">
             <div className="font-semibold text-gray-900">{medName}</div>
+         <div className="text-sm text-gray-600 mt-1">
+            {row.original.med_dsg} {row.original.med_dsg_unit}  . {row.original.med_form}
+          </div>
             <div className="text-sm text-gray-600">{medType}</div>
           </div>
         </div>

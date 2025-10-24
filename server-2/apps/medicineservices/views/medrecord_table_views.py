@@ -151,8 +151,8 @@ class MedicineRecordTableView(APIView):
                     'minv_id': record.minv_id.minv_id if record.minv_id else None,
                     'medicine_name': record.minv_id.med_id.med_name if record.minv_id and record.minv_id.med_id else 'Unknown',
                     'medicine_category': category_name,
-                    'dosage': f"{record.minv_id.minv_dsg} {record.minv_id.minv_dsg_unit}" if record.minv_id else 'N/A',
-                    'form': record.minv_id.minv_form if record.minv_id else 'N/A',
+                    'dosage': f"{record.minv_id.med_id.med_dsg} {record.minv_id.med_id.med_dsg_unit}" if record.minv_id else 'N/A',
+                    'form': record.minv_id.med_id.med_form if record.minv_id else 'N/A',
                     'files': file_data,
                     'status': 'Fulfilled' if record.fulfilled_at else 'Pending',
                     'patient_record': patient_record_data  # Add serialized patient record data here
