@@ -216,12 +216,12 @@ class Command(BaseCommand):
         
         self.stdout.write(f"📬 Total recipients: {len(recipient_rp_ids)}")
         
-        # Set reminder time for 10:00 AM today (timezone-aware)
-        remind_time = timezone.now().replace(hour=10, minute=0, second=0, microsecond=0)
+        # Set reminder time for 8:00 AM today (timezone-aware)
+        remind_time = timezone.now().replace(hour=8, minute=0, second=0, microsecond=0)
         
-        # If 10 AM has already passed today, schedule for tomorrow at 10 AM
+        # If 8 AM has already passed today, schedule for tomorrow at 8 AM
         if remind_time < timezone.now():
-            remind_time += timedelta(days=1)
+            remind_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0)
         
         self.stdout.write(f"⏰ Reminder scheduled for: {remind_time}")
         
@@ -257,10 +257,10 @@ class Command(BaseCommand):
                     recipients=recipient_rp_ids,
                     notif_type="REQUEST",
                     target_obj=None,
-                    web_route="/services/familyplanning/record",
-                    web_params={"patient_id": str(patient_id)},
-                    mobile_route="screens/admin/admin-famplanning/",
-                    mobile_params={"patient_id": str(patient_id)},
+                    web_route="",
+                    web_params="",
+                    mobile_route="",
+                    mobile_params="",
                 )
                 
                 if success and test_mode:

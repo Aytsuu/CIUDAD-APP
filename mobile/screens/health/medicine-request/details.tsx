@@ -64,7 +64,7 @@ export default function MedicineDetailsScreen() {
     };
 
     addToCart(itemToAdd);
-    console.log("➕ Adding to cart:", itemToAdd);
+    console.log("Adding to cart:", itemToAdd);
     
     Alert.alert("Success", "Medicine added to your request", [
       { text: "Continue Browsing", onPress: () => router.back() },
@@ -73,7 +73,6 @@ export default function MedicineDetailsScreen() {
   };
 
   if (!medicine) {
-    // This state indicates medicineData was not passed correctly or could not be parsed
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 justify-center items-center">
         <View className="bg-white p-6 rounded-2xl shadow-lg items-center">

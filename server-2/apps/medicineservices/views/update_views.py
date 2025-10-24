@@ -1,4 +1,3 @@
-
 from apps.medicineservices.models import MedicineRequestItem, MedicineRequest
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
 from apps.medicineservices.serializers import MedicineRecordCreateSerializer,MedicineRequestSerializer
@@ -15,7 +14,79 @@ from apps.administration.models import Staff
 from rest_framework.views import APIView
 from utils.create_notification import NotificationQueries
 
-   
+
+def send_medicine_status_notification(medicine_request_item, new_status, reason=None):
+    try:
+        notifier = NotificationQueries()
+        
+        # Determine recipient (resident)
+        recipient_rp_ids = []
+        resident_name = "Resident"
+        
+        medicine_request = medicine_request_item.medreq_id
+        if medicine_request.rp_id:
+            # Direct resident request
+            recipient_rp_ids = [str(medicine_request.rp_id.rp_id)]
+            if medicine_request.rp_id.per:
+                resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+        elif medicine_request.pat_id and medicine_request.pat_id.rp_id:
+            # Patient with resident profile
+            recipient_rp_ids = [str(medicine_request.pat_id.rp_id.rp_id)]
+            if medicine_request.pat_id.rp_id.per:
+                resident_name = f"{medicine_request.pat_id.rp_id.per.per_fname} {medicine_request.pat_id.rp_id.per.per_lname}"
+        
+        if not recipient_rp_ids:
+            print(f"⚠️ No recipient found for medicine request notification for request item {medicine_request_item.medreqitem_id}")
+            return False
+        
+        # Different messages based on status
+        status_messages = {
+            'rejected': {
+                'title': 'Medicine Request Rejected',
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} was rejected. Reason: {reason or ""}'
+            },
+            'referred': {
+                'title': 'Medicine Request Referred',
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been referred. Reason: {reason or ""}'
+            },
+            'confirmed': {
+                'title': 'Medicine Request Confirmed',
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been confirmed. Please proceed to the health center to pick up your medicine.'
+            }
+        }
+                
+        message_info = status_messages.get(new_status)
+        if not message_info:
+            print(f"No message template for status: {new_status}")
+            return False
+        
+        # Create notification
+        success = notifier.create_notification(
+            title=message_info['title'],
+            message=message_info['message'],
+            sender="00001250924",  # System sender
+            recipients=recipient_rp_ids,
+            notif_type=f"MEDICINE_{new_status.upper()}",
+            target_obj=None,
+            web_route="/services/medicine-request",
+            web_params={"request_id": str(medicine_request.medreq_id), "status": new_status},
+            mobile_route="/(health)/medicine-request/my-requests",
+            mobile_params={"request_id": str(medicine_request.medreq_id)},
+        )
+        
+        if success:
+            print(f"✅ Medicine {new_status} notification sent to {resident_name} for request item {medicine_request_item.medreqitem_id}")
+        else:
+            print(f"❌ Failed to send medicine {new_status} notification to {resident_name} for request item {medicine_request_item.medreqitem_id}")
+            
+        return success
+        
+    except Exception as e:
+        print(f"❌ Error sending medicine {new_status} notification for request item {medicine_request_item.medreqitem_id}: {str(e)}")
+        return False
+    
+    
+    
 class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
     serializer_class = MedicineRequestSerializer 
     queryset = MedicineRequest.objects.all()
@@ -31,17 +102,18 @@ class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
         old_status = instance.status
         new_status = request.data.get('status')
+        print("NEW STATUS",new_status)
         
         # Check if we're updating status to rejected
-        if new_status == 'rejected':
+        if new_status in ['rejected', 'referred']:
             archive_reason = request.data.get('archive_reason', '')
-            instance.status = 'rejected'
+            instance.status = new_status
             instance.is_archived = True
             instance.archive_reason = archive_reason
             instance.save()
             
-            # Send notification for rejected status
-            self.send_status_notification(instance.medreq_id, 'rejected', archive_reason)
+            # Send notification for rejected or referred status
+            send_medicine_status_notification(instance, new_status, archive_reason)
             
         else:
             # For other updates, use default behavior
@@ -49,24 +121,15 @@ class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
             
             # Send notification if status changed
             if new_status and new_status != old_status:
-                self.send_status_notification(instance.medreq_id, new_status)
+                send_medicine_status_notification(instance, new_status)
             
             return response
         
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
-    def send_status_notification(self, medicine_request, new_status, reason=None):
-        """Helper method to send status change notifications"""
-        try:
-            # Use the notification function we created above
-            from .utils import send_medicine_status_notification  # You might want to create a utils file
-            send_medicine_status_notification(medicine_request, new_status, reason)
-        except Exception as e:
-            logger.error(f"Error sending status notification: {str(e)}")
-        
-        
-
+    
+# OLD CODE BEFORE NOTIFICATION ADDITION
 
 # class UpdateConfirmAllPendingItemsView(APIView):  # Change from UpdateAPIView to APIView
 #     @transaction.atomic
@@ -356,7 +419,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
             success = notifier.create_notification(
                 title="Medicine request ready for pickup",
                 message=(
-                    f"Medicines: {medicine_list}. "
+                    f"Medicines requested: {medicine_list}.\n"
                     "Please note that if you do not pick up your medicine within 2 days, "
                     "your request will be automatically cancelled."
                 ),
@@ -364,8 +427,8 @@ class UpdateConfirmAllPendingItemsView(APIView):
                 recipients=recipient_rp_ids,
                 notif_type="MEDICINE_READY",
                 target_obj=None,
-                web_route="/services/medicine/requests",
-                web_params={"request_id": str(medicine_request.medreq_id)},
+                web_route="",
+                web_params="",
                 mobile_route="/(health)/medicine-request/my-requests",
                 mobile_params={"request_id": str(medicine_request.medreq_id)},
             )
