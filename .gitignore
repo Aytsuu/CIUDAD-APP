@@ -72,4 +72,4 @@ env/
 /web/.vite/
 
 # firebase
-server-1/firebase/firebase-key.json
+# server-1/firebase/firebase-key.json
