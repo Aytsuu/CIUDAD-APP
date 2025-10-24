@@ -14,7 +14,7 @@ import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinated
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import TableLoading from "@/pages/healthServices/table-loading";
 
 export default function IndivVaccinationRecords() {
@@ -124,7 +124,7 @@ export default function IndivVaccinationRecords() {
             <p className="text-sm font-bold text-gray-900">{isVaccinationRecordsLoading ? "..." : vaccinationCount}</p>
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <ProtectedComponent exclude={["DOCTOR"]}>
             <div className="flex flex-1 justify-between items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
@@ -144,7 +144,7 @@ export default function IndivVaccinationRecords() {
                 </Button>
               </div>
             </div>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
         </div>
 
         <div className="h-full w-full">

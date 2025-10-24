@@ -14,7 +14,7 @@ import { Heart } from "lucide-react";
 import { FirstAidRecord } from "../types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { firstAidColumns } from "./columns/indiv-records-col";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import TableLoading from "../../table-loading";
 
 export default function IndivFirstAidRecords() {
@@ -165,7 +165,7 @@ export default function IndivFirstAidRecords() {
           </div>
         </div>
 
-        <ProtectedComponentButton exclude={["DOCTOR"]}>
+        <ProtectedComponent exclude={["DOCTOR"]}>
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
@@ -181,7 +181,7 @@ export default function IndivFirstAidRecords() {
               </Link>
             </Button>
           </div>
-        </ProtectedComponentButton>
+        </ProtectedComponent>
       </div>
 
       <div className="h-full w-full bg-white">

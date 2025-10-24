@@ -17,7 +17,7 @@ import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQue
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import TableLoading from "../../table-loading";
@@ -411,7 +411,7 @@ export default function AllFirstAidRecords() {
               />
             </div>
 
-            <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <ProtectedComponent exclude={["DOCTOR"]}>
               <div className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto">
                   <Link
@@ -426,7 +426,7 @@ export default function AllFirstAidRecords() {
                   </Link>
                 </Button>
               </div>
-            </ProtectedComponentButton>
+            </ProtectedComponent>
           </div>
         </div>
 

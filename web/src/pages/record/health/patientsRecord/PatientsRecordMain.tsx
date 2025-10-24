@@ -20,7 +20,7 @@ import { usePatients } from "./queries/fetch";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import ViewButton from "@/components/ui/view-button";
 
 
@@ -375,7 +375,7 @@ export default function PatientsRecord() {
             </div>
           </div>
             
-            <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <ProtectedComponent exclude={["DOCTOR"]}>
             <div>
               <div className="flex ml-2">
                 <Link to="/patientrecords/form">
@@ -385,7 +385,7 @@ export default function PatientsRecord() {
                 </Link>
               </div>
             </div>
-            </ProtectedComponentButton>
+            </ProtectedComponent>
           
         </div>
 

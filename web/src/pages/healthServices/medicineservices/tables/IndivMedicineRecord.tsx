@@ -11,7 +11,7 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { medicineRecordColumns } from "./columns/inv-med-col";
 import { useIndividualMedicineRecords } from "../queries/fetch";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { serializePatientData } from "@/helpers/serializePatientData";
 import TableLoading from "../../table-loading";
 
@@ -195,7 +195,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
             <p className="text-2xl font-bold text-gray-900">{isLoading ? "..." : totalCount}</p>
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <ProtectedComponent exclude={["DOCTOR"]}>
             <div className="flex flex-1 justify-between items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
@@ -217,7 +217,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
                 </Button>
               </div>
             </div>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
         </div>
 
         <div className="h-full w-full rounded-md">

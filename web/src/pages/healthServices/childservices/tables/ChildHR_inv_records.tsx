@@ -17,7 +17,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { GrowthChart } from "./growth-chart";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { processHistoryData } from "./formattedData";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import TableLoading from "../../table-loading";
@@ -291,7 +291,7 @@ export default function InvChildHealthRecords() {
       )}
       <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
       <div className="flex justify-end mt-8">
-        <ProtectedComponentButton exclude={["DOCTOR"]}>
+        <ProtectedComponent exclude={["DOCTOR"]}>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
             {latestRecord && !isLatestRecordFromToday && (
               <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
@@ -309,7 +309,7 @@ export default function InvChildHealthRecords() {
               </div>
             )}
           </div>
-        </ProtectedComponentButton>
+        </ProtectedComponent>
       </div>
 
       <div className="h-full w-full rounded-md mt-4">

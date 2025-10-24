@@ -18,7 +18,7 @@ import { getUniqueAnimalbitePatients, getAnimalBiteStats } from "./api/get-api";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import ViewButton from "@/components/ui/view-button";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 // Type definition for table display
 type UniquePatientDisplay = {
@@ -418,13 +418,13 @@ const Overall: React.FC = () => {
             />
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <ProtectedComponent exclude={["DOCTOR"]}>
             <div className="w-full sm:w-auto">
               <Button onClick={() => setIsReferralFormOpen(true)} className="w-full sm:w-auto font-medium py-2 px-4 rounded-md shadow-sm">
                 New Record
               </Button>
             </div>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
         </div>
 
         <div className="h-full w-full rounded-md">

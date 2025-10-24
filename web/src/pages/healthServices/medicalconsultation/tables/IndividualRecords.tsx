@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useConsultationHistory, useFamHistory } from "../queries/fetch";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { MedicalHistoryTab } from "./medical-history-card";
 import { FamilyHistoryTab } from "./family-history-card";
 import { serializePatientData } from "@/helpers/serializePatientData";
@@ -165,7 +165,7 @@ export default function InvMedicalConRecords() {
             <p className="text-sm font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : totalCount}</p>
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <ProtectedComponent exclude={["DOCTOR"]}>
             <div className="flex flex-1 justify-between items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
@@ -187,7 +187,7 @@ export default function InvMedicalConRecords() {
                 </Button>
               </div>
             </div>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
         </div>
 
         <div className="h-full w-full rounded-md">
