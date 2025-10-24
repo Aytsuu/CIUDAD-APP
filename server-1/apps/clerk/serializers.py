@@ -74,9 +74,27 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 
     def get_requester(self, obj):
         try:
+            # Handle resident certificates
             if obj.certificate and obj.certificate.rp_id and getattr(obj.certificate.rp_id, "per", None):
                 person = obj.certificate.rp_id.per
-                return f"{person.per_fname} {person.per_lname}"
+                # Format as "Last Name First Name Middle Name"
+                name_parts = [
+                    person.per_lname,
+                    person.per_fname,
+                    person.per_mname
+                ]
+                return " ".join(filter(None, name_parts)) or "Unknown"
+            
+            # Handle non-resident certificates
+            elif obj.nonresidentcert:
+                # Use individual name fields: lname fname mname
+                name_parts = [
+                    obj.nonresidentcert.nrc_lname,
+                    obj.nonresidentcert.nrc_fname,
+                    obj.nonresidentcert.nrc_mname
+                ]
+                return " ".join(filter(None, name_parts)) or "Unknown"
+            
             return "Unknown"
         except Exception as e:
             logger.error(f"Error getting requester: {str(e)}")
@@ -84,8 +102,14 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 
     def get_purpose(self, obj):
         try:
+            # Handle resident certificates
             if obj.certificate and obj.certificate.pr_id:
                 return obj.certificate.pr_id.pr_purpose
+            
+            # Handle non-resident certificates
+            elif obj.nonresidentcert and obj.nonresidentcert.pr_id:
+                return obj.nonresidentcert.pr_id.pr_purpose
+            
             return "Not specified"
         except Exception as e:
             logger.error(f"Error getting purpose: {str(e)}")
@@ -122,7 +146,9 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
             "nrc_req_status",
             "nrc_req_payment_status",
             "nrc_pay_date",
-            "nrc_requester",
+            "nrc_lname",
+            "nrc_fname",
+            "nrc_mname",
             "nrc_address",
             "nrc_birthdate",
             "pr_id",    
@@ -250,6 +276,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                 
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
+                    'per_mname': getattr(obj.rp_id.per, 'per_mname', None),
                     'per_lname': obj.rp_id.per.per_lname,
                     'per_dob': dob_value,
                     'per_address': address_str,

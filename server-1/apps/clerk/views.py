@@ -199,7 +199,9 @@ class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
         if search:
             queryset = queryset.filter(
                 Q(nrc_id__icontains=search) |
-                Q(nrc_requester__icontains=search) |
+                Q(nrc_lname__icontains=search) |
+                Q(nrc_fname__icontains=search) |
+                Q(nrc_mname__icontains=search) |
                 Q(nrc_address__icontains=search) |
                 Q(pr_id__pr_purpose__icontains=search) |
                 Q(nrc_req_status__icontains=search) |
@@ -598,6 +600,7 @@ class IssuedCertificateListView(generics.ListAPIView):
             queryset = IssuedCertificate.objects.select_related(
                 'certificate__rp_id__per',
                 'certificate__pr_id',
+                'nonresidentcert__pr_id',
                 'staff'
             ).all()
 
@@ -606,16 +609,26 @@ class IssuedCertificateListView(generics.ListAPIView):
             if search:
                 queryset = queryset.filter(
                     Q(ic_id__icontains=search) |
+                    # Resident certificate search
                     Q(certificate__rp_id__per__per_fname__icontains=search) |
                     Q(certificate__rp_id__per__per_lname__icontains=search) |
+                    Q(certificate__rp_id__per__per_mname__icontains=search) |
                     Q(certificate__pr_id__pr_purpose__icontains=search) |
+                    # Non-resident certificate search
+                    Q(nonresidentcert__nrc_fname__icontains=search) |
+                    Q(nonresidentcert__nrc_lname__icontains=search) |
+                    Q(nonresidentcert__nrc_mname__icontains=search) |
+                    Q(nonresidentcert__pr_id__pr_purpose__icontains=search) |
                     Q(ic_date_of_issuance__icontains=search)
                 )
 
             # Purpose filter - matching web version
             purpose_filter = self.request.query_params.get('purpose', None)
             if purpose_filter:
-                queryset = queryset.filter(certificate__pr_id__pr_purpose=purpose_filter)
+                queryset = queryset.filter(
+                    Q(certificate__pr_id__pr_purpose=purpose_filter) |
+                    Q(nonresidentcert__pr_id__pr_purpose=purpose_filter)
+                )
 
             # Date range filter - matching web version
             date_from = self.request.query_params.get('date_from', None)
@@ -2313,4 +2326,130 @@ class BusinessPermitSidebarView(APIView):
             return Response({
                 'error': str(e),
                 'detail': 'An error occurred while fetching business permit sidebar data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CombinedCertificateListView(ActivityLogMixin, generics.ListAPIView):
+    """
+    Combined view for both resident and non-resident certificates with configurable payment status
+    """
+    permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        # Get payment status filter from request
+        payment_status = self.request.GET.get('payment_status', 'Unpaid')  # Default to 'Unpaid' for backward compatibility
+        
+        # Get resident certificates with specified payment status and exclude cancelled
+        resident_queryset = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).filter(
+            cr_req_payment_status=payment_status,
+            cr_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+        )
+        
+        # Get non-resident certificates with specified payment status and exclude cancelled
+        non_resident_queryset = NonResidentCertificateRequest.objects.select_related('pr_id').filter(
+            nrc_req_payment_status=payment_status,
+            nrc_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+        )
+        
+        # Search functionality
+        search = self.request.GET.get('search', None)
+        if search:
+            resident_queryset = resident_queryset.filter(
+                Q(cr_id__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(rp_id__per__per_mname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(cr_req_status__icontains=search)
+            )
+            
+            non_resident_queryset = non_resident_queryset.filter(
+                Q(nrc_id__icontains=search) |
+                Q(nrc_lname__icontains=search) |
+                Q(nrc_fname__icontains=search) |
+                Q(nrc_mname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(nrc_req_status__icontains=search)
+            )
+        
+        # Status filter
+        status_filter = self.request.GET.get('status', None)
+        if status_filter:
+            resident_queryset = resident_queryset.filter(cr_req_status=status_filter)
+            non_resident_queryset = non_resident_queryset.filter(nrc_req_status=status_filter)
+        
+        # Purpose filter
+        purpose_filter = self.request.query_params.get('purpose', None)
+        if purpose_filter:
+            resident_queryset = resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
+            non_resident_queryset = non_resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
+        
+        # Combine and order by date
+        combined_queryset = list(resident_queryset.order_by('-cr_req_request_date')) + list(non_resident_queryset.order_by('-nrc_req_date'))
+        
+        # Sort combined results by date (most recent first)
+        combined_queryset.sort(key=lambda x: getattr(x, 'cr_req_request_date', getattr(x, 'nrc_req_date', None)), reverse=True)
+        
+        return combined_queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            
+            # Manual pagination since we're combining two different model types
+            page_size = int(request.GET.get('page_size', 10))
+            page = int(request.GET.get('page', 1))
+            
+            start_idx = (page - 1) * page_size
+            end_idx = start_idx + page_size
+            
+            paginated_queryset = queryset[start_idx:end_idx]
+            
+            # Serialize the data
+            serialized_data = []
+            for item in paginated_queryset:
+                if hasattr(item, 'cr_id'):  # Resident certificate
+                    serializer = ClerkCertificateSerializer(item)
+                    data = serializer.data
+                    data['is_nonresident'] = False
+                    # Standardize field names
+                    data['req_request_date'] = data.get('cr_req_request_date')
+                    data['req_purpose'] = data.get('purpose', {}).get('pr_purpose', '')
+                    data['req_payment_status'] = data.get('cr_req_payment_status')
+                else:  # Non-resident certificate
+                    serializer = NonResidentCertReqSerializer(item)
+                    data = serializer.data
+                    data['is_nonresident'] = True
+                    # Map non-resident fields to match resident structure
+                    data['cr_id'] = data.get('nrc_id')
+                    data['req_request_date'] = data.get('nrc_req_date')
+                    data['req_purpose'] = data.get('purpose', {}).get('pr_purpose', '')
+                    data['req_payment_status'] = data.get('nrc_req_payment_status')
+                    data['resident_details'] = None
+                
+                serialized_data.append(data)
+            
+            # Calculate pagination info
+            total_count = len(queryset)
+            has_next = end_idx < total_count
+            has_previous = page > 1
+            
+            response_data = {
+                'count': total_count,
+                'next': f"?page={page + 1}" if has_next else None,
+                'previous': f"?page={page - 1}" if has_previous else None,
+                'results': serialized_data
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            logger.error(f"Error in CombinedCertificateListView: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching combined certificates'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
