@@ -77,7 +77,7 @@ export default function IRRecords() {
                     {id: "medium", name: "Medium"},
                     {id: "high", name: "High"}
                   ]}
-                  withRest={false}
+                  withReset={false}
                   valueLabel="Severity"
                 />
 

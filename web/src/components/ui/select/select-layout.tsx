@@ -22,20 +22,20 @@ interface SelectProps{
   options: Option[],
   value: string,
   onChange: (value: string) => void
-  withRest?: boolean;
+  withReset?: boolean;
   valueLabel?: string
 }
  
-export function SelectLayout({ placeholder, label, className, options, value, withRest=true, valueLabel, onChange }: SelectProps) {
+export function SelectLayout({ placeholder, label, className, options, value, withReset=true, valueLabel, onChange }: SelectProps) {
 
   return (
       <Select value={value} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
-              <p className="text-sm text-gray-600">{valueLabel && valueLabel + ": "}</p><SelectValue placeholder={placeholder} />
+              <p className="text-sm text-gray-600">{valueLabel && valueLabel + ": "} </p><SelectValue placeholder={placeholder} />
           </SelectTrigger> 
           <SelectContent>
               <SelectGroup>
-                  {withRest && (
+                  {withReset && (
                     <SelectLabel className="flex justify-between">
                       <p>{label}</p>
                       <div className="flex items-center gap-1 text-gray-600 cursor-pointer hover:text-black/90"
