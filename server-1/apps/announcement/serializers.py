@@ -7,7 +7,7 @@ from apps.profiling.models import ResidentProfile
 from apps.administration.models import *
 from .models import Announcement, AnnouncementFile, AnnouncementRecipient
 from utils.supabase_client import upload_to_storage
-from apps.notification.create_notification import create_notification
+from apps.notification.utils import create_notification
 import logging
 
 logger = logging.getLogger(__name__)

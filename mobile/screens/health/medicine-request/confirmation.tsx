@@ -59,11 +59,11 @@ export default function Confirmation() {
     <View className="flex-1 bg-white">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-12 pb-4 mt-4">
-        <TouchableWithoutFeedback onPress={() => router.back()}>
+        {/* <TouchableWithoutFeedback onPress={() => router.back()}>
           <View className="flex-row items-center">
             <ArrowLeft size={24} color="#263D67" strokeWidth={2} />
           </View>
-        </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback> */}
       </View>
 
       

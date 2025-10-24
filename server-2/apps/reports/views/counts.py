@@ -31,7 +31,7 @@ class ReportsCount(APIView):
             inv_firstaid_count = FirstAidInventory.objects.count()
             inv_commodity_count = CommodityInventory.objects.count()
             pregnancy_count = Pregnancy.objects.distinct().count()
-            family_planning_count = FP_Record.objects.filter(patrec__patrec_type='Family Planning').distinct().count()
+            family_planning_count = FP_Record.objects.filter(patrec__patrec_type='Family Planning').values('pat').distinct().count()
             animabites_count = AnimalBite_Referral.objects.count()
             medrequest_count = MedicineRequestItem.objects.filter(status='confirmed').distinct('medreq_id').count()
             apprequest_count = MedicineRequest.objects.filter(

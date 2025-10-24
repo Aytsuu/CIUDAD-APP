@@ -80,5 +80,4 @@ urlpatterns = [
     # path('count/<str:pat_id>/', FPRecordCountView.as_view(), name='fp-records-count-by-patient'),
     # path('fp-records/<int:fprecord_id>/check-followup/', CheckFollowupStatusView.as_view(), name='check-fp-followup'),
     # path('check-followup-notification/<str:patient_id>/', check_and_notify_fp_followup, name='check_fp_followup_notification'),
-    
-]
+    ]

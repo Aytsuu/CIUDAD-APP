@@ -418,11 +418,6 @@ class AnimalbiteReferralView(generics.ListCreateAPIView):
 
 @api_view(['GET'])
 def get_animal_bite_analytics(request):
-    """
-    Get comprehensive analytics data for animal bite cases
-    Matches your exact database structure with PatientRecord, AnimalBite_Referral, and AnimalBite_Details
-    """
-    # Get query parameters
     months = int(request.GET.get('months', 12))  # Default last 12 months
     
     # Calculate date range
@@ -456,7 +451,7 @@ def get_animal_bite_analytics(request):
     monthly_bites = {}
     for detail in bite_details:
         month_key = detail.referral.date.replace(day=1)
-        if detail.exposure_type and 'bite' in detail.exposure_type.lower():
+        if detail.exposure_type and detail.exposure_type.lower().strip() == 'bite':
             monthly_bites[month_key] = monthly_bites.get(month_key, 0) + 1
     
     monthly_trends = []
@@ -541,7 +536,7 @@ def get_animal_bite_analytics(request):
     # Count bite cases
     bite_cases = 0
     for detail in bite_details:
-        if detail.exposure_type and 'bite' in detail.exposure_type.lower():
+        if detail.exposure_type and detail.exposure_type.lower().strip() == 'bite':
             bite_cases += 1
     
     # Most common animal
