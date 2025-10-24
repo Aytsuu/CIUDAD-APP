@@ -236,8 +236,8 @@ export const useUpdateChildHealthRecordMutation = () => {
     onSuccess: (data) => {
       // Comprehensive query invalidation
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.data.chrec_id] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["ChildHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
@@ -245,10 +245,10 @@ export const useUpdateChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
-      queryClient.invalidateQueries({ queryKey: ["followupChildHealth"] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
-
+      queryClient.invalidateQueries({ queryKey: ["patients5yearsbelow"] });
 
       showSuccessToast("submitted successfully!");
       navigate(-1);

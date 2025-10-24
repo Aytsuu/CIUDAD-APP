@@ -159,7 +159,7 @@ export function PatientSearch({
         <Label className="font-normal text-xs">
           {currentIsLoading ? "Loading..." : currentEmptyMessage}
         </Label>
-        <Link to="/patient-records/new">
+        <Link to="/patientrecords/form">
           <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
           Register New Patient
           </Label>

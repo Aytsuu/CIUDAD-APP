@@ -10,7 +10,7 @@ import { useSubmitMedicineStock } from "../REQUEST/Medicine/restful-api/Medicine
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { formOptions, unitOptions, dosageUnitOptions } from "./options";
+import { unitOptions } from "./options";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
@@ -21,22 +21,22 @@ import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI
 export default function AddMedicineStock() {
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || "";
-  console.log("STAFFFACKERS",staff)
+  console.log("STAFFFACKERS", staff);
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
       medicineID: "",
       category: "",
-      dosage: undefined,
-      dsgUnit: "",
-      form: "",
+      // dosage: undefined,
+      // dsgUnit: "",
+      // form: "",
       qty: undefined,
       unit: "boxes",
       pcs: undefined,
       expiry_date: "",
       staff: staff,
-      inv_type: "Medicine"
-    }
+      inv_type: "Medicine",
+    },
   });
 
   const navigate = useNavigate();
@@ -67,43 +67,36 @@ export default function AddMedicineStock() {
           <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
           <hr className="mb-2" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Medicine Selection Combobox */}
-            <div className="mt-2">
-              <Label className="block mb-2 text-black/70">Medicine Name</Label>
-              <div className="relative">
-                <Combobox
-                  options={medicineOptions?.formatted || []}
-                  value={
-                    medicineOptions?.formatted?.find(
-                      (option: any) => option.id.startsWith(form.watch("medicineID") + ",") // Note: comma instead of ','
-                    )?.id || ""
+          {/* Medicine Selection Combobox */}
+          <div className="mt-2 w-full">
+            <Label className="block mb-2 text-black/70">Medicine Name</Label>
+            <div className="w-full">
+              <Combobox
+                options={medicineOptions?.formatted || []}
+                value={
+                  medicineOptions?.formatted?.find(
+                    (option: any) => option.id.startsWith(form.watch("medicineID") + ",") // Note: comma instead of ','
+                  )?.id || ""
+                }
+                onChange={(value) => {
+                  const medId = (value ?? "").split(",")[0]; // Make sure this matches your data format
+                  form.setValue("medicineID", medId || "");
+
+                  const selectedMedicine = medicineOptions?.default.find((med: any) => med.med_id === medId);
+                  if (selectedMedicine) {
+                    form.setValue("category", selectedMedicine.catlist || "");
                   }
-                  onChange={(value) => {
-                    const medId = (value ?? "").split(",")[0]; // Make sure this matches your data format
-                    form.setValue("medicineID", medId || "");
-
-                    const selectedMedicine = medicineOptions?.default.find((med: any) => med.med_id === medId);
-                    if (selectedMedicine) {
-                      form.setValue("category", selectedMedicine.catlist || "");
-                    }
-                  }}
-                  placeholder={isMedicinesLoading ? "Loading medicines..." : "Select medicine"}
-                  emptyMessage="No available medicines"
-                  triggerClassName="w-full"
-                />
-              </div>
+                }}
+                placeholder={isMedicinesLoading ? "Loading medicines..." : "Select medicine"}
+                emptyMessage="No available medicines"
+                triggerClassName="w-full"
+              />
             </div>
-
-            <FormInput control={form.control} name="category" label="Category" readOnly />
-
-            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormInput control={form.control} name="dosage" label="Dosage" placeholder="Dsg" type="number" />
-            <FormSelect control={form.control} name="dsgUnit" label="Dosage Unit" options={dosageUnitOptions} />
-            <FormSelect control={form.control} name="form" label="Form" options={formOptions} />
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+            <FormInput control={form.control} name="category" label="Category" readOnly />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,7 +140,13 @@ export default function AddMedicineStock() {
         </form>
       </Form>
 
-      <ConfirmationDialog isOpen={isAddConfirmationOpen} onOpenChange={setIsAddConfirmationOpen} onConfirm={confirmAdd} title="Add Medicine" description="Are you sure you want to add this medicine item?" />
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description="Are you sure you want to add this medicine item?"
+      />
     </div>
   );
 }

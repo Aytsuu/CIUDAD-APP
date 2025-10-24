@@ -39,8 +39,8 @@ export const fetchMedicinesWithStock = () => {
         inv_id: stock.inv_id || 'Unknown Inventory ID',
         name: stock.med_detail?.med_name || 'Unknown Medicine',
         med_type: stock.med_detail?.med_type || 'General',
-        dosage: `${stock.minv_dsg || 0} ${stock.minv_dsg_unit || ''}`.trim(),
-        form: stock.minv_form || '',
+        dosage: `${stock.med_detail?.med_dsg || 0} ${stock.med_detail?.med_dsg_unit || ''}`.trim(),
+        form: stock.med_detail?.med_form || '',
         expiry: stock.inv_detail?.expiry_date || null,
         available: stock.minv_qty_avail || 0,
         batch_number: stock.inv_detail?.batch_number

@@ -52,7 +52,7 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         nbscreening_result: submittedData.nbscreening_result,
         newbornInitiatedbf: submittedData.newbornInitiatedbf,
         selectedStaffId: submittedData.selectedStaffId,
-
+        pregnancy_id: submittedData.pregnancy_id,
         // Child health history
         status: submittedData.status,
         tt_status: submittedData.tt_status,
@@ -185,7 +185,7 @@ export const useChildHealthRecordMutation = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["ChildHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
@@ -196,6 +196,7 @@ export const useChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
+      queryClient.invalidateQueries({ queryKey: ["patients5yearsbelow"] });
 
       showSuccessToast("submitted successfully!");
       navigate(-1);

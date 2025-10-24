@@ -1,6 +1,17 @@
 from django.urls import path
-from .views import *
-
+from .views.all_childRecords import *
+from .views.child_view_by_patId import *
+from .views.create_immunization import *
+from .views.health_pending_followup import *
+from .views.immunization_status import *
+from .views.indiv_history import *
+from .views.latest_bmi import *
+from .views.mini_views import *
+from .views.new_followup_record import *
+from .views.monthly_nutchart import *
+from .views.new_record import *
+from .views.next_ufc import *
+from .views.update_supplementstatus import *
 
 urlpatterns = [
     
@@ -10,7 +21,7 @@ urlpatterns = [
     path('history/pending-count/', PendingMedConChildCountView.as_view(), name='pending-medical-consultation-count'),
     path('update/history/<int:chhist_id>/', UpdateChildHealthHistoryView.as_view(), name='child-health-history-update'),
     path('history/<int:chrec_id>/', IndivChildHealthHistoryView.as_view(), name='child-health-history-detail'),
-    path('historyindiv/<int:chhist_id>/', IndivChildHealthHistoryView.as_view(), name='child-health-history-detail'),
+    # path('historyindiv/<int:chhist_id>/', IndivChildHealthHistoryView.as_view(), name='child-health-history-detail'),
     path('notes/<int:chnotes_id>/', ChildHealthNotesUpdateView.as_view(), name='child-health-notes-update'),
     path('notes/', ChildHealthNotesView.as_view(), name='child-health-notes'),
     path('delete/notes/<int:chnotes_id>/', DeleteChildHealthNotesView.as_view(), name='delete-child-health-notes'),
@@ -31,8 +42,7 @@ urlpatterns = [
     
     path('child-health-record-count/<str:pat_id>/', GeChildHealthRecordCountView.as_view(), name='child-health-record-count'),
     path('records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
-    path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
-    path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
+    # path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
 
     
     #updated post create backed

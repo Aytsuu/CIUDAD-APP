@@ -15,13 +15,13 @@ import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { useMedicinesList } from "../queries/medicine/MedicineFetchQueries";
-import { MedicineData, formOptions } from "./types";
+import { formOptions, formMedOptions, dosageUnitOptions } from "./types";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { isDuplicateMedicine } from "./duplicateChecker";
 
 interface MedicineModalProps {
   mode?: "add" | "edit";
-  initialData?: MedicineData;
+  initialData?: any;
   onClose: () => void;
 }
 
@@ -39,8 +39,11 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
     defaultValues: {
       medicineName: initialData?.medicineName || "",
       cat_id: String(initialData?.cat_id) || "",
-      med_type: initialData?.med_type || ""
-    }
+      med_type: initialData?.med_type || "",
+      med_dsg: initialData?.med_dsg || undefined,
+      med_dsg_unit: initialData?.med_dsg_unit || "",
+      med_form: initialData?.med_form || "",
+    },
   });
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
         if (isDuplicateMedicine(existingMedicines, formData.medicineName)) {
           form.setError("medicineName", {
             type: "manual",
-            message: "Medicine name already exists"
+            message: "Medicine name already exists",
           });
           setIsSubmitting(false);
           return;
@@ -113,7 +116,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
       toast.error("Please select a category");
       form.setError("cat_id", {
         type: "manual",
-        message: "Category is required"
+        message: "Category is required",
       });
       return;
     }
@@ -142,7 +145,8 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
 
   const formValues = form.watch();
   const isEditMode = mode === "edit";
-  const hasFormChanges = isEditMode && initialData ? formValues.medicineName !== initialData.medicineName || String(formValues.cat_id) !== String(initialData.cat_id) || formValues.med_type !== initialData.med_type : true;
+  const hasFormChanges =
+    isEditMode && initialData ? formValues.medicineName !== initialData.medicineName || String(formValues.cat_id) !== String(initialData.cat_id) || formValues.med_type !== initialData.med_type : true;
 
   return (
     <div>
@@ -173,7 +177,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                           ? categories.map((cat) => ({
                               ...cat,
                               id: String(cat.id),
-                              name: cat.name
+                              name: cat.name,
                             }))
                           : [] // Empty array when no data
                       }
@@ -198,6 +202,11 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormInput control={form.control} name="med_dsg" label="Dosage" placeholder="Dsg" type="number" />
+              <FormSelect control={form.control} name="med_dsg_unit" label="Dosage Unit" options={dosageUnitOptions} />
+              <FormSelect control={form.control} name="med_form" label="Form" options={formMedOptions} />
+            </div>
           </div>
 
           <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">

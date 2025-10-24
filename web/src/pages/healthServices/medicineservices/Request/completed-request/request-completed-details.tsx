@@ -25,33 +25,14 @@ export default function CompletedRequestDetail() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch completed request details
-  const {
-    data: apiResponse,
-    isLoading,
-    error: completedRequestError,
-  } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "completed");
+  const { data: apiResponse, isLoading, error: completedRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "completed");
 
   // Extract data from paginated response
   const medicineData = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Calculate totals for summary
-  const calculateTotals = () => {
-    let totalRequested = 0;
-    let totalAllocated = 0;
-    let totalRemaining = 0;
-
-    medicineData.forEach((medicine: any) => {
-      // Sum up totals from the grouped medicine level
-      totalRequested += medicine.total_requested_qty || 0;
-      totalAllocated += medicine.total_allocated_qty || 0;
-      totalRemaining += medicine.total_remaining_qty || 0;
-    });
-
-    return { totalRequested, totalAllocated, totalRemaining };
-  };
-
+  console.log("Completed Request Data:", patientData);
 
   if (completedRequestError) {
     return (
@@ -87,8 +68,7 @@ export default function CompletedRequestDetail() {
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
               <CardTitle>
-                Completed Medicine Items{" "}
-                <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
+                Completed Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
               </CardTitle>
               <CardDescription>All completed medicine request items with allocation details</CardDescription>
             </div>
@@ -98,25 +78,7 @@ export default function CompletedRequestDetail() {
                 state={{
                   params: {
                     patientData: {
-                      pat_id:  patientData?.pat_id,
-                      pat_type: patientData?.pat_type,
-                      age: patientData?.age,
-                      addressFull: patientData?.address?.full_address || "No address provided",
-                      address: {
-                        add_street: patientData?.address?.add_street,
-                        add_barangay: patientData?.address?.add_barangay,
-                        add_city: patientData?.address?.add_city,
-                        add_province: patientData?.address?.add_province,
-                        add_sitio: patientData?.address?.add_sitio,
-                      },
-                      households: [{ hh_id: patientData?.householdno }],
-                      personal_info: {
-                        per_fname: patientData?.personal_info?.per_fname,
-                        per_mname: patientData?.personal_info?.per_mname,
-                        per_lname: patientData?.personal_info?.per_lname,
-                        per_dob: patientData?.personal_info?.per_dob,
-                        per_sex: patientData?.personal_info?.per_sex,
-                      },
+                      pat_id: patientData?.pat_id,
                     },
                   },
                 }}
@@ -183,8 +145,6 @@ export default function CompletedRequestDetail() {
             </div>
           </CardContent>
         </Card>
-
-    
       </div>
     </LayoutWithBack>
   );

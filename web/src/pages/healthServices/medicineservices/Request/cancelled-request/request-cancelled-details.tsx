@@ -60,7 +60,7 @@ export default function CancelledRequestDetail() {
   }
 
   return (
-    <LayoutWithBack title="cancelled Medicine Request" description="View details of cancelled medicine request">
+    <LayoutWithBack title="Cancelled Medicine Request" description="View details of cancelled medicine request">
       <div className="">
         {/* Patient Information Card */}
         <div className="mb-5">

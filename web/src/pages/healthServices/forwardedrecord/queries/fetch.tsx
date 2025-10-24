@@ -22,17 +22,17 @@ export function useCombinedHealthRecords(staffId: string, search: string, record
 
 
 
-export function useCHimmunizationCount() {
-    return useQuery({
-      queryKey: ["chimmunization-count"],
-      queryFn: async () => {
-        const response = await api2.get(`/child-health/child-immunization-count/`);
-        return response.data;
-      },
-      refetchOnMount: true,
-      staleTime: 0
-    });
-  }
+// export function useCHimmunizationCount() {
+//     return useQuery({
+//       queryKey: ["chimmunization-count"],
+//       queryFn: async () => {
+//         const response = await api2.get(`/child-health/child-immunization-count/`);
+//         return response.data;
+//       },
+//       refetchOnMount: true,
+//       staleTime: 0
+//     });
+//   }
   
   export function usePendingMedicalConCount() {
     return useQuery({

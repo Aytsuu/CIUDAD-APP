@@ -464,7 +464,6 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
             <hr className="border-gray mb-5 sm:mb-8" />
           </div>
         )}
-        <hr className="border-gray mb-5 sm:mb-8" />
         <div className="w-full px-2 sm:px-4 md:px-6 bg-snow py-4">
           <div className="mb-5 gap-1">
             <PatientInfoCard patient={patientData} />

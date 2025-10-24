@@ -25,19 +25,22 @@ const withPiecesValidation = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) =
 export const MedicineStocksSchema = withPiecesValidation(z.object({
   medicineID: z.string().min(1, "Medicine name is required"),
   category: z.string().min(1, "Category is required"),
-  dosage: positiveNumberSchema.pipe(z.number().min(1, "Dosage must be at least 1")),
-  dsgUnit: z.string().min(1, "Dosage unit is required"),
-  form: z.string().min(1, "Form is required"),
+  // dosage: positiveNumberSchema.pipe(z.number().min(1, "Dosage must be at least 1")),
+  // dsgUnit: z.string().min(1, "Dosage unit is required"),
+  // form: z.string().min(1, "Form is required"),
   qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   unit: z.string().min(1, "Unit is required").default(""),
   pcs: positiveNumberSchema.optional(), // Truly optional now
   inv_type:z.string().min(1, "Inventory type is required").default("Medicine"),
   staff: z.string().optional(),
   expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-})
-
-);
+    .refine(date => {
+      const now = new Date();
+      const expiry = new Date(date);
+      const diff = expiry.getTime() - now.getTime();
+      return diff > 15 * 24 * 60 * 60 * 1000; // 15 days in ms
+    }, "Expiry date must be at least 15 days in the future")
+}));
 
 export const CommodityStocksSchema = withPiecesValidation(z.object({
   com_id: z.string().min(1, "Commodity name is required"),
@@ -47,8 +50,14 @@ export const CommodityStocksSchema = withPiecesValidation(z.object({
   cinv_recevFrom: z.string().min(1, "Received from is required"),
   inv_type:z.string().min(1, "Inventory type is required").default("Commodity"),
   staff: z.string().optional(),
-  expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")}
+   expiry_date: z.string().min(1, "Expiry date is required")
+    .refine(date => {
+      const now = new Date();
+      const expiry = new Date(date);
+      const diff = expiry.getTime() - now.getTime();
+      return diff > 15 * 24 * 60 * 60 * 1000; // 15 days in ms
+    }, "Expiry date must be at least 15 days in the future")
+}
 ));
 
 export const FirstAidStockSchema = withPiecesValidation(z.object({
@@ -60,8 +69,14 @@ export const FirstAidStockSchema = withPiecesValidation(z.object({
   inv_type:z.string().min(1, "Inventory type is required").default("First Aid"),
   staff: z.string().optional(),
   expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-}));
+    .refine(date => {
+      const now = new Date();
+      const expiry = new Date(date);
+      const diff = expiry.getTime() - now.getTime();
+      return diff > 15 * 24 * 60 * 60 * 1000; // 15 days in ms
+    }, "Expiry date must be at least 15 days in the future")
+}
+));
 
 export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
   imz_id: z.string().min(1, "Immunization supply is required"),
@@ -72,8 +87,14 @@ export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
   inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
   staff: z.string().optional(),
   expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-}));
+    .refine(date => {
+      const now = new Date();
+      const expiry = new Date(date);
+      const diff = expiry.getTime() - now.getTime();
+      return diff > 15 * 24 * 60 * 60 * 1000; // 15 days in ms
+    }, "Expiry date must be at least 15 days in the future")
+}
+));
 
 
 

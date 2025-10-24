@@ -53,24 +53,24 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
             {expired && " (Expired)"}
           </div>
           <div className={`text-sm text-center ${expired ? "text-red-500" : "text-gray-600"}`}>
-            {item?.dosage || 0} {item?.dsgUnit || ""}, {item?.form || ""}
+            {item?.dosage || ""} {item?.dsgUnit || ""}, {item?.form || ""}
           </div>
         </div>
       );
     }
   },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const expired = row.original.isExpired;
-      return (
-        <div className={`flex justify-center min-w-[100px] px-2 ${expired ? "text-red-600" : ""}`}>
-          <div className={`text-center w-full ${expired ? "line-through" : ""}`}>{row.original.category}</div>
-        </div>
-      );
-    }
-  },
+  // {
+  //   accessorKey: "category",
+  //   header: "Category",
+  //   cell: ({ row }) => {
+  //     const expired = row.original.isExpired;
+  //     return (
+  //       <div className={`flex justify-center min-w-[100px] px-2 ${expired ? "text-red-600" : ""}`}>
+  //         <div className={`text-center w-full ${expired ? "line-through" : ""}`}>{row.original.category}</div>
+  //       </div>
+  //     );
+  //   }
+  // },
   {
     accessorKey: "qty",
     header: "Total Qty",
