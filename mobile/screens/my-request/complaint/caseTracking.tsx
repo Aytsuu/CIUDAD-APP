@@ -119,8 +119,8 @@ export default function CaseTracking({
   // Handle schedule navigation
   const handleSchedulePress = () => {
     router.push({
-      pathname: "/(my-request)/complaint-tracking/schedule",
-      params: { sr_id: tracking.sr_id },
+      pathname: "/(my-request)/complaint-tracking/hearing-history",
+      // params: { sr_id: tracking.sr_id },
     });
   };
 
@@ -407,7 +407,7 @@ export default function CaseTracking({
                 </Text>
               </View>
 
-              <View className="py-3">
+              <View className="py-2">
                 <View className="h-px bg-gray-200" />
               </View>
 
