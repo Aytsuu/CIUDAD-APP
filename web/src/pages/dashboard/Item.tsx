@@ -27,6 +27,7 @@ import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-qu
 import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
 import { useAnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
 
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
@@ -213,6 +214,10 @@ const animalBiteCards = useAnimalBiteSectionCards();
           title: "Animal Bites",
           element: <AnimalBiteAnalyticsCharts />,
         },
+        {
+            title: "Family Planning",
+            element: <FamilyPlanningAnalytics />,
+          },
         ],
         sidebar:[
           {
@@ -244,7 +249,16 @@ const animalBiteCards = useAnimalBiteSectionCards();
         ],
         
       },
-
+//  {
+//         dashboard: "FAMILY PLANNING",
+//         card: [totalPatients, newAcceptors, currentUsers, monthlyRegistrations],
+//         chart: [
+//           {
+//             title: "Family Planning Analytics",
+//             element: <FamilyPlanningAnalytics />,
+//           },
+//         ],
+//       },
     ];
     
   } else return []

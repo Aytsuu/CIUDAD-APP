@@ -500,9 +500,9 @@ def get_animal_bite_analytics(request):
     patient_type_counts = referrals.values(
         'patrec__pat_id__pat_type'
     ).annotate(
-        count=Count('referral_id')
+        count=Count('patrec__pat_id', distinct=True)  # Count distinct patients per type
     )
-    
+
     patient_types = []
     for item in patient_type_counts:
         pat_type = item['patrec__pat_id__pat_type']
@@ -511,7 +511,7 @@ def get_animal_bite_analytics(request):
                 'name': pat_type,
                 'value': item['count']
             })
-    
+
     print(f"👥 Patient types: {patient_types}")
     
     site_counts = bite_details.values(

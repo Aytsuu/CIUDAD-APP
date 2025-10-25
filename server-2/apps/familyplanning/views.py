@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from django.db import transaction  # For atomic operations if needed
 from django.db.models import Exists, Sum, Q, Min, F, Case, When, DateField, Subquery, Value, OuterRef,Prefetch
+from django.db.models.functions import ExtractMonth, ExtractYear, TruncMonth
 from django.utils import timezone
 from datetime import date, timedelta
 from .models import *
@@ -28,7 +29,7 @@ from .mappings.mappings import *
 from rest_framework.pagination import PageNumberPagination
 from django.http import Http404
 from .mappings.mappings import get_pelvic_exam_display_values
-
+from collections import defaultdict
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -2977,3 +2978,269 @@ class FP_PregnancyCheckDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FP_PregnancyCheckSerializer
     queryset = FP_pregnancy_check.objects.all()
     lookup_field = "fp_pc_id"
+
+
+        
+@api_view(['GET'])
+def get_fp_method_distribution(request):
+    """
+    Get distribution of family planning methods by distinct patients
+    """
+    try:
+        # More efficient query using distinct patients
+        method_distribution = FP_type.objects.values('fpt_method_used').annotate(
+            patient_count=Count('fprecord__pat', distinct=True)
+        ).filter(patient_count__gt=0).order_by('-patient_count')
+        
+        data = [
+            {
+                'name': item['fpt_method_used'] if item['fpt_method_used'] != "Others" else "Others",
+                'value': item['patient_count']
+            }
+            for item in method_distribution
+        ]
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_method_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching method distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_client_type_distribution(request):
+    """
+    Get distribution of client types by distinct patients
+    """
+    try:
+        # Count distinct patients per client type
+        client_type_distribution = FP_type.objects.values('fpt_client_type').annotate(
+            patient_count=Count('fprecord__pat', distinct=True)
+        ).filter(patient_count__gt=0).order_by('-patient_count')
+        
+        data = [
+            {
+                'name': map_client_type(item['fpt_client_type']),
+                'value': item['patient_count']
+            }
+            for item in client_type_distribution
+        ]
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_client_type_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching client type distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_analytics_summary(request):
+    """
+    Get summary statistics for Family Planning dashboard cards
+    """
+    try:
+        today = timezone.now()
+        first_day_this_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        first_day_last_month = (first_day_this_month - relativedelta(months=1))
+        last_month_end = first_day_this_month - timezone.timedelta(days=1)
+        
+        # Get all distinct patients with FP records
+        total_patients = FP_Record.objects.values('pat').distinct().count()
+        
+        # Get new acceptors and current users using subqueries for better performance
+        new_acceptors = FP_Record.objects.filter(
+            fp_type__fpt_client_type='newacceptor'
+        ).values('pat').distinct().count()
+        
+        current_users = FP_Record.objects.filter(
+            fp_type__fpt_client_type='currentuser'
+        ).values('pat').distinct().count()
+        
+        # Monthly registrations
+        this_month_registrations = FP_Record.objects.filter(
+            created_at__gte=first_day_this_month
+        ).values('pat').distinct().count()
+        
+        last_month_registrations = FP_Record.objects.filter(
+            created_at__gte=first_day_last_month,
+            created_at__lte=last_month_end
+        ).values('pat').distinct().count()
+        
+        # Calculate growth rate
+        growth_rate = 0
+        if last_month_registrations > 0:
+            growth_rate = round(
+                ((this_month_registrations - last_month_registrations) / last_month_registrations) * 100, 1
+            )
+        elif this_month_registrations > 0:
+            growth_rate = 100
+        
+        data = {
+            'total_patients': total_patients,
+            'new_acceptors': new_acceptors,
+            'current_users': current_users,
+            'this_month_registrations': this_month_registrations,
+            'growth_rate': growth_rate,
+            'average_children': FP_Record.objects.aggregate(
+                avg_children=Avg('num_of_children')
+            )['avg_children'] or 0
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_analytics_summary: {str(e)}")
+        return Response(
+            {'error': 'Error fetching FP analytics summary'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_monthly_trends(request):
+    """
+    Get monthly trends for FP records with better performance
+    """
+    try:
+        year = int(request.query_params.get('year', datetime.now().year))
+        
+        # Single database query to get monthly aggregates
+        monthly_data = FP_Record.objects.filter(
+            created_at__year=year
+        ).annotate(
+            month=ExtractMonth('created_at')
+        ).values('month').annotate(
+            total=Count('fprecord_id', distinct=True),
+            new_acceptors=Count('fp_type__fpt_id', filter=Q(fp_type__fpt_client_type='newacceptor'), distinct=True),
+            current_users=Count('fp_type__fpt_id', filter=Q(fp_type__fpt_client_type='currentuser'), distinct=True)
+        ).order_by('month')
+        
+        # Create a dictionary for easy lookup
+        monthly_dict = {item['month']: item for item in monthly_data}
+        
+        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        
+        data = []
+        for i, month_name in enumerate(months, 1):
+            month_data = monthly_dict.get(i, {
+                'total': 0,
+                'new_acceptors': 0,
+                'current_users': 0
+            })
+            
+            data.append({
+                'month': month_name,
+                'newAcceptors': month_data['new_acceptors'],
+                'currentUsers': month_data['current_users'],
+                'total': month_data['total']
+            })
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_monthly_trends: {str(e)}")
+        return Response(
+            {'error': 'Error fetching monthly trends'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_age_distribution(request):
+    """
+    Get age distribution of FP patients with optimized queries
+    """
+    try:
+        today = date.today()
+        
+        # Get distinct patients with FP records - fixed PostgreSQL DISTINCT ON issue
+        distinct_patient_ids = FP_Record.objects.values_list('pat', flat=True).distinct()
+        
+        # Get patient objects with related data
+        patients = Patient.objects.filter(
+            pat_id__in=distinct_patient_ids
+        ).select_related('rp_id__per', 'trans_id')
+        
+        age_groups = {
+            '15-19': 0,
+            '20-24': 0,
+            '25-29': 0,
+            '30-34': 0,
+            '35-39': 0,
+            '40-44': 0,
+            '45+': 0
+        }
+        
+        for patient in patients:
+            dob = None
+            
+            if patient.pat_type == 'Resident' and patient.rp_id and patient.rp_id.per:
+                dob = patient.rp_id.per.per_dob
+            elif patient.pat_type == 'Transient' and patient.trans_id:
+                dob = patient.trans_id.tran_dob
+            
+            if dob:
+                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                
+                if 15 <= age <= 19:
+                    age_groups['15-19'] += 1
+                elif 20 <= age <= 24:
+                    age_groups['20-24'] += 1
+                elif 25 <= age <= 29:
+                    age_groups['25-29'] += 1
+                elif 30 <= age <= 34:
+                    age_groups['30-34'] += 1
+                elif 35 <= age <= 39:
+                    age_groups['35-39'] += 1
+                elif 40 <= age <= 44:
+                    age_groups['40-44'] += 1
+                elif age >= 45:
+                    age_groups['45+'] += 1
+        
+        # Convert to list format
+        data = [
+            {'ageGroup': age_group, 'count': count}
+            for age_group, count in age_groups.items()
+        ]
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_age_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching age distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_follow_up_compliance(request):
+    """
+    Get follow-up visit compliance statistics with optimized query
+    """
+    try:
+        today = timezone.now().date()
+        
+        # Single query to get compliance statistics
+        compliance_data = FP_Assessment_Record.objects.select_related('followv').aggregate(
+            completed=Count('followv_id', filter=Q(followv__followv_status='completed')),
+            pending=Count('followv_id', filter=Q(followv__followv_status='pending') & Q(followv__followv_date__gte=today)),
+            overdue=Count('followv_id', filter=Q(followv__followv_status='pending') & Q(followv__followv_date__lt=today))
+        )
+        
+        data = [
+            {'name': 'Completed', 'value': compliance_data['completed'] or 0},
+            {'name': 'Pending', 'value': compliance_data['pending'] or 0},
+            {'name': 'Overdue', 'value': compliance_data['overdue'] or 0}
+        ]
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error in get_fp_follow_up_compliance: {str(e)}")
+        return Response(
+            {'error': 'Error fetching follow-up compliance'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

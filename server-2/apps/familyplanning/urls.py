@@ -76,8 +76,13 @@ urlpatterns = [
     path('submit-follow-up-form/', submit_follow_up_family_planning_form, name='submit_follow_up_family_planning_form'),
     path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'),
     path('fp-records/', PatientListForOverallTable.as_view(), name='fp-records-paginated'),
-    # path('familyplanning/submit-followup/', submit_followup_family_planning_form, name='submit_followup_family_planning_form'),
-    # path('count/<str:pat_id>/', FPRecordCountView.as_view(), name='fp-records-count-by-patient'),
-    # path('fp-records/<int:fprecord_id>/check-followup/', CheckFollowupStatusView.as_view(), name='check-fp-followup'),
-    # path('check-followup-notification/<str:patient_id>/', check_and_notify_fp_followup, name='check_fp_followup_notification'),
+    
+    
+    # DASHBOARD ANALYTICS
+    path('analytics/method-distribution/', get_fp_method_distribution, name='fp_method_distribution'),
+    path('analytics/client-type-distribution/', get_fp_client_type_distribution, name='fp_client_type_distribution'),
+    path('analytics/monthly-trends/', get_fp_monthly_trends, name='fp_monthly_trends'),
+    path('analytics/age-distribution/', get_fp_age_distribution, name='fp_age_distribution'),
+    path('analytics/follow-up-compliance/', get_fp_follow_up_compliance, name='fp_follow_up_compliance'),
+    path('analytics/summary/', get_fp_analytics_summary, name='fp_analytics_summary'),
     ]
