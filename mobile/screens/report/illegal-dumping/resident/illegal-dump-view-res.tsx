@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
-import { X } from "lucide-react-native";
+import { X, ChevronLeft } from "lucide-react-native";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import ImageCarousel from '@/components/ui/imageCarousel';
@@ -8,7 +8,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteResReport } from '../queries/illegal-dump-update-queries';
 import { ActivityIndicator } from 'react-native';
 import { SelectLayout } from '@/components/ui/select-layout';
-
 
 export default function WasteIllegalDumpingResDetails() {
   // Get all params from the route
@@ -140,12 +139,12 @@ export default function WasteIllegalDumpingResDetails() {
     <>
       <_ScreenLayout
         headerBetweenAction=""
-        showExitButton={true}
+        showExitButton={false}
         showBackButton={false}
-        customRightAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <X size={16} className="text-black" />
-          </TouchableOpacity>
+        customLeftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>       
         }
         footer={
           rep_status === "resolved" ? null : (
