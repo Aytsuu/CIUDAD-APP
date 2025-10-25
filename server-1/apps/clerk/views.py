@@ -1616,14 +1616,13 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
         self._auto_decline_overdue_charges()
         
         queryset = ServiceChargePaymentRequest.objects.filter(
-            pay_sr_type__in=['File Action']
         ).select_related(
             'comp_id',
             'pr_id'
         ).prefetch_related(
             'comp_id__complaintcomplainant_set__cpnt',
             'comp_id__complaintaccused_set__acsd'
-        )
+        ) 
 
         # Add search functionality
         search_query = self.request.GET.get('search', None)
