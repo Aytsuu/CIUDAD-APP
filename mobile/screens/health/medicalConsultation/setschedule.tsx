@@ -143,7 +143,7 @@ const SetSchedule = () => {
         setAmAvailable(slot.am_available);
         setPmAvailable(slot.pm_available);
       } else {
-        Alert.alert('Unavailable', 'This date is not available for booking. Please select another date.');
+        Alert.alert('Unavailable', 'This date is not available for booking. Please check the scheduler.');
       }
     }
   };

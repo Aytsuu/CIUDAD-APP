@@ -88,18 +88,30 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
         logger.info(f"Creating prenatal appointment request with data: {request.data}")
         
         try:
-            serializers = self.get_serializer(data=request.data)
+            # Ensure the requested_date is interpreted in Philippines timezone
+            if 'requested_date' in request.data:
+                from django.utils import timezone
+                import datetime
+                
+                date_str = request.data['requested_date']
+                # Parse and ensure it's treated as Philippines time
+                requested_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                # Create a copy of request.data to modify
+                data = request.data.copy()
+                data['requested_date'] = requested_date
+                serializers = self.get_serializer(data=data)
+            else:
+                serializers = self.get_serializer(data=request.data)
 
             if not serializers.is_valid():
                 logger.error(f"Validation errors: {serializers.errors}")
-                
-                return Response ({
+                return Response({
                     'error': 'Validation failed',
                     'details': serializers.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             pa_request = serializers.save()
-            logger.info(f"Prenatal appointment request created successfully with ID: {pa_request.par_id}")
+            logger.info(f"Prenatal appointment request created successfully with ID: {pa_request.par_id} for date: {pa_request.requested_date}")
             
             return Response({
                 'message': 'Prenatal appointment request created successfully',
@@ -679,23 +691,38 @@ class CheckPendingAppointmentView(generics.RetrieveAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            # Parse the date string in Philippines timezone
+            import datetime
+            from django.utils import timezone
+            
+            # Parse the date string
+            selected_date = datetime.datetime.strptime(date_param, '%Y-%m-%d').date()
+            
+            # Check for pending appointments on that specific date
             pending_appointment = PrenatalAppointmentRequest.objects.filter(
                 rp_id=rp_id,
-                requested_date=date_param,
+                requested_date=selected_date,  # Direct date comparison
                 status='pending'
             ).exists()
             
+            logger.info(f"Checked pending appointments for {rp_id} on {selected_date}: {pending_appointment}")
+            
             return Response({
                 'has_pending': pending_appointment,
-                'date': date_param
+                'date': date_param,
+                'timezone': 'Asia/Manila'
             }, status=status.HTTP_200_OK)
             
+        except ValueError as e:
+            logger.error(f"Invalid date format: {date_param}, error: {str(e)}")
+            return Response({
+                'error': 'Invalid date format. Use YYYY-MM-DD.'
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error checking pending appointment: {str(e)}")
             return Response({
                 'error': 'An error occurred while checking pending appointments'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
             
 class PrenatalAppointmentCompleteView(generics.UpdateAPIView):
     """Mark prenatal appointment as completed"""

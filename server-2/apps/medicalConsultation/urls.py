@@ -26,4 +26,7 @@ urlpatterns=[
 
     path('action-appointment/<int:pk>/', ActionAppointmentView.as_view(), name='reject-appointment'),
     path('medical-consultation-stats/', MedicalUserAppointmentsView.as_view(), name='medical-consultation-stats'),
+
+
+
 ]  

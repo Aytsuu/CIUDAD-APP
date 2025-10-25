@@ -6,7 +6,7 @@ export const usePrenatalAppointmentRequests = (rp_id: string) => {
       queryKey: ['prenatal-appointment-requests', rp_id],
       queryFn: () => getPrenatalAppointmentRequests(rp_id),
       enabled: !!rp_id,
-      staleTime: 2 * 1000,
+      staleTime: 1 * 1000,
       refetchInterval: 5 * 1000,
    })
 }

@@ -3148,6 +3148,7 @@ def get_fp_monthly_trends(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+
 @api_view(['GET'])
 def get_fp_age_distribution(request):
     """

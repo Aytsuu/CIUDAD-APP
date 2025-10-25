@@ -106,7 +106,8 @@ const modules: Module[] = [
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
       <Button
-        onPress={() => router.back()}
+      // onPress={() => router.push("/my-schedules/my-schedules" as Href)}
+        onPress={() => router.push("/(tabs)")}
         className="grid rounded-none bg-blue-800 pl-5 align-left items-start"
       >
         <ChevronLeft size={24} color="white" />
