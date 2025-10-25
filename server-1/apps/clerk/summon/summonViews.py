@@ -470,3 +470,26 @@ class SummonRemarksAnalyticsView(APIView):
                 {'error': 'Internal server error'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+# ============== RESIDENT SIDE CASE TRACKING VIEW ==================
+class CaseTrackingView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, comp_id):
+        try:
+            complaint = Complaint.objects.get(comp_id=comp_id)
+            serializer_class = CaseTrackingSerializer(complaint)
+            
+            return Response(serializer_class.data)
+            
+        except Complaint.DoesNotExist:
+            return Response(
+                {"error": "Complaint not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Internal server error"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

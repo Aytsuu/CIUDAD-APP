@@ -4,7 +4,7 @@ import { Calendar, LocaleConfig } from "react-native-calendars";
 import { ChevronLeft, Calendar as CalendarIcon, Clock, Info, CheckCircle, AlertCircle, Scale, Send, Phone, Mail, MapPin, X,} from "lucide-react-native";
 import { router } from "expo-router";
 // import { useGetSummonDates, useGetSummonTimeSlots, type SummonTimeSlots, useGetScheduleList } from "../../api-operations/queries/SummonFetchQueries";
-import { useGetSummonDates, useGetSummonTimeSlots } from "./queries/scheduleGetQueries";
+import { useGetSummonDates, useGetSummonTimeSlots } from "./queries/summon-relatedFetchQueries";
 import { useLocalSearchParams } from "expo-router";
 import { SummonTimeSlots } from "./types";
 // import { useAddSummonSchedule } from "../../api-operations/queries/ComplaintPostQueries";

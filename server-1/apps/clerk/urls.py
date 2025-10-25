@@ -43,7 +43,7 @@ urlpatterns = [
     path('remarks-analytics/', SummonRemarksAnalyticsView.as_view(), name='remarks-analytics'),
 
     # resident case tracking
-    # path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
+    path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),

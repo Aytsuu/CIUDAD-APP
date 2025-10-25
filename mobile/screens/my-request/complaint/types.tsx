@@ -74,7 +74,7 @@ export interface ComplaintData {
 
 
 
-// Summon Date and Time
+// ================ SUMMON RELEATED TYPES =================
 export type SummonDates = {
     sd_id: number;
     sd_date: string;
@@ -86,4 +86,59 @@ export type SummonTimeSlots = {
     st_start_time: string;
     sd_id: string | number;
     st_is_booked?: boolean;
+}
+
+export type RemarkSuppDoc = {
+    rsd_id: string;
+    rsd_name: string;
+    rsd_type: string;
+    rsd_path: string;
+    rsd_url: string;
+}
+
+export type Remark = {
+    rem_id: string;
+    rem_remarks: string;
+    rem_date: string;
+    staff_name: string;
+    supp_docs: RemarkSuppDoc[];
+}
+
+export type HearingSchedule = {
+    hs_id: string;
+    hs_level: string;
+    hs_is_closed: boolean;
+    summon_date: SummonDates;
+    summon_time: SummonTimeSlots;
+    remark: Remark;
+}
+
+export type SummonCaseDetails = {
+    sc_id: string;
+    sc_code: string;
+    sc_mediation_status: string;
+    sc_conciliation_status?: string | null;
+    sc_date_marked: string;
+    sc_reason: string;
+    comp_id: string;
+    staff_name: string;
+    hearing_schedules: HearingSchedule[];
+}
+
+export type PaymentRequest = {
+    pay_id: number;
+    pay_sr_type: string;
+    pay_status: string;
+    pay_date_req: string;
+    pay_due_date: string;
+    pay_req_status: string;
+    pay_date_paid: string | null;
+    comp_id: number;
+    pr_id: number | null;
+}
+
+export type CaseTrackingType = {
+    payment_request: PaymentRequest | null;
+    summon_case: SummonCaseDetails | null;
+    hearing_schedules: HearingSchedule[] | null;
 }

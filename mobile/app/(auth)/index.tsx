@@ -28,5 +28,5 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <CaseTracking/>
+    return <App/>
 }
