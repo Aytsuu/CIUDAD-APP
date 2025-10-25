@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
+import AnnualDevelopmentPlanArchive from './annual_development_plan_archive.tsx';
 import { getAnnualDevPlanYears, getAnnualDevPlans } from "./restful-api/annualGetAPI";
+import { useGetArchivedAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
 
 function AnnualDevelopmentPlan(){
     const { showLoading, hideLoading } = useLoading();
@@ -20,7 +22,12 @@ function AnnualDevelopmentPlan(){
     const [totalCount, setTotalCount] = useState(0);
     const [plans, setPlans] = useState<any[]>([]);
     const [showPlans, setShowPlans] = useState(false);
+    const [activeTab, setActiveTab] = useState<'main' | 'archive'>('main');
     const pageSize = 10;
+
+    // Get archived plans count
+    const { data: archivedPlansData } = useGetArchivedAnnualDevPlans(1, 1);
+    const archivedCount = archivedPlansData?.count || 0;
 
     useEffect(() => {
         if (search.trim()) {
@@ -99,6 +106,10 @@ function AnnualDevelopmentPlan(){
         return <AnnualDevelopmentPlanView year={openedYear} onBack={handleBack} />;
     }
 
+    if (activeTab === 'archive') {
+        return <AnnualDevelopmentPlanArchive onBack={() => setActiveTab('main')} />;
+    }
+
     return(
         <div className="bg-snow w-full h-full">
             <div className="flex flex-col gap-3 mb-4">
@@ -110,6 +121,36 @@ function AnnualDevelopmentPlan(){
                 </p>
             </div>
             <hr className="border-gray mb-5 sm:mb-4" />   
+
+            {/* Tab Navigation */}
+            <div className="flex border-b border-gray-200 mb-4">
+                <button
+                    onClick={() => setActiveTab('main')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        (activeTab as string) === 'main'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Development Plans
+                </button>
+                <button
+                    onClick={() => setActiveTab('archive')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        (activeTab as string) === 'archive'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    <Archive size={16} />
+                    Archived
+                    {archivedCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                            {archivedCount}
+                        </span>
+                    )}
+                </button>
+            </div>
 
             <div className="flex flex-col md:flex-row justify-between items-center gap-4"> 
                   <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
