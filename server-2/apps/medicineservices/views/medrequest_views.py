@@ -154,6 +154,7 @@ class MedicineRequestItemsByRequestView(generics.ListAPIView):
             'medreq_id__pat_id__per__ppersonal_addresses__add',  # Prefetch patient addresses
         ).order_by('-medreq_id__requested_at')
         
+
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
@@ -211,10 +212,12 @@ class SubmitMedicineRequestView(APIView):
             
             # Validate and get instances
             pat_instance = None
+            trans_instance = None
             if pat_id:
                 try:
                     pat_instance = Patient.objects.get(pat_id=pat_id)
                     print(f"✅ DEBUG: Validated pat_id: {pat_id}")
+                    trans_instance = getattr(pat_instance, 'trans_id', None)
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -226,48 +229,66 @@ class SubmitMedicineRequestView(APIView):
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
             
-            # Create MedicineRequest
+            # Create MedicineRequest (include trans_id if available)
             medicine_request = MedicineRequest.objects.create(
                 pat_id=pat_instance,
                 rp_id=rp_instance,
-                mode='app'
+                trans_id=trans_instance,
+                mode='walk-in',
             )
             print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
             
-            # Create MedicineRequestItems
-            request_items = []
+            # Group medicines by med_id (from MedicineInventory FK)
+            medid_to_allocations = {}
             for med in medicines:
-                if 'minv_id' not in med:
+                minv_id = med.get('minv_id')
+                if not minv_id:
                     return Response({"error": f"minv_id is required for each medicine"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
-                
                 try:
-                    minv_id = int(med['minv_id'])
-                    medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                    
-                    print(f"🔍 DEBUG: Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
-                    
-                    # Create the request item with BOTH minv_id and med
-                    request_item = MedicineRequestItem(
-                        medreq_id=medicine_request,
-                        minv_id=medicine_inv,  # ✅ Set the minv_id
-                        med=medicine_inv.med_id,  # ✅ Set the med field
-                        medreqitem_qty=med.get('quantity', 0),  # Use get with default
-                        reason=med.get('reason', ''),
-                        status='pending'
-                    )
-                    request_items.append(request_item)
-                    
-                except ValueError:
-                    return Response({"error": f"Invalid minv_id: {med['minv_id']} must be a number"}, 
-                                  status=status.HTTP_400_BAD_REQUEST)
+                    medicine_inv = MedicineInventory.objects.get(minv_id=int(minv_id))
+                    med_id = str(medicine_inv.med_id.med_id)
                 except MedicineInventory.DoesNotExist:
-                    return Response({"error": f"Medicine with minv_id {med['minv_id']} not found"}, 
+                    return Response({"error": f"Medicine with minv_id {minv_id} not found"}, 
                                   status=status.HTTP_404_NOT_FOUND)
+                if med_id not in medid_to_allocations:
+                    medid_to_allocations[med_id] = []
+                medid_to_allocations[med_id].append({
+                    'minv_id': minv_id,
+                    'allocated_qty': med.get('quantity', 0),
+                    'reason': med.get('reason', ''),
+                    'signature': med.get('signature', ''),
+                })
             
-            # Bulk create the items
-            MedicineRequestItem.objects.bulk_create(request_items)
-            print(f"✅ DEBUG: Created {len(request_items)} MedicineRequestItems")
+            # Create MedicineRequestItem and MedicineAllocation
+            for med_id, allocations in medid_to_allocations.items():
+                reason = allocations[0]['reason']
+                signature = allocations[0].get('signature', '')
+                medicine_item = MedicineRequestItem.objects.create(
+                    medreq_id=medicine_request,
+                    med_id=med_id,
+                    reason=reason,
+                    status='pending',
+                    signature=signature
+                )
+                for alloc in allocations:
+                    minv_id = alloc['minv_id']
+                    allocated_qty = alloc['allocated_qty']
+                    if minv_id and allocated_qty > 0:
+                        try:
+                            medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
+                            medicine_inventory.temporary_deduction += allocated_qty
+                            medicine_inventory.save()
+                        except MedicineInventory.DoesNotExist:
+                            return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
+                                            status=status.HTTP_404_NOT_FOUND)
+                        MedicineAllocation.objects.create(
+                            medreqitem=medicine_item,
+                            minv=medicine_inventory,
+                            allocated_qty=allocated_qty
+                        )
+            
+            print(f"✅ DEBUG: Created MedicineRequestItems and MedicineAllocations")
             
             # Handle file uploads
             uploaded_files = []
@@ -298,7 +319,6 @@ class SubmitMedicineRequestView(APIView):
                 except Exception as e:
                     print(f"❌ ERROR: File upload failed: {str(e)}")
                     # Don't raise exception here, just log it
-                    # Files are optional for non-prescription medicines
             
             return Response({
                 "success": True,

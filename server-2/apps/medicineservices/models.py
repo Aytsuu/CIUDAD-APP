@@ -13,8 +13,13 @@ class MedicineRequest(models.Model):
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
     mode = models.CharField(default='walk-in', max_length=20) #walk-in or app 
     updated_at = models.DateTimeField(auto_now=True)
+    trans_id =models.ForeignKey(Transient, on_delete=models.CASCADE, db_column='trans_id', related_name='medicine_requests',blank=True,null=True) 
+    requested_at = models.DateTimeField(auto_now_add=True)
+    fulfilled_at = models.DateTimeField(null=True, blank=True)
+    signature = models.TextField(blank=True, null=True)  
     
     def __str__(self):
+        
         return f"MedicineRequest #{self.medreq_id}"
     def save(self, *args, **kwargs):
         if not self.medreq_id:
@@ -52,14 +57,16 @@ class MedicineRequest(models.Model):
 class MedicineRequestItem(models.Model):
     medreqitem_id = models.BigAutoField(primary_key=True)
     medreqitem_qty = models.PositiveIntegerField(default=0)
-    reason = models.TextField(blank=True, null=True)  # (OP)    
-    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items',null=True, blank=True)
+    reason = models.TextField(blank=True, null=True)  # (OP) 
+     
+    # minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items',null=True, blank=True)
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
     med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
     status = models.CharField(max_length=20, default='pending') #refered  or confirm
     is_archived = models.BooleanField(default=False)
     archive_reason = models.TextField(blank=True, null=True)  
     created_at = models.DateTimeField(auto_now_add=True)  
+    
 
 
     def __str__(self):
@@ -86,10 +93,10 @@ class MedicineRecord(models.Model):
     fulfilled_at = models.DateTimeField(null=True, blank=True)
     signature = models.TextField(blank=True, null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, blank=True,null=True, db_column='patrec_id', related_name='medicine_records')
-    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
-    medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, db_column='medreq_id', related_name='medicine_records',blank=True,null=True,)
+    # minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
+    # medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, db_column='medreq_id', related_name='medicine_records',blank=True,null=True,)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_records', null=True, blank=True)
-
+    medreqitem_id = models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name='medicine_records', null=True, blank=True, db_column='medreqitem_id')
 
     def __str__(self):
         return f"MedicineRecord #{self.medrec_id}"
