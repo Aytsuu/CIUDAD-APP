@@ -602,51 +602,40 @@ export default function CaseTrackingScreen({
     const payStatus = tracking.payment_request?.pay_status?.toLowerCase() ?? "unpaid";
     const payDisplay = tracking.payment_request?.pay_status ?? "Unpaid";
 
-    // steps.push({
-    //   id: 1,
-    //   title: "Payment",
-    //   description: "Pay the required mediation fee to proceed with scheduling.",
-    //   status: payStatus,
-    //   display_status: payDisplay,
-    //   details: tracking.payment_request
-    //     ? `Amount to pay: ₱ ${tracking.payment_request.pay_status?.toLocaleString() || "N/A"}\nDue date: ${formatDate(tracking.payment_request.pay_due_date, "long")}`
-    //     : "Payment required for mediation services.",
-    // });
-
     steps.push({
-  id: 1,
-  title: "Payment",
-  description: "Pay the required mediation fee to proceed with scheduling.",
-  status: payStatus,
-  display_status: payDisplay,
-  details: (
-    <View className="space-y-2">
-      {/* Amount */}
-      <View className="flex-row justify-between items-center">
-        <Text className="text-xs text-gray-600">Amount to pay</Text>
-        <Text className="text-xs font-medium text-blue-600">
-          ₱ {tracking.payment_request?.pay_status?.toLocaleString() || "N/A"}
-        </Text>
-      </View>
+      id: 1,
+      title: "Payment",
+      description: "Pay the required mediation fee to proceed with scheduling.",
+      status: payStatus,
+      display_status: payDisplay,
+      details: (
+        <View className="space-y-2">
+          {/* Amount */}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-xs text-gray-600">Amount to pay</Text>
+            <Text className="text-xs font-medium text-blue-600">
+              ₱ {tracking.payment_request?.pay_status?.toLocaleString() || "N/A"}
+            </Text>
+          </View>
 
-      {/* Due Date */}
-      <View className="flex-row justify-between items-center">
-        <Text className="text-xs text-gray-600">Due date</Text>
-        <Text className="text-xs font-medium text-red-600">
-          {tracking.payment_request? formatDate(tracking.payment_request?.pay_due_date, "long"): "N/A"}
-        </Text>
-      </View>
+          {/* Due Date */}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-xs text-gray-600">Due date</Text>
+            <Text className="text-xs font-medium text-red-600">
+              {tracking.payment_request? formatDate(tracking.payment_request?.pay_due_date, "long"): "N/A"}
+            </Text>
+          </View>
 
-      {/* Divider */}
-      <View className="h-px bg-gray-200 my-2" />
+          {/* Divider */}
+          <View className="h-px bg-gray-200 my-2" />
 
-      {/* Warning Note */}
-      <Text className="text-xs text-red-700 italic pb-2">
-        If payment is not made by the due date, the request will be automatically cancelled.
-      </Text>
-    </View>
-  ),
-});
+          {/* Warning Note */}
+          <Text className="text-xs text-red-700 italic pb-2">
+            If payment is not made by the due date, the request will be automatically cancelled.
+          </Text>
+        </View>
+      ),
+    });
 
     // 2 – Schedule Hearing
     // const hasSchedules = tracking.hearing_schedules?.length > 0;
@@ -761,8 +750,7 @@ export default function CaseTrackingScreen({
   const currentStep = steps.find((s) =>
     ["pending", "unpaid", "not scheduled"].includes(s.status)
   );
-  const caseStatus = tracking.summon_case?.sc_conciliation_status ?? "In Progress";
-  const isPaid = tracking.payment_request?.pay_status === "Paid";
+  const caseStatus = tracking.summon_case?.sc_conciliation_status ? tracking.summon_case.sc_conciliation_status : tracking.summon_case?.sc_conciliation_status;
 
   /* ------------------------------------------------------------------ */
   /*  Render                                                            */
@@ -866,7 +854,7 @@ export default function CaseTrackingScreen({
         </View>
 
         {/* ---------- Case Summary Card (Only if Paid) ---------- */}
-        {isPaid && (
+        {tracking.payment_request?.pay_status === "Paid" && (
           <View className="px-5 pb-8">
             <Card className="overflow-hidden shadow-lg border-0">
               <View className="bg-primaryBlue px-6 py-4">
@@ -918,7 +906,7 @@ export default function CaseTrackingScreen({
                     />
                     <Text className="text-gray-600 text-sm">Case Status</Text>
                   </View>
-                  {getStatusBadge(caseStatus)}
+                  {getStatusBadge(caseStatus || "")}
                 </View>
               </View>
             </Card>
