@@ -196,7 +196,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -205,7 +205,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 

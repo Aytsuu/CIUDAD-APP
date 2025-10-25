@@ -236,7 +236,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -245,7 +245,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
