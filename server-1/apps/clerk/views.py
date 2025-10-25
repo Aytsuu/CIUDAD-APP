@@ -1624,6 +1624,10 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             'comp_id__complaintaccused_set__acsd'
         ) 
 
+        sr_type_filter = self.request.GET.get('sr_type', None)
+        if sr_type_filter:
+            queryset = queryset.filter(pay_sr_type=sr_type_filter)
+
         # Add search functionality
         search_query = self.request.GET.get('search', None)
         if search_query:

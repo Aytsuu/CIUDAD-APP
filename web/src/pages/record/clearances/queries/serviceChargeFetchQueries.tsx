@@ -39,6 +39,7 @@ export const getPaidServiceCharges = async (
     //fetch only pending and paid 
     params.append('status', 'pending');
     params.append('payment_status', 'Paid');
+    params.append('sr_type', 'File Action');
 
 
     const res = await api.get(`/clerk/service-charge-treasurer-list/?${params.toString()}`);
