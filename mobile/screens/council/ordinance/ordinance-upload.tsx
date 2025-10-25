@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -36,7 +36,7 @@ interface OrdinanceUploadProps {
   setCreationMode: (mode: 'new' | 'amend' | 'repeal') => void;
   selectedOrdinance: string;
   setSelectedOrdinance: (value: string) => void;
-  availableOrdinances: Array<{ id: string; name: string }>;
+  availableOrdinances: Array<{ id: string; name: string; category: string }>;
   onSuccess: () => void;
 }
 
@@ -75,6 +75,16 @@ export default function OrdinanceUpload({
   const createOrdinanceMutation = useCreateOrdinance();
   const uploadOrdinanceMutation = useUploadOrdinance();
   const { user } = useAuth();
+
+  // Auto-fetch category when ordinance is selected for amend/repeal
+  useEffect(() => {
+    if ((creationMode === 'amend' || creationMode === 'repeal') && selectedOrdinance) {
+      const selectedOrd = availableOrdinances.find(ord => ord.id === selectedOrdinance);
+      if (selectedOrd && selectedOrd.category) {
+        setFormData(prev => ({ ...prev, ordCategory: selectedOrd.category }));
+      }
+    }
+  }, [selectedOrdinance, creationMode, availableOrdinances]);
 
   // Reset form
   const resetForm = () => {
@@ -324,13 +334,24 @@ export default function OrdinanceUpload({
               {/* Category Field */}
               <View className="pt-5">
                 <Text className="text-[13px] font-PoppinsRegular">Category</Text>
-                <SelectLayout
-                  options={categoryOptions.map(cat => ({ label: cat.name, value: cat.id }))}
-                  selectedValue={formData.ordCategory}
-                  onSelect={(option) => setFormData(prev => ({ ...prev, ordCategory: option.value }))}
-                  placeholder="Select category"
-                  isInModal={false}
-                />
+                {(creationMode === 'amend' || creationMode === 'repeal') && selectedOrdinance ? (
+                  <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+                    <Text className="text-[13px] font-PoppinsRegular text-gray-700">
+                      {formData.ordCategory || 'Loading...'}
+                    </Text>
+                    <Text className="text-xs text-gray-500 mt-1">
+                      Automatically set from selected ordinance
+                    </Text>
+                  </View>
+                ) : (
+                  <SelectLayout
+                    options={categoryOptions.map(cat => ({ label: cat.name, value: cat.id }))}
+                    selectedValue={formData.ordCategory}
+                    onSelect={(option) => setFormData(prev => ({ ...prev, ordCategory: option.value }))}
+                    placeholder="Select category"
+                    isInModal={false}
+                  />
+                )}
               </View>
 
               {/* File Upload */}
