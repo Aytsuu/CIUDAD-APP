@@ -16,6 +16,7 @@ export default () => {
                 {/* <Stack.Screen name="complaint-tracking/compViewReq" options={{ headerShown: false, animation: 'fade' }} /> */}
                 <Stack.Screen name="complaint-tracking/compMainView" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="complaint-tracking/schedule" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="complaint-tracking/hearing-history" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
         </ToastProvider>
     )

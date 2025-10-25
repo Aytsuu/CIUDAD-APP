@@ -293,6 +293,32 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("waste")
+    ? [
+        {
+          title: "Waste",
+          url: "/", 
+          items: [
+            {
+              title: "Illegal Dumping Reports",
+              url: "/waste-illegaldumping-report",
+            },
+            {
+              title: "Garbage Pickup Request",
+              url: "/garbage-pickup-request",
+            },
+            {
+              title: "Waste Collection",
+              url: "/waste-collection",
+            },
+            {
+              title: "Waste Personnel & Collection Vehicle",
+              url: "/waste-personnel",
+            },
+          ]
+        }
+      ]
+    : []),
     ...(featureValidator("certificate & clearances")
       ? [
           {
@@ -324,26 +350,6 @@ export function AppSidebar() {
           {
             title: "Donation",
             url: "/donation-record",
-          },
-        ]
-      : []),
-    ...(featureValidator("waste")
-      ? [
-          {
-            title: "Illegal Dumping Reports",
-            url: "/waste-illegaldumping-report",
-          },
-          {
-            title: "Garbage Pickup Request",
-            url: "/garbage-pickup-request",
-          },
-          {
-            title: "Waste Collection",
-            url: "/waste-collection",
-          },
-          {
-            title: "Waste Personnel & Collection Vehicle",
-            url: "/waste-personnel",
           },
         ]
       : []),
