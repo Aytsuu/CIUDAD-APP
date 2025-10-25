@@ -8,17 +8,20 @@ import {
   Linking,
   Alert,
   Modal,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Search, Eye, FileText, X } from 'lucide-react-native';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ChevronLeft, Search, Eye, FileText, X, Plus, Edit } from 'lucide-react-native';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useOrdinances, OrdinanceData } from './queries/ordinance-fetch-queries';
+import { useUpdateOrdinance } from './queries/ordinance-fetch-insert-queries';
+import { groupOrdinancesIntoFolders } from './rest-api/ordinanceGetAPI';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
+import OrdinanceUpload from './ordinance-upload';
 
 // Helper type for grouped ordinances
 interface OrdinanceFolder {
@@ -28,77 +31,19 @@ interface OrdinanceFolder {
   totalOrdinances: number;
 }
 
-// Helper function to group ordinances into folders
-const groupOrdinancesIntoFolders = (ordinances: OrdinanceData[]): OrdinanceFolder[] => {
-  const folders: Map<string, OrdinanceFolder> = new Map();
-  const processedOrdinances = new Set<string>();
-  
-  // First pass: Create folders for ordinances that have amendments or are amendments
-  ordinances.forEach(ordinance => {
-    if (processedOrdinances.has(ordinance.ord_num)) return;
-    
-    const hasAmendments = ordinances.some(ord => 
-      ord.ord_parent === ordinance.ord_num && ord.ord_num !== ordinance.ord_num
-    );
-    
-    const isAmendment = ordinance.ord_parent && ordinance.ord_parent !== ordinance.ord_num;
-    
-    if (hasAmendments || isAmendment) {
-      const baseOrdinanceId = isAmendment ? ordinance.ord_parent! : ordinance.ord_num;
-      
-      if (!folders.has(baseOrdinanceId)) {
-        const folderId = `folder-${baseOrdinanceId}`;
-        folders.set(baseOrdinanceId, {
-          id: folderId,
-          baseOrdinance: ordinances.find(ord => ord.ord_num === baseOrdinanceId)!,
-          amendments: [],
-          totalOrdinances: 1
-        });
-      }
-      
-      processedOrdinances.add(ordinance.ord_num);
-    }
-  });
-  
-  // Second pass: Add amendments to their parent folders
-  ordinances.forEach(ordinance => {
-    if (ordinance.ord_parent && ordinance.ord_parent !== ordinance.ord_num) {
-      const parentId = ordinance.ord_parent;
-      const parentFolder = folders.get(parentId);
-      
-      if (parentFolder) {
-        parentFolder.amendments.push(ordinance);
-        parentFolder.totalOrdinances = parentFolder.amendments.length + 1;
-        processedOrdinances.add(ordinance.ord_num);
-      }
-    }
-  });
-  
-  // Third pass: Create standalone folders for ordinances that aren't part of any chain
-  ordinances.forEach(ordinance => {
-    if (!processedOrdinances.has(ordinance.ord_num)) {
-      const standaloneId = `standalone-${ordinance.ord_num}`;
-      folders.set(standaloneId, {
-        id: standaloneId,
-        baseOrdinance: ordinance,
-        amendments: [],
-        totalOrdinances: 1
-      });
-      processedOrdinances.add(ordinance.ord_num);
-    }
-  });
-  
-  return Array.from(folders.values());
-};
 
 function OrdinancePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [selectedFolder, setSelectedFolder] = useState<OrdinanceFolder | null>(null);
   const [folderViewModalVisible, setFolderViewModalVisible] = useState(false);
+  
+  // Upload modal state
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [creationMode, setCreationMode] = useState<'new' | 'amend' | 'repeal'>('new');
+  const [selectedOrdinance, setSelectedOrdinance] = useState<string>("");
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -115,11 +60,14 @@ function OrdinancePage() {
     debouncedSearchQuery, 
     categoryFilter, 
     yearFilter,
-    activeTab === "archive"
+    false // Show all ordinances (both active and archived)
   );
 
   // Extract the actual data array from paginated response
   const fetchedData = ordinanceData.results || [];
+
+  // Mutation hooks
+  const updateOrdinanceMutation = useUpdateOrdinance();
 
   const categoryOptions = [
     { id: "all", name: "All" },
@@ -129,30 +77,36 @@ function OrdinancePage() {
     { id: "Finance", name: "Finance" }
   ];
 
-  // Extract unique years from ordinance data for the dropdown
+  // Generate all years from 2020 to current year + 1
   const yearOptions = useMemo(() => {
-    const years = new Set<number>();
-    
-    fetchedData.forEach(record => {
-      if (record.ord_year) {
-        years.add(record.ord_year);
-      }
-    });
-
-    const sortedYears = Array.from(years).sort((a, b) => b - a);
+    const currentYear = new Date().getFullYear();
+    const startYear = 2020;
+    const endYear = currentYear + 1;
     
     const options = [{ id: "all", name: "All Years" }];
     
-    sortedYears.forEach(year => {
+    // Generate years from endYear down to startYear (most recent first)
+    for (let year = endYear; year >= startYear; year--) {
       options.push({ id: year.toString(), name: year.toString() });
-    });
+    }
 
     return options;
-  }, [fetchedData]);
+  }, []);
 
   // Group ordinances into folders
   const ordinanceFolders = useMemo(() => {
     return groupOrdinancesIntoFolders(fetchedData);
+  }, [fetchedData]);
+
+  // Get available ordinances for amendment/repeal selection
+  const availableOrdinances = useMemo(() => {
+    return fetchedData
+      .filter(ord => ord.ord_num && ord.ord_num.trim() !== '')
+      .filter(ord => !ord.ord_repealed)
+      .map(ord => ({
+        id: ord.ord_num,
+        name: `${ord.ord_num} - ${ord.ord_title} (${ord.ord_year})`
+      }));
   }, [fetchedData]);
 
   const handleCategoryFilterChange = (value: string) => {
@@ -168,6 +122,10 @@ function OrdinancePage() {
       Alert.alert("Error", "No PDF file available");
       return;
     }
+    
+    console.log("🔍 Opening PDF URL:", pdfUrl);
+    console.log("🔍 URL type:", pdfUrl.startsWith('data:') ? 'Data URL' : 'Regular URL');
+    
     Linking.openURL(pdfUrl).catch(() =>
       Alert.alert('Cannot Open PDF', 'Please make sure you have a PDF reader app installed.')
     );
@@ -181,6 +139,15 @@ function OrdinancePage() {
   const handleRefresh = () => {
     refetch();
   };
+
+
+  // Reset form for upload modal
+  const resetForm = () => {
+    setSelectedOrdinance("");
+    setCreationMode('new');
+  };
+
+
 
   // Get category badge color
   const getCategoryColor = (category: string) => {
@@ -228,17 +195,31 @@ function OrdinancePage() {
             </View>
           </View>
 
-          {folder.totalOrdinances > 1 && (
+          <View className="flex-row items-center gap-2">
+            {folder.totalOrdinances > 1 && (
+              <TouchableOpacity
+                onPress={() => handleFolderView(folder)}
+                className="bg-blue-50 px-2 py-1 rounded"
+              >
+                <View className="flex-row items-center">
+                  <Eye size={12} color="#2563eb" />
+                  <Text className="text-xs text-blue-600 ml-1 font-medium">View All</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            
+            {/* Action buttons */}
             <TouchableOpacity
-              onPress={() => handleFolderView(folder)}
-              className="bg-blue-50 px-2 py-1 rounded"
+              onPress={() => {
+                setCreationMode('amend');
+                setSelectedOrdinance(folder.baseOrdinance.ord_num);
+                setUploadModalVisible(true);
+              }}
+              className="bg-yellow-50 px-2 py-1 rounded"
             >
-              <View className="flex-row items-center">
-                <Eye size={12} color="#2563eb" />
-                <Text className="text-xs text-blue-600 ml-1 font-medium">View All</Text>
-              </View>
+              <Edit size={12} color="#d97706" />
             </TouchableOpacity>
-          )}
+          </View>
         </CardHeader>
 
         <CardContent className="space-y-2">
@@ -274,7 +255,7 @@ function OrdinancePage() {
             </Text>
           </View>
 
-          <View className="flex-row justify-end">
+          <View className="flex-row justify-between items-center">
             <TouchableOpacity
               onPress={() => {
                 if (folder.baseOrdinance.file?.file_url) {
@@ -290,6 +271,7 @@ function OrdinancePage() {
                 <Text className="text-xs text-green-600 ml-1 font-medium">View File</Text>
               </View>
             </TouchableOpacity>
+            
           </View>
         </CardContent>
       </Card>
@@ -335,7 +317,15 @@ function OrdinancePage() {
         <Text className="text-gray-900 text-[13px]">Ordinance Record</Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => {
+            resetForm();
+            setUploadModalVisible(true);
+          }}
+          className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center"
+        >
+          <Plus size={20} color="white" />
+        </TouchableOpacity>
       }
       wrapScroll={false}
     >
@@ -378,65 +368,23 @@ function OrdinancePage() {
           </View>
         </View>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-            <TabsTrigger 
-              value="active" 
-              className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                Active
+        {/* Ordinances List */}
+        {isLoading ? (
+          renderLoadingState()          
+        ) : (
+          <FlatList
+            data={ordinanceFolders}
+            renderItem={renderFolderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ paddingBottom: 500 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <Text className="text-center text-gray-500 py-4">
+                No ordinances found
               </Text>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="archive"
-              className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                Archive
-              </Text>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active">
-            {isLoading ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={ordinanceFolders}
-                renderItem={renderFolderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No active ordinances found
-                  </Text>
-                }
-              />
-            )}            
-          </TabsContent>
-
-          <TabsContent value="archive">
-            {isLoading ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={ordinanceFolders}
-                renderItem={renderFolderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No archived ordinances found
-                  </Text>
-                }
-              />              
-            )}              
-          </TabsContent>
-        </Tabs>
+            }
+          />
+        )}
 
         {/* Folder View Modal */}
         <Modal
@@ -640,6 +588,24 @@ function OrdinancePage() {
             </View>
           </View>
         </Modal>
+
+        {/* Upload Ordinance Modal */}
+        <OrdinanceUpload
+          visible={uploadModalVisible}
+          onClose={() => {
+            setUploadModalVisible(false);
+            resetForm();
+          }}
+          creationMode={creationMode}
+          setCreationMode={setCreationMode}
+          selectedOrdinance={selectedOrdinance}
+          setSelectedOrdinance={setSelectedOrdinance}
+          availableOrdinances={availableOrdinances}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+
       </View>
     </PageLayout>
   );
