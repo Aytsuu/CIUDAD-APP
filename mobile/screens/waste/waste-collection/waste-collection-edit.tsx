@@ -329,7 +329,7 @@ function WasteColEdit() {
           <FormComboCheckbox
             control={form.control}
             name="selectedCollectors"
-            label="Collectors"
+            label="Loader(s)"
             options={collectorOptions}
           />
           {!isEditing && (
@@ -347,7 +347,7 @@ function WasteColEdit() {
           <FormSelect
             control={form.control}
             name="driver"
-            label="Driver"
+            label="Driver Loader"
             options={driverOptions}
           />
           {!isEditing && (

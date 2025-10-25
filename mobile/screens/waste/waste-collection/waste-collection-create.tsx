@@ -231,7 +231,7 @@ function WasteColCreate() {
               <FormComboCheckbox
                   control={form.control}
                   name="selectedCollectors"
-                  label="Collectors"
+                  label="Loader(s)"
                   options={collectorOptions}
               />
             </View>
@@ -239,7 +239,7 @@ function WasteColCreate() {
             <FormSelect
                 control={form.control}
                 name="driver"
-                label="Driver"
+                label="Driver Loader"
                 options={driverOptions}
             />
 
