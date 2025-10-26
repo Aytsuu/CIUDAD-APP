@@ -76,8 +76,7 @@ export default function CreateBudgetPlanSuppDocs (){
                 <MediaPicker
                     selectedImages={selectedImages}
                     setSelectedImages={setSelectedImages}
-                    multiple={false}
-                    maxImages={1}
+                    limit={1}
                 /> 
                 {formError && (
                     <Text className="text-red-500 text-xs">

@@ -240,7 +240,7 @@ export default function WastePersonnelMain() {
                   loading={deleteTruckMutation.isPending}
                 />
               )}
-              {truckViewMode === "archive" && (
+              {/* {truckViewMode === "archive" && (
                 <ConfirmationModal
                   trigger={
                     <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
@@ -254,7 +254,7 @@ export default function WastePersonnelMain() {
                   onPress={() => handlePermanentDeleteTruck(truck)}
                   loading={deleteTruckMutation.isPending}
                 />
-              )}
+              )} */}
             </View>
           </View>
         </CardContent>

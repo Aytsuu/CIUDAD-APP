@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useContext, type ReactNode, useRef, useEffect } from "react"
 import { useState, useCallback } from "react"
-import { Animated, SafeAreaView, Text, TouchableOpacity, View, Modal } from "react-native"
+import { Animated, SafeAreaView, Text, TouchableOpacity, View } from "react-native"
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react-native"
 
 interface ToastContextType {

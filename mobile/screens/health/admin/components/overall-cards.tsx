@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { ChevronRight, File, Home, PersonStanding, Syringe, User2Icon, Users } from "lucide-react-native";
+import { User2Icon } from "lucide-react-native";
 import { StatusBadge } from "./status-badge";
 
 export const Overallrecordcard: React.FC<{
@@ -22,7 +22,7 @@ export const Overallrecordcard: React.FC<{
                 <User2Icon color="white" size={20} />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
+                <Text className="font-semibold text-md text-gray-900">
                   {record.lname}, {record.fname} {record.mname}
                 </Text>
                 <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
@@ -34,7 +34,7 @@ export const Overallrecordcard: React.FC<{
       </View>
 
       {/* Details */}
-      <View className="p-4">
+      {/* <View className="p-4">
         <View className="flex-row items-center mb-3">
           <Users size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
@@ -67,7 +67,7 @@ export const Overallrecordcard: React.FC<{
           </View>
           <ChevronRight size={16} color="#6B7280" />
         </View>
-      </View>
+      </View> */}
     </TouchableOpacity>
   );
 };

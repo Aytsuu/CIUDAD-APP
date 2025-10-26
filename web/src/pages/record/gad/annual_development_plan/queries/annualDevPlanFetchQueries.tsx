@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createAnnualDevPlan } from "../restful-api/annualPostAPI";
-import { getAnnualDevPlanById, getAnnualDevPlansByYear } from "../restful-api/annualGetAPI";
+import { getAnnualDevPlanById, getAnnualDevPlansByYear, getArchivedAnnualDevPlans, archiveAnnualDevPlans, restoreAnnualDevPlans } from "../restful-api/annualGetAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
 
 export interface BudgetItem {
-    gdb_name: string;
-    gdb_pax: string;
-    gdb_amount: string;
+    name: string;
+    quantity: string;
+    price: string;
 }
 
 export interface AnnualDevPlanFormData {
@@ -36,15 +36,16 @@ export const useCreateAnnualDevPlan = () => {
                 dev_res_person: JSON.stringify(resPersons && resPersons.length ? resPersons : (restFormData.dev_res_person ? [restFormData.dev_res_person] : [])),
                 dev_indicator: JSON.stringify(restFormData.dev_indicator ? [restFormData.dev_indicator] : []),
                 dev_budget_items: JSON.stringify(
-                    budgetItems.map((item) => ({
-                        name: item.gdb_name,
-                        pax: item.gdb_pax,
-                        amount: Number(item.gdb_amount || "0"),
-                    }))
+                    budgetItems
+                        .filter(item => item.name && item.name.trim() !== "")
+                        .map((item) => ({
+                            name: item.name.trim(),
+                            quantity: Number(item.quantity || "0"),
+                            price: Number(item.price || "0"),
+                        }))
                 ),
                 staff: staff || null,
             };
-
             return await createAnnualDevPlan(payload);
         },
         onSuccess: () => {
@@ -77,11 +78,13 @@ export const useUpdateAnnualDevPlan = () => {
                 ...restFormData,
                 staff: staff || null,
                 dev_budget_items: JSON.stringify(
-                    budgetItems.map((item) => ({
-                        name: item.gdb_name,
-                        pax: item.gdb_pax,
-                        amount: Number(item.gdb_amount || "0"),
-                    }))
+                    budgetItems
+                        .filter(item => item.name && item.name.trim() !== "")
+                        .map((item) => ({
+                            name: item.name.trim(),
+                            quantity: Number(item.quantity || "0"),
+                            price: Number(item.price || "0"),
+                        }))
                 ),
             };
             return await updateAnnualDevPlan(devId, payload);
@@ -101,5 +104,45 @@ export const useGetAnnualDevPlansByYear = (year: number) => {
             return await getAnnualDevPlansByYear(year);
         },
         enabled: Boolean(year),
+    });
+};
+
+// Archive queries
+export const useGetArchivedAnnualDevPlans = (page?: number, pageSize?: number, search?: string) => {
+    return useQuery({
+        queryKey: ["archivedAnnualDevPlans", page, pageSize, search],
+        queryFn: async () => {
+            return await getArchivedAnnualDevPlans(search, page, pageSize);
+        },
+    });
+};
+
+export const useArchiveAnnualDevPlans = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: async (devIds: number[]) => {
+            return await archiveAnnualDevPlans(devIds);
+        },
+        onSuccess: () => {
+            // Invalidate and refetch queries to update the data
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["archivedAnnualDevPlans"] });
+        },
+    });
+};
+
+export const useRestoreAnnualDevPlans = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: async (devIds: number[]) => {
+            return await restoreAnnualDevPlans(devIds);
+        },
+        onSuccess: () => {
+            // Invalidate and refetch queries to update the data
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["archivedAnnualDevPlans"] });
+        },
     });
 };

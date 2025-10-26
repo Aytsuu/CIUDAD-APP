@@ -93,6 +93,12 @@ const CertForm: React.FC = () => {
   const handleSubmit = () => {
     setError(null);
     
+    // Check if user is deceased
+    if (user?.personal?.per_is_deceased) {
+      setError("Deceased residents cannot request certificates");
+      return;
+    }
+    
     // Validate that purpose is selected
     if (!purpose) {
       setError("Please select a purpose");
@@ -160,14 +166,14 @@ const CertForm: React.FC = () => {
         {addPersonalCert.status === 'pending' && (
           <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
             <View className="bg-white rounded-xl p-6 items-center shadow-lg">
-            <ActivityIndicator size="large" color="#00AFFF" />
-            <Text className="text-gray-800 font-semibold text-lg mt-4">Submitting...</Text>
-            <Text className="text-gray-600 text-sm mt-2 text-center">
-              Please wait while we process your request
-            </Text>
+              <ActivityIndicator size="large" color="#00AFFF" />
+              <Text className="text-gray-800 font-semibold text-lg mt-4">Submitting...</Text>
+              <Text className="text-gray-600 text-sm mt-2 text-center">
+                Please wait while we process your request
+              </Text>
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
 
       
@@ -219,14 +225,27 @@ const CertForm: React.FC = () => {
 
       {/* Submit Button */}
       <TouchableOpacity
-        className={`bg-[#00AFFF] rounded-lg py-3 items-center mt-8 shadow-md ${addPersonalCert.status === 'pending' || !!isLoading ? 'opacity-50' : ''}`}
+        className={`rounded-xl py-4 items-center mt-2 mb-8 ${
+          addPersonalCert.status === 'pending' 
+            ? 'bg-gray-400 opacity-50' 
+            : 'bg-[#00AFFF]'
+        }`}
         activeOpacity={0.85}
         onPress={handleSubmit}
-        disabled={addPersonalCert.status === 'pending' || !!isLoading}
+        disabled={addPersonalCert.status === 'pending'}
       >
-        <Text className="text-white font-semibold text-base">
-          {addPersonalCert.status === 'pending' ? 'Submitting...' : !!isLoading ? 'Loading...' : 'Submit Request'}
-        </Text>
+        {addPersonalCert.status === 'pending' ? (
+          <View className="flex-row items-center">
+            <ActivityIndicator size="small" color="white" />
+            <Text className="text-white font-semibold text-base ml-2">
+              Submitting...
+            </Text>
+          </View>
+        ) : (
+          <Text className="text-white font-semibold text-base">
+            Submit Request
+          </Text>
+        )}
       </TouchableOpacity>
       </View>
     </PageLayout>

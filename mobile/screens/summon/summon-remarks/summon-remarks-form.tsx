@@ -297,7 +297,6 @@ export default function SummonRemarksForm() {
                         <MediaPicker
                             selectedImages={selectedImages}
                             setSelectedImages={setSelectedImages}
-                            multiple={true}
                         />
                         
                         {selectedImages.length === 0 && (

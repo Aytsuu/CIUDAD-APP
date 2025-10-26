@@ -22,7 +22,7 @@ class IRTableSerializer(serializers.ModelSerializer):
     fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
              'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
              'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
-             'ir_track_user_lng', 'ir_track_user_contact']
+             'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name']
   
   def get_ir_type(self, obj):
     if obj.rt:

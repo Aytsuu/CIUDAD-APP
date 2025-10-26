@@ -18,10 +18,11 @@ import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/councilEventdelqueries";
 import { Archive } from "lucide-react";
-// import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext"; 
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
-  // const { user } = useAuth();
+  const { user } = useAuth(); 
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);
@@ -241,105 +242,104 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
             </div>
           </div>
 
-         <div className="mt-4 flex justify-between items-center">
-  
-  {!isEditMode && !isArchived ? (
-    <ConfirmationModal
-      trigger={
-        <Button
-          type="button"
-          className="bg-red-500 text-white hover:bg-red-600"
-          disabled={isArchiving}
-        >
-          {isArchiving ? (
-            <>Archiving...</>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Archive size={16} /> Archive
-            </div>
-          )}
-        </Button>
-      }
-      title="Confirm Archive"
-      description={`Are you sure you want to archive the event "${initialValues.ce_title}"? It will be moved to the archived events list.`}
-      actionLabel="Archive"
-      onClick={handleArchive}
-    />
-  ) : (
-    // Empty div to maintain spacing if no Archive button
-    <div />
-  )}
-
- 
-  <div className="flex gap-3">
-    {isEditMode ? (
-      <>
-        <Button
-          type="button"
-          className="bg-white text-black hover:bg-gray-200"
-          onClick={handleCancelClick}
-        >
-          Cancel
-        </Button>
-        <ConfirmationModal
-          trigger={
-            <Button type="button" disabled={isUpdating}>
-              {isUpdating ? (
-                <>
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          }
-          title="Confirm Changes"
-          description="Are you sure you want to save these changes?"
-          actionLabel="Confirm"
-          onClick={form.handleSubmit(onSubmit)}
-        />
-      </>
-    ) : (
-      !isArchived && (
-        <>
-          <DialogLayout
-            trigger={
-              <Button
-                type="button"
-                className="bg-white text-black hover:bg-gray-100"
-                onClick={handleNextClick}
-              >
-                Preview
-              </Button>
-            }
-            className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
-            title="Attendance Sheet Preview"
-            description="Review the attendance sheet"
-            mainContent={
-              <AttendanceSheetView
-                ce_id={ceId}
-                selectedAttendees={selectedAttendees}
-                numberOfRows={numberOfRows}
-                activity={form.watch("eventTitle")}
-                date={form.watch("eventDate")}
-                time={form.watch("eventTime")}
-                place={form.watch("roomPlace")}
-                description={form.watch("eventDescription")}
-                onConfirm={handleConfirmPreview}
+          <div className="mt-4 flex justify-between items-center">
+            {/* Archive Button - Only show if user is secretary */}
+            {isSecretary && !isEditMode && !isArchived ? (
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="bg-red-500 text-white hover:bg-red-600"
+                    disabled={isArchiving}
+                  >
+                    {isArchiving ? (
+                      <>Archiving...</>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Archive size={16} /> Archive
+                      </div>
+                    )}
+                  </Button>
+                }
+                title="Confirm Archive"
+                description={`Are you sure you want to archive the event "${initialValues.ce_title}"? It will be moved to the archived events list.`}
+                actionLabel="Archive"
+                onClick={handleArchive}
               />
-            }
-            isOpen={isModalOpen}
-            onOpenChange={handleModalOpenChange}
-          />
-          <Button type="button" onClick={handleEditClick}>
-            Edit
-          </Button>
-        </>
-      )
-    )}
-  </div>
-</div>
+            ) : (
+              // Empty div to maintain spacing if no Archive button
+              <div />
+            )}
 
+            {/* Action Buttons (Preview, Edit, Save, Cancel) - Only show if user is secretary */}
+            {isSecretary && (
+              <div className="flex gap-3">
+                {isEditMode ? (
+                  <>
+                    <Button
+                      type="button"
+                      className="bg-white text-black hover:bg-gray-200"
+                      onClick={handleCancelClick}
+                    >
+                      Cancel
+                    </Button>
+                    <ConfirmationModal
+                      trigger={
+                        <Button type="button" disabled={isUpdating}>
+                          {isUpdating ? (
+                            <>Saving...</>
+                          ) : (
+                            "Save"
+                          )}
+                        </Button>
+                      }
+                      title="Confirm Changes"
+                      description="Are you sure you want to save these changes?"
+                      actionLabel="Confirm"
+                      onClick={form.handleSubmit(onSubmit)}
+                    />
+                  </>
+                ) : (
+                  !isArchived && (
+                    <>
+                      <DialogLayout
+                        trigger={
+                          <Button
+                            type="button"
+                            className="bg-white text-black hover:bg-gray-100"
+                            onClick={handleNextClick}
+                          >
+                            Preview
+                          </Button>
+                        }
+                        className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
+                        title="Attendance Sheet Preview"
+                        description="Review the attendance sheet"
+                        mainContent={
+                          <AttendanceSheetView
+                            ce_id={ceId}
+                            selectedAttendees={selectedAttendees}
+                            numberOfRows={numberOfRows}
+                            activity={form.watch("eventTitle")}
+                            date={form.watch("eventDate")}
+                            time={form.watch("eventTime")}
+                            place={form.watch("roomPlace")}
+                            description={form.watch("eventDescription")}
+                            onConfirm={handleConfirmPreview}
+                          />
+                        }
+                        isOpen={isModalOpen}
+                        onOpenChange={handleModalOpenChange}
+                      />
+                      <Button type="button" onClick={handleEditClick}>
+                        Edit
+                      </Button>
+                    </>
+                  )
+                )}
+              </div>
+            )}
+          </div>
         </form>
       </Form>
     </div>

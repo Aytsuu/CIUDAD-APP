@@ -67,7 +67,7 @@ const SummonCaseCard = React.memo(({ item }: { item: SummonCaseList }) => {
 
     const handleViewDetails = () => {
         router.push({
-            pathname: "/(summon)/view-remarks-details",
+            pathname: "/(summon)/view-conciliation-details",
             params: {
                 sc_id: item.sc_id,
                 incident_type: item.incident_type,
@@ -231,7 +231,7 @@ export default function LuponConciliationMain() {
                     </TouchableOpacity>
                 }
                 wrapScroll={false}
-                headerTitle={<Text className="text-gray-900 text-[13px]">Conciliation Proceedings Cases</Text>}
+                headerTitle={<Text className="text-gray-900 text-[13px]">Conciliation Proceedings</Text>}
                 rightAction={
                     <TouchableOpacity 
                         onPress={() => setShowSearch(!showSearch)} 

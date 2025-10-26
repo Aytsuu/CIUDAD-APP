@@ -16,13 +16,14 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
     accessorKey: "personal_info",
     header: "Patient Name",
     cell: ({ row }) => {
-      const { per_fname, per_mname, per_lname, per_suffix } = row.original.personal_info;
-      return `${per_fname} ${per_mname ? per_mname.charAt(0) + "." : ""} ${per_lname} ${per_suffix || ""}`.trim();
+      const { per_fname, per_mname, per_lname, per_suffix } = row.original.personal_info || {};
+      return `${per_fname || ''} ${per_mname ? per_mname.charAt(0) + "." : ""} ${per_lname || ''} ${per_suffix || ""}`.trim();
     }
   },
   {
     accessorKey: "personal_info.per_contact",
-    header: "Contact Number"
+    header: "Contact Number",
+    cell: ({ row }) => row.original.personal_info?.per_contact || "N/A"
   },
   {
     accessorKey: "total_quantity",
@@ -36,45 +37,48 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
       return date.toLocaleDateString();
     }
   },
-
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link
-          to={`/medicine-request/pending-items`}
-          state={{
-            params: {
-              medreq_id: row.original.medreq_id, // Pass the entire row data if needed
-              patientData: {
-                pat_id: row.original.pat_id_value,
-                pat_type: row.original.pat_type,
-                age: row.original.age,
-                addressFull: row.original.address.full_address || "No address provided",
-                address: {
-                  add_street: row.original.address.add_street,
-                  add_barangay: row.original.address.add_barangay,
-                  add_city: row.original.address.add_city,
-                  add_province: row.original.address.add_province,
-                  add_sitio: row.original.address.add_sitio
-                },
-                households: [{ hh_id: row.original.householdno }],
-                personal_info: {
-                  per_fname: row.original.personal_info.per_fname,
-                  per_mname: row.original.personal_info.per_mname,
-                  per_lname: row.original.personal_info.per_lname,
-                  per_dob: row.original.personal_info.per_dob,
-                  per_sex: row.original.personal_info.per_sex
+    cell: ({ row }) => {
+      const address = row.original.address || {};
+      
+      return (
+        <Button variant="ghost" size="sm" asChild>
+          <Link
+            to={`/medicine-request/pending-items`}
+            state={{
+              params: {
+                medreq_id: row.original.medreq_id,
+                patientData: {
+                  pat_id: row.original.pat_id_value,
+                  pat_type: row.original.pat_type,
+                  age: row.original.age,
+                  addressFull: address.full_address || "No address provided",
+                  address: {
+                    add_street: address.add_street || "",
+                    add_barangay: address.add_barangay || "",
+                    add_city: address.add_city || "",
+                    add_province: address.add_province || "",
+                    add_sitio: address.add_sitio || ""
+                  },
+                  households: [{ hh_id: row.original.householdno }],
+                  personal_info: {
+                    per_fname: row.original.personal_info?.per_fname || "",
+                    per_mname: row.original.personal_info?.per_mname || "",
+                    per_lname: row.original.personal_info?.per_lname || "",
+                    per_dob: row.original.personal_info?.per_dob || "",
+                    per_sex: row.original.personal_info?.per_sex || ""
+                  }
                 }
               }
-            }
-          }}
-        >
-          View Items
-        </Link>
-      </Button>
-    )
+            }}
+          >
+            View Items
+          </Link>
+        </Button>
+      );
+    }
   }
 ];
 
@@ -86,7 +90,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       <div className="flex justify-center items-center">
         <div className="min-w-[250px] px-3 py-2">
           <div className="font-semibold text-gray-900">{row.original.med_name || "No name provided"}</div>
-          <div> {row.original.med_type || "No type provided"}</div>
+          <div>{row.original.med_type || "No type provided"}</div>
         </div>
       </div>
     )
@@ -100,7 +104,6 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       </div>
     )
   },
-
   {
     id: "documents",
     header: "Documents",
@@ -151,25 +154,32 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       const [isActionModalOpen, setIsActionModalOpen] = useState(false);
       const [isReferOpen, setIsReferOpen] = useState(false);
       const status = row.original.status;
-
-      // Only show action buttons for pending items of type "Prescription"
+      const files = row.original.medicine_files || [];
+      const med_type = row.original.med_type || "Prescription";
+      
+      // Check if this item has documents and is prescription type
+      const hasDocuments = med_type === "Prescription" && files.length > 0;
 
       return (
         <div className="flex justify-center gap-2">
           {status === "pending" ? (
             <>
-              {/* Refer Button */}
+              {/* Refer Button - Always show */}
               <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)}>
                 Refer Request
               </Button>
 
-              {/* ActionModal Button */}
-              <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
-                Reject Document
-              </Button>
+              {/* Reject Document Button - Only show if there are documents */}
+              {hasDocuments && (
+                <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
+                  Reject Document
+                </Button>
+              )}
 
-              {/* ActionModal Modal */}
-              <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+              {/* ActionModal Modal - Only render if there are documents */}
+              {hasDocuments && (
+                <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+              )}
 
               <ActionModal isOpen={isReferOpen} onClose={() => setIsReferOpen(false)} data={row.original} mode="refer" />
             </>

@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { getClearanceRequests as getClearanceRequestsAPI, ClearanceRequest as APIClearanceRequest } from "../restful-api/clearanceRequestGetAPI";
+import { getClearanceRequests as getClearanceRequestsAPI } from "../restful-api/clearanceRequestGetAPI";
 
 // Enhanced types for web backend compatibility
 export interface ClearanceRequest {

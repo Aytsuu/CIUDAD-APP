@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { format, startOfWeek, addDays } from "date-fns"
 import { enUS } from "date-fns/locale"
-import { View, Text, ScrollView, ActivityIndicator, SafeAreaView, TouchableOpacity } from "react-native" 
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from "react-native" 
 import { useGetServices,useGetScheduler,useGetDays } from "./queries/schedulerFetchQueries"
 import { DailySchedule, WeeklySchedule } from "./schedule-types"
 import ScheduleDialog from "./schedule-dialog"

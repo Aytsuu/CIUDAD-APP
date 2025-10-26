@@ -959,24 +959,22 @@ class OrdinanceFileView(generics.ListCreateAPIView):
     serializer_class = OrdinanceFileSerializer
 
     def create(self, request, *args, **kwargs):
-        # Get file data from request
-        file_data = {
-            'of_name': request.data.get('of_name'),
-            'of_type': request.data.get('of_type'),
-            'of_path': request.data.get('of_path'),
-            'of_url': request.data.get('of_url')
-        }
+        # Handle file uploads like resolution does
+        files = request.data.get('files', [])
         
-        print(f"Creating ordinance file with data: {file_data}")
+        if not files:
+            return Response(
+                {"error": "No files provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        serializer = self.get_serializer(data=file_data)
-        if not serializer.is_valid():
-            print(f"Serializer errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Uploading {len(files)} ordinance files")
         
-        file_obj = serializer.save()
-        print(f"Created ordinance file with ID: {file_obj.of_id}")
+        # Call serializer's upload method and get created files
+        created_files = self.get_serializer()._upload_files(files)
         
+        # Return the created file data
+        serializer = self.get_serializer(created_files, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceFileDetailView(generics.RetrieveUpdateDestroyAPIView):

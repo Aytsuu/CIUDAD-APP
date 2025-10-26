@@ -88,10 +88,45 @@ class CouncilMediationCasesView(generics.ListAPIView):
 
         return queryset.order_by('sc_code')
 
-class SummonCasesView(generics.ListAPIView):
+class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCasesSerializer
     pagination_class = StandardResultsPagination
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        
+        # Custom activity logging for summon case creation
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            # Get staff member from request
+            staff_id = self.request.data.get('staff_id') or '00005250821'  # Default staff ID
+            staff = Staff.objects.filter(staff_id=staff_id).first()
+            
+            if staff:
+                # Get complaint details for better description
+                complaint_info = "Unknown Complaint"
+                if instance.comp_id:
+                    complaint_info = f"Complaint #{instance.comp_id.comp_id}"
+                    if instance.comp_id.comp_incident_type:
+                        complaint_info += f" - {instance.comp_id.comp_incident_type}"
+                
+                create_activity_log(
+                    act_type="Summon Case Created",
+                    act_description=f"New summon case {instance.sc_code} created for {complaint_info}",
+                    staff=staff,
+                    record_id=instance.sc_code
+                )
+                
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for summon case creation: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        return instance
 
     def get_queryset(self):
         queryset = SummonCase.objects.all().select_related(
@@ -135,7 +170,11 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
     queryset = SummonCase.objects.all().prefetch_related(
-        'hearing_schedules',  # Now uses the related_name
+        Prefetch(
+            'hearing_schedules',
+            queryset=HearingSchedule.objects.all().order_by('hs_id')
+        ),
+        'hearing_schedules',  
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',
@@ -153,8 +192,9 @@ class CouncilCaseDetailView(generics.RetrieveAPIView):
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
-                hs_level__icontains='Mediation'
-            )
+                hs_level__icontains='Mediation' 
+            ).order_by('hs_id') 
+
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -174,7 +214,7 @@ class LuponCaseDetailView(generics.RetrieveAPIView):
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
                 hs_level__icontains='Conciliation Proceedings'
-            )
+            ).order_by('hs_id') 
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -185,7 +225,7 @@ class LuponCaseDetailView(generics.RetrieveAPIView):
     lookup_field = 'sc_id'
     lookup_url_kwarg = 'sc_id'
 
-class UpdateSummonCaseView(generics.UpdateAPIView):
+class UpdateSummonCaseView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = SummonCaseSerializer
     permission_classes = [AllowAny]
     queryset = SummonCase.objects.all()
@@ -193,9 +233,59 @@ class UpdateSummonCaseView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_status = instance.sc_mediation_status
+        old_conciliation_status = instance.sc_conciliation_status
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            
+            # Custom activity logging for status changes
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member from request
+                staff_id = request.data.get('staff_id') or '00005250821'  # Default staff ID
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    new_status = instance.sc_mediation_status
+                    new_conciliation_status = instance.sc_conciliation_status
+                    
+                    # Log mediation status change
+                    if old_status != new_status:
+                        create_activity_log(
+                            act_type="Summon Case Mediation Status Updated",
+                            act_description=f"Summon case {instance.sc_code} mediation status changed from '{old_status}' to '{new_status}'",
+                            staff=staff,
+                            record_id=instance.sc_code
+                        )
+                    
+                    # Log conciliation status change
+                    if old_conciliation_status != new_conciliation_status:
+                        create_activity_log(
+                            act_type="Summon Case Conciliation Status Updated",
+                            act_description=f"Summon case {instance.sc_code} conciliation status changed from '{old_conciliation_status}' to '{new_conciliation_status}'",
+                            staff=staff,
+                            record_id=instance.sc_code
+                        )
+                    
+                    # Log general update if no specific status changes
+                    if old_status == new_status and old_conciliation_status == new_conciliation_status:
+                        create_activity_log(
+                            act_type="Summon Case Updated",
+                            act_description=f"Summon case {instance.sc_code} details updated",
+                            staff=staff,
+                            record_id=instance.sc_code
+                        )
+                        
+            except Exception as log_error:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to log activity for summon case update: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -205,12 +295,12 @@ class HearingScheduleView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = HearingScheduleSerializer
     queryset = HearingSchedule.objects.all()
 
-class HearingMinutesCreateView(generics.ListCreateAPIView):
+class HearingMinutesCreateView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = HearingMinutesCreateSerializer
     queryset = HearingMinutes.objects.all()
 
-class UpdateHearingScheduleView(generics.UpdateAPIView):
+class UpdateHearingScheduleView(ActivityLogMixin, generics.UpdateAPIView):
     permission_classes = [AllowAny]
     serializer_class = HearingScheduleSerializer
     queryset = HearingSchedule.objects.all()
@@ -237,32 +327,31 @@ class HearingScheduleListView(generics.ListAPIView):
             'sc_id',     
             'sd_id',
             'st_id'
-        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
+        ).order_by('hs_id')
     
-class RemarkView(generics.ListCreateAPIView):
+class RemarkView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RemarkSerializer
     queryset = Remark.objects.all()
 
-class RemarkSuppDocCreateView(generics.ListCreateAPIView):
+class RemarkSuppDocCreateView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RemarkSuppDocCreateSerializer
     queryset = RemarkSuppDocs.objects.all()
 
 # ======================== SUMMON DATE AND TIME ========================
-class SummonDateAvailabilityView(generics.ListCreateAPIView):
+class SummonDateAvailabilityView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonDateAvailabilitySerializer
     queryset = SummonDateAvailability.objects.all()
 
-
-class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
+class DeleteSummonDateAvailability(ActivityLogMixin, generics.RetrieveDestroyAPIView):
     permission_classes = [AllowAny]
     queryset = SummonDateAvailability.objects.all()
     serializer_class = SummonDateAvailabilitySerializer
     lookup_field = 'sd_id'
 
-class SummonTimeAvailabilityView(generics.ListCreateAPIView):
+class SummonTimeAvailabilityView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonTimeAvailabilitySerializer
     queryset = SummonTimeAvailability.objects.all()
@@ -288,14 +377,14 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
 
-class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
+class DeleteSummonTimeAvailabilityView(ActivityLogMixin, generics.RetrieveDestroyAPIView):
     permission_classes = [AllowAny]
     queryset = SummonTimeAvailability.objects.all()
     serializer_class = SummonTimeAvailabilitySerializer
     lookup_field = 'st_id'
 
 
-class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
+class UpdateSummonTimeAvailabilityView(ActivityLogMixin, generics.UpdateAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonTimeAvailabilitySerializer
     queryset = SummonTimeAvailability.objects.all()
@@ -311,7 +400,7 @@ class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
 
 # =================== PAYMENT REQ =========================
 
-class ServiceChargePaymentReqView(generics.ListCreateAPIView):
+class ServiceChargePaymentReqView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ServiceChargePaymentReqSerializer
     queryset = ServiceChargePaymentRequest.objects.all()

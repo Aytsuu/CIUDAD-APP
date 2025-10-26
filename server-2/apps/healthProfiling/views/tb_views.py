@@ -7,6 +7,7 @@ from ..serializers.tb_serializers import (
     TBSurveilanceCreateSerializer,
     TBSurveilanceUpdateSerializer
 )
+from apps.patientrecords.utils import create_patient_and_record_for_health_profiling
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,20 @@ class TBSurveilanceCreateView(generics.CreateAPIView):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 tb_record = serializer.save()
+                
+                # Automatically create Patient, PatientRecord, and MedicalHistory for health profiling
+                if tb_record.rp:
+                    # Use 'Tuberculosis' as the illness name for medical history
+                    illness_name = 'Tuberculosis'
+                    patient, patient_record, medical_history = create_patient_and_record_for_health_profiling(
+                        tb_record.rp.rp_id, 
+                        record_type='TB', 
+                        illness_name=illness_name
+                    )
+                    if patient and patient_record:
+                        logger.info(f"Patient, PatientRecord, and MedicalHistory created/found for TB record {tb_record.tb_id}: Patient {patient.pat_id}, Record {patient_record.patrec_id}, History {medical_history.medhist_id if medical_history else 'None'}")
+                    else:
+                        logger.warning(f"Failed to create/find Patient and PatientRecord for TB record {tb_record.tb_id}")
                 
                 # Return the created record with full details
                 response_serializer = TBSurveilanceSerializer(tb_record)

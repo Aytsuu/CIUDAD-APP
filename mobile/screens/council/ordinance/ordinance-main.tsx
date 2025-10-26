@@ -8,17 +8,20 @@ import {
   Linking,
   Alert,
   Modal,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Search, Eye, FileText, X } from 'lucide-react-native';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ChevronLeft, Search, Eye, FileText, X, Plus, Edit } from 'lucide-react-native';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useOrdinances, OrdinanceData } from './queries/ordinance-fetch-queries';
+import { useUpdateOrdinance } from './queries/ordinance-fetch-insert-queries';
+import { groupOrdinancesIntoFolders } from './rest-api/ordinanceGetAPI';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
+import OrdinanceUpload from './ordinance-upload';
 
 // Helper type for grouped ordinances
 interface OrdinanceFolder {
@@ -28,77 +31,19 @@ interface OrdinanceFolder {
   totalOrdinances: number;
 }
 
-// Helper function to group ordinances into folders
-const groupOrdinancesIntoFolders = (ordinances: OrdinanceData[]): OrdinanceFolder[] => {
-  const folders: Map<string, OrdinanceFolder> = new Map();
-  const processedOrdinances = new Set<string>();
-  
-  // First pass: Create folders for ordinances that have amendments or are amendments
-  ordinances.forEach(ordinance => {
-    if (processedOrdinances.has(ordinance.ord_num)) return;
-    
-    const hasAmendments = ordinances.some(ord => 
-      ord.ord_parent === ordinance.ord_num && ord.ord_num !== ordinance.ord_num
-    );
-    
-    const isAmendment = ordinance.ord_parent && ordinance.ord_parent !== ordinance.ord_num;
-    
-    if (hasAmendments || isAmendment) {
-      const baseOrdinanceId = isAmendment ? ordinance.ord_parent! : ordinance.ord_num;
-      
-      if (!folders.has(baseOrdinanceId)) {
-        const folderId = `folder-${baseOrdinanceId}`;
-        folders.set(baseOrdinanceId, {
-          id: folderId,
-          baseOrdinance: ordinances.find(ord => ord.ord_num === baseOrdinanceId)!,
-          amendments: [],
-          totalOrdinances: 1
-        });
-      }
-      
-      processedOrdinances.add(ordinance.ord_num);
-    }
-  });
-  
-  // Second pass: Add amendments to their parent folders
-  ordinances.forEach(ordinance => {
-    if (ordinance.ord_parent && ordinance.ord_parent !== ordinance.ord_num) {
-      const parentId = ordinance.ord_parent;
-      const parentFolder = folders.get(parentId);
-      
-      if (parentFolder) {
-        parentFolder.amendments.push(ordinance);
-        parentFolder.totalOrdinances = parentFolder.amendments.length + 1;
-        processedOrdinances.add(ordinance.ord_num);
-      }
-    }
-  });
-  
-  // Third pass: Create standalone folders for ordinances that aren't part of any chain
-  ordinances.forEach(ordinance => {
-    if (!processedOrdinances.has(ordinance.ord_num)) {
-      const standaloneId = `standalone-${ordinance.ord_num}`;
-      folders.set(standaloneId, {
-        id: standaloneId,
-        baseOrdinance: ordinance,
-        amendments: [],
-        totalOrdinances: 1
-      });
-      processedOrdinances.add(ordinance.ord_num);
-    }
-  });
-  
-  return Array.from(folders.values());
-};
 
 function OrdinancePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [selectedFolder, setSelectedFolder] = useState<OrdinanceFolder | null>(null);
   const [folderViewModalVisible, setFolderViewModalVisible] = useState(false);
+  
+  // Upload modal state
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [creationMode, setCreationMode] = useState<'new' | 'amend' | 'repeal'>('new');
+  const [selectedOrdinance, setSelectedOrdinance] = useState<string>("");
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -115,11 +60,14 @@ function OrdinancePage() {
     debouncedSearchQuery, 
     categoryFilter, 
     yearFilter,
-    activeTab === "archive"
+    false // Show all ordinances (both active and archived)
   );
 
   // Extract the actual data array from paginated response
   const fetchedData = ordinanceData.results || [];
+
+  // Mutation hooks
+  const updateOrdinanceMutation = useUpdateOrdinance();
 
   const categoryOptions = [
     { id: "all", name: "All" },
@@ -129,30 +77,37 @@ function OrdinancePage() {
     { id: "Finance", name: "Finance" }
   ];
 
-  // Extract unique years from ordinance data for the dropdown
+  // Generate all years from 2020 to current year + 1
   const yearOptions = useMemo(() => {
-    const years = new Set<number>();
-    
-    fetchedData.forEach(record => {
-      if (record.ord_year) {
-        years.add(record.ord_year);
-      }
-    });
-
-    const sortedYears = Array.from(years).sort((a, b) => b - a);
+    const currentYear = new Date().getFullYear();
+    const startYear = 2020;
+    const endYear = currentYear + 1;
     
     const options = [{ id: "all", name: "All Years" }];
     
-    sortedYears.forEach(year => {
+    // Generate years from endYear down to startYear (most recent first)
+    for (let year = endYear; year >= startYear; year--) {
       options.push({ id: year.toString(), name: year.toString() });
-    });
+    }
 
     return options;
-  }, [fetchedData]);
+  }, []);
 
   // Group ordinances into folders
   const ordinanceFolders = useMemo(() => {
     return groupOrdinancesIntoFolders(fetchedData);
+  }, [fetchedData]);
+
+  // Get available ordinances for amendment/repeal selection
+  const availableOrdinances = useMemo(() => {
+    return fetchedData
+      .filter(ord => ord.ord_num && ord.ord_num.trim() !== '')
+      .filter(ord => !ord.ord_repealed)
+      .map(ord => ({
+        id: ord.ord_num,
+        name: `${ord.ord_num} - ${ord.ord_title} (${ord.ord_year})`,
+        category: ord.ord_category
+      }));
   }, [fetchedData]);
 
   const handleCategoryFilterChange = (value: string) => {
@@ -168,6 +123,10 @@ function OrdinancePage() {
       Alert.alert("Error", "No PDF file available");
       return;
     }
+    
+    console.log("🔍 Opening PDF URL:", pdfUrl);
+    console.log("🔍 URL type:", pdfUrl.startsWith('data:') ? 'Data URL' : 'Regular URL');
+    
     Linking.openURL(pdfUrl).catch(() =>
       Alert.alert('Cannot Open PDF', 'Please make sure you have a PDF reader app installed.')
     );
@@ -181,6 +140,15 @@ function OrdinancePage() {
   const handleRefresh = () => {
     refetch();
   };
+
+
+  // Reset form for upload modal
+  const resetForm = () => {
+    setSelectedOrdinance("");
+    setCreationMode('new');
+  };
+
+
 
   // Get category badge color
   const getCategoryColor = (category: string) => {
@@ -203,16 +171,20 @@ function OrdinancePage() {
   const renderFolderItem = ({ item: folder }: { item: OrdinanceFolder }) => {
     const categoryColor = getCategoryColor(folder.baseOrdinance.ord_category);
     
+    // Check if this ordinance has been repealed (either base ordinance is repealed or has repeal amendments)
+    const hasRepeal = folder.baseOrdinance.ord_repealed || 
+      folder.amendments.some(amendment => amendment.ord_repealed && !amendment.ord_is_ammend);
+    
     return (
-      <Card className="border border-gray-200 bg-white mb-4">
+      <Card className={`border border-gray-200 bg-white mb-4 ${hasRepeal ? 'opacity-75' : ''}`}>
         <CardHeader className="flex-row justify-between items-start">
           <View className="flex-1 pr-2">
             <View className="flex-row items-center mb-2">
-              <View className="w-8 h-8 rounded-lg bg-blue-500 items-center justify-center mr-2">
+              <View className={`w-8 h-8 rounded-lg items-center justify-center mr-2 ${hasRepeal ? 'bg-red-500' : 'bg-blue-500'}`}>
                 <FileText size={16} color="white" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900" numberOfLines={2}>
+                <Text className={`text-base font-semibold ${hasRepeal ? 'text-gray-600' : 'text-gray-900'}`} numberOfLines={2}>
                   {folder.baseOrdinance.ord_title}
                 </Text>
               </View>
@@ -220,25 +192,55 @@ function OrdinancePage() {
             
             <View className="flex-row items-center gap-1 flex-wrap">
               <Text className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</Text>
-              {folder.baseOrdinance.ord_repealed && (
-                <View className="px-2 py-0.5 rounded-full bg-red-100">
-                  <Text className="text-xs text-red-800 font-medium">Repealed</Text>
+              {hasRepeal && (
+                <View className="px-2 py-0.5 rounded-full bg-red-100 border border-red-200">
+                  <Text className="text-xs text-red-800 font-medium">REPEALED</Text>
                 </View>
               )}
             </View>
           </View>
 
-          {folder.totalOrdinances > 1 && (
-            <TouchableOpacity
-              onPress={() => handleFolderView(folder)}
-              className="bg-blue-50 px-2 py-1 rounded"
-            >
-              <View className="flex-row items-center">
-                <Eye size={12} color="#2563eb" />
-                <Text className="text-xs text-blue-600 ml-1 font-medium">View All</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+          <View className="flex-row items-center gap-2">
+            {folder.totalOrdinances > 1 && (
+              <TouchableOpacity
+                onPress={() => handleFolderView(folder)}
+                className="bg-blue-50 px-2 py-1 rounded"
+              >
+                <View className="flex-row items-center">
+                  <Eye size={12} color="#2563eb" />
+                  <Text className="text-xs text-blue-600 ml-1 font-medium">View All</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            
+            {/* Action buttons - only show if not repealed */}
+            {!hasRepeal && (
+              <TouchableOpacity
+                onPress={() => {
+                  setCreationMode('amend');
+                  setSelectedOrdinance(folder.baseOrdinance.ord_num);
+                  setUploadModalVisible(true);
+                }}
+                className="bg-yellow-50 px-2 py-1 rounded"
+              >
+                <Edit size={12} color="#d97706" />
+              </TouchableOpacity>
+            )}
+            
+            {/* Repeal button - only show if not already repealed */}
+            {!hasRepeal && (
+              <TouchableOpacity
+                onPress={() => {
+                  setCreationMode('repeal');
+                  setSelectedOrdinance(folder.baseOrdinance.ord_num);
+                  setUploadModalVisible(true);
+                }}
+                className="bg-red-50 px-2 py-1 rounded"
+              >
+                <Text className="text-xs text-red-600 font-medium">Repeal</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </CardHeader>
 
         <CardContent className="space-y-2">
@@ -274,7 +276,7 @@ function OrdinancePage() {
             </Text>
           </View>
 
-          <View className="flex-row justify-end">
+          <View className="flex-row justify-between items-center">
             <TouchableOpacity
               onPress={() => {
                 if (folder.baseOrdinance.file?.file_url) {
@@ -290,6 +292,7 @@ function OrdinancePage() {
                 <Text className="text-xs text-green-600 ml-1 font-medium">View File</Text>
               </View>
             </TouchableOpacity>
+            
           </View>
         </CardContent>
       </Card>
@@ -335,7 +338,15 @@ function OrdinancePage() {
         <Text className="text-gray-900 text-[13px]">Ordinance Record</Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => {
+            resetForm();
+            setUploadModalVisible(true);
+          }}
+          className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center"
+        >
+          <Plus size={20} color="white" />
+        </TouchableOpacity>
       }
       wrapScroll={false}
     >
@@ -378,65 +389,23 @@ function OrdinancePage() {
           </View>
         </View>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-            <TabsTrigger 
-              value="active" 
-              className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                Active
+        {/* Ordinances List */}
+        {isLoading ? (
+          renderLoadingState()          
+        ) : (
+          <FlatList
+            data={ordinanceFolders}
+            renderItem={renderFolderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ paddingBottom: 500 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <Text className="text-center text-gray-500 py-4">
+                No ordinances found
               </Text>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="archive"
-              className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                Archive
-              </Text>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active">
-            {isLoading ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={ordinanceFolders}
-                renderItem={renderFolderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No active ordinances found
-                  </Text>
-                }
-              />
-            )}            
-          </TabsContent>
-
-          <TabsContent value="archive">
-            {isLoading ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={ordinanceFolders}
-                renderItem={renderFolderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No archived ordinances found
-                  </Text>
-                }
-              />              
-            )}              
-          </TabsContent>
-        </Tabs>
+            }
+          />
+        )}
 
         {/* Folder View Modal */}
         <Modal
@@ -449,16 +418,16 @@ function OrdinancePage() {
           }}
         >
           <View className="flex-1 bg-black/50">
-            <View className="flex-1 mt-20 bg-white rounded-t-3xl">
+            <View className="flex-1 mt-16 bg-white rounded-t-3xl">
               {/* Modal Header */}
-              <View className="p-4 border-b border-gray-200">
+              <View className="px-6 py-4 border-b border-gray-200">
                 <View className="flex-row justify-between items-center">
                   <View className="flex-1">
                     <Text className="text-lg font-semibold text-gray-900" numberOfLines={2}>
                       {selectedFolder?.baseOrdinance.ord_title}
                     </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      {selectedFolder?.totalOrdinances} ordinance(s) in this folder
+                    <Text className="text-sm text-gray-500 mt-1">
+                      ORD: {selectedFolder?.baseOrdinance.ord_num} • {selectedFolder?.totalOrdinances} ordinance{selectedFolder?.totalOrdinances !== 1 ? 's' : ''}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -466,7 +435,7 @@ function OrdinancePage() {
                       setFolderViewModalVisible(false);
                       setSelectedFolder(null);
                     }}
-                    className="ml-2"
+                    className="p-2"
                   >
                     <X size={24} color="#6b7280" />
                   </TouchableOpacity>
@@ -474,21 +443,24 @@ function OrdinancePage() {
               </View>
 
               {/* Modal Content */}
-              <ScrollView className="flex-1 p-4">
-                {selectedFolder && (
-                  <View className="space-y-4">
-                    {/* Base Ordinance */}
-                    <View className="bg-white rounded-lg border border-gray-200 p-4">
-                      <View className="flex-row items-center mb-3">
-                        <View className="w-2 h-2 bg-blue-500 rounded-full mr-2"></View>
-                        <Text className="text-sm font-semibold text-blue-700">Base Ordinance</Text>
-                        <View className="ml-2 px-2 py-0.5 rounded border border-gray-300">
-                          <Text className="text-xs text-gray-600">Original</Text>
-                        </View>
-                      </View>
-
-                      <View className="space-y-3">
-                        <View className="flex-row items-center gap-2">
+              <ScrollView 
+                className="flex-1" 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                <View className="p-6">
+                  {selectedFolder && (
+                    <View className="space-y-4">
+                      {/* Base Ordinance */}
+                      <View className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <View className="flex-row items-center justify-between mb-4">
+                          <View className="flex-row items-center">
+                            <View className="w-3 h-3 bg-blue-500 rounded-full mr-2"></View>
+                            <Text className="text-base font-semibold text-blue-600">Base Ordinance</Text>
+                            <View className="ml-2 px-2 py-1 bg-blue-100 rounded-full">
+                              <Text className="text-xs text-blue-800 font-medium">v1.0</Text>
+                            </View>
+                          </View>
                           <TouchableOpacity
                             onPress={() => {
                               if (selectedFolder.baseOrdinance.file?.file_url) {
@@ -497,56 +469,70 @@ function OrdinancePage() {
                                 Alert.alert('No file available');
                               }
                             }}
-                            className="bg-blue-50 px-3 py-1 rounded"
+                            className="bg-blue-500 px-3 py-1.5 rounded-lg"
                           >
                             <View className="flex-row items-center">
-                              <Eye size={12} color="#2563eb" />
-                              <Text className="text-xs text-blue-600 ml-1">View File</Text>
+                              <Eye size={14} color="white" />
+                              <Text className="text-xs text-white ml-1 font-medium">View File</Text>
                             </View>
                           </TouchableOpacity>
                         </View>
 
-                        <Text className="text-base font-medium text-gray-900">
+                        <Text className="text-base font-medium text-gray-900 mb-3 leading-tight">
                           {selectedFolder.baseOrdinance.ord_title}
                         </Text>
-                        <Text className="text-xs text-gray-600">
-                          ORD: {selectedFolder.baseOrdinance.ord_num} • {selectedFolder.baseOrdinance.ord_date_created}
-                        </Text>
-                        <View className="bg-gray-50 p-3 rounded">
-                          <Text className="text-sm text-gray-700">
+                        <View className="flex-row items-center mb-3">
+                          <Text className="text-sm text-gray-600 font-medium">ORD:</Text>
+                          <Text className="text-sm text-gray-800 font-semibold ml-1">
+                            {selectedFolder.baseOrdinance.ord_num}
+                          </Text>
+                          <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
+                          <Text className="text-sm text-gray-600">
+                            {new Date(selectedFolder.baseOrdinance.ord_date_created).toLocaleDateString()}
+                          </Text>
+                        </View>
+                        <View className="bg-gray-50 p-3 rounded-lg">
+                          <Text className="text-sm text-gray-700 leading-relaxed">
                             {selectedFolder.baseOrdinance.ord_details || 'No details available'}
                           </Text>
                         </View>
                       </View>
-                    </View>
 
-                    {/* Amendments & Repeals */}
-                    {selectedFolder.amendments.length > 0 && (() => {
-                      const amendmentItems = selectedFolder.amendments.filter(a => a.ord_is_ammend);
-                      const repealItems = selectedFolder.amendments.filter(a => a.ord_repealed && !a.ord_is_ammend);
-                      
-                      return (
-                        <View className="space-y-4">
-                          {amendmentItems.length > 0 && (
-                            <>
-                              <View className="border-b border-gray-200 pb-2">
-                                <Text className="text-base font-semibold text-gray-800">
-                                  Amendments ({amendmentItems.length})
-                                </Text>
-                              </View>
-
-                              {amendmentItems.map((amendment, index) => (
-                                <View key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
-                                  <View className="flex-row items-center mb-3">
-                                    <View className="w-2 h-2 bg-green-500 rounded-full mr-2"></View>
-                                    <Text className="text-sm font-semibold text-green-700">Amendment {index + 1}</Text>
-                                    <View className="ml-2 px-2 py-0.5 rounded border border-gray-300">
-                                      <Text className="text-xs text-gray-600">Version {amendment.ord_ammend_ver || index + 1}</Text>
-                                    </View>
+                      {/* Amendments & Repeals */}
+                      {selectedFolder.amendments.length > 0 && (() => {
+                        const amendmentItems = selectedFolder.amendments.filter(a => a.ord_is_ammend);
+                        const repealItems = selectedFolder.amendments.filter(a => a.ord_repealed && !a.ord_is_ammend);
+                        
+                        return (
+                          <View className="space-y-4">
+                            {amendmentItems.length > 0 && (
+                              <View className="space-y-4">
+                                <View className="flex-row items-center mt-6 mb-4">
+                                  <View className="w-3 h-3 bg-green-500 rounded-full mr-2"></View>
+                                  <Text className="text-base font-semibold text-green-600">
+                                    Amendments ({amendmentItems.length})
+                                  </Text>
+                                  <View className="ml-2 px-2 py-1 bg-green-100 rounded-full">
+                                    <Text className="text-xs text-green-800 font-medium">
+                                      {amendmentItems.length} ITEM{amendmentItems.length !== 1 ? 'S' : ''}
+                                    </Text>
                                   </View>
+                                </View>
 
-                                  <View className="space-y-3">
-                                    <View className="flex-row items-center gap-2">
+                                {amendmentItems.map((amendment, index) => (
+                                  <View key={amendment.ord_num} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <View className="flex-row items-center justify-between mb-4">
+                                      <View className="flex-row items-center">
+                                        <View className="w-3 h-3 bg-green-500 rounded-full mr-2"></View>
+                                        <Text className="text-base font-semibold text-green-600">
+                                          Amendment {index + 1}
+                                        </Text>
+                                        <View className="ml-2 px-2 py-1 bg-green-100 rounded-full">
+                                          <Text className="text-xs text-green-800 font-medium">
+                                            v{amendment.ord_ammend_ver || index + 1}
+                                          </Text>
+                                        </View>
+                                      </View>
                                       <TouchableOpacity
                                         onPress={() => {
                                           if (amendment.file?.file_url) {
@@ -555,49 +541,62 @@ function OrdinancePage() {
                                             Alert.alert('No file available');
                                           }
                                         }}
-                                        className="bg-blue-50 px-3 py-1 rounded"
+                                        className="bg-green-500 px-3 py-1.5 rounded-lg"
                                       >
                                         <View className="flex-row items-center">
-                                          <Eye size={12} color="#2563eb" />
-                                          <Text className="text-xs text-blue-600 ml-1">View File</Text>
+                                          <Eye size={14} color="white" />
+                                          <Text className="text-xs text-white ml-1 font-medium">View File</Text>
                                         </View>
                                       </TouchableOpacity>
                                     </View>
 
-                                    <Text className="text-base font-medium text-gray-900">
+                                    <Text className="text-base font-medium text-gray-900 mb-3 leading-tight">
                                       {amendment.ord_title}
                                     </Text>
-                                    <Text className="text-xs text-gray-600">
-                                      ORD: {amendment.ord_num} • {amendment.ord_date_created}
-                                    </Text>
-                                    <View className="bg-gray-50 p-3 rounded">
-                                      <Text className="text-sm text-gray-700">
+                                    <View className="flex-row items-center mb-3">
+                                      <Text className="text-sm text-gray-600 font-medium">ORD:</Text>
+                                      <Text className="text-sm text-gray-800 font-semibold ml-1">
+                                        {amendment.ord_num}
+                                      </Text>
+                                      <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
+                                      <Text className="text-sm text-gray-600">
+                                        {new Date(amendment.ord_date_created).toLocaleDateString()}
+                                      </Text>
+                                    </View>
+                                    <View className="bg-gray-50 p-3 rounded-lg">
+                                      <Text className="text-sm text-gray-700 leading-relaxed">
                                         {amendment.ord_details || 'No details available'}
                                       </Text>
                                     </View>
                                   </View>
-                                </View>
-                              ))}
-                            </>
-                          )}
-
-                          {repealItems.length > 0 && (
-                            <>
-                              <View className="border-b border-gray-200 pb-2">
-                                <Text className="text-base font-semibold text-gray-800">
-                                  Repeals ({repealItems.length})
-                                </Text>
+                                ))}
                               </View>
+                            )}
 
-                              {repealItems.map((repeal) => (
-                                <View key={repeal.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
-                                  <View className="flex-row items-center mb-3">
-                                    <View className="w-2 h-2 bg-red-500 rounded-full mr-2"></View>
-                                    <Text className="text-sm font-semibold text-red-700">Repeal</Text>
+                            {repealItems.length > 0 && (
+                              <View className="space-y-4">
+                                <View className="flex-row items-center mt-6 mb-4">
+                                  <View className="w-3 h-3 bg-red-500 rounded-full mr-2"></View>
+                                  <Text className="text-base font-semibold text-red-600">
+                                    Repeals ({repealItems.length})
+                                  </Text>
+                                  <View className="ml-2 px-2 py-1 bg-red-100 rounded-full">
+                                    <Text className="text-xs text-red-800 font-medium">
+                                      {repealItems.length} ITEM{repealItems.length !== 1 ? 'S' : ''}
+                                    </Text>
                                   </View>
+                                </View>
 
-                                  <View className="space-y-3">
-                                    <View className="flex-row items-center gap-2">
+                                {repealItems.map((repeal) => (
+                                  <View key={repeal.ord_num} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <View className="flex-row items-center justify-between mb-4">
+                                      <View className="flex-row items-center">
+                                        <View className="w-3 h-3 bg-red-500 rounded-full mr-2"></View>
+                                        <Text className="text-base font-semibold text-red-600">Repeal</Text>
+                                        <View className="ml-2 px-2 py-1 bg-red-100 rounded-full">
+                                          <Text className="text-xs text-red-800 font-medium">REPEALED</Text>
+                                        </View>
+                                      </View>
                                       <TouchableOpacity
                                         onPress={() => {
                                           if (repeal.file?.file_url) {
@@ -606,40 +605,65 @@ function OrdinancePage() {
                                             Alert.alert('No file available');
                                           }
                                         }}
-                                        className="bg-blue-50 px-3 py-1 rounded"
+                                        className="bg-red-500 px-3 py-1.5 rounded-lg"
                                       >
                                         <View className="flex-row items-center">
-                                          <Eye size={12} color="#2563eb" />
-                                          <Text className="text-xs text-blue-600 ml-1">View File</Text>
+                                          <Eye size={14} color="white" />
+                                          <Text className="text-xs text-white ml-1 font-medium">View File</Text>
                                         </View>
                                       </TouchableOpacity>
                                     </View>
 
-                                    <Text className="text-base font-medium text-gray-900">
+                                    <Text className="text-base font-medium text-gray-900 mb-3 leading-tight">
                                       {repeal.ord_title}
                                     </Text>
-                                    <Text className="text-xs text-gray-600">
-                                      ORD: {repeal.ord_num} • {repeal.ord_date_created}
-                                    </Text>
-                                    <View className="bg-gray-50 p-3 rounded">
-                                      <Text className="text-sm text-gray-700">
+                                    <View className="flex-row items-center mb-3">
+                                      <Text className="text-sm text-gray-600 font-medium">ORD:</Text>
+                                      <Text className="text-sm text-gray-800 font-semibold ml-1">
+                                        {repeal.ord_num}
+                                      </Text>
+                                      <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
+                                      <Text className="text-sm text-gray-600">
+                                        {new Date(repeal.ord_date_created).toLocaleDateString()}
+                                      </Text>
+                                    </View>
+                                    <View className="bg-gray-50 p-3 rounded-lg">
+                                      <Text className="text-sm text-gray-700 leading-relaxed">
                                         {repeal.ord_details || 'No details available'}
                                       </Text>
                                     </View>
                                   </View>
-                                </View>
-                              ))}
-                            </>
-                          )}
-                        </View>
-                      );
-                    })()}
-                  </View>
-                )}
+                                ))}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })()}
+                    </View>
+                  )}
+                </View>
               </ScrollView>
             </View>
           </View>
         </Modal>
+
+        {/* Upload Ordinance Modal */}
+        <OrdinanceUpload
+          visible={uploadModalVisible}
+          onClose={() => {
+            setUploadModalVisible(false);
+            resetForm();
+          }}
+          creationMode={creationMode}
+          setCreationMode={setCreationMode}
+          selectedOrdinance={selectedOrdinance}
+          setSelectedOrdinance={setSelectedOrdinance}
+          availableOrdinances={availableOrdinances}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+
       </View>
     </PageLayout>
   );

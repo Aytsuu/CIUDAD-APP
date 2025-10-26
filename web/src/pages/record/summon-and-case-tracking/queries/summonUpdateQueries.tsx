@@ -16,6 +16,8 @@ export const useResolveCase = (onSuccess?: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCases'] })
 
             toast.success('Case marked as resolved', {
                 id: "resolveCase",
@@ -48,6 +50,8 @@ export const useForwardcase = (onSuccess?: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCases'] })
 
             toast.success('Case is forwarded to Lupon', {
                 id: "forwardCase",
@@ -80,6 +84,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
             
             toast.success('Case marked as escalated', {
                 id: "escalateCase",

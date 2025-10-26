@@ -7,7 +7,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout'
 import { PurposeAndRatesSchema } from '@/form-schema/rates-form-schema'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronLeft, X } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useAddPurposeAndRate } from './queries/ratesInsertQueries'
 import z from "zod";

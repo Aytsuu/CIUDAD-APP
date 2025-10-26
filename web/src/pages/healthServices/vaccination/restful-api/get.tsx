@@ -166,9 +166,6 @@ export const getUnvaccinatedVaccines = async (patientId: string) => {
 
 
 
-
-
-
 export const getUnvaccinatedResidentsDetailsForVaccine = async (
   vacId: number,
   params: any = {}
@@ -180,6 +177,8 @@ export const getUnvaccinatedResidentsDetailsForVaccine = async (
     if (params.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params.age_group_id) queryParams.append('age_group_id', params.age_group_id.toString());
     if (params.search) queryParams.append('search', params.search);
+    // Add vaccination_status parameter
+    if (params.vaccination_status) queryParams.append('vaccination_status', params.vaccination_status);
 
     const url = `/vaccination/unvaccinated-residents-detailssummary/${vacId}/?${queryParams.toString()}`;
     const response = await api2.get(url);

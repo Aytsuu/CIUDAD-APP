@@ -15,7 +15,6 @@ import { Card } from "@/components/ui/card";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
-import { UserRound } from "@/lib/icons/UserRound";
 import { LoadingState } from "@/components/ui/loading-state";
 import { capitalize } from "@/helpers/capitalize";
 

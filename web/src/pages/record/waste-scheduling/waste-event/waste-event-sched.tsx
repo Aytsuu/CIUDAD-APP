@@ -9,13 +9,15 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import WasteEventSchedSchema from '@/form-schema/waste-event-form-schema';
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog/dialog';
+import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell, Plus } from 'lucide-react';
 import { createWasteEvent } from './queries/wasteEventQueries';
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { useSitioList } from '@/pages/record/profiling/queries/profilingFetchQueries';
+import { useState } from 'react';
 
 const announcementOptions = [
     { id: "all", label: "All", checked: false },
@@ -31,6 +33,7 @@ function WasteEventSched() {
     const { user } = useAuth();
     const { data: sitioList = [], isLoading: isSitioLoading } = useSitioList();
     const sitioOptions = (sitioList || []).map((s: any) => ({ id: s.sitio_id, name: s.sitio_name }));
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     
     const form = useForm<z.infer<typeof WasteEventSchedSchema>>({
         resolver: zodResolver(WasteEventSchedSchema),
@@ -90,6 +93,7 @@ function WasteEventSched() {
             }
 
             form.reset();
+            setIsDialogOpen(false);
         } catch (error) {
             console.error('Error creating waste event:', error);
             showErrorToast("Failed to schedule event. Please try again.");
@@ -99,16 +103,24 @@ function WasteEventSched() {
     const selectedAnnouncements = form.watch('selectedAnnouncements') || [];
 
     return (
-        <div className="container mx-auto p-4 max-w-4xl">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-darkBlue2">Schedule Event</h1>
-                <p className="text-gray-600">Create and manage waste management events</p>
-            </div>
-
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Schedule Event
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-darkBlue2">Schedule Event</DialogTitle>
+                    <p className="text-gray-600">Create and manage waste management events</p>
+                </DialogHeader>
+                
+                <div className="overflow-y-auto max-h-[calc(90vh-120px)] pr-2">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <Card>
+                                <CardContent className="p-6">
                             {/* Event Name */}
                             <FormField
                                 control={form.control}
@@ -322,7 +334,7 @@ function WasteEventSched() {
                                     type="button" 
                                     variant="outline" 
                                     onClick={() => form.reset()}
-                                    className="w-full sm:w-auto bg-amber-700 hover:bg-amber700 text-white"
+                                    className="w-full sm:w-auto bg-amber-700 hover:bg-amber-700 text-white"
                                 >
                                     Reset
                                 </Button>
@@ -337,7 +349,9 @@ function WasteEventSched() {
                     </Card>
                 </form>
             </Form>
-        </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 

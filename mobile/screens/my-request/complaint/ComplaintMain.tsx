@@ -16,7 +16,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { useAuth } from "@/contexts/AuthContext";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { Drawer } from "@/components/ui/drawer"; 
-import { ConfirmationModal } from "./ComplaintConfirmationModal";
+import { ConfirmationModal } from "./components/ComplaintConfirmationModal";
 import { useRaiseComplaint } from "./queries/ComplaintPostQueries";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -394,9 +394,6 @@ export default function ResidentComplaint() {
         cancelText="Go Back"
         isLoading={isRaising}
         showDetails={!!selectedComplaint}
-        detailsTitle="Complaint Details:"
-        detailsContent={selectedComplaint?.comp_incident_type}
-        detailsSubContent={selectedComplaint?.comp_allegation}
       />
     </ScreenLayout>
   );

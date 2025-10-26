@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
+import { getBusinessPermit, type BusinessPermit } from "@/pages/record/clearances/queries/busFetchQueries";
+import { markBusinessPermitAsIssued, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busUpdateQueries";
 import TemplateMainPage from "../council/templates/template-main";
 import { useAuth } from "@/context/AuthContext";
 import { useLoading } from "@/context/LoadingContext";

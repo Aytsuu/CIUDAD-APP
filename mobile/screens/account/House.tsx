@@ -11,14 +11,10 @@ import {
 } from "react-native";
 import { useGetOwnedHouses } from "./queries/accountGetQueries";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Home, Users } from "lucide-react-native";
+import { Home } from "lucide-react-native";
 import { formatDate } from "@/helpers/dateHelpers";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+
+
 import React from "react";
 
 export default () => {

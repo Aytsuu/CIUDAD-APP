@@ -282,8 +282,8 @@ export default function OPTMonthlyDetails() {
                 <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFH.age_groups[ageGroup]?.N?.Female || 0)}</td>
                 <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.W?.Male || 0) + (WFH.age_groups[ageGroup]?.SW?.Male || 0))}</td>
                 <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.W?.Female || 0) + (WFH.age_groups[ageGroup]?.SW?.Female || 0))}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFH.age_groups[ageGroup]?.OW?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFH.age_groups[ageGroup]?.OW?.Female || 0)}</td>
+                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.OW?.Male || 0) + (WFH.age_groups[ageGroup]?.OB?.Male || 0))}</td>
+                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.OW?.Female || 0) + (WFH.age_groups[ageGroup]?.OB?.Female || 0))}</td>
                 <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFH.age_groups[ageGroup]?.Total?.Male || 0)}</td>
                 <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFH.age_groups[ageGroup]?.Total?.Female || 0)}</td>
               </tr>

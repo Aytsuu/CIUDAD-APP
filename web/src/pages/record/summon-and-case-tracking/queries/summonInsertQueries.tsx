@@ -18,6 +18,7 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
                 queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
                 queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
 
+
                 toast.loading('Submitting Record...', {id: "createCase"});
         
                 toast.success('Record Submitted!', {

@@ -3,9 +3,7 @@ from rest_framework import generics
 from .serializers import *
 from apps.patientrecords.models import *
 from apps.patientrecords.serializers import *
-from django.db.models import Q, Sum, IntegerField, Value
-from django.db.models.functions import Substr, StrIndex
-from django.db.models.functions import Cast
+from django.db.models import Q, OuterRef, Subquery
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -25,12 +23,18 @@ class PatientFirstaidRecordsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        # Base queryset with annotations for first aid count
+        # Subquery to get the latest first aid date for each patient
+        latest_firstaid_subquery = FirstAidRecord.objects.filter(
+            patrec_id__pat_id=OuterRef('pat_id')
+        ).order_by('-created_at').values('created_at')[:1]
+
+        # Base queryset with annotations for count and latest date
         queryset = Patient.objects.annotate(
             firstaid_count=Count(
                 'patient_records__first_aid_records',
                 distinct=True
-            )
+            ),
+            latest_firstaid_date=Subquery(latest_firstaid_subquery)
         ).filter(
             # Only include patients who have first aid records
             patient_records__first_aid_records__isnull=False
@@ -38,7 +42,10 @@ class PatientFirstaidRecordsView(generics.ListAPIView):
             'rp_id__per',         
             'trans_id',             
             'trans_id__tradd_id'   
-        ).distinct().order_by('-firstaid_count')
+        ).distinct()
+
+        # Order by latest first aid date (most recent first) then by count
+        queryset = queryset.order_by('-latest_firstaid_date', '-firstaid_count')
         
         # Search filter
         search_query = self.request.query_params.get('search', '').strip()
@@ -52,8 +59,6 @@ class PatientFirstaidRecordsView(generics.ListAPIView):
         
         return queryset
     
-
-    
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()) 
         page = self.paginate_queryset(queryset)
@@ -64,7 +69,6 @@ class PatientFirstaidRecordsView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
 
 
 class IndividualFirstaidRecordView(generics.ListAPIView):
@@ -473,6 +477,16 @@ class MonthlyFirstAidChart(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Get the monthly recipient list ID for FirstAid type
+            try:
+                monthly_report = MonthlyRecipientListReport.objects.get(
+                    month_year=month,
+                    rcp_type='FirstAid'
+                )
+                monthly_id = monthly_report.monthlyrcplist_id
+            except MonthlyRecipientListReport.DoesNotExist:
+                monthly_id = None
+
             # Count first aid records for the specified month (don't sum quantities)
             queryset = FirstAidRecord.objects.filter(
                 created_at__year=year,
@@ -492,6 +506,7 @@ class MonthlyFirstAidChart(APIView):
             return Response({
                 'success': True,
                 'month': month,
+                'monthly_report_id': monthly_id,
                 'first_aid_counts': item_counts,
                 'total_records': sum(item_counts.values())
             }, status=status.HTTP_200_OK)

@@ -10,52 +10,160 @@ from rest_framework.decorators import api_view
 from .models import *
 from apps.patientrecords.models import Patient, PatientRecord 
 # from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
+from django.db.models import Count, Max, Subquery, OuterRef, F, Q
+from django.db.models.functions import Concat, Cast
+from rest_framework.pagination import PageNumberPagination
+from django.db.models.fields import CharField
 
-from django.db.models import F 
+
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit'  # Matches your frontend pageSize
+    max_page_size = 100
 
 
-class AnimalBiteInfographicView(APIView):
-    def get(self, request):
-        try:
-            # Fetch the single infographic record (assuming one record with id=1)
-            infographic = AnimalBiteInfographic.objects.first()
-            if not infographic:
-                return Response(
-                    {"error": "Infographic content not found"},
-                    status=status.HTTP_404_NOT_FOUND
+class UniqueAnimalBitePatientsView(generics.ListAPIView):
+    serializer_class = AnimalBiteUniquePatientSerializer
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        queryset = PatientRecord.objects.filter(patrec_type="Animal Bites")
+
+        # Annotate latest referral and details from latest referral
+        latest_referral_pk = Subquery(
+            AnimalBite_Referral.objects.filter(patrec=OuterRef('pk')).order_by('-date').values('pk')[:1]
+        )
+        queryset = queryset.annotate(
+            latest_referral_pk=latest_referral_pk,
+            bite_count=Count('referrals', distinct=True),
+            latest_date=Max('referrals__date'),
+            latest_exposure=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_type')[:1]
+            ),
+            latest_site=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_site')[:1]
+            ),
+            latest_animal=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('biting_animal')[:1]
+            ),
+            latest_actions=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('actions_taken')[:1]
+            ),
+            latest_referredby=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('referredby')[:1]
+            ),
+        )
+
+        # Apply filter
+        filter_value = self.request.query_params.get('filter', 'all')
+        if filter_value != 'all':
+            if filter_value == 'bite':
+                queryset = queryset.filter(latest_exposure='Bite')
+            elif filter_value == 'non-bite':
+                queryset = queryset.filter(latest_exposure='Non-bite')
+            elif filter_value == 'resident':
+                queryset = queryset.filter(pat_id__pat_type='Resident')
+            elif filter_value == 'transient':
+                queryset = queryset.filter(pat_id__pat_type='Transient')
+
+        # Apply search - CORRECTED RELATIONSHIP PATHS
+        search = self.request.query_params.get('search', '')
+        if search:
+            # Create Q objects for both resident and transient patient name searches
+            resident_name_q = Q(
+                Q(pat_id__rp_id__per__per_fname__icontains=search) |
+                Q(pat_id__rp_id__per__per_lname__icontains=search) |
+                Q(pat_id__rp_id__per__per_mname__icontains=search)
+            )
+            
+            transient_name_q = Q(
+                Q(pat_id__trans_id__tran_fname__icontains=search) |
+                Q(pat_id__trans_id__tran_lname__icontains=search) |
+                Q(pat_id__trans_id__tran_mname__icontains=search)
+            )
+            
+            # Combine resident and transient name searches
+            name_q = resident_name_q | transient_name_q
+            
+            # Other field searches
+            other_fields_q = Q(
+                Q(pat_id__rp_id__per__per_sex__icontains=search) |
+                Q(pat_id__trans_id__tran_sex__icontains=search) |
+                Q(pat_id__pat_type__icontains=search) |
+                Q(latest_exposure__icontains=search) |
+                Q(latest_site__icontains=search) |
+                Q(latest_animal__icontains=search)
+            )
+            
+            # Combine all search conditions
+            queryset = queryset.filter(name_q | other_fields_q)
+
+        # Apply ordering (for sorting)
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            if ordering == 'patient':
+                # Order by resident last name first, then transient last name
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').asc(nulls_last=True),
+                    F('resident_fname').asc(nulls_last=True),
+                    F('transient_lname').asc(nulls_last=True),
+                    F('transient_fname').asc(nulls_last=True)
                 )
-            serializer = AnimalBiteInfographicSerializer(infographic)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Error fetching infographic: {str(e)}")
-            return Response(
-                {"error": f"Failed to fetch infographic: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            elif ordering == '-patient':
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').desc(nulls_last=True),
+                    F('resident_fname').desc(nulls_last=True),
+                    F('transient_lname').desc(nulls_last=True),
+                    F('transient_fname').desc(nulls_last=True)
+                )
+            elif ordering == 'patientType':
+                queryset = queryset.order_by('pat_id__pat_type')
+            elif ordering == '-patientType':
+                queryset = queryset.order_by(F('pat_id__pat_type').desc())
+            elif ordering == 'recordCount':
+                queryset = queryset.order_by('bite_count')
+            elif ordering == '-recordCount':
+                queryset = queryset.order_by(F('bite_count').desc())
+        else:
+            # Default ordering
+            queryset = queryset.order_by('-latest_date')
 
-    def put(self, request):
-        # Restrict to admins
-        if not request.user.is_authenticated or not request.user.is_staff:
-            return Response(
-                {"error": "Only admins can update infographic content"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        try:
-            infographic = AnimalBiteInfographic.objects.first()
-            if not infographic:
-                # Create if it doesn't exist
-                infographic = AnimalBiteInfographic.objects.create(content=request.data.get('content', {}))
-            else:
-                infographic.content = request.data.get('content', infographic.content)
-                infographic.save()
-            serializer = AnimalBiteInfographicSerializer(infographic)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Error updating infographic: {str(e)}")
-            return Response(
-                {"error": f"Failed to update infographic: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        if request.query_params.get('export'):
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
+    
+class AnimalBiteStatsView(APIView):
+    def get(self, request):
+        qs = PatientRecord.objects.filter(patrec_type="Animal Bites")
+        total = qs.count()
+        residents = qs.filter(pat_id__pat_type="Resident").count()
+        transients = qs.filter(pat_id__pat_type="Transient").count()
+        resident_percentage = round((residents / total) * 100) if total > 0 else 0
+        transient_percentage = round((transients / total) * 100) if total > 0 else 0
+        return Response({
+            'total': total,
+            'residents': residents,
+            'transients': transients,
+            'residentPercentage': resident_percentage,
+            'transientPercentage': transient_percentage
+        })    
+    
+
             
 class AnimalBiteReferralCountView(APIView):
     def get(self, request, pat_id=None):

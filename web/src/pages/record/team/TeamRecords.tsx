@@ -134,10 +134,10 @@ export default function TeamRecords() {
                 ]}
               />
               <Button onClick={() => setView("plantilla")} variant="outline" className="gap-2">
-                PLANTILLA
+                Plantilla
               </Button>
               <Button onClick={() => setView("certification")}  variant="outline" className="gap-2">
-                CERTIFICATION
+                Certification
               </Button>
             </div>
           </div>

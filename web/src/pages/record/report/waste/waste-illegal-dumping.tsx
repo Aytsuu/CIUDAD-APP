@@ -244,11 +244,12 @@ function WasteIllegalDumping() {
         </div>
 
         <SelectLayout
-          className="bg-white w-full sm:w-[200px]"
+          className="bg-white w-full sm:w-[250px]"
           label=""
           placeholder="Filter"
           options={filterOptions}
           value={selectedFilterId}
+          valueLabel="Matter"
           onChange={handleFilterChange}
         />                             
       </div>             

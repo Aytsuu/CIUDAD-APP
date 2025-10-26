@@ -2,7 +2,6 @@
 import React from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
 import type { CommodityRecords, ApiItemWithStaff } from "../types"; // Adjust path if needed
-import { SearchInput } from "@/components/ui/search-input";
 // import { Skeleton } from "@/components/ui/skeleton";
 import { useCommodityTransactions } from "../restful-api/transaction/fetchqueries";
 import { formatDate } from "@/helpers/dateHelpers";

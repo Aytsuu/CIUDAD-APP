@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, Alert, ScrollView, Image } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Syringe, RefreshCw, Plus, FileText, Calendar } from "lucide-react-native";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView } from "react-native";
+import { Search, ChevronLeft, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { format, parseISO, isValid } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -12,7 +10,6 @@ import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinated
 import { PatientInfoCard } from "../admin/components/patientcards";
 import { VaccinationStatusCards } from "../admin/components/vaccination-status-cards";
 import { FollowUpsCard } from "../admin/components/followup-cards";
-import { SignatureModal } from "../admin/components/signature-modal";
 import { PaginationControls } from "../admin/components/pagination-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { serializePatientData, SerializedPatientData } from "./patientdata";
@@ -149,7 +146,7 @@ export default function IndividualVaccinationRecords() {
               <ChevronLeft size={24} color="#374151" />
             </TouchableOpacity>
           }
-          headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
+          headerTitle={<Text className="text-slate-900 text-[13px]">Vaccination Records</Text>}
           rightAction={<View className="w-10 h-10" />}
         >
           {" "}
@@ -203,10 +200,10 @@ export default function IndividualVaccinationRecords() {
             </View>
           </View>
           <View className="p-4 mt-4">
-            <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+            <View className="flex-row items-center px-2 border p-2  border-gray-300 bg-gray-50 rounded-lg shadow-sm">
               <Search size={20} color="#6B7280" />
-              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
-              {isSearching && (
+              <TextInput className="flex-1 ml-3  text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+              {isSearching && ( 
                 <View className="ml-2">
                   <RefreshCw size={16} color="#3B82F6" className="animate-spin" />
                 </View>
@@ -226,7 +223,7 @@ export default function IndividualVaccinationRecords() {
             </View>
           </View>
           {isVaccinationRecordsLoading || isSearching ? (
-            <View className="flex-1 items-center justify-center py-8">
+            <View className="flex-1 items-center justify-center  py-8 ">
               <View className="items-center justify-center">
                 <RefreshCw size={32} color="#3B82F6" className="animate-spin" />
                 <Text className="text-gray-600 mt-2">{isSearching ? "Searching records..." : "Loading vaccination records..."}</Text>
@@ -242,7 +239,7 @@ export default function IndividualVaccinationRecords() {
                 renderItem={({ item }) => <VaccinationRecordCard record={item} />}
                 ListFooterComponent={
                   isVaccinationFetching ? (
-                    <View className="py-4 items-center">
+                    <View className="py-4 items-center ">
                       <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
                       <Text className="text-gray-600 text-sm mt-1">Loading more records...</Text>
                     </View>

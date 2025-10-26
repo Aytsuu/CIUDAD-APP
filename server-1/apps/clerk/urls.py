@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import *
 from .summon.summonViews import *
-from apps.complaint.views.complaint_view import *
+from apps.complaint.views.complaint_view import ComplaintDetailView
+from .views import CancelBusinessPermitView
 
 urlpatterns = [ 
     # Council Mediation
@@ -14,7 +15,7 @@ urlpatterns = [
     path('update-summon-case/<str:sc_id>/', UpdateSummonCaseView.as_view(), name='update-summon-case'),
     path('summon-schedule-list/<str:sc_id>/', HearingScheduleListView.as_view(), name='summon-schedule-list'),
     path('view-complaint/<str:comp_id>/', ComplaintDetailView.as_view(), name='complaint-detail'),
-
+    
     path('hearing-minutes/', HearingMinutesCreateView.as_view(), name='hearing-minutes-create'),
     path('hearing-schedule/', HearingScheduleView.as_view(), name='hearing-sched-create'),
     path('update-hearing-schedule/<str:hs_id>/', UpdateHearingScheduleView.as_view(), name='hearing-sched-update'),
@@ -37,11 +38,12 @@ urlpatterns = [
     path('service-charge-payment-req/', ServiceChargePaymentReqView.as_view(), name='service-charge-payment-req'),
     path('file-action-id/', FileActionIdView.as_view(), name='file-action-id'),
 
-    path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
-    path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
+    # resident case tracking
+    # path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),
+    path('certificate-all/', CombinedCertificateListView.as_view(), name='certificate_combined_list'),
     path('certificate-update-status/<str:cr_id>/', CertificateStatusUpdateView.as_view(), name='certificate_status_update'),
     path('certificate/<str:pk>/', CertificateDetailView.as_view(), name='certificate_detail'),
     path('certificate/<str:cr_id>/cancel/', CancelCertificateView.as_view(), name='certificate_cancel'),
@@ -49,13 +51,14 @@ urlpatterns = [
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
     path('business-permit/upload/', BusinessPermitUploadView.as_view(), name='business-permit-upload'),
     path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
+    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit_cancel'),
     path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
     
     # Personal Clearances and Payment URLs
     path('personal-clearances/', PersonalClearancesView.as_view(), name='personal-clearances-list'),
     path('nonresident-personal-clearance/', NonResidentsCertReqView.as_view(), name='nonresident-personal-cert-req'),
-    path('update-personal-req-status/<int:nrc_id>/', UpdateNonResidentCertReqView.as_view(), name='update-non-resident-status'),
+    path('update-personal-req-status/<str:nrc_id>/', UpdateNonResidentCertReqView.as_view(), name='update-non-resident-status'),
     path('permit-clearances/', PermitClearanceView.as_view(), name='permit-clearances-list'),
     path('payment/create/<str:cr_id>/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
     path('payment/webhook/', PaymentStatusView.as_view(), name='payment-webhook'),
@@ -65,8 +68,17 @@ urlpatterns = [
 
     # Treasurer - Service Charge Requests
     path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
+    path('service-charge-treasurer-list/', ServiceChargeTreasurerListView.as_view(), name='service-charge-treasurer-list'),
     path('treasurer/service-charge-payment/<int:pay_id>/', UpdateServiceChargePaymentStatusView.as_view(), name='update-service-charge-payment'),
     
     # Business Permit Files
     path('business-permit-files/<str:bpr_id>/', BusinessPermitFilesView.as_view(), name='business-permit-files'),
+    
+    # Certificate Analytics
+    path('analytics/certificates/', CertificateAnalyticsView.as_view(), name='certificate-analytics'),
+    path('analytics/certificates/purpose-trending/', CertificatePurposeTrendingView.as_view(), name='certificate-purpose-trending'),
+    
+    # Business Permit Analytics
+    path('analytics/business-permits/', BusinessPermitAnalyticsView.as_view(), name='business-permit-analytics'),
+    path('analytics/business-permits/sidebar/', BusinessPermitSidebarView.as_view(), name='business-permit-sidebar'),
 ]

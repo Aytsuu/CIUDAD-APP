@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getActiveBusinesses,
   getBusinessRespondent,
+  getDeceasedResidentsList,
   getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
@@ -22,32 +23,32 @@ import {
 import { api } from "@/api/api";
 
 // ================ ALL =================
-export const useProfilingAllRecord = (
-  page: number,
-  pageSize: number,
-  searchQuery: string,
-) => {
-  return useQuery({
-    queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
-    queryFn: async () => {
-      try {
-        const res = await api.get('profiling/all/', {
-          params: {
-            page,
-            page_size: pageSize,
-            search: searchQuery
-          }
-        });
+// export const useProfilingAllRecord = (
+//   page: number,
+//   pageSize: number,
+//   searchQuery: string,
+// ) => {
+//   return useQuery({
+//     queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
+//     queryFn: async () => {
+//       try {
+//         const res = await api.get('profiling/all/', {
+//           params: {
+//             page,
+//             page_size: pageSize,
+//             search: searchQuery
+//           }
+//         });
 
-        return res.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
-    },
-    staleTime: 5000
-  })
-} 
+//         return res.data;
+//       } catch (err) {
+//         console.error(err);
+//         throw err;
+//       }
+//     },
+//     staleTime: 5000
+//   })
+// } 
  
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
@@ -106,6 +107,15 @@ export const usePersonalModification = (per_id?: string) => {
     staleTime: 5000
   })
 }
+
+export const useDeceasedResidentsList = () => {
+  return useQuery({
+    queryKey: ["deceasedResidentsList"],
+    queryFn: getDeceasedResidentsList,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
+  });
+};
 
 export const useResidentsList = (
   is_staff: boolean = false,
@@ -239,10 +249,11 @@ export const useActiveBusinesses = (
   page: number,
   pageSize: number,
   searchQuery: string,
+  size?: string
 ) => {
   return useQuery({
-    queryKey: ["activeBusinesses", page, pageSize, searchQuery],
-    queryFn: () => getActiveBusinesses(page, pageSize, searchQuery),
+    queryKey: ["activeBusinesses", page, pageSize, searchQuery, size],
+    queryFn: () => getActiveBusinesses(page, pageSize, searchQuery, size),
     staleTime: 5000,
   });
 };

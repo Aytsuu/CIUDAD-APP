@@ -62,7 +62,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
 
 
 
-const handleResolutionFileUpdates = async (res_num: String, mediaFiles: any[]) => {
+const handleResolutionFileUpdates = async (res_num: string, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-file/?res_num=${res_num}`);
@@ -101,7 +101,7 @@ const handleResolutionFileUpdates = async (res_num: String, mediaFiles: any[]) =
 
 
 
-const handleSuppDocUpdates = async (res_num: String, mediaFiles: any[]) => {
+const handleSuppDocUpdates = async (res_num: string, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-supp/?res_num=${res_num}`);

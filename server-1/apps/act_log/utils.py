@@ -187,6 +187,12 @@ class ActivityLogMixin:
         instance = serializer.save()
         try:
             staff = getattr(self.request.user, 'staff', None)
+            
+            # Debug logging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"ActivityLogMixin perform_update: instance={instance.__class__.__name__}, staff={staff}, old_values={old_values}, new_values={serializer.validated_data}")
+            
             # Determine action and build description
             new_values = serializer.validated_data
             action_label = self._detect_action_from_diff(old_values, new_values)
@@ -199,8 +205,11 @@ class ActivityLogMixin:
                 staff=staff,
                 record_id=str(getattr(instance, 'pk', None)) if getattr(instance, 'pk', None) else None,
             )
-        except Exception:
-            pass
+            logger.info(f"Activity log created: {instance.__class__.__name__} {action_label}")
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to create activity log in mixin: {str(e)}")
         return instance
 
     def destroy(self, request, *args, **kwargs):

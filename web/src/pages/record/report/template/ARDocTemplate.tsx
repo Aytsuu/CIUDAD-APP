@@ -87,7 +87,7 @@ export const ARDocTemplate = ({
       if(publicUrl){
         updateTemplate({
           data: {
-            rte_logoLeft: publicUrl
+            logo_left: publicUrl
           },
           type: 'AR'  
         })
@@ -104,7 +104,7 @@ export const ARDocTemplate = ({
       if(publicUrl){
         updateTemplate({
           data: {
-            rte_logoRight: publicUrl
+            logo_right: publicUrl
           },
           type: 'AR'  
         })
@@ -131,12 +131,10 @@ export const ARDocTemplate = ({
   }
 
   const getName = (value: string) => {
-    return value.split(" ")?.map((val, idx) => {
-      if(idx > 1) {
-        return val
-      }
-    }).filter(Boolean).join(", ");
-  }
+    const name = value.split("-")[1];
+    const array = name.split(" ");
+    return (`${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`);
+  };
 
   const changePreparedBy = (value: string) => {
     const name = getName(value);
@@ -309,8 +307,8 @@ export const ARDocTemplate = ({
               <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
             </div>
             <div className="flex gap-8 mt-6">
-              {images?.map((image: any) => (
-                <img src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
+              {images?.map((image: any, index: number) => (
+                <img key={index} src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
               ))}
             </div>
             <div className="w-[85%] flex justify-between mt-12">

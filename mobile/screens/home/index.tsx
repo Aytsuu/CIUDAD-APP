@@ -10,18 +10,14 @@ import {
 import { Card } from "@/components/ui/card";
 import { features } from "./features";
 import { useRouter } from "expo-router";
-import { LoadingModal } from "@/components/ui/loading-modal";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "../_PageLayout";
 import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
-import Svg, { Path } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { capitalize } from "@/helpers/capitalize";
-import ImagePickerExample from "@/components/ui/image-picker";
 
 const styles = StyleSheet.create({
   container: {
@@ -46,9 +42,9 @@ export default function HomeScreen() {
   console.log("All Data: ", JSON.stringify(user, null, 2))
   // console.log("Personal Data: ", JSON.stringify(user?.personal, null, 2))
 
-  if (isLoading) {
-    return <LoadingModal visible={true} />;
-  }
+  // if (isLoading) {
+  //   return <LoadingModal visible={true} />;
+  // }
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (

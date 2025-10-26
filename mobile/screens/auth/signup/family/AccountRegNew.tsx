@@ -1,8 +1,4 @@
 import React from "react";
-import AccountDetails from "../account/AccountDetails";
-import PageLayout from "@/screens/_PageLayout";
-import { TouchableOpacity, View, Text, ScrollView } from "react-native";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { router } from "expo-router";
 import { useProgressContext } from "@/contexts/ProgressContext";
 import AccountSetup from "../account/AccountSetup";

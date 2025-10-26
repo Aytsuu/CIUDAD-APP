@@ -1,7 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { z } from "zod";
 import { archiveTemplateRec } from "../request/template-DeleteRequest";
 import { deleteTemplate } from "../request/template-DeleteRequest";
 

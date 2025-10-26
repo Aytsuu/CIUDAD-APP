@@ -151,8 +151,6 @@ class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-
 class MonthlyMedicineChart(APIView):
     def get(self, request, month):
         try:
@@ -166,6 +164,16 @@ class MonthlyMedicineChart(APIView):
                     'success': False,
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get the monthly recipient list ID for medicine type
+            try:
+                monthly_report = MonthlyRecipientListReport.objects.get(
+                    month_year=month,
+                    rcp_type='Medicine'
+                )
+                monthly_id = monthly_report.monthlyrcplist_id
+            except MonthlyRecipientListReport.DoesNotExist:
+                monthly_id = None
 
             # Get medicine counts for the specified month
             queryset = MedicineRecord.objects.filter(
@@ -186,6 +194,7 @@ class MonthlyMedicineChart(APIView):
             return Response({
                 'success': True,
                 'month': month,
+                'monthly_report_id': monthly_id,
                 'medicine_counts': medicine_counts,
                 'total_records': sum(medicine_counts.values())
             }, status=status.HTTP_200_OK)

@@ -17,6 +17,8 @@ from .views.family_health_profiling_views import *
 from .views.survey_views import *
 from .views.survey_form_views import *
 from .views.all_record_views import *
+from .views.dependents_views import *
+from .views.history_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -76,6 +78,9 @@ urlpatterns = [
     path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
     path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
     path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+    # Dependents Under Five
+    path("dependent-under-five/create/", DependentsUnderFiveCreateView.as_view(), name="dependent-under-five-create"),
+    path("dependent-under-five/list/", DependentsUnderFiveListView.as_view(), name="dependent-under-five-list"),
 
     #   # Request Urls
     # path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
@@ -151,5 +156,13 @@ urlpatterns = [
     # Survey Identification Form URLs
     path("survey-identification/form/submit/", SurveyIdentificationFormSubmitView.as_view(), name="survey-identification-form-submit"),
 
-]
+    # Update History URLs
+    path("history/ncd/", NCDHistoryView.as_view(), name="ncd-history"),
+    path("history/tb/", TBHistoryView.as_view(), name="tb-history"),
+    path("history/survey/", SurveyHistoryView.as_view(), name="survey-history"),
+    path("history/water-supply/", WaterSupplyHistoryView.as_view(), name="water-supply-history"),
+    path("history/sanitary-facility/", SanitaryFacilityHistoryView.as_view(), name="sanitary-facility-history"),
+    path("history/solid-waste/", SolidWasteMgmtHistoryView.as_view(), name="solid-waste-history"),
+    path("history/environmental/", EnvironmentalHealthHistoryView.as_view(), name="environmental-health-history"),
 
+]

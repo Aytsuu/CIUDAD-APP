@@ -3,10 +3,9 @@
 
 import React, { useState, useMemo, useRef } from "react";
 import { View, TouchableOpacity, ScrollView, RefreshControl, FlatList, Dimensions } from "react-native";
-import { ChevronLeft, Calendar, User, Heart, Scale, Thermometer, Activity, ChevronRight, ChevronLeft as LeftIcon } from "lucide-react-native";
+import { ChevronLeft, Calendar, Heart, Scale, Thermometer, Activity, ChevronRight, ChevronLeft as LeftIcon } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useConsultationHistory } from "../../queries/fetch";
