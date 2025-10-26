@@ -98,8 +98,13 @@ export default function FamilyPlanningForm({
           setOriginalClientType(formData.typeOfClient);
         }
       }
+      if (formData.dateOfBirth) {
+        form.setValue("age", calculateAge(formData.dateOfBirth));
+        form.trigger("age"); // Re-validate age
+      }
     }
-  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
+    
+  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode,form]);
 
   useEffect(() => {
     if (!isPatientPreSelected) {

@@ -36,50 +36,50 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
     
-class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = FPRecordSerializer 
-    pagination_class = StandardResultsSetPagination  
+# class PatientListForOverallTable(generics.ListAPIView):
+#     serializer_class = FPRecordSerializer 
+#     pagination_class = StandardResultsSetPagination  
     
-    def get_queryset(self):
-        # Start with all FP_Record objects
-        queryset = FP_Record.objects.select_related(
-            "pat",
-            "pat__rp_id__per",
-            "pat__trans_id",
-        ).prefetch_related(
-            'fp_type_set'
-        ).order_by("-created_at") 
+#     def get_queryset(self):
+#         # Start with all FP_Record objects
+#         queryset = FP_Record.objects.select_related(
+#             "pat",
+#             "pat__rp_id__per",
+#             "pat__trans_id",
+#         ).prefetch_related(
+#             'fp_type_set'
+#         ).order_by("-created_at") 
         
-        search_query = self.request.query_params.get('search', None)
-        if search_query:
-            queryset = queryset.filter(
-                Q(pat__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat__trans_id__tran_lname__icontains=search_query) |
-                Q(pat__trans_id__tran_fname__icontains=search_query) |
-                Q(client_id__icontains=search_query) |
-                Q(fp_type_set__fpt_client_type__icontains=search_query) |
-                Q(fp_type_set__fpt_method_used__icontains=search_query)
-            ).distinct() # Use distinct to avoid duplicate records if multiple FP_types match
-        # Apply client_type filter if 'client_type' query parameter is present
-        client_type_filter = self.request.query_params.get('client_type', None)
-        if client_type_filter and client_type_filter != "all":
-            queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
-        return queryset
+#         search_query = self.request.query_params.get('search', None)
+#         if search_query:
+#             queryset = queryset.filter(
+#                 Q(pat__rp_id__per__per_lname__icontains=search_query) |
+#                 Q(pat__rp_id__per__per_fname__icontains=search_query) |
+#                 Q(pat__trans_id__tran_lname__icontains=search_query) |
+#                 Q(pat__trans_id__tran_fname__icontains=search_query) |
+#                 Q(client_id__icontains=search_query) |
+#                 Q(fp_type_set__fpt_client_type__icontains=search_query) |
+#                 Q(fp_type_set__fpt_method_used__icontains=search_query)
+#             ).distinct() # Use distinct to avoid duplicate records if multiple FP_types match
+#         # Apply client_type filter if 'client_type' query parameter is present
+#         client_type_filter = self.request.query_params.get('client_type', None)
+#         if client_type_filter and client_type_filter != "all":
+#             queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
+#         return queryset
     
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            patient_data_map = {}
-            for record in page:
-                patient_id = record.pat.pat_id
-                if patient_id not in patient_data_map:
-                    patient_data_map[patient_id] = patient_entry
-            response_data = list(patient_data_map.values())
-            return self.get_paginated_response(response_data)
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         page = self.paginate_queryset(queryset)
+#         if page is not None:
+#             patient_data_map = {}
+#             for record in page:
+#                 patient_id = record.pat.pat_id
+#                 if patient_id not in patient_data_map:
+#                     patient_data_map[patient_id] = patient_entry
+#             response_data = list(patient_data_map.values())
+#             return self.get_paginated_response(response_data)
      
-        return Response([])
+#         return Response([])
     
 @api_view(['GET'])
 def get_fp_patient_counts(request):
@@ -284,6 +284,11 @@ class PatientListForOverallTable(generics.ListAPIView):
         if client_type_filter and client_type_filter != "all":
             queryset = queryset.filter(fpt_client_type__iexact=client_type_filter).distinct()
         
+        # NEW: Apply patient_type filter if 'patient_type' query parameter is present
+        patient_type_filter = self.request.query_params.get('patient_type', None)
+        if patient_type_filter and patient_type_filter != "all":
+            queryset = queryset.filter(fprecord__pat__pat_type__iexact=patient_type_filter).distinct()
+        
         return queryset
     
     def list(self, request, *args, **kwargs):
@@ -347,8 +352,8 @@ class PatientListForOverallTable(generics.ListAPIView):
             patient_entry["sex"] = transient.tran_sex
         
         return patient_entry
-
-
+    
+    
 @api_view(["GET"])
 def get_fp_records_for_patient(request, patient_id):
     try:

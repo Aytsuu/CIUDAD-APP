@@ -9,7 +9,6 @@ from .serializers import *
 from rest_framework.decorators import api_view
 from .models import *
 from apps.patientrecords.models import Patient, PatientRecord 
-# from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
 from django.db.models import Count, Max, Subquery, OuterRef, F, Q
 from django.db.models.functions import Concat, Cast, TruncMonth, Coalesce
 from rest_framework.pagination import PageNumberPagination
@@ -17,6 +16,7 @@ from django.db.models.fields import CharField
 from datetime import datetime, timedelta
 from collections import defaultdict
 import calendar
+from dateutil.relativedelta import relativedelta
 
 class StandardPagination(PageNumberPagination):
     page_size = 10
@@ -419,12 +419,21 @@ class AnimalbiteReferralView(generics.ListCreateAPIView):
 @api_view(['GET'])
 def get_animal_bite_analytics(request):
     months = int(request.GET.get('months', 12))  # Default last 12 months
+    month_str = request.GET.get('month')  # Optional: YYYY-MM to set the end month
     
     # Calculate date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=months * 30)
+    end_date = datetime.now().date()
+    if month_str:
+        try:
+            year, month = map(int, month_str.split('-'))
+            _, last_day = calendar.monthrange(year, month)
+            end_date = datetime(year, month, last_day).date()
+        except ValueError:
+            return Response({'error': 'Invalid month format. Use YYYY-MM'}, status=status.HTTP_400_BAD_REQUEST)
     
-    print(f"📊 Fetching animal bite analytics for {months} months (from {start_date.date()} to {end_date.date()})")
+    start_date = (end_date - relativedelta(months=months - 1)).replace(day=1)
+    
+    print(f"📊 Fetching animal bite analytics for {months} months (from {start_date} to {end_date})")
     
     # Get all Animal Bite referrals in date range
     referrals = AnimalBite_Referral.objects.filter(

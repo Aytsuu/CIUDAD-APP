@@ -1,3 +1,4 @@
+// Item.tsx
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
 import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sidebar";
@@ -26,11 +27,9 @@ import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/ex
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
 import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
-import { useAnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards"; // Import the component directly
 import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
 
-
-// *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
   administrationCards: ReturnType<typeof useAdminSectionCards>,
@@ -56,11 +55,10 @@ export const getItemsConfig = (
     maternal,
   } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
-  const {accepted, rejected, completed, pending} = garbCards;
+  const { accepted, rejected, completed, pending } = garbCards;
   const { cashDonations } = donationCards;
-const animalBiteCards = useAnimalBiteSectionCards();
 
-  if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
+  if (user?.staff?.staff_type.toLowerCase() === "barangay staff") {
     return [
       {
         dashboard: "ADMINISTRATION",
@@ -100,7 +98,7 @@ const animalBiteCards = useAnimalBiteSectionCards();
       },
       {
         dashboard: "GAD",
-         chart: [
+        chart: [
           {
             title: "GAD Budget Overview",
             element: <GADQuarterlyBudgetChart />,
@@ -125,11 +123,11 @@ const animalBiteCards = useAnimalBiteSectionCards();
         chart: [
           {
             title: "Finance Expense Overview",
-            element: <IncomeExpenseQuarterlyChart/>,
+            element: <IncomeExpenseQuarterlyChart />,
           },
           {
             title: "Finance Income Overview",
-            element: <IncomeQuarterlyChart/>,
+            element: <IncomeQuarterlyChart />,
           },
         ],
         sidebar: [
@@ -148,26 +146,31 @@ const animalBiteCards = useAnimalBiteSectionCards();
       },
       {
         dashboard: "DONATION",
-         card: [cashDonations],
+        card: [cashDonations],
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed], 
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
       },
       {
         dashboard: "ANIMAL BITES",
-        card: [ animalBiteCards.totalCases,animalBiteCards.biteCases,animalBiteCards.commonAnimal,animalBiteCards.commonSite ],
+        card: [
+          {
+            title: "Animal Bite Summary",
+            element: <AnimalBiteSectionCards initialMonth={currentMonth} />,
+          },
+        ],
         chart: [
           {
             title: "Animal Bite Analytics",
-            element: <AnimalBiteAnalyticsCharts />,
+            element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
           },
         ],
       },
     ];
   }
 
-  if (user?.staff?.staff_type.toLowerCase() == "health staff") {
+  if (user?.staff?.staff_type.toLowerCase() === "health staff") {
     return [
       {
         dashboard: "ADMINISTRATION",
@@ -195,7 +198,6 @@ const animalBiteCards = useAnimalBiteSectionCards();
           familyPlanning,
           maternal,
         ],
-
         chart: [
           {
             title: "OPT",
@@ -205,21 +207,20 @@ const animalBiteCards = useAnimalBiteSectionCards();
             title: "Medical History",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
-         
-        {
-          title: "Maternal",
-          element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
-        },
-        {
-          title: "Animal Bites",
-          element: <AnimalBiteAnalyticsCharts />,
-        },
-        {
+          {
+            title: "Maternal",
+            element: <MaternalAgeDistributionChart initialMonth={currentMonth} />,
+          },
+          {
+            title: "Animal Bites",
+            element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
+          },
+          {
             title: "Family Planning",
             element: <FamilyPlanningAnalytics />,
           },
         ],
-        sidebar:[
+        sidebar: [
           {
             title: "Pending Medical Appointments",
             element: <PendingMedicalAppointmentsSidebar />,
@@ -228,9 +229,8 @@ const animalBiteCards = useAnimalBiteSectionCards();
             title: "Pending Medicine Requests",
             element: <PendingMedicineRequestsSidebar />,
           },
-        ]
+        ],
       },
-
       {
         dashboard: "INVENTORY",
         sidebar: [
@@ -243,23 +243,11 @@ const animalBiteCards = useAnimalBiteSectionCards();
             element: <FirstAidDistributionSidebar />,
           },
           {
-            title:"Administered Vaccination",
-            element:<VaccinationDistributionSidebar />
-          }
+            title: "Administered Vaccination",
+            element: <VaccinationDistributionSidebar />,
+          },
         ],
-        
       },
-//  {
-//         dashboard: "FAMILY PLANNING",
-//         card: [totalPatients, newAcceptors, currentUsers, monthlyRegistrations],
-//         chart: [
-//           {
-//             title: "Family Planning Analytics",
-//             element: <FamilyPlanningAnalytics />,
-//           },
-//         ],
-//       },
     ];
-    
-  } else return []
+  } else return [];
 };
