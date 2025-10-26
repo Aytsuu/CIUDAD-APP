@@ -17,7 +17,7 @@ class ComplaintListView(generics.ListAPIView):
             'complaintaccused_set__acsd',
             'files',
             'staff'
-        ).filter(comp_is_archive=False).order_by('-comp_created_at')
+        ).order_by('-comp_created_at')
 
         status = self.request.query_params.get('status')
         if status:
@@ -48,7 +48,6 @@ class ResidentsComplaintListView(generics.ListAPIView):
                 'files',
                 'staff'
             ).filter(
-                comp_is_archive=False,
                 complaintcomplainant__cpnt__rp_id__rp_id=rp_id
             ).order_by('-comp_created_at')
             

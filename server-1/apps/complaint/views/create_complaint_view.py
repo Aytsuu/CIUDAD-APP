@@ -10,7 +10,7 @@ from apps.complaint.serializers import ComplaintSerializer
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
-from apps.notification.create_notification import create_notification
+from apps.notification.utils import create_notification
 from ..serializers import ComplaintFileSerializer
 # from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 
@@ -203,30 +203,54 @@ class ComplaintCreateView(APIView):
                 # Create notification
                 try:
                     # Get all staff with ADMIN position
-                    staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
+                    admin_staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
                     
                     recipients = []
                     
-                    for staff in staff:
+                    for staff in admin_staff:
                         if staff.rp:
                             print(f"Staff RP ID: {staff.rp.rp_id}")
                             recipients.append(staff.rp)
                     
-                    print(f"Complaint Data: {complaint}")
+                    print(f"Complaint Data: {complaint.comp_incident_type}, {complaint.comp_location}")
 
                     if recipients:
+                        # Get rp_id from request (as string)
+                        sender = request.data.get('rp_id')
+                        
+                        if sender:
+                            sender = str(sender)  # Ensure it's a string
+                            logger.info(f"Using rp_id as sender: {sender}")
+                        
+                        # Fallback: try to get rp_id from authenticated user
+                        if not sender:
+                            if request.user and request.user.is_authenticated:
+                                if hasattr(request.user, 'rp') and request.user.rp:
+                                    sender = str(request.user.rp.rp_id) 
+                            else:
+                                logger.warning("No rp_id provided and no authenticated user")
+                        
+                        complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
+                        
                         create_notification(
                             title="New Complaint Filed",
                             message=(
                                 f"A {complaint.comp_incident_type} complaint is awaiting your review. "
                             ),
-                            sender=request.user,
+                            sender=sender, 
                             recipients=recipients,
                             notif_type="REQUEST",
                             target_obj=complaint,
+                            web_route="complaint/view/",
+                            web_params={
+                                "comp_id": str(complaint.comp_id),
+                            },
+                            mobile_route="/(my-request)/complaint-tracking/compMainView",
+                            mobile_params={"comp_id": str(complaint.comp_id)},
                         )
+                        
                         logger.info(
-                            f"Notifications sent to {len(recipients)} ADMIN staff members."
+                            f"Notifications sent to {len(recipients)} ADMIN staff members with sender rp_id: {sender}"
                         )
                     else:
                         logger.warning("No ADMIN staff found to notify.")
@@ -238,6 +262,7 @@ class ComplaintCreateView(APIView):
                 return Response(
                     response_serializer.data, status=status.HTTP_201_CREATED
                 )
+                
             else:
                 logger.error(f"Serializer errors: {serializer.errors}")
                 return Response(

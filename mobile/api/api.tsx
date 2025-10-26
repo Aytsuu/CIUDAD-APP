@@ -3,7 +3,7 @@ import { setupApiInterceptor } from "./apiInterceptor";
 import Constants from 'expo-constants'
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.6:8000",
+  baseURL: "http://192.168.1.12:8000",
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",

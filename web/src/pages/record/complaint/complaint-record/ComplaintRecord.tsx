@@ -25,8 +25,7 @@ export default function ComplaintRecord() {
   // Filter for Accepted and Raised complaints that are not archived
   const acceptedAndRaisedComplaints = useMemo(() => {
     return complaints.filter((c: Complaint) => 
-      (c.comp_status === 'Accepted' || c.comp_status === 'Raised') && !c.comp_is_archive
-    );
+      (c.comp_status === 'Accepted' || c.comp_status === 'Raised'));
   }, [complaints]);
 
   const filteredData = useMemo(() => {
@@ -40,18 +39,13 @@ export default function ComplaintRecord() {
 
   const buttonCounts = useMemo(() => {
     const requestCount = complaints.filter((c: Complaint) => 
-      c.comp_status === 'Pending' && !c.comp_is_archive
-    ).length;
-    
-    const archivedCount = complaints.filter((c: Complaint) => 
-      c.comp_is_archive === true
+      c.comp_status === 'Pending'
     ).length;
     
     const rejectedCount = complaints.filter((c: Complaint) => 
-      c.comp_status === 'Rejected' && !c.comp_is_archive
-    ).length;
+      c.comp_status === 'Rejected').length;
 
-    return { requestCount, archivedCount, rejectedCount };
+    return { requestCount, rejectedCount };
   }, [complaints]);
 
   if (error) return <div>Error: {error.message}</div>;
@@ -82,7 +76,6 @@ export default function ComplaintRecord() {
           newReport: true,
           rejected: false, 
           requestCount: buttonCounts.requestCount,
-          archivedCount: buttonCounts.archivedCount,
           rejectedCount: buttonCounts.rejectedCount,
         }}
       />

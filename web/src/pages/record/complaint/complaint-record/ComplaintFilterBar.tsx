@@ -11,7 +11,6 @@ type ButtonConfig = {
   newReport?: boolean;
   rejected?: boolean;
   requestCount?: number;
-  archivedCount?: number;
   rejectedCount?: number;
 };
 
@@ -33,7 +32,6 @@ export default function ComplaintFilterBar({
     newReport: true,
     rejected: false,
     requestCount: 0,
-    archivedCount: 0,
     rejectedCount: 0,
   }
 }: Props) {
@@ -112,9 +110,6 @@ export default function ComplaintFilterBar({
               >
                 <Archive size={16} className="text-gray-400" />
                 <span>Archived</span>
-                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
-                  {buttons.archivedCount || 0}
-                </span>
               </Button>
             </Link>
           )}

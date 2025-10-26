@@ -9,12 +9,16 @@ import {
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { getResidentComplaint } from "./queries/ComplaintGetQueries";
 import { router } from "expo-router";
-import { ChevronLeft, MoreVertical } from "lucide-react-native";
+import { ChevronLeft, MoreVertical, AlertCircle, XCircle } from "lucide-react-native";
 import { SearchWithTabs } from "./components/SearchWithTabs";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useAuth } from "@/contexts/AuthContext";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
+import { Drawer } from "@/components/ui/drawer"; 
+import { ConfirmationModal } from "./ComplaintConfirmationModal";
+import { useRaiseComplaint } from "./queries/ComplaintPostQueries";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ComplaintItem {
   comp_id: string;
@@ -28,10 +32,16 @@ interface ComplaintItem {
 
 export default function ResidentComplaint() {
   const {user} = useAuth();
+  const queryClient = useQueryClient();
   const { data: ResidentComplaintList, isLoading, isError } = getResidentComplaint();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
-  console.log(JSON.stringify(ResidentComplaintList, null, 2));
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [actionType, setActionType] = useState<"raise" | "cancel" | null>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<ComplaintItem | null>(null);
+  const { mutate: raiseComplaint, isPending: isRaising } = useRaiseComplaint();
+
   // Calculate status counts
   const statusCounts = useMemo(() => {
     if (!ResidentComplaintList)
@@ -113,77 +123,125 @@ export default function ResidentComplaint() {
     }
   };
 
-  const renderComplaintCard = ({ item }: { item: ComplaintItem }) => (
-  <TouchableOpacity
-    onPress={() =>
-      router.push({
-        pathname: `/(my-request)/complaint-tracking/compMainView`,
-        params: { comp_id: item.comp_id },
-      })
+  const handleMorePress = (item: ComplaintItem) => {
+    setSelectedComplaint(item);
+    setDrawerVisible(true);
+  };
+
+  const openConfirmModal = (type: "raise" | "cancel") => {
+    setActionType(type);
+    setDrawerVisible(false);
+    setConfirmModalVisible(true);
+  };
+
+  const handleConfirmAction = () => {
+    if (!selectedComplaint) return;
+
+    if (actionType === "raise") {
+      raiseComplaint(Number(selectedComplaint.comp_id), {
+        onSuccess: () => {
+          console.log("Complaint successfully raised!");
+          // Invalidate and refetch the complaints list
+          queryClient.invalidateQueries({ queryKey: ["ResidentComplaintList"] });
+          setConfirmModalVisible(false);
+          setActionType(null);
+          alert("Complaint successfully raised!");
+        },
+        onError: (error: any) => {
+          console.error("Failed to raise complaint:", error);
+          setConfirmModalVisible(false);
+          setActionType(null);
+          alert("Failed to raise complaint. Please try again.");
+        },
+      });
+    } else if (actionType === "cancel") {
+      // Add your cancel complaint mutation here
+      console.log("Cancelling complaint:", selectedComplaint.comp_id);
+      // After your cancel mutation succeeds, also invalidate:
+      queryClient.invalidateQueries({ queryKey: ["ResidentComplaintList"] });
+      setConfirmModalVisible(false);
+      setActionType(null);
+      alert("Complaint cancelled successfully!");
     }
-    className="bg-white rounded-xl p-4"
-  >
-    <View className="flex-row items-start justify-between">
-      <View className="flex-row flex-1">
-        <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mr-3 overflow-hidden">
-          <Image
-            source={
-              user?.profile_image
-                ? { uri: user.profile_image }
-                : require("@/assets/images/Logo.png")
-            }
-            className="w-full h-full rounded-full"
-            style={{ backgroundColor: "#f3f4f6" }}
-          />
-        </View>
+  };
 
-        {/* Text Details */}
-        <View className="flex-1">
-          <View className="flex-row items-center">
-            <Text className="text-base font-PoppinsSemiBold text-gray-900 mr-2">
-              {item.comp_incident_type}
-            </Text>
+  const handleCancelModal = () => {
+    setConfirmModalVisible(false);
+    setActionType(null);
+    setDrawerVisible(true);
+  };
 
-            <View
-              className={`px-3 py-1 rounded-full ${
-                getStatusColor(item.comp_status).split(" ")[0]
-              }`}
-            >
-              <Text
-                className={`text-xs font-PoppinsMedium ${
-                  getStatusColor(item.comp_status).split(" ")[1]
+  const renderComplaintCard = ({ item }: { item: ComplaintItem }) => (
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: `/(my-request)/complaint-tracking/compMainView`,
+          params: { comp_id: item.comp_id },
+        })
+      }
+      className="bg-white rounded-xl p-4"
+    >
+      <View className="flex-row items-start justify-between">
+        <View className="flex-row flex-1">
+          <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mr-3 overflow-hidden">
+            <Image
+              source={
+                user?.profile_image
+                  ? { uri: user.profile_image }
+                  : require("@/assets/images/Logo.png")
+              }
+              className="w-full h-full rounded-full"
+              style={{ backgroundColor: "#f3f4f6" }}
+            />
+          </View>
+
+          {/* Text Details */}
+          <View className="flex-1">
+            <View className="flex-row items-center">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mr-2">
+                {item.comp_incident_type}
+              </Text>
+
+              <View
+                className={`px-3 py-1 rounded-full ${
+                  getStatusColor(item.comp_status).split(" ")[0]
                 }`}
               >
-                {item.comp_status}
-              </Text>
+                <Text
+                  className={`text-xs font-PoppinsMedium ${
+                    getStatusColor(item.comp_status).split(" ")[1]
+                  }`}
+                >
+                  {item.comp_status}
+                </Text>
+              </View>
+            </View>
+
+            <Text className="text-sm font-PoppinsRegular text-gray-500" numberOfLines={1}>
+              {item.comp_allegation} | {item.comp_location}
+            </Text>
+
+            {/* Status directly below details */}
+            <View className="flex-row items-center mt-2">
+              <Text className="text-xs font-PoppinsRegular text-gray-400">{localDateFormatter(item.comp_datetime)}</Text>
             </View>
           </View>
-
-          <Text className="text-sm font-PoppinsRegular text-gray-500" numberOfLines={1}>
-            {item.comp_allegation} | {item.comp_location}
-          </Text>
-
-          {/* Status directly below details */}
-          <View className="flex-row items-center mt-2">
-            <Text className="text-xs font-PoppinsRegular text-gray-400">{localDateFormatter(item.comp_datetime)}</Text>
-
-            
-          </View>
         </View>
+
+        {/* Right: More icon */}
+        <TouchableOpacity 
+          className="p-1"
+          onPress={() => handleMorePress(item)}
+        >
+          <MoreVertical size={20} color="#9CA3AF" />
+        </TouchableOpacity>
       </View>
 
-      {/* Right: More icon */}
-      <TouchableOpacity className="p-1">
-        <MoreVertical size={20} color="#9CA3AF" />
-      </TouchableOpacity>
-    </View>
-
-    {/* Datetime - bottom right */}
-    <View className="items-end mt-2">
-    </View>
-  </TouchableOpacity>
-);
-
+      {/* Datetime - bottom right */}
+      <View className="items-end mt-2">
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderContent = () => {
     if (isLoading) {
@@ -269,6 +327,77 @@ export default function ResidentComplaint() {
         />
         {renderContent()}
       </View>
+
+      {/* Action Drawer */}
+      <Drawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        header="Complaint Actions"
+        description={`What would you like to do with this complaint?`}
+        showCloseButton={true}
+        showHeaderSpacing={true}
+      >
+        <View className="px-6 pb-8">
+          {/* Raise Option */}
+          <TouchableOpacity
+            onPress={() => openConfirmModal("raise")}
+            className="flex-row items-start p-4 bg-blue-50 rounded-xl mb-3 border border-blue-100"
+            activeOpacity={0.7}
+          >
+            <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-4">
+              <AlertCircle size={20} color="#3B82F6" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-1">
+                Raise Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-600">
+                Escalate this complaint to higher authorities for urgent attention and resolution.
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Cancel Option */}
+          <TouchableOpacity
+            onPress={() => openConfirmModal("cancel")}
+            className="flex-row items-start p-4 bg-red-50 rounded-xl border border-red-100"
+            activeOpacity={0.7}
+          >
+            <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-4">
+              <XCircle size={20} color="#EF4444" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-1">
+                Cancel Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-600">
+                Withdraw this complaint. This action will mark the complaint as cancelled.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Drawer>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={confirmModalVisible}
+        onClose={handleCancelModal}
+        onConfirm={handleConfirmAction}
+        type={actionType === "raise" ? "raise" : "cancel"}
+        title={actionType === "raise" ? "Raise Complaint?" : "Cancel Complaint?"}
+        description={
+          actionType === "raise"
+            ? "This will escalate your complaint to higher authorities for urgent attention. Are you sure you want to continue?"
+            : "This action will cancel your complaint and mark it as withdrawn. This action cannot be undone. Do you want to continue?"
+        }
+        confirmText="Continue"
+        cancelText="Go Back"
+        isLoading={isRaising}
+        showDetails={!!selectedComplaint}
+        detailsTitle="Complaint Details:"
+        detailsContent={selectedComplaint?.comp_incident_type}
+        detailsSubContent={selectedComplaint?.comp_allegation}
+      />
     </ScreenLayout>
   );
 }

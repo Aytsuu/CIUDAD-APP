@@ -33,7 +33,6 @@ export function ComplaintActionModal({
   isOpen,
   onClose,
   actionType,
-  complaintId,
   onConfirm,
   isLoading = false,
 }: ComplaintActionModalProps) {

@@ -104,7 +104,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_datetime',
             'comp_allegation',
             'comp_created_at',
-            'comp_is_archive',
+            'comp_rejection_reason',
             'complainant', 
             'accused',      
             'complaint_files',
@@ -142,16 +142,16 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
         model = Complaint
         fields = [
             'comp_status',
-            # 'rejection_reason',
+            'comp_rejection_reason',
         ]
         extra_kwargs = {
-            'rejection_reason': {'required': False, 'allow_blank': True}
+            'comp_rejection_reason': {'required': False, 'allow_blank': True}
         }
     
     def validate(self, data):
         """Validate that rejection reason is provided when status is Rejected"""
         if data.get('comp_status') == 'Rejected':
             raise serializers.ValidationError({
-                # 'rejection_reason': 'Rejection reason is required when rejecting a complaint.'
+                'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
             })
         return data

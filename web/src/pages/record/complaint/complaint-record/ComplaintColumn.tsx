@@ -93,7 +93,6 @@ export const complaintColumns = (
       ),
       cell: ({ row }) => {
         const complainants = row.original.complainant;
-        console.log(JSON.stringify(complainants, null, 2));
         if (!complainants || complainants.length === 0) {
           return <div className="text-gray-500">Anonymous</div>;
         }
