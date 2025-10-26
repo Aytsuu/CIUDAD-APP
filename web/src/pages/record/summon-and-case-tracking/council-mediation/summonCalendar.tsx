@@ -181,10 +181,33 @@ const SummonCalendar = () => {
     );
   };
 
+  // Check if a date has any booked time slots
+  const hasBookedTimeSlots = (date: Date): boolean => {
+    if (!date) return false;
+    
+    // Find the summon date record for this date
+    const summonDate = summonDates.find((item) => {
+      const dbDate = new Date(item.sd_date);
+      return (
+        dbDate.getFullYear() === date.getFullYear() &&
+        dbDate.getMonth() === date.getMonth() &&
+        dbDate.getDate() === date.getDate()
+      );
+    });
+    
+    if (!summonDate) return false;
+    
+    // Check if any time slots for this date are booked
+    return fetchedTimeSlots.some(
+      slot => slot.sd_id === summonDate.sd_id && slot.st_is_booked
+    );
+  };
+
   // Check if time slot editing is restricted to next quarter only
   const isTimeSlotEditingRestricted = (): boolean => {
     return !!(editMode && selectedDateForTimeSlots && !isDateInNextQuarter(selectedDateForTimeSlots));
   };
+
   const handleDateSelection = (date: Date) => {
     if (isDateDisabled(date)) return;
 
@@ -205,14 +228,23 @@ const SummonCalendar = () => {
       }
     } else {
       // In edit mode, only allow selection within next quarter
-      setTempSelectedDates((prev) => {
-        const isSelected = prev.some(
-          (d) =>
-            d.getFullYear() === date.getFullYear() &&
-            d.getMonth() === date.getMonth() &&
-            d.getDate() === date.getDate()
-        );
+      const isSelected = tempSelectedDates.some(
+        (d) =>
+          d.getFullYear() === date.getFullYear() &&
+          d.getMonth() === date.getMonth() &&
+          d.getDate() === date.getDate()
+      );
 
+      // Prevent unchecking dates with booked time slots
+      if (isSelected && hasBookedTimeSlots(date)) {
+        toast.info("Cannot disable date with booked time slots.", {
+          description: "This date has booked time slots and cannot be disabled.",
+          duration: 3000,
+        });
+        return;
+      }
+
+      setTempSelectedDates((prev) => {
         return isSelected
           ? prev.filter(
               (d) =>
@@ -346,9 +378,13 @@ const SummonCalendar = () => {
     const isDisabled = isDateDisabled(date);
     const isInNextQuarter = isDateInNextQuarter(date);
     const isEditMode = editMode;
+    const hasBookedSlots = hasBookedTimeSlots(date);
 
     // In edit mode, dates outside next quarter should not be selectable
     const isSelectable = !isDisabled && (!isEditMode || isInNextQuarter);
+
+    // Disable checkbox for dates with booked time slots
+    const isCheckboxDisabled = hasBookedSlots;
 
     return (
       <div
@@ -365,7 +401,7 @@ const SummonCalendar = () => {
           <Checkbox 
             checked={isSelected} 
             onChange={() => handleDateSelection(date)} 
-            disabled={isPendingAdd} 
+            disabled={isPendingAdd || isCheckboxDisabled}
             className="mt-1"
           />
         )}
@@ -488,6 +524,7 @@ const SummonCalendar = () => {
                             <li>Time slot management is also restricted to next quarter dates</li>
                             <li>Green-highlighted dates are available for editing</li>
                             <li>Use checkboxes to select/deselect available dates</li>
+                            <li>Dates with <strong>booked time slots cannot be disabled</strong></li>
                           </ul>
                         </div>
                       </div>
