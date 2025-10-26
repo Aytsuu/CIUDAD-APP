@@ -46,15 +46,23 @@ export const useAddSummonDates = (onSuccess?: () => void) => {
             sd_id: number;
             sd_is_checked: boolean;
         }[]}) => addSummonDate(values.newDates, values.oldDates),
+        onMutate: () => {
+            toast.loading('Saving dates...', {id: "addDates"});
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonDates'] });
+            toast.success('Dates saved successfully!', {
+                id: "addDates",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error updating dates:", err);
             toast.error(
                 "Failed to update dates. Please try again.",
-                { duration: 2000 }
+                { id: "addDates", duration: 2000 }
             );
         }
     })
@@ -141,43 +149,3 @@ export const useAddRemarks = (onSuccess?: () => void) => {
         }
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// export const useAddSuppDoc = (onSuccess?: () => void) => {
-//     const queryClient = useQueryClient();
-//     return useMutation({
-//         mutationFn: async (data: {
-//             ss_id: string;
-//             sr_id: string;
-//             file: { name: string; type: string; file: string | undefined}[];
-//             reason: string;
-//         }) => {
-//             return addSuppDoc(data.ss_id, data.sr_id,  data.file, data.reason);
-//         },
-//         onSuccess: () => {
-//             queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
-
-//             showSuccessToast('Documents uploaded successfully!')
-//             onSuccess?.();
-//         },
-//         onError: (err: Error) => {
-//             console.error("Upload error:", err);
-//             showErrorToast( "Failed to upload documents. Please try again.")
-//         }
-//     });
-// }
-
