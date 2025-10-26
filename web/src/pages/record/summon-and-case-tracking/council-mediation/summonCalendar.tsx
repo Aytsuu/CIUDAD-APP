@@ -567,6 +567,11 @@ const SummonCalendar = () => {
                           <div className="text-lg font-semibold text-blue-800 mt-1">
                             {formatDate(selectedDateForTimeSlots, "long")}
                           </div>
+                          {hasBookedTimeSlots(selectedDateForTimeSlots) && (
+                            <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
+                              Has booked time slots
+                            </div>
+                          )}
                         </div>
 
                         {/* Existing Time Slots */}
