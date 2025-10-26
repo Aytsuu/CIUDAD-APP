@@ -11,6 +11,8 @@ from django.db import transaction
 from apps.complaint.models import Complaint
 from apps.clerk.models import ServiceChargePaymentRequest
 from apps.treasurer.models import Purpose_And_Rates
+from apps.notification.utils import create_notification
+from apps.administration.models import Staff
 
 # Python Imports
 import logging
@@ -39,6 +41,28 @@ class ServiceChargeRequestCreateView(APIView):
                 pay_status="Unpaid", 
                 pay_date_req=timezone.now(), 
                 comp_id=complaint,
+            )
+            
+            # Get all staff with Clerk position
+            admin_staff = Staff.objects.filter(pos__pos_title="Clerk").select_related("rp")
+            
+            recipients = []
+            
+            for staff in admin_staff:
+                if staff.rp:
+                    print(f"Clerk RP ID: {staff.rp.rp_id}")
+                    recipients.append(staff.rp)
+            
+            create_notification(
+                title="Blotter Request Raised",
+                message=f"Your request is now being raised to higher ups for further action.",
+                sender=request.user.rp.rp_id,
+                recipients=recipients,
+                notif_type="Info",
+                web_route="complaint/view/",
+                web_params={"comp_id": str(complaint.comp_id),},
+                mobile_route="/(my-request)/complaint-tracking/compMainView",
+                mobile_params={"comp_id": str(complaint.comp_id)}
             )
             
             return Response({

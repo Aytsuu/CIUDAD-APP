@@ -36,7 +36,7 @@ class RecipientSerializer(serializers.ModelSerializer):
     sender_name = serializers.CharField(source='notif.sender.username', read_only=True)
     sender_profile = serializers.CharField(source='notif.sender.profile_image', read_only=True)
     redirect_url = serializers.SerializerMethodField()
-    mobile_screen = serializers.SerializerMethodField()
+    mobile_route = serializers.SerializerMethodField()
     class Meta:
         model = Recipient
         fields = [
@@ -50,7 +50,7 @@ class RecipientSerializer(serializers.ModelSerializer):
             'sender_name',
             'sender_profile',
             'redirect_url',
-            'mobile_screen',
+            'mobile_route',
         ]
         read_only_fields = fields
 
@@ -79,10 +79,10 @@ class RecipientSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def get_mobile_screen(self, obj):
+    def get_mobile_route(self, obj):
         if obj.notif.mobile_route:
             return {
-                'path': obj.notif.mobile_route,
+                'screen': obj.notif.mobile_route,
                 'params': obj.notif.mobile_params or {}
             }
         return None

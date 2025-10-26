@@ -17,7 +17,6 @@ def create_notification(
     sender,
     recipients: list,
     notif_type: str,
-    target_obj=None,
     web_route: str = None,
     web_params: dict = None,
     mobile_route: str = None,
@@ -55,10 +54,6 @@ def create_notification(
         'mobile_route': mobile_route,
         'mobile_params': mobile_params,
     }
-
-    if target_obj:
-        notification_data['content_type'] = ContentType.objects.get_for_model(target_obj)
-        notification_data['object_id'] = target_obj.pk
 
     notification = Notification.objects.create(**notification_data)
 
@@ -105,7 +100,6 @@ def create_notification(
     print(f"Notification sent. Total sent: {total_sent}, failed: {total_failed}")
     return notification
 
-
 def reminder_notification(
     title: str,
     message: str,
@@ -113,7 +107,6 @@ def reminder_notification(
     recipients: list,
     notif_type: str,
     remind_at: datetime,
-    target_obj=None,
     web_route=None,
     web_params=None,
     mobile_route=None,
@@ -131,7 +124,7 @@ def reminder_notification(
         id=sched_id,
         replace_existing=True,
         args=[
-            title, message, sender, recipients, notif_type, target_obj,
+            title, message, sender, recipients, notif_type,
             web_route, web_params, mobile_route, mobile_params
         ],
     )

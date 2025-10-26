@@ -12,7 +12,6 @@ from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
 from apps.notification.utils import create_notification
 from ..serializers import ComplaintFileSerializer
-# from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 
 # Django imports
 from django.db import transaction
@@ -240,11 +239,8 @@ class ComplaintCreateView(APIView):
                             sender=sender, 
                             recipients=recipients,
                             notif_type="REQUEST",
-                            target_obj=complaint,
                             web_route="complaint/view/",
-                            web_params={
-                                "comp_id": str(complaint.comp_id),
-                            },
+                            web_params={"comp_id": str(complaint.comp_id),},
                             mobile_route="/(my-request)/complaint-tracking/compMainView",
                             mobile_params={"comp_id": str(complaint.comp_id)},
                         )
