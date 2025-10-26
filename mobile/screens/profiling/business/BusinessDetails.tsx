@@ -37,6 +37,8 @@ export default function BusinessDetails() {
     error,
     refetch: refetchBusiness,
   } = useBusinessInfo(business?.bus_id);
+  
+  console.log(businessInfo)
 
   const InfoRow = ({
     label,
@@ -110,7 +112,7 @@ export default function BusinessDetails() {
     const registeredDate = item
       ? formatDate(item?.bus_date_registered, "long")
       : "";
-    const registeredBy = item?.bus_registered_by || "N/A";
+    const registeredBy = item?.registered_by || "N/A";
     const businessFiles = item?.files || [];
 
     return (

@@ -109,7 +109,7 @@ class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
   
 
 class BusinessInfoSerializer(serializers.ModelSerializer):
-  bus_registered_by = serializers.SerializerMethodField()
+  registered_by = serializers.SerializerMethodField()
   br = BusinessRespondentInfoSerializer()
   rp = ResidentPersonalInfoSerializer()
   files = serializers.SerializerMethodField()
@@ -118,7 +118,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     model = Business
     fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'bus_status',
               'bus_location', 'bus_date_of_registration', 'bus_date_verified',
-              'bus_registered_by', 'files']
+              'registered_by', 'files']
     
   def get_files(self, obj):
     files = [
@@ -132,13 +132,17 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     
     return files
   
-  def get_bus_registered_by(self, obj):
-    if not obj.staff:
-      return None
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
-    info = obj.staff.rp.per
-    return f'{info.per_lname}, {info.per_fname} ' \
-          f'{info.per_mname}' if info.per_mname else None 
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FileInputSerializer(serializers.Serializer):
   name = serializers.CharField()
