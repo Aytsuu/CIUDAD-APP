@@ -61,7 +61,7 @@ export default function OTPModal({
               {otp.map((digit, index) => (
                 <TextInput
                   key={index}
-                  ref={(el) => (otpRefs.current[index] = el)}
+                  ref={(el) => { otpRefs.current[index] = el; }}
                   className="border border-gray-300 rounded-lg w-12 h-14 text-center text-lg"
                   value={digit}
                   keyboardType="number-pad"

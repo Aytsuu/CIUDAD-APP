@@ -2,9 +2,8 @@ from utils.supabase_client import upload_to_storage
 from rest_framework import serializers
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
-from .models import *
+from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, ComplaintRecipient)
 import json
-# from django.utils import timezone
 
 class AccusedSerializer(serializers.ModelSerializer):
     res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True)  
@@ -105,7 +104,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_datetime',
             'comp_allegation',
             'comp_created_at',
-            'comp_is_archive',
+            'comp_rejection_reason',
             'complainant', 
             'accused',      
             'complaint_files',
@@ -137,3 +136,22 @@ class ComplaintSerializer(serializers.ModelSerializer):
         if obj.staff:
             return StaffMinimalSerializer(obj.staff).data
         return None
+    
+class ComplaintUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Complaint
+        fields = [
+            'comp_status',
+            'comp_rejection_reason',
+        ]
+        extra_kwargs = {
+            'comp_rejection_reason': {'required': False, 'allow_blank': True}
+        }
+    
+    def validate(self, data):
+        """Validate that rejection reason is provided when status is Rejected"""
+        if data.get('comp_status') == 'Rejected':
+            raise serializers.ValidationError({
+                'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
+            })
+        return data

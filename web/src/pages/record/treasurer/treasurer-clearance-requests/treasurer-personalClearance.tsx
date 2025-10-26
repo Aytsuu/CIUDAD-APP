@@ -112,7 +112,16 @@ function PersonalClearance() {
     const nonResidentColumns: ColumnDef<NonResidentReq>[] = [
         {
             id: "nrc_requester",
-            accessorFn: (row) => (row.nrc_requester ? row.nrc_requester.replace(/,/g, "") : ""),
+            accessorFn: (row) => {
+                // Use individual name fields: lname fname mname (all uppercase)
+                const nameParts = [
+                    row.nrc_lname,
+                    row.nrc_fname,
+                    row.nrc_mname
+                ].filter(part => part && part.trim() !== '');
+                
+                return nameParts.join(' ').toUpperCase() || 'N/A';
+            },
             header: ({ column }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -190,9 +199,18 @@ function PersonalClearance() {
                                             id: row.original.nrc_id,
                                             purpose: row.original.purpose?.pr_purpose,
                                             rate: row.original.purpose?.pr_rate,
-                                            requester: row.original.nrc_requester?.replace(/,/g, "") || "",
+                                            requester: (() => {
+                                                // Use individual name fields: lname fname mname (all uppercase)
+                                                const nameParts = [
+                                                    row.original.nrc_lname,
+                                                    row.original.nrc_fname,
+                                                    row.original.nrc_mname
+                                                ].filter(part => part && part.trim() !== '');
+                                                
+                                                return nameParts.join(' ').toUpperCase() || 'N/A';
+                                            })(),
                                             pay_status: row.original.nrc_req_payment_status,
-                                            nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                            nat_col: row.original.purpose?.pr_purpose,
                                             is_resident: false
                                         });
                                         // Ensure discount modal is closed when opening receipt
@@ -255,9 +273,19 @@ function PersonalClearance() {
                     <ArrowUpDown size={14} />
                 </div>
             ),
-            cell: ({ row }) => (
-                <div>{`${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`}</div>
-            ),
+            cell: ({ row }) => {
+                // For residents, format as "Last Name First Name Middle Name"
+                const resident = row.original.resident_details;
+                if (!resident) return <div>N/A</div>;
+                
+                const nameParts = [
+                    resident.per_lname,
+                    resident.per_fname,
+                    resident.per_mname
+                ].filter(part => part && part.trim() !== '');
+                
+                return <div>{nameParts.join(' ') || 'N/A'}</div>;
+            },
         },
         {
             accessorKey: "purpose.pr_purpose",
@@ -345,9 +373,18 @@ function PersonalClearance() {
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: "0",
-                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    requester: (() => {
+                                                
+                                                        const resident = row.original.resident_details;
+                                                        const nameParts = [
+                                                            resident.per_lname,
+                                                            resident.per_fname,
+                                                            resident.per_mname
+                                                        ].filter(part => part && part.trim() !== '');
+                                                        return nameParts.join(' ') || 'N/A';
+                                                    })(),
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                                    nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     is_resident: true,
                                                     voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
                                                     isSeniorEligible: isSenior,
@@ -389,9 +426,18 @@ function PersonalClearance() {
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: row.original.purpose?.pr_rate,
-                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    requester: (() => {
+                                                        // Format resident name: "Last Name First Name Middle Name"
+                                                        const resident = row.original.resident_details;
+                                                        const nameParts = [
+                                                            resident.per_lname,
+                                                            resident.per_fname,
+                                                            resident.per_mname
+                                                        ].filter(part => part && part.trim() !== '');
+                                                        return nameParts.join(' ') || 'N/A';
+                                                    })(),
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                                    nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     // Paid resident without voter_id should still be treated as resident
                                                     is_resident: true,
                                                     voter_id: (row.original as any)?.resident_details?.voter_id ?? null,

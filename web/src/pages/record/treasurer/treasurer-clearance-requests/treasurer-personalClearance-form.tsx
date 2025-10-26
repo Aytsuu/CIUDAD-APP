@@ -132,15 +132,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
         }
     };
 
-    // Helper function to format requester name in all capital letters
-    const formatRequesterName = (lastName: string, firstName: string, middleName?: string): string => {
-        const nameParts = [lastName, firstName];
-        if (middleName && middleName.trim()) {
-            nameParts.push(middleName);
-        }
-        return nameParts.join(', ').toUpperCase();
-    };
-
     const onSubmitNonResident = async (values: z.infer<typeof NonResidentFormSchema>) => {
         try {   
             setIsSubmitting(true);
@@ -150,11 +141,11 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 return;
             }
 
-            // Combine name fields into requester field using helper function
-            const requester = formatRequesterName(values.last_name, values.first_name, values.middle_name);
-
+            // Use individual name fields instead of combined requester field
             const payload = {
-                requester: requester,
+                last_name: values.last_name,
+                first_name: values.first_name,
+                middle_name: values.middle_name,
                 purpose: values.purpose,
                 address: values.address,
                 birthdate: values.birthdate,

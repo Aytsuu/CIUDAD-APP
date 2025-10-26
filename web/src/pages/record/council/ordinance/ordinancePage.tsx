@@ -202,6 +202,12 @@ function OrdinancePage() {
             return { text: "Base Ordinance", color: "text-green-600", bgColor: "bg-green-100" };
         }
     };
+
+    // Function to check if ordinance has been repealed
+    const isOrdinanceRepealed = (folder: OrdinanceFolder) => {
+        return folder.baseOrdinance.ord_repealed || 
+               folder.amendments.some(amendment => amendment.ord_repealed && !amendment.ord_is_ammend);
+    };
     
     const handleFolderView = (folder: OrdinanceFolder) => {
         setSelectedFolder(folder);
@@ -490,40 +496,43 @@ function OrdinancePage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-                        {filteredItems.map((folder) => (
-                            <CardLayout
-                                key={folder.id}
-                                title={
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
-                                                <FileText className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 text-lg">{folder.baseOrdinance.ord_title}</h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</span>
-                                                    {folder.baseOrdinance.ord_repealed && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                            Repealed
-                                                        </span>
-                                                    )}
+                        {filteredItems.map((folder) => {
+                            const isRepealed = isOrdinanceRepealed(folder);
+                            return (
+                                <CardLayout
+                                    key={folder.id}
+                                    cardClassName={`border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200 ${isRepealed ? 'opacity-75' : ''}`}
+                                    title={
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-white shadow-sm ${isRepealed ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'}`}>
+                                                    <FileText className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <h3 className={`font-semibold text-lg ${isRepealed ? 'text-gray-600' : 'text-gray-900'}`}>{folder.baseOrdinance.ord_title}</h3>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</span>
+                                                        {isRepealed && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                REPEALED
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            {folder.totalOrdinances > 1 && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleFolderView(folder)}
+                                                    className="h-7 px-2 text-xs hover:bg-blue-50"
+                                                >
+                                                    <Eye className="h-3 w-3 mr-1" />
+                                                    View All
+                                                </Button>
+                                            )}
                                         </div>
-                                        {folder.totalOrdinances > 1 && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleFolderView(folder)}
-                                                className="h-7 px-2 text-xs hover:bg-blue-50"
-                                            >
-                                                <Eye className="h-3 w-3 mr-1" />
-                                                View All
-                                            </Button>
-                                        )}
-                                    </div>
-                                }
+                                    }
                                 description={
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2">
@@ -589,11 +598,11 @@ function OrdinancePage() {
                                         </div>
                                     </div>
                                 }
-                                cardClassName="border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200"
                                 headerClassName="pb-3"
                                 contentClassName="pt-0"
                             />
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

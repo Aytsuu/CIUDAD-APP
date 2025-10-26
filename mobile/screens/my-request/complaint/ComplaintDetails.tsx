@@ -191,11 +191,6 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
           )}
 
           {person.cpnt_number && <InfoRow icon={Phone} label="Contact Number" value={person.cpnt_number} />}
-
-          {person.rp_id && <InfoRow icon={Hash} label="Resident Profile ID" value={person.rp_id} />}
-          {(person.cpnt_id || person.acsd_id) && (
-            <InfoRow icon={Hash} label={`${type} ID`} value={person.cpnt_id || person.acsd_id} />
-          )}
         </View>
       </View>
     )

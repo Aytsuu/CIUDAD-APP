@@ -21,5 +21,5 @@ export const fetchNotification = () => {
     staleTime: 5000, 
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     retry: 2, // Retry failed requests twice
-  });
+  })
 };

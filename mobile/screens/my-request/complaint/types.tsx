@@ -64,7 +64,7 @@ export interface ComplaintData {
   comp_datetime: string;
   comp_allegation: string;
   comp_created_at: string;
-  comp_is_archive: boolean;
+  comp_rejection_reason: string;
   complainant: Complainant[];
   accused: Accused[];
   complaint_files: ComplaintFile[];

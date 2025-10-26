@@ -228,6 +228,7 @@ export default function ComplaintMainView(): React.JSX.Element {
   // State
   const [activeTab, setActiveTab] = useState<TabType>('details');
   const [complaintData, setComplaintData] = useState<ComplaintData | null>(null);
+  const [showGoBackModal, setShowGoBackModal] = useState(false);
 
   // Load complaint from params (if passed directly)
   useEffect(() => {
@@ -265,6 +266,15 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Loading state
   const isDataLoading = isLoading || (!complaintData && shouldFetch);
 
+  // Handle navigation back
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  const handleGoBackRequest = () => {
+    setShowGoBackModal(true);
+  };
+
   // Tab Button Component
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity
@@ -280,7 +290,7 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Shared Header Actions
   const LeftHeader = (
     <TouchableOpacity
-      onPress={() => router.back()}
+      onPress={handleGoBackRequest}
       className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
     >
       <ChevronLeft size={20} color="#374151" />
@@ -321,7 +331,7 @@ export default function ComplaintMainView(): React.JSX.Element {
               : "The complaint you're looking for doesn't exist or couldn't be loaded."}
           </Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={handleGoBack}
             className="mt-6 bg-blue-500 px-8 py-3 rounded-xl shadow-sm"
             activeOpacity={0.8}
           >

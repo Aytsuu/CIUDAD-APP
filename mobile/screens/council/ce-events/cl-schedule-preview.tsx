@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,18 +14,17 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input"
 import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { EventFormValues } from "./ce-att-typeFile";
-import { LoadingModal } from '@/components/ui/loading-modal';
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 const CLSchedulePreview = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const event = useMemo(
-  () => {
-    const parsedEvent = params.event ? JSON.parse(params.event as string) : null;
+  const event = useMemo(() => {
+    const parsedEvent = params.event
+      ? JSON.parse(params.event as string)
+      : null;
     return parsedEvent;
-  },
-  [params.event]
-);
+  }, [params.event]);
   const isAdding = params.isAdding === "true";
   const isArchived = event?.is_archive || false;
   const [isEditMode, setIsEditMode] = useState(isAdding);
@@ -68,7 +67,7 @@ const CLSchedulePreview = () => {
         "",
       ce_is_archive: isArchived,
       ce_rows: data.numRows || 0,
-      staff_id: data.staff_id || '00005250925',
+      staff_id: data.staff_id || "00005250925",
     };
 
     if (isAdding) {
@@ -100,7 +99,9 @@ const CLSchedulePreview = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Schedule Events</Text>}
+        headerTitle={
+          <Text className="text-gray-900 text-[13px]">Schedule Events</Text>
+        }
         rightAction={
           <TouchableOpacity>
             <ChevronLeft size={30} color="black" className="text-white" />
@@ -157,8 +158,8 @@ const CLSchedulePreview = () => {
         }
       >
         {isArchived && (
-          <View className="bg-yellow-100 p-4 mb-4 rounded-md">
-            <Text className="text-yellow-800 text-center">
+          <View className="bg-gray-200 py-3 rounded-lg">
+            <Text className="text-gray-600 text-base font-semibold text-center">
               This event is archived and cannot be modified
             </Text>
           </View>
@@ -282,8 +283,8 @@ const CLSchedulePreview = () => {
       </PageLayout>
 
       {/* Loading Modal for mutations */}
-      <LoadingModal 
-        visible={addEventMutation.isPending || updateEventMutation.isPending} 
+      <LoadingModal
+        visible={addEventMutation.isPending || updateEventMutation.isPending}
       />
     </>
   );

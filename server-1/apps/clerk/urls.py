@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import *
 from .summon.summonViews import *
-from apps.complaint.views.complaint_view import *
+from apps.complaint.views.complaint_view import ComplaintDetailView
+from .views import CancelBusinessPermitView
 
 urlpatterns = [ 
     # Council Mediation
@@ -47,6 +48,7 @@ urlpatterns = [
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),
+    path('certificate-all/', CombinedCertificateListView.as_view(), name='certificate_combined_list'),
     path('certificate-update-status/<str:cr_id>/', CertificateStatusUpdateView.as_view(), name='certificate_status_update'),
     path('certificate/<str:pk>/', CertificateDetailView.as_view(), name='certificate_detail'),
     path('certificate/<str:cr_id>/cancel/', CancelCertificateView.as_view(), name='certificate_cancel'),
@@ -54,6 +56,7 @@ urlpatterns = [
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
     path('business-permit/upload/', BusinessPermitUploadView.as_view(), name='business-permit-upload'),
     path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
+    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit_cancel'),
     path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
     

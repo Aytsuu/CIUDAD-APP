@@ -39,4 +39,9 @@ export const cancelCertificate = async (cr_id: string) => {
   return res.data;
 };
 
+export const cancelBusinessPermit = async (bpr_id: string) => {
+  const res = await api.post(`clerk/business-permit/${bpr_id}/cancel/`, {});
+  return res.data;
+};
+
 

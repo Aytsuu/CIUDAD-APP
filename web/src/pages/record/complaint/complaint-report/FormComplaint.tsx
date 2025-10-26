@@ -8,7 +8,7 @@ import {
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
-import { ProgressBar } from "@/components/progress-bar";
+import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -21,7 +21,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -171,8 +170,16 @@ export const ComplaintForm = () => {
       title={"Blotter Form"}
       description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
     >
-      <ProgressBar steps={steps} currentStep={step} showDescription={true} />
-
+      <ProgressWithIcon
+        progress={step}
+        steps={steps.map((s, i) => ({
+          id: s.number,
+          label: s.title,
+          minProgress: i + 1,
+          icon: s.icon,
+          onClick: (id) => setStep(id),
+        }))}
+      />
       <FormProvider {...methods}>
         <div className="mb-8 mt-4 px-32">
           {step === 1 && <ComplainantInfo />}

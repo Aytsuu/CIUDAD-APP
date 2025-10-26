@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPersonalCertifications, getBusinessPermitRequests, cancelCertificate } from "../restful-API/certTrackingGetAPI";
+import { getPersonalCertifications, getBusinessPermitRequests, cancelCertificate, cancelBusinessPermit } from "../restful-API/certTrackingGetAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useCertTracking = (residentId: string) => {
@@ -33,6 +33,16 @@ export const useCancelCertificate = (residentId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (cr_id: string) => cancelCertificate(cr_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
+    }
+  })
+}
+
+export const useCancelBusinessPermit = (residentId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bpr_id: string) => cancelBusinessPermit(bpr_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
     }

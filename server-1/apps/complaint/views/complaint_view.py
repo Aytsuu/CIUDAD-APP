@@ -12,24 +12,18 @@ class ComplaintListView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
 
     def get_queryset(self):
-        try:
-            queryset = Complaint.objects.prefetch_related(
-                'complaintcomplainant_set__cpnt__rp_id',
-                'complaintaccused_set__acsd__rp_id',
-                'files',
-                'staff'
-            ).filter(comp_is_archive=False).order_by('-comp_created_at')
-            
-            # we filter by comp_status
-            status = self.request.query_params.get('status')
-            if status:
-                queryset = queryset.filter(comp_status=status)
-                
-            return queryset
-        
-        except Exception as e:
-            logger.error(f"Error in ComplaintListView queryset: {str(e)}")
-            return Complaint.objects.none()
+        queryset = Complaint.objects.prefetch_related(
+            'complaintcomplainant_set__cpnt',
+            'complaintaccused_set__acsd',
+            'files',
+            'staff'
+        ).order_by('-comp_created_at')
+
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(comp_status=status)
+        return queryset
+
         
 class ResidentsComplaintListView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
@@ -54,7 +48,6 @@ class ResidentsComplaintListView(generics.ListAPIView):
                 'files',
                 'staff'
             ).filter(
-                comp_is_archive=False,
                 complaintcomplainant__cpnt__rp_id__rp_id=rp_id
             ).order_by('-comp_created_at')
             

@@ -94,41 +94,6 @@ export const useSendEmailOTPMutation = () => {
   });
 };
 
-export const useVerifyEmailOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<TokenResponse, Error, EmailOTPCredentials>({
-    mutationFn: async ({ email, otp }) => {
-      console.log('🔐 Verifying Email OTP...');
-      const response = await api.post('authentication/email/verifyOtp/', {
-        email,
-        otp,
-      });
-      console.log('✅ Email OTP verification successful');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data) => {
-      if (data.access && data.user) {
-        dispatch(setAuthData({ 
-          accessToken: data.access, 
-          user: data.user,
-        }));
-        dispatch(clearAuthState());
-      }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Email OTP verification failed';
-      console.error('❌ Email OTP verification failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
 
 export const useLogoutMutation = () => {
   const dispatch = useAppDispatch();

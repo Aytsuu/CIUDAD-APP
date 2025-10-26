@@ -18,9 +18,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# ========================
-# SECURITY CONFIGURATION
-# ========================
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
 # # SECURITY WARNING: don't run with debug turned on in production!
@@ -82,10 +80,7 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
-    "simple_history",
-
 ]
-SCHEDULER_AUTOSTART = True
 
 # REST_FRAMEWORK = {
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',

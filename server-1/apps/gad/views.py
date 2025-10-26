@@ -808,8 +808,16 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
     def get_queryset(self):
         year = self.request.query_params.get('year')
         qs = DevelopmentPlan.objects.all()
+        
         if year:
             qs = qs.filter(dev_date__year=year)
+        
+        # Archive filter - MUST come before search
+        dev_archived = self.request.query_params.get('dev_archived', None)
+        if dev_archived is not None:
+            # Convert string to boolean
+            is_archived = dev_archived.lower() == 'true'
+            qs = qs.filter(dev_archived=is_archived)
         
         # Add search functionality
         search = self.request.query_params.get('search', None)
@@ -876,6 +884,47 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
             )
 
 # GET years with data
+
+class GADDevelopmentPlanBulkUpdate(APIView):
+    permission_classes = [AllowAny]
+    
+    def patch(self, request):
+        """Bulk archive/restore development plans"""
+        dev_ids = request.data.get('dev_ids', [])
+        dev_archived = request.data.get('dev_archived', False)
+        
+        if not dev_ids:
+            return Response(
+                {"error": "dev_ids is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        updated = DevelopmentPlan.objects.filter(
+            dev_id__in=dev_ids
+        ).update(dev_archived=dev_archived)
+        
+        return Response({
+            "updated": updated,
+            "dev_archived": dev_archived
+        }, status=status.HTTP_200_OK)
+class GADDevelopmentPlanArchiveView(generics.UpdateAPIView):
+    queryset = DevelopmentPlan.objects.filter(dev_archived=False)
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'
+    permission_classes = [AllowAny]
+
+    def perform_update(self, serializer):
+        serializer.save(dev_archived=True)
+
+class GADDevelopmentPlanRestoreView(generics.UpdateAPIView):
+    queryset = DevelopmentPlan.objects.filter(dev_archived=True)
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'
+    permission_classes = [AllowAny]
+
+    def perform_update(self, serializer):
+        serializer.save(dev_archived=False)
+
 class GADDevelopmentPlanYears(APIView):
     permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):

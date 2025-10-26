@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
 import { Loader2 } from "lucide-react";
 
+
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
    function ReceiptForm({
     id,
@@ -249,10 +250,6 @@ import { Loader2 } from "lucide-react";
                     <div>
                         <label className="text-sm font-medium text-gray-600">Resident Name</label>
                         <p className="text-base text-gray-900 font-medium mt-1">{requester}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Request Type</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col === 'Service Charge' ? 'Summon' : nat_col}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Purpose</label>

@@ -109,6 +109,7 @@ const ReceiptPage = () => {
       'dwup': { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' },
       
       // Personal & Miscellaneous - Pink/Rose variants
+      'burial': { bg: 'bg-rose-200', text: 'text-rose-900', border: 'border-rose-300' },
       'cohabitation': { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' },
       'marriage certification': { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-300' },
       'good moral': { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800', border: 'border-fuchsia-300' },

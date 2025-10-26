@@ -1,7 +1,6 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -289,13 +288,13 @@ function GADProjectProposal() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[150px]">
             <SelectLayout
               className="bg-white"
               options={yearFilterOptions}
               placeholder="Year"
               value={selectedYear}
+              valueLabel="Filter"
               onChange={handleYearChange}
             />
           </div>

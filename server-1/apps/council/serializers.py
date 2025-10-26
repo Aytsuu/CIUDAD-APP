@@ -4,7 +4,8 @@ from .models import *
 from django.apps import apps
 from apps.treasurer.models import Purpose_And_Rates
 from apps.gad.models import ProjectProposal
-from utils.supabase_client import upload_to_storage
+from utils.supabase_client import upload_to_storage, supabase
+import base64
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
 from datetime import datetime, timedelta
@@ -515,6 +516,74 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrdinanceFile
         fields = ['of_id', 'of_name', 'of_type', 'of_path', 'of_url']
+    
+    def _upload_files(self, files):
+        """Upload files to Supabase storage (same as web version)"""
+        created_files = []
+        for file_data in files:
+            print(f"Processing file: {file_data['name']}, type: {file_data['type']}")
+            
+            # Generate unique file name to avoid conflicts (same as web)
+            import time
+            unique_name = f"{int(time.time())}-{file_data['name']}"
+            file_path = f"ordinances/{unique_name}"
+            
+            of_file = OrdinanceFile(
+                of_name=file_data['name'],
+                of_type=file_data['type'],
+                of_path=file_path,
+            )
+
+            print(f"Uploading to Supabase: {unique_name}")
+            
+            # Use direct Supabase upload like web version
+            try:
+                # Convert base64 to bytes
+                b64_string = file_data['file']
+                if b64_string.startswith('data:'):
+                    b64_string = b64_string.split(',')[1]
+                
+                # Add padding if necessary
+                missing_padding = len(b64_string) % 4
+                if missing_padding:
+                    b64_string += '=' * (4 - missing_padding)
+                
+                file_bytes = base64.b64decode(b64_string)
+                
+                # Upload directly to ordinance bucket
+                upload_result = supabase.storage.from_('ordinance-bucket').upload(
+                    file_path,
+                    file_bytes,
+                    {
+                        'content-type': file_data['type'],
+                        'cacheControl': '3600',
+                        'upsert': False,
+                    }
+                )
+                
+                if upload_result.error:
+                    print(f"❌ Upload error: {upload_result.error}")
+                    raise upload_result.error
+                
+                # Get public URL
+                url_result = supabase.storage.from_('ordinance-bucket').get_public_url(file_path)
+                url = url_result.data['publicUrl']
+                
+                print(f"✅ Upload successful, URL: {url}")
+                
+            except Exception as e:
+                print(f"❌ Direct upload failed: {e}")
+                # Fallback to upload_to_storage
+                print("🔄 Trying upload_to_storage as fallback...")
+                url = upload_to_storage(file_data, 'ordinance-bucket', 'ordinances')
+                print(f"Fallback upload successful, URL: {url}")
+            
+            of_file.of_url = url
+            of_file.save()  # Save individually to get the ID
+            print(f"Saved to database with ID: {of_file.of_id}")
+            created_files.append(of_file)
+
+        return created_files
 
 class OrdinanceSerializer(serializers.ModelSerializer):
     staff = serializers.PrimaryKeyRelatedField(read_only=True)
