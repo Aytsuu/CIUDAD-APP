@@ -637,9 +637,40 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
 # ================== SERVICE CHARGE SERIALIZERS =========================
     
 class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
+    # Make pay_id not required so it can be auto-generated
+    pay_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     class Meta:
         model = ServiceChargePaymentRequest
         fields = '__all__'
+    
+    def create(self, validated_data):
+        # Auto-generate pay_id as SR code if not provided
+        if 'pay_id' not in validated_data or not validated_data.get('pay_id'):
+            from django.utils import timezone
+            from .models import ServiceChargePaymentRequest
+            
+            year_suffix = timezone.now().year % 100
+            
+            # Get the last ServiceChargePaymentRequest to determine next sequential number
+            last_record = ServiceChargePaymentRequest.objects.filter(
+                pay_id__startswith='SR'
+            ).order_by('-pay_id').first()
+            
+            if last_record and last_record.pay_id.endswith(f"-{year_suffix:02d}"):
+                # Extract the number from the last pay_id (e.g., "SR051-25" -> 51)
+                try:
+                    last_num = int(last_record.pay_id.split('-')[0].replace('SR', ''))
+                    seq = last_num + 1
+                except (ValueError, IndexError):
+                    seq = 1
+            else:
+                seq = 1
+            
+            # Generate the new pay_id
+            validated_data['pay_id'] = f"SR{seq:03d}-{year_suffix:02d}"
+        
+        return super().create(validated_data)
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
@@ -670,7 +701,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             'comp_id',
             'pr_id',
             'sr_id',
-            'sr_code', 
+            'sr_code',  # This will now read from database
             'sr_type',
             'sr_req_date',
             'sr_req_status',
@@ -748,10 +779,8 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         return f"SR-{obj.pay_id}"
     
     def get_sr_code(self, obj):
-        # Generate SR code like SR000-25 (similar to CR000-25)
-        from django.utils import timezone
-        year_suffix = timezone.now().year % 100
-        return f"SR{obj.pay_id:03d}-{year_suffix:02d}"
+        # pay_id is already stored as SR code in the database (e.g., "SR051-25")
+        return obj.pay_id
     
     def get_sr_type(self, obj):
         # Use the payment request type

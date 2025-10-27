@@ -170,7 +170,7 @@ class SummonTimeAvailability(models.Model):
 
 
 class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.BigAutoField(primary_key=True)
+    pay_id = models.CharField(primary_key=True, max_length=50)
     pay_sr_type = models.CharField(max_length=200)
     pay_status = models.CharField(max_length=200, default='Unpaid')
     pay_date_req = models.DateTimeField(default=datetime.now)
