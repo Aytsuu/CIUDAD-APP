@@ -32,48 +32,6 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
         })
 }
 
-export const useAddSummonDates = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient()
-    const {toast} = useToastContext()
-
-    return useMutation({
-        mutationFn: (values: {newDates: string[]; oldDates: {
-            sd_id: number;
-            sd_is_checked: boolean;
-        }[]}) => addSummonDate(values.newDates, values.oldDates),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['summonDates'] });
-            onSuccess?.();
-        },
-        onError: (err) => {
-            console.error("Error updating dates:", err);
-            toast.error("Failed to update dates. Please try again.")
-        }
-    })
-}
-
-export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient();
-    const {toast} = useToastContext()
-
-    return useMutation({
-        mutationFn: (timeSlots: Array<{
-            sd_id: number;
-            st_start_time: string;
-            st_is_booked?: boolean;
-        }>) => addSummonTimeSlots(timeSlots),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['summonTimeSlots'] });
-            onSuccess?.();
-            toast.success("Time slots saved successfully")
-        },
-        onError: (err) => {
-            console.error("Error saving time slots:", err);
-            toast.error("Failed to save time slots. Please try again.")
-        }
-    });
-}
-
 
 export const useAddHearingMinutes = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();

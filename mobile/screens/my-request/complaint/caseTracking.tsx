@@ -8,9 +8,7 @@ import { useGetCaseTrackingDetails } from "./queries/summon-relatedFetchQueries"
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 
-export default function CaseTrackingScreen({
-  comp_id,
-  isRaised = "Raised",
+export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
 }: {
   comp_id?: string;
   isRaised?: string;
@@ -41,6 +39,9 @@ export default function CaseTrackingScreen({
     const handleSchedulePress = () => {
       router.push({
         pathname: "/(my-request)/complaint-tracking/hearing-history",
+        params: {
+          hearing_schedules: JSON.stringify(tracking.hearing_schedules || [])
+        }
       });
     };
 
