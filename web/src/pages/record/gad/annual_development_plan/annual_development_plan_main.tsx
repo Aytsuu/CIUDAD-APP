@@ -5,10 +5,9 @@ import { Search, ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
-
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
 import AnnualDevelopmentPlanArchive from './annual_development_plan_archive.tsx';
-import { getAnnualDevPlanYears, getAnnualDevPlans } from "./restful-api/annualGetAPI";
+import {getAnnualDevPlans } from "./restful-api/annualGetAPI";
 import { useGetArchivedAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
 
 function AnnualDevelopmentPlan(){
