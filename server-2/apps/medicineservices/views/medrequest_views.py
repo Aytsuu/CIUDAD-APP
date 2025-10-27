@@ -228,16 +228,20 @@ class SubmitMedicineRequestView(APIView):
                     print(f"✅ DEBUG: Validated rp_id: {rp_id}")
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+            patient_record = PatientRecord.objects.create(
+                pat_id=pat_instance,
+                patrec_type="Medicine Record",
+            )
             
             # Create MedicineRequest (include trans_id if available)
             medicine_request = MedicineRequest.objects.create(
-                pat_id=pat_instance,
                 rp_id=rp_instance,
                 trans_id=trans_instance,
                 mode='walk-in',
                 requested_at=timezone.now(),
                 fulfilled_at=timezone.now(),
                 signature= med.get('signature', ''),
+                patrec=patient_record
             )
             print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
             

@@ -100,6 +100,7 @@ export default function InvChildHealthRecords() {
     const resolvedAge = resolvedDob ? calculateAgeFromDOB(resolvedDob).years.toString() : "";
 
     return {
+      chrec_id: chrecDetails?.chrec_id || chrecId || "",
       pat_id: chrecDetails?.patient || patDetails?.pat_id || ChildHealthRecord?.pat_id || patId || "",
       fname: personalInfo?.per_fname || ChildHealthRecord?.fname || "",
       lname: personalInfo?.per_lname || ChildHealthRecord?.lname || "",
@@ -186,7 +187,7 @@ export default function InvChildHealthRecords() {
             patId: derivedChildData.pat_id,
             originalRecord: latestRecord,
             patientData: derivedChildData,
-            chrecId: derivedChildData.chrec_id || chrecId,
+            chrecId: derivedChildData.chrec_id ,
             mode: "addnewchildhealthrecord",
           },
         },

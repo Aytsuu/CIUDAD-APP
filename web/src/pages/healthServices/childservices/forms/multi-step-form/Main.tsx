@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
 import ChildHRPage1 from "./Step1";
 import ChildHRPage2 from "./Step2";
 import ChildHRPage3 from "./Step3";
@@ -21,6 +20,7 @@ import { isToday } from "@/helpers/isToday";
 import StepIndicator from "./StepsIndicator";
 import TableLoading from "@/pages/healthServices/table-loading";
 import { useLocalStorage } from "@/helpers/useLocalStorage"; // <-- import
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function ChildHealthRecordForm() {
   const location = useLocation();
@@ -74,6 +74,8 @@ export default function ChildHealthRecordForm() {
         return newCompletedSteps;
       });
     }
+
+    console.log("paramsn",location.state.params)
   }, [currentPage]);
 
   useEffect(() => {
@@ -210,8 +212,9 @@ export default function ChildHealthRecordForm() {
       try {
         setIsLoading(true);
         setError(null);
-        const chrecRecord = childHealthRecord && childHealthRecord.length > 0 ? childHealthRecord[0] : null;
 
+        // Use the first result from the API response
+        const chrecRecord = childHealthRecord?.results?.[0];
         if (!chrecRecord) {
           throw new Error("Parent child health record (chrec) not found.");
         }
@@ -225,7 +228,8 @@ export default function ChildHealthRecordForm() {
         const allHistoricalSupplementStatuses: CHSSupplementStat[] = [];
         const allImmunizationTracking: ImmunizationTracking[] = [];
 
-        chrecRecord.child_health_histories?.forEach((history: any) => {
+        // Iterate over the child health history results
+        childHealthRecord?.results?.forEach((history: any) => {
           const latestNote = getLatestNoteForRecord(history.child_health_notes || []);
 
           // Process vital signs
@@ -335,11 +339,7 @@ export default function ChildHealthRecordForm() {
         setHistoricalBFChecks(allHistoricalBFChecks); // Set BF checks with IDs
         setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
 
-        const selectedChhistRecord = chrecRecord.child_health_histories?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
-
-        if (!selectedChhistRecord) {
-          throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`);
-        }
+        const selectedChhistRecord = childHealthRecord?.results?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
 
         setApiData(selectedChhistRecord);
         const latestNote = getLatestNoteForRecord(selectedChhistRecord.child_health_notes || []);
@@ -372,7 +372,7 @@ export default function ChildHealthRecordForm() {
     };
 
     fetchRecordData();
-  }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, childHealthRecord]);
+  }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, childHealthRecord, formData.childDob, setFormData]);
 
   const updateFormData = (data: Partial<FormData>) => {
     setFormData({ ...initialFormData, ...formData, ...data });
@@ -430,9 +430,7 @@ export default function ChildHealthRecordForm() {
   // Clear localStorage on back
   const handleBack = () => {
     setFormData(initialFormData); // Clear localStorage
-    setCurrentPage(1);
-    setSelectedPatient(null);
-    setSelectedPatientId("");
+ 
     navigate(-1);
   };
 
@@ -464,19 +462,11 @@ export default function ChildHealthRecordForm() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <Button className="self-start p-2 text-black" variant={"outline"} onClick={handleBack}>
-          <ChevronLeft />
-        </Button>
-        <div className="mb-4 flex-col items-center">
-          <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">Child Health Record</h1>
-          <p className="text-xs text-darkGray sm:text-sm">
-            Manage and view child's health record for {formData.childFname} {formData.childLname}
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
+    <LayoutWithBack
+      title={isNewchildhealthrecord ? "New Child Health Record" : isaddnewchildhealthrecordMode ? "Add New Child Health Record" : "Edit Child Health Record"} 
+      description="Fill out the form to manage child health records."
+      >
+        
       {/* Step Indicator */}
       <StepIndicator currentStep={currentPage} totalSteps={4} onStepClick={handleStepClick} allowClickNavigation={true} completedSteps={completedSteps} />
 
@@ -533,6 +523,8 @@ export default function ChildHealthRecordForm() {
           </div>
         }
       />
-    </>
+      </LayoutWithBack>
+     
+-    </>
   );
 }
