@@ -33,14 +33,6 @@ export default function HouseholdDetails() {
     }
   }, [params.household]);
 
-  // Add your query hook here for fetching household families
-  // const {
-  //   data: householdFamilies,
-  //   isLoading: loadingFamilies,
-  //   refetch: refetchFamilies,
-  // } = useGetHouseholdFamilies(household?.hh_id);
-  
-  // For now, using the data from params
   const families = household?.families || [];
   const totalFamilies = families.length;
   const loadingFamilies = false;
@@ -126,7 +118,7 @@ export default function HouseholdDetails() {
               {item.total_families > 0 ? item.total_families === 1 ? "family" : "families" : "No family registered"}
             </Text>
           </View>
-          {item.nhts && (
+          {item.nhts == "YES" && (
             <View className="bg-green-500 px-3 py-1 rounded-full">
               <Text className="text-white text-xs">NHTS</Text>
             </View>
@@ -177,7 +169,7 @@ export default function HouseholdDetails() {
       </View>
 
       {/* NHTS Information */}
-      {item.nhts && (
+      {item.nhts == "YES" && (
         <View className="py-4">
           <Text className="text-green-600 font-medium text-sm mb-2">
             NHTS Beneficiary

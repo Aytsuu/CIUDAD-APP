@@ -1,18 +1,16 @@
 import { Text, TouchableOpacity, View } from "react-native";
-import ScreenLayout from "../_ScreenLayout";
 import { Megaphone } from "@/lib/icons/Megaphone";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { Bell } from "@/lib/icons/Bell";
 import { useRouter } from "expo-router";
+import PageLayout from "../_PageLayout";
 
 export default () => {
   const router = useRouter();
 
   return (
-    <ScreenLayout
-      showBackButton={false}
-      showExitButton={false}
-      headerBetweenAction={<Text className="text-[13px]">Inbox</Text>}
+    <PageLayout
+      headerTitle={<Text className="text-gray-900 text-[13px]">Inbox</Text>}
     >
       <View className="flex-1 px-6">
         {/* Announcement Card */}
@@ -72,6 +70,6 @@ export default () => {
           </View>
         </TouchableOpacity>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
