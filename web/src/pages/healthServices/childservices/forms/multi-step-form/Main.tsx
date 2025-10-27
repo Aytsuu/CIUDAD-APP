@@ -75,7 +75,6 @@ export default function ChildHealthRecordForm() {
       });
     }
 
-    console.log("paramsn",location.state.params)
   }, [currentPage]);
 
   useEffect(() => {
@@ -96,6 +95,20 @@ export default function ChildHealthRecordForm() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    // Cleanup function that runs when component unmounts
+    return () => {
+      // Only clear if we're in addnewchildhealthrecord mode and navigating away
+      if (isaddnewchildhealthrecordMode) {
+        localStorage.removeItem("childHRFormData");
+        localStorage.removeItem("childHRSelectedPatient");
+        localStorage.removeItem("childHRSelectedPatientId");
+      }
+    };
+  }, [isaddnewchildhealthrecordMode]);
+
+
 
   const handleStepClick = (stepId: number) => {
     if (stepId <= currentPage || completedSteps.includes(stepId)) {
@@ -364,7 +377,6 @@ export default function ChildHealthRecordForm() {
           setSelectedPatientId(fullPatientIdString);
         }
       } catch (error) {
-        console.error("Error fetching record data:", error);
         setError(`Failed to load record data: ${error instanceof Error ? error.message : "Unknown error"}`);
       } finally {
         setIsLoading(false);
@@ -391,7 +403,6 @@ export default function ChildHealthRecordForm() {
   const handleSubmit = async (submittedData: FormData) => {
     setIsSubmitting(true);
     setError(null);
-    console.log("child display submit:", submittedData);
 
     try {
       const dataToSubmit = {
@@ -420,7 +431,6 @@ export default function ChildHealthRecordForm() {
       setSelectedPatient(null);
       setSelectedPatientId("");
     } catch (error) {
-      console.error("Error submitting form:", error);
       setError(`Failed to submit form: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
@@ -428,11 +438,7 @@ export default function ChildHealthRecordForm() {
   };
 
   // Clear localStorage on back
-  const handleBack = () => {
-    setFormData(initialFormData); // Clear localStorage
- 
-    navigate(-1);
-  };
+
 
   if (isLoading || isRecordLoading) {
     return (
@@ -446,7 +452,6 @@ export default function ChildHealthRecordForm() {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
         <div className="text-red-500">{error || recordError?.message}</div>
-        <Button onClick={handleBack}>Go Back</Button>
       </div>
     );
   }
@@ -455,7 +460,6 @@ export default function ChildHealthRecordForm() {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
         <div className="text-red-500">No record data available to edit</div>
-        <Button onClick={handleBack}>Go Back</Button>
       </div>
     );
   }
