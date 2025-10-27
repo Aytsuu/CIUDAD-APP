@@ -8,7 +8,9 @@ from apps.pagination import StandardResultsPagination
 from apps.treasurer.serializers import Purpose_And_RatesSerializers
 from apps.treasurer.models import Purpose_And_Rates
 from rest_framework.views import APIView
-
+from apps.complaint.serializers import ComplaintSerializer
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class LuponCasesView(generics.ListAPIView):
@@ -493,3 +495,25 @@ class CaseTrackingView(APIView):
                 {"error": "Internal server error"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+# ============= COMPLAINT DETAIL VIEW ===============
+class ComplaintDetailView(APIView):
+    def get(self, request, comp_id, *args, **kwargs):  # Add comp_id as parameter
+        if not comp_id:
+            return Response(
+                {'error': 'comp_id parameter is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        complaint = get_object_or_404(
+            Complaint.objects.prefetch_related(
+                'complainant',  
+                'accused',       
+                'files',         
+                'staff'          
+            ),
+            comp_id=comp_id
+        )
+
+        serializer = ComplaintSerializer(complaint)
+        return Response(serializer.data, status=status.HTTP_200_OK)

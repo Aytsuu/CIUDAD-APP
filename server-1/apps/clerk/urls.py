@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import *
 from .summon.summonViews import *
-from apps.complaint.views.complaint_view import ComplaintDetailView
 from .views import CancelBusinessPermitView
 
 urlpatterns = [ 
