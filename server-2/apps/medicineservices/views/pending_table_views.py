@@ -167,252 +167,99 @@ class MedicineRequestPendingTableView(generics.ListCreateAPIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
 
-# class MedicineRequestPendingItemsTableView(APIView):
-#     pagination_class = StandardResultsPagination
-    
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             medreq_id = self.kwargs.get('medreq_id')
-#             queryset = MedicineRequestItem.objects.all()
-            
-#             # Filter by medicine request ID if provided
-#             if medreq_id:
-#                 queryset = queryset.filter(medreq_id=medreq_id)
-            
-#             # Add select_related and prefetch_related for performance
-#             queryset = queryset.select_related(
-#                 'medreq_id', 
-#                 'med', 
-#                 'minv_id',  # Added this
-#                 'minv_id__med_id',  # Added this
-#                 'medreq_id__rp_id', 
-#                 'medreq_id__pat_id',
-#                 'medreq_id__pat_id__rp_id',
-#                 'medreq_id__pat_id__trans_id',
-#                 'medreq_id__rp_id__per',
-#             ).prefetch_related(
-#                 'medreq_id__medicine_files',
-#             ).order_by('-medreq_id__requested_at')
-            
-#             # Group by med_id and prepare response data
-#             medicine_groups = {}
-            
-#             for item in queryset:
-#                 med_id = None
-#                 med_name = "Unknown Medicine"
-#                 med_type = "Unknown Type"
-                
-#                 # Get medicine ID, name, and type from med field (first priority)
-#                 if item.med:
-#                     med_id = item.med.med_id
-#                     med_name = item.med.med_name
-#                     med_type = item.med.med_type
-#                 # If med is null, try to get from minv_id__med_id
-#                 elif item.minv_id and item.minv_id.med_id:
-#                     med_id = item.minv_id.med_id.med_id
-#                     med_name = item.minv_id.med_id.med_name
-#                     med_type = item.minv_id.med_id.med_type
-                 
-#                 # Get formatted patient name
-#                 patient_name = "Unknown Patient"
-#                 if item.medreq_id.pat_id:
-#                     patient = item.medreq_id.pat_id
-                    
-#                     if patient.rp_id and patient.rp_id.per:
-#                         personal = patient.rp_id.per
-#                         patient_name = f"{personal.per_fname} {personal.per_lname}"
-#                         if personal.per_mname:
-#                             patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-#                     elif patient.trans_id:
-#                         transient = patient.trans_id
-#                         patient_name = f"{transient.tran_fname} {transient.tran_lname}"
-#                         if transient.tran_mname:
-#                             patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
-                
-#                 # Use a unique key for grouping - combine med_id and patient if needed
-#                 group_key = f"{med_id}_{patient_name}" if med_id else f"unknown_{patient_name}"
-                
-#                 if group_key not in medicine_groups:
-#                     medicine_groups[group_key] = {
-#                         'med_id': med_id,
-#                         'med_name': med_name,
-#                         'med_type': med_type,
-#                         'patient_name': patient_name,
-#                         'request_items': []
-#                     }
-                
-#                 # Get medicine files for this request
-#                 medicine_files = []
-#                 for file in item.medreq_id.medicine_files.all():
-#                     medicine_files.append({
-#                         'medf_id': file.medf_id,
-#                         'medf_name': file.medf_name,
-#                         'medf_type': file.medf_type,
-#                         'medf_path': file.medf_path,
-#                         'medf_url': file.medf_url,
-#                         'created_at': file.created_at
-#                     })
-                
-#                 # Get patient information
-#                 patient_info = {}
-#                 if item.medreq_id.pat_id:
-#                     patient = item.medreq_id.pat_id
-                    
-#                     if patient.rp_id and patient.rp_id.per:
-#                         personal = patient.rp_id.per
-#                         patient_info = {
-#                             'pat_id': patient.pat_id,
-#                             'type': 'resident',
-#                             'per_fname': personal.per_fname,
-#                             'per_lname': personal.per_lname,
-#                             'per_mname': personal.per_mname,
-#                             'per_contact': personal.per_contact,
-#                             'per_dob': personal.per_dob,
-#                             'per_sex': personal.per_sex
-#                         }
-#                     elif patient.trans_id:
-#                         transient = patient.trans_id
-#                         patient_info = {
-#                             'pat_id': patient.pat_id,
-#                             'type': 'transient',
-#                             'tran_fname': transient.tran_fname,
-#                             'tran_lname': transient.tran_lname,
-#                             'tran_mname': transient.tran_mname,
-#                             'tran_contact': transient.tran_contact,
-#                             'tran_dob': transient.tran_dob,
-#                             'tran_sex': transient.tran_sex
-#                         }
-                
-#                 # Get inventory details if available
-#                 inventory_info = {}
-#                 if item.minv_id:
-#                     inventory_info = {
-#                         'minv_id': item.minv_id.minv_id,
-#                         'stock_quantity': item.minv_id.minv_qty_avail,
-#                         'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
-#                     }
-                
-#                 request_item_data = {
-#                     'medreqitem_id': item.medreqitem_id,
-#                     'medreqitem_qty': item.medreqitem_qty,
-#                     'reason': item.reason,
-#                     'status': item.status,
-#                     'inventory': inventory_info,
-#                     'patient': patient_info,
-#                     'medicine_files': medicine_files,
-#                     'medreq_id': item.medreq_id.medreq_id,
-#                     'requested_at': item.medreq_id.requested_at,
-#                 }
-                
-#                 medicine_groups[group_key]['request_items'].append(request_item_data)
-            
-#             # Convert to list for pagination
-#             medicine_data = list(medicine_groups.values())
-            
-#             # Apply pagination
-#             paginator = self.pagination_class()
-#             page_size = int(request.GET.get('page_size', paginator.page_size))
-#             paginator.page_size = page_size
-            
-#             page_data = paginator.paginate_queryset(medicine_data, request)
-            
-#             if page_data is not None:
-#                 response = paginator.get_paginated_response(page_data)
-#                 return Response({
-#                     'success': True,
-#                     'results': response.data['results'],
-#                     'count': response.data['count'],
-#                     'next': response.data.get('next'),
-#                     'previous': response.data.get('previous')
-#                 })
-            
-#             return Response({
-#                 'success': True,
-#                 'results': medicine_data,
-#                 'count': len(medicine_data)
-#             }, status=status.HTTP_200_OK)
-            
-#         except Exception as e:
-#             return Response({
-#                 'success': False,
-#                 'error': f'Error fetching medicine request items: {str(e)}'
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-     
-            
-            
-class MedicineRequestPendingItemsTableView(APIView):
+class MedicineRequestPendingItemsTableView(APIView): 
     pagination_class = StandardResultsPagination
-    
+
     def get(self, request, *args, **kwargs):
         try:
             medreq_id = self.kwargs.get('medreq_id')
             queryset = MedicineRequestItem.objects.all()
-            
-            # Filter by medicine request ID if provided
+
             if medreq_id:
                 queryset = queryset.filter(medreq_id=medreq_id)
-            
-            # Add select_related and prefetch_related for performance
+
             queryset = queryset.select_related(
-                'medreq_id', 
-                'med', 
+                'medreq_id',
+                'med',
                 'minv_id',
                 'minv_id__med_id',
-                'medreq_id__rp_id', 
-                'medreq_id__pat_id',
-                'medreq_id__pat_id__rp_id',
-                'medreq_id__pat_id__trans_id',
+                'medreq_id__rp_id',
+                'medreq_id__trans_id',
                 'medreq_id__rp_id__per',
             ).prefetch_related(
                 'medreq_id__medicine_files',
-                'allocations',  # Prefetch allocations for each request item
-                'allocations__minv',  # Prefetch the inventory for each allocation
+                'allocations',
+                'allocations__minv',
+                'allocations__minv__med_id',
             ).order_by('-medreq_id__requested_at')
-            
-            # Group by med_id and prepare response data
+
             medicine_groups = {}
-            
+
             for item in queryset:
-                med_id = None
-                med_name = "Unknown Medicine"
-                med_type = "Unknown Type"
-                
-                # Get medicine ID, name, and type from med field (first priority)
-                if item.med:
-                    med_id = item.med.med_id
-                    med_name = item.med.med_name
-                    med_type = item.med.med_type
-                    med_dsg = item.med.med_dsg
-                    med_form = item.med.med_form
-                    med_dsg_unit = item.med.med_dsg_unit
-                # If med is null, try to get from minv_id__med_id
+                allocations = list(item.allocations.all())
+                # Try allocations first
+                if allocations and allocations[0].minv and allocations[0].minv.med_id:
+                    med_obj = allocations[0].minv.med_id
+                elif item.med:
+                    med_obj = item.med
                 elif item.minv_id and item.minv_id.med_id:
-                    med_id = item.minv_id.med_id.med_id
-                    med_name = item.minv_id.med_id.med_name
-                    med_type = item.minv_id.med_id.med_type
-                    med_dsg = item.minv_id.med_id.med_dsg
-                    med_form = item.minv_id.med_id.med_form
-                    med_dsg_unit = item.minv_id.med_id.med_dsg_unit
-                 
-                # Get formatted patient name
+                    med_obj = item.minv_id.med_id
+                else:
+                    med_obj = None
+
+                if med_obj:
+                    med_id = med_obj.med_id
+                    med_name = med_obj.med_name
+                    med_type = med_obj.med_type
+                    med_dsg = getattr(med_obj, 'med_dsg', None)
+                    med_form = getattr(med_obj, 'med_form', None)
+                    med_dsg_unit = getattr(med_obj, 'med_dsg_unit', None)
+                else:
+                    med_id = None
+                    med_name = "Unknown Medicine"
+                    med_type = "Unknown Type"
+                    med_dsg = None
+                    med_form = None
+                    med_dsg_unit = None
+
+                # Get formatted patient name and info using rp_id or trans_id
                 patient_name = "Unknown Patient"
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_name = f"{personal.per_fname} {personal.per_lname}"
-                        if personal.per_mname:
-                            patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_name = f"{transient.tran_fname} {transient.tran_lname}"
-                        if transient.tran_mname:
-                            patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
-                
-                # Use a unique key for grouping - combine med_id and patient if needed
+                patient_info = {}
+
+                medreq = item.medreq_id
+                if medreq.rp_id and hasattr(medreq.rp_id, 'per'):
+                    personal = medreq.rp_id.per
+                    patient_name = f"{personal.per_fname} {personal.per_lname}"
+                    if personal.per_mname:
+                        patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
+                    patient_info = {
+                        'type': 'resident',
+                        'rp_id': medreq.rp_id.rp_id,
+                        'per_fname': personal.per_fname,
+                        'per_lname': personal.per_lname,
+                        'per_mname': personal.per_mname,
+                        'per_contact': personal.per_contact,
+                        'per_dob': personal.per_dob,
+                        'per_sex': personal.per_sex
+                    }
+                elif medreq.trans_id:
+                    transient = medreq.trans_id
+                    patient_name = f"{transient.tran_fname} {transient.tran_lname}"
+                    if transient.tran_mname:
+                        patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
+                    patient_info = {
+                        'type': 'transient',
+                        'trans_id': transient.trans_id,
+                        'tran_fname': transient.tran_fname,
+                        'tran_lname': transient.tran_lname,
+                        'tran_mname': transient.tran_mname,
+                        'tran_contact': transient.tran_contact,
+                        'tran_dob': transient.tran_dob,
+                        'tran_sex': transient.tran_sex
+                    }
+
                 group_key = f"{med_id}_{patient_name}" if med_id else f"unknown_{patient_name}"
-                
+
                 if group_key not in medicine_groups:
                     medicine_groups[group_key] = {
                         'med_id': med_id,
@@ -424,10 +271,10 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'patient_name': patient_name,
                         'request_items': []
                     }
-                
+
                 # Get medicine files for this request
                 medicine_files = []
-                for file in item.medreq_id.medicine_files.all():
+                for file in medreq.medicine_files.all():
                     medicine_files.append({
                         'medf_id': file.medf_id,
                         'medf_name': file.medf_name,
@@ -436,37 +283,7 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'medf_url': file.medf_url,
                         'created_at': file.created_at
                     })
-                
-                # Get patient information
-                patient_info = {}
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'resident',
-                            'per_fname': personal.per_fname,
-                            'per_lname': personal.per_lname,
-                            'per_mname': personal.per_mname,
-                            'per_contact': personal.per_contact,
-                            'per_dob': personal.per_dob,
-                            'per_sex': personal.per_sex
-                        }
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'transient',
-                            'tran_fname': transient.tran_fname,
-                            'tran_lname': transient.tran_lname,
-                            'tran_mname': transient.tran_mname,
-                            'tran_contact': transient.tran_contact,
-                            'tran_dob': transient.tran_dob,
-                            'tran_sex': transient.tran_sex
-                        }
-                
+
                 # Get inventory details if available
                 inventory_info = {}
                 if item.minv_id:
@@ -475,12 +292,12 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'stock_quantity': item.minv_id.minv_qty_avail,
                         'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
                     }
-                
+
                 # Get allocation details for this request item
-                allocations = []
+                allocations_data = []
                 total_allocated_qty = 0
-                
-                for allocation in item.allocations.all():
+
+                for allocation in allocations:
                     allocation_data = {
                         'alloc_id': allocation.alloc_id,
                         'minv_id': allocation.minv.minv_id,
@@ -493,7 +310,6 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'allocated_qty': allocation.allocated_qty,
                         'created_at': allocation.created_at,
                         'minv_details': {
-                          
                             'minv_qty': allocation.minv.minv_qty,
                             'minv_qty_unit': allocation.minv.minv_qty_unit,
                             'minv_pcs': allocation.minv.minv_pcs,
@@ -507,9 +323,9 @@ class MedicineRequestPendingItemsTableView(APIView):
                             'is_archived': allocation.minv.inv_id.is_Archived if allocation.minv.inv_id else None,
                         }
                     }
-                    allocations.append(allocation_data)
+                    allocations_data.append(allocation_data)
                     total_allocated_qty += allocation.allocated_qty
-                
+
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
                     'medreqitem_qty': item.medreqitem_qty,
@@ -518,27 +334,26 @@ class MedicineRequestPendingItemsTableView(APIView):
                     'inventory': inventory_info,
                     'patient': patient_info,
                     'medicine_files': medicine_files,
-                    'medreq_id': item.medreq_id.medreq_id,
-                    'requested_at': item.medreq_id.requested_at,
-                    # Add allocation information
-                    'allocations': allocations,
+                    'medreq_id': medreq.medreq_id,
+                    'requested_at': medreq.requested_at,
+                    'allocations': allocations_data,
                     'total_allocated_qty': total_allocated_qty,
                     'remaining_qty': item.medreqitem_qty - total_allocated_qty,
                     'is_fully_allocated': total_allocated_qty >= item.medreqitem_qty,
                 }
-                
+
                 medicine_groups[group_key]['request_items'].append(request_item_data)
-            
+
             # Convert to list for pagination
             medicine_data = list(medicine_groups.values())
-            
+
             # Apply pagination
             paginator = self.pagination_class()
             page_size = int(request.GET.get('page_size', paginator.page_size))
             paginator.page_size = page_size
-            
+
             page_data = paginator.paginate_queryset(medicine_data, request)
-            
+
             if page_data is not None:
                 response = paginator.get_paginated_response(page_data)
                 return Response({
@@ -548,13 +363,13 @@ class MedicineRequestPendingItemsTableView(APIView):
                     'next': response.data.get('next'),
                     'previous': response.data.get('previous')
                 })
-            
+
             return Response({
                 'success': True,
                 'results': medicine_data,
                 'count': len(medicine_data)
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({
                 'success': False,

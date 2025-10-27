@@ -20,14 +20,13 @@ from pagination import *
 from django.db.models import Q, Prefetch
 from utils import *
 
-
-# ================PROCESSED MEDICINE REQUEST ITEMS TABLE (CONFIRMED/CANCELLED/REFERRED)========================
+# ...existing code...
 class MedicineRequestStatusTableView(generics.ListCreateAPIView):
-    """ 
+    """
     MAIN TABLE FOR PROCESSED MEDICINE REQUESTS
     Shows medicine requests that have been processed (confirmed, cancelled, or referred)
     Can be filtered by status parameter: ?status=all|confirmed|cancelled|referred
-    Handles both pat_id and rp_id cases
+    Handles rp_id and trans_id cases only (pat_id removed)
     """
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination
@@ -49,22 +48,15 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
         queryset = MedicineRequest.objects.filter(
             medreq_id__in=request_ids
         ).select_related(
-            'pat_id',
-            'pat_id__rp_id',
-            'pat_id__trans_id',
-            'pat_id__rp_id__per',
+            'trans_id',
             'rp_id',
             'rp_id__per',
         ).prefetch_related(
             'items',
-            'items__minv_id',
-            'items__minv_id__med_id',
             'items__med',
             'items__allocations',
             'items__allocations__minv',
             'items__allocations__minv__med_id',
-            'pat_id__rp_id__per__personal_addresses__add',
-            'pat_id__rp_id__per__personal_addresses__add__sitio',
             'rp_id__per__personal_addresses__add',
             'rp_id__per__personal_addresses__add__sitio',
         ).annotate(
@@ -89,37 +81,23 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
 
         if search_query:
             queryset = queryset.filter(
-                Q(pat_id__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_mname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_contact__icontains=search_query) |
-                Q(pat_id__trans_id__tran_lname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_fname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_mname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_contact__icontains=search_query) |
+                Q(trans_id__tran_lname__icontains=search_query) |
+                Q(trans_id__tran_fname__icontains=search_query) |
+                Q(trans_id__tran_mname__icontains=search_query) |
+                Q(trans_id__tran_contact__icontains=search_query) |
                 Q(rp_id__per__per_lname__icontains=search_query) |
                 Q(rp_id__per__per_fname__icontains=search_query) |
                 Q(rp_id__per__per_mname__icontains=search_query) |
                 Q(rp_id__per__per_contact__icontains=search_query) |
                 Q(medreq_id__icontains=search_query) |
-                Q(pat_id__pat_id__icontains=search_query) |
                 Q(rp_id__rp_id__icontains=search_query) |
-                Q(items__minv_id__med_id__med_name__icontains=search_query) |
                 Q(items__med__med_name__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_province__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_city__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_street__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
-                Q(pat_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
-                Q(pat_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__fam_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
             ).distinct()
@@ -163,8 +141,6 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
             ).count()
             global_total = global_completed + global_cancelled + global_referred + global_rejected
 
-            from apps.patientrecords.models import Patient
-
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
                 enriched_data = []
@@ -179,14 +155,6 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                             'referred': medreq_obj.referred_count,
                             'rejected': medreq_obj.rejected_count
                         }
-                    rp_id = item.get('rp_id')
-                    if rp_id and not item.get('pat_id'):
-                        try:
-                            patient = Patient.objects.filter(rp_id=rp_id, pat_type='Resident').first()
-                            if patient:
-                                item['pat_id'] = patient.pat_id
-                        except Exception as e:
-                            item['pat_id_error'] = str(e)
                     enriched_data.append(item)
 
                 response = self.get_paginated_response(enriched_data)
@@ -213,14 +181,6 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                         'referred': medreq_obj.referred_count,
                         'rejected': medreq_obj.rejected_count
                     }
-                rp_id = item.get('rp_id')
-                if rp_id and not item.get('pat_id'):
-                    try:
-                        patient = Patient.objects.filter(rp_id=rp_id, pat_type='Resident').first()
-                        if patient:
-                            item['pat_id'] = patient.pat_id
-                    except Exception as e:
-                        item['pat_id_error'] = str(e)
                 enriched_data.append(item)
 
             return Response({
@@ -253,7 +213,7 @@ class MedicineRequestStatusTableViewDetails(APIView):
     Can be filtered by status parameter: ?status=all|confirmed|cancelled|referred
     Includes allocation details for confirmed items
     Groups by medicine name, dosage, and form - separate groups for same medicine with different dosage/form
-    Handles both pat_id and rp_id cases
+    Handles rp_id and trans_id cases only (pat_id removed)
     Handles items directly connected to minv_id
     """
     pagination_class = StandardResultsPagination
@@ -284,13 +244,7 @@ class MedicineRequestStatusTableViewDetails(APIView):
             dosage_unit = item.med.med_dsg_unit
             form = item.med.med_form
 
-        if item.minv_id and item.minv_id.med_id and not med_id:
-            med_id = item.minv_id.med_id.med_id
-            med_name = item.minv_id.med_id.med_name
-            med_type = item.minv_id.med_id.med_type
-            dosage = item.minv_id.med_id.med_dsg
-            dosage_unit = item.minv_id.med_id.med_dsg_unit
-            form = item.minv_id.med_id.med_form
+    
 
         formatted_name = self.format_medicine_name(med_name, dosage, dosage_unit, form)
         return med_id, med_name, med_type, dosage, dosage_unit, form, formatted_name
@@ -313,13 +267,8 @@ class MedicineRequestStatusTableViewDetails(APIView):
             queryset = queryset.select_related(
                 'medreq_id',
                 'med',
-                'minv_id',
-                'minv_id__med_id',
-                'minv_id__inv_id',
-                'medreq_id__pat_id',
-                'medreq_id__pat_id__rp_id',
-                'medreq_id__pat_id__trans_id',
-                'medreq_id__pat_id__rp_id__per',
+              
+                'medreq_id__trans_id',
                 'medreq_id__rp_id',
                 'medreq_id__rp_id__per',
             ).prefetch_related(
@@ -335,23 +284,16 @@ class MedicineRequestStatusTableViewDetails(APIView):
             for item in queryset:
                 med_id, med_name, med_type, dosage, dosage_unit, form, formatted_name = self.get_medicine_details(item)
                 patient_name = "Unknown Patient"
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_name = f"{personal.per_fname} {personal.per_lname}"
-                        if personal.per_mname:
-                            patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_name = f"{transient.tran_fname} {transient.tran_lname}"
-                        if transient.tran_mname:
-                            patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
-                elif item.medreq_id.rp_id and item.medreq_id.rp_id.per:
+                if item.medreq_id.rp_id and item.medreq_id.rp_id.per:
                     personal = item.medreq_id.rp_id.per
                     patient_name = f"{personal.per_fname} {personal.per_lname}"
                     if personal.per_mname:
                         patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
+                elif item.medreq_id.trans_id:
+                    transient = item.medreq_id.trans_id
+                    patient_name = f"{transient.tran_fname} {transient.tran_lname}"
+                    if transient.tran_mname:
+                        patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
 
                 group_key = f"{formatted_name}_{item.medreq_id.medreq_id}"
 
@@ -374,7 +316,6 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         'total_requested_qty': 0,
                         'total_allocated_qty': 0,
                    }
-                # (medicine_files, patient_info, inventory_info logic can be added here as needed)
 
                 item_allocated_qty = 0
                 allocations = []
@@ -384,42 +325,25 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         allocation_data = {
                             'alloc_id': allocation.alloc_id,
                             'allocated_qty': allocation.allocated_qty,
-                            # (add other allocation fields as needed)
                         }
                         allocations.append(allocation_data)
                         item_allocated_qty += allocation.allocated_qty
-                    # Fallback: if no allocations, use medreqitem_qty
-                    if item_allocated_qty == 0:
-                        item_allocated_qty = item.medreqitem_qty
+                  
 
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
-                    'medreqitem_qty': item.medreqitem_qty,
-                    'archive_reason':item.archive_reason,
+                    'archive_reason': item.archive_reason,
                     'reason': item.reason,
                     'status': item.status,
-                    'is_direct_connection': bool(item.minv_id),
-                    'inventory': {},  # fill as needed
+                    'inventory': {},
                     'allocations': allocations,
                     'item_allocated_qty': item_allocated_qty,
-                    'remaining_qty': item.medreqitem_qty - item_allocated_qty if item.status == 'completed' else 0,
-                    'is_fully_allocated': item_allocated_qty >= item.medreqitem_qty if item.status == 'completed' else False,
                 }
 
                 medicine_groups[group_key]['request_items'].append(request_item_data)
-                medicine_groups[group_key]['total_requested_qty'] += item.medreqitem_qty
                 medicine_groups[group_key]['total_allocated_qty'] += item_allocated_qty
 
-            # Fallback: if total_allocated_qty is 0, use total_requested_qty
-            for group in medicine_groups.values():
-                if not group.get('total_allocated_qty') or group['total_allocated_qty'] == 0:
-                    group['total_allocated_qty'] = group.get('total_requested_qty', 0)
-                group['total_remaining_qty'] = group['total_requested_qty'] - group['total_allocated_qty']
-                group['is_fully_allocated'] = group['total_allocated_qty'] >= group['total_requested_qty']
-                group['allocation_percentage'] = (
-                    (group['total_allocated_qty'] / group['total_requested_qty'] * 100)
-                    if group['total_requested_qty'] > 0 else 0
-                )
+            
 
             medicine_data = list(medicine_groups.values())
 
@@ -454,3 +378,4 @@ class MedicineRequestStatusTableViewDetails(APIView):
                 'success': False,
                 'error': f'Error fetching processed medicine request items: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# ...existing code...

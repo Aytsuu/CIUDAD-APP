@@ -113,9 +113,9 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
         } else if (row.attribute === "Diagnosis") {
           rowData[recordId] = record.find_details?.assessment_summary || "N/A";
         } else if (row.attribute === "Bhw Assigned") {
-          rowData[recordId] = toTitleCase(`${record.staff_details?.rp?.per?.per_fname || ""} ${record.staff_details?.rp?.per?.per_mname || ""} ${record.staff_details?.rp?.per?.per_lname || ""} ${record.staff_details?.rp?.per?.per_suffix || ""}`.trim()) || "N/A";
+          rowData[recordId] = toTitleCase(`${record.staff_details?.fname || ""} ${record.staff_details?.mname || ""} ${record.staff_details?.lname || ""} ${record.staff_details?.suffix || ""}`.trim()) || "N/A";
         } else if (row.attribute === "Doctor Assigned") {
-          rowData[recordId] = toTitleCase(`${record.assigned_to_details?.rp?.per?.per_fname || ""} ${record.assigned_to_details?.rp?.per?.per_mname || ""} ${record.assigned_to_details?.rp?.per?.per_lname || ""} ${record.assigned_to_details?.rp?.per?.per_suffix || ""}`.trim()) || "N/A";
+          rowData[recordId] = toTitleCase(`${record.assigned_to_details?.fname || ""} ${record.assigned_to_details?.mname || ""} ${record.assigned_to_details?.lname || ""} ${record.assigned_to_details?.suffix || ""}`.trim()) || "N/A";
         } else {
           rowData[recordId] = "N/A";
         }

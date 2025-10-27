@@ -1,6 +1,6 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory ,getChildnotesfollowup,getChildData} from "../restful-api/get";
+import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory ,getChildnotesfollowup,getChildData,getChildHealthCurrentAndPreviousHistory} from "../restful-api/get";
 
 
 export const useChildHealthRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
@@ -21,14 +21,32 @@ export function useNutritionalSummary(id: string) {
   });
 }
 
-export const useChildHealthHistory = (id: string | undefined) => {
+export const useChildHealthHistory = (
+  id: string | undefined,
+  params?: { page?: number; page_size?: number }
+) => {
   return useQuery({
-    queryKey: ["childHealthHistory", id],
-    queryFn: () => getChildHealthHistory(id!),
+    queryKey: ["childHealthHistory", id, params],
+    queryFn: () => getChildHealthHistory(id!, params),
     enabled: !!id,
     staleTime: 1000 * 60 * 5
   });
 };
+
+
+// React Query hook for current and previous history
+export const useChildHealthCurrentAndPreviousHistory = (
+  chrec: string | undefined,
+  chhist: string | undefined,
+) => {
+  return useQuery({
+    queryKey: ["childHealthCurrentAndPreviousHistory", chrec, chhist],
+    queryFn: () => getChildHealthCurrentAndPreviousHistory(chrec!, chhist!,),
+    enabled: !!chrec && !!chhist,
+    staleTime: 1000 * 60 * 5
+  });
+};
+
 
 export const useNutriotionalStatus = (id: string | undefined) => {
   return useQuery({

@@ -40,7 +40,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
   const [activeTab, setActiveTab] = useState<"medical" | "philhealth" | "history">("medical");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
-  const bhw = `${consultation?.staff_details?.rp?.per?.per_fname || ""} ${consultation?.staff_details?.rp?.per?.per_lname || ""} ${consultation?.staff_details?.rp?.per?.per_mname || ""} ${consultation?.staff_details?.rp?.per?.per_suffix || ""}`;
+  const bhw = `${consultation?.staff_details?.fname || ""} ${consultation?.staff_details?.lname || ""} ${consultation?.staff_details?.mname || ""} ${consultation?.staff_details?.suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");

@@ -55,16 +55,14 @@ export const formatChildHealthData = (childRecords: any[]): any[] => {
     };
   });
 };
+export const processHistoryData = (historyData: any[], dob: string): any[] => {
+  if (!Array.isArray(historyData) || historyData.length === 0) return [];
 
-export const processHistoryData = (historyData: any, dob: string): any[] => {
-  if (!historyData || historyData.length === 0) return [];
-  const mainRecord = historyData[0];
-  if (!mainRecord || !mainRecord.child_health_histories) return [];
-  
-  const sortedHistories = [...mainRecord.child_health_histories].sort(
+  // Sort histories by created_at descending
+  const sortedHistories = [...historyData].sort(
     (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
-  
+
   return sortedHistories.map((record: any, index: number) => {
     let bmi = "N/A";
     let findingsData = {
@@ -112,8 +110,8 @@ export const processHistoryData = (historyData: any, dob: string): any[] => {
     }
 
     return {
-      chrec_id: mainRecord.chrec, // note: adjust if necessary
-      patrec: mainRecord.patrec_id,
+      chrec_id: record.chrec, // note: adjust if necessary
+      patrec: record.patrec_id,
       status: record.status || "N/A",
       chhist_id: record.chhist_id,
       id: index + 1,

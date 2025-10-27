@@ -65,7 +65,7 @@ interface Patients {
   created_at: string;
 }
 
-const getPatType = (type: string) => {
+export const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
       return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white'

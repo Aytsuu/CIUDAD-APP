@@ -2,16 +2,14 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, Users, Home, UserCheck } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import {  Search, Users, Home, UserCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useFirstaidRecords } from "../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
-import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
@@ -21,9 +19,9 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import TableLoading from "../../table-loading";
+import {firstAidColumns} from "./columns/all_records_cols";
 
 export default function AllFirstAidRecords() {
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -206,125 +204,6 @@ export default function AllFirstAidRecords() {
     exportToPDF2(dataToExport, `first_aid_records_${new Date().toISOString().slice(0, 10)}`, "First Aid Records");
   };
 
-  const columns: ColumnDef<any>[] = [
-    {
-      accessorKey: "pat_id",
-      header: "Patient ID",
-      cell: ({ row }) => <div className="flex justify-center">{row.original.pat_id}</div>
-    },
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          <span className="text-center">Patient</span> <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="text-center py-2 px-4">
-            <div className="font-medium break-words ">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age}
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          <span className="text-center">Address</span> <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
-          {row.original.address ? row.original.address : "No address provided"}
-        </div>
-      )
-    },
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "firstaid_count",
-      header: "No of Records",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.firstaid_count}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "latest_firstaid_date",
-      header: "Latest Record Date",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[150px] px-2">
-            <div className="text-center w-full">
-            {row.original.latest_firstaid_date
-              ? new Date(row.original.latest_firstaid_date).toLocaleDateString()
-              : "N/A"}
-            </div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const patientData = {
-          pat_id: row.original.pat_id,
-          pat_type: row.original.pat_type,
-          age: row.original.age,
-          addressFull: row.original.address,
-          address: {
-            add_street: row.original.street,
-            add_barangay: row.original.barangay,
-            add_city: row.original.city,
-            add_province: row.original.province,
-            add_sitio: row.original.sitio
-          },
-          households: [{ hh_id: row.original.householdno }],
-          personal_info: {
-            per_fname: row.original.fname,
-            per_mname: row.original.mname,
-            per_lname: row.original.lname,
-            per_dob: row.original.dob,
-            per_sex: row.original.sex
-          }
-        };
-        return (
-          <ViewButton
-            onClick={() => {
-              navigate("/services/firstaid/records", {
-                state: {
-                  params: {
-                    patientData
-                  }
-                }
-              });
-            }}
-          />
-        );
-      }
-    }
-  ];
 
   return (
     <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records">
@@ -469,7 +348,7 @@ export default function AllFirstAidRecords() {
                 <span>Error loading data. Please try again.</span>
               </div>
             ) : (
-              <DataTable columns={columns} data={formattedData} />
+              <DataTable columns={firstAidColumns} data={formattedData} />
             )}
           </div>
 

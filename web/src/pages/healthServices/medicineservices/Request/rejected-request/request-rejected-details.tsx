@@ -36,22 +36,6 @@ export default function RejectedRequestDetail() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Calculate totals for summary
-  const calculateTotals = () => {
-    let totalRequested = 0;
-    let totalAllocated = 0;
-    let totalRemaining = 0;
-
-    medicineData.forEach((medicine: any) => {
-      // Sum up totals from the grouped medicine level
-      totalRequested += medicine.total_requested_qty || 0;
-      totalAllocated += medicine.total_allocated_qty || 0;
-      totalRemaining += medicine.total_remaining_qty || 0;
-    });
-
-    return { totalRequested, totalAllocated, totalRemaining };
-  };
-
 
   if (rejectedRequestError) {
     return (
@@ -121,10 +105,12 @@ export default function RejectedRequestDetail() {
                   },
                 }}
               >
-                <Button size="sm">
-                  <History className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
+                {patientData?.pat_id && (
+                  <Button size="sm">
+                    <History className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                )}
               </Link>
             </div>
           </CardHeader>

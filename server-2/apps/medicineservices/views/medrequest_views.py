@@ -235,6 +235,9 @@ class SubmitMedicineRequestView(APIView):
                 rp_id=rp_instance,
                 trans_id=trans_instance,
                 mode='walk-in',
+                requested_at=timezone.now(),
+                fulfilled_at=timezone.now(),
+                signature= med.get('signature', ''),
             )
             print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
             

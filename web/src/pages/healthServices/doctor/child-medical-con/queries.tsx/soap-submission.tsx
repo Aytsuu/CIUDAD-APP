@@ -17,6 +17,8 @@ export const useSubmitSoapForm = () => {
         patrec_id: checkupData?.chrec_details?.patrec,
         chhist_id: checkupData?.chhist_id,
         chvital_id: checkupData?.child_health_vital_signs?.[0]?.chvital_id,
+         pat_id: formData.medicineRequest.pat_id,
+
 
         // SOAP fields
         assessment_summary: formData.assessment_summary,

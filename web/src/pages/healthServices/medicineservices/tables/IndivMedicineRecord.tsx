@@ -58,7 +58,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
 
     const firstRecord = medicineRecords[0];
     // Adjust the path based on your medicine record structure
-    const patientDetails = firstRecord?.patient_record?.pat_details;
+    const patientDetails = firstRecord?.pat_details;
     if (!patientDetails) {
       return null;
     }
@@ -208,7 +208,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
                     state={{
                       params: {
                         mode: "fromindivrecord",
-                        patientData: patientData,
+                        patientData: derivedPatientData,
                       },
                     }}
                   >

@@ -357,7 +357,7 @@ class CompleteChildHealthRecordAPIView(APIView):
                 submitted_data['pat_id'], 
                 child_health_history.chhist_id, 
                 staff_instance
-            )
+            ) 
         
         return Response({
             "success": True,
@@ -367,7 +367,7 @@ class CompleteChildHealthRecordAPIView(APIView):
             "chhist_id": child_health_history.chhist_id,
             "chvital_id": chvital_id,
             "followv_id": followv_id
-        }, status=status.HTTP_201_CREATED)
+        }, status=status.HTTP_201_CREATED) 
     
     def _handle_breastfeeding_dates(self, bf_dates, chhist_id):
         """Handle exclusive breastfeeding check dates"""
@@ -390,76 +390,101 @@ class CompleteChildHealthRecordAPIView(APIView):
                     chhist=chhist,
                     ebf_date=cleaned_date,
                     type_of_feeding=type_of_feeding
-                )
-    
+                    )
+        
     def _handle_medicines(self, medicines, pat_id, chhist_id, staff_instance):
-        """Handle medicine processing in bulk"""
+        """Handle medicine processing using MedicineRequest and MedicineRequestItem"""
         if not medicines:
             return
-        
+
         # Get patient and child health history instances
         try:
             patient = Patient.objects.get(pat_id=pat_id)
             chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
         except (Patient.DoesNotExist, ChildHealth_History.DoesNotExist) as e:
             raise Exception(f"Required instance not found: {str(e)}")
-        
+
         # Create single patient record for all medicines
         patient_record = PatientRecord.objects.create(
             pat_id=patient,
-            patrec_type="Medicine Record"
+            patrec_type="Medicine Request"
         )
-        
-        # Process each medicine
+        rp_id = patient.rp_id if patient.rp_id else None
+        trans_id = patient.trans_id if patient.trans_id else None
+
+        # Create MedicineRequest
+        med_request = MedicineRequest.objects.create(
+            mode='walk-in',
+            signature=None,
+            requested_at=timezone.now(),
+            fulfilled_at=timezone.now(),
+            patrec=patient_record,
+            rp_id=rp_id,
+            trans_id=trans_id,
+        )
+
+        # Group medicines by med_id (from MedicineInventory FK)
+        medid_to_allocations = {}
         for med in medicines:
             minv_id = med.get('minv_id')
             medrec_qty = med.get('medrec_qty', 0)
             reason = med.get('reason', 'Child Health Supplement')
-            
             if not minv_id or medrec_qty <= 0:
                 continue
             try:
-                # Get medicine inventory
-                medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
-                # Check stock
-                if medicine_inv.minv_qty_avail < medrec_qty:
-                    raise Exception(f"Insufficient stock for medicine {minv_id}")
-                # Create medicine record
-                medicine_record = MedicineRecord.objects.create(
-                    patrec_id=patient_record,
-                    minv_id=medicine_inv,
-                    medrec_qty=medrec_qty,
-                    reason=reason,
-                    requested_at=timezone.now(),
-                    fulfilled_at=timezone.now(),
-                    staff=staff_instance
-                )
-                # Update inventory
-                medicine_inv.minv_qty_avail -= medrec_qty
-                medicine_inv.save()
-                
-                # Create transaction
-                unit = medicine_inv.minv_qty_unit or 'pcs'
-                if unit.lower() == 'boxes':
-                    mdt_qty = f"{medrec_qty} pcs"
-                else:
-                    mdt_qty = f"{medrec_qty} {unit}"
-                
-                MedicineTransactions.objects.create(
-                    mdt_qty=mdt_qty,
-                    mdt_action="Deducted",
-                    staff=staff_instance,
-                    minv_id=medicine_inv
-                )
-                
-                # Create child health supplement relationship
-                ChildHealthSupplements.objects.create(
-                    chhist=chhist,
-                    medrec=medicine_record
-                )
-                
+                minv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
+                med_id = minv.med_id  # FK object, not string
             except MedicineInventory.DoesNotExist:
-                raise Exception(f"Medicine inventory {minv_id} not found") 
+                raise Exception(f"Medicine inventory {minv_id} not found")
+            if med_id not in medid_to_allocations:
+                medid_to_allocations[med_id] = []
+            medid_to_allocations[med_id].append({
+                'minv': minv,
+                'medrec_qty': medrec_qty,
+                'reason': reason,
+            })
+
+        # Create MedicineRequestItem and MedicineAllocation
+        for med_obj, allocations in medid_to_allocations.items():
+            reason = allocations[0].get('reason', 'Child Health Supplement')
+            medicine_item = MedicineRequestItem.objects.create(
+                reason=reason,
+                med=med_obj,
+                medreq_id=med_request,
+                status='completed',
+                action_by=staff_instance,
+                completed_by=staff_instance,
+            )
+            for alloc in allocations:
+                minv = alloc['minv']
+                medrec_qty = alloc['medrec_qty']
+                if minv and medrec_qty > 0:
+                    # Deduct inventory
+                    if minv.minv_qty_avail < medrec_qty:
+                        raise Exception(f"Insufficient stock for medicine {minv.minv_id}")
+                    minv.minv_qty_avail -= medrec_qty
+                    minv.save()
+                    # Create transaction
+                    unit = minv.minv_qty_unit or 'pcs'
+                    mdt_qty = f"{medrec_qty} pcs" if unit.lower() == 'boxes' else f"{medrec_qty} {unit}"
+                    MedicineTransactions.objects.create(
+                        mdt_qty=mdt_qty,
+                        mdt_action="Deducted",
+                        staff=staff_instance,
+                        minv_id=minv
+                    )
+                    # Create allocation
+                    allocation = MedicineAllocation.objects.create(
+                        medreqitem=medicine_item,
+                        minv=minv,
+                        allocated_qty=medrec_qty
+                    )
+                    # Link to child health supplements
+                    ChildHealthSupplements.objects.create(
+                        chhist=chhist,
+                        medrec=allocation
+                    )
+            
            
     def _create_supplement_status(self, status_type, status_data, chhist_id, weight):
         """Create supplement status record"""

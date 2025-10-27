@@ -177,9 +177,9 @@
       header: "Medicine Details",
       cell: ({ row }) => (
         <div className="min-w-[250px] px-3 py-2">
-          <div className="font-semibold text-gray-900">{row.original.medicine_name || "Unknown"}</div>
+          <div className="font-semibold text-gray-900">{row.original.med_details?.med_name || "Unknown"}</div>
           <div className="text-sm text-gray-600 mt-1">
-            {row.original.dosage} {row.original.form}
+            {row.original.med_details?.med_dsg} {row.original.med_details?.med_form}
           </div>
         </div>
       )
@@ -191,8 +191,10 @@
         <div className="flex justify-center min-w-[200px] px-2">
           <div className="flex flex-col">
             <div className="text-sm">
-              {row.original.medrec_qty} {row.original.minv_details?.minv_qty_unit === "boxes" ? "pcs" : row.original.minv_details?.minv_qty_unit}
-            </div>
+ {row.original.total_allocated_qty}{" "}
+            {row.original.unit=== "boxes"
+              ? "pcs"
+              : row.original.unit}             </div>
           </div>
         </div>
       )
@@ -233,7 +235,7 @@
                   </div>
                 </div>
 
-                <SignatureModal signature={row.original.signature} isOpen={isSignatureModalOpen} onClose={() => setIsSignatureModalOpen(false)} />
+                <SignatureModal signature={row.original.medreq_details?.signature} isOpen={isSignatureModalOpen} onClose={() => setIsSignatureModalOpen(false)} />
               </>
             ) : (
               <div className="text-xs text-gray-400 italic">No signature</div>
@@ -258,7 +260,7 @@
       cell: ({ row }) => {
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(false);
-        const files = row.original.files || [];
+        const files = row.original.medicine_files || [];
 
         const handleOpenModal = async () => {
           setIsModalOpen(true);

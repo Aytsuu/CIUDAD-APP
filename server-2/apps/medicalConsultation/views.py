@@ -828,18 +828,24 @@ class CreateMedicalConsultationView(APIView):
             )
 
 # ========MEDICAL CONSULTATION END SOAP FORM
-
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
             data = request.data
             staff_id = data.get('staff_id')
+            staff = None
+            if staff_id:
+                try:
+                    staff = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    return Response({"error": f"Staff with ID {staff_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
             medrec_id = data.get('medrec_id')
             patrec_id = data.get('patrec_id')
             app_id = data.get('app_id')
             appointment = None
             phil_id = data.get('phil_id')
+            pat_id = data.get('pat_id')
 
             if not all([medrec_id, patrec_id]):
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
@@ -871,14 +877,19 @@ class SoapFormSubmissionView(APIView):
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-                # Create MedicineRequest
+                # # Create PatientRecord for Medicine Record
+                # medicine_patrec = PatientRecord.objects.create(
+                #     pat_id=patient,
+                #     patrec_type="Medicine Record"
+                # )
+
+                # Create MedicineRequest and link to PatientRecord
                 med_request_payload = {
                     'rp_id': rp_id.rp_id if rp_id else None,
                     'trans_id': trans_id.trans_id if trans_id else None,
-                    'pat_id': pat_id,
+                    # 'patrec': medicine_patrec.patrec_id,  # Link to new PatientRecord
                     'status': 'pending',
                     'mode': 'walk-in',
-                    'created_at': timezone.now(),
                     'requested_at': timezone.now(),
                 }
                 med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
@@ -907,33 +918,28 @@ class SoapFormSubmissionView(APIView):
                         'minv_id': minv_id,
                         'allocated_qty': med.get('medrec_qty', 0),
                         'reason': med.get('reason', ''),
-                        'signature': med.get('signature', ''),
                     })
 
                 # Create MedicineRequestItem and MedicineAllocation
                 for med_id, allocations in medid_to_allocations.items():
-                    # Only one MedicineRequestItem per med_id
                     reason = allocations[0]['reason']
                     signature = allocations[0].get('signature', '')
                     medicine_item_data = {
                         'reason': reason,
-                        'med_id': med_id,
+                        'med': med_id,
                         'medreq_id': med_request.medreq_id,
                         'status': 'confirmed',
-                        'signature': signature,
                         'created_at': timezone.now(),
-                        'requested_at': timezone.now(),
+                        'action_by': staff,
                     }
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
                     medicine_item = medicine_item_serializer.save()
 
-                    # For each allocation, create MedicineAllocation
                     for alloc in allocations:
                         minv_id = alloc['minv_id']
                         allocated_qty = alloc['allocated_qty']
                         if minv_id and allocated_qty > 0:
-                            # Update MedicineInventory with temporary deduction
                             try:
                                 medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
                                 medicine_inventory.temporary_deduction += allocated_qty
@@ -943,7 +949,6 @@ class SoapFormSubmissionView(APIView):
                                     {"error": f"Medicine inventory with ID {minv_id} not found"},
                                     status=status.HTTP_400_BAD_REQUEST
                                 )
-                            # Create MedicineAllocation
                             MedicineAllocation.objects.create(
                                 medreqitem=medicine_item,
                                 minv=medicine_inventory,
@@ -1071,6 +1076,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
             patrec_id = data.get("patrec_id")
             chhist_id = data.get("chhist_id")
             chvital_id = data.get("chvital_id")
+            pat_id = data.get("pat_id")
 
             if not patrec_id:
                 raise ValidationError("Missing required field: patrec_id")
@@ -1102,14 +1108,19 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-                # Create MedicineRequest
+                # # Create PatientRecord for Medicine Record
+                # medicine_patrec = PatientRecord.objects.create(
+                #     pat_id=patient,
+                #     patrec_type="Medicine Record"
+                # )
+
+                # Create MedicineRequest and link to PatientRecord
                 med_request_payload = {
                     "rp_id": rp_id.rp_id if rp_id else None,
                     "trans_id": trans_id.trans_id if trans_id else None,
-                    "pat_id": pat_id,
+                    # "patrec": medicine_patrec.patrec_id,  # Link to new PatientRecord
                     "status": "pending",
                     "mode": medicine_request_data.get("mode", "walk-in"),
-                    "created_at": timezone.now(),
                     "requested_at": timezone.now(),
                 }
                 med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
@@ -1138,7 +1149,6 @@ class ChildHealthSoapFormSubmissionView(APIView):
                         "minv_id": minv_id,
                         "allocated_qty": med.get("medrec_qty", 0),
                         "reason": med.get("reason", ""),
-                        "signature": med.get("signature", ""),
                     })
 
                 # Create MedicineRequestItem and MedicineAllocation
@@ -1147,12 +1157,11 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     signature = allocations[0].get("signature", "")
                     medicine_item_data = {
                         "reason": reason,
-                        "med_id": med_id,
+                        "med": med_id,
                         "medreq_id": med_request.medreq_id,
                         "status": "confirmed",
-                        "signature": signature,
                         "created_at": timezone.now(),
-                        "requested_at": timezone.now(),
+                        "action_by": staff,
                     }
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
@@ -1226,7 +1235,6 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
 
 
 

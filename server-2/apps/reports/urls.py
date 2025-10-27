@@ -6,7 +6,6 @@ from .views.choptmonthly_summary_views import MonthlyOPTSummaryDetailedReport, O
 from .views.chopt_formplus_views import MonthlyOPTChildHealthSummariesAPIView, MonthlyOPTChildHealthReportAPIView
 from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIView,SemiAnnualOPTChildHealthReportAPIView
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
-from .views.chart_views import NutritionalStatusMonthlyChart
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
 from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsRCPDetailAPIView, MonthlyMedicineChart
 from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
@@ -36,7 +35,7 @@ urlpatterns=[
         path('opt-tracking/yearly-summaries/', YearlyOPTChildHealthSummariesAPIView.as_view(), name='yearly-child-health-summaries'),
         
         #CHARTS
-        path('nutritional-status/monthly-detail/<str:month>/', NutritionalStatusMonthlyChart.as_view(), name='nutritional-status-monthly-detail'),
+        # path('nutritional-status/monthly-detail/<str:month>/', NutritionalStatusMonthlyChart.as_view(), name='nutritional-status-monthly-detail'),
         path('medical-history/monthly/<str:month>/',MedicalHistoryMonthlyChart.as_view(), name='medical-history-monthly'),
         
         # NEW CHILDREN LIST

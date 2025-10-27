@@ -42,16 +42,13 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
         queryset = MedicineRequest.objects.filter(
             medreq_id__in=processing_request_ids,
         ).select_related(
-            'pat_id', 'rp_id', 'pat_id__rp_id', 'pat_id__trans_id',
-            'pat_id__rp_id__per',  # Resident patient personal info
+            'rp_id', 'trans_id',
             'rp_id__per',  # Requesting physician personal info
         ).prefetch_related(
             'items',  # Medicine request items
             'items__minv_id',  # Medicine inventory
             'items__minv_id__med_id',  # Medicine details
             'items__med',  # Alternative medicine reference
-            'pat_id__rp_id__per__personal_addresses__add',  # Patient addresses
-            'pat_id__rp_id__per__personal_addresses__add__sitio',  # Patient sitios
             'rp_id__per__personal_addresses__add',  # Physician addresses
             'rp_id__per__personal_addresses__add__sitio',  # Physician sitios
         ).order_by('-requested_at')
@@ -59,18 +56,7 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
         # Apply search filter if provided
         if search_query:
             queryset = queryset.filter(
-                # Search by patient information (Resident)
-                Q(pat_id__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_mname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_contact__icontains=search_query) |
-                
-                # Search by patient information (Transient)
-                Q(pat_id__trans_id__tran_lname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_fname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_mname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_contact__icontains=search_query) |
-                
+             
                 # Search by physician information
                 Q(rp_id__per__per_lname__icontains=search_query) |
                 Q(rp_id__per__per_fname__icontains=search_query) |
@@ -85,15 +71,7 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
                 # Search by medicine names in items
                 Q(items__minv_id__med_id__med_name__icontains=search_query) |
                 Q(items__med__med_name__icontains=search_query) |
-                
-                # Search by patient address information
-                Q(pat_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
-                
+             
                 # Search by physician address information
                 Q(rp_id__per__personaladdress__add__add_province__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_city__icontains=search_query) |
@@ -102,9 +80,7 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
                 Q(rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
                 
-                # Search by household and family information
-                Q(pat_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
-                Q(pat_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
+              
                 Q(rp_id__respondents_info__fam__fam_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
             ).distinct()

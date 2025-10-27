@@ -1,38 +1,34 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { HealthHistoryTable } from "./health-history-table"; // Updated import
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getSupplementStatusesFields } from "./config";
+// import { getSupplementStatusesFields } from "./config";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
-import { useChildHealthHistory } from "../forms/queries/fetchQueries";
+import { useChildHealthCurrentAndPreviousHistory } from "../forms/queries/fetchQueries";
 
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing
   const navigate = useNavigate();
   const location = useLocation();
   const { chrecId, chhistId } = location.state?.params || {};
-  const { data: historyData, isLoading } = useChildHealthHistory(chrecId);
+
+  // Fetch current and previous records
+  const { data: historyData, isLoading } = useChildHealthCurrentAndPreviousHistory(chrecId, chhistId);
+
+  // Extract child health histories directly
+  const childHealthHistories = useMemo(() => historyData?.results?.[0]?.child_health_histories || [], [historyData]);
+
+  // const supplementStatusesFields = useMemo(() => getSupplementStatusesFields(childHealthHistories), [childHealthHistories]);
 
   // State management
-  const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
-
-  useEffect(() => {
-    if (historyData) {
-      const sortedHistory = (historyData[0]?.child_health_histories || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      setFullHistoryData(sortedHistory);
-    }
-  }, [historyData, chhistId]);
-
-  const supplementStatusesFields = useMemo(() => getSupplementStatusesFields(fullHistoryData), [fullHistoryData]);
 
   // Loading state
   if (isLoading) {
@@ -80,12 +76,17 @@ export default function ChildHealthHistoryDetail() {
 
               {/* Current Record Tab */}
               <TabsContent value="current">
-                <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
+                <PatientSummarySection
+                  recordsToDisplay={childHealthHistories.filter((record:any) => record.chhist_id === chhistId)}
+                  fullHistoryData={childHealthHistories}
+                  chhistId={chhistId}
+                  
+                />
               </TabsContent>
 
               {/* History Tab */}
               <TabsContent value="history">
-                {fullHistoryData.length === 0 ? (
+                {childHealthHistories.length === 0 ? (
                   <div className="p-6 text-center text-gray-600">
                     <p>No health history found for this child.</p>
                   </div>
@@ -97,7 +98,7 @@ export default function ChildHealthHistoryDetail() {
                         {/* Record Count */}
                         <div className="flex justify-center">
                           <div className="text-sm text-gray-500 font-medium">
-                            Showing {fullHistoryData.length} health {fullHistoryData.length === 1 ? "record" : "records"}
+                            Showing {childHealthHistories.length} health {childHealthHistories.length === 1 ? "record" : "records"}
                           </div>
                         </div>
 
@@ -107,9 +108,9 @@ export default function ChildHealthHistoryDetail() {
                         {/* Table View */}
                         <div className="w-full">
                           <HealthHistoryTable
-                            recordsToDisplay={fullHistoryData} // Show all records for horizontal scrolling
+                            recordsToDisplay={childHealthHistories.slice().sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())} // Reverse order
                             chhistId={chhistId}
-                            supplementStatusesFields={supplementStatusesFields}
+                            // supplementStatusesFields={supplementStatusesFields}
                           />
                         </div>
                       </div>

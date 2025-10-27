@@ -3,7 +3,7 @@ import { api2 } from "@/api/api";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { showSuccessToast,showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
@@ -14,13 +14,7 @@ export interface AddRecordArgs {
 export interface AddRecordResult {
   success: boolean;
   message: string;
-  data: {
-    patrec_id: string;
-    chrec_id: string;
-    chhist_id: string;
-    chvital_id?: string;
-    followv_id?: string | null;
-  };
+  data: any;
 }
 
 /**
@@ -62,9 +56,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         newbornInitiatedbf: submittedData.newbornInitiatedbf,
         selectedStaffId: submittedData.selectedStaffId,
 
-
-
-
         // Child health history
         status: submittedData.status,
         tt_status: submittedData.tt_status,
@@ -75,12 +66,12 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
           ...vital,
           ht: vital.ht ? Number(vital.ht) : null,
           wt: vital.wt ? Number(vital.wt) : null,
-          temp: vital.temp ? Number(vital.temp) : null
+          temp: vital.temp ? Number(vital.temp) : null,
         })),
         nutritionalStatus: submittedData.nutritionalStatus
           ? {
               ...submittedData.nutritionalStatus,
-              muac: submittedData.nutritionalStatus.muac ? Number(submittedData.nutritionalStatus.muac) : null
+              muac: submittedData.nutritionalStatus.muac ? Number(submittedData.nutritionalStatus.muac) : null,
             }
           : null,
         childAge: submittedData.childAge,
@@ -92,20 +83,19 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         // Medicines
         medicines: submittedData.medicines?.map((med) => ({
           ...med,
-          medrec_qty: Number(med.medrec_qty)
+          medrec_qty: Number(med.medrec_qty),
         })),
 
         // Supplement statuses
         historicalSupplementStatuses: submittedData.historicalSupplementStatuses?.map((status) => ({
           ...status,
           chssupplementstat_id: status.chssupplementstat_id,
-          date_completed: status.date_completed || null
+          date_completed: status.date_completed || null,
         })),
 
         birthwt: submittedData.birthwt,
         anemic: submittedData.anemic,
 
-       
         // Transient parent information
         mother_fname: submittedData.motherFname,
         mother_lname: submittedData.motherLname,
@@ -117,14 +107,12 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         father_mname: submittedData.fatherMname,
         father_age: submittedData.fatherAge,
         father_dob: submittedData.fatherdob,
-        passed_status: submittedData.passed_status || "recorded"
+        passed_status: submittedData.passed_status || "recorded",
       },
       staff: staff,
       todaysHistoricalRecord: todaysHistoricalRecord,
-      originalRecord: originalRecord
+      originalRecord: originalRecord,
     };
-
-   
 
     console.log("Hey", requestData);
     // Make API call to the comprehensive update endpoint
@@ -137,10 +125,11 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         data: {
           patrec_id: response.data.data.patrec_id,
           chrec_id: response.data.data.chrec_id,
+          pat_id: submittedData.pat_id,
           chhist_id: response.data.data.chhist_id,
           chvital_id: response.data.data.chvital_id,
-          followv_id: response.data.data.followv_id
-        }
+          followv_id: response.data.data.followv_id,
+        },
       };
     } else {
       throw new Error(`Unexpected response status: ${response.status}`);
@@ -236,7 +225,7 @@ export const useUpdateChildHealthRecordMutation = () => {
     onSuccess: (data) => {
       // Comprehensive query invalidation
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.data.chrec_id] });
       queryClient.invalidateQueries({ queryKey: ["ChildHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
@@ -245,7 +234,7 @@ export const useUpdateChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
-      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.data.patrec_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
       queryClient.invalidateQueries({ queryKey: ["patients5yearsbelow"] });
@@ -258,7 +247,7 @@ export const useUpdateChildHealthRecordMutation = () => {
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
 
-showErrorToast(`Operation Failed: ${errorMessage}`)  
-  }
+      showErrorToast(`Operation Failed: ${errorMessage}`);
+    },
   });
 };
