@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { X, ChevronLeft } from "lucide-react-native";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteResReport } from '../queries/illegal-dump-update-queries';
@@ -137,11 +137,9 @@ export default function WasteIllegalDumpingResDetails() {
 
   return (
     <>
-      <_ScreenLayout
-        headerBetweenAction=""
-        showExitButton={false}
-        showBackButton={false}
-        customLeftAction={
+      <PageLayout
+        headerTitle=""
+        leftAction={
           <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>       
@@ -197,7 +195,6 @@ export default function WasteIllegalDumpingResDetails() {
             )        
           )
         }
-        stickyFooter={true}
       >
         <ScrollView className="px-6 pb-8">
           {/* Header */}
@@ -309,7 +306,7 @@ export default function WasteIllegalDumpingResDetails() {
             </View>
           </View>
         </ScrollView>
-      </_ScreenLayout>
+      </PageLayout>
 
       <Modal
           visible={showResolutionModal}
