@@ -65,6 +65,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const [selectedResolution, setSelectedResolution] = useState<any>(null);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveDialogPlanId, setArchiveDialogPlanId] = useState<number | null>(null);
+  const [showArchiveButtons, setShowArchiveButtons] = useState(false);
 
   // Fetch GAD Project Proposals and Resolutions to determine links per mandate
   const { data: proposals = [] } = useGetProjectProposals();
@@ -171,7 +173,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   };
 
   const handleArchiveClick = () => {
-    setShowArchiveDialog(true);
+    // Toggle showing individual archive buttons instead of archiving all
+    setShowArchiveButtons(true);
   };
 
   const handleConfirmArchive = async () => {
@@ -181,10 +184,37 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       await archivePlansMutation.mutateAsync(planIds);
       showSuccessToast(`Successfully archived ${plans.length} development plan(s)`);
       setShowArchiveDialog(false);
+      setShowArchiveButtons(false);
       onBack(); // Go back to main view after archiving
     } catch (error) {
       console.error("Failed to archive plans:", error);
       showErrorToast("Failed to archive development plans");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleSingleArchiveClick = (planId: number) => {
+    setArchiveDialogPlanId(planId);
+    setShowArchiveDialog(true);
+  };
+
+  // Archive a single plan
+  const handleConfirmSingleArchive = async () => {
+    if (!archiveDialogPlanId) return;
+    
+    setIsArchiving(true);
+    try {
+      await archivePlansMutation.mutateAsync([archiveDialogPlanId]);
+      showSuccessToast("Successfully archived development plan");
+      setShowArchiveDialog(false);
+      const archivedId = archiveDialogPlanId;
+      setArchiveDialogPlanId(null);
+      // Remove the archived plan from the view
+      setPlans(prev => prev.filter(plan => plan.dev_id !== archivedId));
+    } catch (error) {
+      console.error("Failed to archive plan:", error);
+      showErrorToast("Failed to archive development plan");
     } finally {
       setIsArchiving(false);
     }
@@ -247,7 +277,23 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <tr key={plan.dev_id}>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      <div className="font-semibold text-blue-900">{plan.dev_client}</div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-semibold text-blue-900">{plan.dev_client}</div>
+                        {showArchiveButtons && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSingleArchiveClick(plan.dev_id);
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 p-0 h-auto w-auto"
+                            title="Archive this plan"
+                          >
+                            <X size={16} />
+                          </Button>
+                        )}
+                      </div>
                       <div className="text-xs mt-2 text-gray-700 mb-5">{plan.dev_issue}</div>
                       {(() => {
                         const proposal = proposalByDevId.get(plan.dev_id);
@@ -523,19 +569,31 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         </div>
       )}
       <div className="flex justify-end gap-4 mt-6">
-        <Button 
-          onClick={() => handleEdit(plans[0]?.dev_id)}
-          className="text-white hover:bg-ligh-blue-1000 w-28"
-        >
-          Edit
-        </Button>
-        <Button 
-          onClick={handleArchiveClick}
-          className="bg-red-600 text-white hover:bg-red-700 w-28"
-          disabled={isArchiving}
-        >
-          {isArchiving ? "Archiving..." : "Archive"}
-        </Button>
+        {!showArchiveButtons && (
+          <>
+            <Button 
+              onClick={() => handleEdit(plans[0]?.dev_id)}
+              className="text-white hover:bg-ligh-blue-1000 w-28"
+            >
+              Edit
+            </Button>
+            <Button 
+              onClick={handleArchiveClick}
+              className="bg-red-600 text-white hover:bg-red-700 w-28"
+              disabled={isArchiving}
+            >
+              Archive
+            </Button>
+          </>
+        )}
+        {showArchiveButtons && (
+          <Button 
+            onClick={() => setShowArchiveButtons(false)}
+            className="bg-gray-600 text-white hover:bg-gray-700 w-32"
+          >
+            Cancel Archive
+          </Button>
+        )}
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
@@ -598,11 +656,14 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Archive className="h-5 w-5 text-red-600" />
-              Archive Development Plans?
+              {archiveDialogPlanId ? "Archive Development Plan?" : "Archive All Development Plans?"}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Are you sure you want to archive all development plans for year {year}?
+                {archiveDialogPlanId 
+                  ? "Are you sure you want to archive this development plan?"
+                  : `Are you sure you want to archive all development plans for year ${year}?`
+                }
               </p>
               <p className="text-sm text-gray-600">
                 Archived plans will be moved to the archive section and won't appear in the main development plans list.
@@ -610,9 +671,9 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isArchiving} onClick={() => setArchiveDialogPlanId(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmArchive}
+              onClick={archiveDialogPlanId ? handleConfirmSingleArchive : handleConfirmArchive}
               disabled={isArchiving}
               className="bg-red-600 hover:bg-red-700"
             >

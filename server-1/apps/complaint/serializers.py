@@ -105,7 +105,6 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_datetime',
             'comp_allegation',
             'comp_created_at',
-            'comp_is_archive',
             'complainant', 
             'accused',      
             'complaint_files',

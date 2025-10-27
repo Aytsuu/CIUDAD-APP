@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.parsers import *
 from .models import *
 from apps.notification.models import Notification
+from apps.profiling.models import ResidentProfile, PersonalAddress
 import json
 import logging
 from rest_framework.decorators import api_view, permission_classes
@@ -32,7 +33,7 @@ class ComplaintListView(generics.ListAPIView):
                 # 'complaintaccused_set__acsd__rp_id',
                 'files',
                 'staff'
-            ).filter(comp_is_archive=False).order_by('-comp_created_at')
+            ).order_by('-comp_created_at')
             
             # we filter by comp_status
             status = self.request.query_params.get('status')
@@ -77,7 +78,7 @@ class ArchiveComplaintView(APIView):
     def patch(self, request, pk):
         try:
             complaint = Complaint.objects.get(pk=pk)
-            complaint.comp_is_archive = True
+            # Archive functionality removed - you can add logic to mark as archived using status
             complaint.save()
             serializer = ComplaintSerializer(complaint)
             return Response(serializer.data)
@@ -93,10 +94,10 @@ class ArchiveComplaintView(APIView):
             )
 
 class ArchivedComplaintsView(generics.ListAPIView):
-    queryset = Complaint.objects.filter(comp_is_archive=True).prefetch_related(
+    queryset = Complaint.objects.prefetch_related(
         'complaintcomplainant_set__cpnt',
         'complaintaccused_set__acsd',
-        'complaint_file',
+        'files',
         'staff'
     ).order_by('-comp_created_at')
     serializer_class = ComplaintSerializer
@@ -105,14 +106,14 @@ class RestoreComplaintView(APIView):
 
     def patch(self, request, pk):
         try:
-            complaint = Complaint.objects.get(pk=pk, comp_is_archive=True)
-            complaint.comp_is_archive = False
+            complaint = Complaint.objects.get(pk=pk)
+            # Restore functionality removed
             complaint.save()
             serializer = ComplaintSerializer(complaint)
             return Response(serializer.data)
         except Complaint.DoesNotExist:
             return Response(
-                {"error": "Archived complaint not found"},
+                {"error": "Complaint not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:

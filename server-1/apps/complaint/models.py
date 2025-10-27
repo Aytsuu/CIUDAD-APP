@@ -37,7 +37,6 @@ class Complaint(models.Model):
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
-    comp_is_archive = models.BooleanField(default=False)
     comp_status = models.CharField(
         max_length=20, 
         default='Pending',
