@@ -1,12 +1,13 @@
 import { api } from "@/api/api";
 
-export const resolveCase = async (status_type: string, sc_id: string) => {
+export const resolveCase = async (status_type: string, sc_id: string, staff_id: string) => {
     try{
 
         if(status_type == "Council"){
             const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
                 sc_mediation_status: "Resolved",
                 sc_date_marked: new Date().toISOString(),
+                staff_id: staff_id
             })
 
             return res.data
@@ -14,6 +15,7 @@ export const resolveCase = async (status_type: string, sc_id: string) => {
             const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
                 sc_conciliation_status: "Resolved",
                 sc_date_marked: new Date().toISOString(),
+                staff_id: staff_id
             })
             return res.data
         }
@@ -37,7 +39,7 @@ export const forwardCase = async(sc_id:string) => {
 }
 
 
-export const escalateCase = async (sc_id: string, comp_id: string) => {
+export const escalateCase = async (sc_id: string, comp_id: string, staff_id: string) => {
     try{
         const currentDate = new Date();
         const dueDate = new Date(currentDate);
@@ -60,6 +62,7 @@ export const escalateCase = async (sc_id: string, comp_id: string) => {
         const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
             sc_conciliation_status: "Escalated",
             sc_date_marked: new Date().toISOString(),
+            staff_id: staff_id
         })
 
         return res.data

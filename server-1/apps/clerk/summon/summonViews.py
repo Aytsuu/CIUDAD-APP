@@ -7,7 +7,10 @@ from apps.act_log.utils import ActivityLogMixin
 from apps.pagination import StandardResultsPagination
 from apps.treasurer.serializers import Purpose_And_RatesSerializers
 from apps.treasurer.models import Purpose_And_Rates
-
+from rest_framework.views import APIView
+from apps.complaint.serializers import ComplaintSerializer
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class LuponCasesView(generics.ListAPIView):
@@ -169,12 +172,13 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
 class SummonCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.all().order_by('hs_id')
         ),
-        'hearing_schedules',  
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',
@@ -188,13 +192,14 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
 class CouncilCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
                 hs_level__icontains='Mediation' 
             ).order_by('hs_id') 
-
         ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
@@ -209,7 +214,9 @@ class CouncilCaseDetailView(generics.RetrieveAPIView):
 class LuponCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCase.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().select_related(
+        'staff_id__rp__per'
+    ).prefetch_related(
         Prefetch(
             'hearing_schedules',
             queryset=HearingSchedule.objects.filter(
@@ -415,3 +422,98 @@ class FileActionIdView(generics.RetrieveAPIView):
             pr_purpose="File Action", 
             pr_is_archive=False
         ).order_by('-pr_date').first()
+    
+
+# ================== ANALYTICS =======================
+
+class ConciliationAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        counts = {
+            'waiting': SummonCase.objects.filter(sc_conciliation_status__iexact='waiting for schedule').count(),
+            'ongoing': SummonCase.objects.filter(sc_conciliation_status__iexact='ongoing').count(),
+            'escalated': SummonCase.objects.filter(sc_conciliation_status__iexact='escalated').count(),
+            'resolved': SummonCase.objects.filter(sc_conciliation_status__iexact='resolved').count(),
+            'total': SummonCase.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+    
+class MediationAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        counts = {
+            'waiting': SummonCase.objects.filter(sc_mediation_status__iexact='waiting for schedule').count(),
+            'ongoing': SummonCase.objects.filter(sc_mediation_status__iexact='ongoing').count(),
+            'forwarded': SummonCase.objects.filter(sc_mediation_status__iexact='forwarded to lupon').count(),
+            'resolved': SummonCase.objects.filter(sc_mediation_status__iexact='resolved').count(),
+            'total': SummonCase.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+    
+
+class SummonRemarksAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        try:
+            no_remarks_count = HearingSchedule.objects.filter(remark__isnull=True).count()
+            
+            return Response({
+                'no_remarks_count': no_remarks_count
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error in hearing schedule analytics: {e}")
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+
+# ============== RESIDENT SIDE CASE TRACKING VIEW ==================
+class CaseTrackingView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, comp_id):
+        try:
+            complaint = Complaint.objects.get(comp_id=comp_id)
+            serializer_class = CaseTrackingSerializer(complaint)
+            
+            return Response(serializer_class.data)
+            
+        except Complaint.DoesNotExist:
+            return Response(
+                {"error": "Complaint not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Internal server error"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# ============= COMPLAINT DETAIL VIEW ===============
+class ComplaintDetailView(APIView):
+    def get(self, request, comp_id, *args, **kwargs):  # Add comp_id as parameter
+        if not comp_id:
+            return Response(
+                {'error': 'comp_id parameter is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        complaint = get_object_or_404(
+            Complaint.objects.prefetch_related(
+                'complainant',  
+                'accused',       
+                'files',         
+                'staff'          
+            ),
+            comp_id=comp_id
+        )
+
+        serializer = ComplaintSerializer(complaint)
+        return Response(serializer.data, status=status.HTTP_200_OK)

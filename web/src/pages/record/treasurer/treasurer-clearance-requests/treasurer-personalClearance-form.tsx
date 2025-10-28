@@ -28,17 +28,13 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     
-    // Try multiple ways to get staff_id
+   
     const getStaffId = () => {
         if (!user?.staff) return undefined;
-        
-        // Try different possible field names
         const staff = user.staff;
         let staffId = staff.staff_id || staff.id || staff.staffId || staff.staff_ID;
-        
-        // Handle truncated staff_id by padding with zeros
         if (staffId && typeof staffId === 'string') {
-            // If staff_id is less than 11 digits, pad with leading zeros
+            
             if (staffId.length < 11) {
                 staffId = staffId.padStart(11, '0');
             }

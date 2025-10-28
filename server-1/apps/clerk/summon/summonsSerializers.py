@@ -5,6 +5,7 @@ from utils.supabase_client import upload_to_storage
 from django.utils import timezone
 from django.db import transaction
 from apps.profiling.serializers.business_serializers import FileInputSerializer
+from apps.treasurer.serializers import Purpose_And_RatesSerializers
 
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
@@ -149,6 +150,7 @@ class SummonCasesSerializer(serializers.ModelSerializer):
     
 class RemarkDetailSerializer(serializers.ModelSerializer):
     supp_docs = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Remark
@@ -156,7 +158,8 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
             'rem_id',
             'rem_remarks',
             'rem_date',
-            'supp_docs'
+            'supp_docs',
+            'staff_name'
         ]
     
     def get_supp_docs(self, obj):
@@ -166,6 +169,25 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting remark supp docs: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
+        return None
 
 class HearingScheduleDetailSerializer(serializers.ModelSerializer):
     remark = RemarkDetailSerializer(read_only=True)
@@ -206,6 +228,7 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
 
 class SummonCaseDetailSerializer(serializers.ModelSerializer):
     hearing_schedules = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = SummonCase
@@ -217,7 +240,9 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
             'sc_date_marked', 
             'sc_reason', 
             'comp_id',
+            'staff_name',
             'hearing_schedules'
+            
         ]
     
     def get_hearing_schedules(self, obj):
@@ -228,6 +253,24 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting hearing schedules: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
         
 
 class HearingMinutesCreateSerializer(serializers.ModelSerializer):
@@ -320,6 +363,61 @@ class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
         if rsd_files:
             return RemarkSuppDocs.objects.bulk_create(rsd_files)
         return []
+
+# ================ PAYMENT SERIALIZER ==============
+class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
+    pay_amount = serializers.SerializerMethodField()
+    purpose_details = Purpose_And_RatesSerializers(source='pr_id', read_only=True)
     
+    class Meta:
+        model = ServiceChargePaymentRequest
+        fields = [
+            'pay_id', 
+            'pay_sr_type', 
+            'pay_status', 
+            'pay_date_req', 
+            'pay_due_date', 
+            'pay_req_status', 
+            'pay_date_paid', 
+            'comp_id', 
+            'pr_id',
+            'pay_amount',
+            'purpose_details'
+        ]
+    
+    def get_pay_amount(self, obj):
+        """Get the payment amount from the associated Purpose_And_Rates"""
+        if obj.pr_id and obj.pr_id.pr_rate:
+            return obj.pr_id.pr_rate
+        return None
+    
+# =================== CASE TRACKING SERIALIZER ============================
+class CaseTrackingSerializer(serializers.Serializer):
+    payment_request = serializers.SerializerMethodField()
+    summon_case = serializers.SerializerMethodField()
 
+    def get_payment_request(self, obj):
+        try:
+            payment_request = ServiceChargePaymentRequest.objects.filter(
+                comp_id=obj.comp_id
+            ).select_related('pr_id').first() 
+            
+            if payment_request:
+                return ServiceChargePaymentReqSerializer(payment_request).data
+            return None
+        except Exception as e:
+            print(f"Error getting payment request: {e}")
+            return None
 
+    def get_summon_case(self, obj):
+        try:
+            summon_case = SummonCase.objects.filter(
+                comp_id=obj.comp_id
+            ).first()
+            
+            if summon_case:
+                return SummonCaseDetailSerializer(summon_case).data
+            return None
+        except Exception as e:
+            print(f"Error getting summon case: {e}")
+            return None

@@ -22,15 +22,13 @@ export default function SummonRemarkDetails(){
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const { sc_id, incident_type, hasResident, comp_names, acc_names, complainant_addresses, accused_addresses, complainant_rp_ids, sc_code, sc_mediation_status} = params
+    const { sc_id, incident_type, hasResident, comp_names, acc_names, sc_code, sc_mediation_status} = params
 
     const {data: details, isLoading} = useGetSummonCaseDetails(String(sc_id))
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
     const accusedNames = acc_names ? (acc_names as string).split(',') : []
-    const complainantAddresses = complainant_addresses ? (complainant_addresses as string).split(',') : []
-    const accusedAddresses = accused_addresses ? (accused_addresses as string).split(',') : []
 
     const hasResidentBool = hasResident === "true"
 
@@ -127,11 +125,21 @@ export default function SummonRemarkDetails(){
 
                         {/* Show Date Marked if available */}
                         {details?.sc_date_marked && (
-                            <View className="flex-row justify-between items-center py-2">
-                                <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
-                                <Text className="text-sm font-semibold text-gray-900">
-                                    {formatTimestamp(details.sc_date_marked)}
-                                </Text>
+                            <View className="py-2">
+                                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                    <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
+                                    <Text className="text-sm font-semibold text-gray-900">
+                                        {formatTimestamp(details.sc_date_marked)}
+                                    </Text>
+                                </View>
+                                {details.staff_name && (
+                                    <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                        <Text className="text-sm font-medium text-gray-600">Marked By</Text>
+                                        <Text className="text-sm font-semibold text-gray-900">
+                                            {details.staff_name}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         )}
                     </CardContent>
@@ -260,12 +268,12 @@ export default function SummonRemarkDetails(){
                                     <View className="border-t border-gray-100 pt-3">
                                         {schedule.remark && schedule.remark.rem_id ? (
                                             <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                                <View className="flex-row justify-between items-start mb-2">
-                                                    <Text className="text-sm font-semibold text-blue-800">
-                                                        Remarks Added
+                                                <View className="mb-2">
+                                                    <Text className="text-sm font-semibold text-blue-800 mb-1">
+                                                        Remarks
                                                     </Text>
-                                                    <Text className="text-xs text-blue-600">
-                                                        {formatTimestamp(schedule.remark.rem_date)}
+                                                    <Text className="text-xs text-blue-600 italic">
+                                                        by{schedule.remark.staff_name ? ` ${schedule.remark.staff_name}` : ' Unknown'}, on {formatTimestamp(schedule.remark.rem_date)}
                                                     </Text>
                                                 </View>
                                                 <Text className="text-sm text-gray-700 mb-2">
@@ -279,7 +287,7 @@ export default function SummonRemarkDetails(){
                                                         >
                                                             <View className="flex-row items-center">
                                                                 <Paperclip size={16} color="#3b82f6" />
-                                                                <Text className="text-blue-700 font-medium ml-2">
+                                                                <Text className="text-blue-700 text-sm font-semibold ml-2">
                                                                     View Attached Files ({schedule.remark.supp_docs.length})
                                                                 </Text>
                                                             </View>
@@ -306,7 +314,7 @@ export default function SummonRemarkDetails(){
                                     {!schedule.remark && (
                                         <TouchableOpacity 
                                             className="mt-3 bg-blue-600 py-2 px-4 rounded-lg"
-                                            onPress={() => handleAddRemarks(schedule.hs_id, schedule.st_id, schedule.sc_id, hearingSchedules.length)}
+                                            onPress={() => handleAddRemarks(schedule.hs_id, schedule.summon_time.st_id, details?.sc_id || '', hearingSchedules.length)}
                                         >
                                             <Text className="text-white text-sm font-semibold text-center">
                                                 Add Remarks

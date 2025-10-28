@@ -53,8 +53,8 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
 
     # Try sending the message
     try:
-        response = messaging.send(fcm_message)
-        print(f"✅ Successfully sent message: {response}")
+        response = messaging.send(message)
+        print("Successfully sent message:", response)
         return response
 
     except exceptions.InvalidArgumentError as e:

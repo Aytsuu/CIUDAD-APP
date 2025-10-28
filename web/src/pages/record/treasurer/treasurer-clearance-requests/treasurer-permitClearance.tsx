@@ -280,7 +280,8 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                         mainContent={
                             <ReceiptForm 
                                 certificateRequest={{
-                                    cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
+                                    cr_id: row.original.bpr_id || "", // Keep for backward compatibility
+                                    bpr_id: row.original.bpr_id || "", // Add bpr_id field
                                     req_type: "Permit Clearance",
                                     req_purpose: row.original.purposeData ? row.original.purposeData.pr_purpose : "Business Permit", // Use actual purpose name
                                     resident_details: {

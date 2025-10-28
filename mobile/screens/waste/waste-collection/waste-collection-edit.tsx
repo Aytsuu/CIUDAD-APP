@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Loader2 } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { ChevronLeft  } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,7 @@ import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-querie
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useUpdateWasteSchedule } from './queries/waste-col-update-queries';
 import { useUpdateCollectors } from './queries/waste-col-update-queries';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
 import { useAuth } from '@/contexts/AuthContext';
@@ -206,21 +206,13 @@ function WasteColEdit() {
   };
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Edit Waste Collection Schedule</Text>}
-      headerAlign="left"
-      showBackButton={true}
-      showExitButton={false}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text className="text-[13px]">Edit Waste Collection Schedule</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isLoading || isUpdating || isUpdatingCollectors}
-      loadingMessage="Updating schedule..."
       footer={
         <View className="w-full">
           {!isEditing ? (
@@ -233,11 +225,12 @@ function WasteColEdit() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-md items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
                 }}
+                disabled={isUpdating || isUpdatingCollectors}                
               >
                 <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -248,14 +241,14 @@ function WasteColEdit() {
                     className="flex-1 bg-primaryBlue py-4 rounded-md items-center flex-row justify-center"
                     disabled={isUpdating || isUpdatingCollectors}
                   >
-                    {isUpdating || isUpdatingCollectors ? (
-                      <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                        <Text className="text-white text-base font-semibold">Saving...</Text>
-                      </>
-                    ) : (
-                      <Text className="text-white text-base font-semibold">Save</Text>
-                    )}
+                    <View className="flex-row justify-center items-center gap-2">
+                        {(isUpdating || isUpdatingCollectors) && (
+                        <ActivityIndicator size="small" color="white" />
+                        )}
+                        <Text className="text-white text-base font-semibold">
+                        {isUpdating || isUpdatingCollectors ? "Saving..." : "Save"}
+                        </Text>
+                    </View>  
                   </TouchableOpacity>
                 }
                 title="Confirm Save"
@@ -267,7 +260,6 @@ function WasteColEdit() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
       <View className="w-full px-6">
         {/* Date Input */}
@@ -396,7 +388,7 @@ function WasteColEdit() {
           )}
         </View>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

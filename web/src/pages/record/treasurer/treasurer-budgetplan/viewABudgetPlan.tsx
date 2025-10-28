@@ -156,6 +156,7 @@ function ViewBudgetPlan() {
                     <BudgetItemEditForm
                       planId={planId}
                       budgetItems={fetchedData?.details || []}
+                      plan_year = {fetchedData.plan_year}
                       balanceUnappropriated={
                         fetchedData?.plan_balUnappropriated
                       }

@@ -6,20 +6,29 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
 import { useGetViewAccepted } from "./queries/garbagePickupStaffFetchQueries"
 import { LoadingState } from "@/components/ui/loading-state"
+import { Button } from "@/components/ui/button"
+import { ConfirmationModal } from "@/components/ui/confirmationModal"
+import { useUpdateGarbageRequestStatus } from "./queries/garbagePickupStaffUpdateQueries"
+import { LoadingModal } from "@/components/ui/loading-modal"
 
 export default function ViewRequestDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
   const { data: requestDetails, isLoading } = useGetViewAccepted(garb_id)
+  const { mutate: confirm, isPending} = useUpdateGarbageRequestStatus()
 
   if(isLoading){
-      return(
-        <View className="flex-1 justify-center items-center">
-            <LoadingState/>
-        </View>
-      )
-    }
+    return(
+      <View className="flex-1 justify-center items-center">
+          <LoadingState/>
+      </View>
+    )
+  }
+
+  const handleConfirm = (garb_id: string) => {
+    confirm(garb_id)
+  }
   
 
   const handleEditAssignment = () => {
@@ -47,6 +56,19 @@ export default function ViewRequestDetails() {
       headerBetweenAction={<Text className="text-[13px]">Request Details</Text>}
       showBackButton={false}
       showExitButton={false}
+      footer={
+        <ConfirmationModal
+          trigger={
+            <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
+              <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm Completion</Text>
+          </Button>
+          }
+          description="Are you sure you want to mark this request as completed?"
+          title="Completion Confirmation"
+          onPress={() => handleConfirm(garb_id)}
+        />
+      }
+      stickyFooter={true}
     >
       <ScrollView className="flex-1 p-6">
         {/* Request Info Card */}
@@ -125,7 +147,7 @@ export default function ViewRequestDetails() {
             <View className="py-3 border-b border-gray-100">
               <View className="flex-row items-center mb-2 gap-2">
                 <User size={16} color="#6b7280" className="mr-2" />
-                <Text className="text-gray-600 font-PoppinsMedium">Driver:</Text>
+                <Text className="text-gray-600 font-PoppinsMedium">Driver Loader:</Text>
               </View>
               <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails?.assignment_info.driver}</Text>
             </View>
@@ -135,7 +157,7 @@ export default function ViewRequestDetails() {
             <View className="py-3 border-b border-gray-100">
               <View className="flex-row items-center mb-2 gap-2">
                 <Users size={16} color="#6b7280" className="mr-2" />
-                <Text className="text-gray-600 font-PoppinsMedium">Collectors:</Text>
+                <Text className="text-gray-600 font-PoppinsMedium">Loader(s):</Text>
               </View>
               <View className="ml-6">
                 <View className="flex-row flex-wrap gap-2">
@@ -211,6 +233,7 @@ export default function ViewRequestDetails() {
             </View>
           </View>
         )}
+        <LoadingModal visible={isPending}/>
       </ScrollView>
     </_ScreenLayout>
   )

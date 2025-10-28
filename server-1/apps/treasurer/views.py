@@ -59,7 +59,7 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
             'plan_id',
             'plan_year',
             'plan_actual_income',
-            'plan_rpt_income'
+            'plan_rpt_income',
             'plan_balance',
             'plan_tax_share',
             'plan_tax_allotment',

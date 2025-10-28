@@ -129,6 +129,7 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
             );
         }
     },
+    {accessorKey: "sr_req_status", header: "Request Status"},
     { accessorKey: "action", 
         header: "Action",
         cell: ({ row }) =>(

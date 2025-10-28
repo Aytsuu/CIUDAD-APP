@@ -7,7 +7,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageRejectedResident } from "../queries/garbagePickupFetchQueries";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useAuth } from "@/contexts/AuthContext";
-import { LoadingState } from "@/components/ui/loading-state"; // ✅ Import your reusable loading component
+import { LoadingState } from "@/components/ui/loading-state"; 
 
 export default function ResidentRejected() {
   const { user } = useAuth();
@@ -57,7 +57,7 @@ export default function ResidentRejected() {
       {/* Loading / Empty / List */}
       {isDataLoading ? (
         <View className="h-64 justify-center items-center">
-          <LoadingState /> {/* ✅ Unified loading animation */}
+          <LoadingState />
         </View>
       ) : filteredData.length === 0 ? (
         <View className="justify-center items-center py-8">
@@ -76,7 +76,7 @@ export default function ResidentRejected() {
           </View>
         </View>
       ) : (
-        <ScrollView className="pb-4" showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}>
+       <ScrollView className="pb-4" showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}>
           <View className="gap-4">
             {filteredData.map((request) => (
               <Card
@@ -143,12 +143,11 @@ export default function ResidentRejected() {
                       </View>
                     )}
 
-                    {/* Rejection Date */}
+                    {/* Rejection Date with Staff Name */}
                     {request.dec_date && (
                       <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-600">Rejection Date:</Text>
-                        <Text className="text-sm font-medium text-red-700">
-                          {formatTimestamp(request.dec_date)}
+                        <Text className="text-sm text-gray-400 text-right italic">
+                          {request.staff_name ? `by ${request.staff_name}, on ${formatTimestamp(request.dec_date)}` : formatTimestamp(request.dec_date)}
                         </Text>
                       </View>
                     )}
