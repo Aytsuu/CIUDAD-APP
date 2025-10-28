@@ -148,6 +148,8 @@ urlpatterns = [
     # Population Structure Report
     path("population-structure-report/", PopulationStructureReportView.as_view(), name="population-structure-report"),
     path("population-yearly-records/", PopulationYearlyRecordsView.as_view(), name="population-yearly-records"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
 
     # Survey Identification URLs
     path("survey-identification/list/", SurveyIdentificationListView.as_view(), name="survey-identification-list"),

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
 import { Printer, Download, Loader2 } from "lucide-react"
@@ -10,6 +10,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { usePopulationStructureReport } from "./queries/fetchQueries"
 import type { PopulationStructureData } from "./types"
 import { useReactToPrint } from "react-to-print"
+import html2pdf from "html2pdf.js"
 
 export default function PopulationStructureRecords() {
   const location = useLocation()
@@ -22,6 +23,7 @@ export default function PopulationStructureRecords() {
 
   const { showLoading, hideLoading } = useLoading()
   const printRef = useRef<HTMLDivElement>(null)
+  const [exporting, setExporting] = useState(false)
   const { year } = state || {}
 
   const { data: reportResponse, isLoading, error } = usePopulationStructureReport(year, "all")
@@ -66,6 +68,32 @@ export default function PopulationStructureRecords() {
     `,
   })
 
+  // Export to PDF handler using html2pdf.js
+  const handleExportPdf = async () => {
+    const element = printRef.current
+    if (!element) return
+    try {
+      setExporting(true)
+      const filename = `Population_Structure_${year || "all"}.pdf`
+      await html2pdf()
+        .set({
+          margin: [0.3, 0.5, 0.3, 0.5],
+          filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: "in", format: "legal", orientation: "portrait" },
+          pagebreak: { mode: ["css", "legacy"] },
+        } as any)
+        .from(element)
+        .save()
+      
+    } catch (e) {
+      toast.error("Failed to export PDF")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <LayoutWithBack title="Population Structure Report" description="Loading report data...">
@@ -88,9 +116,13 @@ export default function PopulationStructureRecords() {
             <Printer className="mr-2 h-4 w-4" />
             Print Report
           </Button>
-          <Button onClick={handlePrint}>
-            <Download className="mr-2 h-4 w-4" />
-            Export as PDF
+          <Button onClick={handleExportPdf} disabled={exporting}>
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {exporting ? "Exporting…" : "Export as PDF"}
           </Button>
         </div>
 

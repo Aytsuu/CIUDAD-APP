@@ -47,6 +47,7 @@ import MultiStepFormFHIS from "@/pages/healthServices/Reports/fhisreport/pages/m
 import FHSISMonthlyRecords from "@/pages/healthServices/Reports/fhisreport/monthly";
 import YearlyPopulationRecords from "@/pages/healthServices/Reports/healthprofiling-report/yearly";
 import PopulationStructureRecords from "@/pages/healthServices/Reports/healthprofiling-report/records";
+import HealthProfilingSummaryReport from "@/pages/healthServices/Reports/healthprofiling-report/HealthProfilingSummaryReport";
 
 export const healthreports_router = [
   // {
@@ -212,5 +213,9 @@ export const healthreports_router = [
   {
     path: "/health-family-profiling/records",
     element: <PopulationStructureRecords />
+  },
+  {
+    path: "/health-family-profiling/summary",
+    element: <HealthProfilingSummaryReport />
   }
 ];

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Folder } from "lucide-react";
+import { Loader2, Search, Folder, FileText } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { MonthInfoCard } from "../month-folder-component";
+import { Button } from "@/components/ui/button/button";
+import { useNavigate } from "react-router-dom";
 
 interface YearRecord {
   year: string;
@@ -19,9 +21,11 @@ interface YearRecord {
 
 export default function YearlyPopulationRecords() {
   const { showLoading, hideLoading } = useLoading();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedYear, setSelectedYear] = useState<string>("");
 
   const { data: apiResponse, isLoading, error } = usePopulationYearlyRecords();
 
@@ -41,6 +45,13 @@ export default function YearlyPopulationRecords() {
 
   const yearlyData = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
   const totalYears = yearlyData.length;
+
+  // Set default year to most recent when data loads
+  useEffect(() => {
+    if (yearlyData.length > 0 && !selectedYear) {
+      setSelectedYear(yearlyData[0].year);
+    }
+  }, [yearlyData, selectedYear]);
 
   // Filter data based on search query
   const filteredData = yearlyData.filter((yearData: YearRecord) => {
@@ -63,10 +74,47 @@ export default function YearlyPopulationRecords() {
     >
       <div>
         <Card className="">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
-            <div className="flex-1"></div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center p-4 border-b">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Select Year:</span>
+                <Select
+                  value={selectedYear}
+                  onValueChange={(value) => setSelectedYear(value)}
+                >
+                  <SelectTrigger className="w-32 bg-white">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearlyData.map((record: YearRecord) => (
+                      <SelectItem key={record.year} value={record.year}>
+                        {record.year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button
+                variant="default"
+                onClick={() => {
+                  if (selectedYear) {
+                    navigate("/health-family-profiling/summary", {
+                      state: { year: selectedYear }
+                    });
+                  } else {
+                    toast.error("Please select a year first");
+                  }
+                }}
+                disabled={!selectedYear}
+                className="w-full sm:w-auto"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                View Health Summary Report
+              </Button>
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 p-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               {/* Search Input */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />

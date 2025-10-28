@@ -71,6 +71,7 @@
     "framer-motion": "^12.7.4",
     "html2canvas": "^1.4.1",
     "html2pdf": "^0.0.11",
+    "html2pdf.js": "^0.12.1",
     "iodash": "^0.0.1-security",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
