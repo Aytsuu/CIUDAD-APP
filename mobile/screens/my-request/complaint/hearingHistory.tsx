@@ -177,11 +177,10 @@ export default function HearingHistory() {
       </PageLayout>
 
       {/* Floating Add Button - Always visible but conditionally disabled */}
-      <TouchableOpacity 
-        onPress={handleAddSchedule}
-        disabled={hasOpenSchedule || isClosed}
+      <TouchableOpacity onPress={handleAddSchedule}
+        disabled={hasOpenSchedule || isClosed || hearingSchedules.length === 6}
         className={`absolute bottom-6 right-6 w-16 h-16 rounded-full items-center justify-center shadow-lg z-50 ${
-          hasOpenSchedule || isClosed ? "bg-gray-400" : "bg-blue-600"
+          hasOpenSchedule || isClosed || hearingSchedules.length === 6 ? "bg-gray-400" : "bg-blue-600"
         }`}
         style={{
           shadowColor: "#000",

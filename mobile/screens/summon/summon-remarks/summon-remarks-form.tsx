@@ -114,6 +114,8 @@ export default function SummonRemarksForm() {
                         <MediaPicker
                             selectedImages={selectedImages}
                             setSelectedImages={setSelectedImages}
+                            limit={10}
+                            editable={true}
                         />
                         
                         {selectedImages.length === 0 && (
@@ -167,7 +169,6 @@ export default function SummonRemarksForm() {
                                         checked={value}
                                         onCheckedChange={(checked) => onChange(checked)}
                                         className="border-gray-300 w-5 h-5"
-                                        indicatorClassName="bg-primaryBlue"
                                     />
                                     <View className="flex-1">
                                         <Text className="text-[14px] font-PoppinsSemiBold text-gray-900 mb-1">
