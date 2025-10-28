@@ -92,7 +92,7 @@ export default function AddImzSupplyStock() {
           <form onSubmit={(e) => e.preventDefault()} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
             <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
               <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Add Immunization Supply Stocks
+              Add Stocks
             </Label>
             <div className="space-y-6 p-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

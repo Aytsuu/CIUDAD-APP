@@ -69,7 +69,7 @@ class VaccinationRecordSerializerBase(serializers.ModelSerializer):
 # ALL  VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
-    patient_details = PatientSerializer(source='*', read_only=True)
+    patient_details = PatientMiniMalSerializer(source='*', read_only=True)
     latest_vaccination_date = serializers.SerializerMethodField()
     
     class Meta:

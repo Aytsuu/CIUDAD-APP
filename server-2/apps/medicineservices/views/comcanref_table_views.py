@@ -92,12 +92,12 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                 Q(medreq_id__icontains=search_query) |
                 Q(rp_id__rp_id__icontains=search_query) |
                 Q(items__med__med_name__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__add_province__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__add_city__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__add_street__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
-                Q(rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__add_province__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__add_city__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__add_barangay__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__add_street__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp_id__per__personal_addresses__add__add_external_sitio__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__fam_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
             ).distinct()
@@ -141,22 +141,22 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
             ).count()
             global_total = global_completed + global_cancelled + global_referred + global_rejected
 
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                enriched_data = []
-                for item in serializer.data:
-                    medreq_id = item.get('medreq_id')
-                    medreq_obj = next((q for q in page if q.medreq_id == medreq_id), None)
-                    if medreq_obj:
-                        item['item_counts'] = {
-                            'total_items': medreq_obj.total_items,
-                            'completed': medreq_obj.completed_count,
-                            'cancelled': medreq_obj.cancelled_count,
-                            'referred': medreq_obj.referred_count,
-                            'rejected': medreq_obj.rejected_count
-                        }
-                    enriched_data.append(item)
+            enriched_data = []
+            for medreq in queryset:
+                total_items_count = MedicineRequestItem.objects.filter(
+                    medreq_id=medreq.medreq_id
+                ).count()
 
+                total_allocated_qty = MedicineAllocation.objects.filter(
+                    medreqitem__medreq_id=medreq.medreq_id
+                ).aggregate(total_qty=Sum('allocated_qty'))['total_qty'] or 0
+
+                serialized_data = self.get_serializer(medreq).data
+                serialized_data['total_items_count'] = total_items_count
+                serialized_data['total_allocated_quantity'] = total_allocated_qty
+                enriched_data.append(serialized_data)
+
+            if page is not None:
                 response = self.get_paginated_response(enriched_data)
                 response.data['global_counts'] = {
                     'completed': global_completed,
@@ -167,21 +167,6 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                 }
                 response.data['status_filter'] = status_filter
                 return response
-
-            serializer = self.get_serializer(queryset, many=True)
-            enriched_data = []
-            for item in serializer.data:
-                medreq_id = item.get('medreq_id')
-                medreq_obj = next((q for q in queryset if q.medreq_id == medreq_id), None)
-                if medreq_obj:
-                    item['item_counts'] = {
-                        'total_items': medreq_obj.total_items,
-                        'completed': medreq_obj.completed_count,
-                        'cancelled': medreq_obj.cancelled_count,
-                        'referred': medreq_obj.referred_count,
-                        'rejected': medreq_obj.rejected_count
-                    }
-                enriched_data.append(item)
 
             return Response({
                 'success': True,

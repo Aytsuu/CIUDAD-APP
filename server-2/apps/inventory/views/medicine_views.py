@@ -643,9 +643,9 @@ class TableMedicineTransactionView(APIView):
                     'inv_id': inventory.inv_id if inventory else "N/A", 
                     'med_detail': {
                         'med_name': medicine.med_name if medicine else "Unknown Medicine",
-                        'minv_dsg': medicine_inventory.minv_dsg if medicine_inventory else 0,
-                        'minv_dsg_unit': medicine_inventory.minv_dsg_unit if medicine_inventory else "N/A",
-                        'minv_form': medicine_inventory.minv_form if medicine_inventory else "N/A",
+                        'minv_dsg': medicine.med_dsg if medicine else 0,
+                        'minv_dsg_unit': medicine.med_dsg_unit if medicine else "N/A",
+                        'minv_form': medicine.med_form if medicine else "N/A",
                     },
                     'mdt_qty': transaction.mdt_qty,
                     'mdt_action': transaction.mdt_action,

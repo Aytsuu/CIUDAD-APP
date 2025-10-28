@@ -75,7 +75,7 @@ class MedicineRequestItem(models.Model):
 
 class MedicineAllocation(models.Model):
     alloc_id = models.BigAutoField(primary_key=True)
-    medreqitem = models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name="allocations")
+    medreqitem = models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name="allocations",db_column='medreqitem_id')
     minv= models.ForeignKey(MedicineInventory, on_delete=models.CASCADE)
     allocated_qty = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

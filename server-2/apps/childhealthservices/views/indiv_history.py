@@ -5,9 +5,9 @@ import logging
 
 # Django imports
 from django.db.models import (
-   OuterRef, Subquery, Q, Prefetch, Count, Subquery
+   OuterRef, Subquery, Q, Prefetch, Count, Subquery, Window, F
 )
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, Rank
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models.signals import post_save
@@ -45,6 +45,12 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
                 chrec_id=chrec_id,
                 status__in=["recorded", "immunization", "check-up"]
             )
+            .annotate(
+                index=Window(
+                    expression=Rank(),
+                    order_by=F('created_at').asc()
+                )
+            )
             .select_related('chrec')
             .prefetch_related(
                 'child_health_notes',
@@ -54,7 +60,7 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
                 'child_health_vital_signs__vital',
                 'child_health_vital_signs__bm',
                 'child_health_vital_signs__find',
-                'child_health_supplements',
+                'child_health_supplements', 
                 'child_health_supplements__medreqitem',
                 'exclusive_bf_checks',
                 'immunization_tracking',

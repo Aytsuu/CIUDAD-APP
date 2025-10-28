@@ -1,5 +1,5 @@
 // components/HealthHistoryTable.tsx
-import { getValueByPath, getDiffClass } from "@/pages/healthServices/childservices/viewrecords/ChildHealthutils";
+import { getValueByPath } from "@/pages/healthServices/childservices/viewrecords/ChildHealthutils";
 import { format, isValid } from "date-fns";
 import {  User, HeartPulse, Syringe, Pill } from "lucide-react";
 import { exclusiveBfCheckFields, findingsFields, immunizationTrackingFields, notesFields, supplementsFields, vitalSignsFields } from "@/pages/healthServices/childservices/viewrecords/config";
@@ -46,33 +46,24 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
     }
   ];
 
-  const renderCellValue = (field: any, record: any, recordIndex: number) => {
+  const renderCellValue = (field: any, record: any) => {
     const valueInCurrentColumn = getValueByPath(record, field.path);
-    const valueInPreviousRecord = recordsToDisplay[1] ? getValueByPath(recordsToDisplay[1], field.path) : undefined;
 
     let displayValue;
 
     if (field.format) {
       const formatted = field.format(valueInCurrentColumn, record);
 
-      // Handle JSX elements array (like from findingsFields, notesFields, etc.)
       if (Array.isArray(formatted) && formatted.length > 0 && React.isValidElement(formatted[0])) {
-        displayValue = formatted; // React can handle array of JSX elements
-      }
-      // Handle objects array (like from exclusiveBfCheckFields)
-      else if (Array.isArray(formatted) && formatted.length > 0 && typeof formatted[0] === "object" && !React.isValidElement(formatted[0]) && "date" in formatted[0]) {
+        displayValue = formatted;
+      } else if (Array.isArray(formatted) && formatted.length > 0 && typeof formatted[0] === "object" && !React.isValidElement(formatted[0]) && "date" in formatted[0]) {
         displayValue = formatted.map((item: any, index: number) => <div key={`ebf-${index}`}>{item.date}</div>);
-      }
-      // Handle empty arrays
-      else if (Array.isArray(formatted) && formatted.length === 0) {
+      } else if (Array.isArray(formatted) && formatted.length === 0) {
         displayValue = "N/A";
-      }
-      // Handle strings and other primitives
-      else {
+      } else {
         displayValue = formatted;
       }
     } else {
-      // Original logic for non-formatted values
       displayValue =
         valueInCurrentColumn !== undefined && valueInCurrentColumn !== null && valueInCurrentColumn !== ""
           ? typeof valueInCurrentColumn === "string" && valueInCurrentColumn.match(/^\d{4}-\d{2}-\d{2}/)
@@ -87,10 +78,8 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
           : "N/A";
     }
 
-    const isCurrentRecord = recordIndex === 0;
-    const diffClass = getDiffClass(valueInCurrentColumn, valueInPreviousRecord, isCurrentRecord);
 
-    return <span className={diffClass}>{displayValue}</span>;
+    return <span>{displayValue}</span>;
   };
 
   return (
@@ -105,7 +94,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
 
           {/* Horizontal Scrollable Records */}
           <div className="flex overflow-x-auto gap-4">
-            {recordsToDisplay.map((record, recordIndex) => {
+            {recordsToDisplay.map((record) => {
               const isCurrentRecord = record.chhist_id === chhistId;
               return (
                 <div
@@ -126,7 +115,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
                         {field.label}
                       </span>
                       <span className="block text-sm text-gray-800">
-                        {renderCellValue(field, record, recordIndex)}
+                        {renderCellValue(field, record)}
                       </span>
                     </div>
                   ))}

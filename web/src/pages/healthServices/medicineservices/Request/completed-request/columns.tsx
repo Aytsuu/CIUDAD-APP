@@ -85,7 +85,7 @@ export const medicineRequestCompletedColumns: ColumnDef<any>[] = [
     size: 100,
     cell: ({ row }) => (
       <div className="text-center py-2">
-        <div className="font-semibold text-blue-600">{row.original.item_counts.completed || 0}</div>
+        <div className="font-semibold text-blue-600">{row.original.total_allocated_quantity || 0}</div>
       </div>
     )
   },

@@ -2,11 +2,19 @@ import { format, isValid, isSameDay } from "date-fns";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator"; // Import the helper
 import { toTitleCase } from "../../../../helpers/ToTitleCase";
 
-// Organized fields into logical sections and added comments for clarity
-
 // General Record Overview Fields
 export const recordOverviewFields: any[] = [
-  { label: "TT Status", path: ["tt_status"] },
+  {
+    label: "TT Status",
+    path: ["tt_status"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
 ];
 
 // Placeholder for No Record Found
@@ -18,17 +26,84 @@ export const norecord = (
 
 // Child Personal Information Fields
 export const childPersonalInfoFields: any[] = [
-  { label: "Patient ID", path: ["chrec_details", "patrec_details", "pat_details", "pat_id"] },
-  { label: "Last Name", path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_lname"] },
-  { label: "First Name", path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_fname"] },
-  { label: "Middle Name", path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_mname"] },
+  {
+    label: "Patient ID",
+    path: ["chrec_details", "patrec_details", "pat_details", "pat_id"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "Last Name", 
+    path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_lname"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "First Name", 
+    path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_fname"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "Middle Name", 
+    path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_mname"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
   {
     label: "Date of Birth",
     path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_dob"],
-    format: (val: string) => (val && isValid(new Date(val)) ? format(new Date(val), "PPP") : ""),
+    format: (val: string | null) => {
+      const formattedVal = val && isValid(new Date(val)) ? format(new Date(val), "PPP") : "";
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{formattedVal || "N/A"}</span>
+        </div>
+      );
+    },
   },
-  { label: "Sex", path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_sex"] },
-  { label: "Contact", path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_contact"] },
+  { 
+    label: "Sex", 
+    path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_sex"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "Contact", 
+    path: ["chrec_details", "patrec_details", "pat_details", "personal_info", "per_contact"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
 ];
 
 // Family Head Information Fields
@@ -36,24 +111,82 @@ export const familyHeadInfoFields: any[] = [
   {
     label: "Mother's Name",
     path: ["chrec_details", "patrec_details", "pat_details", "family_head_info", "family_heads", "mother", "personal_info"],
-    format: (val: any) => (val ? `${val.per_fname} ${val.per_lname}` : ""),
+    format: (val: any) => {
+      const name = val ? `${val.per_fname} ${val.per_lname}` : "";
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{name || "N/A"}</span>
+        </div>
+      );
+    },
   },
   {
     label: "Mother's Contact",
     path: ["chrec_details", "patrec_details", "pat_details", "family_head_info", "family_heads", "mother", "personal_info", "per_contact"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
   },
   {
     label: "Father's Name",
     path: ["chrec_details", "patrec_details", "pat_details", "family_head_info", "family_heads", "father", "personal_info"],
-    format: (val: any) => (val ? `${val.per_fname} ${val.per_lname}` : ""),
+    format: (val: any) => {
+      const name = val ? `${val.per_fname} ${val.per_lname}` : "";
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{name || "N/A"}</span>
+        </div>
+      );
+    },
   },
   {
     label: "Father's Contact",
     path: ["chrec_details", "patrec_details", "pat_details", "family_head_info", "family_heads", "father", "personal_info", "per_contact"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
   },
-  { label: "Family No.", path: ["chrec_details", "family_no"] },
-  { label: "Mother's Occupation", path: ["chrec_details", "mother_occupation"] },
-  { label: "Father's Occupation", path: ["chrec_details", "father_occupation"] },
+  { 
+    label: "Family No.", 
+    path: ["chrec_details", "family_no"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "Mother's Occupation", 
+    path: ["chrec_details", "mother_occupation"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "Father's Occupation", 
+    path: ["chrec_details", "father_occupation"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
 ];
 
 // Vital Signs and Nutritional Status Fields
@@ -191,17 +324,61 @@ export const findingsFields: any[] = [
 ];
 
 export const nutritionStatusesFields: any[] = [
-  { label: "Weight-for-Age (WFA)", path: ["nutrition_statuses", "0", "wfa"] },
+  { 
+    label: "Weight-for-Age (WFA)", 
+    path: ["nutrition_statuses", "0", "wfa"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
   {
     label: "Length/Height-for-Age (LHFA)",
     path: ["nutrition_statuses", "0", "lhfa"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
   },
   {
     label: "Weight-for-Length (WFL)",
     path: ["nutrition_statuses", "0", "wfl"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
   },
-  { label: "MUAC", path: ["nutrition_statuses", "0", "muac"] },
-  { label: "MUAC Status", path: ["nutrition_statuses", "0", "muac_status"] },
+  { 
+    label: "MUAC", 
+    path: ["nutrition_statuses", "0", "muac"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
+  { 
+    label: "MUAC Status", 
+    path: ["nutrition_statuses", "0", "muac_status"],
+    format: (val: string | null) => {
+      return (
+        <div className="px-4 py-2">
+          <span className="text-black">{val || "N/A"}</span>
+        </div>
+      );
+    },
+  },
 ];
 
 export const notesFields: any[] = [
@@ -254,10 +431,11 @@ export const notesFields: any[] = [
       if (allNotes.length === 0) {
         return [norecord];
       }
+
       return allNotes.map((noteData, index) => (
         <div key={`note-${noteData.chnotes_id}-${index}`} className="mb-4 flex justify-center text-black">
           <div className="text-left px-6 py-4 " style={{ width: "400px" }}>
-            <div className="mb-2 text-lg font-semibold  flex items-center">{noteData.content}</div>
+            <div className="mb-2 text-lg font-semibold flex items-center">{noteData.content}</div>
             <div className="text-lg text-gray-700 ml-4">
               {noteData.historyType === "+" ? (
                 <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded mr-2">Created</span>
@@ -287,6 +465,7 @@ export const notesFields: any[] = [
           </div>,
         ];
       }
+
       return followUps.map((note, index) => {
         const followv = note.followv_details!;
         const followDate = followv.followv_date ? new Date(followv.followv_date).toLocaleDateString() : "Unknown date";
@@ -296,7 +475,6 @@ export const notesFields: any[] = [
               <div className="mb-2 text-xl font-bold ">{followv.followv_description || "No description provided"}</div>
               <div className="ml-2 text-lg text-gray-700 w-fit">
                 <div>
-                  {" "}
                   <span className="font-semibold"> Scheduled on: </span>
                   {followDate}
                 </div>
@@ -319,7 +497,7 @@ export const notesFields: any[] = [
       });
     },
   },
-]
+];
 
 export const supplementsFields: any[] = [
   {
@@ -329,6 +507,7 @@ export const supplementsFields: any[] = [
       if (!val || val.length === 0) {
         return [norecord];
       }
+      
       // Combine supplement items and supplement statuses if fullHistoryData is provided
       let supplementStatuses: any[] = [];
       if (fullHistoryData) {
@@ -400,21 +579,13 @@ export const supplementsFields: any[] = [
       const statusItems = supplementStatuses.length > 0
         ? supplementStatuses.map((status: any, index: number) => {
             const dateCompleted = status?.date_completed && isValid(new Date(status.date_completed)) ? format(new Date(status.date_completed), "PPP") : "";
-            const isMatchingStatus = fullHistoryData
-              ? fullHistoryData.some(
-                  (otherRecord) =>
-                    otherRecord.chhist_id !== record.chhist_id &&
-                    otherRecord.supplements_statuses &&
-                    otherRecord.supplements_statuses.includes(status)
-                )
-              : false;
+          
+           
             const showCompletedDate = status.updated_at && record.created_at && isSameDay(new Date(status.updated_at), new Date(record.created_at));
             const hasBirthwt = status?.status_type?.toLowerCase().includes("birthwt") || status?.status_type?.toLowerCase().includes("birth weight");
             return (
               <div className="flex justify-center mb-4" key={`${status.chssupplementstat_id}-${index}`}>
-                <div
-                  className={`px-6 py-4 w-full max-w-xl  ${isMatchingStatus ? "text-red-500 font-semibold" : ""}`}
-                >
+                <div className="px-6 py-4 w-full max-w-xl">
                   <div className="font-bold text-xl  mb-2">{status?.status_type || ""}</div>
                   {hasBirthwt && <div className="ml-4 text-lg text-gray-800">- Birth Weight: {status?.birthwt || ""}</div>}
                   <div className="ml-4 text-lg text-gray-800">- Seen: {status?.date_seen && isValid(new Date(status.date_seen)) ? format(new Date(status.date_seen), "PPP") : ""}</div>
@@ -433,7 +604,6 @@ export const supplementsFields: any[] = [
   },
 ];
 
-
 export const exclusiveBfCheckFields = [
   {
     label: "EBF Check Months",
@@ -442,6 +612,7 @@ export const exclusiveBfCheckFields = [
       if (!val || val.length === 0) {
         return [norecord];
       }
+      
       return val.map((ebf: any, index: number) => (
         <div key={ebf.ebf_id || index} className="flex justify-center items-center flex-col mb-4">
           <div className="text-left flex flex-col px-6 py-4 ">
@@ -465,6 +636,7 @@ export const immunizationTrackingFields: any[] = [
       if (!val || val.length === 0) {
         return [norecord];
       }
+      
       return val.map((imt, index) => {
         const vachist = imt.vachist_details;
         if (!vachist) {

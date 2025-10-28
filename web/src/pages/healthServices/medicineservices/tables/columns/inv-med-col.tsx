@@ -172,6 +172,15 @@
   };
 
   export const medicineRecordColumns: ColumnDef<any>[] = [
+     {
+    accessorKey: "id",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">{row.original.index}</div>
+      </div>
+    ),
+  },
     {
       accessorKey: "medicine",
       header: "Medicine Details",

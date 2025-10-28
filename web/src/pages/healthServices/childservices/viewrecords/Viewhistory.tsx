@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { HealthHistoryTable } from "./health-history-table"; // Updated import
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 // import { getSupplementStatusesFields } from "./config";
 import { PatientSummarySection } from "./CurrentHistoryView";
@@ -11,6 +10,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
 import { useChildHealthCurrentAndPreviousHistory } from "../forms/queries/fetchQueries";
 import { LayoutWithBack } from "../../../../components/ui/layout/layout-with-back";
+import TableLoading from "../../table-loading";
 
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing
@@ -34,12 +34,7 @@ export default function ChildHealthHistoryDetail() {
       <LayoutWithBack title="Child Health History" description="View detailed health history records for the child.">
         <>
           {isLoading ? (
-                <div className="w-full h-full p-6">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
+                <TableLoading/>
           ) : (
             <CardLayout
               cardClassName="px-6"

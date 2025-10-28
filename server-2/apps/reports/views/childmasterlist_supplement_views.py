@@ -41,9 +41,9 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
             'patrec__pat_id__trans_id__tradd_id'
         ).prefetch_related(
             Prefetch(
-                'child_health_histories__child_health_supplements__medrec',
-                queryset=MedicineRecord.objects.select_related(
-                    'minv_id', 'minv_id__med_id', 'minv_id__med_id__cat'
+                'child_health_histories__child_health_supplements__medreqitem',
+                queryset=MedicineRequestItem.objects.select_related(
+                    'med', 'med__cat', 'medreq_id'
                 )
             ),
             Prefetch(
@@ -232,7 +232,7 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
             mnp['12-23'].sort()
 
         except (AttributeError, TypeError, ValueError) as e:
-            print(f"Error processing supplements for child {child.id}: {str(e)}")
+            print(f"Error processing supplements for child {child.chrec_id}: {str(e)}")
 
         return {
             'vitamin_a': vitamin_a,

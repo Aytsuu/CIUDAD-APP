@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework import generics, status
-from django.db.models import Q, Count, OuterRef, Subquery
+from django.db.models import Q, Count, OuterRef, Subquery, F
 from datetime import timedelta
 from django.utils.timezone import now
 import json
 from dateutil.relativedelta import relativedelta
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, RowNumber
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
@@ -19,6 +19,7 @@ from pagination import *
 from django.db.models import Q, Prefetch
 from utils import *
 from apps.medicalConsultation.utils import *
+from django.db.models import Window
 
 class PatientMedicineRecordsTableView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
@@ -72,62 +73,71 @@ class PatientMedicineRecordsTableView(generics.ListAPIView):
         return Response(serializer.data)
 
 class MedicineRecordTableView(APIView):
-            pagination_class = StandardResultsPagination
+    pagination_class = StandardResultsPagination
 
-            def get(self, request, pat_id):
-                try:
-                    search_query = request.GET.get('search', '').strip()
-                    page_size = int(request.GET.get('page_size', 10))
+    def get(self, request, pat_id):
+        try:
+            search_query = request.GET.get('search', '').strip()
+            page_size = int(request.GET.get('page_size', 10))
 
-                    patient_records = PatientRecord.objects.filter(pat_id__pat_id=pat_id)
-                    medicine_items = MedicineRequestItem.objects.select_related(
-                        'med',
-                        'medreq_id',
-                        'medreq_id__patrec',
-                        'completed_by',
-                        'action_by'
-                    ).prefetch_related(
-                        'allocations',
-                        'allocations__minv',
-                        'allocations__minv__med_id'
-                    ).filter(
-                        medreq_id__patrec__in=patient_records,
-                        status='completed'  # Only include completed items
-                    ).order_by('-created_at')
+            patient_records = PatientRecord.objects.filter(pat_id__pat_id=pat_id)
+            medicine_items = MedicineRequestItem.objects.select_related(
+                'med',
+                'medreq_id',
+                'medreq_id__patrec',
+                'completed_by',
+                'action_by'
+            ).prefetch_related(
+                'allocations',
+                'allocations__minv',
+                'allocations__minv__med_id'
+            ).filter(
+                medreq_id__patrec__in=patient_records,
+                status='completed'  # Only include completed items  
+            ).annotate(
+                total_count=Window(
+                    expression=Count('*'),
+                    order_by=[]
+                ),
+                index=F('total_count') - Window(
+                    expression=RowNumber(),
+                    order_by=F('created_at').desc()
+                ) + 1
+            ).order_by('-created_at')
 
-                    if search_query:
-                        medicine_items = medicine_items.filter(
-                            Q(med_id__med_name__icontains=search_query) |
-                            Q(reason__icontains=search_query) |
-                            Q(medreqitem_id__icontains=search_query) |
-                            Q(med_id__cat__cat_name__icontains=search_query)
-                        )
+            if search_query:
+                medicine_items = medicine_items.filter(
+                    Q(med_id__med_name__icontains=search_query) |
+                    Q(reason__icontains=search_query) |
+                    Q(medreqitem_id__icontains=search_query) |
+                    Q(med_id__cat__cat_name__icontains=search_query)
+                )
 
-                    # Use the serializer to format each item
-                    records_data = MedicineRecordSerialzer(medicine_items, many=True).data
+            # Use the serializer to format each item
+            records_data = MedicineRecordSerialzer(medicine_items, many=True).data
 
-                    paginator = self.pagination_class()
-                    paginator.page_size = page_size
-                    page_data = paginator.paginate_queryset(records_data, request)
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(records_data, request)
 
-                    if page_data is not None:
-                        response = paginator.get_paginated_response(page_data)
-                        response.data['success'] = True
-                        response.data['count'] = medicine_items.count()  # Only count completed items
-                        return response
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                response.data['success'] = True
+                response.data['count'] = medicine_items.count()  # Only count completed items
+                return response
 
-                    return Response({
-                        'success': True,
-                        'results': records_data,
-                        'count': medicine_items.count()  # Only count completed items
-                    }, status=status.HTTP_200_OK)
+            return Response({
+                'success': True,
+                'results': records_data,
+                'count': medicine_items.count()  # Only count completed items
+            }, status=status.HTTP_200_OK)
 
-                except Exception as e:
-                    import traceback
-                    traceback.print_exc()
-                    return Response({
-                        'success': False,
-                        'error': f'Error fetching medicine records: {str(e)}',
-                        'results': [],
-                        'count': 0
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine records: {str(e)}',
+                'results': [],
+                'count': 0
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

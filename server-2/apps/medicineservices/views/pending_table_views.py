@@ -9,6 +9,9 @@ from django.db.models.functions import TruncMonth
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
+from django.db.models import F
+from django.db.models import Window, F
+from django.db.models.functions import Rank
 
 
 from ..serializers import *
@@ -17,7 +20,7 @@ from django.utils.timezone import now
 from apps.childhealthservices.models import ChildHealthSupplements,ChildHealth_History
 from apps.reports.models import *
 from apps.reports.serializers import *
-from pagination import *
+from pagination import * 
 from django.db.models import Q, Prefetch
 from utils import * 
 
@@ -34,69 +37,74 @@ class MedicineRequestPendingTableView(generics.ListCreateAPIView):
         # Get the search query and date filter from request parameters
         search_query = self.request.GET.get('search', '').strip()
         date_filter = self.request.GET.get('date_filter', 'all').strip()
-        
+
         # Get all MedicineRequest IDs that have at least one pending item
         pending_request_ids = MedicineRequestItem.objects.filter(
             status='pending'
         ).values_list('medreq_id', flat=True).distinct()
-        
+
         # Base queryset for medicine requests that have pending items
         queryset = MedicineRequest.objects.filter(
             medreq_id__in=pending_request_ids,
             mode="app"  # Only walk-in requests
+        ).annotate(
+            index=Window(
+                expression=Rank(),
+                order_by=F('requested_at').desc()
+            )
         ).select_related(
-            'pat_id', 'rp_id', 'pat_id__rp_id', 'pat_id__trans_id',
-            'pat_id__rp_id__per',  # Resident patient personal info
+            'patrec__pat_id', 'rp_id', 'patrec__pat_id__rp_id', 'patrec__pat_id__trans_id',
+            'patrec__pat_id__rp_id__per',  # Resident patient personal info
             'rp_id__per',  # Requesting physician personal info
         ).prefetch_related(
             'items',  # Medicine request items
             'items__minv_id',  # Medicine inventory
             'items__minv_id__med_id',  # Medicine details
             'items__med',  # Alternative medicine reference
-            'pat_id__rp_id__per__personal_addresses__add',  # Patient addresses
-            'pat_id__rp_id__per__personal_addresses__add__sitio',  # Patient sitios
+            'patrec__pat_id__rp_id__per__personal_addresses__add',  # Patient addresses
+            'patrec__pat_id__rp_id__per__personal_addresses__add__sitio',  # Patient sitios
             'rp_id__per__personal_addresses__add',  # Physician addresses
             'rp_id__per__personal_addresses__add__sitio',  # Physician sitios
         ).order_by('-requested_at')
-        
+
         # Apply search filter if provided
         if search_query:
             queryset = queryset.filter(
                 # Search by patient information (Resident)
-                Q(pat_id__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_mname__icontains=search_query) |
-                Q(pat_id__rp_id__per__per_contact__icontains=search_query) |
-                
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(patrec__ppatrec__at_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_contact__icontains=search_query) |
+
                 # Search by patient information (Transient)
-                Q(pat_id__trans_id__tran_lname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_fname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_mname__icontains=search_query) |
-                Q(pat_id__trans_id__tran_contact__icontains=search_query) |
-                
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_mname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_contact__icontains=search_query) |
+
                 # Search by physician information
                 Q(rp_id__per__per_lname__icontains=search_query) |
                 Q(rp_id__per__per_fname__icontains=search_query) |
                 Q(rp_id__per__per_mname__icontains=search_query) |
                 Q(rp_id__per__per_contact__icontains=search_query) |
-                
+
                 # Search by IDs
                 Q(medreq_id__icontains=search_query) |
                 Q(pat_id__pat_id__icontains=search_query) |
                 Q(rp_id__rp_id__icontains=search_query) |
-                
+
                 # Search by medicine names in items
                 Q(items__minv_id__med_id__med_name__icontains=search_query) |
                 Q(items__med__med_name__icontains=search_query) |
-                
+
                 # Search by patient address information
-                Q(pat_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
-                Q(pat_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
-                
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+
                 # Search by physician address information
                 Q(rp_id__per__personaladdress__add__add_province__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_city__icontains=search_query) |
@@ -104,60 +112,68 @@ class MedicineRequestPendingTableView(generics.ListCreateAPIView):
                 Q(rp_id__per__personaladdress__add__add_street__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
                 Q(rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
-                
+
                 # Search by household and family information
-                Q(pat_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
-                Q(pat_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__fam_id__icontains=search_query) |
                 Q(rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
-            ).distinct() 
-        
+            ).distinct()
+
         # Apply date filter if provided
         if date_filter != 'all':
-            today = datetime.now().date()  
-            
+            today = datetime.now().date()
+
             if date_filter == 'today':
                 # Filter for today's requests
                 queryset = queryset.filter(requested_at__date=today)
-                
+
             elif date_filter == 'this-week':
                 # Filter for this week's requests (Monday to Sunday)
                 start_of_week = today - timedelta(days=today.weekday())
                 queryset = queryset.filter(requested_at__date__gte=start_of_week)
-                
+
             elif date_filter == 'this-month':
                 # Filter for this month's requests
                 start_of_month = today.replace(day=1)
                 queryset = queryset.filter(requested_at__date__gte=start_of_month)
-        
+
         return queryset
         
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.filter_queryset(self.get_queryset())
             page = self.paginate_queryset(queryset)
-            
+
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
-                
+
                 # Calculate total number of pending medicine request items across all matching requests
                 total_medicines_quantity = MedicineRequestItem.objects.filter(
                     medreq_id__in=queryset.values_list('medreq_id', flat=True),
                     status='pending'
                 ).count()
-                
-                response = self.get_paginated_response(serializer.data)
+
+                # Add index to the serialized data
+                serialized_data = serializer.data
+                for index, item in enumerate(serialized_data, start=1):
+                    item['index'] = index
+
+                response = self.get_paginated_response(serialized_data)
                 response.data['total_medicines_quantity'] = total_medicines_quantity
                 return response
-            
+
             serializer = self.get_serializer(queryset, many=True)
+            serialized_data = serializer.data
+            for index, item in enumerate(serialized_data, start=1):
+                item['index'] = index
+
             return Response({
                 'success': True,
-                'results': serializer.data,
-                
-                'count': len(serializer.data)
+                'results': serialized_data,
+                'count': len(serialized_data)
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -181,16 +197,14 @@ class MedicineRequestPendingItemsTableView(APIView):
             queryset = queryset.select_related(
                 'medreq_id',
                 'med',
-                'minv_id',
-                'minv_id__med_id',
                 'medreq_id__rp_id',
                 'medreq_id__trans_id',
-                'medreq_id__rp_id__per',
+                'medreq_id__rp_id__per'
             ).prefetch_related(
                 'medreq_id__medicine_files',
                 'allocations',
                 'allocations__minv',
-                'allocations__minv__med_id',
+                'allocations__minv__med_id'
             ).order_by('-medreq_id__requested_at')
 
             medicine_groups = {}
@@ -198,12 +212,10 @@ class MedicineRequestPendingItemsTableView(APIView):
             for item in queryset:
                 allocations = list(item.allocations.all())
                 # Try allocations first
-                if allocations and allocations[0].minv and allocations[0].minv.med_id:
+                if allocations and allocations[0].minv:
                     med_obj = allocations[0].minv.med_id
                 elif item.med:
                     med_obj = item.med
-                elif item.minv_id and item.minv_id.med_id:
-                    med_obj = item.minv_id.med_id
                 else:
                     med_obj = None
 
@@ -286,11 +298,11 @@ class MedicineRequestPendingItemsTableView(APIView):
 
                 # Get inventory details if available
                 inventory_info = {}
-                if item.minv_id:
+                if allocations and allocations[0].minv:
                     inventory_info = {
-                        'minv_id': item.minv_id.minv_id,
-                        'stock_quantity': item.minv_id.minv_qty_avail,
-                        'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
+                        'minv_id': allocations[0].minv.minv_id,
+                        'stock_quantity': allocations[0].minv.minv_qty_avail,
+                        'expiry_date': allocations[0].minv.inv_id.expiry_date if allocations[0].minv.inv_id else None,
                     }
 
                 # Get allocation details for this request item
@@ -328,7 +340,6 @@ class MedicineRequestPendingItemsTableView(APIView):
 
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
-                    'medreqitem_qty': item.medreqitem_qty,
                     'reason': item.reason,
                     'status': item.status,
                     'inventory': inventory_info,
@@ -338,8 +349,6 @@ class MedicineRequestPendingItemsTableView(APIView):
                     'requested_at': medreq.requested_at,
                     'allocations': allocations_data,
                     'total_allocated_qty': total_allocated_qty,
-                    'remaining_qty': item.medreqitem_qty - total_allocated_qty,
-                    'is_fully_allocated': total_allocated_qty >= item.medreqitem_qty,
                 }
 
                 medicine_groups[group_key]['request_items'].append(request_item_data)

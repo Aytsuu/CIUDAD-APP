@@ -46,8 +46,6 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
             'rp_id__per',  # Requesting physician personal info
         ).prefetch_related(
             'items',  # Medicine request items
-            'items__minv_id',  # Medicine inventory
-            'items__minv_id__med_id',  # Medicine details
             'items__med',  # Alternative medicine reference
             'rp_id__per__personal_addresses__add',  # Physician addresses
             'rp_id__per__personal_addresses__add__sitio',  # Physician sitios
@@ -109,38 +107,47 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
         try:
             queryset = self.filter_queryset(self.get_queryset())
             page = self.paginate_queryset(queryset)
-            
+
+            # Prepare data for each person
+            results = []
+            for medreq in queryset:
+                total_medicines_count = MedicineRequestItem.objects.filter(
+                    medreq_id=medreq.medreq_id,
+                    status='confirmed'
+                ).count()
+
+                total_allocated_qty = MedicineAllocation.objects.filter(
+                    medreqitem__medreq_id=medreq.medreq_id
+                ).aggregate(total_qty=Sum('allocated_qty'))['total_qty'] or 0
+
+                serialized_data = self.get_serializer(medreq).data
+                serialized_data['total_medicines_quantity'] = total_medicines_count
+                serialized_data['total_allocated_quantity'] = total_allocated_qty
+                results.append(serialized_data)
+
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
-                                # Count the number of confirmed MedicineRequestItem entries
-                total_medicines_count = MedicineRequestItem.objects.filter(
-                    medreq_id__in=queryset.values_list('medreq_id', flat=True),
-                    status='confirmed'
-                ).count()  
-                response = self.get_paginated_response(serializer.data)
-                response.data['total_medicines_quantity'] = total_medicines_count
+                response = self.get_paginated_response(results)
                 return response
-            
-            serializer = self.get_serializer(queryset, many=True)
+
             return Response({
                 'success': True,
-                'results': serializer.data,
-                'count': len(serializer.data)
+                'results': results,
+                'count': len(results)
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             import traceback
             traceback.print_exc()
             return Response({
                 'success': False,
-                'error': f'Error fetching medicine requests: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR())
-    
+                'error': f'Error fetching confirmed medicine requests: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-    
-    
-    
-         
-         
-         
+
+
+
+
+
+

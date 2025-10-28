@@ -105,7 +105,7 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     pat_details = serializers.SerializerMethodField()
     unit= serializers.SerializerMethodField()
     medreq_details = MedicineRequestBaseSerializer(source='medreq_id', read_only=True)
-    
+    index = serializers.IntegerField(read_only=True)
     
     def get_total_allocated_qty(self, obj):
         # obj is a MedicineRequestItem instance
@@ -215,9 +215,9 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
   
 class MedicineRequestItemSerializer(serializers.ModelSerializer):
     medreq_details = MedicineRecordSerialzer(source='medreq_id', read_only=True)
-    med_details=MedicineListSerializers(source='med', read_only=True)
-    medicine_files = MedicineFileSerializer(source='medreq_id.medicine_files', many=True, read_only=True)
-    
+    med_details = MedicineListSerializers(source='med', read_only=True)
+    medicine_files = MedicineFileSerializer(many=True, read_only=True)  # Removed redundant `source`
+
     class Meta:
         model = MedicineRequestItem
         fields = '__all__'

@@ -100,7 +100,6 @@ export default function InvChildHealthRecords() {
     const resolvedAge = resolvedDob ? calculateAgeFromDOB(resolvedDob).years.toString() : "";
 
     return {
-      chrec_id: chrecDetails?.chrec_id || chrecId || "",
       pat_id: chrecDetails?.patient || patDetails?.pat_id || ChildHealthRecord?.pat_id || patId || "",
       fname: personalInfo?.per_fname || ChildHealthRecord?.fname || "",
       lname: personalInfo?.per_lname || ChildHealthRecord?.lname || "",
@@ -167,13 +166,23 @@ export default function InvChildHealthRecords() {
   }, [historyData, dob]);
 
   const latestRecord = useMemo(() => {
-    if (!processedHistoryData || processedHistoryData.length === 0) return null;
+    if (!processedHistoryData || !Array.isArray(processedHistoryData) || processedHistoryData.length === 0) return null;
     return processedHistoryData[0];
   }, [processedHistoryData]);
+  console.log("Latest Record:", latestRecord);
 
   const isLatestRecordImmunizationOrCheckup = useMemo(() => {
     if (!latestRecord) return false;
     return latestRecord.status === "immunization" || latestRecord.status === "check-up";
+  }, [latestRecord]);
+
+  const isLatestRecordToday = useMemo(() => {
+    if (!latestRecord || !latestRecord.latestDate) return false;
+
+    const latestDate = new Date(latestRecord.latestDate).toDateString();
+    const currentDate = new Date().toDateString();
+
+    return latestDate === currentDate;
   }, [latestRecord]);
 
   const totalPages = Math.ceil((historyData.count || 0) / pageSize);
@@ -196,6 +205,8 @@ export default function InvChildHealthRecords() {
   };
 
   const columns = useMemo(() => getChildHealthColumns(derivedChildData, nutritionalStatusData), [derivedChildData, nutritionalStatusData]);
+
+  const memoizedChildData = useMemo(() => derivedChildData, [derivedChildData]);
 
   if (isError) {
     return (
@@ -232,7 +243,7 @@ export default function InvChildHealthRecords() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
       <div className="mb-5">
-        <ChildHealthRecordCard child={derivedChildData} isLoading={childHistoryLoading} />
+        <ChildHealthRecordCard child={memoizedChildData} isLoading={childHistoryLoading} />
       </div>
       {isLoading ? (
         <VaccinationStatusCardsSkeleton />
@@ -250,12 +261,14 @@ export default function InvChildHealthRecords() {
       <div className="flex justify-end mt-8">
         <ProtectedComponent exclude={["DOCTOR"]}>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
-            {latestRecord && (
+            {latestRecord && !isLatestRecordToday && (
               <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
                 {isLatestRecordImmunizationOrCheckup ? (
                   <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
                     <span className="text-sm font-medium">
-                      {latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}
+                      {latestRecord.status === "immunization"
+                        ? "This child is currently receiving an immunization."
+                        : "This child is currently undergoing a health check-up."}
                     </span>
                   </div>
                 ) : (

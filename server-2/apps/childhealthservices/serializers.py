@@ -177,7 +177,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     exclusive_bf_checks = ExclusiveBFCheckSerializer(many=True, read_only=True)
     immunization_tracking = ChildHealthImmunizationHistorySerializer(many=True, read_only=True)
     supplements_statuses =ChildHealthSupplementStatusSerializer(many=True, read_only=True)
-
+    index = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = ChildHealth_History
@@ -194,6 +194,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
             'exclusive_bf_checks',
             'immunization_tracking',
             'supplements_statuses',
+            'index',
         ]
 
 
@@ -212,5 +213,5 @@ class OPTTrackingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ChildHealthVitalSigns
-        fields = ['vital_signs', 'chist_details']  
+        fields = ['vital_signs', 'chist_details']
 
