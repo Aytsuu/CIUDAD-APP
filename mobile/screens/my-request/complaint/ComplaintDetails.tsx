@@ -1,11 +1,7 @@
 import type React from "react"
 import { useState } from "react"
 import { TouchableOpacity, View, Text, ScrollView } from "react-native"
-import {
-  FileText,
-  Gavel,
-  User,
-} from "lucide-react-native"
+import { FileText, User,} from "lucide-react-native"
 import type { ComplaintData, PersonType, ComplaintFile } from "./types"
 
 interface ComplaintDetailsProps {
@@ -70,8 +66,8 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress, count = 0 }) => (
     <TouchableOpacity
       onPress={onPress}
-      className={`px-4 py-2.5 rounded-lg mr-2 transition-all ${
-        isActive ? "bg-blue-500 shadow-md" : "bg-slate-100 border border-slate-200"
+      className={`px-4 py-2.5 rounded-lg mr-2 ${
+        isActive ? "bg-blue-500" : "bg-slate-100 border border-slate-200"
       }`}
     >
       <Text className={`font-semibold text-sm ${isActive ? "text-white" : "text-slate-700"}`}>
@@ -81,7 +77,7 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
   )
 
   const FileCard: React.FC<FileCardProps> = ({ file, index }) => (
-    <View className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 mb-3 border border-slate-200">
+    <View className="bg-slate-50 rounded-xl p-4 mb-3 border border-slate-200">
       <Text className="font-bold mb-2">File {index + 1}</Text>
       {file.file_name && <Text>Name: {file.file_name}</Text>}
       {file.file_type && <Text>Type: {file.file_type}</Text>}
@@ -97,7 +93,7 @@ const renderPerson = (person: PersonType) => {
   
   return (
     <View className="mb-4 bg-white p-1 rounded-lg border border-gray-200">
-      <View className="flex flex-row items-start bg-blue-500 rounded-lg p-2 mb-3 ">
+      <View className="flex-row items-start bg-blue-500 rounded-lg p-2 mb-3">
         <View className="bg-white rounded-full p-3">
           <User size={24} color="#3b82f6" />
         </View>
@@ -115,9 +111,9 @@ const renderPerson = (person: PersonType) => {
         </View>
       </View>
       
-      <View className="space-y-4 px-4">
+      <View className="px-4">
         {(person.acsd_age || person.cpnt_gender || person.acsd_gender) && (
-          <View className="flex flex-row">
+          <View className="flex-row mb-2">
             {person.acsd_age && (
               <Text className="text-sm text-gray-600 pr-8">
                 <Text className="font-medium">Age:</Text> {person.acsd_age}
@@ -131,31 +127,31 @@ const renderPerson = (person: PersonType) => {
           </View>
         )}
         {contact && (
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-600 mb-2">
             <Text className="font-medium">Contact:</Text> {contact}
           </Text>
         )}
         
         {person.cpnt_number && (
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-600 mb-2">
             <Text className="font-medium">Contact Number:</Text> {person.cpnt_number}
           </Text>
         )}
         
         {address && (
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-600 mb-2">
             <Text className="font-medium">Address:</Text> {address}
           </Text>
         )}
         
         {person.cpnt_relation_to_respondent && (
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-600 mb-2">
             <Text className="font-medium">Relationship:</Text> {person.cpnt_relation_to_respondent}
           </Text>
         )}
         
         {person.acsd_description && (
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-600 mb-2">
             <Text className="font-medium">Description:</Text> {person.acsd_description}
           </Text>
         )}
@@ -166,16 +162,16 @@ const renderPerson = (person: PersonType) => {
 
   return (
     <ScrollView className="flex-1 bg-slate-50" showsVerticalScrollIndicator={false}>
-      <View className="p-4 space-y-5">
+      <View className="p-4">
         {/* Header */}
-        <View className="bg-blue-500 text-white rounded-xl p-2 mb-5">
-          <View className="flex-col items-start ">
+        <View className="bg-blue-500 rounded-xl p-2 mb-5">
+          <View className="flex-col items-start">
             <View className={`px-4 py-2 rounded-lg border w-full items-center ${getStatusColor(data.comp_status)} mb-2`}>
               <Text className={`text-lg font-bold ${getStatusColor(data.comp_status).split(" ")[0]}`}>
                 {data.comp_status?.toUpperCase() || "UNKNOWN"}
               </Text>
             </View>
-            <View className="">
+            <View>
               <Text className="text-white text-sm">Date Filed: {formatDateTime(data.comp_created_at)}</Text>
               <Text className="text-white text-sm">Confirmed by: {data.staff}</Text>
             </View>
@@ -185,14 +181,13 @@ const renderPerson = (person: PersonType) => {
             <TouchableOpacity
               onPress={handleRequestSummon}
               activeOpacity={0.7}
-              className={`bg-teal-600 rounded-lg p-4 flex-row items-center justify-center mt-4 shadow-md`}
+              className="bg-teal-600 rounded-lg p-4 flex-row items-center justify-center mt-4"
             >
-              <FileText size={20} color="white" />
+              <FileText size={20} color="#ffffff" />
               <Text className="text-white font-bold pl-2">
                 {isSummonRequested ? "Summon Requested" : "Request Summon"}
               </Text>
             </TouchableOpacity>
-
           )}
 
           {data.comp_status?.toLowerCase() === "pending" && (
@@ -215,7 +210,7 @@ const renderPerson = (person: PersonType) => {
         <View className="bg-white">
           {/* Complaint Details */}
           <View className="bg-white rounded-xl p-4 w-full my-4">
-            <Text className="text-md font-semibold text-slate-900">Allegation</Text>
+            <Text className="text-base font-semibold text-slate-900">Allegation</Text>
             <Text className="text-sm font-normal text-slate-900 mb-5">Details about the incident or wrongdoing being reported</Text>
 
             <View className="w-full bg-blue-500 rounded-md py-2 mb-2 px-2">
@@ -241,7 +236,7 @@ const renderPerson = (person: PersonType) => {
 
           {/* Complainants */}
           <View className="bg-white rounded-xl p-4 w-full my-4">
-            <Text className="text-md font-semibold text-slate-900">Complainant</Text>
+            <Text className="text-base font-semibold text-slate-900">Complainant</Text>
             <Text className="text-sm font-normal text-slate-900 mb-5">Person who lodged or initiated the complaint</Text>
 
             {data.complainant?.length ? (
@@ -269,7 +264,7 @@ const renderPerson = (person: PersonType) => {
 
           {/* Accused */}
           <View className="bg-white rounded-xl p-4 w-full my-4">
-            <Text className="text-md font-semibold text-slate-900">Respondent</Text>
+            <Text className="text-base font-semibold text-slate-900">Respondent</Text>
             <Text className="text-sm font-normal text-slate-900 mb-5">The person being reported or accused in the incident</Text>
 
             {data.accused?.length ? (
@@ -297,7 +292,7 @@ const renderPerson = (person: PersonType) => {
 
           {/* Files */}
           <View className="bg-white rounded-xl p-4 w-full my-4">
-            <Text className="text-md font-semibold text-slate-900">Attached Files</Text>
+            <Text className="text-base font-semibold text-slate-900">Attached Files</Text>
             <Text className="text-sm font-normal text-slate-900 mb-5">Uploaded photos, files, or proof related to the incident.</Text>
 
             {data.complaint_files?.length ? (
