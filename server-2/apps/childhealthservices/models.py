@@ -106,7 +106,8 @@ class ChildHealthSupplements(models.Model):
     chsupplement_id = models.BigAutoField(primary_key=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
-    medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
+    # medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
+    medreqitem =models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     
     class Meta:
         db_table = 'child_health_supplements'
@@ -125,27 +126,7 @@ class ChildHealthSupplementsStatus(models.Model):
     class Meta:
         db_table = 'child_health_supplements_status'
               
-class NutritionalStatus(models.Model):
-    nutstat_id = models.BigAutoField(primary_key=True)
-    wfa = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Age
-    lhfa = models.CharField(max_length=100, blank=True, null=True)  # Length-for-Age
-    wfl = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Length
-    muac = models.CharField(max_length=100, blank=True, null=True)  # Mid-Upper Arm Circumference
-    created_at = models.DateTimeField(auto_now_add=True)
-    edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
-    muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
-    remarks = models.TextField(blank=True, null=True)  # Additional remarks
-    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
 
-    
-    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
-    # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
-    # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
-    pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
-   
-  
-    class Meta:
-        db_table = 'nutritional_status'
         
         
 class ExclusiveBFCheck(models.Model):

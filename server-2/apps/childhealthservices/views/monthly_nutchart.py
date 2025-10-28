@@ -34,28 +34,28 @@ from apps.medicalConsultation.utils import apply_patient_type_filter
 
      
             
-class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
-    serializer_class = NutritionalStatusSerializerBase
+# class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
+#     serializer_class = NutritionalStatusSerializerBase
     
-    def get_queryset(self):
-        """
-        Get nutritional status records for a specific month
-        Defaults to current month if no parameters provided
-        """
-        # Get month and year from query parameters
-        month = self.request.query_params.get('month', None)
-        year = self.request.query_params.get('year', None)
+#     def get_queryset(self):
+#         """
+#         Get nutritional status records for a specific month
+#         Defaults to current month if no parameters provided
+#         """
+#         # Get month and year from query parameters
+#         month = self.request.query_params.get('month', None)
+#         year = self.request.query_params.get('year', None)
         
-        # If no parameters provided, use current month
-        if not month or not year:
-            current_date = timezone.now()
-            month = current_date.month
-            year = current_date.year
+#         # If no parameters provided, use current month
+#         if not month or not year:
+#             current_date = timezone.now()
+#             month = current_date.month
+#             year = current_date.year
         
-        # Filter by month and year
-        queryset = NutritionalStatus.objects.filter(
-            created_at__month=month,
-            created_at__year=year
-        ).order_by('-created_at')
+#         # Filter by month and year
+#         queryset = NutritionalStatus.objects.filter(
+#             created_at__month=month,
+#             created_at__year=year
+#         ).order_by('-created_at')
         
-        return queryset
+#         return queryset

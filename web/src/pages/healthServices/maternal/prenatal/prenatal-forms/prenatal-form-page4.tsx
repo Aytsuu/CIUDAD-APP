@@ -17,7 +17,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
-import { ProtectedComponentButton } from "@/ProtectedComponentButton"
+import { ProtectedComponent } from "@/ProtectedComponent"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
@@ -286,11 +286,11 @@ export default function PrenatalFormFourthPq({
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <ProtectedComponentButton exclude={['BARANGAY HEALTH WORKER']}>
+          <ProtectedComponent exclude={['BARANGAY HEALTH WORKER']}>
             <Button variant="outline" onClick={() => removePrenatalCareEntry(row.index)}>
               <SquarePen className="h-4 w-4" />
             </Button>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
           <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
             <Trash className="h-4 w-4" />
           </Button>

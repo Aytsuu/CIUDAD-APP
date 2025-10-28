@@ -2,6 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 
 
@@ -21,9 +22,9 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
+              <div className="font-medium truncate">{toTitleCase(fullName)}</div>
               <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
+                {toTitleCase(row.original.sex)}, {row.original.age}
               </div>
             </div>
           </div>
@@ -42,7 +43,22 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
+              <div className="font-medium truncate">{toTitleCase(fullName)}</div>
+            </div>
+          </div>
+        );
+      }
+    },
+
+     {
+      accessorKey: "father",
+      header: 'Father',
+      cell: ({ row }) => {
+        const fullName = `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{toTitleCase(fullName)}</div>
             </div>
           </div>
         );
@@ -57,7 +73,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       ),
       cell: ({ row }) => (
         <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">{row.original.address}</div>
+          <div className="w-[250px] break-words">{toTitleCase(row.original.address)}</div>
         </div>
       )
     },
@@ -70,21 +86,21 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         </div>
       )
     },
-    {
-      accessorKey: "delivery_type",
-      header: "Delivery Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full capitalize">{row.original.delivery_type?.toLowerCase() || "N/A"}</div>
-        </div>
-      )
-    },
+    // {
+    //   accessorKey: "delivery_type",
+    //   header: "Delivery Type",
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[120px] px-2">
+    //       <div className="text-center w-full">{toTitleCase(row.original.delivery_type || "N/A")}</div>
+    //     </div>
+    //   )
+    // },
     {
       accessorKey: "pat_type",
       header: "Patient Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full capitalize">{row.original.pat_type?.toLowerCase() || "N/A"}</div>
+          <div className="text-center w-full">{toTitleCase(row.original.pat_type || "N/A")}</div>
         </div>
       )
     },
@@ -93,7 +109,6 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
             <ViewButton
               onClick={() => {
                 navigate("/child-immunization", {
@@ -105,7 +120,6 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
               }}
             />
           </div>
-        </div>
       )
     }
   ];

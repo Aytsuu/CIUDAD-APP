@@ -6,6 +6,9 @@ import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema";
 import { LFA_GIRLS_TABLE, LFA_BOYS_TABLE, WFA_BOYS_TABLE, WFA_GIRLS_TABLE, WFH_BOYS_TABLE, WFH_GIRLS_TABLE } from "@/pages/healthServices/childservices/tables/who-tables";
 
+
+
+
 interface NutritionalStatusCalculatorProps {
   weight?: number;
   height?: number;

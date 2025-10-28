@@ -76,7 +76,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
   const { residents, transients } = calculateCounts();
 
   return (
-    <MainLayoutComponent title="Medical Consultation" description="Forwarded records for Medical Consultation">
+    <MainLayoutComponent title="Referred Patients" description="List of referred patient for consultation ">
       <div className="w-full h-full flex flex-col">
         {/* Enhanced Card Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

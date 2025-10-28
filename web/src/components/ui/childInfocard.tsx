@@ -153,8 +153,7 @@ export const ChildHealthRecordCard = ({ child, isLoading = false }: ChildHealthR
   const formattedFatherName = fatherName ? toTitleCase(fatherName) : "Not provided";
   
   // Format address with title case
-  const fulladdress = `${child.address} ${child.landmarks}`.trim();
-  const formattedAddress = fulladdress ? toTitleCase(fulladdress) : "Not provided";
+  const formattedAddress = child.address ? toTitleCase(child.address) : "Not provided";
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">

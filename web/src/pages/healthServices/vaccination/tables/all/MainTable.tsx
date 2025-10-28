@@ -65,7 +65,7 @@ export default function VaccinationManagement() {
                 </TabsTrigger>
                 <TabsTrigger value="unvaccinated" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <UserX className="h-4 w-4" />
-                  <span>Unvaccinated Residents</span>
+                  <span>Resident Vaccination Tracking</span>
                 </TabsTrigger>
               </TabsList>
             </div>

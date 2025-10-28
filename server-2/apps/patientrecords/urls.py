@@ -12,7 +12,7 @@ from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
 from .views.mobile_views import *
-from apps.administration.views.staff_views import HealthStaffListView
+from apps.administration.views.staff_views import *
 from.views.family_views import MyChildrenSimpleAPIView
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
@@ -44,6 +44,7 @@ urlpatterns = [
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
     path('body-measurements/<str:pat_id>/', BodyMeasurementView.as_view(), name='body-measurements-by-patient'),
+    path('children-body-measurements/<str:pat_id>/', ChildrenBodyMeasurementView.as_view(), name='children-body-measurements'),
    
     path("findings/", FindingView.as_view(), name="findings"),
 

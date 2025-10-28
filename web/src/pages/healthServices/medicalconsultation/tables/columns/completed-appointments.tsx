@@ -3,8 +3,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
-import { formatDate,formatDateTime } from "@/helpers/dateHelper";
-
+import { formatDate, formatDateTime } from "@/helpers/dateHelper";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
   {
@@ -13,7 +13,7 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
     size: 50,
     cell: ({ row, table }) => {
       return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
-    }
+    },
   },
   {
     accessorKey: "personal_info",
@@ -26,16 +26,16 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
         <div className="px-2 py-2">
           <div className="text-center space-y-1">
             <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
-              {fullName}
+              {toTitleCase(fullName) || "Unknown Patient"}
             </div>
-            <div className="text-sm text-gray-500">{personalInfo?.per_contact || "No contact"}</div>
+            <div className="text-sm text-gray-500">{toTitleCase(personalInfo?.per_contact || "No contact")}</div>
             <div className="text-xs text-gray-400">
-              {personalInfo?.per_sex || "N/A"} • {formatDate(personalInfo?.per_dob)}
+              {toTitleCase(personalInfo?.per_sex || "N/A")} • {formatDate(personalInfo?.per_dob)}
             </div>
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "address",
@@ -43,10 +43,11 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
     size: 250,
     cell: ({ row }) => {
       const address = row.original.address;
-      const addressText = address 
+      const addressText = address
         ? [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province]
             .filter(Boolean)
-            .join(", ") 
+            .map(toTitleCase)
+            .join(", ")
         : "No address";
       return (
         <div className="px-2 py-2">
@@ -55,7 +56,7 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "chief_complaint",
@@ -70,7 +71,7 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "scheduled_date",
@@ -79,10 +80,10 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-center py-2">
-          <div className="font-medium text-gray-900">{formatDate(row.original.scheduled_date)}</div>
+          <div className="font-medium text-gray-900">{toTitleCase(formatDate(row.original.scheduled_date))}</div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "meridiem",
@@ -91,21 +92,21 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex justify-center py-2">
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`px-3 py-1 text-xs font-medium ${
-              row.original.meridiem === "AM" 
-                ? "text-yellow-600 bg-yellow-50 border-yellow-500" 
-                : row.original.meridiem === "PM" 
-                ? "text-blue-600 bg-blue-50 border-blue-500" 
+              row.original.meridiem === "AM"
+                ? "text-yellow-600 bg-yellow-50 border-yellow-500"
+                : row.original.meridiem === "PM"
+                ? "text-blue-600 bg-blue-50 border-blue-500"
                 : "text-gray-500 bg-gray-50 border-gray-400"
             }`}
           >
-            {row.original.meridiem || "N/A"}
+            {(row.original.meridiem || "N/A")}
           </Badge>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "created_at",
@@ -115,24 +116,12 @@ export const medicalAppointmentCompletedColumns: ColumnDef<any>[] = [
       const { date, time } = formatDateTime(row.original.created_at);
       return (
         <div className="text-center py-2">
-          <div className="font-medium text-gray-900 text-sm">{date}</div>
-          {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+          <div className="font-medium text-gray-900 text-sm">{toTitleCase(date)}</div>
+          {time && <div className="text-xs text-gray-500 mt-1">{toTitleCase(time)}</div>}
         </div>
       );
-    }
+    },
   },
-  // {
-  //   accessorKey: "status",
-  //   header: () => <div className="text-center">Status</div>,
-  //   size: 100,
-  //   cell: ({ row }) => (
-  //     <div className="flex justify-center py-2">
-  //       <Badge className="bg-green-100 text-green-800 hover:bg-green-100 capitalize text-xs px-3 py-1">
-  //         {row.original.status }
-  //       </Badge>
-  //     </div>
-  //   )
-  // },
   {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,

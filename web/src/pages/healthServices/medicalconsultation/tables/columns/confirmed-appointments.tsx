@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { formatDate,formatDateTime } from "@/helpers/dateHelper";
-
+import { toTitleCase} from "@/helpers/ToTitleCase";
 
 export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
   {
@@ -14,7 +14,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     size: 50,
     cell: ({ row, table }) => {
       return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
-    }
+    },
   },
   {
     accessorKey: "personal_info",
@@ -27,16 +27,16 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
         <div className="px-2 py-2">
           <div className="text-center space-y-1">
             <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
-              {fullName}
+              {toTitleCase(fullName) || "Unknown Patient"}
             </div>
-            <div className="text-sm text-gray-500">{personalInfo?.per_contact || "No contact"}</div>
+            <div className="text-sm text-gray-500">{toTitleCase(personalInfo?.per_contact || "No contact")}</div>
             <div className="text-xs text-gray-400">
-              {personalInfo?.per_sex || "N/A"} • {formatDate(personalInfo?.per_dob)}
+              {toTitleCase(personalInfo?.per_sex || "N/A")} • {formatDate(personalInfo?.per_dob)}
             </div>
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "address",
@@ -44,10 +44,11 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     size: 250,
     cell: ({ row }) => {
       const address = row.original.address;
-      const addressText = address 
+      const addressText = address
         ? [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province]
             .filter(Boolean)
-            .join(", ") 
+            .map(toTitleCase)
+            .join(", ")
         : "No address";
       return (
         <div className="px-2 py-2">
@@ -56,7 +57,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "chief_complaint",
@@ -71,7 +72,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "scheduled_date",
@@ -80,10 +81,10 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-center py-2">
-          <div className="font-medium text-gray-900">{formatDate(row.original.scheduled_date)}</div>
+          <div className="font-medium text-gray-900">{toTitleCase(formatDate(row.original.scheduled_date))}</div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "meridiem",
@@ -92,21 +93,21 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex justify-center py-2">
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`px-3 py-1 text-xs font-medium ${
-              row.original.meridiem === "AM" 
-                ? "text-yellow-600 bg-yellow-50 border-yellow-500" 
-                : row.original.meridiem === "PM" 
-                ? "text-blue-600 bg-blue-50 border-blue-500" 
+              row.original.meridiem === "AM"
+                ? "text-yellow-600 bg-yellow-50 border-yellow-500"
+                : row.original.meridiem === "PM"
+                ? "text-blue-600 bg-blue-50 border-blue-500"
                 : "text-gray-500 bg-gray-50 border-gray-400"
             }`}
           >
-            {row.original.meridiem || "N/A"}
+            {(row.original.meridiem || "N/A")}
           </Badge>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "created_at",
@@ -116,11 +117,11 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
       const { date, time } = formatDateTime(row.original.created_at);
       return (
         <div className="text-center py-2">
-          <div className="font-medium text-gray-900 text-sm">{date}</div>
-          {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+          <div className="font-medium text-gray-900 text-sm">{toTitleCase(date)}</div>
+          {time && <div className="text-xs text-gray-500 mt-1">{toTitleCase(time)}</div>}
         </div>
       );
-    }
+    },
   },
   // {
   //   accessorKey: "status",
@@ -139,47 +140,46 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     header: () => <div className="text-center">Actions</div>,
     size: 100,
     cell: ({ row }) => {
-      const navigate = useNavigate();
       const appointment = row.original;
-    
-      const appointmentData = {
-        id: appointment.id,
-        personal_info: appointment.personal_info,
-        address: appointment.address,
-        chief_complaint: appointment.chief_complaint,
-        scheduled_date: appointment.scheduled_date,
-        meridiem: appointment.meridiem,
-        status: appointment.status,
-        created_at: appointment.created_at,
-        archive_reason: appointment.archive_reason,
-        rp: appointment.rp
-      };
-    
+
       return (
         <div className="flex justify-center py-2">
           <ViewButton
             onClick={() => {
+              const navigate = useNavigate();
+              const appointmentData = {
+                id: appointment.id,
+                personal_info: appointment.personal_info,
+                address: appointment.address,
+                chief_complaint: appointment.chief_complaint,
+                scheduled_date: appointment.scheduled_date,
+                meridiem: appointment.meridiem,
+                status: appointment.status,
+                created_at: appointment.created_at,
+                archive_reason: appointment.archive_reason,
+                rp: appointment.rp,
+              };
+
               navigate("/services/medical-consultation/appointments/form", {
                 state: {
                   params: {
-                    // Transform appointment data to match what medical consultation expects
                     patientData: {
-                      rp: appointment.rp, // Use rp ID as patient ID
+                      rp: appointment.rp,
                       personal_info: appointment.personal_info,
                       address: appointment.address,
-                      pat_type: "Resident", 
-                      age: calculateAge(appointment.personal_info?.per_dob), // You might need to calculate this
+                      pat_type: "Resident",
+                      age: calculateAge(appointment.personal_info?.per_dob),
                       householdno: appointment.rp?.householdno,
-                      additional_info: appointment.rp?.additional_info
+                      additional_info: appointment.rp?.additional_info,
                     },
-                    appointmentData: appointmentData // Keep original appointment data if needed
-                  }
-                }
+                    appointmentData: appointmentData,
+                  },
+                },
               });
             }}
           />
         </div>
       );
-    }
+    },
   }
 ];

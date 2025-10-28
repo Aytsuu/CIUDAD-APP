@@ -591,49 +591,92 @@ class UpdateChildHealthRecordAPIView(APIView):
 
         
     def _handle_medicines(self, submitted_data, staff_instance, chhist_id):
-        """Handle medicine processing"""
-        if not submitted_data.get('medicines'):
+        """Handle medicine processing using MedicineRequest and MedicineRequestItem"""
+        medicines = submitted_data.get('medicines', [])
+        if not medicines:
             return
-        
-        for med in submitted_data['medicines']:
-            try:
-                # Get patient
-                patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
-                
-                # Create patient record
-                patient_record = PatientRecord.objects.create(
-                    pat_id=patient,
-                    patrec_type="Medicine Record"
-                )
-                
-                # Create medicine record
-                medicine_record = MedicineRecord.objects.create(
-                    patrec_id=patient_record,
-                    minv_id_id=med['minv_id'],
-                    medrec_qty=med['medrec_qty'],
-                    reason=med.get('reason', ''),
-                    requested_at=timezone.now(),
-                    fulfilled_at=timezone.now(),
-                    staff=staff_instance
-                )
-                
-                # Update medicine inventory
-                self._update_medicine_inventory(
-                    med['minv_id'], 
-                    med['medrec_qty'], 
-                    staff_instance
-                )
-                
-                # Create child health relationship
-                ChildHealthSupplements.objects.create(
-                    chhist_id=chhist_id,
-                    medrec=medicine_record
-                )
-                
-            except Exception as e:
-                print(f"Error processing medicine {med.get('minv_id')}: {str(e)}")
+
+        try:
+            # Get patient
+            patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
+        except Patient.DoesNotExist:
+            print(f"Patient with ID {submitted_data['pat_id']} not found")
+            return
+
+        # Create PatientRecord
+        patient_record = PatientRecord.objects.create(
+            pat_id=patient,
+            patrec_type="Medicine Request",
+        )
+        rp_id = patient.rp_id if patient.rp_id else None
+        trans_id = patient.trans_id if patient.trans_id else None
+
+        # Create MedicineRequest
+        med_request = MedicineRequest.objects.create(
+            mode='walk-in',
+            signature=None,
+            requested_at=timezone.now(),
+            fulfilled_at=timezone.now(),
+            patrec=patient_record,
+            rp_id=rp_id,
+            trans_id=trans_id,
+        )
+
+        # Group medicines by med_id (from MedicineInventory FK)
+        medid_to_allocations = {}
+        for med in medicines:
+            minv_id = med.get('minv_id')
+            if not minv_id:
                 continue
-    
+            try:
+                minv = MedicineInventory.objects.get(minv_id=minv_id)
+                med_id = minv.med_id  # FK object, not string
+            except MedicineInventory.DoesNotExist:
+                print(f"Medicine inventory with ID {minv_id} not found")
+                continue
+            if med_id not in medid_to_allocations:
+                medid_to_allocations[med_id] = []
+            medid_to_allocations[med_id].append({
+                'minv': minv,
+                'medrec_qty': med.get('medrec_qty', 0),
+                'reason': med.get('reason', ''),
+            })
+
+        # Create MedicineRequestItem and MedicineAllocation
+        for med_obj, allocations in medid_to_allocations.items():
+            reason = allocations[0].get('reason', 'Medicine allocation')
+            medicine_item = MedicineRequestItem.objects.create(
+                reason=reason,
+                med=med_obj,
+                medreq_id=med_request,
+                status='completed',
+                action_by=staff_instance,
+                completed_by=staff_instance,
+            )
+            for alloc in allocations:
+                minv = alloc['minv']
+                medrec_qty = alloc['medrec_qty']
+                if minv and medrec_qty > 0:
+                    try:
+                        self._update_medicine_inventory(
+                            minv.minv_id,
+                            medrec_qty,
+                            staff_instance
+                        )
+                    except Exception as e:
+                        print(f"Error updating inventory for {minv.minv_id}: {str(e)}")
+                        continue
+                    allocation = MedicineAllocation.objects.create(
+                        medreqitem=medicine_item,
+                        minv=minv,
+                        allocated_qty=medrec_qty
+                    )
+                    # Link to child health supplements
+                    ChildHealthSupplements.objects.create(
+                        chhist_id=chhist_id,
+                        medreqitem=medicine_item
+                            )
+
     def _update_medicine_inventory(self, minv_id, quantity, staff_instance):
         """Update medicine inventory and create transaction"""
         try:

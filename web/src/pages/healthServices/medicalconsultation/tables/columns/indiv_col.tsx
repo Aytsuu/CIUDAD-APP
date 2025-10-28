@@ -2,6 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import ViewButton from "@/components/ui/view-button";
 import { useNavigate } from "react-router-dom";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 const isHighlighted = (rowAppId: any, patientData_app_id?: any) => {
   if (patientData_app_id == null) return false;
@@ -96,12 +97,12 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
     header: "BHW Assigned",
     cell: ({ row }) => {
       const highlighted = isHighlighted(row.original?.app_id, patientData?.app_id);
-      const fname = row.original?.staff_details?.rp?.per?.per_fname || "N/A";
-      const lname = row.original?.staff_details?.rp?.per?.per_lname || "N/A";
+      const fname = row.original?.staff_details?.fname || "N/A";
+      const lname = row.original?.staff_details?.lname || "N/A";
       const bhw = `${fname} ${lname}`;
       return (
         <div className={`px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
-          {(bhw || "N/A").toUpperCase()}
+        {toTitleCase(bhw || "N/A")}
         </div>
       );
     }

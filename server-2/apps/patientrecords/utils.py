@@ -1,5 +1,6 @@
 from .models import *
-from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.models import *
+from apps.healthProfiling.serializers.base import PersonalSerializer
 from django.utils import timezone
 import logging
 
@@ -232,3 +233,339 @@ def get_latest_vital_signs(pat_id):
         print("Error fetching vital signs:", e)
         return None
 
+
+def extract_personal_info(obj):
+    """Get personal info from rp_id or trans_id"""
+    try:
+        if hasattr(obj, 'rp_id') and obj.rp_id and hasattr(obj.rp_id, 'per'):
+            personal = obj.rp_id.per
+            return {
+                'per_fname': personal.per_fname,
+                'per_lname': personal.per_lname,
+                'per_mname': personal.per_mname,
+                'per_suffix': personal.per_suffix,
+                'per_dob': personal.per_dob,
+                'per_sex': personal.per_sex,
+                'per_status': personal.per_status,
+                'per_edAttainment': personal.per_edAttainment,
+                'per_religion': personal.per_religion,
+                'per_contact': personal.per_contact,
+            }
+        elif hasattr(obj, 'trans_id') and obj.trans_id:
+            trans = obj.trans_id
+            return {
+                'per_fname': trans.tran_fname,
+                'per_lname': trans.tran_lname,
+                'per_mname': trans.tran_mname,
+                'per_suffix': trans.tran_suffix,
+                'per_dob': trans.tran_dob,
+                'per_sex': trans.tran_sex,
+                'per_status': trans.tran_status,
+                'per_edAttainment': trans.tran_ed_attainment,
+                'per_religion': trans.tran_religion,
+                'per_contact': trans.tran_contact,
+            }
+    except Exception as e:
+        print(f"Error getting personal info: {str(e)}")
+    return None
+
+def extract_address(obj):
+    """Get address from rp_id or trans_id"""
+    try:
+        if hasattr(obj, 'rp_id') and obj.rp_id and hasattr(obj.rp_id, 'per'):
+            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
+            if personal_address and personal_address.add:
+                address = personal_address.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    address.add_barangay,
+                    address.add_city,
+                    address.add_province,
+                    address.add_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+        elif hasattr(obj, 'trans_id') and obj.trans_id and obj.trans_id.tradd_id:
+            trans_addr = obj.trans_id.tradd_id
+            sitio = trans_addr.tradd_sitio
+            address_parts = [
+                trans_addr.tradd_barangay,
+                trans_addr.tradd_city,
+                trans_addr.tradd_province,
+                trans_addr.tradd_street,
+            ]
+            full_address = ", ".join(filter(None, address_parts))
+            return {
+                'add_street': trans_addr.tradd_street,
+                'add_barangay': trans_addr.tradd_barangay,
+                'add_city': trans_addr.tradd_city,
+                'add_province': trans_addr.tradd_province,
+                'add_sitio': sitio,
+                'full_address': full_address
+            }
+    except Exception as e:
+        print(f"Error getting address: {str(e)}")
+    return None
+
+
+
+
+def get_personal_info(obj, context=None):
+    """
+    Get personal information for both resident and transient patients.
+    """
+    if getattr(obj, 'pat_type', None) == 'Resident' and getattr(obj, 'rp_id', None) and hasattr(obj.rp_id, 'per'):
+        return PersonalSerializer(obj.rp_id.per, context=context).data if context else PersonalSerializer(obj.rp_id.per).data
+
+    elif getattr(obj, 'pat_type', None) == 'Transient' and getattr(obj, 'trans_id', None):
+        trans = obj.trans_id
+        return {
+            'per_fname': getattr(trans, 'tran_fname', None),
+            'per_lname': getattr(trans, 'tran_lname', None),
+            'per_mname': getattr(trans, 'tran_mname', None),
+            'per_suffix': getattr(trans, 'tran_suffix', None),
+            'per_dob': getattr(trans, 'tran_dob', None),
+            'per_sex': getattr(trans, 'tran_sex', None),
+            'per_status': getattr(trans, 'tran_status', None),
+            'per_edAttainment': getattr(trans, 'tran_ed_attainment', None),
+            'per_religion': getattr(trans, 'tran_religion', None),
+            'per_contact': getattr(trans, 'tran_contact', None),
+            'philhealth_id': getattr(trans, 'philhealth_id', None),
+        }
+    return None
+
+def get_address(obj):
+    """
+    Get address information for Resident and Transient patients.
+    """
+    try:
+        if getattr(obj, 'pat_type', None) == 'Resident' and getattr(obj, 'rp_id', None):
+            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
+            if personal_address and personal_address.add:
+                address = personal_address.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    address.add_barangay,
+                    address.add_city,
+                    address.add_province,
+                    address.add_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+
+            household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
+            if household and household.add:
+                address = household.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    address.add_barangay,
+                    address.add_city,
+                    address.add_province,
+                    address.add_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+            return None
+
+        elif getattr(obj, 'pat_type', None) == 'Transient' and getattr(obj, 'trans_id', None) and getattr(obj.trans_id, 'tradd_id', None):
+            trans_addr = obj.trans_id.tradd_id
+            sitio = trans_addr.tradd_sitio
+            address_parts = [
+                trans_addr.tradd_barangay,
+                trans_addr.tradd_city,
+                trans_addr.tradd_province,
+                trans_addr.tradd_street,
+            ]
+            full_address = ", ".join(filter(None, address_parts))
+            return {
+                'add_street': trans_addr.tradd_street,
+                'add_barangay': trans_addr.tradd_barangay,
+                'add_city': trans_addr.tradd_city,
+                'add_province': trans_addr.tradd_province,
+                'add_sitio': sitio,
+                'full_address': full_address
+            }
+        return None
+    except Exception as e:
+        print(f"Error retrieving address: {str(e)}")
+        return None
+    
+def get_family_head_info(obj, context=None):
+    """Reusable function to get family head info for Resident or Transient patients."""
+    family_heads = {}
+    if getattr(obj, 'pat_type', None) == 'Resident' and getattr(obj, 'rp_id', None):
+        try:
+            current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+            if not current_composition:
+                return None
+
+            fam_id = current_composition.fam_id
+
+            family_compositions = FamilyComposition.objects.filter(
+                fam_id=fam_id
+            ).select_related('rp', 'rp__per')
+
+            for composition in family_compositions:
+                role = composition.fc_role.lower()
+                if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
+                    personal = composition.rp.per
+                    patient = Patient.objects.filter(rp_id=composition.rp).first()
+                    family_planning_method = None
+                    if patient:
+                        latest_fp_record = patient.fp_records.order_by('-created_at').first()
+                        if latest_fp_record:
+                            fp_type = latest_fp_record.fp_type_set.first()
+                            family_planning_method = fp_type.fpt_method_used if fp_type else None
+
+                    # Get address information for this family head
+                    address_info = None
+                    if hasattr(obj, '_get_family_head_address'):
+                        address_info = obj._get_family_head_address(composition.rp)
+                    # If not, you can implement a utility for address as well
+
+                    family_heads[role] = {
+                        'rp_id': composition.rp.rp_id,
+                        'role': composition.fc_role,
+                        'personal_info': PersonalSerializer(personal, context=context).data if context else {},
+                        'composition_id': composition.fc_id,
+                        'family_planning_method': family_planning_method,
+                        'address': address_info
+                    }
+            
+            return {
+                'fam_id': fam_id,
+                'family_heads': family_heads,
+                'has_mother': 'mother' in family_heads,
+                'has_father': 'father' in family_heads,
+                'total_heads': len(family_heads)
+            }
+        except Exception as e:
+            print(f"Error in get_family_head_info: {str(e)}")
+            return None
+
+    elif getattr(obj, 'pat_type', None) == 'Transient' and getattr(obj, 'trans_id', None):
+        try:
+            trans = obj.trans_id
+            if getattr(trans, 'mother_fname', None) or getattr(trans, 'mother_lname', None):
+                family_heads['mother'] = {
+                    'role': 'Mother',
+                    'personal_info': {
+                        'per_fname': trans.mother_fname,
+                        'per_lname': trans.mother_lname,
+                        'per_mname': trans.mother_mname,
+                        'per_dob': trans.mother_dob,
+                    },
+                    'family_planning_method': None
+                }
+
+            if getattr(trans, 'father_fname', None) or getattr(trans, 'father_lname', None):
+                family_heads['father'] = {
+                    'role': 'Father',
+                    'personal_info': {
+                        'per_fname': trans.father_fname,
+                        'per_lname': trans.father_lname,
+                        'per_mname': trans.father_mname,
+                        'per_dob': trans.father_dob,
+                    },
+                    'family_planning_method': None
+                }
+
+            return {
+                'fam_id': None,
+                'family_heads': family_heads,
+                'has_mother': 'mother' in family_heads,
+                'has_father': 'father' in family_heads,
+                'total_heads': len(family_heads)
+            }
+        except Exception as e:
+            print(f"Error in get_family_head_info: {str(e)}")
+            return None
+
+    return None
+
+
+
+def get_family(obj):
+    """
+    Returns the family composition info for a Resident patient.
+    """
+    if getattr(obj, 'pat_type', None) == 'Resident' and getattr(obj, 'rp_id', None):
+        try:
+            current_composition = FamilyComposition.objects.filter(
+                rp=obj.rp_id
+            ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+            
+            if not current_composition:
+                print(f'No family composition found for resident {obj.rp_id.rp_id}')
+                return None
+
+            fam_id = current_composition.fam_id
+
+            all_compositions = FamilyComposition.objects.filter(
+                fam_id=fam_id
+            ).select_related('rp', 'rp__per')
+
+            current_role = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+            if current_role:
+                return {
+                    'fam_id': str(current_role.fam_id),
+                    'fc_role': current_role.fc_role,
+                    'fc_id': current_role.fc_id
+                }
+
+            mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
+            if mother_composition:
+                return {
+                    'fam_id': str(mother_composition.fam_id),
+                    'fc_role': 'Mother',
+                    'fc_id': mother_composition.fc_id
+                }
+            
+            father_composition = all_compositions.filter(fc_role__iexact='Father').first()
+            if father_composition:
+                return {
+                    'fam_id': str(father_composition.fam_id),
+                    'fc_role': 'Father',
+                    'fc_id': father_composition.fc_id
+                }
+            
+            other_composition = all_compositions.exclude(
+                fc_role__iexact='Mother'
+            ).exclude(
+                fc_role__iexact='Father'
+            ).first()
+
+            if other_composition:
+                return {
+                    'fam_id': str(other_composition.fam_id),
+                    'fc_role': other_composition.fc_role,
+                    'fc_id': other_composition.fc_id
+                }
+            
+            return None
+        
+        except Exception as e:
+            print(f'Error fetching fam_id for resident {obj.rp_id.rp_id}: {str(e)}')
+            return None
+    return None

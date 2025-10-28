@@ -3,6 +3,7 @@ import { ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
 import { toTitleCase } from "@/helpers/ToTitleCase";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 export const childColumns: ColumnDef<any>[] = [
   {
@@ -100,26 +101,15 @@ export const childColumns: ColumnDef<any>[] = [
     ),
   },
   {
-    accessorKey: "pat_type",
-    size: 80,
-    header: () => (
-      <div className="flex w-full justify-center items-center py-2">
-        <span className="text-xs sm:text-sm font-medium">Type</span>
-      </div>
-    ),
-    cell: ({ row }) => {
-      const patType = row.original.pat_type?.toLowerCase() || "";
-      const isTransient = patType === "transient";
-
-      return (
-        <div className="flex justify-center items-center px-2 py-3">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${isTransient ? "bg-orange-100 text-orange-800" : "bg-blue-100 text-blue-800"}`}>
-            {toTitleCase(row.original.pat_type || "")}
-          </span>
+      accessorKey: "pat_type",
+      header: () => <div className="">Type</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center">
+        <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
-      );
-    },
-  },
+      )
+      },
+
   {
     accessorKey: "latest_child_history_date",
     size: 120,

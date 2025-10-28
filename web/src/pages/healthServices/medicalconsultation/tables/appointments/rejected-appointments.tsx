@@ -48,7 +48,7 @@ export default function RejectedMedicalAppointments() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Referred</p>
+              <p className="text-sm font-medium text-gray-600">Total Rejected</p>
               <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
             </div>
             <div className="p-2 bg-purple-100 rounded-lg">

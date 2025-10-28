@@ -1,7 +1,7 @@
 from .models import *
 from rest_framework import serializers
 from apps.inventory.serializers.firstaid_serializers import *
-from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,7 +13,7 @@ from .models import *
 class PatientFirstaidRecordSerializer(serializers.ModelSerializer):
     firstaid_count = serializers.SerializerMethodField()
     latest_firstaid_date = serializers.SerializerMethodField()
-    patient_details = PatientSerializer(source='*', read_only=True)
+    patient_details = PatientMiniMalSerializer(source='*', read_only=True)
     
     class Meta:
         model = Patient
@@ -38,7 +38,7 @@ class PatientFirstaidRecordSerializer(serializers.ModelSerializer):
     
 class FirstaidRecordSerializer(serializers.ModelSerializer):
     finv_details = FirstAidInventorySerializer(source='finv', read_only=True)
-    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
+    patrec_details = PatientMiniMalSerializer(source='patrec.pat_id', read_only=True)
     
     class Meta:
         model = FirstAidRecord
