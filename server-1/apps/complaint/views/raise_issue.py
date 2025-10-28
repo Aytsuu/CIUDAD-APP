@@ -42,9 +42,9 @@ class ServiceChargeRequestCreateView(APIView):
                 pay_date_req=timezone.now(), 
                 comp_id=complaint,
             )
-            
+            print(payment_request)
             # Get all staff with Clerk position
-            admin_staff = Staff.objects.filter(pos__pos_title="Clerk").select_related("rp")
+            admin_staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
             
             recipients = []
             

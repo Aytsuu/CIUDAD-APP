@@ -215,32 +215,32 @@ export function ComplaintViewRecord() {
         <div className="w-full h-full bg-white rounded-lg mb-4 p-2">
             <div className="pl-5">
               <h1 className="text-lg font-semibold text-gray-800">Allegation</h1>
-              <p className="text-sm text-gray-500 ">Details about the incident or wrongdoing being reported</p>
+              <p className="text-sm text-gray-500 ">Details about the incident or wrongdoing being reported.</p>
             </div>
 
             <div className="grid grid-cols-3 grid-rows-2 p-4 gap-x-10 gap-y-4">
               {/* box 1 */}
               <div className="bg-blue-500 text-white rounded-lg w-full h-full px-4 py-2">
                 <h2 className="text-md font-semibold">Type of Incident</h2>
-                <p className="text-xs text-white mb-2">Details about the incident or wrongdoing being reported</p>
+                <p className="text-xs text-white mb-2">Details about the incident or wrongdoing being reported.</p>
                 <h2 className="text-lg w-full text-center font-semibold">{c.comp_incident_type}</h2>
               </div>
               {/* box 2 */}
               <div className="bg-gray-100 rounded-lg w-full h-full px-4 py-2">
                 <h2 className="text-md font-semibold">Time of incident</h2>
-                <p className="text-xs text-gray-500 mb-2">The time when the incident occured</p>
+                <p className="text-xs text-gray-500 mb-2">The time when the incident occured.</p>
                 <h2 className="text-lg w-full text-center text-gray-600 font-semibold">{new Date(c.comp_datetime).toLocaleString()}</h2>
               </div>
               {/* box 3 */}
               <div className="bg-gray-100 rounded-lg w-full h-full px-4 py-2">
                 <h2 className="text-md font-semibold">Location of incident</h2>
-                <p className="text-xs text-gray-500 mb-2">The area or address where the reported event took place</p>
+                <p className="text-xs text-gray-500 mb-2">The area or address where the reported event took place.</p>
                 <h2 className="text-lg w-full text-center text-gray-600 font-semibold">{c.comp_location}</h2>
               </div>
               {/* row 2 */}
               <div className="bg-gray-100 rounded-lg w-full h-full px-4 py-2 col-span-3">
-                <h2 className="text-md font-semibold">Location of incident</h2>
-                <p className="text-xs text-gray-500 mb-2">The area or address where the reported event took place</p>
+                <h2 className="text-md font-semibold">Incident Details</h2>
+                <p className="text-xs text-gray-500 mb-2">A clear description of what happened.</p>
                 <p className="text-start text-md w-full text-gray-600 font-semibold break-words whitespace-pre-wrap">{c.comp_allegation}</p>
               </div>
             </div>
@@ -284,6 +284,12 @@ export function ComplaintViewRecord() {
                           Age: {person.cpnt_age} yrs. old, Gender: {person.cpnt_gender}
                         </h3>
                         <h3 className="text-sm text-white">
+                          Contact #: {person.cpnt_number}
+                        </h3>
+                        <h3 className="text-sm text-white">
+                          Address: R. PALMA, SAN ROQUE (CIUDAD), CEBU CITY, CEBU
+                        </h3>
+                        <h3 className="text-sm text-white">
                           Relation to Respondent: {person.cpnt_relation_to_respondent}
                         </h3>
                       </div>
@@ -323,6 +329,9 @@ export function ComplaintViewRecord() {
                             </div>
                             <h3 className="text-sm text-white">
                               Age: {person.acsd_age} yrs. old, Gender: {person.acsd_gender}
+                            </h3>
+                            <h3 className="text-sm text-white">
+                              Address: R. PALMA, SAN ROQUE (CIUDAD), CEBU CITY, CEBU
                             </h3>
                             <h3 className="text-sm text-white">
                               Description: {person.acsd_description}
@@ -373,7 +382,7 @@ export function ComplaintViewRecord() {
 
   return (
     <LayoutWithBack
-      title="Complaint Details"
+      title="Blotter Details"
       description="Review and manage complaint record information"
     >
       <div className="flex">
