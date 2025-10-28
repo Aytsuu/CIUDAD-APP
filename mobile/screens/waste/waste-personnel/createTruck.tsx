@@ -109,16 +109,7 @@ export default function WasteTruckCreate() {
             name="truck_last_maint"
             label="Last Maintenance"
           />
-        </View>
-
-        <View className="mb-4">
-          <FormInput
-            control={control}
-            name="truck_track_device"
-            label="Tracking Device ID"
-            placeholder="Enter tracking device ID (optional)"
-          />
-        </View>        
+        </View>      
       </View>
     </PageLayout>
   );

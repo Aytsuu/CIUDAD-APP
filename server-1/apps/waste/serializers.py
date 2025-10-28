@@ -238,23 +238,7 @@ class WastePersonnelSerializer(serializers.ModelSerializer):
 class WasteTruckSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteTruck
-        fields = [
-            'truck_id',
-            'truck_plate_num',
-            'truck_model',
-            'truck_capacity',
-            'truck_status',
-            'truck_last_maint',
-            'truck_is_archive',
-            'truck_track_device',
-            'truck_track_device_lat',
-            'truck_track_device_lng',
-            'staff'
-        ]
-        extra_kwargs = {
-            'truck_track_device_lat': {'read_only': True},
-            'truck_track_device_lng': {'read_only': True},
-        }
+        fields = '__all__' 
 
 class SitioSerializer(serializers.ModelSerializer):
     class Meta:

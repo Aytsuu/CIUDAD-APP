@@ -46,7 +46,6 @@ export default function WasteTruckEdit() {
     truck_last_maint: truck?.truck_last_maint
       ? truck.truck_last_maint.split('T')[0]
       : new Date().toISOString().split('T')[0],
-    truck_track_device: truck?.truck_track_device,
   };
 
   // Populate form with truck data
@@ -60,7 +59,6 @@ export default function WasteTruckEdit() {
         truck_last_maint: truck.truck_last_maint
           ? truck.truck_last_maint.split('T')[0]
           : new Date().toISOString().split('T')[0],
-        truck_track_device: truck.truck_track_device,
       });
     }
   }, [truck, reset]);
@@ -240,16 +238,6 @@ export default function WasteTruckEdit() {
             control={control}
             name="truck_last_maint"
             label="Last Maintenance"
-            editable={isEditing && !isArchived} // Disable if archived
-          />
-        </View>
-
-        <View className="relative">
-          <FormInput
-            control={control}
-            name="truck_track_device"
-            label="Tracking Device ID"
-            placeholder="Enter tracking device ID (optional)"
             editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
