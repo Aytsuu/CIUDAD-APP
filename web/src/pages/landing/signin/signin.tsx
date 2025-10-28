@@ -257,7 +257,7 @@ export default function SignIn() {
       >
         <div className="flex items-center justify-center gap-2">
           <MdSwapHoriz className="w-5 h-5" />
-          <span>Login with Email Instead</span>
+          <span>Login via Email</span>
         </div>
       </Button>
     </div>
@@ -340,7 +340,7 @@ export default function SignIn() {
     >
       <div className="flex items-center justify-center gap-2">
         <MdSwapHoriz className="w-5 h-5" />
-        <span>Login with Phone Instead</span>
+        <span>Login via Phone </span>
       </div>
     </Button>
   </div>

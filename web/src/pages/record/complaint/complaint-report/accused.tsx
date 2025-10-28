@@ -9,11 +9,19 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Search, Trash2 } from "lucide-react";
+import {
+  X,
+  Search,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  PlusCircle,
+} from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
 import { Input } from "@/components/ui/input";
 import { FormInput } from "@/components/ui/form/form-input";
+import { MdAccountCircle } from "react-icons/md";
 
 type Resident = {
   rp_id: string;
@@ -25,7 +33,17 @@ type Resident = {
   [key: string]: any;
 };
 
-export const AccusedInfo = () => {
+interface AccusedInfoProps {
+  onNext: () => void;
+  onPrevious: () => void;
+  isSubmitting: boolean;
+}
+
+export const AccusedInfo: React.FC<AccusedInfoProps> = ({
+  onNext,
+  onPrevious,
+  isSubmitting,
+}) => {
   const { control, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -34,9 +52,11 @@ export const AccusedInfo = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResident, setSelectedResident] = useState<any>(null);
-  const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
+  const [selectedResidentValue, setSelectedResidentValue] =
+    useState<string>("");
 
-  const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
+  const { data: allResidents = [], isLoading: isResidentsLoading } =
+    useAllResidents();
 
   const currentAccused = watch(`accused.${activeTab}`);
 
@@ -76,15 +96,17 @@ export const AccusedInfo = () => {
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
     setValue(`accused.${activeTab}.acsd_name`, resident.name);
     setValue(`accused.${activeTab}.acsd_age`, resident.age);
-    
+
     // Format gender to match options
     const residentGender = resident.gender;
     let formattedGender = "";
     if (residentGender) {
-      formattedGender = residentGender.charAt(0).toUpperCase() + residentGender.slice(1).toLowerCase();
+      formattedGender =
+        residentGender.charAt(0).toUpperCase() +
+        residentGender.slice(1).toLowerCase();
     }
     setValue(`accused.${activeTab}.acsd_gender`, formattedGender);
-    
+
     setValue(`accused.${activeTab}.acsd_description`, "");
     setValue(`accused.${activeTab}.acsd_address`, resident.address || "");
   };
@@ -111,7 +133,9 @@ export const AccusedInfo = () => {
   useEffect(() => {
     const currentAccusedData = watch(`accused.${activeTab}`);
     if (currentAccusedData?.rp_id) {
-      const resident = allResidents.find((r: Resident) => r.rp_id === currentAccusedData.rp_id);
+      const resident = allResidents.find(
+        (r: Resident) => r.rp_id === currentAccusedData.rp_id
+      );
       setSelectedResident(resident || null);
       setSelectedResidentValue(currentAccusedData.rp_id);
     } else {
@@ -130,7 +154,7 @@ export const AccusedInfo = () => {
         <span className="inline-block px-2 py-1 text-s font-normal bg-green-500 text-white rounded">
           #{resident.rp_id}
         </span>
-        <span>{resident.cpnt_name}</span>
+        <span>{resident.name}</span>
       </div>
     ),
   }));
@@ -143,77 +167,79 @@ export const AccusedInfo = () => {
     <div className="rounded-lg mt-10">
       {/* Header Section */}
       <div className="bg-white p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-black/70">
-            Respondent Information
-          </h3>
-        </div>
-        
-        <p className="text-sm text-gray-600 mb-6">
-          Please select a registered resident as the respondent. Only registered residents can be filed as respondents in a complaint. The description field can be edited to provide additional details about the incident.
-        </p>
-
-        {/* Tab Navigation */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 flex-1 overflow-x-auto">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className={`flex items-center px-3 py-2 cursor-pointer rounded-md transition-colors whitespace-nowrap ${
-                  activeTab === index
-                    ? "bg-blue-500 text-white shadow-sm"
-                    : "bg-ashGray/40 text-black/50 hover:bg-gray-200"
-                }`}
-                onClick={() => {
-                  setActiveTab(index);
-                }}
-              >
-                <span className="text-sm font-medium">
-                  {getTabDisplayName(index)}
-                </span>
-                {fields.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeAccused(index);
-                    }}
-                    className={`ml-2 p-1 rounded-full transition-colors ${
-                      activeTab === index
-                        ? "hover:bg-blue-700 text-blue-100 hover:text-white"
-                        : "hover:bg-red-100 text-gray-500 hover:text-red-600"
-                    }`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            ))}
+        <div className="flex flex-col items-center justify-center text-center">
+          <div className="flex text-blue-500 items-center justify-center mb-2">
+            <MdAccountCircle size={30} className="mr-2" />
+            <h3 className="text-lg font-bold">Respondent</h3>
           </div>
-          <Button
-            type="button"
-            onClick={addAccused}
-            variant="outline"
-            size="sm"
-            className="ml-3 text-blue-600 border-blue-300 hover:bg-blue-50 whitespace-nowrap"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Respondent
-          </Button>
+          <p className="text-xs text-gray-600 max-w-md">
+            Please select a registered resident as the respondent. Only
+            registered residents can be filed as respondents in a complaint. The
+            description field can be edited to provide additional details about
+            the incident.
+          </p>
         </div>
       </div>
-
-      {/* Form Content */}
-      <div
-        key={`tab-${activeTab}`}
-        className="bg-white rounded-lg p-6"
-      >
+      <div key={`tab-${activeTab}`} className="bg-white rounded-lg p-6">
         <div className="space-y-6">
+          {/* Form Fields - Read-only except for description */}
+          <div className="space-y-6 p-4 rounded-lg">
+                      {/* Tab Navigation */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 flex-1 overflow-x-auto">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={`flex items-center px-3 py-2 cursor-pointer rounded-md transition-colors whitespace-nowrap ${
+                    activeTab === index
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "bg-ashGray/40 text-black/50 hover:bg-gray-200"
+                  }`}
+                  onClick={() => {
+                    setActiveTab(index);
+                  }}
+                >
+                  <span className="text-sm font-medium">
+                    {getTabDisplayName(index)}
+                  </span>
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeAccused(index);
+                      }}
+                      className={`ml-2 p-1 rounded-full transition-colors ${
+                        activeTab === index
+                          ? "hover:bg-blue-700 text-blue-100 hover:text-white"
+                          : "hover:bg-red-100 text-gray-500 hover:text-red-600"
+                      }`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+              <Button
+                type="button"
+                onClick={addAccused}
+                variant="outline"
+                size="sm"
+                className="ml-3 text-blue-600 bg-blue-50 border-blue-300 hover:bg-blue-500 hover:text-white whitespace-nowrap"
+              >
+                <PlusCircle className="h-4 w-4" />
+              </Button>
+          </div>
           {/* Resident Search Section with Combobox */}
           <div className="space-y-3">
             <div className="flex gap-2 items-center">
               <div className="flex-1">
-                <Combobox 
+                <p className="text-xs text-gray-600 mb-2">
+                  Search and select a record if the complainant is a registered
+                  resident.
+                </p>
+                <Combobox
                   options={residentOptions}
                   value={selectedResidentValue}
                   onChange={(value) => {
@@ -224,7 +250,7 @@ export const AccusedInfo = () => {
                     }
                   }}
                   placeholder="Select a resident"
-                  triggerClassName="w-full"
+                  triggerClassName="w-full text-gray-500 font-normal"
                   contentClassName="w-full max-w-2xl"
                   emptyMessage={
                     <div className="flex flex-col items-center justify-center py-4 text-center">
@@ -251,9 +277,6 @@ export const AccusedInfo = () => {
               )}
             </div>
           </div>
-
-          {/* Form Fields - Read-only except for description */}
-          <div className="space-y-6 p-4 rounded-lg">
             <FormInput
               control={control}
               name={`accused.${activeTab}.acsd_name`}
@@ -269,7 +292,7 @@ export const AccusedInfo = () => {
                 name={`accused.${activeTab}.acsd_age`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-semibold text-black/50">
+                    <FormLabel className="font-semibold text-gray-700">
                       Age
                     </FormLabel>
                     <FormControl>
@@ -277,7 +300,7 @@ export const AccusedInfo = () => {
                         type="number"
                         min="1"
                         max="150"
-                        placeholder="Auto-filled from resident data"
+                        placeholder=""
                         {...field}
                         readOnly={true}
                         className=""
@@ -293,12 +316,12 @@ export const AccusedInfo = () => {
                 name={`accused.${activeTab}.acsd_gender`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-semibold text-black/50">
+                    <FormLabel className="font-semibold text-gray-700">
                       Gender
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Auto-filled from resident data"
+                        placeholder=""
                         {...field}
                         readOnly={true}
                         className=""
@@ -314,7 +337,7 @@ export const AccusedInfo = () => {
               control={control}
               name={`accused.${activeTab}.acsd_address`}
               label="Complete Address *"
-              placeholder="Auto-filled from resident data"
+              placeholder=""
               className="max-w-full "
               readOnly={true}
             />
@@ -325,7 +348,7 @@ export const AccusedInfo = () => {
               name={`accused.${activeTab}.acsd_description`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-black/50">
+                  <FormLabel className="font-semibold text-gray-700">
                     Description *
                   </FormLabel>
                   <FormControl>
@@ -333,7 +356,7 @@ export const AccusedInfo = () => {
                       placeholder="Provide detailed description of the respondent's involvement in the incident..."
                       className="min-h-[120px] bg-white border-2 border-blue-200 focus:border-blue-400"
                       {...field}
-                      value={field.value || ""} 
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -347,6 +370,28 @@ export const AccusedInfo = () => {
             type="hidden"
             {...control.register(`accused.${activeTab}.rp_id`)}
           />
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-6 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onPrevious}
+              className="flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+              disabled={isSubmitting}
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onNext}
+              className="flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+              disabled={isSubmitting}
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

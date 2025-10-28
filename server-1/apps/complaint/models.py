@@ -47,26 +47,10 @@ class Complaint(models.Model):
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_rejection_reason = models.TextField(blank=True, null=True)
-    comp_status = models.CharField(
-        max_length=20, 
-        default='Pending',
-    )
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='complaints',
-    )
-    complainant = models.ManyToManyField(
-        Complainant,
-        through='ComplaintComplainant',
-        related_name='complaints'
-    )
-    accused = models.ManyToManyField(
-        Accused,
-        through='ComplaintAccused',
-        related_name='complaints'
-    )
+    comp_status = models.CharField(max_length=20, default='Pending',)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='complaints',)
+    complainant = models.ManyToManyField(Complainant, through='ComplaintComplainant', related_name='complaints')
+    accused = models.ManyToManyField(Accused,through='ComplaintAccused',related_name='complaints')
 
     class Meta:
         db_table = 'complaint'

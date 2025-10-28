@@ -70,6 +70,7 @@ export interface ComplaintData {
   complaint_files: ComplaintFile[];
   comp_status: string;
   staff: any;
+  rp_id: string;
 }
 
 
