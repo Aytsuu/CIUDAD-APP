@@ -18,7 +18,6 @@ export const getSummonTimeSlots = async(sd_id: number) => {
     }
 }
 
-
 export const getCaseTrackingDetails = async(comp_id: string) => {
     try{
 
@@ -30,7 +29,6 @@ export const getCaseTrackingDetails = async(comp_id: string) => {
         throw err
     }
 }
-
 
 export const getSummonScheduleList = async (sc_id: string) => {
     try{

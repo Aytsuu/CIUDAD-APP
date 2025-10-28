@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useGetCaseTrackingDetails } from "./queries/summon-relatedFetchQueries";
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatTimestamp } from "@/helpers/timestampformatter";
+import { formatTime } from "@/helpers/timeFormatter";
 
 export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
 }: {
@@ -40,7 +41,6 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       router.push({
         pathname: "/(my-request)/complaint-tracking/hearing-history",
         params: {
-          hearing_schedules: JSON.stringify(tracking.hearing_schedules || []),
           sc_id: tracking?.summon_case?.sc_id || ''
         }
       }); 
@@ -112,27 +112,18 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         
         if (status === "ongoing") {
           // Find the open hearing schedule (not closed)
-          const openSchedule = tracking.hearing_schedules?.find(schedule => !schedule.hs_is_closed);
+          const openSchedule = tracking.summon_case?.hearing_schedules?.find(schedule => !schedule.hs_is_closed);
           
           if (openSchedule) {
-            const hearingDate = formatDate(openSchedule.summon_date.sd_date, "long");
-            const hearingTime = openSchedule.summon_time.st_start_time;
-            const hearingLevel = openSchedule.hs_level;
             const remark = openSchedule.remark?.rem_remarks;
-            
             return (
               <View className="space-y-2">
                 <Text className="text-gray-600 text-sm leading-5">
-                  Your hearing is scheduled for {hearingDate} at {hearingTime}.
+                  {remark 
+                    ? "The barangay staff has provided an update on your hearing session."
+                    : "Your schedule is ready and waiting for a remark from barangay staff."
+                  }
                 </Text>
-                <Text className="text-gray-600 text-sm leading-5">
-                  Hearing Level: {hearingLevel}
-                </Text>
-                {remark && (
-                  <Text className="text-gray-600 text-sm leading-5 italic">
-                    Remark: {remark}
-                  </Text>
-                )}
               </View>
             );
           } else {
@@ -160,7 +151,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
           return (
             <View className="space-y-1">
               <Text className="text-gray-600 text-sm leading-5">
-                The case has been successfully resolved through mediation.
+                The case has been successfully resolved through hearing sessions.
               </Text>
             </View>
           );
@@ -184,16 +175,14 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         }
         
         if (status === "ongoing") {
-          const openSchedules = tracking.hearing_schedules?.filter(schedule => !schedule.hs_is_closed) || [];
-          const closedSchedules = tracking.hearing_schedules?.filter(schedule => schedule.hs_is_closed) || [];
+          const openSchedule = tracking.summon_case?.hearing_schedules?.find(schedule => !schedule.hs_is_closed);
           
-          if (openSchedules.length > 0) {
-            return `${openSchedules.length} active hearing session(s) scheduled`;
-          } else if (closedSchedules.length > 0) {
-            return `${closedSchedules.length} completed hearing session(s)`;
-          } else {
-            return "No hearing sessions scheduled yet";
-          }
+          if (openSchedule) {
+            const hearingDate = formatDate(openSchedule.summon_date?.sd_date, "long") || 'Date not set';
+            const hearingTime = openSchedule.summon_time?.st_start_time ? formatTime(openSchedule.summon_time.st_start_time) : 'Time not set';
+                        
+            return `Scheduled for ${hearingDate} at ${hearingTime}`;
+          } 
         }
         
         if (status === "escalated") {
@@ -203,7 +192,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         if (status === "resolved") {
           const resolutionDate = tracking.summon_case?.sc_date_marked;
           return resolutionDate 
-            ? `Case resolved on ${formatDate(resolutionDate)}`
+            ? "Case resolved!"
             : "Case successfully closed";
         }
         
@@ -231,7 +220,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         status: getCaseStatusDisplay().toLowerCase(),
         display_status: caseDisplay,
         details: tracking.summon_case?.sc_date_marked
-          ? `Case ${getCaseStatusDisplay()} on ${formatDate(tracking.summon_case.sc_date_marked)}`
+          ? `Case resolved on ${formatDate(tracking.summon_case.sc_date_marked)} and marked by ${tracking.summon_case?.staff_name}`
           : "Pending mediation outcome.",
       });
 
@@ -391,8 +380,10 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                                 {step.description}
                               </View>
                               {step.details && (
-                                <View className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                  <Text className="text-xs text-blue-800 font-medium">{step.details}</Text>
+                                <View className='mt-2'>
+                                  <View className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <Text className="text-xs text-blue-800 font-medium">{step.details}</Text>
+                                  </View>
                                 </View>
                               )}
                             </View>

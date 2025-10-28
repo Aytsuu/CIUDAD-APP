@@ -12,13 +12,8 @@ export const useAddSched = (onSuccess?: () => void) => {
             mutationFn: (data: {sd_id: string, st_id: string, sc_id: string, level: string, type: string}) => 
             addSummonSched(data.sd_id, data.st_id, data.sc_id, data.level, data.type),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
-                queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
-                queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
-                queryClient.invalidateQueries({ queryKey: ['luponCases'] })
-                queryClient.invalidateQueries({ queryKey: ['councilCases'] })
-                queryClient.invalidateQueries({ queryKey: ['summonCases'] })
                 queryClient.invalidateQueries({ queryKey: ['caseTrackingDetails']})
+                queryClient.invalidateQueries({ queryKey: ['schedList']})
         
                 toast.success('Record Submitted!')
                 onSuccess?.()
