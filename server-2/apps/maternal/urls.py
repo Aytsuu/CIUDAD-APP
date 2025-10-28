@@ -64,5 +64,4 @@ urlpatterns=[
     # Laboratory Results URLs
     path('lab-results/<str:pregnancy_id>/', get_pregnancy_lab_results, name='pregnancy-lab-results'),
     path('pregnancy/lab-results/', list_lab_results_for_pregnancy, name='pregnancy-lab-results-list'),
-
 ]

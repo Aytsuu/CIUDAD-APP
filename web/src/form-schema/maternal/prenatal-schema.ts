@@ -347,8 +347,9 @@ export const PrenatalFormSchema = z.object({
     }),
 
     // forward record to
-    forward_to_staff_id: z.string().optional(),
-    forward_status: z.string().optional(),
+    assigned_to: z.string().optional(),
+    status: z.string().optional(),
+    forwarded_status: z.string().optional(),
 
     // prenatal care table
     prenatalCare: z.array(PrenatalCareEntrySchema).optional(),

@@ -1,5 +1,6 @@
 from django.db import models
 from apps.administration.models import Staff  # Adjust the import based on your project structure
+from apps.patientrecords.models import Illness
 
 # class HeaderRecipientListReporTemplate(models.Model):
 #     rcpheader_id = models.AutoField(primary_key=True)
@@ -50,6 +51,7 @@ class BHWDailyNotes(models.Model):
     bhwdn_id = models.BigAutoField(primary_key=True)
     staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
     description = models.TextField(null=True, blank=True)
+    disease_surv_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -63,8 +65,8 @@ class BHWDailyNotes(models.Model):
 class BHWReferOrFollowUp(models.Model):
     bhwrof_id = models.BigAutoField(primary_key=True)
     bhwdn_id = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE)
-    disease_name = models.CharField(max_length=255)
-    referred_count = models.IntegerField(default=0)
+    referred_follow_up_count = models.IntegerField(default=0)
+    ill_id = models.ForeignKey(Illness, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'bhw_refer_or_follow_up'

@@ -398,20 +398,24 @@ export default function PrenatalFormFourthPq({
       if (selectedStaffId) {
         // Determine status based on staff position
         let forwardStatus = "pending_review"
+        let forwardedStatus = "completed"
         
         if (selectedStaffPosition.toUpperCase() === "ADMIN") {
           forwardStatus = "tbc_by_midwife"
-          console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife")
+          forwardedStatus = "pending"
+          console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
         } else if (selectedStaffPosition.toUpperCase() === "DOCTOR") {
           forwardStatus = "check_up"
-          console.log("Forwarding to DOCTOR staff - setting status to: check_up")
+          forwardedStatus = "completed"
+          console.log("Forwarding to DOCTOR staff - setting status to: check_up, forwarded_status to: completed")
         }
         
         // Store forward information in form for backend
-        form.setValue("forward_to_staff_id", selectedStaffId)
-        form.setValue("forward_status", forwardStatus)
+        form.setValue("assigned_to", selectedStaffId)
+        form.setValue("status", forwardStatus)
+        form.setValue("forwarded_status", forwardedStatus)
         
-        console.log("Forward record: Staff ID:", selectedStaffId, "Status:", forwardStatus)
+        console.log("Forward record: Staff ID:", selectedStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
       }
 
       setIsSubmitting(true)

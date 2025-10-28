@@ -136,6 +136,7 @@ class Prenatal_Form(models.Model):
     previous_complications = models.TextField(null=True, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(null=True, blank=True)
+    forwarded_status = models.CharField(null=True, blank=True)
 
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 

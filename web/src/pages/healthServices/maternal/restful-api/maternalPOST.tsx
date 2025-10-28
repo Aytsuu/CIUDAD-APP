@@ -128,6 +128,7 @@ export interface PrenatalRecord {
   vacrec_totaldose?: number | null
   assigned_to?: string
   status?: string
+  forwarded_status?: string | null
 }
 
 export const addPrenatalRecord = async (data: PrenatalRecord) => {

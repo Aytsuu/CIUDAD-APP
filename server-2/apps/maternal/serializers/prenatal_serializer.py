@@ -1912,6 +1912,29 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     validated_data['status'] = pf_status
                     logger.info(f"Setting prenatal form status to: {pf_status}")
 
+                # Set forwarded_status based on assigned staff position
+                forwarded_status = None
+                if assigned_to_staff:
+                    try:
+                        # Get the position from the staff's pos ForeignKey
+                        staff_position = ""
+                        if assigned_to_staff.pos:
+                            # Use pos_title to get the position name
+                            staff_position = (assigned_to_staff.pos.pos_title or "").upper()
+                        
+                        if staff_position == "ADMIN":
+                            forwarded_status = "pending"
+                            logger.info(f"Forwarding to ADMIN staff - setting forwarded_status to: pending")
+                        elif staff_position == "DOCTOR":
+                            forwarded_status = "completed"
+                            logger.info(f"Forwarding to DOCTOR staff - setting forwarded_status to: completed")
+                        
+                        if forwarded_status:
+                            validated_data['forwarded_status'] = forwarded_status
+                    except Exception as e:
+                        logger.warning(f"Error getting staff position for forwarded_status: {str(e)}")
+                        # Continue without setting forwarded_status if there's an error
+
                 # create Prenatal_Form
                 logger.info(f"Creating prenatal form with staff: {staff_instance}")
                 prenatal_form = Prenatal_Form.objects.create(

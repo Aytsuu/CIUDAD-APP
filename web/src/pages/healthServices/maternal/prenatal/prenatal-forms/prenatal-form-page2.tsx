@@ -169,10 +169,10 @@ export default function PrenatalFormSecPg({
       return
     }
 
-    if (!vaccineType) {
-      showErrorToast("Error! Please select a vaccine type.")
-      return
-    }
+    // if (!vaccineType) {
+    //   showErrorToast("Error! Please select a vaccine type.")
+    //   return
+    // }
 
     const newTTData: TetanusToxoidType = {
       vaccineType: vaccineType,

@@ -299,8 +299,9 @@ export default function PrenatalForm() {
         : undefined,
 
       // Forward record fields
-      assigned_to: data.forward_to_staff_id ? data.forward_to_staff_id : undefined,
-      status: data.forward_status ? data.forward_status : undefined,
+      assigned_to: data.assigned_to ? data.assigned_to : undefined,
+      status: data.status ? data.status : undefined,
+      forwarded_status: data.forwarded_status ? data.forwarded_status : undefined,
     }
   }
 
