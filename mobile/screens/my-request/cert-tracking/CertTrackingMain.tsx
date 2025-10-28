@@ -19,6 +19,7 @@ export default function CertTrackingMain() {
   const { mutate: cancelBusiness } = useCancelBusinessPermit(user?.rp || "");
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
+  const [paymentFilter, setPaymentFilter] = React.useState<'all' | 'unpaid' | 'paid'>('all');
   const [searchInputVal, setSearchInputVal] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showSearch, setShowSearch] = React.useState(false);
@@ -66,6 +67,29 @@ export default function CertTrackingMain() {
     
     // Default to in_progress for any other status (like "Pending", "Submitted", etc.)
     return 'in_progress';
+  }
+
+  const getPaymentBadge = (paymentStatus?: string) => {
+    const normalized = (paymentStatus || "").toLowerCase().trim();
+    
+    if (normalized === 'paid') {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Paid</Text>;
+    }
+    
+    if (normalized === 'unpaid') {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-orange-100 text-orange-800">Unpaid</Text>;
+    }
+    
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-800">—</Text>;
+  }
+
+  const getPaymentStatus = (item: any): string => {
+    // Try multiple possible payment status fields
+    const paymentStatus = item?.cr_req_payment_status ?? 
+                          item?.req_payment_status ?? 
+                          item?.payment_status ?? 
+                          '';
+    return paymentStatus.toString().trim();
   }
 
   const extractStatus = (item: any) => {
@@ -251,7 +275,8 @@ export default function CertTrackingMain() {
 
             {/* Status Filters */}
             <View className="bg-white px-6 py-3 border-b border-gray-200">
-              <View className="flex-row bg-gray-100 rounded-xl p-1">
+              <Text className="text-xs font-medium text-gray-600 mb-2">Request Status</Text>
+              <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
                 <TouchableOpacity
                   className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
                   activeOpacity={0.8}
@@ -281,6 +306,31 @@ export default function CertTrackingMain() {
                   <Text className={`text-sm ${statusFilter === 'cancelled' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Cancelled</Text>
                 </TouchableOpacity>
               </View>
+
+              <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status</Text>
+              <View className="flex-row bg-gray-100 rounded-xl p-1">
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${paymentFilter === 'all' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setPaymentFilter('all')}
+                >
+                  <Text className={`text-sm ${paymentFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${paymentFilter === 'unpaid' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setPaymentFilter('unpaid')}
+                >
+                  <Text className={`text-sm ${paymentFilter === 'unpaid' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Unpaid</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 py-2 rounded-lg items-center ${paymentFilter === 'paid' ? 'bg-white' : ''}`}
+                  activeOpacity={0.8}
+                  onPress={() => setPaymentFilter('paid')}
+                >
+                  <Text className={`text-sm ${paymentFilter === 'paid' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Paid</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Tab Content */}
@@ -289,16 +339,18 @@ export default function CertTrackingMain() {
                 <>
                   {data?.personal?.filter((i: any) => {
                     const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                    const paymentMatch = paymentFilter === 'all' || getPaymentStatus(i).toLowerCase() === paymentFilter;
                     const searchMatch = !searchQuery || 
                       (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
-                    return statusMatch && searchMatch;
+                    return statusMatch && paymentMatch && searchMatch;
                   }).length ? (
                     data.personal
                       .filter((i: any) => {
                         const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                        const paymentMatch = paymentFilter === 'all' || getPaymentStatus(i).toLowerCase() === paymentFilter;
                         const searchMatch = !searchQuery || 
                           (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
-                        return statusMatch && searchMatch;
+                        return statusMatch && paymentMatch && searchMatch;
                       })
                       .sort((a: any, b: any) => {
                         // Sort by status: In Progress first, then Completed, then Cancelled
@@ -325,11 +377,20 @@ export default function CertTrackingMain() {
                       })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
-                          {getStatusBadge(extractStatus(item))}
+                        <View className="flex-row justify-between items-center mb-2">
+                          <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
+                          <View className="flex-row gap-2">
+                            {getStatusBadge(extractStatus(item))}
+                          </View>
+                        </View>
+                        <View className="flex-row justify-between items-center mb-1">
+                          <Text className="text-gray-500 text-xs">Payment Status:</Text>
+                          {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.cr_pay_date || item?.invoice?.inv_date) && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.cr_pay_date || item?.invoice?.inv_date)}</Text>
+                        )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
                         )}
@@ -382,16 +443,18 @@ export default function CertTrackingMain() {
                 <>
                   {data?.business?.filter((i: any) => {
                     const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                    const paymentMatch = paymentFilter === 'all' || getPaymentStatus(i).toLowerCase() === paymentFilter;
                     const searchMatch = !searchQuery || 
                       (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
-                    return statusMatch && searchMatch;
+                    return statusMatch && paymentMatch && searchMatch;
                   }).length ? (
                     data.business
                       .filter((i: any) => {
                         const statusMatch = statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter;
+                        const paymentMatch = paymentFilter === 'all' || getPaymentStatus(i).toLowerCase() === paymentFilter;
                         const searchMatch = !searchQuery || 
                           (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
-                        return statusMatch && searchMatch;
+                        return statusMatch && paymentMatch && searchMatch;
                       })
                       .sort((a: any, b: any) => {
                         // Sort by status: In Progress first, then Completed, then Cancelled
@@ -418,11 +481,20 @@ export default function CertTrackingMain() {
                       })
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
-                          {getStatusBadge(extractStatus(item))}
+                        <View className="flex-row justify-between items-center mb-2">
+                          <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
+                          <View className="flex-row gap-2">
+                            {getStatusBadge(extractStatus(item))}
+                          </View>
+                        </View>
+                        <View className="flex-row justify-between items-center mb-1">
+                          <Text className="text-gray-500 text-xs">Payment Status:</Text>
+                          {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date)}</Text>
+                        )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_business_permit?.ibp_date_of_issuance || item?.req_date_completed)}</Text>
                         )}
