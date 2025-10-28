@@ -61,7 +61,7 @@ export const useSendEmailOTPMutation = () => {
   
   return useMutation<{ message: string }, Error, Record<string, any>>({
     mutationFn: async (data) => {
-      console.log(data)
+      console.log("Email data to be sent: ", data)
       const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },
@@ -69,50 +69,10 @@ export const useSendEmailOTPMutation = () => {
       dispatch(setLoading(true));
       dispatch(clearError());
     },
-    // onMutate: () => {
-    //   dispatch(setLoading(true));
-    //   dispatch(clearError());
-    // },
     onSuccess: (data, email) => {
       if (data.message) {
         dispatch(setOtpSent({ sent: true, email }));
       }
-      dispatch(setLoading(false));
-    },
-    // onError: (error: any) => {
-    //   const message = error?.response?.data?.email || "Failed to send OTP";
-    //   console.log(message)
-    //   dispatch(setError(message));
-    //   dispatch(setLoading(false));
-    // },
-  });
-};
-
-export const useVerifyEmailOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation({
-    mutationFn: async ({ otp, email } : { otp: string, email: string}) => {
-      const response = await api.post('authentication/email/verifyOtp/', {
-        otp,
-        email,
-      });
-      return response;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: () => {
-      // if (data.access) {
-      //   dispatch(setAuthData({ access: data.access, user: data.user }));
-      //   dispatch(clearOtpState());
-      // }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'OTP verification failed';
-      dispatch(setError(message));
       dispatch(setLoading(false));
     },
   });

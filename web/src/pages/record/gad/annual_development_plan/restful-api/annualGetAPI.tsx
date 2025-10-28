@@ -3,6 +3,7 @@ import { api } from "@/api/api";
 // Get all years with data (with search support)
 export const getAnnualDevPlanYears = async (search?: string) => {
   const params = new URLSearchParams();
+  params.append('dev_archived', 'false'); // Only get years with non-archived plans
   if (search) {
     params.append('search', search);
   }
@@ -14,6 +15,7 @@ export const getAnnualDevPlanYears = async (search?: string) => {
 export const getAnnualDevPlansByYear = async (year: string | number, search?: string, page?: number, pageSize?: number) => {
   const params = new URLSearchParams();
   params.append('year', year.toString());
+  params.append('dev_archived', 'false'); // Only get non-archived plans
   if (search) {
     params.append('search', search);
   }
@@ -30,6 +32,7 @@ export const getAnnualDevPlansByYear = async (year: string | number, search?: st
 // Get all plans with search and pagination support
 export const getAnnualDevPlans = async (search?: string, page?: number, pageSize?: number) => {
   const params = new URLSearchParams();
+  params.append('dev_archived', 'false'); // Only get non-archived plans
   if (search) {
     params.append('search', search);
   }
@@ -52,5 +55,40 @@ export const getStaffList = async () => {
 // Get single plan by ID
 export const getAnnualDevPlanById = async (devId: number | string) => {
   const res = await api.get(`/gad/gad-annual-development-plan/${devId}/`);
+  return res.data;
+};
+
+// Get archived plans with search and pagination support
+export const getArchivedAnnualDevPlans = async (search?: string, page?: number, pageSize?: number) => {
+  const params = new URLSearchParams();
+  params.append('dev_archived', 'true');
+  if (search) {
+    params.append('search', search);
+  }
+  if (page) {
+    params.append('page', page.toString());
+  }
+  if (pageSize) {
+    params.append('page_size', pageSize.toString());
+  }
+  const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
+  return res.data;
+};
+
+// Archive plans (bulk operation)
+export const archiveAnnualDevPlans = async (devIds: number[]) => {
+  const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
+    dev_ids: devIds,
+    dev_archived: true
+  });
+  return res.data;
+};
+
+// Restore archived plans (bulk operation)
+export const restoreAnnualDevPlans = async (devIds: number[]) => {
+  const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
+    dev_ids: devIds,
+    dev_archived: false
+  });
   return res.data;
 };

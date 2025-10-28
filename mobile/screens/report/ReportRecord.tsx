@@ -1,4 +1,3 @@
-import PageLayout from "@/screens/_PageLayout";
 import { TouchableOpacity, View, Text } from "react-native";
 import { User } from "../_Enums";
 import { router } from "expo-router";
@@ -29,6 +28,12 @@ const recordMenuItem = [
       route: '',
       user: [User.resident, User.brgyStaff]
     },
+    {
+      title: 'Illegal Dumping',
+      description: '',
+      route: '/(waste)/illegal-dumping/resident/illegal-dump-res-main',
+      user: [User.resident, User.brgyStaff]
+    },    
   ]
 
 export default function ReportRecord() {

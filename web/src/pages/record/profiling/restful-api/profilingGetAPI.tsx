@@ -11,6 +11,19 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
+export const getDeceasedResidentsList = async () => {
+  try {
+    const res = await api.get("profiling/resident/", {
+      params: {
+        deceased_only: true
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const getResidentsList = async (
   is_staff: boolean = false, 
   exclude_independent: boolean = false,
@@ -216,13 +229,14 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
 };
 
 // ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
-export const getActiveBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
+export const getActiveBusinesses = async (page: number, pageSize: number, searchQuery: string, size?: string) => {
   try {
     const res = await api.get("profiling/business/active/list/table/", {
       params: {
         page,
         page_size: pageSize,
-        search: searchQuery
+        search: searchQuery,
+        size
       }
     });
     return res.data;

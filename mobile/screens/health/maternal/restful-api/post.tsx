@@ -13,6 +13,18 @@ interface PrenatalAppointmentData {
     pat_id: string;
 }
 
+export interface PatientCheckResponse {
+    exists: boolean;
+    created: boolean;
+    patient: {
+        pat_id: string;
+        pat_type: string;
+        pat_status: string;
+        rp_id: string;
+    };
+    message: string;
+}
+
 export const addPrenatalAppointment = async (data: PrenatalAppointmentData) => {
     try {
         const response = await api2.post('/maternal/prenatal/appointment/request/', data);
@@ -27,3 +39,13 @@ export const addPrenatalAppointment = async (data: PrenatalAppointmentData) => {
         throw error
     }
 }
+
+export const checkOrCreatePatient = async (rp_id: string): Promise<PatientCheckResponse> => {
+    try {
+        const response = await api2.post('/patientrecords/patient/check-or-create/', { rp_id });
+        return response.data;
+    } catch (error) {
+        console.error("Error checking/creating patient:", error);
+        throw error;
+    }
+};

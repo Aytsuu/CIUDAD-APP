@@ -9,6 +9,9 @@ export interface TruckData {
   truck_last_maint: string;
   truck_is_archive?: boolean;
   staff?: any;
+  truck_track_device?: string | null;
+  truck_track_device_lat?: number | null;
+  truck_track_device_lng?: number | null;
 }
 
 export interface PersonnelItem {
@@ -25,6 +28,9 @@ export interface TruckFormValues {
   truck_status: "Operational" | "Maintenance";
   truck_last_maint: string;
   staff?: any;
+  truck_track_device?: string | null;
+  truck_track_device_lat?: number | null;
+  truck_track_device_lng?: number | null;
 }
 
 export const SearchFormSchema = z.object({
@@ -81,4 +87,7 @@ export interface Trucks {
   truck_status: "Operational" | "Maintenance";
   truck_last_maint: string;
   truck_is_archive?: boolean;
+  truck_track_device?: string | null;
+  truck_track_device_lat?: number | null;
+  truck_track_device_lng?: number | null;
 }

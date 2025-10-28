@@ -1,46 +1,57 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Loader2, Eye, CheckCircle } from 'lucide-react';
+import { Search, Eye, CheckCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { getPaidServiceCharges, markServiceChargeAsIssued, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/serviceChargeFetchQueries";
+import { markServiceChargeAsIssued } from "@/pages/record/clearances/queries/serviceChargeUpdateQueries";
 import TemplateMainPage from "../council/templates/template-main";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useLoading } from "@/context/LoadingContext";
 
 
 interface ExtendedServiceCharge extends ServiceCharge {}
 
 function ServiceChargePage() {
- 
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
   const queryClient = useQueryClient();
-  const [refreshTick, _setRefreshTick] = useState(0);
+  const { showLoading, hideLoading } = useLoading();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
 
-  const { data: serviceCharges, isLoading, error } = useQuery<ServiceCharge[]>({
-    queryKey: ["paidServiceCharges"],
-    queryFn: getPaidServiceCharges,
+  const { data: serviceChargesData, isLoading, error } = useQuery({
+    queryKey: ["paidServiceCharges", currentPage, searchTerm, filterStatus],
+    queryFn: () => getPaidServiceCharges(searchTerm, currentPage, 10),
   });
 
-  // Handle error state
+  // Handle loading state
   useEffect(() => {
-    if (error) {
-      showErrorToast("Failed to load service charge data. Please try again.");
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
     }
-  }, [error]);
+  }, [isLoading, showLoading, hideLoading]);
+
+  const serviceCharges = serviceChargesData?.results || [];
+  const totalCount = serviceChargesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / 10);
+
+  // Since we're now using backend filtering, we don't need frontend filtering
+  const filteredServiceCharges = serviceCharges;
 
   // Mutation for marking service charge as issued
-  const markAsIssuedMutation = useMutation<any, unknown, { sr_id: string }>({
+  const markAsIssuedMutation = useMutation<any, unknown, { sr_id: string; pay_id: string }>({
     mutationFn: markServiceChargeAsIssued,
     onSuccess: async (_data, variables) => {
       showSuccessToast(`Service Charge ${variables.sr_id} marked as printed successfully!`);
@@ -52,31 +63,9 @@ function ServiceChargePage() {
     },
   });
 
-  // Filter and search logic
-  const filteredServiceCharges = useMemo(() => {
-    if (!serviceCharges) return [];
-    return serviceCharges.filter(sc => {
-      const searchMatch = searchTerm === "" || 
-        sc.sr_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sc.sr_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sc.complainant_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      return searchMatch;
-    });
-  }, [serviceCharges, searchTerm]);
-
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil((filteredServiceCharges?.length || 0) / pageSize));
-  }, [filteredServiceCharges, pageSize]);
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredServiceCharges.slice(start, end);
-  }, [filteredServiceCharges, currentPage, pageSize]);
-
   // Mark as Printed -> behave like Certification: mark as issued and move to Issued Certificates
   const handleMarkAsPrinted = (sc: ServiceCharge) => {
-    markAsIssuedMutation.mutate({ sr_id: sc.sr_id });
+    markAsIssuedMutation.mutate({ sr_id: sc.sr_id, pay_id: sc.sr_id });
   };
 
   // Eye icon: open populated template immediately
@@ -84,12 +73,9 @@ function ServiceChargePage() {
     setSelectedSC(sc as ExtendedServiceCharge);
   }
 
-  // When print dialog/template closes, refresh table and force a remount to avoid UI glitch
-  // const handleTemplateClose = async () => {
-  //   setSelectedSC(null);
-  //   await queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
-  //   setRefreshTick(t => t + 1);
-  // };
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const columns: ColumnDef<ServiceCharge>[] = [
     {
@@ -215,59 +201,57 @@ function ServiceChargePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <SelectLayout
+            placeholder="Filter by status"
+            label=""
+            className="bg-white"
+            options={[
+              { id: "all", name: "All Status" },
+              { id: "completed", name: "Completed" },
+              { id: "declined", name: "Declined" },
+            ]}
+            value={filterStatus}
+            onChange={(value) => setFilterStatus(value)}
+          />
         </div>
       </div>
 
-        <div className="bg-white">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
-            <div className="flex items-center gap-4">
+      <div className="w-full flex flex-col">
+        <div className="w-full h-auto bg-white p-3">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-                <Input type="number" className="w-14 h-8" value={pageSize}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value || '10', 10);
-                    const safe = isNaN(val) || val <= 0 ? 10 : val;
-                    setPageSize(safe);
-                    setCurrentPage(1);
-                  }}
-                />
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
             <p className="text-xs sm:text-sm">Entries</p>
-              </div>
           </div>
         </div>
 
+        <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+              <Spinner size="lg" />
             </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
             <DataTable 
-              key={refreshTick}
               columns={columns} 
-              data={paginatedData} 
+              data={filteredServiceCharges} 
               header={true} 
             />
           )}
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0 mt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          {(() => {
-            const total = filteredServiceCharges?.length || 0;
-            const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-            const end = Math.min(total, currentPage * pageSize);
-            return `Showing ${start}-${end} of ${total} rows`;
-          })()}
+          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            className=""
             totalPages={totalPages}
             currentPage={currentPage}
-            onPageChange={(p) => setCurrentPage(p)}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>
@@ -286,7 +270,13 @@ function ServiceChargePage() {
           issuedDate={new Date().toISOString()}
           isNonResident={false}
           showAddDetails={false}
-          businessName={ selectedSC.sr_code}
+          businessName={selectedSC.sr_code}
+          fileActComplainant={(selectedSC.complainant_names && selectedSC.complainant_names.length ? selectedSC.complainant_names.join(', ') : (selectedSC.complainant_name || ''))}
+          fileActComplainantAddress={(selectedSC.complainant_addresses && selectedSC.complainant_addresses.length ? selectedSC.complainant_addresses.filter(Boolean).join(', ') : '')}
+          fileActRespondent={(selectedSC.accused_names && selectedSC.accused_names.length ? selectedSC.accused_names.join(', ') : '')}
+          fileActRespondentAddress={(selectedSC.accused_addresses && selectedSC.accused_addresses.length ? selectedSC.accused_addresses.filter(Boolean).join(', ') : '')}
+          fileActBarangayCase={selectedSC.sr_code || ''}
+          fileActComplainDate={selectedSC.sr_req_date || ''}
         />
       )}
     </div>

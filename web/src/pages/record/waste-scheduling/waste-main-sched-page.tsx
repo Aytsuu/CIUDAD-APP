@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCalendar from "@/components/ui/calendar/EventCalendar";
 // import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
-import WasteCollectionMain from "./waste-collection/waste-col-main";
+// import WasteCollectionMain from "./waste-collection/waste-col-main";
 // import { useGetHotspotRecords } from "./waste-hotspot/queries/hotspotFetchQueries";
 // import { useGetWasteCollectionSchedFull } from "./waste-collection/queries/wasteColFetchQueries";
 import { useState } from "react";
@@ -106,7 +106,7 @@ const WasteMainScheduling = () => {
 
       {/* Tabs Section */}
       <Tabs defaultValue="calendar" className="mb-6">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-2 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
           <TabsTrigger
             value="calendar"
             onClick={() => setActiveTab("calendar")}
@@ -114,20 +114,7 @@ const WasteMainScheduling = () => {
           >
             Calendar
           </TabsTrigger>
-          <TabsTrigger
-            value="waste-collection"
-            onClick={() => setActiveTab("waste-collection")}
-            className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800 data-[state=active]:border-purple-300 hover:bg-purple-50 hover:text-purple-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
-          >
-            Waste Collection
-          </TabsTrigger>
-          <TabsTrigger
-            value="hotspot"
-            onClick={() => setActiveTab("hotspot")}
-            className="data-[state=active]:bg-cyan-100 data-[state=active]:text-cyan-800 data-[state=active]:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
-          >
-            Hotspot
-          </TabsTrigger>
+
           <TabsTrigger
             value="waste-events"
             onClick={() => setActiveTab("waste-events")}
@@ -143,7 +130,7 @@ const WasteMainScheduling = () => {
               sources={calendarSources}
               legendItems={[
                 // { label: "Hotspot Assignments", color: "#3b82f6" },
-                { label: "Waste Collection", color: "#10b981" },
+                // { label: "Waste Collection", color: "#10b981" },
                 { label: "Waste Events", color: "#f59e0b" },
                 { label: "Council Events", color: "#191970" },
               ]}
@@ -151,13 +138,6 @@ const WasteMainScheduling = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="waste-collection" className="space-y-4">
-          <WasteCollectionMain />
-        </TabsContent>
-{/* 
-        <TabsContent value="hotspot" className="space-y-4">
-          <WasteHotspotMain />
-        </TabsContent> */}
 
         <TabsContent value="waste-events" className="space-y-4">
           <WasteEventSched />

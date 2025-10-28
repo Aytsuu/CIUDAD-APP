@@ -1,5 +1,5 @@
 // MedicineRequestForm.tsx - IMPROVED WITH IMAGE DISPLAY
-"use client";
+"  client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button/button";
@@ -39,7 +39,7 @@ export default function MedicineRequestForm() {
     page: 1,
     pageSize: 10,
     search: "",
-    is_temp: false // Changed to false for medicine request form
+    is_temp: true // Changed to false for medicine request form
   });
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
@@ -233,7 +233,7 @@ export default function MedicineRequestForm() {
         content={
           <>
             <div className="w-full py-6">
-              <div className="px-4">
+              <div className="">
                 {mode === "fromallrecordtable" && <PatientSearch value={selectedPatientId} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelect} className="mb-4" />}
 
                 {selectedPatientData && (
@@ -253,7 +253,7 @@ export default function MedicineRequestForm() {
                 )}
               </div>
 
-              <div className="w-full overflow-x-auto">
+              <div className="w-full overflow-x-auto ">
                 <MedicineDisplay
                   medicines={medicineStocksOptions || []}
                   initialSelectedMedicines={selectedMedicines}
@@ -270,7 +270,7 @@ export default function MedicineRequestForm() {
 
                 {/* Conditionally show MediaUpload only when prescription medicine is selected */}
                 {hasPrescriptionMedicine && (
-                  <div className="w-full p-4">
+                  <div className="w-full py-4">
                     <MediaUpload title="Supporting Documents" 
                     description="Prescription medicine selected. Image upload is required." 
                     mediaFiles={mediaFiles} activeVideoId={activeVideoId} 
@@ -280,7 +280,7 @@ export default function MedicineRequestForm() {
                   </div>
                 )}
 
-                <div className="px-3 pt-6">
+                <div className="pt-6">
                   {!isMedicinesLoading && ((mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities) && (
                     <MedicineRequestError mode={mode} selectedPatientData={selectedPatientData} selectedPatientId={selectedPatientId} selectedMedicinesLength={selectedMedicines.length} hasExceededStock={hasExceededStock} />
                   )}

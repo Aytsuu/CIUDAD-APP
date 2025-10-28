@@ -30,6 +30,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function ARRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -45,13 +46,15 @@ export default function ARRecords() {
     React.useState<boolean>(false);
   const [isCreatable, setIsCreatable] = React.useState<boolean>(true);
   const [reset, setReset] = React.useState<boolean>(false);
+  const [status, setStatus] = React.useState<string>("all");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
   const { data: arReports, isLoading: isLoadingArReports } =
     useGetAcknowledgementReport(
       currentPage,
       debouncedPageSize,
-      debouncedSearchQuery
+      debouncedSearchQuery,
+      status
     );
   const { data: weeklyAR, isLoading: isLoadingWeeklyAR } = useGetWeeklyAR();
   const { mutateAsync: addWAR } = useAddWAR();
@@ -177,7 +180,6 @@ export default function ARRecords() {
           </Badge>
         </div>
       )}
-
       <div className="flex w-full h-full gap-4">
         {/* Data Table Section */}
         <Card className="w-full">
@@ -191,6 +193,24 @@ export default function ARRecords() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <SelectLayout
+                    withRest={false}
+                    value={status}
+                    valueLabel="Status"
+                    className="gap-4 focus:ring-0"
+                    onChange={(value) => {
+                      setStatus(value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder=""
+                    options={[
+                      { id: "all", name: "All" },
+                      { id: "signed", name: "Signed" },
+                      { id: "unsigned", name: "Unsigned" },
+                    ]}
                   />
                 </div>
               </div>

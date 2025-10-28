@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { CircleCheck } from "lucide-react-native";
 import { deleteAnnualGrossSales, deletePurposeAndRate } from "../restful-API/ratesDeleteAPI";
 
 

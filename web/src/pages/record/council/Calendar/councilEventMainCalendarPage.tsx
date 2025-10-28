@@ -15,20 +15,23 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
 import { CouncilEvent } from "./councilEventTypes";
+import { useAuth } from "@/context/AuthContext";
 
 function CalendarPage() {
+  const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "archive">("calendar");
   const [viewEvent, setViewEvent] = useState<CouncilEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";
 
-// Fetch NON-archived events for calendar tab
+  // Fetch NON-archived events for calendar tab
   const { data: activeEventsData, isLoading: isActiveEventsLoading } = useGetCouncilEvents(
     1, 
     1000, 
     undefined, 
     "all", 
-    false  // is_archive=false
+    false  
   );
   
   // Fetch ARCHIVED events for archive tab
@@ -37,14 +40,12 @@ function CalendarPage() {
     1000,
     undefined,
     "all",
-    true,  // is_archive=true
+    true,  
   );
 
-  // Use the appropriate data based on active tab
   const councilEvents = activeTab === "archive" 
     ? archivedEventsData?.results || [] 
     : activeEventsData?.results || [];
-
 
   const calendarEvents = councilEvents.filter((event: CouncilEvent) => !event.ce_is_archive);
   const { showLoading, hideLoading } = useLoading();
@@ -73,6 +74,7 @@ function CalendarPage() {
       return eventDateTime >= now && eventDateTime <= fiveDaysFromNow;
     }
   });
+
   const { mutate: deleteCouncilEvent } = useDeleteCouncilEvent();
   const { mutate: restoreCouncilEvent } = useRestoreCouncilEvent();
   
@@ -104,45 +106,48 @@ function CalendarPage() {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 flex items-center justify-between">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="calendar">Calendar</TabsTrigger>
-            <TabsTrigger value="archive">
-              <div className="flex items-center gap-2">
-                <Archive size={16} /> Archive
-              </div>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        {activeTab === "calendar" && (
-          <DialogLayout
-            isOpen={isAddDialogOpen}
-            onOpenChange={setIsAddDialogOpen}
-            trigger={
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus size={16} className="mr-2" /> Add Event
-              </Button>
-            }
-            className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-            title="Add Event"
-            description="Create a new council event"
-            mainContent={
-              <div className="w-full h-full">
-                <SchedEventForm onSuccess={() => setIsAddDialogOpen(false)} />
-              </div>
-            }
-          />
-        )}
-      </div>
-
+      {/* Only show header controls if user is secretary */}
+      {isSecretary && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 flex items-center justify-between">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="calendar">Calendar</TabsTrigger>
+              <TabsTrigger value="archive">
+                <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {activeTab === "calendar" && (
+            <DialogLayout
+              isOpen={isAddDialogOpen}
+              onOpenChange={setIsAddDialogOpen}
+              trigger={
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus size={16} className="mr-2" /> Add Event
+                </Button>
+              }
+              className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title="Add Event"
+              description="Create a new council event"
+              mainContent={
+                <div className="w-full h-full">
+                  <SchedEventForm onSuccess={() => setIsAddDialogOpen(false)} />
+                </div>
+              }
+            />
+          )}
+        </div>
+      )}
+      
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
           <TabsContent value="calendar">
             {isLoading ? (
               <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
-                Loading council calendar...
+                Loading calendar...
               </div>
             ) : (
               <EventCalendar
@@ -154,7 +159,6 @@ function CalendarPage() {
               />
             )}
           </TabsContent>
-
           <TabsContent value="archive">
             {isArchivedEventsLoading ? (
               <div className="flex items-center justify-center py-16 gap-2 text-gray-500">

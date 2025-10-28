@@ -359,8 +359,9 @@ class VaccineStock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
+    volume = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-
+    
     class Meta:
         db_table = 'vaccine_stocks'
         ordering = ['-created_at']

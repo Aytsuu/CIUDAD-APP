@@ -4,15 +4,16 @@ import { nonPhilHealthSchema } from "@/form-schema/medicalConsultation/nonPhilhe
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "react-router-dom";
-import { BriefcaseMedical, FilesIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BriefcaseMedical, FilesIcon, HeartPulse, Users, AlertCircle } from "lucide-react";
+import { MdBloodtype, MdPregnantWoman, MdSmokingRooms, MdLocalBar } from "react-icons/md";
+import { useEffect, useState, useCallback } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { Combobox } from "@/components/ui/combobox";
 import CardLayout from "@/components/ui/card/card-layout";
-import { MdBloodtype, MdPregnantWoman, MdSmokingRooms, MdLocalBar } from "react-icons/md";
+import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { useAuth } from "@/context/AuthContext";
 import { useLatestVitals } from "../../vaccination/queries/fetch";
 import { usePreviousBMI } from "../queries/fetch";
@@ -27,13 +28,12 @@ import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { ttStatusOptions } from "./options";
-
-export const civilStatusOptions = [
-  { id: "single", name: "Single" },
-  { id: "married", name: "Married" },
-  { id: "widowed", name: "Widowed" }
-];
+import { ttStatusOptions, civilStatusOptions, TabButton } from "./options";
+import { usePrenatalPatientObsHistory } from "../../maternal/queries/maternalFetchQueries";
+import { MedicalHistoryTab } from "../tables/medical-history-card";
+import { FamilyHistoryTab } from "../tables/family-history-card";
+import { useFamHistory } from "../queries/fetch";
+import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 
 export default function MedicalConsultationForm() {
   const location = useLocation();
@@ -44,90 +44,228 @@ export default function MedicalConsultationForm() {
   const name = `${user?.personal?.per_fname || ""} ${user?.personal?.per_mname || ""} ${user?.personal?.per_lname || ""}`.trim();
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedPatientData, setSelectedPatientData] = useState<any>(patientData || null);
-  const pat_id = selectedPatientId.split(",")[0].trim() || patientData?.pat_id || "";
+  const [activeTab, setActiveTab] = useState<"medical" | "family">("medical");
+  const [medHistorySearch, setMedHistorySearch] = useState("");
+  const [famHistorySearch, setFamHistorySearch] = useState("");
+  const [selectedStaffDisplay, setSelectedStaffDisplay] = useState(""); // For display in combobox
+
+  // Get patient ID with proper null checks
+  const currentPatientData = mode === "fromindivrecord" ? patientData : selectedPatientData;
+  const pat_id = currentPatientData?.pat_id || selectedPatientId.split(",")[0].trim() || "";
+
   const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError } = useLatestVitals(pat_id);
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError } = usePreviousBMI(pat_id);
+  const { data: obsHistoryData } = usePrenatalPatientObsHistory(pat_id);
+
+  // Use the current patient data for these hooks with proper null checks
+  const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(currentPatientData?.pat_id || "", medHistorySearch);
+  const { data: famHistoryData, isLoading: isFamHistoryLoading, isError: isFamHistoryError } = useFamHistory(currentPatientData?.pat_id || "", famHistorySearch);
+
   const non_membersubmit = useSubmitMedicalConsultation();
+
+  const handleMedHistorySearchChange = useCallback((value: string) => {
+    setMedHistorySearch(value);
+  }, []);
+
+  // Clear medical history search
+  const clearMedHistorySearch = useCallback(() => {
+    setMedHistorySearch("");
+  }, []);
+
+  // Handle family history search
+  const handleFamHistorySearchChange = useCallback((value: string) => {
+    setFamHistorySearch(value);
+  }, []);
+
+  // Clear family history search
+  const clearFamHistorySearch = useCallback(() => {
+    setFamHistorySearch("");
+  }, []);
+
+  // Handle tab change with event prevention
+  const handleTabChange = useCallback((tab: "medical" | "family") => {
+    setActiveTab(tab);
+  }, []);
 
   const form = useForm<nonPhilHealthType>({
     resolver: zodResolver(nonPhilHealthSchema),
     defaultValues: {
-      pat_id: patientData?.pat_id?.toString() || "",
+      pat_id: currentPatientData?.pat_id?.toString() || "",
       bhw_assignment: name,
       vital_pulse: undefined,
       vital_temp: undefined,
       vital_bp_systolic: undefined,
       vital_bp_diastolic: undefined,
       vital_RR: undefined,
+      vital_o2: undefined,
       height: undefined,
       weight: undefined,
       medrec_chief_complaint: "",
       staff: staff || null,
-
       is_phrecord: false, // Default to false
       phil_pin: undefined,
+      civil_status: "",
       iswith_atc: false,
       dependent_or_member: "",
-      lmp: "",
-      obscore_g: "",
-      obscore_p: "",
-      tpal: "",
-      tt_status: "",
+      obs_abortions: 0,
+      obs_ch_born_alive: 0,
+      obs_fullterm: 0,
+      obs_gravida: 0,
+      obs_id: "",
+      obs_lg_babies: "0",
+      obs_lg_babies_str: false,
+      obs_para: 0,
+      obs_preterm: 0,
+      obs_still_birth: 0,
+      obs_lmp: "",
+      tts_status: "",
+      tts_date_given: "",
       ogtt_result: "",
       contraceptive_used: "",
-      smk_sticks_per_day: "",
-      smk_years: "",
+      smk_sticks_per_day: "0",
+      smk_years: "0",
       is_passive_smoker: false,
-      alcohol_bottles_per_day: "",
-
-      selectedDoctorStaffId: ""
+      alcohol_bottles_per_day: "0",
+      selectedDoctorStaffId: "",
+      famselectedIllnesses: [],
+      myselectedIllnesses: []
     }
   });
-  
+
   const { setValue, control, watch } = form;
   const isPhilhealthRecord = watch("is_phrecord"); // Watch the checkbox value
 
- useEffect(() => {
-  if (latestVitals) {
-    form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
-    form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
-    form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
-    form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
-    form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
-  }
-  if (previousMeasurements) {
-    form.setValue("height", previousMeasurements.height ?? 0);
-    form.setValue("weight", previousMeasurements.weight ?? 0);
-  }
-  if (selectedPatientData) {
-    // Corrected line - removed the duplicate fallback that doesn't exist
-    form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
-    form.setValue("tt_status", selectedPatientData?.additional_info?.mother_tt_status || "");
-    console.log("Selected Patient Data:", selectedPatientData);
-    console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
-  }
-}, [latestVitals, previousMeasurements, form, selectedPatientData]);
+  useEffect(() => {
+    console.log("Current Patient Data:", currentPatientData);
+    if (latestVitals) {
+      form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
+      form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
+      form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
+      form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
+      form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
+      form.setValue("vital_o2", latestVitals.oxygen_saturation?.toString() ?? "");
+    }
+    if (previousMeasurements) {
+      form.setValue("height", previousMeasurements.height ?? 0);
+      form.setValue("weight", previousMeasurements.weight ?? 0);
+    }
+    if (selectedPatientData) {
+      form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
+      form.setValue("civil_status", selectedPatientData?.personal_info?.per_status || "");
+      form.setValue("tts_status", selectedPatientData?.additional_info?.mother_tt_status?.status || "");
+      const ttDateGiven = selectedPatientData?.additional_info?.mother_tt_status?.date_given;
+      form.setValue("tts_date_given", ttDateGiven ? format(new Date(ttDateGiven), "yyyy-MM-dd") : "");
+      form.setValue("contraceptive_used", selectedPatientData?.family_planning_method?.toString() || "");
+    }
+    if (obsHistoryData) {
+      form.setValue("obs_lmp", obsHistoryData?.obstetrical_history?.obs_lmp ? format(new Date(obsHistoryData?.obstetrical_history?.obs_lmp), "yyyy-MM-dd") : "");
+      form.setValue("obs_gravida", obsHistoryData?.obstetrical_history?.obs_gravida ?? 0);
+      form.setValue("obs_para", obsHistoryData?.obstetrical_history?.obs_para ?? 0);
+      form.setValue("obs_id", obsHistoryData?.obstetrical_history?.obs_id ?? "");
+      form.setValue("obs_fullterm", obsHistoryData?.obstetrical_history?.obs_fullterm ?? 0);
+      form.setValue("obs_preterm", obsHistoryData?.obstetrical_history?.obs_preterm ?? 0);
+      form.setValue("obs_abortions", obsHistoryData?.obstetrical_history?.obs_abortions ?? 0);
+      form.setValue("obs_living_ch", obsHistoryData?.obstetrical_history?.obs_living_ch ?? 0);
+      form.setValue("obs_ch_born_alive", obsHistoryData?.obstetrical_history?.obs_ch_born_alive ?? 0);
+      form.setValue("obs_still_birth", obsHistoryData?.obstetrical_history?.obs_still_birth ?? 0);
+      form.setValue("obs_lg_babies", obsHistoryData?.obstetrical_history?.obs_lg_babies ?? 0);
+      form.setValue("obs_lg_babies_str", obsHistoryData?.obstetrical_history?.obs_lg_babies_str === true || obsHistoryData?.obstetrical_history?.obs_lg_babies_str === false ? obsHistoryData?.obstetrical_history?.obs_lg_babies_str : false);
+      const lmpDate = new Date(obsHistoryData.obstetrical_history.obs_lmp);
+      const formattedDate = format(lmpDate, "yyyy-MM-dd");
+      form.setValue("obs_lmp", formattedDate);
+    }
+  }, [latestVitals, previousMeasurements, form, selectedPatientData, obsHistoryData, currentPatientData]);
 
-const handlePatientSelect = async (patient: any, patientId: string) => {
-  setSelectedPatientId(patientId);
-  setSelectedPatientData(patient);
-  form.setValue("pat_id", patient?.pat_id || "");
-  
-  // Debug logs
-  console.log("Patient selected:", patient);
-  console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
-  console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
-};
+  // Add this to your component to see real-time validation errors
+  useEffect(() => {
+    console.log("Form Errors:", form.formState.errors);
+    console.log("Is Form Valid:", form.formState.isValid);
+    console.log("Form Values:", form.getValues());
+  }, [form.formState.errors, form.formState.isValid]);
+
+  const handlePatientSelect = async (patient: any, patientId: string) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientData(patient);
+    form.setValue("pat_id", patient?.pat_id || "");
+
+    // Debug logs
+    console.log("Patient selected:", patient);
+    console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
+    console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
+  };
+
+  const handleFamIllnessSelectionChange = useCallback(
+    (ids: number[]) => {
+      form.setValue("famselectedIllnesses", ids);
+      form.trigger("famselectedIllnesses");
+      console.log("Selected Illness IDs:", ids);
+    },
+    [form]
+  );
+
+  const handleMyIllnessSelectionChange = useCallback(
+    (ids: number[]) => {
+      form.setValue("myselectedIllnesses", ids);
+      form.trigger("myselectedIllnesses");
+      console.log("My Selected Illness IDs:", ids);
+    },
+    [form]
+  );
 
   const onSubmit = async (data: nonPhilHealthType) => {
-    if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
+    if (!selectedStaffId) {
+      showErrorToast("Please select a staff member to forward the consultation to.");
+      return;
+    }
+    if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !currentPatientData)) {
       showErrorToast("Please select a patient first");
       return;
     }
-    non_membersubmit.mutate({ data });
+    if (!form.formState.isValid) {
+      console.log("🔴 Form is invalid, cannot submit");
+      showErrorToast("Please fix form errors before submitting");
+      return;
+    }
+
+    if (data.is_phrecord === true) {
+      if (!data.phil_pin) {
+        form.setError("dependent_or_member", { type: "manual", message: "required" });
+        return;
+      }
+      if (!data.civil_status) {
+        form.setError("dependent_or_member", { type: "manual", message: "required" });
+        return;
+      }
+      if (!data.dependent_or_member) {
+        form.setError("dependent_or_member", { type: "manual", message: "required" });
+
+        return;
+      }
+      if (!data.phil_pin || !data.civil_status || !data.dependent_or_member) {
+        showErrorToast("Please fill in all required fields.");
+        return;
+      }
+    }
+    console.log(data);
+    non_membersubmit.mutate({ data: data });
   };
+
+  // Show loading state if no patient data is available
+  if (!currentPatientData && mode === "fromindivrecord") {
+    return (
+      <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <Label className="text-base font-semibold text-yellow-500">No patient data</Label>
+          </div>
+          <p className="text-sm text-gray-700">Patient data is not available. Please go back and select a patient.</p>
+        </div>
+      </LayoutWithBack>
+    );
+  }
 
   return (
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
@@ -141,12 +279,62 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
             {mode === "fromallrecordtable" && <PatientSearch value={selectedPatientId} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelect} />}
 
             {/* Patient info card */}
-            {(mode === "fromindivrecord" ? patientData : selectedPatientData) && (
+            {currentPatientData && (
               <div className="mt-4">
-                <PatientInfoCard patient={mode === "fromindivrecord" ? patientData : selectedPatientData} />
+                <PatientInfoCard patient={currentPatientData} />
               </div>
             )}
 
+            {/* History Section with Tabs - MOVED OUTSIDE THE FORM */}
+            {currentPatientData && (
+              <div className="mb-6 w-full mt-4">
+                <div className="bg-white rounded-lg overflow-hidden shadow-lg">
+                  <div className="border-b border-gray-200">
+                    <div className="flex space-x-4">
+                      <TabButton active={activeTab === "medical"} onClick={() => handleTabChange("medical")}>
+                        <div className="flex items-center gap-2">
+                          <HeartPulse className="h-4 w-4" />
+                          Medical History
+                        </div>
+                      </TabButton>
+                      <TabButton active={activeTab === "family"} onClick={() => handleTabChange("family")}>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Family History
+                        </div>
+                      </TabButton>
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    {activeTab === "medical" ? (
+                      <MedicalHistoryTab
+                        pat_id={currentPatientData.pat_id}
+                        searchValue={medHistorySearch}
+                        onSearchChange={handleMedHistorySearchChange}
+                        onClearSearch={clearMedHistorySearch}
+                        medHistoryData={medHistoryData}
+                        isMedHistoryLoading={isMedHistoryLoading}
+                        isMedHistoryError={isMedHistoryError}
+                        medHistoryError={medHistoryError}
+                      />
+                    ) : (
+                      <FamilyHistoryTab
+                        pat_id={currentPatientData.pat_id}
+                        searchValue={famHistorySearch}
+                        onSearchChange={handleFamHistorySearchChange}
+                        onClearSearch={clearFamHistorySearch}
+                        famHistoryData={famHistoryData}
+                        isFamHistoryLoading={isFamHistoryLoading}
+                        isFamHistoryError={isFamHistoryError}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FORM STARTS HERE - Tabs are now outside the form */}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* PhilHealth Section Header */}
@@ -158,26 +346,15 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                       <FormItem className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 ">
                           <FormControl>
-                            <Checkbox 
-                              checked={field.value} 
-                              onCheckedChange={field.onChange} 
-                              className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                              disabled={mode === "addnewchildhealthrecord"} 
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={mode === "addnewchildhealthrecord"} />
                           </FormControl>
-                          <FormLabel className="text-lg font-semibold text-blue-800 cursor-pointer">
-                            PhilHealth Consultation
-                          </FormLabel>
+                          <FormLabel className="text-lg font-semibold text-blue-800 cursor-pointer">PhilHealth Consultation</FormLabel>
                         </div>
                       </FormItem>
                     )}
                   />
-                  
-                  {isPhilhealthRecord && (
-                    <div className="mt-2 text-sm text-blue-600">
-                      PhilHealth section is enabled.
-                    </div>
-                  )}
+
+                  {isPhilhealthRecord && <div className="mt-2 text-sm text-blue-600">PhilHealth section is enabled.</div>}
                 </div>
 
                 {/* Conditionally render Philhealth form section */}
@@ -191,28 +368,15 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           render={({ field }) => (
                             <FormItem className="flex items-center space-x-3">
                               <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                />
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                               </FormControl>
-                              <FormLabel className="text-sm font-medium text-gray-700">
-                                With ATC Walk-in?
-                              </FormLabel>
+                              <FormLabel className="text-sm font-medium text-gray-700">With ATC Walk-in?</FormLabel>
                             </FormItem>
                           )}
                         />
                       </div>
                       <div className="md:col-span-1">
-                        <FormInput 
-                          control={form.control} 
-                          name="phil_pin" 
-                          label="PhilHealth PIN" 
-                          placeholder="Enter 12-digit PIN" 
-                          // maxLength={12}
-                          className="w-full" 
-                        />
+                        <FormInput control={form.control} name="phil_pin" label="PhilHealth PIN" placeholder="Enter 12-digit PIN" className="w-full" />
                       </div>
                       <div className="md:col-span-1">
                         <FormSelect
@@ -226,8 +390,23 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           placeholder="Select type"
                         />
                       </div>
+
+                      <div className="md:col-span-1">
+                        <FormSelect control={form.control} name="civil_status" label="Civil Status" options={civilStatusOptions} placeholder="Select type" />
+                      </div>
                     </div>
-                    
+
+                    <div className="flex w-full bg-white p-4 gap-6">
+                      <div className="w-1/2 border-r-4 pr-4">
+                        <Label className="block mb-2 text-sm font-bold text-gray-700">Family Medical History</Label>
+                        <IllnessComponent selectedIllnesses={form.watch("famselectedIllnesses") || []} onIllnessSelectionChange={handleFamIllnessSelectionChange} />
+                      </div>
+                      <div className="w-1/2">
+                        <Label className="block mb-2 text-sm font-bold text-gray-700">My Past Medical History</Label>
+                        <IllnessComponent selectedIllnesses={form.watch("myselectedIllnesses") || []} onIllnessSelectionChange={handleMyIllnessSelectionChange} />
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Pregnancy Information Card */}
                       <div className="p-5 flex flex-col gap-4 border rounded-lg shadow-sm bg-white border-green-300">
@@ -235,29 +414,29 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           <MdPregnantWoman className="text-green-600" size={24} />
                           <Label className="text-lg font-semibold text-gray-700">Pregnancy Information</Label>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormDateTimeInput 
-                            control={form.control} 
-                            name="lmp" 
-                            label="Last Menstrual Period (LMP)" 
-                            type="date" 
-                          />
-                       
+                          <FormDateTimeInput control={form.control} name="obs_lmp" label="Last Menstrual Period (LMP)" type="date" />
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
-                          <FormInput control={form.control} name="obscore_g" label="Gravida (G)" placeholder="G" type="number" step={1} maxLength={2} />
-                          <FormInput control={form.control} name="obscore_p" label="Para (P)" placeholder="P" type="number" step={1} maxLength={2} />
+                          <FormInput control={form.control} name="obs_gravida" label="Gravida (G)" placeholder="G" type="number" step={1} maxLength={2} />
+                          <FormInput control={form.control} name="obs_para" label="Para (P)" placeholder="P" type="number" step={1} maxLength={2} />
                         </div>
-                        
-                        <FormInput control={form.control} name="tpal" label="TPAL Score" placeholder="Term, Preterm, Abortion, Living" />
-                        
+
+                        <Label>TPAL</Label>
+                        <div className="grid grid-cols-4 gap-4">
+                          <FormInput control={form.control} name="obs_fullterm" label="Full Term" type="number" step={1} maxLength={2} placeholder="No. of full term pregnancies" />
+                          <FormInput control={form.control} name="obs_preterm" label="Preterm" type="number" step={1} maxLength={2} placeholder="No. of preterm pregnancies" />
+                          <FormInput control={form.control} name="obs_abortions" label="Abortions" type="number" step={1} maxLength={2} placeholder="No. of abortions" />
+                          <FormInput control={form.control} name="obs_living_ch" label="Living Children" type="number" step={1} maxLength={2} placeholder="No. of living children" />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormSelect control={form.control} name="tt_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
-                          <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Result" />
+                          <FormSelect control={form.control} name="tts_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
+                          <FormDateTimeInput control={form.control} name="tts_date_given" label="TT date given" type="date" />
                         </div>
-                        
+                        <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Result" />
+
                         <FormInput control={form.control} name="contraceptive_used" label="Contraceptive Used" placeholder="Method used" />
                       </div>
 
@@ -267,7 +446,7 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           <MdSmokingRooms className="text-blue-600" size={24} />
                           <Label className="text-lg font-semibold text-gray-700">Lifestyle Information</Label>
                         </div>
-                        
+
                         <div className="space-y-4">
                           <div>
                             <Label className="text-sm font-medium text-gray-700 mb-2 block">Smoking History</Label>
@@ -281,15 +460,10 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                                   render={({ field }) => (
                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
                                       <FormControl>
-                                        <Checkbox
-                                          checked={field.value}
-                                          onCheckedChange={field.onChange}
-                                        />
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                       </FormControl>
                                       <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                          Passive Smoker
-                                        </FormLabel>
+                                        <FormLabel>Passive Smoker</FormLabel>
                                       </div>
                                     </FormItem>
                                   )}
@@ -297,20 +471,12 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 pt-2 border-t">
                             <MdLocalBar className="text-blue-600" size={20} />
                             <Label className="text-sm font-medium text-gray-700">Alcohol Consumption</Label>
                           </div>
-                          <FormInput 
-                            control={form.control} 
-                            name="alcohol_bottles_per_day" 
-                            label="Bottles per Day" 
-                            placeholder="0" 
-                            type="number" 
-                            step={1} 
-                            maxLength={2} 
-                          />
+                          <FormInput control={form.control} name="alcohol_bottles_per_day" label="Bottles per Day" placeholder="0" type="number" step={1} maxLength={2} />
                         </div>
                       </div>
                     </div>
@@ -374,10 +540,23 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                       <div className="relative">
                         <Combobox
                           options={staffOptions?.formatted || []}
-                          value={selectedStaffId}
+                          value={selectedStaffDisplay}
                           onChange={(value) => {
-                            setSelectedStaffId(value || "");
-                            setValue("selectedDoctorStaffId", value || ""); // Also set the form value
+                            console.log("Combobox selected value:", value);
+
+                            if (value) {
+                              // Extract just the ID part (first part before first hyphen)
+                              const staffId = value.split("-")[0];
+                              console.log("Extracted staff ID:", staffId);
+
+                              setSelectedStaffDisplay(value); // Full display value for combobox
+                              setSelectedStaffId(staffId); // Just the ID for submission
+                              setValue("selectedDoctorStaffId", staffId); // Set form value with trimmed ID
+                            } else {
+                              setSelectedStaffDisplay("");
+                              setSelectedStaffId("");
+                              setValue("selectedDoctorStaffId", "");
+                            }
                           }}
                           placeholder={staffLoading ? "Loading staff..." : "Select staff member"}
                           emptyMessage="No available staff members"
@@ -394,7 +573,7 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                   <Button variant="outline" type="button" onClick={() => form.reset()} className="w-full sm:w-[150px]" disabled={non_membersubmit.isPending}>
                     Reset Form
                   </Button>
-                  <Button type="submit" className="w-full sm:w-[150px]" disabled={(mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData) || non_membersubmit.isPending}>
+                  <Button type="submit" className="w-full sm:w-[150px]" disabled={(mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !currentPatientData) || non_membersubmit.isPending}>
                     {non_membersubmit.isPending ? (
                       <div className="flex items-center gap-2">
                         <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

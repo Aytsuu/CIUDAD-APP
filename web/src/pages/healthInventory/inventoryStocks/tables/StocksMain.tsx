@@ -1,47 +1,52 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import MedicineStocks from "./MedicineStocks";
-import VaccineStocks from "./VaccineStocks";
-import FirstAidStocks from "./FirstAidStocks";
-import CommodityStocks from "./CommodityStocks";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+
 import { useReportsCount } from "@/pages/healthServices/count-return/count";
 
 const TabConfig = [
   {
     id: "medicine",
     icon: Pill,
-    label: "Medicine"
+    label: "Medicine",
+    path: "medicine"
   },
   {
-    id: "vaccine",
+    id: "vaccine", 
     icon: Syringe,
-    label: "Antigen"
+    label: "Antigen",
+    path: "antigen"
   },
   {
     id: "commodity",
     icon: Package,
-    label: "Commodity"
+    label: "Commodity", 
+    path: "commodity"
   },
   {
     id: "firstaid",
     icon: Bandage,
-    label: "First Aid"
+    label: "First Aid",
+    path: "firstaid"
   }
 ] as const;
 
 type TabType = (typeof TabConfig)[number]["id"];
 
 export default function MainInventoryStocks() {
-  const [selectedView, setSelectedView] = useState<TabType>(() => {
-    if (typeof window !== "undefined") {
-      const savedView = localStorage.getItem("mainInventoryStocksView");
-      return (savedView as TabType) || "medicine";
-    }
-    return "medicine";
-  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get current tab from URL path
+  const getCurrentTabFromPath = () => {
+    const pathSegments = location.pathname.split("/");
+    const currentSegment = pathSegments[pathSegments.length - 1];
+    return TabConfig.find(tab => tab.path === currentSegment)?.id || "medicine";
+  };
 
+  const [selectedView, setSelectedView] = useState<TabType>(getCurrentTabFromPath);
   const { data: count, isLoading: countLoading } = useReportsCount();
 
   const [counts, setCounts] = useState({
@@ -51,9 +56,19 @@ export default function MainInventoryStocks() {
     firstaid: 0
   });
 
+  // Update URL when tab changes
   useEffect(() => {
+    const currentTab = TabConfig.find(tab => tab.id === selectedView);
+    if (currentTab) {
+      navigate(currentTab.path, { replace: true });
+    }
     localStorage.setItem("mainInventoryStocksView", selectedView);
-  }, [selectedView]);
+  }, [selectedView, navigate]);
+
+  // Update selected view when URL changes
+  useEffect(() => {
+    setSelectedView(getCurrentTabFromPath());
+  }, [location.pathname]);
 
   // Update counts when API data changes
   useEffect(() => {
@@ -110,18 +125,8 @@ export default function MainInventoryStocks() {
           </div>
 
           <CardContent className="p-4 pt-6">
-            <TabsContent value="medicine" className="mt-0">
-              <MedicineStocks />
-            </TabsContent>
-            <TabsContent value="vaccine" className="mt-0">
-              <VaccineStocks />
-            </TabsContent>
-            <TabsContent value="commodity" className="mt-0">
-              <CommodityStocks />
-            </TabsContent>
-            <TabsContent value="firstaid" className="mt-0">
-              <FirstAidStocks />
-            </TabsContent>
+            {/* Render nested tab content */}
+            <Outlet />
           </CardContent>
         </Tabs>
       </CardHeader>

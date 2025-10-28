@@ -5,5 +5,5 @@ class NotificationConfig(AppConfig):
     name = 'apps.notification'
 
     def ready(self):
-        from apps.notification.tasks import start_scheduler
+        from apps.notification.utils import start_scheduler
         start_scheduler()

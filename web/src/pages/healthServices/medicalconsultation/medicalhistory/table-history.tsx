@@ -6,27 +6,20 @@ import { History, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { useConsultationHistory } from "../queries/fetch";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
-export function ConsultationHistoryTable({
-  patientId,
-  currentConsultationId,
-
-}: {
-  patientId: string;
-  currentConsultationId: number | undefined;
-}) {
-
-  const   pageSize = 3;
+export function ConsultationHistoryTable({ patientId, currentConsultationId }: { patientId: string; currentConsultationId: number | undefined }) {
+  const pageSize = 3;
   const [currentPage, setCurrentPage] = useState(1);
 
   // Call the hook directly here
-  const { data, isLoading } = useConsultationHistory(patientId, currentPage, pageSize);
-
+  // In your ConsultationHistoryTable component
+  const { data, isLoading } = useConsultationHistory(patientId, currentPage, pageSize, undefined, currentConsultationId);
   // Process the data with safe access
   const relevantHistory = useMemo(() => {
     if (!data?.results) return [];
 
-    return data.results.map((history: any) => ({
+    const allRecords = data.results.map((history: any) => ({
       ...history,
       patrec: history.patrec,
       medrec_id: history.medrec_id,
@@ -39,7 +32,24 @@ export function ConsultationHistoryTable({
       staff_details: history.staff_details || {},
       find_details: history.find_details || {}
     }));
-  }, [data]);
+
+    // If no current consultation ID, return all records
+    if (!currentConsultationId) return allRecords;
+
+    // Find the current consultation to get its date
+    const currentConsultation = allRecords.find((record: any) => record.medrec_id === currentConsultationId);
+
+    // If current consultation not found, return all records
+    if (!currentConsultation) return allRecords;
+
+    const currentConsultationDate = new Date(currentConsultation.created_at);
+
+    // FILTER OUT ALL RECORDS THAT COME AFTER THE CURRENT CONSULTATION
+    return allRecords.filter((record: any) => {
+      const recordDate = new Date(record.created_at);
+      return recordDate <= currentConsultationDate;
+    });
+  }, [data, currentConsultationId]);
 
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
@@ -48,7 +58,9 @@ export function ConsultationHistoryTable({
     if (relevantHistory.length <= 0) return [];
 
     const tableRows = [
-      { attribute: "Bhw Assigned", type: "bhw" },
+      { attribute: "Bhw Assigned", type: "data" },
+      { attribute: "Doctor Assigned", type: "data" },
+
       { attribute: "Chief Complaint", type: "data" },
       { attribute: "Blood Pressure", type: "data" },
       { attribute: "Temperature", type: "data" },
@@ -59,24 +71,21 @@ export function ConsultationHistoryTable({
       { attribute: "Subjective Summary", type: "data" },
       { attribute: "Objective Summary", type: "data" },
       { attribute: "Plan Treatment Summary", type: "data" },
-      { attribute: "Diagnosis", type: "data" },
+      { attribute: "Diagnosis", type: "data" }
     ];
 
     return tableRows.map((row) => {
       const rowData: any = {
         attribute: row.attribute,
-        type: row.type,
+        type: row.type
       };
 
-      relevantHistory.forEach((record:any) => {
+      relevantHistory.forEach((record: any) => {
         const recordId = `record_${record.medrec_id}`;
 
         // Safe access with fallbacks
         if (row.attribute === "Date") {
-          rowData[recordId] = format(
-            new Date(record.created_at || Date.now()),
-            "MMM d, yyyy"
-          );
+          rowData[recordId] = format(new Date(record.created_at || Date.now()), "MMM d, yyyy");
         } else if (row.attribute === "Chief Complaint") {
           rowData[recordId] = record.medrec_chief_complaint || "N/A";
         } else if (row.attribute === "Status") {
@@ -103,9 +112,10 @@ export function ConsultationHistoryTable({
           rowData[recordId] = record.find_details?.plantreatment_summary || "N/A";
         } else if (row.attribute === "Diagnosis") {
           rowData[recordId] = record.find_details?.assessment_summary || "N/A";
-        } else if (row.attribute === "bhw") {
-          const staff = record.staff_details?.rp?.per || {};
-          rowData[recordId] = `${staff.per_fname || ""} ${staff.per_mname || ""} ${staff.per_lname || ""} ${staff.per_suffix || ""}`.trim() || "N/A";
+        } else if (row.attribute === "Bhw Assigned") {
+          rowData[recordId] = toTitleCase(`${record.staff_details?.rp?.per?.per_fname || ""} ${record.staff_details?.rp?.per?.per_mname || ""} ${record.staff_details?.rp?.per?.per_lname || ""} ${record.staff_details?.rp?.per?.per_suffix || ""}`.trim()) || "N/A";
+        } else if (row.attribute === "Doctor Assigned") {
+          rowData[recordId] = toTitleCase(`${record.assigned_to_details?.rp?.per?.per_fname || ""} ${record.assigned_to_details?.rp?.per?.per_mname || ""} ${record.assigned_to_details?.rp?.per?.per_lname || ""} ${record.assigned_to_details?.rp?.per?.per_suffix || ""}`.trim()) || "N/A";
         } else {
           rowData[recordId] = "N/A";
         }
@@ -122,20 +132,12 @@ export function ConsultationHistoryTable({
         header: "",
         cell: ({ row }) => {
           const rowType = row.original.type;
-          return rowType === "heading" ? (
-            <div className="font-semibold text-gray-900 text-sm sm:text-base w-[200px] min-w-[200px] max-w-[200px]">
-              {row.getValue("attribute")}
-            </div>
-          ) : (
-            <div className="font-medium text-gray-700 text-sm sm:text-base px-4">
-              {row.getValue("attribute")}
-            </div>
-          );
-        },
-      },
+          return rowType === "heading" ? <div className="font-semibold text-gray-900 text-sm sm:text-base w-[200px] min-w-[200px] max-w-[200px]">{row.getValue("attribute")}</div> : <div className="font-medium text-gray-700 text-sm sm:text-base px-4">{row.getValue("attribute")}</div>;
+        }
+      }
     ];
 
-    relevantHistory.forEach((record:any) => {
+    relevantHistory.forEach((record: any) => {
       const recordId = `record_${record.medrec_id}`;
       const isCurrent = record.medrec_id === currentConsultationId;
 
@@ -145,13 +147,7 @@ export function ConsultationHistoryTable({
         header: () => {
           return (
             <div className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-              {isCurrent ? (
-                <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-                  {format(new Date(record.created_at || Date.now()), "MMM d, yyyy")} (Current)
-                </span>
-              ) : (
-                format(new Date(record.created_at || Date.now()), "MMM d, yyyy")
-              )}
+              {isCurrent ? <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">{format(new Date(record.created_at || Date.now()), "MMM d, yyyy")} (Current)</span> : format(new Date(record.created_at || Date.now()), "MMM d, yyyy")}
             </div>
           );
         },
@@ -160,9 +156,13 @@ export function ConsultationHistoryTable({
           const rowData = row.original;
 
           if (rowData.attribute === "Chief Complaint") {
-            const formattedValue = value && value !== "N/A" 
-              ? value.split(",").map((item) => item.trim()).filter(Boolean)
-              : [];
+            const formattedValue =
+              value && value !== "N/A"
+                ? value
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
             return (
               <div className="text-justify pr-4">
                 {formattedValue.length > 0 ? (
@@ -174,23 +174,25 @@ export function ConsultationHistoryTable({
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm sm:text-base break-words whitespace-normal">
-                    N/A
-                  </span>
+                  <span className="text-sm sm:text-base break-words whitespace-normal">N/A</span>
                 )}
               </div>
             );
           }
 
           if (rowData.attribute === "Objective Summary") {
-            const formattedValue = value && value !== "N/A" 
-              ? value.split("-").map((item) => item.trim()).filter(Boolean)
-              : [];
-            
+            const formattedValue =
+              value && value !== "N/A"
+                ? value
+                    .split("-")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+
             const grouped: { [key: string]: string[] } = {};
-            
+
             formattedValue.forEach((item) => {
-              const colonIndex = item.indexOf(':');
+              const colonIndex = item.indexOf(":");
               if (colonIndex > -1) {
                 const keyword = item.substring(0, colonIndex).trim();
                 const itemValue = item.substring(colonIndex + 1).trim();
@@ -199,19 +201,19 @@ export function ConsultationHistoryTable({
                 }
                 grouped[keyword].push(itemValue);
               } else {
-                if (!grouped['Other']) {
-                  grouped['Other'] = [];
+                if (!grouped["Other"]) {
+                  grouped["Other"] = [];
                 }
-                grouped['Other'].push(item);
+                grouped["Other"].push(item);
               }
             });
-            
+
             const groupedArray = Object.entries(grouped).map(([keyword, values]) => ({
               keyword,
-              content: keyword !== 'Other' ? values.join(', ') : values.join(', '),
-              hasKeyword: keyword !== 'Other'
+              content: keyword !== "Other" ? values.join(", ") : values.join(", "),
+              hasKeyword: keyword !== "Other"
             }));
-            
+
             return (
               <div className="text-start">
                 {groupedArray.length > 0 ? (
@@ -229,38 +231,28 @@ export function ConsultationHistoryTable({
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm sm:text-base break-words whitespace-normal">
-                    N/A
-                  </span>
+                  <span className="text-sm sm:text-base break-words whitespace-normal">N/A</span>
                 )}
               </div>
             );
           }
 
           if (rowData.attribute === "HT") {
-            return (
-              <div className="text-sm sm:text-base">
-                {value && value !== "N/A" 
-                  ? `${parseFloat(value).toFixed(2).endsWith(".00") ? parseInt(value) : value} cm`
-                  : "N/A"}
-              </div>
-            );
+            return <div className="text-sm sm:text-base">{value && value !== "N/A" ? `${parseFloat(value).toFixed(2).endsWith(".00") ? parseInt(value) : value} cm` : "N/A"}</div>;
           }
 
           if (rowData.attribute === "WT") {
-            return (
-              <div className="text-sm sm:text-base">
-                {value && value !== "N/A" 
-                  ? `${parseFloat(value).toFixed(2).endsWith(".00") ? parseInt(value) : value} kg`
-                  : "N/A"}
-              </div>
-            );
+            return <div className="text-sm sm:text-base">{value && value !== "N/A" ? `${parseFloat(value).toFixed(2).endsWith(".00") ? parseInt(value) : value} kg` : "N/A"}</div>;
           }
 
           if (rowData.attribute === "Diagnosis") {
-            const formattedValue = value && value !== "N/A" 
-              ? value.split(",").map((item) => item.trim()).filter(Boolean)
-              : [];
+            const formattedValue =
+              value && value !== "N/A"
+                ? value
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
             return (
               <div className="text-justify pr-4">
                 {formattedValue.length > 0 ? (
@@ -272,18 +264,20 @@ export function ConsultationHistoryTable({
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm sm:text-base break-words whitespace-normal">
-                    N/A
-                  </span>
+                  <span className="text-sm sm:text-base break-words whitespace-normal">N/A</span>
                 )}
               </div>
             );
           }
 
           if (rowData.attribute === "Plan Treatment Summary") {
-            const formattedValue = value && value !== "N/A" 
-              ? value.split(/[-,]/).map((item) => item.trim()).filter(Boolean)
-              : [];
+            const formattedValue =
+              value && value !== "N/A"
+                ? value
+                    .split(/[-,]/)
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
             return (
               <div className="text-justify pr-4">
                 {formattedValue.length > 0 ? (
@@ -295,28 +289,18 @@ export function ConsultationHistoryTable({
                     ))}
                   </ul>
                 ) : (
-                  <span className="text-sm sm:text-base break-words whitespace-normal">
-                    N/A
-                  </span>
+                  <span className="text-sm sm:text-base break-words whitespace-normal">N/A</span>
                 )}
               </div>
             );
           }
 
           if (rowData.attribute === "bhw") {
-            return (
-              <div className="text-sm sm:text-base">
-                {value || "N/A"}
-              </div>
-            );
+            return <div className="text-sm sm:text-base">{value || "N/A"}</div>;
           }
 
-          return (
-            <div className="text-sm sm:text-base min-w-[250px]">
-              {value || "N/A"}
-            </div>
-          );
-        },
+          return <div className="text-sm sm:text-base min-w-[250px]">{value || "N/A"}</div>;
+        }
       });
     });
 
@@ -335,30 +319,18 @@ export function ConsultationHistoryTable({
         <div className="text-sm text-gray-600 mb-2 sm:mb-0">
           Showing {startItem} to {endItem} of {totalCount} records
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1"
-          >
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} className="flex items-center gap-1">
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          
+
           <div className="text-sm text-gray-600 mx-2">
             Page {currentPage} of {totalPages}
           </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="flex items-center gap-1"
-          >
+
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} className="flex items-center gap-1">
             Next
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -382,21 +354,15 @@ export function ConsultationHistoryTable({
         <div className="flex items-center justify-center mb-2">
           <History size={20} />
         </div>
-        <p className="text-lg sm:text-lg text-gray-600">
-          No consultation history found.
-        </p>
+        <p className="text-lg sm:text-lg text-gray-600">No consultation history found.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <DataTable
-        columns={columns}
-        data={tableData}
-        pagination={false}
-      />
-      
+      <DataTable columns={columns} data={tableData} pagination={false} />
+
       {/* Pagination Controls */}
       <PaginationControls />
     </div>

@@ -46,27 +46,11 @@ class Complaint(models.Model):
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
-    comp_is_archive = models.BooleanField(default=False)
-    comp_status = models.CharField(
-        max_length=20, 
-        default='Pending',
-    )
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='complaints',
-    )
-    complainant = models.ManyToManyField(
-        Complainant,
-        through='ComplaintComplainant',
-        related_name='complaints'
-    )
-    accused = models.ManyToManyField(
-        Accused,
-        through='ComplaintAccused',
-        related_name='complaints'
-    )
+    comp_rejection_reason = models.TextField(blank=True, null=True)
+    comp_status = models.CharField(max_length=20, default='Pending',)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='complaints',)
+    complainant = models.ManyToManyField(Complainant, through='ComplaintComplainant', related_name='complaints')
+    accused = models.ManyToManyField(Accused,through='ComplaintAccused',related_name='complaints')
 
     class Meta:
         db_table = 'complaint'
@@ -88,19 +72,6 @@ class Complaint(models.Model):
             self.comp_id = int(f"{date_str}{seq:03d}") 
         super().save(*args, **kwargs)
     
-    def get_absolute_url(self):
-        return {
-            'path': '/complaint/view',
-            'params': {'id': self.comp_id}
-        }
-    
-    def get_mobile_route(self):
-        return {
-            'screen' : '/(my-request)/complaint-tracking/compMainView',
-            'params' : {'comp_id': str(self.comp_id)}
-        }
-        
-        
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)
     comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)

@@ -61,28 +61,38 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
 @receiver(post_save, sender=ServiceChargePaymentRequest)
 def auto_decline_overdue_charges(sender, instance, created, **kwargs):
     try:
-        if instance.pay_status == 'Unpaid':
+        # Skip if this is a signal-triggered save to prevent recursion
+        if hasattr(instance, '_skip_auto_decline'):
+            return
+            
+        if instance.pay_status == 'Unpaid' and instance.pay_req_status == 'Pending':
             cutoff_date = timezone.now() - timedelta(days=7)
             
             if instance.pay_date_req and instance.pay_date_req < cutoff_date:
-                instance.pay_status = 'Declined'
-                instance.pay_date_paid = timezone.now()
-                instance.save(update_fields=['pay_status', 'pay_date_paid'])
+                # Only update pay_req_status to Declined, keep pay_status as Unpaid
+                instance._skip_auto_decline = True  # Prevent recursion
+                instance.pay_req_status = 'Declined'
+                instance.save(update_fields=['pay_req_status'])
                 logger.info(f'Auto-declined overdue service charge {instance.pay_id}')
         
-        # Check other overdue charges
-        overdue_charges = ServiceChargePaymentRequest.objects.filter(
-            pay_status='Unpaid',
-            pay_date_req__lt=timezone.now() - timedelta(days=7)
-        )
-        
-        if overdue_charges.exists():
-            updated_count = overdue_charges.update(
-                pay_status='Declined',
-                pay_date_paid=timezone.now()
+        # Check other overdue charges (only run once, not on every save)
+        if created:  # Only run on creation, not on every update
+            overdue_charges = ServiceChargePaymentRequest.objects.filter(
+                pay_status='Unpaid',
+                pay_req_status='Pending',
+                pay_date_req__lt=timezone.now() - timedelta(days=7)
             )
-            if updated_count > 0:
-                logger.info(f'Auto-declined {updated_count} overdue service charges')
+            
+            if overdue_charges.exists():
+                # Mark records to skip signal recursion
+                for charge in overdue_charges:
+                    charge._skip_auto_decline = True
+                
+                updated_count = overdue_charges.update(
+                    pay_req_status='Declined'
+                )
+                if updated_count > 0:
+                    logger.info(f'Auto-declined {updated_count} overdue service charges')
                 
     except Exception as e:
         logger.error(f'Error in auto_decline_overdue_charges signal: {str(e)}')

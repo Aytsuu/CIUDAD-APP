@@ -10,7 +10,6 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
 import { useIncomeParticular } from './queries/income-expense-FetchQueries';
-import { useCreateIncome } from './queries/income-expense-AddQueries';
 import { useUpdateIncome } from './queries/income-expense-UpdateQueries';
 import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
@@ -84,9 +83,9 @@ function IncomeEditForm() {
     const yearIncome = Number(year);
      let totalIncome = 0.0
 
-        let totIncome = Number(totInc);
-        let prev_amount = Number(inc_amount);
-        let current_amount = Number(values.inc_amount);
+        const totIncome = Number(totInc);
+        const prev_amount = Number(inc_amount);
+        const current_amount = Number(values.inc_amount);
 
         if (inputYear !== yearIncome) {
             form.setError('inc_datetime', {

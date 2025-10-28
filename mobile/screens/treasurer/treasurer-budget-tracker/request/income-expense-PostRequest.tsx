@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { useState } from "react";
 import { parseFloatSafe } from "@/helpers/floatformatter";
 import { capitalize } from "@/helpers/capitalize";
 
@@ -8,7 +7,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
     try{
 
-        let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
+        const entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
         console.log({
             iet_datetime: incomeExpenseInfo.iet_datetime,
@@ -54,19 +53,20 @@ export const expense_log = async (iet_num: number, expenseLogInfo: Record<string
     try{
         const currentTimestamp = new Date().toISOString();
 
-        console.log({
+        console.log("ADD EXPENSER LOG: ",{
             el_datetime: currentTimestamp,
-            el_return_amount: expenseLogInfo.returnAmount,
-            el_proposed_budget: expenseLogInfo.el_proposed_budget,
-            el_actual_expense: expenseLogInfo.el_actual_expense,
+            el_return_amount: parseFloat(expenseLogInfo.returnAmount || 0).toFixed(2),
+            el_proposed_budget: parseFloat(expenseLogInfo.el_proposed_budget || 0).toFixed(2),
+            el_actual_expense: parseFloat(expenseLogInfo.el_actual_expense || 0).toFixed(2),
+            iet_num: iet_num
         })
 
         const res = await api.post('treasurer/expense-log/',{
 
             el_datetime: currentTimestamp,
-            el_return_amount: expenseLogInfo.returnAmount,
-            el_proposed_budget: expenseLogInfo.el_proposed_budget,
-            el_actual_expense: expenseLogInfo.el_actual_expense,
+            el_return_amount: parseFloat(expenseLogInfo.returnAmount || 0).toFixed(2),
+            el_proposed_budget: parseFloat(expenseLogInfo.el_proposed_budget || 0).toFixed(2),
+            el_actual_expense: parseFloat(expenseLogInfo.el_actual_expense || 0).toFixed(2),
             iet_num: iet_num
 
         })

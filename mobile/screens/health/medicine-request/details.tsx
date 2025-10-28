@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, ScrollView } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { ArrowLeft, AlertCircle, Pill } from "lucide-react-native"

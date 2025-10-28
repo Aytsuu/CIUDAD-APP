@@ -7,16 +7,17 @@ def update_ann_status():
 
     Announcement.objects.filter(
         ann_end_at__lte=now,
-        ann_status="Active"
-    ).update(ann_status="Inactive")
+        ann_status__iexact="ACTIVE"
+    ).update(ann_status="INACTIVE")
 
     Announcement.objects.filter(
         ann_start_at__lte=now,
         ann_end_at__gt=now,
-        ann_status="Inactive"
-    ).update(ann_status="Active")
+        ann_status__iexact="INACTIVE"
+    ).update(ann_status="ACTIVE")
+    
 
     Announcement.objects.filter(
         ann_start_at__gt=now,
-        ann_status="Active"
-    ).update(ann_status="Inactive")
+        ann_status__iexact="ACTIVE"
+    ).update(ann_status="INACTIVE")

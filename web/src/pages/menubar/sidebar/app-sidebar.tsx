@@ -159,7 +159,7 @@ export function AppSidebar() {
   const barangayItems: BaseMenuItem[] = [
     {
       title: "Calendar",
-      url: "/waste-calendar-scheduling",
+      url: "/calendar-page",
     },
     ...(featureValidator("report")
       ? [
@@ -167,7 +167,16 @@ export function AppSidebar() {
             title: "Report",
             url: "/",
             items: [
-              { title: "Incident", url: "/report/incident" },
+              { 
+                title: "Incident", 
+                url: "/report/incident",
+                items: [
+                  {
+                    title: "Securado",
+                    url: "/report/incident/securado"
+                  }
+                ]
+              },
               { title: "Acknowledgement", url: "/report/acknowledgement" },
               {
                 title: "Weekly Accomplishment",
@@ -181,8 +190,12 @@ export function AppSidebar() {
     ...(featureValidator("complaint")
       ? [
           {
-            title: "Complaint",
-            url: "/complaint",
+            title: "Blotter",
+            url: "/",
+            items: [
+              {title: "Process", url: "/complaint"},
+              {title: "Record", url: "/record"}
+            ]
           },
         ]
       : []),
@@ -241,7 +254,7 @@ export function AppSidebar() {
             title: "Council",
             url: "/",
             items: [
-              { title: "Council Events", url: "/calendar-page" },
+              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
@@ -299,6 +312,10 @@ export function AppSidebar() {
                 url: "record/clearances/businesspermit",
               },
               {
+                title: "Service Charge",
+                url: "record/clearances/servicecharge",
+              },
+              {
                 title: "Issued Certificates",
                 url: "record/clearances/issuedcertificates",
               },
@@ -323,6 +340,10 @@ export function AppSidebar() {
           {
             title: "Garbage Pickup Request",
             url: "/garbage-pickup-request",
+          },
+          {
+            title: "Waste Collection",
+            url: "/waste-collection",
           },
           {
             title: "Waste Personnel & Collection Vehicle",
@@ -362,25 +383,26 @@ export function AppSidebar() {
       title: "Services",
       url: "/",
       items: [
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Animal Bites", url: "/services/animalbites" },
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
-        { title: "Maternal", url: "/services/maternalrecords" },
+        { title: "Family Planning", url: "/services/familyplanning" },
+        { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
-          url: "/services/medical-consultation",
+          url: "/services/medical-consultation/records",
         },
-        { title: "Medicine", url: "/services/medicine" },
+        { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
     ...(featureValidator("inventory") ? [{
       title: "Inventory",
-      url: "/",
+      url:  "/" ,
       items: [
-        { title: "Inventory List", url: "/inventory/list" },
-        { title: "Inventory Stocks", url: "/inventory/stocks" },
+        { title: "Inventory List", url: "/inventory/list/medicine" },
+        { title: "Inventory Stocks", url: "/inventory-stocks/list/stocks/medicine" }
+
       ],
     }] : []),
     ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
@@ -407,7 +429,7 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              { title: "All", url: "/profiling/all" },
+              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

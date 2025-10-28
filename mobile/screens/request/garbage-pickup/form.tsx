@@ -129,8 +129,7 @@ export default function GarbagePickupForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={false}
-                maxImages={1}
+                limit={1}
               /> 
             </View>
 

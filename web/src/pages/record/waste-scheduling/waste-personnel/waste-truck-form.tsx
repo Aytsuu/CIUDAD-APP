@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
+import { Eye, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -214,7 +214,7 @@ const TruckManagement = ({
               />
             )}
 
-            {activeTab === "archive" && (
+            {/* {activeTab === "archive" && (
               <TooltipLayout
                 trigger={
                   <div className="flex items-center h-8">
@@ -243,7 +243,7 @@ const TruckManagement = ({
                 }
                 content="Delete"
               />
-            )}
+            )} */}
           </div>
         );
       },
@@ -261,6 +261,7 @@ const TruckManagement = ({
     truck_status: truck.truck_status as TruckStatus,
     truck_last_maint: truck.truck_last_maint,
     truck_is_archive: truck.truck_is_archive,
+    truck_track_device: truck.truck_track_device,
   }));
 
   const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
@@ -324,6 +325,7 @@ const TruckManagement = ({
       form.reset({
         ...truck,
         truck_capacity: String(truck.truck_capacity).replace(",", ""),
+        truck_track_device: truck.truck_track_device || "",
       });
     } else {
       form.reset({
@@ -332,6 +334,7 @@ const TruckManagement = ({
         truck_capacity: "",
         truck_status: "Operational",
         truck_last_maint: new Date().toISOString().split("T")[0],
+        truck_track_device: "",
       });
     }
     setIsDialogOpen(true);
@@ -464,6 +467,14 @@ const TruckManagement = ({
                     name="truck_last_maint"
                     type="date"
                     label="Last Maintenance"
+                    readOnly={isReadOnly}
+                  />
+
+                  <FormInput
+                    control={form.control}
+                    name="truck_track_device"
+                    label="Tracking Device ID"
+                    placeholder="Enter tracking device ID (optional)"
                     readOnly={isReadOnly}
                   />
 

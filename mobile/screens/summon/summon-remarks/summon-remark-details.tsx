@@ -64,15 +64,15 @@ export default function SummonRemarkDetails(){
         })
     }
 
-    const handleViewImages = (files: any[], index = 0) => {
+     const handleViewImages = (files: any[], index = 0) => {
         const images = files.map(file => ({
-            url: file.url || file.momsp_url || file.sd_url, // Adjust based on your actual file structure
-            name: file.name || file.momsp_name || file.sd_name || 'Document'
-        }));
-        setSelectedImages(images);
-        setCurrentIndex(index);
-        setViewImagesModalVisible(true);
-    };
+            url: file.url || file.rsd_url ,
+            name: file.name || file.rsd_name
+        }))
+        setSelectedImages(images)
+        setCurrentIndex(index)
+        setViewImagesModalVisible(true)
+    }
 
    
     if(isLoading){

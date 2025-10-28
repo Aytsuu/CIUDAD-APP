@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import *
 from datetime import datetime, timedelta
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Subquery, Max
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.models import *
 from .utils import *
@@ -27,11 +27,21 @@ from pagination import *
 from apps.healthProfiling.models import *
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
+
+
+
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
+        # Subquery to get the latest consultation date for each patient
+        latest_consultation_subquery = MedicalConsultation_Record.objects.filter(
+            patrec__pat_id=OuterRef('pat_id'),
+            medrec_status='completed'
+        ).order_by('-created_at').values('created_at')[:1]
+
+        # Base queryset with annotations for count and latest date
         queryset = Patient.objects.annotate(
             medicalrec_count=Count(
                 'patient_records__medical_consultation_record',
@@ -39,7 +49,8 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
                     patient_records__medical_consultation_record__medrec_status='completed'
                 ),
                 distinct=True
-            )
+            ),
+            latest_consultation_date=Subquery(latest_consultation_subquery)
         ).filter(
             patient_records__medical_consultation_record__medrec_status='completed'
         ).select_related(
@@ -48,7 +59,10 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         ).prefetch_related(
             'rp_id__per__personal_addresses__add__sitio',
             'patient_records__medical_consultation_record'
-        ).distinct().order_by('-medicalrec_count')
+        ).distinct()
+
+        # Order by latest consultation date (most recent first) then by count
+        queryset = queryset.order_by('-latest_consultation_date', '-medicalrec_count')
         
         # Track if any filter is applied
         filters_applied = False
@@ -89,7 +103,6 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
     
     def _apply_status_filter(self, queryset, status):
         """Filter by status - keep this in view if it's specific to this view"""
-        # Implement your status filter logic here
         return queryset.filter(patient_records__medical_consultation_record__medrec_status=status)
     
     def list(self, request, *args, **kwargs):
@@ -97,13 +110,11 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         page = self.paginate_queryset(queryset)
         
         if page is not None:
-            # You can add parents info and address to serialized data if needed
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-    
     
     
     
@@ -379,11 +390,29 @@ class ViewMedicalConsultationRecordView(generics.ListAPIView):
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
         search_query = self.request.GET.get('search', '').strip()
+        current_consultation_id = self.request.GET.get('current_consultation_id', '').strip()
         
         queryset = MedicalConsultation_Record.objects.filter(
             patrec__pat_id=pat_id,
             medrec_status='completed' 
         ).order_by('-created_at')
+        
+        # FILTER OUT CONSULTATIONS AFTER THE CURRENT ONE
+        if current_consultation_id:
+            try:
+                # Get the current consultation's date
+                current_consultation = MedicalConsultation_Record.objects.get(
+                    medrec_id=current_consultation_id,
+                    patrec__pat_id=pat_id
+                )
+                current_date = current_consultation.created_at
+                
+                # Only include consultations on or before the current consultation date
+                queryset = queryset.filter(created_at__lte=current_date)
+                
+            except MedicalConsultation_Record.DoesNotExist:
+                # If current consultation not found, return all
+                pass
         
         # Add search functionality
         if search_query:
@@ -467,14 +496,124 @@ class PendingMedConCountView(APIView):
 
 
 
+
 #================================ CREATE STEP1
+# class CreateMedicalConsultationView(APIView):
+#     @transaction.atomic
+#     def post(self, request):
+#         data = request.data
+#         try:
+#             # 🔹 Required fields (excluding staff if optional)
+#             required_fields = ["pat_id", "medrec_chief_complaint", "height", "weight"]
+
+#             missing_fields = []
+#             for field in required_fields:
+#                 value = data.get(field, None)
+#                 if value is None or str(value).strip() == "":
+#                     missing_fields.append(field)
+
+#             if missing_fields:
+#                 return Response(
+#                     {
+#                         "success": False,
+#                         "error": "Missing required fields",
+#                         "missing_fields": missing_fields,
+#                         "received_data": data,
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#             # 🔹 Handle staff (optional)
+#             staff = None
+#             staff_id = data.get("staff")
+#             if staff_id not in [None, "", "null"]:
+#                 try:
+#                     staff = Staff.objects.get(pk=staff_id)
+#                 except Staff.DoesNotExist:
+#                     return Response(
+#                         {"error": f"Invalid staff ID: {staff_id}"},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+            
+#             # 🔹 Get Patient instance (ADD THIS)
+#             try:
+#                 patient = Patient.objects.get(pat_id=data["pat_id"])
+#             except Patient.DoesNotExist:
+#                 return Response(
+#                     {"error": f"Invalid patient ID: {data['pat_id']}"},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#             # 1. Create PatientRecord
+#             patrec = PatientRecord.objects.create(
+#                 pat_id_id=data["pat_id"],  # This might also need fixing if it expects a Patient instance
+#                 patrec_type="Medical Consultation",
+#             )
+
+#             # 2. Create VitalSigns
+#             vital = VitalSigns.objects.create(
+#                 vital_bp_systolic=data.get("vital_bp_systolic", ""),
+#                 vital_bp_diastolic=data.get("vital_bp_diastolic", ""),
+#                 vital_temp=data.get("vital_temp", ""),
+#                 vital_RR=data.get("vital_RR", ""),
+#                 vital_o2="N/A",
+#                 vital_pulse=data.get("vital_pulse", ""),
+#                 patrec=patrec,
+#                 staff=staff,
+#             )
+
+#             # 3. Create BodyMeasurement - FIXED
+#             bm = BodyMeasurement.objects.create(
+#                 height=float(data.get("height", 0)),
+#                 weight=float(data.get("weight", 0)),
+#                 pat=patient,  # ✅ Now passing Patient instance instead of string
+#                 staff=staff,
+#             )
+
+#             assigned_staff = None
+#             selected_staff_id = data.get('selectedDoctorStaffId')
+#             if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+#                 try:
+#                     assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+#                 except Staff.DoesNotExist:
+#                     print(f"Staff with ID {selected_staff_id} does not exist")
+       
+#             # 4. Create MedicalConsultation_Record
+#             medrec = MedicalConsultation_Record.objects.create(
+#                 patrec=patrec,
+#                 vital=vital,
+#                 bm=bm,
+#                 find=None,
+#                 medrec_chief_complaint=data["medrec_chief_complaint"],
+#                 staff=staff,
+#                 assigned_to=assigned_staff
+#             )
+
+#             return Response(
+#                 {
+#                     "success": True,
+#                     "patrec_id": patrec.patrec_id,
+#                     "vital_id": vital.vital_id,
+#                     "bm_id": bm.bm_id,
+#                     "medrec_id": medrec.medrec_id,
+#                 },
+#                 status=status.HTTP_201_CREATED,
+#             )
+
+#         except Exception as e:
+#             return Response(
+#                 {"error": str(e), "received_data": data},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+
 class CreateMedicalConsultationView(APIView):
     @transaction.atomic
     def post(self, request):
         data = request.data
         try:
             # 🔹 Required fields (excluding staff if optional)
-            required_fields = ["pat_id", "medrec_chief_complaint", "height", "weight"]
+            required_fields = ["pat_id", "medrec_chief_complaint"]
 
             missing_fields = []
             for field in required_fields:
@@ -493,6 +632,17 @@ class CreateMedicalConsultationView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # 🔹 FIX: Add proper boolean parsing function
+            def parse_boolean(value):
+                if isinstance(value, bool):
+                    return value
+                if isinstance(value, str):
+                    if value.lower() in ['true', '1', 'yes', 'on']:
+                        return True
+                    elif value.lower() in ['false', '0', 'no', 'off', 'null', 'undefined', '']:
+                        return False
+                return bool(value)
+
             # 🔹 Handle staff (optional)
             staff = None
             staff_id = data.get("staff")
@@ -505,7 +655,7 @@ class CreateMedicalConsultationView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             
-            # 🔹 Get Patient instance (ADD THIS)
+            # 🔹 Get Patient instance
             try:
                 patient = Patient.objects.get(pat_id=data["pat_id"])
             except Patient.DoesNotExist:
@@ -514,9 +664,20 @@ class CreateMedicalConsultationView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # 🔹 Handle Appointment if provided
+            appointment = None
+            app_id = data.get("app_id")
+            if app_id and app_id not in [None, "", "null"]:
+                try:
+                    appointment = MedConsultAppointment.objects.get(id=app_id)
+                    print(f"DEBUG: Found appointment with ID: {appointment.id}")
+                except MedConsultAppointment.DoesNotExist:
+                    print(f"DEBUG: Appointment with ID {app_id} not found")
+                    appointment = None
+
             # 1. Create PatientRecord
             patrec = PatientRecord.objects.create(
-                pat_id_id=data["pat_id"],  # This might also need fixing if it expects a Patient instance
+                pat_id_id=data["pat_id"],
                 patrec_type="Medical Consultation",
             )
 
@@ -526,29 +687,121 @@ class CreateMedicalConsultationView(APIView):
                 vital_bp_diastolic=data.get("vital_bp_diastolic", ""),
                 vital_temp=data.get("vital_temp", ""),
                 vital_RR=data.get("vital_RR", ""),
-                vital_o2="N/A",
+                vital_o2=data.get("vital_o2", "N/A"),
                 vital_pulse=data.get("vital_pulse", ""),
                 patrec=patrec,
                 staff=staff,
             )
 
-            # 3. Create BodyMeasurement - FIXED
+            # 3. Create BodyMeasurement
             bm = BodyMeasurement.objects.create(
                 height=float(data.get("height", 0)),
                 weight=float(data.get("weight", 0)),
-                pat=patient,  # ✅ Now passing Patient instance instead of string
+                pat=patient,
                 staff=staff,
             )
 
             assigned_staff = None
             selected_staff_id = data.get('selectedDoctorStaffId')
-            if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+            if selected_staff_id:
                 try:
                     assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
                 except Staff.DoesNotExist:
                     print(f"Staff with ID {selected_staff_id} does not exist")
-       
-            # 4. Create MedicalConsultation_Record
+
+            # 🔹 FIX: Use the boolean parsing function
+            is_phrecord = parse_boolean(data.get('is_phrecord', False))
+            
+            print(f"DEBUG: is_phrecord value: {is_phrecord}, type: {type(is_phrecord)}")
+            print(f"DEBUG: Raw is_phrecord from data: {data.get('is_phrecord')}")
+            
+            # Only process PhilHealth data if explicitly marked as PhilHealth record
+            tts_instance = None
+            obs_instance = None
+            phil_details_instance = None
+
+            if is_phrecord:
+                print("DEBUG: Processing PhilHealth record")
+                
+                # 🔹 Handle TT Status - only if PhilHealth record
+                tts_status = data.get('tts_status')
+                tts_date_given = data.get('tts_date_given')
+                tts_id = data.get('tts_id')
+                
+                # ✅ FIX: Ensure TT Status is properly handled and linked
+                if tts_status and tts_status.strip():
+                    # Check if TT Status with same status already exists
+                    existing_tts = TT_Status.objects.filter(
+                        tts_status=tts_status,
+                        pat_id=patient
+                    ).first()
+                    
+                    if existing_tts:
+                        # Use existing TT Status
+                        tts_instance = existing_tts
+                        print(f"DEBUG: Using existing TT Status with ID: {tts_instance.tts_id}")
+                    else:
+                        # Create new TT Status - ✅ FIX: Parse boolean
+                        tts_instance = TT_Status.objects.create(
+                            tts_status=tts_status,
+                            tts_date_given=tts_date_given if tts_date_given else None,
+                            tts_tdap=parse_boolean(data.get('tts_tdap', False)),
+                            pat_id=patient
+                        )
+                        print(f"DEBUG: Created new TT Status with ID: {tts_instance.tts_id}")
+                elif tts_id and tts_id.strip():
+                    # Use existing TT Status by ID
+                    try:
+                        tts_instance = TT_Status.objects.get(tts_id=tts_id)
+                        print(f"DEBUG: Found TT Status by ID: {tts_instance.tts_id}")
+                    except TT_Status.DoesNotExist:
+                        print(f"DEBUG: TT Status with ID {tts_id} not found")
+                        tts_instance = None
+                else:
+                    print("DEBUG: No TT Status data provided")
+
+                # 🔹 Handle Obstetrical History - only if PhilHealth record
+                obs_data = {
+                    'obs_ch_born_alive': data.get('obs_ch_born_alive'),
+                    'obs_living_ch': data.get('obs_living_ch'),
+                    'obs_abortion': data.get('obs_abortions'),
+                    'obs_still_birth': data.get('obs_still_birth'),
+                    'obs_lg_babies': data.get('obs_lg_babies'),
+                    'obs_lg_babies_str': data.get('obs_lg_babies_str'),  # BooleanField!
+                    'obs_gravida': data.get('obs_gravida'),
+                    'obs_para': data.get('obs_para'),
+                    'obs_fullterm': data.get('obs_fullterm'),
+                    'obs_preterm': data.get('obs_preterm'),
+                    'patrec_id': patrec,
+                }
+                
+                # Check if any obstetrical data is provided
+                has_obs_data = any(
+                    value not in [None, '', 'null'] 
+                    for key, value in obs_data.items() 
+                    if key not in ['patrec_id', 'obs_lg_babies_str']
+                )
+                
+                if has_obs_data:
+                    # ✅ FIX: Parse the boolean field FIRST
+                    obs_data['obs_lg_babies_str'] = parse_boolean(obs_data.get('obs_lg_babies_str', False))
+                    
+                    # Convert string numbers to integers where applicable
+                    for field in ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 
+                                 'obs_still_birth', 'obs_lg_babies', 'obs_gravida', 
+                                 'obs_para', 'obs_fullterm', 'obs_preterm']:
+                        if obs_data[field] not in [None, '', 'null']:
+                            try:
+                                obs_data[field] = int(obs_data[field])
+                            except (ValueError, TypeError):
+                                obs_data[field] = None
+                        else:
+                            obs_data[field] = None
+                    
+                    obs_instance = Obstetrical_History.objects.create(**obs_data)
+                    print(f"DEBUG: Created Obstetrical_History with ID: {obs_instance.obs_id}")
+
+            # 4. Create MedicalConsultation_Record (CORE CONSULTATION ONLY)
             medrec = MedicalConsultation_Record.objects.create(
                 patrec=patrec,
                 vital=vital,
@@ -556,40 +809,182 @@ class CreateMedicalConsultationView(APIView):
                 find=None,
                 medrec_chief_complaint=data["medrec_chief_complaint"],
                 staff=staff,
-                assigned_to=assigned_staff
+                assigned_to=assigned_staff,
+                is_phrecord=is_phrecord,
+                app_id=appointment,  # Link the appointment if exists
             )
 
-            return Response(
-                {
-                    "success": True,
-                    "patrec_id": patrec.patrec_id,
-                    "vital_id": vital.vital_id,
-                    "bm_id": bm.bm_id,
-                    "medrec_id": medrec.medrec_id,
-                },
-                status=status.HTTP_201_CREATED,
-            )
+            # 🔹 Update appointment status if appointment exists
+            if appointment:
+                print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'in queue'")
+                appointment.status = "in queue"
+                appointment.save()
+                print(f"DEBUG: Appointment status updated to '{appointment.status}'")
+
+            # 🔹 Create MedicalHistory records for FAMILY illnesses
+            famselected_illnesses = data.get('famselectedIllnesses', [])
+            if famselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(famselected_illnesses)} family illnesses")
+                for illness_id in famselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=True,  # This is family history
+                            is_for_surveillance=False,
+                            remarks="Family medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created family medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating family medical history for illness {illness_id}: {str(e)}")
+
+            # 🔹 Create MedicalHistory records for PERSONAL illnesses  
+            myselected_illnesses = data.get('myselectedIllnesses', [])
+            if myselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(myselected_illnesses)} personal illnesses")
+                for illness_id in myselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=False,  # This is personal medical history
+                            is_for_surveillance=False,
+                            remarks="Personal medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created personal medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating personal medical history for illness {illness_id}: {str(e)}")
+
+            # 🔹 Create PhilhealthDetails ONLY if it's explicitly a PhilHealth record
+            if is_phrecord:
+                print("DEBUG: Creating PhilhealthDetails")
+                
+                # ✅ FIX: Parse all boolean fields using the function
+                phil_details_data = {
+                    'iswith_atc': parse_boolean(data.get('iswith_atc', False)),
+                    'civil_status': data.get('civil_status'),
+                    'dependent_or_member': data.get('dependent_or_member'),
+                    'ogtt_result': data.get('ogtt_result'),
+                    'contraceptive_used': data.get('contraceptive_used'),
+                    'smk_sticks_per_day': data.get('smk_sticks_per_day'),
+                    'smk_years': data.get('smk_years'),
+                    'is_passive_smoker': parse_boolean(data.get('is_passive_smoker', False)),
+                    'alcohol_bottles_per_day': data.get('alcohol_bottles_per_day'),
+                    'tts': tts_instance,  # ✅ This will be the FK - either existing or newly created
+                    'obs': obs_instance,
+                    'lab': None,  
+                }
+                
+                print(f"DEBUG: PhilhealthDetails data - tts: {tts_instance}, obs: {obs_instance}")
+                print(f"DEBUG: TT Status instance details: {tts_instance.tts_id if tts_instance else 'None'}")
+                
+                # ✅ FIX: Clean string fields to ensure empty strings become None
+                string_fields = ['civil_status', 'dependent_or_member', 'ogtt_result', 
+                               'contraceptive_used', 'smk_sticks_per_day', 'smk_years', 
+                               'alcohol_bottles_per_day']
+                
+                for field in string_fields:
+                    if phil_details_data[field] in ["", "null", "undefined"]:
+                        phil_details_data[field] = None
+                
+                # Create PhilhealthDetails linked to the consultation
+                try:
+                    phil_details_instance = PhilhealthDetails.objects.create(
+                        medrec=medrec,
+                        **phil_details_data
+                    )
+                    print(f"DEBUG: PhilhealthDetails created with ID: {phil_details_instance.phil_id}")
+                    # ✅ VERIFY: Check that the TT FK is properly set
+                    if phil_details_instance.tts:
+                        print(f"DEBUG: CONFIRMED - PhilhealthDetails.tts is set to: {phil_details_instance.tts.tts_id}")
+                    else:
+                        print("DEBUG: PhilhealthDetails.tts is None")
+                except Exception as e:
+                    print(f"DEBUG: Error creating PhilhealthDetails: {str(e)}")
+                    raise e
+
+            response_data = {
+                "success": True,
+                "patrec_id": patrec.patrec_id,
+                "vital_id": vital.vital_id,
+                "bm_id": bm.bm_id,
+                "medrec_id": medrec.medrec_id,
+                "is_phrecord": is_phrecord,
+                "family_illnesses_count": len(famselected_illnesses),
+                "personal_illnesses_count": len(myselected_illnesses),
+            }
+
+            # Add appointment info if appointment was linked
+            if appointment:
+                response_data["appointment_id"] = appointment.id
+                response_data["appointment_status_updated"] = "in queue"
+
+            # Add PhilHealth details info ONLY if it's a PhilHealth record
+            if is_phrecord and phil_details_instance:
+                response_data["phil_details_id"] = phil_details_instance.phil_id
+                
+                if tts_instance:
+                    response_data["tts_id"] = tts_instance.tts_id
+                    response_data["tts_status"] = tts_instance.tts_status
+                    response_data["tts_linked_to_phil"] = True  # ✅ Confirm linkage
+
+                if obs_instance:
+                    response_data["obs_id"] = obs_instance.obs_id
+                    response_data["obs_linked_to_phil"] = True  # ✅ Confirm linkage
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
+            # ✅ ROLLBACK happens automatically due to @transaction.atomic
+            import traceback
+            print(f"Error: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             return Response(
-                {"error": str(e), "received_data": data},
+                {
+                    "error": str(e),
+                    "traceback": traceback.format_exc(),
+                    "received_data": data
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
 # ========MEDICAL CONSULTATION END SOAP FORM
+
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
             data = request.data
+            print(data)
             staff_id = data.get('staff_id') or None
             medrec_id = data.get('medrec_id') or None
             patrec_id = data.get('patrec_id') or None
+            app_id = data.get('app_id') or None  # Get appointment ID
 
-            
-            #  only enforce medrec_id and patrec_id as required
+            # only enforce medrec_id and patrec_id as required
             if not all([medrec_id, patrec_id]):
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
+
+            # Get the medical record to check PhilHealth status
+            phil_id = data.get('phil_id')
+
+            # 🔹 Handle Appointment if provided - Update status to "completed"
+            appointment = None
+            if app_id and app_id not in [None, "", "null"]:
+                try:
+                    appointment = MedConsultAppointment.objects.get(id=app_id)
+                    print(f"DEBUG: Found appointment with ID: {appointment.id}, current status: '{appointment.status}'")
+                except MedConsultAppointment.DoesNotExist:
+                    print(f"DEBUG: Appointment with ID {app_id} not found")
+                    appointment = None
 
             # 1. Create Findings
             finding_data = {
@@ -597,7 +992,7 @@ class SoapFormSubmissionView(APIView):
                 'plantreatment_summary': data.get('plantreatment_summary', ''),
                 'subj_summary': data.get('subj_summary', ''),
                 'obj_summary': data.get('obj_summary', ''),
-                'staff': staff_id  # 👈 this will be None if missing
+                'staff': staff_id
             }
             finding_serializer = FindingSerializer(data=finding_data)
             finding_serializer.is_valid(raise_exception=True)
@@ -605,14 +1000,14 @@ class SoapFormSubmissionView(APIView):
 
             # 2. Medicine Request (only if medicines exist)
             med_request_id = None
-            medicine_request_data = data.get('medicine_request')
+            medicine_request_data = data.get('medicineRequest')  # Note: changed from medicine_request to medicineRequest
             if medicine_request_data and medicine_request_data.get('medicines'):
                 # Create MedicineRequest first
                 med_request_data = {
-                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
+                    'rp_id': staff_id,  # Use staff_id as physician ID
                     'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
                     'status': 'pending',
-                    'mode': medicine_request_data.get('mode', 'walk-in')
+                    'mode': 'walk-in'
                 }
                 
                 med_request_serializer = MedicineRequestSerializer(data=med_request_data)
@@ -623,7 +1018,7 @@ class SoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medreqitem_qty', 0)
+                    requested_qty = medicine.get('medrec_qty', 0)  # Note: changed from medreqitem_qty to medrec_qty
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:
@@ -663,54 +1058,125 @@ class SoapFormSubmissionView(APIView):
                 )
 
             # 3. Physical Exam Results
-            if data.get('physical_exam_results'):
+            physical_exam_results = data.get('physicalExamResults')  # Note: changed from physical_exam_results to physicalExamResults
+            if physical_exam_results:
                 per_data = [
                     {'pe_option': pe, 'find': finding.find_id}
-                    for pe in data['physical_exam_results']
+                    for pe in physical_exam_results
                 ]
                 per_serializer = PEResultSerializer(data=per_data, many=True)
                 per_serializer.is_valid(raise_exception=True)
                 per_serializer.save()
 
-            # 4. Update Medical Consultation Record
+            # 4. Medical History
+            selected_illnesses = data.get('selectedIllnesses')  # Note: changed from selected_illnesses to selectedIllnesses
+            if selected_illnesses:
+                medical_history_data = [
+                    {
+                        'patrec_id': patrec_id,
+                        'ill_id': ill_id,
+                        'ill_date': date.today().strftime('%Y-%m-%d'),
+                        'is_for_surveillance': True
+                    }
+                    for ill_id in selected_illnesses
+                ]
+                MedicalHistory.objects.bulk_create([
+                    MedicalHistory(**item) for item in medical_history_data
+                ])
+
+            # 5. Handle PhilHealth Laboratory Data if it's a PhilHealth record
+            if phil_id:
+                try:
+                    # Get the existing PhilHealth details
+                    philhealth_details = PhilhealthDetails.objects.get(phil_id=phil_id)
+                    
+                    # Create or update PhilHealth Laboratory record
+                    lab_data = {
+                        'is_cbc': data.get('is_cbc', False),
+                        'is_urinalysis': data.get('is_urinalysis', False),
+                        'is_fecalysis': data.get('is_fecalysis', False),
+                        'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
+                        'is_creatine': data.get('is_creatine', False),
+                        'is_hba1c': data.get('is_hba1c', False),
+                        'is_chestxray': data.get('is_chestxray', False),
+                        'is_papsmear': data.get('is_papsmear', False),
+                        'is_fbs': data.get('is_fbs', False),
+                        'is_oralglucose': data.get('is_oralglucose', False),
+                        'is_lipidprofile': data.get('is_lipidprofile', False),
+                        'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
+                        'is_ecg': data.get('is_ecg', False),
+                        'others': data.get('others', ''),
+                    }
+                    
+                    # Check if lab already exists for this PhilHealth record
+                    if philhealth_details.lab:
+                        # Update existing lab record
+                        lab_serializer = PhilHealthLaboratorySerializer(
+                            philhealth_details.lab, 
+                            data=lab_data, 
+                            partial=True
+                        )
+                    else:
+                        # Create new lab record
+                        lab_serializer = PhilHealthLaboratorySerializer(data=lab_data)
+                    
+                    lab_serializer.is_valid(raise_exception=True)
+                    lab_instance = lab_serializer.save()
+                    
+                    # Link the lab to PhilHealth details
+                    philhealth_details.lab = lab_instance
+                    philhealth_details.save()
+                    
+                    print(f"PhilHealth laboratory data updated for phil_id: {phil_id}")
+                    
+                except PhilhealthDetails.DoesNotExist:
+                    return Response(
+                        {"error": f"PhilHealth details with ID {phil_id} not found"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                except Exception as e:
+                    # Log the error but don't fail the entire request
+                    print(f"Error updating PhilHealth laboratory: {str(e)}")
+
+            # 6. Update Medical Consultation Record
             MedicalConsultation_Record.objects.filter(medrec_id=medrec_id).update(
                 medrec_status='completed',
                 find=finding,
                 medreq_id=med_request_id,
             )
 
-            # 5. Medical History
-            if data.get('selected_illnesses'):
-                medical_history_data = [
-                    {
-                        'patrec_id': patrec_id,
-                        'ill_id': ill_id,
-                        'ill_date': date.today().strftime('%Y-%m-%d'),  # Corrected year format
-                        'is_for_surveillance': True  # Added field for surveillance
-                    }
-                    for ill_id in data['selected_illnesses']
-                ]
-                MedicalHistory.objects.bulk_create([
-                    MedicalHistory(**item) for item in medical_history_data
-                ])
+            # 🔹 Update appointment status to "completed" if appointment exists
+            if appointment:
+                print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'completed'")
+                appointment.status = "completed"
+                appointment.save()
+                print(f"DEBUG: Appointment status updated to '{appointment.status}'")
 
-            return Response({
+            response_data = {
                 'success': True,
-                'finding_id': finding.find_id,
-                'med_request_id': med_request_id,  # will be None if no medicines
-            }, status=status.HTTP_201_CREATED)
+            }
+
+            # Add appointment info to response if appointment was updated
+            if appointment:
+                response_data["appointment_id"] = appointment.id
+                response_data["appointment_status_updated"] = "completed"
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except MedicalConsultation_Record.DoesNotExist:
+            return Response(
+                {'error': f'Medical consultation record with ID {medrec_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             return Response(
                 {'error': 'Internal server error', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-
-
+            
+            
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic

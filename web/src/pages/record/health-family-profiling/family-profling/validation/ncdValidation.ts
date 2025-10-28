@@ -24,9 +24,7 @@ export function prepareNCDRecordForSubmission(ncdRecord: any) {
     
     // Map form field names to backend model field names
     ncd_riskclass_age: ncdData.riskClassAgeGroup || '',
-    ncd_comorbidities: ncdData.comorbidities === "Others" && ncdData.comorbiditiesOthers 
-      ? ncdData.comorbiditiesOthers 
-      : ncdData.comorbidities || '',
+    ncd_comorbidities: ncdData.comorbidities || '', // Direct value from combobox (from DB or custom)
     ncd_lifestyle_risk: ncdData.lifestyleRisk === "Others" && ncdData.lifestyleRiskOthers
       ? ncdData.lifestyleRiskOthers
       : ncdData.lifestyleRisk || '',

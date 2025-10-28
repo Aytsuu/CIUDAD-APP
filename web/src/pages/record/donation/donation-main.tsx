@@ -49,7 +49,7 @@ function DonationTracker() {
   }, [isLoading, showLoading, hideLoading]);
 
   const categoryOptions = [
-    { id: "all", name: "All Categories" },
+    { id: "all", name: "All" },
     { id: "Monetary Donations", name: "Monetary Donations" },
     { id: "Essential Goods", name: "Essential Goods" },
     { id: "Medical Supplies", name: "Medical Supplies" },
@@ -62,7 +62,7 @@ function DonationTracker() {
   ];
 
   const statusOptions = [
-    { id: "all", name: "All Statuses" },
+    { id: "all", name: "All" },
     { id: "Stashed", name: "Stashed" },
     { id: "Allotted", name: "Allotted" },
   ];
@@ -222,14 +222,15 @@ function DonationTracker() {
               }}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
             <SelectLayout
-              className="bg-white w-full sm:w-48"
+              className="bg-white w-full sm:w-48 gap-1"
               label=""
               placeholder="Filter by Category"
               options={categoryOptions}
               value={categoryFilter}
               onChange={(value) => handleFilterChange('category', value)}
+              valueLabel="Category"
             />
             <SelectLayout
               className="bg-white w-full sm:w-48"
@@ -237,6 +238,7 @@ function DonationTracker() {
               options={statusOptions}
               value={statusFilter}
               onChange={(value) => handleFilterChange('status', value)}
+              valueLabel="Status"
             />
           </div>
         </div>

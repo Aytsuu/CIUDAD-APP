@@ -27,7 +27,7 @@ interface CartState {
   uploadedFiles: UploadedFile[]; // Store uploaded files at cart level
 }
 
-let _globalCartState: CartState = {
+const _globalCartState: CartState = {
   items: [],
   uploadedFiles: [],
 };
@@ -68,6 +68,12 @@ export const addUploadedFile = (file: UploadedFile): void => {
 
 export const removeUploadedFile = (fileId: string): void => {
   _globalCartState.uploadedFiles = _globalCartState.uploadedFiles.filter(file => file.id !== fileId);
+  notifySubscribers();
+};
+
+// ADD THIS MISSING FUNCTION:
+export const clearUploadedFiles = (): void => {
+  _globalCartState.uploadedFiles = [];
   notifySubscribers();
 };
 

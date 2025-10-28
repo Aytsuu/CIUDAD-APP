@@ -9,6 +9,7 @@ import { useRouter } from "expo-router";
 export const useAddSummonSchedule = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const {toast} = useToastContext()
+    const router = useRouter()
 
      return useMutation({
             mutationFn: (data: {status_type: string, values: z.infer<typeof SummonSchema>}) => addSchedule(data.values, data.status_type),
@@ -16,10 +17,13 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
                 queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
                 queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
                 queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
-
+                queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+                queryClient.invalidateQueries({ queryKey: ['councilCases'] })
+                queryClient.invalidateQueries({ queryKey: ['summonCases'] })
         
                 toast.success('Record Submitted!')
                 onSuccess?.()
+                router.back()
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);
@@ -89,6 +93,9 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCases'] })
+            queryClient.invalidateQueries({ queryKey: ['summonCases'] })
 
             toast.success('Hearing Minutes uploaded successfully!')
             onSuccess?.();
@@ -123,6 +130,9 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
             queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCases'] })
+            queryClient.invalidateQueries({ queryKey: ['summonCases'] })
 
             toast.success('Remarks added successfully!')
             onSuccess?.();

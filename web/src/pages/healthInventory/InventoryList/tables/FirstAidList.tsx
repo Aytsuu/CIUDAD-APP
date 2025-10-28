@@ -2,14 +2,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useFirstAid } from "../queries/firstAid/fetch-queries";
 import { useDeleteFirstAid } from "../queries/firstAid/delete-queries";
 import { FirstAidColumns, FirstAidRecords } from "./columns/FirstAidCol";
 import { FirstAidModal } from "../Modal/FirstAidModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function FirstAidList() {
   const [searchInput, setSearchInput] = useState("");
@@ -83,6 +84,30 @@ export default function FirstAidList() {
   }, [firstAidData]);
 
   const displayData = useMemo(() => formatFirstAidData(), [formatFirstAidData]);
+
+  // Export functionality
+  const prepareExportData = () => {
+    return displayData.map((firstAid) => ({
+      "First Aid ID": firstAid.id,
+      "First Aid Name": firstAid.fa_name,
+      "Category": firstAid.cat_name
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `first_aid_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `first_aid_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `first_aid_list_${new Date().toISOString().slice(0, 10)}`, "First Aid List");
+  };
 
   const handleDelete = () => {
     if (faToDelete === null) return;
@@ -180,18 +205,16 @@ export default function FirstAidList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" }
-            ]}
+
+          <div >
+          <ExportDropdown 
+            onExportCSV={handleExportCSV} 
+            onExportExcel={handleExportExcel} 
+            onExportPDF={handleExportPDF} 
+            className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 " 
           />
+          </div>
+         
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

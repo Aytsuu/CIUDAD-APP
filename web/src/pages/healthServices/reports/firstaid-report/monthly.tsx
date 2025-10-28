@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
-import { useLoading } from "@/context/LoadingContext";
 import { useFirstAidRecords } from "./queries/fetch";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyFirstAidRecords() {
-  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10); 
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,13 +31,7 @@ export default function MonthlyFirstAidRecords() {
     }
   }, [error]);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
+ 
 
   const monthlyData = apiResponse?.results?.data || [];
   const totalMonths = apiResponse?.results?.total_months || 0;

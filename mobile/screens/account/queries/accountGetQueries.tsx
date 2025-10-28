@@ -12,7 +12,8 @@ export const useGetPersonalModificationReq = (per_id: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    retry: false
   })
 }
 
@@ -27,7 +28,8 @@ export const useGetOwnedHouses = (residentId: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    retry: false
   })
 }
 
@@ -46,6 +48,7 @@ export const useGetResidentFamily = (residentId: string) => {
         throw err;
       }
     },
-    staleTime: 500
+    staleTime: 500,
+    retry: false
   })
 }

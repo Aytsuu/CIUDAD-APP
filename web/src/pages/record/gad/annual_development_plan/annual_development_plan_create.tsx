@@ -39,7 +39,7 @@ export default function AnnualDevelopmentPlanCreate() {
   const form = useForm<GADAnnualDevPlanCreateInput>({
     resolver: zodResolver(GADAnnualDevPlanCreateSchema),
     defaultValues: {
-      dev_date: "",
+      dev_date: "", // Default to today's date
       dev_client: "",
       dev_issue: "",
       dev_project: "",
@@ -52,11 +52,11 @@ export default function AnnualDevelopmentPlanCreate() {
       staff: staffId || "",
     }
   });
-  const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_amount: string}[]>([]);
+  const [budgetItems, setBudgetItems] = useState<{name: string, quantity: string, price: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
-    gdb_name: "",
-    gdb_pax: "",
-    gdb_amount: "",
+    name: "",
+    quantity: "",
+    price: "",
   });
 
   const [staffOptions, setStaffOptions] = useState<{ staff_id: string; full_name: string; position: string }[]>([]);
@@ -96,21 +96,22 @@ export default function AnnualDevelopmentPlanCreate() {
   };
 
   const addBudgetItem = () => {
-    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_amount) {
+    if (currentBudgetItem.name && currentBudgetItem.name.trim() !== "" && 
+        currentBudgetItem.quantity !== "" && currentBudgetItem.price !== "") {
       setBudgetItems(prev => [...prev, currentBudgetItem]);
-      // Calculate total budget: sum of (pax * price) for all items
+      // Calculate total budget: sum of (quantity * price) for all items
       const totalBudget = budgetItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
-      }, 0) + (parseFloat(currentBudgetItem.gdb_pax) || 0) * (parseFloat(currentBudgetItem.gdb_amount) || 0);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
+      }, 0) + (parseFloat(currentBudgetItem.quantity) || 0) * (parseFloat(currentBudgetItem.price) || 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
-      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+      setCurrentBudgetItem({ name: "", quantity: "", price: "" });
     }
   };
 
   const clearBudgetItem = () => {
-    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+    setCurrentBudgetItem({ name: "", quantity: "", price: "" });
   };
 
   const removeBudgetItem = (index: number) => {
@@ -118,9 +119,9 @@ export default function AnnualDevelopmentPlanCreate() {
       const newItems = prev.filter((_, i) => i !== index);
       // Recalculate total budget after removal
       const totalBudget = newItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
       }, 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
       return newItems;
@@ -187,6 +188,7 @@ export default function AnnualDevelopmentPlanCreate() {
     try {
       const resPersonsArray = selectedStaff.map(s => s.position);
       const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
+      
       await createMutation.mutateAsync({ 
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
         budgetItems: budgetItems as BudgetItemType[], 
@@ -214,7 +216,7 @@ export default function AnnualDevelopmentPlanCreate() {
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-3xl text-darkBlue2">Annual Development Plan 2024</h1>
+          <h1 className="font-semibold text-3xl text-darkBlue2">Annual Development Plan </h1>
         </div>
         <p className="text-sm text-gray-600 ml-12">Create a comprehensive annual development plan for gender and development initiatives</p>
       </div>
@@ -492,8 +494,8 @@ export default function AnnualDevelopmentPlanCreate() {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Item Name</label>
                   <input
                     type="text"
-                    name="gdb_name"
-                    value={currentBudgetItem.gdb_name}
+                    name="name"
+                    value={currentBudgetItem.name}
                     onChange={handleBudgetItemChange}
                     placeholder="e.g., AM Snacks, Materials, etc."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -501,11 +503,11 @@ export default function AnnualDevelopmentPlanCreate() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity/Pax</label>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity</label>
                     <input
                       type="number"
-                      name="gdb_pax"
-                      value={currentBudgetItem.gdb_pax}
+                      name="quantity"
+                      value={currentBudgetItem.quantity}
                       onChange={handleBudgetItemChange}
                       placeholder="e.g., 50"
                       min="0"
@@ -517,8 +519,8 @@ export default function AnnualDevelopmentPlanCreate() {
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>
                     <input
                       type="number"
-                      name="gdb_amount"
-                      value={currentBudgetItem.gdb_amount}
+                      name="price"
+                      value={currentBudgetItem.price}
                       onChange={handleBudgetItemChange}
                       placeholder="0.00"
                       min="0"
@@ -568,13 +570,13 @@ export default function AnnualDevelopmentPlanCreate() {
                 ) : (
                   <div className="space-y-3">
                     {budgetItems.map((item, index) => {
-                      const pax = parseFloat(item.gdb_pax) || 0;
-                      const amount = parseFloat(item.gdb_amount) || 0;
-                      const total = pax * amount;
+                      const quantity = parseFloat(item.quantity) || 0;
+                      const price = parseFloat(item.price) || 0;
+                      const total = quantity * price;
                       return (
                         <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-medium text-gray-800">{item.gdb_name}</h4>
+                            <h4 className="font-medium text-gray-800">{item.name}</h4>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-semibold text-green-600">₱{total.toFixed(2)}</span>
                               <button
@@ -588,7 +590,7 @@ export default function AnnualDevelopmentPlanCreate() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} | Price: ₱{amount.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.quantity} | Price: ₱{price.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -597,9 +599,9 @@ export default function AnnualDevelopmentPlanCreate() {
                         <span className="text-lg font-semibold text-gray-800">Total Budget:</span>
                         <span className="text-2xl font-bold text-green-600">
                           ₱{budgetItems.reduce((sum, item) => {
-                            const pax = parseFloat(item.gdb_pax) || 0;
-                            const amount = parseFloat(item.gdb_amount) || 0;
-                            return sum + (pax * amount);
+                            const quantity = parseFloat(item.quantity) || 0;
+                            const price = parseFloat(item.price) || 0;
+                            return sum + (quantity * price);
                           }, 0).toFixed(2)}
                         </span>
                       </div>

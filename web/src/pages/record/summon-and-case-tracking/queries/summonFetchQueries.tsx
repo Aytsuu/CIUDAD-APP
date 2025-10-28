@@ -183,7 +183,7 @@ export type ComplaintDetails = {
     comp_location: string;
     comp_datetime: string;
     comp_created_at: string;
-    comp_is_archive: boolean;
+    comp_rejection_reason: string;
     comp_status: string;
     complainant: Complainant[];  
     accused: Accused[];          

@@ -1,8 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useEffect, useRef } from "react";
-import SoapFormFields from "@/components/ui/soap-form";
-import { useAuth } from "@/context/AuthContext";
+import SoapFormFields from "./soap-with-ph";
 import { usePhysicalExamQueries } from "../queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "../queries.tsx/soap-submission";
@@ -18,9 +17,6 @@ interface SoapFormProps {
 }
 
 export default function SoapForm({ patientData, MedicalConsultation, onBack, initialData, onFormDataUpdate }: SoapFormProps) {
-  const { user } = useAuth();
-  const staff = user?.staff?.staff_id || null;
-
   const [currentPage, setCurrentPage] = useState(1);
   const { mutate: submitSoapForm, isPending: isSubmitting } = useSubmitSoapForm();
 
@@ -55,10 +51,10 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
     page: 1,
     pageSize: 10,
-    search: '',
-    is_temp: true,
+    search: "",
+    is_temp: true
   });
-  
+
   const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
 
@@ -72,14 +68,14 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     setMedicineSearchParams((prev: any) => ({
       ...prev,
       search: searchTerm,
-      page: 1,
+      page: 1
     }));
   };
 
   const handleMedicinePageChange = (page: number) => {
     setMedicineSearchParams((prev: any) => ({
       ...prev,
-      page,
+      page
     }));
   };
 
@@ -91,17 +87,38 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       assessment_summary: initialData?.assessment_summary || "",
       plantreatment_summary: initialData?.plantreatment_summary || "",
       medicineRequest: {
-        pat_id: patientData?.pat_id || "",
-        medicines: selectedMedicines // Use the state directly
+        pat_id: initialData?.medicineRequest?.pat_id || "",
+        medicines: []
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
-      followv: initialData?.followv || undefined
+      followv: initialData?.followv || undefined,
+      is_cbc: initialData?.is_cbc || false,
+      is_urinalysis: initialData?.is_urinalysis || false,
+      is_fecalysis: initialData?.is_fecalysis || false,
+      is_sputum_microscopy: initialData?.is_sputum_microscopy || false,
+      is_creatine: initialData?.is_creatine || false,
+      is_hba1c: initialData?.is_hba1c || false,
+      is_chestxray: initialData?.is_chestxray || false,
+      is_papsmear: initialData?.is_papsmear || false,
+      is_fbs: initialData?.is_fbs || false,
+      is_oralglucose: initialData?.is_oralglucose || false,
+      is_lipidprofile: initialData?.is_lipidprofile || false,
+      is_ecg: initialData?.is_ecg || false,
+      is_fecal_occult_blood: initialData?.is_fecal_occult_blood || false,
+      others: initialData?.others || "",
+      is_phrecord: initialData?.is_phrecord || false,
+      phil_id: initialData?.phil_id || MedicalConsultation?.philhealth_details?.phil_id || "",
+      staff_id: initialData?.staff_id || "",
+      medrec_id: initialData?.medrec_id || MedicalConsultation?.medrec_id || "",
+      patrec_id: initialData?.patrec_id || MedicalConsultation?.patrec || "",
+      app_id: initialData?.app_id || ""
     }
   });
 
   // FIX 2: Sync form values when selectedMedicines changes
   useEffect(() => {
+    console.log(MedicalConsultation, "====Medixal===");
     form.setValue("medicineRequest", {
       pat_id: patientData?.pat_id || "",
       medicines: selectedMedicines
@@ -141,77 +158,81 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   }, [form, selectedMedicines, onFormDataUpdate]);
 
   // FIX 3: Improved medicine update handler with better change detection
-  const handleSelectedMedicinesChange = useCallback((updated: any[]) => {
-    if (isUpdatingFromChild.current) {
-      isUpdatingFromChild.current = false;
-      return;
-    }
+  const handleSelectedMedicinesChange = useCallback(
+    (updated: any[]) => {
+      if (isUpdatingFromChild.current) {
+        isUpdatingFromChild.current = false;
+        return;
+      }
 
-    // Add unique IDs to new medicines and ensure proper structure
-    const updatedWithIds = updated.map((med, index) => ({
-      ...med,
-      _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
-      medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
-      reason: med.reason || ""
-    }));
+      // Add unique IDs to new medicines and ensure proper structure
+      const updatedWithIds = updated.map((med, index) => ({
+        ...med,
+        _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
+        medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
+        reason: med.reason || ""
+      }));
 
-    // Better change detection - compare the actual content, not just order
-    const currentMedicines = selectedMedicines.map(med => ({
-      minv_id: med.minv_id,
-      medrec_qty: med.medrec_qty,
-      reason: med.reason
-    }));
-    
-    const newMedicines = updatedWithIds.map(med => ({
-      minv_id: med.minv_id,
-      medrec_qty: med.medrec_qty,
-      reason: med.reason
-    }));
+      // Better change detection - compare the actual content, not just order
+      const currentMedicines = selectedMedicines.map((med) => ({
+        minv_id: med.minv_id,
+        medrec_qty: med.medrec_qty,
+        reason: med.reason
+      }));
 
-    const hasChanges = JSON.stringify(currentMedicines) !== JSON.stringify(newMedicines);
-    
-    if (!hasChanges) {
-      return;
-    }
+      const newMedicines = updatedWithIds.map((med) => ({
+        minv_id: med.minv_id,
+        medrec_qty: med.medrec_qty,
+        reason: med.reason
+      }));
 
-    console.log('Updating medicines:', updatedWithIds); // Debug log
+      const hasChanges = JSON.stringify(currentMedicines) !== JSON.stringify(newMedicines);
 
-    setSelectedMedicines(updatedWithIds);
+      if (!hasChanges) {
+        return;
+      }
 
-    // Update plan treatment summary
-    const summaryWithoutMeds = form
-      .getValues("plantreatment_summary")
-      .split("\n")
-      .filter((line) => !line.startsWith("- ") && line.trim() !== "");
+      console.log("Updating medicines:", updatedWithIds); // Debug log
 
-    const medLines = updatedWithIds.length > 0
-      ? updatedWithIds.map((med) => {
-          const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-          return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
-        })
-      : [];
+      setSelectedMedicines(updatedWithIds);
 
-    const newSummary = [...summaryWithoutMeds, ...medLines].join("\n");
+      // Update plan treatment summary
+      const summaryWithoutMeds = form
+        .getValues("plantreatment_summary")
+        .split("\n")
+        .filter((line) => !line.startsWith("- ") && line.trim() !== "");
 
-    // Update form values
-    isUpdatingFromChild.current = true;
-    form.setValue("plantreatment_summary", newSummary);
-    form.setValue("medicineRequest", {
-      pat_id: patientData?.pat_id || "",
-      medicines: updatedWithIds
-    });
+      const medLines =
+        updatedWithIds.length > 0
+          ? updatedWithIds.map((med) => {
+              const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
+              return `- ${stock?.name || "Unknown"} ${stock?.dosage || ""} (${med.medrec_qty} ${stock?.unit || "units"}) ${med.reason || ""}`;
+            })
+          : [];
 
-    // Trigger form validation
-    form.trigger(["plantreatment_summary", "medicineRequest"]);
+      const newSummary = [...summaryWithoutMeds, ...medLines].join("\n");
 
-    if (onFormDataUpdate) {
-      const currentValues = form.getValues();
-      onFormDataUpdate({
-        ...currentValues,
-        selectedMedicines: updatedWithIds
+      // Update form values
+      isUpdatingFromChild.current = true;
+      form.setValue("plantreatment_summary", newSummary);
+      form.setValue("medicineRequest", {
+        pat_id: patientData?.pat_id || "",
+        medicines: updatedWithIds
       });
-    }
-  }, [form, patientData?.pat_id, medicineStocksOptions, onFormDataUpdate, selectedMedicines]);
+
+      // Trigger form validation
+      form.trigger(["plantreatment_summary", "medicineRequest"]);
+
+      if (onFormDataUpdate) {
+        const currentValues = form.getValues();
+        onFormDataUpdate({
+          ...currentValues,
+          selectedMedicines: updatedWithIds
+        });
+      }
+    },
+    [form, patientData?.pat_id, medicineStocksOptions, onFormDataUpdate, selectedMedicines]
+  );
 
   // Removed separate quantity handler - will be handled in main medicine change handler
 
@@ -286,23 +307,50 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     onBack();
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
-  const onSubmit = async (data: SoapFormType) => {
-    // Ensure the latest selectedMedicines are included in submission
-    const submissionData = {
-      ...data,
-      medicineRequest: {
-        ...data.medicineRequest,
-        medicines: selectedMedicines
-      }
-    };
+  const onSubmit = useCallback(
+    (data: SoapFormType) => {
+      // Create clean submission data with only the necessary fields
+      const submissionData: SoapFormType = {
+        subj_summary: data.subj_summary,
+        obj_summary: data.obj_summary,
+        assessment_summary: data.assessment_summary,
+        plantreatment_summary: data.plantreatment_summary,
+        medicineRequest: { pat_id: patientData?.pat_id || "", medicines: selectedMedicines },
+        physicalExamResults: data.physicalExamResults,
+        selectedIllnesses: data.selectedIllnesses,
+        followv: data.followv,
+        is_cbc: data.is_cbc,
+        is_urinalysis: data.is_urinalysis,
+        is_fecalysis: data.is_fecalysis,
+        is_sputum_microscopy: data.is_sputum_microscopy,
+        is_creatine: data.is_creatine,
+        is_hba1c: data.is_hba1c,
+        is_chestxray: data.is_chestxray,
+        is_papsmear: data.is_papsmear,
+        is_fbs: data.is_fbs,
+        is_oralglucose: data.is_oralglucose,
+        is_lipidprofile: data.is_lipidprofile,
+        is_ecg: data.is_ecg,
+        is_fecal_occult_blood: data.is_fecal_occult_blood,
+        others: data.others,
+        is_phrecord: data.is_phrecord,
+        phil_id: data.phil_id || MedicalConsultation?.philhealth_details?.phil_id || "",
+        staff_id: data.staff_id || MedicalConsultation?.staff_id || "",
+        medrec_id: data.medrec_id || MedicalConsultation?.medrec_id || "",
+        patrec_id: data.patrec_id || MedicalConsultation?.patrec || "",
+        app_id: data.app_id || MedicalConsultation?.app_id || ""
+      };
 
-    submitSoapForm({
-      formData: submissionData,
-      patientData,
-      MedicalConsultation,
-      staffId: staff
-    });
-  };
+      console.log("Clean submission data:", submissionData);
+
+      submitSoapForm({
+        formData: submissionData,
+        patientData,
+        MedicalConsultation
+      });
+    },
+    [selectedMedicines, patientData, MedicalConsultation, submitSoapForm]
+  );
 
   return (
     <div>
@@ -329,9 +377,8 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         medicinePagination={medicinePagination}
         onMedicineSearch={handleMedicineSearch}
         onMedicinePageChange={handleMedicinePageChange}
+        medicalConsultation={MedicalConsultation}
       />
     </div>
-
-    
   );
 }
