@@ -73,7 +73,7 @@ urlpatterns = [
     # Treasurer - Service Charge Requests
     path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
     path('service-charge-treasurer-list/', ServiceChargeTreasurerListView.as_view(), name='service-charge-treasurer-list'),
-    path('treasurer/service-charge-payment/<int:pay_id>/', UpdateServiceChargePaymentStatusView.as_view(), name='update-service-charge-payment'),
+    path('treasurer/service-charge-payment/<str:pay_id>/', UpdateServiceChargePaymentStatusView.as_view(), name='update-service-charge-payment'),
     
     # Business Permit Files
     path('business-permit-files/<str:bpr_id>/', BusinessPermitFilesView.as_view(), name='business-permit-files'),

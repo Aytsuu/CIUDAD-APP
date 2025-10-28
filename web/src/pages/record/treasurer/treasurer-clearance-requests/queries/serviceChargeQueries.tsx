@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getTreasurerServiceCharges, getServiceChargeRate, PurposeRate, createServiceChargePaymentRequest, acceptSummonRequest, ServiceChargeResponse } from '../restful-api/serviceChargeGetAPI';
-import { updateServiceChargeStatus } from '../restful-api/serviceChargePostAPI';
+import { updateServiceChargeStatus, declineServiceChargeRequest } from '../restful-api/serviceChargePostAPI';
 
 export function useTreasurerServiceCharges(search?: string, page?: number, pageSize?: number) {
   return useQuery<ServiceChargeResponse>({
@@ -34,8 +34,16 @@ export function useServiceChargeRate() {
 
 export function useUpdateServiceChargeStatus(onSuccess?: () => void) {
   return useMutation({
-    mutationFn: ({ pay_id, data }: { pay_id: string | number; data: { sr_code?: string; status?: string } }) => 
+    mutationFn: ({ pay_id, data }: { pay_id: string | number; data: { sr_code?: string; pay_status?: string } }) => 
       updateServiceChargeStatus(pay_id, data),
+    onSuccess,
+  });
+}
+
+export function useDeclineServiceChargeRequest(onSuccess?: () => void) {
+  return useMutation({
+    mutationFn: ({ pay_id, reason }: { pay_id: string | number; reason: string }) => 
+      declineServiceChargeRequest(pay_id, reason),
     onSuccess,
   });
 }

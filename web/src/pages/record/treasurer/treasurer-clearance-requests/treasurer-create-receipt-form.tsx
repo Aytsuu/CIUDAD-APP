@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
-import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
+import { useAddPersonalReceipt, useAddReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
@@ -51,6 +51,8 @@ import { Loader2 } from "lucide-react";
    const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
    const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
+    
+   const { mutate: addReceiptMutation, isPending: isAddReceiptPending} = useAddReceipt(onComplete)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
     const { data: scRate } = useServiceChargeRate();
@@ -113,7 +115,7 @@ import { Loader2 } from "lucide-react";
                     await updateServiceChargeStatus({ 
                         pay_id: pay_id, 
                         data: { 
-                            status: "Paid" 
+                            pay_status: "Paid" 
                         } 
                     });
                 } else {
@@ -131,18 +133,11 @@ import { Loader2 } from "lucide-react";
                             pay_sr_type: purpose || 'File Action'
                         });
                         newPayId = newPaymentRequest?.pay_id || newPaymentRequest?.spay_id;
-                        
-                        // Update the pay_id for invoice creation
-                        // Note: We'll use newPayId directly in the invoice creation logic
-                        
-                        // Service charge payment request created successfully
-                        
-                        // Update status to "Paid" - backend will generate sr_code automatically
                         console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
                             pay_id: newPayId, 
                             data: { 
-                                status: "Paid" 
+                                pay_status: "Paid" 
                             } 
                         });
                     }
@@ -201,7 +196,13 @@ import { Loader2 } from "lucide-react";
             console.log('[Receipt onSubmit] effectivePayId:', effectivePayId, 'type:', typeof effectivePayId);
             console.log('[Receipt onSubmit] newPayId:', newPayId, 'type:', typeof newPayId);
             console.log('[Receipt onSubmit] payload.pay_id:', payload.pay_id, 'type:', typeof payload.pay_id);
-            await receipt(payload as any);
+            
+            // Use the appropriate mutation based on the type
+            if (nat_col === 'Service Charge') {
+                await addReceiptMutation(payload as any);
+            } else {
+                await receipt(payload as any);
+            }
 
             console.log('Receipt mutation called successfully');
             
@@ -374,10 +375,10 @@ import { Loader2 } from "lucide-react";
                 <div className="flex justify-end gap-3 mt-6">
                 <Button 
                     type="submit" 
-                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
+                    disabled={isPending || isAddReceiptPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
-                    {isPending || isAcceptPending || isAcceptNonResPending ? (
+                    {isPending || isAddReceiptPending || isAcceptPending || isAcceptNonResPending ? (
                         <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Processing...</span>

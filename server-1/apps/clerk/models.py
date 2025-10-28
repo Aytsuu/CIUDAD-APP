@@ -177,6 +177,7 @@ class ServiceChargePaymentRequest(models.Model):
     pay_due_date = models.DateField(default = default_due_date())
     pay_req_status = models.CharField(max_length=200, default='Pending')
     pay_date_paid = models.DateTimeField(null = True, blank = True)
+    pay_reason = models.TextField(null=True, blank=True, default=None)  
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')
 

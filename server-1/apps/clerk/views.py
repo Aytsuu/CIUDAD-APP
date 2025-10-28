@@ -1811,10 +1811,20 @@ class UpdateServiceChargePaymentStatusView(APIView):
                 payment_request.pay_status = request.data['pay_status']
                 if request.data['pay_status'] == "Paid":
                     payment_request.pay_date_paid = timezone.now()
+                    # DO NOT automatically change pay_req_status to Completed
+                    # pay_req_status should only change to Completed when explicitly updated
             
             # Update request status if provided
             if 'pay_req_status' in request.data:
                 payment_request.pay_req_status = request.data['pay_req_status']
+                # If declining, also set pay_status to Unpaid and clear payment date
+                if request.data['pay_req_status'] == "Declined":
+                    payment_request.pay_status = "Unpaid"
+                    payment_request.pay_date_paid = None
+            
+            # Update reason if provided (for declining)
+            if 'pay_reason' in request.data:
+                payment_request.pay_reason = request.data['pay_reason']
             
             payment_request.save()
             
