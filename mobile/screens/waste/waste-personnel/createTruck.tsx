@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import ScreenLayout from "@/screens/_ScreenLayout";
+import PageLayout from "@/screens/_PageLayout";
 import TruckFormSchema from "@/form-schema/waste-truck-schema";
 import { ChevronLeft } from "lucide-react-native";
 import { useAddTruck } from "./waste-personnel-truck-queries";
@@ -36,21 +36,31 @@ export default function WasteTruckCreate() {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={
+      headerTitle={
         <Text className="text-gray-900 text-[13px]">Add New Truck</Text>
       }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Creating truck..."
+      rightAction={<View />}
+      footer={
+          <TouchableOpacity
+            className="bg-primaryBlue py-3 rounded-lg"
+            onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text className="text-white text-base font-semibold text-center">
+                {isSubmitting ? "Creating..." : "Create"}
+              </Text>
+            )}
+          </TouchableOpacity>
+      }
     >
       <View className="space-y-4 p-4 flex-1 px-6">
         <View className="mb-4">
@@ -108,24 +118,8 @@ export default function WasteTruckCreate() {
             label="Tracking Device ID"
             placeholder="Enter tracking device ID (optional)"
           />
-        </View>
-
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          <TouchableOpacity
-            className="bg-primaryBlue py-3 rounded-lg"
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text className="text-white text-base font-semibold text-center">
-                Create
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        </View>        
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 }
