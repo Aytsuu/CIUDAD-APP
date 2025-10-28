@@ -32,6 +32,10 @@ import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // hooks
 import { fetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
+import { usePrenatalLabResult } from "../../queries/maternalFetchQueries"
+
+// helpers
+import { mapApiLabResultsToFormData } from "../../helpers/labResultsMapper"
 
 
 export default function PrenatalFormSecPg({
@@ -58,7 +62,10 @@ export default function PrenatalFormSecPg({
 
   // Fetch vaccine stocks with age filtering based on patient DOB
   const patientDob = form.watch("motherPersonalInfo.motherDOB")
+  const pregnancyId = form.watch("pregnancy_id")
+
   const { data: vaccineStocksData, isLoading: isVaccineLoading } = fetchVaccinesWithStock(patientDob)
+  const { data: prenatalLabResults } = usePrenatalLabResult(pregnancyId || "")
 
   // Check if selected vaccine is conditional
   const selectedVaccineType = form.watch("prenatalVaccineInfo.vaccineType")
@@ -208,6 +215,15 @@ export default function PrenatalFormSecPg({
     }
 
   }, [form.watch("presentPregnancy.pf_lmp")])
+
+  // Load lab results from API when pregnancy ID changes
+  useEffect(() => {
+    if (prenatalLabResults?.lab_results && prenatalLabResults.lab_results.length > 0) {
+      console.log("Loading lab results from API:", prenatalLabResults)
+      const mappedLabResults = mapApiLabResultsToFormData(prenatalLabResults)
+      setLabResults(mappedLabResults)
+    }
+  }, [prenatalLabResults?.lab_results])
 
   useEffect(() => {
     // convert lab results to the format expected by your form schema
@@ -386,10 +402,17 @@ export default function PrenatalFormSecPg({
                     ) : (
                       ttRecords
                         .sort((a, b) => {
-                          // Sort by date (most recent first)
-                          const dateA = a.ttDateGiven ? new Date(a.ttDateGiven).getTime() : 0
-                          const dateB = b.ttDateGiven ? new Date(b.ttDateGiven).getTime() : 0
-                          return dateB - dateA
+                          // Sort by TT status: TT5, TT4, TT3, TT2, TT1
+                          const ttOrder: Record<string, number> = {
+                            "TT5": 5,
+                            "TT4": 4,
+                            "TT3": 3,
+                            "TT2": 2,
+                            "TT1": 1,
+                          }
+                          const statusA = ttOrder[a.ttStatus || ""] || 0
+                          const statusB = ttOrder[b.ttStatus || ""] || 0
+                          return statusB - statusA
                         })
                         .map((record, index) => {
                           const statusBadge = getTTStatusBadge(record.ttStatus)

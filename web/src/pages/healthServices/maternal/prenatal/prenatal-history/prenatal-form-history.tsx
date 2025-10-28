@@ -657,6 +657,38 @@ export default function PrenatalFormTableHistory() {
                     })}
                   </TableRow>
                   <TableRow>
+                    <TableCell>Temperature (°C)</TableCell>
+                    {records.map((record: any, index: number) => (
+                      <TableCell key={index} className="text-center">
+                        {record.vital_signs_details?.vital_temp || "N/A"}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Pulse Rate (bpm)</TableCell>
+                    {records.map((record: any, index: number) => (
+                      <TableCell key={index} className="text-center">
+                        {record.vital_signs_details?.vital_pulse_rate || "N/A"}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Oxygen Saturation (%)</TableCell>
+                    {records.map((record: any, index: number) => (
+                      <TableCell key={index} className="text-center">
+                        {record.vital_signs_details?.vital_o2 || "N/A"}
+                      </TableCell>
+                    ))}
+                  </TableRow> 
+                  <TableRow>
+                    <TableCell>Respiratory Rate (brpm)</TableCell>
+                    {records.map((record: any, index: number) => (
+                      <TableCell key={index} className="text-center">
+                        {record.vital_signs_details?.vital_rr || "N/A"}
+                      </TableCell>
+                    ))}
+                  </TableRow> 
+                  <TableRow>
                     <TableCell>Blood Pressure</TableCell>
                     {records.map((record: any, index: number) => (
                       <TableCell key={index} className="text-center">
@@ -674,7 +706,7 @@ export default function PrenatalFormTableHistory() {
                             <div className="space-y-1">
                               {entries.map((entry: any, idx: number) => (
                                 <div key={idx}>
-                                  FH: {entry.pfpc_fundal_ht || "N/A"}, FHR: {entry.pfpc_fetal_hr || "N/A"}, Pos:{" "}
+                                  FH: {entry.pfpc_fundal_ht || "N/A"}, FHR: {entry.pfpc_fetal_hr || "N/A"}, Fetal Position:{" "}
                                   {entry.pfpc_fetal_pos || "N/A"}
                                 </div>
                               ))}

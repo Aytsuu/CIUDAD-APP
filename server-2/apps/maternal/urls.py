@@ -5,6 +5,7 @@ from apps.maternal.views import *
 from .views.postpartum_views import *
 from .views.prenatal_views import *
 from .views.pregnancy_views import *
+from .views.labresult_views import *
 
 urlpatterns=[
     # Maternal
@@ -14,13 +15,14 @@ urlpatterns=[
    
     # Prenatal Appointment Request URLs
     path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
+    path('prenatal/appointment/requests/pendings/', PendingPrenatalAppointmentsView.as_view(), name='prenatal-appointment-requests-pendings'),
     path('prenatal/appointment/requests/all/', PrenatalAppointmentRequestViewAll.as_view(), name='prenatal-appointment-requests-all'),
     path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-list'),
     path('prenatal/appointment/cancel/<str:par_id>/', PrenatalAppointmentCancellationView.as_view(), name='prenatal-appointment-cancel'),
     path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),
-    
+
     # Pregnancy URLs
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),
@@ -59,5 +61,8 @@ urlpatterns=[
     path('postpartum/<str:ppr_id>/complete/', PostpartumPartumFormView.as_view(), name='postpartum-form-complete'),
     path('postpartum/<str:pat_id>/postpartum-assessments/', PostpartumAssessmentsWithVitalsListView.as_view(), name='postpartum-assessment-care'),
 
+    # Laboratory Results URLs
+    path('lab-results/<str:pregnancy_id>/', get_pregnancy_lab_results, name='pregnancy-lab-results'),
+    path('pregnancy/lab-results/', list_lab_results_for_pregnancy, name='pregnancy-lab-results-list'),
 
 ]

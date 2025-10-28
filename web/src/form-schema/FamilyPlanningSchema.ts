@@ -138,7 +138,7 @@ const FamilyPlanningBaseSchema = z.object({
   }),
   previousMethod: z.string().optional(),
 
-  methodCurrentlyUsed: z.string().nonempty(),
+  methodCurrentlyUsed: z.string().optional(),
   methodCurrentlyUsedName: z.string().optional(),
 
   medicalHistory: z.object({
@@ -385,16 +385,12 @@ export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup"
     }
 
     // Enhanced validation for create/edit modes only
-    if (
-      (data.typeOfClient === "currentuser" || data.typeOfClient === "newacceptor") &&
-      (data.subTypeOfClient === "changingmethod" ||
-        data.subTypeOfClient === "dropoutrestart" ||
-        data.subTypeOfClient === "changingclinic")
-    ) {
+    if (data.typeOfClient === "newacceptor") {
+      // New Acceptor validations
       if (!data.reasonForFP) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Reason is required",
+          message: "Reason for Family Planning is required",
           path: ["reasonForFP"],
         })
       }
@@ -407,15 +403,64 @@ export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup"
         })
       }
 
-      if (data.reasonForFP === "sideeffects" && !data.reason) {
+      // Method validation for new acceptors
+      if (!data.methodCurrentlyUsed) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Please specify the side effects",
-          path: ["reason"],
+          message: "Required",
+          path: ["methodCurrentlyUsed"],
         })
+      }
+
+    } else if (data.typeOfClient === "currentuser") {
+      // Current User validations
+      if (!data.subTypeOfClient) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required",
+          path: ["subTypeOfClient"],
+        })
+      }
+
+      // Reason validation for current users (only for changing method)
+      if (data.subTypeOfClient === "changingmethod" || data.subTypeOfClient === "changingclinic" || data.subTypeOfClient === "dropoutrestart") {
+        if (!data.reasonForFP) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Reason is required when changing method",
+            path: ["reasonForFP"],
+          })
+        }
+
+        // Specific reason validations
+        if (data.reasonForFP === "sideeffects" && !data.reason) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please specify the side effects",
+            path: ["reason"],
+          })
+        }
+
+        if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please specify the other reason",
+            path: ["otherReasonForFP"],
+          })
+        }
+
+        // Method validation for changing method
+        if (!data.methodCurrentlyUsed) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "New method is required when changing method",
+            path: ["methodCurrentlyUsed"],
+          })
+        }
       }
     }
 
+    // Common validation for other method specification
     if (data.methodCurrentlyUsed === "Others" && !data.otherMethod) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -425,6 +470,8 @@ export const createPage1Schema = (mode?: "create" | "edit" | "view" | "followup"
     }
   })
 
+
+  
 export const page2Schema = FamilyPlanningBaseSchema.pick({
   medicalHistory: true,
   obstetricalHistory: true,

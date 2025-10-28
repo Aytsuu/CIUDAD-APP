@@ -17,6 +17,7 @@ import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { formatDate } from "@/helpers/dateHelper";
 
 import { usePatients } from "./queries/fetch";
+import { usePatientCount } from "./queries/fetch";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -219,6 +220,7 @@ export default function PatientsRecord() {
     debouncedSearchTerm,
     selectedFilter
   );
+  const { data: patientCount } = usePatientCount();
 
   const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
 
@@ -282,12 +284,11 @@ export default function PatientsRecord() {
     return transformPatientsToReports(patientData.results);
   }, [patientData]);
 
-  const patientDataset = transformedPatients;
 
-  const totalPatients = patientDataset.length;
+  const totalPatients = patientCount?.total || 0;
 
-  const residents = patientDataset.filter((patient) => patient.type.includes("Resident")).length;
-  const transients = patientDataset.filter((patient) => patient.type.includes("Transient")).length;
+  const residents = patientCount?.resident || 0;
+  const transients = patientCount?.transient || 0;
   const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 

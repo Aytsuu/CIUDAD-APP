@@ -205,13 +205,25 @@ export const getIllnessList = async () => {
 // prenatal complete table comparison
 export const getPrenatalRecordComparison = async (pregnancyId: string) => {
   try {
-    const res = await api2.get(`maternal/prenatal/records/?pregnancyId=${pregnancyId}`)
+    const res = await api2.get(`maternal/prenatal/records/?pregnancy_id=${pregnancyId}`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal record comparison: ", error);
     throw error;
   }
 }
+
+// prenatal (based on pregnancy) lab result
+export const getPrenatalLabResult = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/lab-results/${pregnancyId}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal lab result: ", error);
+    throw error;
+  }
+}
+
 
 {/* *********** postpartum *********** */}
 
@@ -276,6 +288,18 @@ export const getMaternalCharts = async (month: string) => {
     return res.data || []
   } catch (error) {
     console.error("Error fetching maternal charts: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** dashboard sidebar *********** */}
+export const getPrenatalAppointmentsPending = async () => {
+  try {
+    const res = await api2.get('maternal/prenatal/appointment/requests/pendings/')
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointments pending: ", error);
     throw error;
   }
 }

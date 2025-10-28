@@ -468,7 +468,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
-            # Get latest occupation from any prenatal form for this patient
+            # GET latest occupation from any prenatal form for this patient
             latest_occupation = None
             latest_pf_with_occupation = Prenatal_Form.objects.filter(
                 patrec_id__pat_id=patient,
@@ -500,7 +500,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
         ).select_related(
             'pregnancy_id', 'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'bm_id', 'staff'
         ).prefetch_related(
-            'pf_previous_hospitalization', 'lab_result__lab_result_img',
+            'pf_previous_hospitalization', #'lab_result__lab_result_img',
             'pf_anc_visit', 'pf_checklist', 'pf_birth_plan', 
             'pf_obstetric_risk_code', 'pf_prenatal_care'
         ).order_by('-created_at').first()
@@ -514,10 +514,10 @@ def get_latest_patient_prenatal_record(request, pat_id):
             }, status=status.HTTP_200_OK)
 
         serializer = PrenatalDetailSerializer(latest_pf)
-        # Attach spouse info if available
+        
         result_data = serializer.data
         if spouse_data:
-            result_data['spouse_details'] = spouse_data
+            result_data['spouse_details'] = spouse_data # spouse data if available 
 
         return Response({
             'pat_id': pat_id,

@@ -26,7 +26,7 @@ import { useAddPostpartumRecord } from "../queries/maternalAddQueries"
 import {
   transformPostpartumFormData,
   validatePostpartumFormData,
-} from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
+} from "@/pages/healthServices/maternal/helpers/postpartumFormHelpers"
 import { showErrorToast } from "@/components/ui/toast" 
 
 // fetch hooks

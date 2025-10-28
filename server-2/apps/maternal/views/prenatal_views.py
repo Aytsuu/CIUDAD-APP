@@ -613,3 +613,67 @@ class CheckPendingAppointmentView(generics.RetrieveAPIView):
             return Response({
                 'error': 'An error occurred while checking pending appointments'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class PendingPrenatalAppointmentsView(generics.ListAPIView):
+    serializer_class = PrenatalRequestAppointmentSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+
+    def get_queryset(self):
+        """Optimize query to fetch related resident profile and personal info"""
+        return PrenatalAppointmentRequest.objects.filter(
+            status='pending'
+        ).select_related('rp_id', 'rp_id__per')
+
+    def list(self, request, *args, **kwargs):
+        """Custom list to include personal info of rp_id holder"""
+        try:
+            queryset = self.get_queryset()
+            
+            if not queryset.exists():
+                logger.info("No pending prenatal appointments found")
+                return Response({
+                    'message': 'No pending prenatal appointments found',
+                    'requests': []
+                }, status=status.HTTP_200_OK)
+
+            requests_data = []
+            for appointment in queryset:
+                personal_info = None
+                if appointment.rp_id and appointment.rp_id.per:
+                    per = appointment.rp_id.per
+                    personal_info = {
+                        'per_id': per.per_id,
+                        'per_fname': per.per_fname,
+                        'per_mname': per.per_mname,
+                        'per_lname': per.per_lname,
+                        'per_suffix': per.per_suffix,
+                        'per_dob': per.per_dob.strftime('%Y-%m-%d') if per.per_dob else None,
+                        'per_sex': per.per_sex,
+                        'per_contact': per.per_contact,
+                    }
+                
+                appointment_data = {
+                    'par_id': appointment.par_id,
+                    'requested_at': appointment.requested_at.isoformat() if appointment.requested_at else None,
+                    'requested_date': appointment.requested_date.isoformat() if appointment.requested_date else None,
+                    'status': appointment.status,
+                    'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
+                    'pat_id': appointment.pat_id.pat_id if appointment.pat_id else None,
+                    'personal_info': personal_info,
+                }
+                requests_data.append(appointment_data)
+            
+            logger.info(f"Found {queryset.count()} pending prenatal appointments")
+
+            return Response({
+                'message': 'Pending prenatal appointments retrieved successfully',
+                'requests': requests_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error retrieving pending prenatal appointments: {str(e)}")
+            return Response({
+                'error': 'An error occurred while retrieving pending appointments',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

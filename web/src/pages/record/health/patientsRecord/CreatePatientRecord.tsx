@@ -167,7 +167,6 @@ export default function CreatePatientRecord() {
           <>
             <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id} </span>
             {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
-            
           </>
         )
       })) || [],
@@ -416,7 +415,7 @@ export default function CreatePatientRecord() {
                           <Label className="text-black/70">Resident</Label>
                           <div className="grid mt-[6.5px] ">
                             <Combobox
-                              options={persons.formatted }
+                              options={persons.formatted}
                               value={selectedResidentId}
                               onChange={handlePatientSelection}
                               placeholder={residentLoading ? "Loading residents..." : "Select a resident"}

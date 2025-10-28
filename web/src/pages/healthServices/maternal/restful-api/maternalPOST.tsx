@@ -116,12 +116,18 @@ export interface PrenatalRecord {
   }>
   vital_bp_systolic: number | null
   vital_bp_diastolic: number | null
+  vital_temp: string | null
+  vital_RR: string | null
+  vital_pulse: string | null
+  vital_o2: string | null
   selected_medicines?: Array<{
     minv_id: string
     medrec_qty: number
     reason: string
   }>
-  vacrec_totaldose?: number | null 
+  vacrec_totaldose?: number | null
+  assigned_to?: string
+  status?: string
 }
 
 export const addPrenatalRecord = async (data: PrenatalRecord) => {

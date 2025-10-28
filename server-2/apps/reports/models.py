@@ -45,3 +45,26 @@ class MonthlyRecipientListReport(models.Model):
     class Meta:
         db_table = 'monthly_recipient_list_report'
 
+
+class BHWDailyNotes(models.Model):
+    bhwdn_id = models.BigAutoField(primary_key=True)
+    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'bhw_daily_notes'
+        indexes = [
+            models.Index(fields=['staff_id', 'created_at']),
+        ]
+
+
+class BHWReferOrFollowUp(models.Model):
+    bhwrof_id = models.BigAutoField(primary_key=True)
+    bhwdn_id = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE)
+    disease_name = models.CharField(max_length=255)
+    referred_count = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'bhw_refer_or_follow_up'

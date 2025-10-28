@@ -20,7 +20,7 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     landmarks: "",
     trans_id: patient.trans_id || "",
     rp_id: patient.rp_id?.rp_id || "",
-    birth_order: 1,
+    birth_order: (patient.additional_info?.total_children ?? 1) + 1,
     placeOfDeliveryType: "Home",
     placeOfDeliveryLocation: "",
     motherFname: "",
@@ -35,7 +35,7 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     fatherdob: "",
     fatherAge: "",
     fatherOccupation: "",
-    tt_status: patient.family_head_info?.family_heads?.tt_status || ""
+    tt_status: patient.family_head_info?.family_heads?.tt_status || "",
   };
 
   if (patient.personal_info?.per_dob) {

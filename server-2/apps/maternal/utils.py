@@ -420,3 +420,155 @@ def get_pregnancy_month_at_week(weeks):
         return 9
     else:
         return 10
+
+
+# ========================================================================================
+# LAB RESULTS UPDATE/CREATE LOGIC - Updates existing lab results instead of creating new ones
+# ========================================================================================
+
+def create_or_update_lab_results(patient, lab_results_data, prenatal_form=None, upload_image_callback=None):
+    """
+    Create or update laboratory results for a patient across all prenatal visits.
+    
+    Key Logic:
+    - If a lab_type already exists for this patient → UPDATE it
+    - If a lab_type is new → CREATE it
+    - For images: APPEND new images to existing lab result (don't delete old ones)
+    
+    Args:
+        patient (Patient): The patient instance
+        lab_results_data (list): List of lab data dicts with keys: lab_type, result_date, images, remarks, etc.
+        prenatal_form (Prenatal_Form, optional): The prenatal form being created. Used for backwards compatibility.
+        upload_image_callback (callable, optional): Function to handle image upload (self._upload_lab_image)
+    
+    Returns:
+        list: List of created/updated LaboratoryResult instances
+    
+    Example Flow:
+        Visit 1: User checks urinalysis + cbc
+        - urinalysis created with result_date, images, to_be_followed=True
+        - cbc created with result_date, images, is_completed=True
+        
+        Visit 2: User modifies urinalysis (adds image) and adds date to cbc
+        - urinalysis UPDATED: appends new image, updates result_date and remarks
+        - cbc UPDATED: appends new image, sets is_completed=True
+        
+        Visit 3: User adds new lab type (e.g., blood_typing)
+        - blood_typing CREATED as new record
+        - existing labs stay updated with their latest data
+    """
+    from apps.maternal.models import LaboratoryResult, LaboratoryResultImg
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    if not lab_results_data:
+        logger.info("No lab results data provided")
+        return []
+    
+    updated_labs = []
+    
+    try:
+        for lab_data in lab_results_data:
+            lab_type = lab_data.get('lab_type')
+            if not lab_type:
+                logger.warning("Skipping lab data - no lab_type specified")
+                continue
+            
+            # Extract images before checking for existing record
+            images_data = lab_data.pop('images', [])
+            
+            # STEP 1: Check if this lab_type already exists for this patient
+            # Query across ALL prenatal forms for this patient to find existing lab of same type
+            existing_lab = LaboratoryResult.objects.filter(
+                pf_id__patrec_id__pat_id=patient,
+                lab_type=lab_type
+            ).order_by('-created_at').first()  # Get most recent if multiple exist
+            
+            if existing_lab:
+                # UPDATE existing lab result
+                logger.info(f"Updating existing lab result: lab_type={lab_type}, lab_id={existing_lab.lab_id}")
+                
+                # Update fields that might have changed
+                if lab_data.get('result_date'):
+                    existing_lab.result_date = lab_data['result_date']
+                
+                if 'is_completed' in lab_data:
+                    existing_lab.is_completed = lab_data['is_completed']
+                
+                if 'to_be_followed' in lab_data:
+                    existing_lab.to_be_followed = lab_data['to_be_followed']
+                
+                if lab_data.get('remarks'):
+                    existing_lab.remarks = lab_data['remarks']
+                
+                if lab_data.get('document_path'):
+                    existing_lab.document_path = lab_data['document_path']
+                
+                # Save updated record
+                existing_lab.save()
+                logger.info(f"Lab result updated: lab_type={lab_type}")
+                
+                lab_result = existing_lab
+            else:
+                # CREATE new lab result
+                logger.info(f"Creating new lab result: lab_type={lab_type}")
+                
+                # Use provided prenatal_form, or get the latest one for this patient
+                if prenatal_form:
+                    pf = prenatal_form
+                else:
+                    pf = Prenatal_Form.objects.filter(
+                        patrec_id__pat_id=patient
+                    ).order_by('-created_at').first()
+                
+                if not pf:
+                    logger.warning(f"Cannot create lab result - no prenatal form found for patient {patient.pat_id}")
+                    continue
+                
+                lab_result = LaboratoryResult.objects.create(
+                    pf_id=pf,
+                    lab_type=lab_type,
+                    result_date=lab_data.get('result_date'),
+                    is_completed=lab_data.get('is_completed', False),
+                    to_be_followed=lab_data.get('to_be_followed', False),
+                    document_path=lab_data.get('document_path', ''),
+                    remarks=lab_data.get('remarks', '')
+                )
+                logger.info(f"Lab result created: lab_type={lab_type}, lab_id={lab_result.lab_id}")
+            
+            # STEP 2: Handle images - APPEND new images (don't delete old ones)
+            if images_data and upload_image_callback:
+                logger.info(f"Processing {len(images_data)} image(s) for lab_type={lab_type}")
+                
+                for img_data in images_data:
+                    try:
+                        # Check if this image already exists (by image_name - not image_url, since base64 changes)
+                        # We check by image_name because base64 encoding will be different on each submission
+                        existing_img = LaboratoryResultImg.objects.filter(
+                            lab_id=lab_result,
+                            image_name=img_data.get('image_name', '')
+                        ).exists()
+                        
+                        if existing_img:
+                            logger.info(f"Image already exists: {img_data.get('image_name')} - skipping")
+                            continue
+                        
+                        # Use the provided callback to upload image
+                        # This should be self._upload_lab_image from the serializer
+                        upload_image_callback(img_data, lab_result)
+                        logger.info(f"Uploaded image: {img_data.get('image_name')}")
+                    except Exception as e:
+                        logger.error(f"Error uploading image {img_data.get('image_name')}: {str(e)}")
+                        # Continue processing other images even if one fails
+            
+            updated_labs.append(lab_result)
+        
+        logger.info(f"Lab result processing complete: {len(updated_labs)} lab(s) updated/created")
+        return updated_labs
+    
+    except Exception as e:
+        logger.error(f"Error in create_or_update_lab_results: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise

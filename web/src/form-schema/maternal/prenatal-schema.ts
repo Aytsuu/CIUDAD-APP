@@ -77,10 +77,10 @@ export const PrenatalCareEntrySchema = z.object({
     aogWeeks: positiveNumberSchema.optional(), 
     aogDays: positiveNumberSchema.optional(), 
   }),
-  wt: positiveNumberSchema, // Keep as string for form input, transform later if needed
+  wt: positiveNumberSchema,
   bp: z.object({
-    systolic: positiveNumberSchema, // Keep as string for form input, transform later if needed
-    diastolic: positiveNumberSchema, // Keep as string for form input, transform later if needed
+    systolic: positiveNumberSchema, 
+    diastolic: positiveNumberSchema, 
   }),
   leopoldsFindings: z.object({
     fundalHeight: z.string().optional(),
@@ -90,6 +90,10 @@ export const PrenatalCareEntrySchema = z.object({
   notes: z.object({
     complaints: z.string().optional(),
     advises: z.string().optional(),
+    temp: z.string().optional(),
+    resRate: z.string().optional(),
+    pulseRate: z.string().optional(),
+    o2: z.string().optional(),
   }),
 })
 
@@ -141,15 +145,39 @@ export const PrenatalFormSchema = z.object({
         prevHospitalizationYr: positiveNumberSchema.optional(),
         previousComplications: z.string().optional(),
 
-        prevIllnessData: z.array(z.object({
-            prevIllness: z.string().default(''),
-            prevIllnessYr: positiveNumberSchema.optional(),
-            ill_id: z.number().optional()
-        })).optional(),
-        prevHospitalizationData: z.array(z.object({
-            prevHospitalization: z.string().default(''),
-            prevHospitalizationYr: positiveNumberSchema.optional(),
-        })).optional(),
+        prevIllnessData: z
+            .union([
+                z.array(z.object({
+                    prevIllness: z.string().default(''),
+                    prevIllnessYr: positiveNumberSchema.optional(),
+                    ill_id: z.number().optional()
+                })),
+                z.string(),
+                z.undefined(),
+                z.null()
+            ])
+            .transform(val => {
+                if (Array.isArray(val)) return val;
+                if (!val || val === '') return [];
+                return [];
+            })
+            .optional(),
+        prevHospitalizationData: z
+            .union([
+                z.array(z.object({
+                    prevHospitalization: z.string().default(''),
+                    prevHospitalizationYr: positiveNumberSchema.optional(),
+                })),
+                z.string(),
+                z.undefined(),
+                z.null()
+            ])
+            .transform(val => {
+                if (Array.isArray(val)) return val;
+                if (!val || val === '') return [];
+                return [];
+            })
+            .optional(),
     }),
 
     // previous pregnancy
@@ -317,6 +345,10 @@ export const PrenatalFormSchema = z.object({
         name: z.string().optional(),
         id: z.string().optional()
     }),
+
+    // forward record to
+    forward_to_staff_id: z.string().optional(),
+    forward_status: z.string().optional(),
 
     // prenatal care table
     prenatalCare: z.array(PrenatalCareEntrySchema).optional(),

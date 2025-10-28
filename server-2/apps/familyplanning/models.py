@@ -30,7 +30,19 @@ class FP_Record(models.Model):
     def __str__(self):
         return f"FP Record {self.fprecord_id} for Patient {self.pat.pat_id}"
 
-   
+    def get_absolute_url(self):
+        return {
+            'path': '/services/familyplanning/records',
+            'params': {'fprecordId': self.fprecord_id}
+        }
+    
+    # def get_mobile_route(self):
+    #     return {
+    #         'screen' : '/(my-request)/complaint-tracking/compMainView',
+    #         'params' : {'comp_id': str(self.comp_id)}
+    #     }
+    
+    
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
     fpt_client_type = models.CharField(max_length=50)

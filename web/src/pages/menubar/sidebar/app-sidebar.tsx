@@ -341,7 +341,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -377,7 +377,7 @@ export function AppSidebar() {
         { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
       ],
-    },
+    },  
     ...(featureValidator("inventory") ? [{
       title: "Inventory",
       url:  "/" ,
@@ -387,7 +387,7 @@ export function AppSidebar() {
 
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/scheduled/follow-ups" }] : []),
     ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];

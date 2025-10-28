@@ -701,6 +701,7 @@ class PatientSerializer(serializers.ModelSerializer):
                                                 pregnancy_data = {
                                                     'pregnancy_id': mother_pregnancy.pregnancy_id,
                                                     'pf_id': mother_prenatal.pf_id,
+                                                    'mother_pat_id': mother_patient.pat_id,  # Add mother's patient ID
                                                 }
                                                 
                                                 # fetch ppr_id from PostpartumRecord if exists

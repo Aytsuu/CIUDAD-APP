@@ -6,11 +6,19 @@ import {
 	getAllTransientAddresses,
 	getChildData,
 	checkPatientExistsGet,
-	getChildren
+	getChildren,
+	getPatientCount
  } from "../restful-api/get";
 
 
-
+export const usePatientCount = () => {
+	return useQuery({
+		queryKey: ['patientCount'],
+		queryFn: getPatientCount,
+		staleTime: 60000, // 1 minute
+		refetchInterval: 3000, // 
+	})
+}
 
 export const useChildData = (id: any,) => {
 	return useQuery({

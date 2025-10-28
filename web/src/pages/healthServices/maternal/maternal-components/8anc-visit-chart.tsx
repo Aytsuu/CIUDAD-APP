@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarCheck, Check } from "lucide-react"
+import { Check } from "lucide-react"
 
 interface PregnancyDataDetails {
   pregnancy_id: string
@@ -170,10 +170,10 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
   const thirdTrimesterVisits = visitCounts.third
 
   return (
-    <div className="bg-white rounded-sm shadow-md border border-gray-200">
+    <div className="bg-white rounded-sm shadow-sm border border-gray-200">
       <div className="p-4 w-full">
-        <h2 className="flex items-center text-lg font-semibold mb-3 gap-1">
-          <CalendarCheck size={24} color="red" /> 8 ANC Visit Tracker
+        <h2 className="flex justify-between items-center text-lg font-semibold mb-3 gap-1">
+          8 ANC Visit Tracker <p className="bg-pink-200 text-xs text-pink-800 border-pink-600 border rounded-md px-2 py-0.5">Latest Pregnancy</p>
         </h2>
         <div className="grid grid-cols-3 gap-2 w-full">
           {/* 1st trimester */}

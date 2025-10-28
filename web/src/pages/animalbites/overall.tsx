@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import ViewButton from "@/components/ui/view-button";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { LoadingState } from "@/components/ui/health-component/loading-state";
 
 // Type definition for table display
 type UniquePatientDisplay = {
@@ -199,32 +200,32 @@ const Overall: React.FC = () => {
         </div>
       )
     },
-    {
-      accessorKey: "exposure",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Exposure Type <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.exposure}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "siteOfExposure",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Site of Exposure <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.siteOfExposure}</div>
-        </div>
-      )
-    },
+    // {
+    //   accessorKey: "exposure",
+    //   header: ({ column }) => (
+    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+    //       Exposure Type <ArrowUpDown size={15} />
+    //     </div>
+    //   ),
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[100px] px-2">
+    //       <div className="text-center w-full">{row.original.exposure}</div>
+    //     </div>
+    //   )
+    // },
+    // {
+    //   accessorKey: "siteOfExposure",
+    //   header: ({ column }) => (
+    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+    //       Site of Exposure <ArrowUpDown size={15} />
+    //     </div>
+    //   ),
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[120px] px-2">
+    //       <div className="text-center w-full">{row.original.siteOfExposure}</div>
+    //     </div>
+    //   )
+    // },
     {
       accessorKey: "bitingAnimal",
       header: ({ column }) => (
@@ -250,15 +251,15 @@ const Overall: React.FC = () => {
         );
       }
     },
-    {
-      accessorKey: "referredby",
-      header: "Referred by",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.referredby}</div>
-        </div>
-      )
-    },
+    // {
+    //   accessorKey: "referredby",
+    //   header: "Referred by",
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[120px] px-2">
+    //       <div className="text-center w-full">{row.original.referredby}</div>
+    //     </div>
+    //   )
+    // },
     {
       accessorKey: "norecords",
       header: ({ column }) => (
@@ -474,9 +475,7 @@ const Overall: React.FC = () => {
           {/* Data Table */}
           <div className="bg-white w-full overflow-x-auto border">
             {loading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                  
-              </div>
+              <LoadingState/>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
                 <span>{error}</span>

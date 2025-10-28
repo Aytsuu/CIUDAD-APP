@@ -11,9 +11,7 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from "recharts";
 
-// --- Type Definition ---
 type PatientRecordDetail = {
   bite_id: number;
   exposure_type: string;
@@ -38,7 +36,7 @@ type PatientRecordDetail = {
 
 // --- Statistics Card Component ---
 const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; bgColor: string; iconColor: string }> = ({ icon, title, value, bgColor, iconColor }) => (
-  <div className={`${bgColor} rounded-xl p-6 shadow-lg transform transition-all hover:scale-105 hover:shadow-xl`}>
+  <div className={`${bgColor} rounded-xl p-6 shadow-lg transform transition-all  hover:shadow-xl`}>
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
@@ -221,8 +219,6 @@ const IndividualPatientHistory: React.FC = () => {
     };
   }, [patientRecords]);
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
   const handlePrintClick = (record: PatientRecordDetail) => {
     setSelectedRecord(record);
     setPrintModalOpen(true);
@@ -316,7 +312,7 @@ const IndividualPatientHistory: React.FC = () => {
 
   return (
     <LayoutWithBack title="Animal Bite Patient History" description="Comprehensive analysis of animal bite incidents">
-      <div className="container mx-auto py-8 space-y-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+      <div className="container mx-auto space-y-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
         <PatientInfoCard patient={patientInfo} />
 
         {/* Statistics Overview */}
@@ -352,84 +348,7 @@ const IndividualPatientHistory: React.FC = () => {
         </div>
 
         {/* Charts Section */}
-        {patientRecords.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Exposure Types Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <ShieldCheck size={20} className="text-blue-600" />
-                Exposure Type Distribution
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={stats.exposureTypes}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {stats.exposureTypes.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Biting Animals Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <PawPrint size={20} className="text-orange-600" />
-                Biting Animals
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={stats.animalTypes}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Exposure Sites Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <MapPin size={20} className="text-green-600" />
-                Exposure Sites
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={stats.exposureSites} layout="vertical">
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={100} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#10b981" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Timeline Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Calendar size={20} className="text-purple-600" />
-                Incident Timeline
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={stats.timeline}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
+       
 
         {/* Records Summary Table */}
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
@@ -466,7 +385,7 @@ const IndividualPatientHistory: React.FC = () => {
                         <Calendar size={18} />
                         {new Date(record.referral_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                      <div className="mt-2 text-xs text-gray-500 font-medium">Incident #{patientRecords.length - index}</div>
+                      {/* <div className="mt-2 text-xs text-gray-500 font-medium">Incident #{patientRecords.length - index}</div> */}
                     </div>
                     <div className="space-y-4">
                       {historyFields.map((field) => (

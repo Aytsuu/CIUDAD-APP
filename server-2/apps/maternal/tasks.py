@@ -11,25 +11,26 @@ def update_missed_followups():
     and automatically mark them as 'Missed'
     """
     try:
-        # Use PH (Asia/Manila) timezone to determine "today" for comparisons
+        # use PH (Asia/Manila) timezone to determine "today" for comparisons
         tz_ph = ZoneInfo("Asia/Manila")
         now = timezone.now().astimezone(tz_ph)
         today_ph = now.date()
         
-        # Find all pending follow-ups where the date has passed
+        # find all pending follow-ups where the date has passed except Family Planning
         pending_followups = FollowUpVisit.objects.filter(
             followv_status='pending',
-            followv_date__lt=today_ph,  # Date is in the past (PH date)
-            # patrec_id__patrec_type__in=['Prenatal', 'Postpartum Care']  # Only maternal services
+            followv_date__lt=today_ph  # Date is in the past (PH date)
+        ).exclude(
+            patrec_id__patrec_type__in=['Family Planning']
         )
         
         count = pending_followups.count()
         
         if count > 0:
-            # Update all matching records to 'Missed'
+            # update all matching records to 'missed'
             updated = pending_followups.update(followv_status='missed')
-            logger.info(f"[{now}] Updated {updated} pending follow-ups to 'Missed' status")
-            print(f"[{now}] ✓ Marked {updated} overdue follow-ups as Missed")
+            logger.info(f"[{now}] Updated {updated} pending follow-ups to 'missed' status")
+            print(f"[{now}] ✓ Marked {updated} overdue follow-ups as missed")
         else:
             logger.debug(f"[{now}] No overdue follow-ups found")
             print(f"[{now}] ℹ No overdue follow-ups to update")

@@ -61,7 +61,7 @@ export default function InvMedicalConRecords() {
     try {
       const serialized = serializePatientData ? serializePatientData(patientDetails) : patientDetails;
       return serialized as any;
-    } catch (e) {
+    } catch {
       return patientDetails as any;
     }
   }, [medicalRecords]);

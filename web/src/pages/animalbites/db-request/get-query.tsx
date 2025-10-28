@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId, getAnimalBitePatientSummary} from "../api/get-api" // Updated import
+import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId, getAnimalBitePatientSummary, getAnimalBiteAnalytics, getAnimalBitePatientAnalytics} from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 import { toast } from "sonner"
 import { submitAnimalBiteReferral } from "./postrequest"
@@ -38,14 +38,6 @@ export const useCreatePatient = () => {
     },
   })
 }
-
-// export const useAnimalBitePatientCounts = () => {
-//   return useQuery({
-//     queryKey: ["animalbite-patient-counts"],
-//     queryFn: getAnimalBitePatientCounts,
-//     staleTime: 1000 * 60 * 1, // Cache for 1 minute, adjust as needed
-//   })
-// }
 
 export const useAnimalBitePatientSummary = () => {
   return useQuery({
@@ -175,3 +167,21 @@ export const useRefreshAllData = () => {
 function useToastContext(): { toast: any } {
   throw new Error("Function not implemented.")
 }
+
+
+export const useAnimalBiteAnalytics = (months: number = 12) => {
+  return useQuery({
+    queryKey: ["animal-bite-analytics", months],
+    queryFn: () => getAnimalBiteAnalytics(months),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useAnimalBitePatientAnalytics = (patientId: string) => {
+  return useQuery({
+    queryKey: ["animal-bite-patient-analytics", patientId],
+    queryFn: () => getAnimalBitePatientAnalytics(patientId),
+    enabled: !!patientId,
+    staleTime: 1000 * 60 * 5,
+  });
+};

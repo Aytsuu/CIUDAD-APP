@@ -285,6 +285,10 @@ export default function PrenatalForm() {
       vital_bp_diastolic: (data.prenatalCare?.[0]?.bp.diastolic != null && !isNaN(data.prenatalCare?.[0]?.bp.diastolic))
         ? data.prenatalCare[0].bp.diastolic
         : null,
+      vital_temp: data.prenatalCare?.[0]?.notes?.temp || null,
+      vital_RR: data.prenatalCare?.[0]?.notes?.resRate || null,
+      vital_pulse: data.prenatalCare?.[0]?.notes?.pulseRate || null,
+      vital_o2: data.prenatalCare?.[0]?.notes?.o2 || null,
       
       // Selected medicines for micronutrient supplementation
       selected_medicines: selectedMedicines.length > 0 ? selectedMedicines : undefined,
@@ -293,6 +297,10 @@ export default function PrenatalForm() {
       vacrec_totaldose: data.prenatalVaccineInfo.vacrec_totaldose 
         ? parseInt(data.prenatalVaccineInfo.vacrec_totaldose.toString()) 
         : undefined,
+
+      // Forward record fields
+      assigned_to: data.forward_to_staff_id ? data.forward_to_staff_id : undefined,
+      status: data.forward_status ? data.forward_status : undefined,
     }
   }
 

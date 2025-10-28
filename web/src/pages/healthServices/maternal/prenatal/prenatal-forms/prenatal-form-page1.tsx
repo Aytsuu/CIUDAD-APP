@@ -114,32 +114,11 @@ export default function PrenatalFormFirstPg({
   // add mutation hook
   const addIllnessMutation = useAddIllnessData();
 
+  // lg babies watchers
   const hasLgBabies = watch("obstetricHistory.historyOfLBabiesStr");
   const lgBabiesCount = watch("obstetricHistory.historyOfLBabies");
 
-  // Validate large babies count when hasLgBabies is true
-  // useEffect(() => {
-  //   if (hasLgBabies === true) {
-  //     // Check if count is provided and greater than 0
-  //     if (!lgBabiesCount || lgBabiesCount <= 0) {
-  //       form.setError("obstetricHistory.historyOfLBabies", {
-  //         type: "manual",
-  //         message: "Count of Large Babies is required",
-  //       });
-  //     } else {
-  //       // Clear the error if count is valid
-  //       form.clearErrors("obstetricHistory.historyOfLBabies");
-  //     }
-  //   } else if (hasLgBabies === false) {
-  //     // Clear error and reset count when 'No' is selected
-  //     form.clearErrors("obstetricHistory.historyOfLBabies");
-  //     if (lgBabiesCount && lgBabiesCount > 0) {
-  //       setValue("obstetricHistory.historyOfLBabies", 0);
-  //     }
-  //   }
-  // }, [hasLgBabies, lgBabiesCount, form, setValue]);
-
-  // This function will only be called by form.handleSubmit if validation passes
+  // next button handler with validation
   const handleNext = async () => {
     const isValid = await trigger([
       "pat_id", // Ensure patient ID is validated
@@ -890,7 +869,7 @@ export default function PrenatalFormFirstPg({
     },
     {
       accessorKey: "prevIllnessYr",
-      header: "Year",
+      header: "Date",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="w-full truncate">
@@ -1419,7 +1398,7 @@ export default function PrenatalFormFirstPg({
                           label=""
                           placeholder={
                             hasLgBabies === true && (!lgBabiesCount || lgBabiesCount <= 0)
-                              ? "Enter count of Large Babies is required"
+                              ? "Count of Large Babies is required"
                               : "Enter count of large babies"
                           }
                           type="number"

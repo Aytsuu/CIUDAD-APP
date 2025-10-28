@@ -86,7 +86,6 @@ export const getChildData = async (id: any): Promise<any> => {
 }
 
 
-
 export const getChildren = async (id:string) => {
 	try{
 		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
@@ -97,3 +96,14 @@ export const getChildren = async (id:string) => {
 	}
 }
 	
+
+// fetch patient count
+export const getPatientCount = async () => {
+	try {
+		const res = await api2.get('/patientrecords/patients/count/');
+		return res.data;
+	} catch (error) {
+		console.error("Error fetching patient count:", error);
+		throw error;
+	}
+}

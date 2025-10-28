@@ -5,6 +5,7 @@ from apps.patientrecords.models import *
 from apps.administration.models import *
 from apps.inventory.models import *
 from apps.healthProfiling.models import *
+# from .shared_notification_utils import create_fp_followup_notification
 
 class FPRecordSerializer(serializers.ModelSerializer):
     patrec = serializers.PrimaryKeyRelatedField(queryset=PatientRecord.objects.all())
@@ -43,7 +44,27 @@ class FPAssessmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'fprecord_id': {'required': False}}
 
-
+    def update(self, instance, validated_data):
+        old_status = instance.followv.followv_status if instance.followv else None
+        
+        # Call parent update
+        instance = super().update(instance, validated_data)
+        
+        # Check if follow-up status changed to 'missed'
+        if (instance.followv and 
+            instance.followv.followv_status == 'missed' and 
+            old_status != 'missed'):
+            
+            create_fp_followup_notification(
+                instance.fprecord,
+                instance.followv.followv_date,
+                "missed",
+                self.context['request'].user if 'request' in self.context else None
+            )
+        
+        return instance
+    
+    
 class PelvicExamSerializer(serializers.ModelSerializer):
     # uterinePosition = serializers.ChoiceField(
     #     choices=['midline', 'anteflexed', 'retroflexed']

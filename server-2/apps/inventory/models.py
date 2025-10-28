@@ -171,7 +171,7 @@ class Inventory(models.Model):
         
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
-    minv_dsg = models.PositiveIntegerField(default=0)
+    # minv_dsg = models.PositiveIntegerField(default=0)
     minv_dsg_unit = models.CharField(max_length=100,default="N/A")
     minv_form = models.CharField(max_length=100, default="N/A") 
     minv_qty = models.PositiveIntegerField(default=0,)

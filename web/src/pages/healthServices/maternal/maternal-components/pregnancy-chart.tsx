@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, CheckCircle, HeartHandshake, Tally5 } from "lucide-react"
+import { Clock, CheckCircle, HeartHandshake } from "lucide-react"
 
 interface PregnancyDataDetails {
   pregnancy_id: string;
@@ -57,9 +57,9 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
   const pregnancyLoss = pregnancies.filter((p) => normalizeStatus(p.status) === "Pregnancy Loss").length;
 
 	return (
-		<div className="bg-white rounded-sm shadow-md border border-gray-200">
+		<div className="bg-white rounded-sm shadow-sm border border-gray-200">
 			<div className="p-4 w-full">
-				<h2 className="flex items-center text-lg font-semibold mb-3 gap-1"><Tally5 size={24} color="#f97316"/> Overall Pregnancy Summary</h2>
+				<h2 className="flex items-center text-lg font-semibold mb-3 gap-1"> Overall Pregnancy Summary</h2>
 				<div className="grid grid-cols-2 gap-2 w-full">
 					{/* active */}
 					<div className="flex flex-col text-center rounded-md border p-4 gap-2">

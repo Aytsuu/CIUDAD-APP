@@ -19,7 +19,7 @@ year = str(today.year)
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
     requested_at = models.DateTimeField(auto_now_add=True)
-    requested_date = models.DateField(null=True, blank=True) 
+    requested_date = models.DateTimeField(null=True, blank=True) 
     approved_at = models.DateField(null=True, blank=True)
     cancelled_at = models.DateField(null=True, blank=True)
     completed_at = models.DateField(null=True, blank=True)
@@ -47,13 +47,13 @@ class PrenatalAppointmentRequest(models.Model):
     def approve(self, staff=None):
         """Approve the appointment"""
         self.status = 'approved'
-        self.approved_at = timezone.now()
+        self.approved_at = timezone.now().date()
         self.save()
     
     def cancel(self, reason=None, staff=None):
         """Cancel the appointment"""
         self.status = 'cancelled'
-        self.cancelled_at = timezone.now()
+        self.cancelled_at = timezone.now().date()
         if reason:
             self.reason = reason
         self.save()
@@ -61,13 +61,13 @@ class PrenatalAppointmentRequest(models.Model):
     def complete(self, staff=None):
         """Mark appointment as completed"""
         self.status = 'completed'
-        self.completed_at = timezone.now()
+        self.completed_at = timezone.now().date()
         self.save()
     
     def reject(self, reason=None, staff=None):
         """Reject the appointment"""
         self.status = 'rejected'
-        self.rejected_at = timezone.now()
+        self.rejected_at = timezone.now().date()
         if reason:
             self.reason = reason
         self.save()
@@ -75,7 +75,7 @@ class PrenatalAppointmentRequest(models.Model):
     def mark_as_missed(self, staff=None):
         """Mark appointment as missed - no reason required"""
         self.status = 'missed'
-        self.missed_at = timezone.now()
+        self.missed_at = timezone.now().date()
         self.save()
     
     def is_overdue(self):
