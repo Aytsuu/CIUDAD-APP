@@ -101,18 +101,6 @@ export default function ComplaintFilterBar({
               </Button>
             </Link>
           )}
-
-          {buttons.archived && (
-            <Link to="/complaint/archive">
-              <Button
-                variant="outline"
-                className="gap-2 text-darkGray hover:text-black"
-              >
-                <Archive size={16} className="text-gray-400" />
-                <span>Archived</span>
-              </Button>
-            </Link>
-          )}
           
           {buttons.newReport && (
             <Link to="/complaint/report" className="sm:ml-auto">

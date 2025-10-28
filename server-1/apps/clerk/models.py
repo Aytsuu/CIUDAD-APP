@@ -170,13 +170,14 @@ class SummonTimeAvailability(models.Model):
 
 
 class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.BigAutoField(primary_key=True)
+    pay_id = models.CharField(primary_key=True, max_length=50)
     pay_sr_type = models.CharField(max_length=200)
     pay_status = models.CharField(max_length=200, default='Unpaid')
     pay_date_req = models.DateTimeField(default=datetime.now)
     pay_due_date = models.DateField(default = default_due_date())
     pay_req_status = models.CharField(max_length=200, default='Pending')
     pay_date_paid = models.DateTimeField(null = True, blank = True)
+    pay_reason = models.TextField(null=True, blank=True, default=None)  
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')
 
@@ -192,6 +193,13 @@ class SummonCase(models.Model):
     sc_date_marked = models.DateTimeField(null=True, blank=True)
     sc_reason = models.TextField(null=True, blank=True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'summon_case'
@@ -227,7 +235,14 @@ class Remark(models.Model):
     rem_remarks = models.TextField()
     rem_date = models.DateTimeField(default = datetime.now)
     hs_id = models.OneToOneField('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remark')
-
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
     class Meta:
         db_table = 'remark'
 

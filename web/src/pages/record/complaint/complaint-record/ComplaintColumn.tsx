@@ -2,34 +2,17 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint, Complainant, Accused } from "../complaint-type";
 import { Link } from "react-router";
 import { ArrowUpDown, AlertCircle, CircleChevronRight } from "lucide-react";
-import {
-  MdCheckCircle,
-  MdCancel,
-  MdTrendingUp,
-  MdAccessTimeFilled,
-  MdError,
-  MdSecurity,
-  MdGavel,
-  MdHomeRepairService,
-  MdVolumeUp,
-  MdHelpOutline,
-  MdMoreHoriz
-} from "react-icons/md";
+import {MdCheckCircle, MdCancel, MdTrendingUp, MdAccessTimeFilled, MdError, MdSecurity, MdGavel, MdHomeRepairService, MdVolumeUp, MdHelpOutline, MdMoreHoriz} from "react-icons/md";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverContent,} from "@/components/ui/popover";
 
-
-// Interface for column options
 interface ComplaintColumnsOptions {
-  statusFilter?: string | null; // Status to display (e.g., "pending", "accepted", etc.)
-  showAllStatuses?: boolean; // If true, shows dynamic status based on data
+  statusFilter?: string | null; 
+  showAllStatuses?: boolean; 
 }
 
-// Reusable complaint columns with optional status filter
-export const complaintColumns = (
-  options: ComplaintColumnsOptions = {}
-): ColumnDef<Complaint>[] => {
+export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnDef<Complaint>[] => {
   const { statusFilter = null, showAllStatuses = true } = options;
 
   return [
@@ -98,7 +81,9 @@ export const complaintColumns = (
         }
 
         const name = complainants[0].cpnt_name;
-        const firstComplainant = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() || "Anonymous";
+        const firstComplainant =
+          name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() ||
+          "Anonymous";
         const remainingCount = complainants.length - 1;
 
         return (
@@ -108,23 +93,34 @@ export const complaintColumns = (
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <MdMoreHoriz/>
+                    <MdMoreHoriz />
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="p-2">
-                  <div className="flex flex-col gap-1">
-                    {complainants.slice(1).map((person: Complainant, idx: number) => (
-                      <div key={person.cpnt_id ?? idx} className="flex items-center justify-center gap-x-2  text-gray-700">
-                           <span>
+                <PopoverContent className="p-2 w-auto max-w-md">
+                  <div className="flex flex-col gap-1 items-start">
+                    {complainants
+                      .slice(1)
+                      .map((person: Complainant, idx: number) => (
+                        <div
+                          key={person.cpnt_id ?? idx}
+                          className="flex items-center gap-x-2 text-gray-700 w-full"
+                        >
+                          <span className="flex-shrink-0">
                             {person.rp_id ? (
-                              <div className="bg-green-500 px-4 py-1 rounded-full text-bold text-white"><p>Resident</p></div>
+                              <div className="bg-green-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
+                                Resident
+                              </div>
                             ) : (
-                              <div className="bg-blue-500 px-4 py-1 rounded-full text-bold text-white"><p>Non-resident</p></div>
+                              <div className="bg-blue-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
+                                Non-resident
+                              </div>
                             )}
                           </span>
-                        {person.cpnt_name.toUpperCase()}
-                      </div>
-                    ))}
+                          <span className="break-words min-w-0 flex-1">
+                            {person.cpnt_name.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -162,24 +158,35 @@ export const complaintColumns = (
             {remainingCount > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
-                   <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <MdMoreHoriz/>
+                  <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
+                    <MdMoreHoriz />
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="p-2 w-full">
-                  <div className="flex flex-col gap-1">
-                     {accusedPersons.slice(1).map((person: Accused, idx: number) => (
-                      <div key={person.acsd_id ?? idx} className="flex items-center justify-center gap-x-2  text-gray-700">
-                          <span>
+                <PopoverContent className="p-2 w-auto max-w-md">
+                  <div className="flex flex-col gap-1 items-start">
+                    {accusedPersons
+                      .slice(1)
+                      .map((person: Accused, idx: number) => (
+                        <div
+                          key={person.acsd_id ?? idx}
+                          className="flex items-center gap-x-2 text-gray-700 w-full"
+                        >
+                          <span className="flex-shrink-0">
                             {person.rp_id ? (
-                              <div className="bg-green-500 px-4 py-1 rounded-full text-bold text-white"><p>Resident</p></div>
+                              <div className="bg-green-500 px-5 py-1 rounded-full font-semibold text-white text-sm">
+                                Resident
+                              </div>
                             ) : (
-                              <div className="bg-blue-500 px-4 py-1 rounded-full text-bold text-white"><p>Non-resident</p></div>
+                              <div className="bg-blue-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
+                                Non-resident
+                              </div>
                             )}
                           </span>
-                        {person.acsd_name.toUpperCase()}
-                      </div>
-                    ))}
+                          <span className="break-words min-w-0 flex-1">
+                            {person.acsd_name.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -188,11 +195,14 @@ export const complaintColumns = (
         );
       },
     },
+
     {
       accessorKey: "comp_incident_type",
       header: "Incident Type",
       cell: ({ row }) => {
-        const type = (row.getValue("comp_incident_type") as string)?.toLowerCase();
+        const type = (
+          row.getValue("comp_incident_type") as string
+        )?.toLowerCase();
 
         const typeStyles: Record<string, string> = {
           theft: "bg-yellow-100 text-yellow-700",
@@ -208,14 +218,18 @@ export const complaintColumns = (
           "noise complaint": <MdVolumeUp size={18} />,
         };
 
-        const displayType = type ? type.charAt(0).toUpperCase() + type.slice(1) : "Unknown";
+        const displayType = type
+          ? type.charAt(0).toUpperCase() + type.slice(1)
+          : "Unknown";
 
         const typeClass = typeStyles[type] || "bg-gray-100 text-gray-700";
         const icon = iconMap[type] || <MdHelpOutline size={18} />;
 
         return (
           <div className="flex justify-center items-center w-full h-full">
-            <span className={`flex items-center justify-center gap-2 w-full h-full px-3 py-2 rounded-md text-sm font-medium text-center ${typeClass}`}>
+            <span
+              className={`flex items-center justify-center gap-2 w-full h-full px-3 py-2 rounded-md text-sm font-medium text-center ${typeClass}`}
+            >
               {icon} {displayType}
             </span>
           </div>
@@ -229,7 +243,7 @@ export const complaintColumns = (
         // If statusFilter is provided and showAllStatuses is false, show only that status
         if (statusFilter && !showAllStatuses) {
           const status = statusFilter.toLowerCase();
-          
+
           const statusStyles: Record<string, string> = {
             resolved: "bg-green-100 text-green-700",
             rejected: "bg-red-100 text-red-700",
@@ -239,7 +253,6 @@ export const complaintColumns = (
             accepted: "bg-green-100 text-green-700",
             filed: "bg-blue-100 text-blue-700",
             processing: "bg-yellow-100 text-yellow-700",
-            settled: "bg-green-100 text-green-700",
           };
 
           const iconMap: Record<string, React.ReactNode> = {
@@ -251,10 +264,10 @@ export const complaintColumns = (
             accepted: <MdCheckCircle size={18} />,
             filed: <MdCheckCircle size={18} />,
             processing: <MdTrendingUp size={18} />,
-            settled: <MdCheckCircle size={18} />,
           };
 
-          const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+          const displayStatus =
+            status.charAt(0).toUpperCase() + status.slice(1);
 
           return (
             <div className="flex justify-center items-center">
@@ -280,7 +293,6 @@ export const complaintColumns = (
           raised: "bg-blue-100 text-blue-700",
           accepted: "bg-green-100 text-green-700",
           processing: "bg-yellow-100 text-yellow-700",
-          settled: "bg-green-100 text-green-700",
         };
 
         const iconMap: Record<string, React.ReactNode> = {
@@ -343,20 +355,20 @@ export const complaintColumns = (
 };
 
 // Convenience functions for specific use cases
-export const pendingComplaintColumns = () => 
+export const pendingComplaintColumns = () =>
   complaintColumns({ statusFilter: "pending", showAllStatuses: false });
 
-export const resolvedComplaintColumns = () => 
+export const resolvedComplaintColumns = () =>
   complaintColumns({ statusFilter: "resolved", showAllStatuses: false });
 
-export const rejectedComplaintColumns = () => 
+export const rejectedComplaintColumns = () =>
   complaintColumns({ statusFilter: "rejected", showAllStatuses: false });
 
-export const acceptedComplaintColumns = () => 
+export const acceptedComplaintColumns = () =>
   complaintColumns({ statusFilter: "accepted", showAllStatuses: false });
 
-export const raisedComplaintColumns = () => 
+export const raisedComplaintColumns = () =>
   complaintColumns({ statusFilter: "raised", showAllStatuses: false });
 
-export const allComplaintColumns = () => 
+export const allComplaintColumns = () =>
   complaintColumns({ showAllStatuses: true });

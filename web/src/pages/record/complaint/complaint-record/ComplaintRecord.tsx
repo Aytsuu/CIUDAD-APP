@@ -10,10 +10,9 @@ import ComplaintPagination from "./ComplaintPagination";
 import { useBulkArchiveComplaints } from "../api-operations/queries/complaintPostQueries";
 
 export default function ComplaintRecord() {
-  const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<string | null>(null);
-  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
   const bulkArchiveComplaints = useBulkArchiveComplaints();
