@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,12 +9,12 @@ import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
-import { ChevronLeft, Loader2  } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -307,22 +307,13 @@ function ExpenseEdit() {
 
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text>Edit Expense Entry</Text>}
-      headerAlign="left"
-      showBackButton={false}
-      showExitButton={false}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text>Edit Expense Entry</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Updating expense entry..."
-      stickyFooter={true}
       footer={
         <View className="w-full">
           {!isEditing ? (
@@ -340,6 +331,7 @@ function ExpenseEdit() {
                   setIsEditing(false);
                   form.reset();
                 }}
+                disabled={isPending}
               >
                 <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -352,8 +344,8 @@ function ExpenseEdit() {
                   >
                     {isPending ? (
                       <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                        <Text className="text-white text-base font-semibold">Saving...</Text>
+                        <ActivityIndicator size="small" color="white" className="mr-2" />
+                        <Text className="text-white text-base font-semibold ">Saving...</Text>
                       </>
                     ) : (
                       <Text className="text-white text-base font-semibold">Save</Text>
@@ -512,7 +504,7 @@ function ExpenseEdit() {
 
       </View>
 
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 
