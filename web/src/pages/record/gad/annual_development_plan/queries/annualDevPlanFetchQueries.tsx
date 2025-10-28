@@ -109,11 +109,11 @@ export const useGetAnnualDevPlansByYear = (year: number) => {
 };
 
 // Archive queries
-export const useGetArchivedAnnualDevPlans = (page?: number, pageSize?: number, search?: string) => {
+export const useGetArchivedAnnualDevPlans = (page?: number, pageSize?: number, search?: string, ordering?: string) => {
     return useQuery({
-        queryKey: ["archivedAnnualDevPlans", page, pageSize, search],
+        queryKey: ["archivedAnnualDevPlans", page, pageSize, search, ordering],
         queryFn: async () => {
-            return await getArchivedAnnualDevPlans(search, page, pageSize);
+            return await getArchivedAnnualDevPlans(search, page, pageSize, ordering);
         },
     });
 };

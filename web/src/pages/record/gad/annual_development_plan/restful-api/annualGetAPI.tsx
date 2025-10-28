@@ -59,7 +59,7 @@ export const getAnnualDevPlanById = async (devId: number | string) => {
 };
 
 // Get archived plans with search and pagination support
-export const getArchivedAnnualDevPlans = async (search?: string, page?: number, pageSize?: number) => {
+export const getArchivedAnnualDevPlans = async (search?: string, page?: number, pageSize?: number, ordering?: string) => {
   const params = new URLSearchParams();
   params.append('dev_archived', 'true');
   if (search) {
@@ -70,6 +70,9 @@ export const getArchivedAnnualDevPlans = async (search?: string, page?: number, 
   }
   if (pageSize) {
     params.append('page_size', pageSize.toString());
+  }
+  if (ordering) {
+    params.append('ordering', ordering);
   }
   const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
   return res.data;

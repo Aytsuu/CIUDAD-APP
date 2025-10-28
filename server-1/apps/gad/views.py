@@ -829,7 +829,9 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 Q(dev_indicator__icontains=search)
             )
         
-        return qs.order_by('-dev_date')
+        # Support dynamic ordering
+        ordering = self.request.query_params.get('ordering', '-dev_date')
+        return qs.order_by(ordering)
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
