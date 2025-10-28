@@ -7,7 +7,7 @@ from apps.profiling.models import ResidentProfile
 from apps.administration.models import *
 from .models import Announcement, AnnouncementFile, AnnouncementRecipient
 from utils.supabase_client import upload_to_storage
-from apps.notification.create_notification import create_notification
+from apps.notification.utils import create_notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
     
     def get_staff(self, obj):
         info = obj.staff.rp.per
-        name = f"{info.per_lname}, {info.per_fname}{' ' + info.per_mname[0] + '.' if info.per_mname else ''}"
+        name = f"{info.per_lname}{f" {info.per_mname[0]}." if info.per_mname else ""} {info.per_fname}"
 
         return {
             "id": obj.staff.staff_id,

@@ -97,24 +97,3 @@ export const useGarbagePickupSectionCards = () => {
   };
 };
 
-// Component version (your original approach but enhanced)
-export const GargbagePickupSectionCards = () => {
-  const navigate = useNavigate();
-  const { data, isLoading } = useGetGarbageCardAnalytics();
-
-  return (
-    <>
-      {garbagePickupCards.map((card) => (
-        <GarbagePickupCard 
-          key={card.title}
-          title={card.title}
-          value={data?.[card.dataKey] ?? 0}
-          isLoading={isLoading}
-          onClick={() => {
-            navigate("/garbage-pickup-request")
-          }}
-        />
-      ))}
-    </>
-  );
-};

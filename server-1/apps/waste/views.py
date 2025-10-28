@@ -1252,7 +1252,7 @@ class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
 
 class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
-    serializer_class = ResidentAcceptedPickupRequestsSerializer
+    serializer_class = ResidentAcceptedPickupRequestsSerializer  
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
 

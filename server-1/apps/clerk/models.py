@@ -192,6 +192,13 @@ class SummonCase(models.Model):
     sc_date_marked = models.DateTimeField(null=True, blank=True)
     sc_reason = models.TextField(null=True, blank=True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'summon_case'
@@ -227,7 +234,14 @@ class Remark(models.Model):
     rem_remarks = models.TextField()
     rem_date = models.DateTimeField(default = datetime.now)
     hs_id = models.OneToOneField('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remark')
-
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
     class Meta:
         db_table = 'remark'
 

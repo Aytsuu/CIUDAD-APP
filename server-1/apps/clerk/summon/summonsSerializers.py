@@ -149,6 +149,7 @@ class SummonCasesSerializer(serializers.ModelSerializer):
     
 class RemarkDetailSerializer(serializers.ModelSerializer):
     supp_docs = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Remark
@@ -156,7 +157,8 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
             'rem_id',
             'rem_remarks',
             'rem_date',
-            'supp_docs'
+            'supp_docs',
+            'staff_name'
         ]
     
     def get_supp_docs(self, obj):
@@ -166,6 +168,25 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting remark supp docs: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
+        return None
 
 class HearingScheduleDetailSerializer(serializers.ModelSerializer):
     remark = RemarkDetailSerializer(read_only=True)
@@ -206,6 +227,7 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
 
 class SummonCaseDetailSerializer(serializers.ModelSerializer):
     hearing_schedules = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     
     class Meta:
         model = SummonCase
@@ -217,7 +239,9 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
             'sc_date_marked', 
             'sc_reason', 
             'comp_id',
+            'staff_name',
             'hearing_schedules'
+            
         ]
     
     def get_hearing_schedules(self, obj):
@@ -228,6 +252,24 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting hearing schedules: {e}")
             return []
+        
+    def get_staff_name(self, obj):
+        try:
+            if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+                per = obj.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+        
         
 
 class HearingMinutesCreateSerializer(serializers.ModelSerializer):
@@ -321,5 +363,122 @@ class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
             return RemarkSuppDocs.objects.bulk_create(rsd_files)
         return []
     
+
+# =================== CASE TRACKING SERIALIZER ============================
+
+class CaseTrackingSerializer(serializers.Serializer):
+    payment_request = serializers.SerializerMethodField()
+    summon_case = serializers.SerializerMethodField()
+    # hearing_schedules = serializers.SerializerMethodField()
+    # current_step = serializers.SerializerMethodField()
+
+    def get_payment_request(self, obj):
+        try:
+            payment_request = ServiceChargePaymentRequest.objects.filter(
+                comp_id=obj.comp_id
+            ).first()
+            
+            if payment_request:
+                return ServiceChargePaymentReqSerializer(payment_request).data
+            return None
+        except Exception as e:
+            print(f"Error getting payment request: {e}")
+            return None
+
+    def get_summon_case(self, obj):
+        try:
+            summon_case = SummonCase.objects.filter(
+                comp_id=obj.comp_id
+            ).first()
+            
+            if summon_case:
+                return SummonCaseDetailSerializer(summon_case).data
+            return None
+        except Exception as e:
+            print(f"Error getting summon case: {e}")
+            return None
+
+    # def get_hearing_schedules(self, obj):
+    #     try:
+    #         summon_case = SummonCase.objects.filter(comp_id=obj.comp_id).first()
+    #         if summon_case:
+    #             hearing_schedules = HearingSchedule.objects.filter(
+    #                 sc_id=summon_case.sc_id
+    #             ).order_by('hs_id')
+    #             return HearingScheduleDetailSerializer(hearing_schedules, many=True).data
+    #         return []
+    #     except Exception as e:
+    #         print(f"Error getting hearing schedules: {e}")
+    #         return []
+
+
+    # def get_current_step(self, obj):
+    #     steps = []
+    #     # Step 1: Payment
+    #     payment_request = ServiceChargePaymentRequest.objects.filter(
+    #         comp_id=obj.comp_id
+    #     ).first()
+        
+    #     if payment_request:
+    #         steps.append({
+    #             'id': 1,
+    #             'title': 'Payment',
+    #             'description': 'Pay the required mediation fee to proceed with scheduling.',
+    #             'status': payment_request.pay_status.lower(),
+    #             'display_status': payment_request.pay_status
+    #         })
+    #     else:
+    #         steps.append({
+    #             'id': 1,
+    #             'title': 'Payment',
+    #             'description': 'Pay the required mediation fee to proceed with scheduling.',
+    #             'status': 'unpaid',
+    #             'display_status': 'Unpaid'
+    #         })
+
+    #     # Step 2: Schedule Mediation
+    #     summon_case = SummonCase.objects.filter(comp_id=obj.comp_id).first()
+    #     has_schedules = False
+    #     if summon_case:
+    #         has_schedules = HearingSchedule.objects.filter(sc_id=summon_case.sc_id).exists()
+        
+    #     if has_schedules:
+    #         steps.append({
+    #             'id': 2,
+    #             'title': 'Schedule Mediation',
+    #             'description': 'Attend the scheduled mediation session with both parties.',
+    #             'status': 'pending',
+    #             'display_status': 'Not Scheduled'
+    #         })
+    #     else:
+    #         steps.append({
+    #             'id': 2,
+    #             'title': 'Schedule Mediation',
+    #             'description': 'Attend the scheduled mediation session with both parties.',
+    #             'status': 'pending',
+    #             'display_status': 'Not Scheduled'
+    #         })
+
+    #     # Step 3: Case Completion
+    #     case_status = 'pending'
+    #     display_status = 'In Progress'
+        
+    #     if summon_case:
+    #         if summon_case.sc_conciliation_status == 'resolved':
+    #             case_status = 'accepted'
+    #             display_status = 'Resolved'
+    #         elif summon_case.sc_conciliation_status == 'escalated':
+    #             case_status = 'rejected'
+    #             display_status = 'Escalated'
+        
+    #     steps.append({
+    #         'id': 3,
+    #         'title': 'Case Completion',
+    #         'description': 'The case will be marked as resolved or escalated after mediation.',
+    #         'status': case_status,
+    #         'display_status': display_status
+    #     })
+
+    #     return steps
 
 

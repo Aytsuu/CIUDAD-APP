@@ -7,7 +7,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageCompleteResident } from "../queries/garbagePickupFetchQueries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import { LoadingState } from "@/components/ui/loading-state"; // ✅ Import loading animation
+import { LoadingState } from "@/components/ui/loading-state"; 
 
 export default function ResidentCompleted() {
   const router = useRouter();

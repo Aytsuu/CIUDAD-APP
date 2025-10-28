@@ -11,22 +11,27 @@ import { useFieldArray } from "react-hook-form";
 import { useEffect } from "react";
 import { useUpdateBudgetItem } from "../queries/budgetPlanUpdateQueries";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
+import { useBudgetItems } from "../../treasurer-income-expense-tracker/queries/treasurerIncomeExpenseFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetItemEditForm({
   planId,
   budgetItems,
   balanceUnappropriated,
   budgetaryObligations,
+  plan_year,
   onSuccess,
 }: {
   planId: number;
   budgetItems: BudgetPlanDetail[];
   balanceUnappropriated: number;
   budgetaryObligations: number;
+  plan_year: string;
   onSuccess: () => void;
 }) {
   const { mutate: updateItems, isPending } = useUpdateBudgetItem(onSuccess);
-  
+  const { data: expenseData, isLoading} = useBudgetItems(Number(plan_year))
+
   // Source items (from) - exclude items with 0 amount (including unappropriated if 0)
   const fromOptions = [
     ...(Number(balanceUnappropriated) > 0 ? [{
@@ -290,6 +295,21 @@ export default function BudgetItemEditForm({
     const enteredAmount = Number.parseFloat(amountValue) || 0;
     return (fromAmount - enteredAmount).toFixed(2);
   };
+
+  if (isLoading) {
+      return (
+          <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="flex justify-end">
+                  <Skeleton className="h-10 w-24" />
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="h-full flex flex-col">

@@ -308,7 +308,6 @@ function TreasurerDisbursementVouchers() {
               placeholder="Year"
               value={selectedYear}
               onChange={handleYearChange}
-              valueLabel="Filter"
             />
           </div>
           {viewMode === "active" && (

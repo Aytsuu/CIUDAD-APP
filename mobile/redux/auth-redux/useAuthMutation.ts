@@ -4,6 +4,7 @@ import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSe
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
 import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
+import { KeychainService } from "@/services/keychainService";
 
 export const useLoginMutation = () => {
   const dispatch = useAppDispatch();
@@ -12,18 +13,18 @@ export const useLoginMutation = () => {
     mutationFn: async (credentials) => {
       console.log('🔐 Attempting login...');
       const response = await api.post('authentication/mobile/login/', credentials);
-      console.log('✅ Login successful');
+      console.log('✅ Login successful: ');
       return response.data;
     },
     onMutate: () => {
       dispatch(setLoading(true));
       dispatch(clearError());
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await KeychainService.setRefreshToken(data.refresh)
       dispatch(setAuthData({ 
-        accessToken: data.access_token, 
+        accessToken: data.access, 
         user: data.user,
-        refreshToken: data.refresh 
       }));
       dispatch(setLoading(false));
     },
@@ -93,42 +94,6 @@ export const useSendEmailOTPMutation = () => {
   });
 };
 
-export const useVerifyEmailOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<TokenResponse, Error, EmailOTPCredentials>({
-    mutationFn: async ({ email, otp }) => {
-      console.log('🔐 Verifying Email OTP...');
-      const response = await api.post('authentication/email/verifyOtp/', {
-        email,
-        otp,
-      });
-      console.log('✅ Email OTP verification successful');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data) => {
-      // if (data.access_token && data.user) {
-      //   dispatch(setAuthData({ 
-      //     accessToken: data.access_token, 
-      //     user: data.user,
-      //     refreshToken: data.refresh_token 
-      //   }));
-      //   dispatch(clearOtpState());
-      // }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Email OTP verification failed';
-      console.error('❌ Email OTP verification failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
 
 export const useLogoutMutation = () => {
   const dispatch = useAppDispatch();
@@ -145,7 +110,8 @@ export const useLogoutMutation = () => {
     onMutate: () => {
       dispatch(setLoading(true));
     },
-    onSettled: () => {
+    onSettled: async () => {
+      await KeychainService.removeRefreshToken();
       dispatch(clearAuthState());
       dispatch(setLoading(false));
       queryClient.clear();

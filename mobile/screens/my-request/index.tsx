@@ -23,6 +23,13 @@ export default () => {
       gradient: ['#8b5cf6', '#7c3aed'],
     },
     {
+      title: "Blotter Request",
+      description: "File a request to document the incident and promtoe a peaceful settlement.",
+      route: "/(my-request)/complaint-tracking/compMain",
+      icon: "",
+      gradient: ['#6d28d9', '#a78bfa'],
+    },
+    {
       title: "Medicine Request",
       description: "Monitor your medicine requests.",
       route: "/(health)/medicine-request/my-requests",
