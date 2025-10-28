@@ -142,3 +142,12 @@ export type CaseTrackingType = {
     summon_case: SummonCaseDetails | null;
     hearing_schedules: HearingSchedule[] | null;
 }
+
+export type ScheduleList = {
+    ss_id: string;
+    ss_mediation_level: string;
+    ss_is_rescheduled: boolean;
+    ss_reason: string;
+    hearing_date: string;
+    hearing_time: string;
+}

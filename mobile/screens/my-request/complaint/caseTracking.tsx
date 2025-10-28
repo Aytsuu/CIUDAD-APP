@@ -40,9 +40,10 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       router.push({
         pathname: "/(my-request)/complaint-tracking/hearing-history",
         params: {
-          hearing_schedules: JSON.stringify(tracking.hearing_schedules || [])
+          hearing_schedules: JSON.stringify(tracking.hearing_schedules || []),
+          sc_id: tracking?.summon_case?.sc_id || ''
         }
-      });
+      }); 
     };
 
     // Get case status display with proper logic
@@ -78,28 +79,19 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         status: payStatus,
         display_status: tracking.payment_request?.pay_status,
         details: (
-          <View className="p-2 bg-gray-50 rounded-lg border border-gray-200 mt-2">
-            <View className="space-y-2">
-              {/* Amount */}
-              <View className="flex-row justify-between items-center">
-                <Text className="text-xs text-gray-600 font-medium">Amount</Text>
-                <Text className="text-xs font-semibold text-blue-600">
-                  ₱ {amount ? amount.toLocaleString() : "N/A"}
-                </Text>
-              </View>
+          <View className='space-y-1'>
+            <View className='flex flex-row items-center justify-between w-full'>
+              <Text className="text-xs text-gray-600 font-medium">Amount</Text>
+              <Text className="text-xs font-semibold text-blue-600">
+                ₱ {amount ? amount.toLocaleString() : "N/A"}
+              </Text>
+            </View>
 
-              {/* Date - Show payment date if paid, due date if unpaid */}
-              <View className="flex-row justify-between items-center">
-                <Text className="text-xs text-gray-600 font-medium">
-                  {payStatus === "paid" ? "Payment Date" : "Due Date"}
-                </Text>
-                <Text className={`text-xs font-semibold ${payStatus === "paid" ? "text-green-600" : "text-red-600"}`}>
-                  {payStatus === "paid" 
-                    ? (tracking.payment_request?.pay_date_paid ? formatTimestamp(tracking.payment_request?.pay_date_paid) : "N/A")
-                    : (tracking.payment_request?.pay_due_date ? formatDate(tracking.payment_request.pay_due_date, "long") : "N/A")
-                  }
-                </Text>
-              </View>
+            <View className='flex flex-row items-center justify-between w-full'>
+              <Text className="text-xs text-gray-600 font-medium">{payStatus == "unpaid" ? "Due Date" : "Date Paid"}</Text>
+              <Text className={`text-xs font-semibold ${payStatus === "paid" ? "text-green-600" : "text-red-600"}`}>
+                {payStatus == "unpaid" ? formatDate(tracking?.payment_request?.pay_due_date || "", "long"): formatTimestamp(tracking.payment_request?.pay_date_paid || '')}
+              </Text>
             </View>
           </View>
         ),
@@ -418,7 +410,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                               </View>
                               <Text className="text-2xl font-bold text-gray-300">{step.id}</Text>
                             </View>
-                            <View className="space-y-3">
+                            <View className="space-y-2">
                               <View className="space-y-1">
                                 {step.description}
                               </View>

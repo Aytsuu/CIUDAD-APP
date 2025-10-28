@@ -1,50 +1,5 @@
 import { api } from "@/api/api";
 
-
-export const addSummonDate = async (newDates: string[], oldDates: {
-    sd_id: number;
-    sd_is_checked: boolean;
-}[]) => {
-    try {
-
-        oldDates.forEach(oldDate => {
-            if (!oldDate.sd_is_checked) {
-                api.delete(`clerk/delete-summon-date/${oldDate.sd_id}/`);
-            }
-        });
-
-        const responses = await Promise.all(
-            newDates.map(date => 
-                api.post('clerk/summon-date-availability/', {
-                    sd_date: date 
-                })
-            )
-        );
-        
-        return responses.map(res => res.data);
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-}
-
-export const addSummonTimeSlots = async (timeSlots: Array<{
-    sd_id: number;
-    st_start_time: string;
-    st_is_booked?: boolean;
-}>) => {
-
-    console.log('Slots', timeSlots)
-    try {
-        const res = await api.post('clerk/summon-time-availability/', timeSlots);
-        return res.data;
-    } catch (err) {
-        console.error(err);
-        throw err; 
-    }
-}
-
-
 export const addSchedule = async (schedule: Record<string, any>, status_type: string) => {
     try{
         console.log('data:', {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { getSummonDates, getSummonTimeSlots, getCaseTrackingDetails } from "../restful-API/summon-relatedGetAPI"
-import { CaseTrackingType, SummonDates, SummonTimeSlots } from "../types"
+import { getSummonDates, getSummonTimeSlots, getCaseTrackingDetails, getSummonScheduleList } from "../restful-API/summon-relatedGetAPI"
+import { CaseTrackingType, SummonDates, SummonTimeSlots, ScheduleList } from "../types"
 
 export const useGetSummonDates = () => {
     return useQuery<SummonDates[]>({
@@ -25,4 +25,13 @@ export const useGetCaseTrackingDetails = (comp_id: string) => {
         queryFn: () => getCaseTrackingDetails(comp_id),
         staleTime: 5000
     })
+}
+
+export const useGetScheduleList = (sc_id: string) => {
+     return useQuery<ScheduleList[]>({
+        queryKey: ['schedList', sc_id],
+        queryFn: () => getSummonScheduleList(sc_id),
+        enabled: !!sc_id, 
+        staleTime: 5000,
+    });
 }

@@ -18,13 +18,17 @@ export default function HearingHistory() {
   const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const sc_id = params.sc_id as string
 
   // Parse the hearing schedules from params
   const hearingSchedules = params.hearing_schedules ? JSON.parse(params.hearing_schedules as string) : [];
 
   const handleAddSchedule = () => {
     router.push({
-      pathname: '/(my-request)/complaint-tracking/schedule'
+      pathname: '/(my-request)/complaint-tracking/schedule',
+      params: {
+        sc_id: sc_id
+      }
     });
   };
 
@@ -48,9 +52,6 @@ export default function HearingHistory() {
           </TouchableOpacity>
         }
         headerTitle={<Text className="text-gray-900 text-[13px]">Hearing Schedules</Text>}
-        rightAction={
-          <Text className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"> </Text>
-        }
         wrapScroll={false}
       >
         <View className="flex-1 bg-gray-50">
