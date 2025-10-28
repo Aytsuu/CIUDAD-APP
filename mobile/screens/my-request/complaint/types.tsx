@@ -135,6 +135,7 @@ export type PaymentRequest = {
     pay_date_paid: string | null;
     comp_id: number;
     pr_id: number | null;
+    pay_amount: number;
 }
 
 export type CaseTrackingType = {

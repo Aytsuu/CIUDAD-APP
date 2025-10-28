@@ -317,6 +317,7 @@ export default function ComplaintMainView(): React.JSX.Element {
         leftAction={LeftHeader}
         headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
         rightAction={RightHeader}
+        wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center px-4 bg-gray-50">
           <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mb-4">
@@ -348,6 +349,7 @@ export default function ComplaintMainView(): React.JSX.Element {
       leftAction={LeftHeader}
       headerTitle={<Text className="flex items-start text-gray-900 font-medium">Blotter Request</Text>}
       rightAction={RightHeader}
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Tab Navigation */}

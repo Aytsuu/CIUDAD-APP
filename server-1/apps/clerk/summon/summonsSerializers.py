@@ -5,6 +5,7 @@ from utils.supabase_client import upload_to_storage
 from django.utils import timezone
 from django.db import transaction
 from apps.profiling.serializers.business_serializers import FileInputSerializer
+from apps.treasurer.serializers import Purpose_And_RatesSerializers
 
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
@@ -362,10 +363,35 @@ class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
         if rsd_files:
             return RemarkSuppDocs.objects.bulk_create(rsd_files)
         return []
+
+# ================ PAYMENT SERIALIZER ==============
+class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
+    pay_amount = serializers.SerializerMethodField()
+    purpose_details = Purpose_And_RatesSerializers(source='pr_id', read_only=True)
     
-
+    class Meta:
+        model = ServiceChargePaymentRequest
+        fields = [
+            'pay_id', 
+            'pay_sr_type', 
+            'pay_status', 
+            'pay_date_req', 
+            'pay_due_date', 
+            'pay_req_status', 
+            'pay_date_paid', 
+            'comp_id', 
+            'pr_id',
+            'pay_amount',
+            'purpose_details'
+        ]
+    
+    def get_pay_amount(self, obj):
+        """Get the payment amount from the associated Purpose_And_Rates"""
+        if obj.pr_id and obj.pr_id.pr_rate:
+            return obj.pr_id.pr_rate
+        return None
+    
 # =================== CASE TRACKING SERIALIZER ============================
-
 class CaseTrackingSerializer(serializers.Serializer):
     payment_request = serializers.SerializerMethodField()
     summon_case = serializers.SerializerMethodField()
@@ -374,7 +400,7 @@ class CaseTrackingSerializer(serializers.Serializer):
         try:
             payment_request = ServiceChargePaymentRequest.objects.filter(
                 comp_id=obj.comp_id
-            ).first()
+            ).select_related('pr_id').first() 
             
             if payment_request:
                 return ServiceChargePaymentReqSerializer(payment_request).data
