@@ -19,7 +19,7 @@ import { Plus } from "lucide-react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import ScreenLayout from "@/screens/_ScreenLayout";
+import PageLayout from "@/screens/_PageLayout";
 import {
   Archive,
   ArchiveRestore,
@@ -43,40 +43,38 @@ const CouncilCalendarPage = () => {
     "active"
   );
   const isArchived = eventViewMode === "archive";
-  
+
   // Fetch ACTIVE events for active tab
-  const { 
-    data: activeEventsData, 
-    isLoading: isActiveEventsLoading, 
-    error, 
-    refetch: refetchActive 
-  } = useGetCouncilEvents(
-    1, 
-    1000, 
-    undefined, 
-    "all", 
-    false  // is_archive=false for active events
-  );
-  
-  // Fetch ARCHIVED events for archive tab
-  const { 
-    data: archivedEventsData, 
-    isLoading: isArchivedEventsLoading,
-    refetch: refetchArchived 
+  const {
+    data: activeEventsData,
+    isLoading: isActiveEventsLoading,
+    error,
+    refetch: refetchActive,
   } = useGetCouncilEvents(
     1,
     1000,
     undefined,
     "all",
-    true, 
+    false // is_archive=false for active events
   );
 
-  // Use the appropriate data based on active tab
-  const events = eventViewMode === "archive" 
-    ? archivedEventsData?.results || [] 
-    : activeEventsData?.results || [];
+  // Fetch ARCHIVED events for archive tab
+  const {
+    data: archivedEventsData,
+    isLoading: isArchivedEventsLoading,
+    refetch: refetchArchived,
+  } = useGetCouncilEvents(1, 1000, undefined, "all", true);
 
-  const isLoading = eventViewMode === "archive" ? isArchivedEventsLoading : isActiveEventsLoading;
+  // Use the appropriate data based on active tab
+  const events =
+    eventViewMode === "archive"
+      ? archivedEventsData?.results || []
+      : activeEventsData?.results || [];
+
+  const isLoading =
+    eventViewMode === "archive"
+      ? isArchivedEventsLoading
+      : isActiveEventsLoading;
   const [refreshing, setRefreshing] = useState(false);
   const deleteEventMutation = useDeleteCouncilEvent();
   const restoreEventMutation = useRestoreCouncilEvent();
@@ -312,7 +310,7 @@ const CouncilCalendarPage = () => {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <LoadingState/>
+        <LoadingState />
       </SafeAreaView>
     );
   }
@@ -328,18 +326,16 @@ const CouncilCalendarPage = () => {
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-          <ChevronLeft size={24} className="text-gray-700" />
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-gray-900 text-[13px]">Council Events</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      scrollable={false}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">Council Events</Text>
+      }
+      rightAction={<View />}
     >
       {/* Calendar Header */}
       <View className="bg-white shadow-sm py-4 px-6">
@@ -375,21 +371,44 @@ const CouncilCalendarPage = () => {
 
       {/* Tabs - Styled like Budget Plan */}
       <View className="px-6 mt-4">
-        <Tabs value={eventViewMode} onValueChange={val => handleTabChange(val as "active" | "archive")}>
+        <Tabs
+          value={eventViewMode}
+          onValueChange={(val) => handleTabChange(val as "active" | "archive")}
+        >
           <TabsList className="bg-blue-50 flex-row justify-between">
-            <TabsTrigger 
-              value="active" 
-              className={`flex-1 mx-1 ${eventViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            <TabsTrigger
+              value="active"
+              className={`flex-1 mx-1 ${
+                eventViewMode === "active"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
             >
-              <Text className={`${eventViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+              <Text
+                className={`${
+                  eventViewMode === "active"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
                 Active
               </Text>
             </TabsTrigger>
-            <TabsTrigger 
-              value="archive" 
-              className={`flex-1 mx-1 ${eventViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            <TabsTrigger
+              value="archive"
+              className={`flex-1 mx-1 ${
+                eventViewMode === "archive"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
             >
-              <Text className={`${eventViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+              <Text
+                className={`${
+                  eventViewMode === "archive"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
                 Archive
               </Text>
             </TabsTrigger>
@@ -412,7 +431,9 @@ const CouncilCalendarPage = () => {
               <TouchableOpacity
                 className="bg-primaryBlue p-2 rounded-full"
                 onPress={() =>
-                  router.push("/(council)/council-events/schedule?isAdding=true")
+                  router.push(
+                    "/(council)/council-events/schedule?isAdding=true"
+                  )
                 }
               >
                 <Plus size={20} color="#ffffff" />
@@ -441,7 +462,7 @@ const CouncilCalendarPage = () => {
           </View>
         )}
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 
