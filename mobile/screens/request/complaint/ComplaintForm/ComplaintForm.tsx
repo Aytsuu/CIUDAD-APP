@@ -17,7 +17,7 @@ const STEPS = [
   { id: 3, title: "Incident" },
 ];
 
-const ComplaintReportProcess = () => {
+export default function ComplaintReportProcess () {
   const router = useRouter();
   const { user } = useAuth();
   const isStaff = !!user?.staff;
@@ -122,5 +122,3 @@ const ComplaintReportProcess = () => {
     </ScreenLayout>
   );
 };
-
-export default ComplaintReportProcess;

@@ -27,7 +27,7 @@ export default () => {
       description: "File a request to document the incident and promtoe a peaceful settlement.",
       route: "/(my-request)/complaint-tracking/compMain",
       icon: "",
-      gradient: ['#6d28d9', '#a78bfa'],
+      gradient: ['#EBEFFE', '#0875DC']
     },
     {
       title: "Medicine Request",

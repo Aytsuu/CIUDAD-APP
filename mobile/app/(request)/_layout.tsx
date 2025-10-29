@@ -9,6 +9,7 @@ export default () => {
             <Stack.Screen name="certification-request/cert-choices" options={{ headerShown: false, animation: 'fade' }}/>
             <Stack.Screen name="certification-request/cert-business-request" options={{headerShown: false, animation: 'fade'}}/>
             <Stack.Screen name="cert-tracking/index" options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="complaint/complaint-req-form" options={{ headerShown: false, animation: 'fade' }} />
         </Stack>
     )
 }
