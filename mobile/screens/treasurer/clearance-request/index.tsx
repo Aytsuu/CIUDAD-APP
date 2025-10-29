@@ -28,21 +28,21 @@ const ClearanceRequestMain = () => {
       title: 'Personal & Others',
       description: 'View certificate requests',
       icon: FileText,
-      gradient: ['#3b82f6', '#1e40af'],
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       id: 'business',
       title: 'Business Permits',
       description: 'View business permit requests',
       icon: Building2,
-      gradient: ['#059669', '#047857'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       id: 'service_charge',
       title: 'Service Charge',
       description: 'View service charge requests',
       icon: Award,
-      gradient: ['#dc2626', '#991b1b'],
+      gradient: ['#2563eb', '#1e40af'],
     }
   ]
 
@@ -94,9 +94,6 @@ const ClearanceRequestMain = () => {
                   <View>
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
-                    </Text>
-                    <Text className="text-white/80 text-xs mt-1 leading-tight">
-                      {item.description}
                     </Text>
                   </View>
                 </View>

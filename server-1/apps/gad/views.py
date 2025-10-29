@@ -342,10 +342,53 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 logger.error(f"Serializer validation failed: {serializer.errors}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            # Save the instance
+            # Save the instance and log activity
             try:
                 instance = serializer.save()
                 logger.info(f"Successfully created proposal with ID: {instance.gpr_id}")
+                
+                # Log the activity if staff exists with staff_id
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff from request data or user
+                    staff_id = request.data.get('staff_id') or request.data.get('staffId') or request.data.get('staff')
+                    
+                    # Try to get staff from user if not in request
+                    if not staff_id:
+                        try:
+                            staff_id = getattr(request.user, 'staff', None)
+                            if staff_id:
+                                staff_id = getattr(staff_id, 'staff_id', None)
+                        except:
+                            pass
+                    
+                    if staff_id:
+                        # Format staff_id properly (pad with leading zeros if needed)
+                        if isinstance(staff_id, str) and len(staff_id) < 11:
+                            staff_id = staff_id.zfill(11)
+                        elif isinstance(staff_id, int):
+                            staff_id = str(staff_id).zfill(11)
+                        
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                        
+                        if staff:
+                            # Create activity log
+                            create_activity_log(
+                                act_type="Project Proposal Created",
+                                act_description=f"Project proposal {instance.gpr_id} created for development plan {instance.dev_id}",
+                                staff=staff,
+                                record_id=str(instance.gpr_id)
+                            )
+                            logger.info(f"Activity logged for project proposal creation: {instance.gpr_id}")
+                        else:
+                            logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    else:
+                        logger.warning("No staff_id provided in request for activity logging")
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity for project proposal creation: {str(log_error)}")
+                    # Don't fail the request if logging fails
                 
                 # Verify the instance was actually saved
                 saved_instance = ProjectProposal.objects.get(pk=instance.gpr_id)

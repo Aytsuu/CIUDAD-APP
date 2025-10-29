@@ -104,9 +104,6 @@ export default () => {
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
                     </Text>
-                    <Text className="text-white/80 text-xs mt-1 leading-tight">
-                      {item.description}
-                    </Text>
                   </View>
                 </View>
               </LinearGradient>
