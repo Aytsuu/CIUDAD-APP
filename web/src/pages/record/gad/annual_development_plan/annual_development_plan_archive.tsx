@@ -9,7 +9,6 @@ import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
@@ -305,36 +304,22 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
                             <TooltipProvider>
                               <TooltipLayout
                                 trigger={
-                                  <div>
-                                    <ConfirmationModal
-                                      trigger={
-                                        <div className="bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 p-2.5 rounded-lg cursor-pointer transition-colors">
-                                          <RotateCcw size={18} />
-                                        </div>
-                                      }
-                                      title="Restore Archived Plan"
-                                      description="Would you like to restore this plan from the archive and make it active again?"
-                                      actionLabel="Restore"
-                                      onClick={() => handleRestore(plan.dev_id)}
-                                    />
+                                  <div 
+                                    className="bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 p-2.5 rounded-lg cursor-pointer transition-colors"
+                                    onClick={() => handleRestore(plan.dev_id)}
+                                  >
+                                    <RotateCcw size={18} />
                                   </div>
                                 }
                                 content="Restore"
                               />
                               <TooltipLayout
                                 trigger={
-                                  <div>
-                                    <ConfirmationModal
-                                      trigger={
-                                        <div className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 p-2.5 rounded-lg cursor-pointer transition-colors">
-                                          <Trash size={18} />
-                                        </div>
-                                      }
-                                      title="Permanent Deletion Confirmation"
-                                      description="This plan will be permanently deleted and cannot be recovered. Do you wish to proceed?"
-                                      actionLabel="Delete"
-                                      onClick={() => handleDelete(plan.dev_id)}
-                                    />
+                                  <div 
+                                    className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 p-2.5 rounded-lg cursor-pointer transition-colors"
+                                    onClick={() => handleDelete(plan.dev_id)}
+                                  >
+                                    <Trash size={18} />
                                   </div>
                                 }
                                 content="Delete Permanently"
