@@ -11,7 +11,8 @@ import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
 import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
 import { Spinner } from "@/components/ui/spinner";
-import { DocumentViewer } from "@/components/ui/document-viewer";
+import { ImageModal } from "@/components/ui/image-modal";
+import { ZoomIn } from "lucide-react";
 import { getBusinessPermitFiles } from "./restful-api/permitClearanceGetAPI";
 import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -22,6 +23,7 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
   const [files, setFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -58,19 +60,115 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
     fetchFiles();
   };
 
-  return (
-    <DocumentViewer
-      files={files.map(file => ({
+  const mediaFiles = React.useMemo(() => {
+    return files.map((file: any) => {
+      const url = file.bpf_url || '';
+      const fileType = file.bpf_type || '';
+      
+      // Determine file type category
+      const normalizedType = fileType.toLowerCase().trim();
+      const isAssessment = normalizedType.includes('assessment');
+      const isPermit = normalizedType.includes('permit');
+      
+      // All files are images - treat as image type
+      return {
         id: file.bpf_id,
-        type: file.bpf_type,
-        url: file.bpf_url
-      }))}
-      title={businessName}
-      subtitle={`Business Permit ID: ${bprId}`}
-      isLoading={isLoading}
-      error={error}
-      onRetry={handleRetry}
-    />
+        url: url,
+        type: 'image' as const,
+        name: fileType || `Image ${file.bpf_id}`,
+        fileType: isAssessment ? 'assessment' : isPermit ? 'permit' : 'other'
+      };
+    });
+  }, [files]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4 p-6">
+        <div className="text-center py-8 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
+          <p className="text-sm text-red-600 mb-4">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">{businessName}</h3>
+        <p className="text-sm text-gray-500">Business Permit ID: {bprId}</p>
+      </div>
+      {mediaFiles.length === 0 ? (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-500">No documents available</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-auto-fit gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', maxWidth: '100%' }}>
+          {mediaFiles.map((media: any, index: number) => (
+            <div key={media.id || index} className="group relative">
+              <div
+                className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                onClick={() => setSelectedImage(media)}
+              >
+                {/* Image preview */}
+                <img
+                  src={media.url}
+                  alt={media.name || `Image ${index + 1}`}
+                  className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                
+                {/* Type badge overlay */}
+                {media.fileType && media.fileType !== 'other' && (
+                  <div className="absolute top-2 left-2">
+                    <span
+                      className={`px-2 py-1 rounded-md text-xs font-semibold shadow-sm ${
+                        media.fileType === 'assessment'
+                          ? 'bg-blue-500 text-white'
+                          : media.fileType === 'permit'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-500 text-white'
+                      }`}
+                    >
+                      {media.fileType === 'assessment' ? 'Assessment' : 'Previous Permit'}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
+                  <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <ZoomIn size={40} className="text-white"/>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          ))}
+        </div>
+      )}
+      <ImageModal
+        src={selectedImage?.url || ""}
+        alt={selectedImage?.name || "Business Permit Document"}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
+    </div>
   );
 };
 

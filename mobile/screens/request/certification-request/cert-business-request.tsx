@@ -532,6 +532,7 @@ const CertPermit: React.FC = () => {
                       setSelectedImages={setPreviousPermitImages}
                       limit={1}
                       editable={true}
+                      allowCrop={false}
                     />
                   </View>
                 )}
@@ -546,6 +547,7 @@ const CertPermit: React.FC = () => {
                     setSelectedImages={setAssessmentImages}
                     limit={1}
                     editable={true}
+                    allowCrop={false}
                   />
                 </View>
               </View>
@@ -570,18 +572,6 @@ const CertPermit: React.FC = () => {
               </Text>
             </View>
 
-            {/* Upload Progress */}
-            {isUploadingFiles && (
-              <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
-                <View className="flex-row items-center justify-center">
-                  <ActivityIndicator size="small" color="#00AFFF" />
-                  <Text className="text-blue-700 text-sm font-medium ml-2">
-                    {uploadProgress}
-                  </Text>
-                </View>
-              </View>
-            )}
-
             {/* Submit Button */}
             {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || isBarangayClearance) ? (
               <TouchableOpacity
@@ -598,7 +588,7 @@ const CertPermit: React.FC = () => {
                   <View className="flex-row items-center">
                     <ActivityIndicator size="small" color="white" />
                     <Text className="text-white font-semibold text-base ml-2">
-                      {isUploadingFiles ? 'Uploading...' : 'Submitting...'}
+                      Submitting...
                     </Text>
                   </View>
                 ) : (
