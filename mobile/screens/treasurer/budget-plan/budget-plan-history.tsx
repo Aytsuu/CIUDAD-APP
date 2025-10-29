@@ -3,7 +3,7 @@ import { useGetBudgetPlanHistory, type BudgetPlanHistory } from "./queries/budge
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
-import EmptyState from "@/components/ui/emptyState";
+import { History } from "lucide-react-native";
 
 export default function BudgetPlanHistory({ planId }: { planId: string }) {
   const { data: fetchedData = [], isLoading } = useGetBudgetPlanHistory(planId);
@@ -22,6 +22,7 @@ export default function BudgetPlanHistory({ planId }: { planId: string }) {
       <ScrollView 
         className="flex-1" 
         contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
       >
         {fetchedData.length > 0 ? (
           fetchedData.map((item) => (
@@ -86,9 +87,20 @@ export default function BudgetPlanHistory({ planId }: { planId: string }) {
             </Card>
           ))
         ) : (
-            <EmptyState emptyMessage="No budget plan history yet." />
+          <View className="flex-1 justify-center items-center py-16">
+            <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
+              <History size={48} className="text-gray-300 mb-4" />
+                <Text className="text-gray-500 text-center text-lg font-semibold mb-2">
+                  No Budget History
+                </Text>
+                <Text className="text-gray-400 text-center text-sm max-w-xs">
+                  No budget transfers have been made for this plan yet.
+                </Text>
+            </View>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
+

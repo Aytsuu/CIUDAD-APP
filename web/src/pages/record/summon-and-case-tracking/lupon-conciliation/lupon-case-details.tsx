@@ -305,19 +305,17 @@ export default function LuponCaseDetails() {
       header: " ",
       cell: ({ row }) => {
         const schedule = row.original
-        const showPreview = !schedule.hs_is_closed
 
         return (
           <div className="flex justify-center gap-2">
             {/* Preview Summon */}
-            {showPreview && (
               <TooltipLayout
                 trigger={
                   <DialogLayout
                     trigger={
-                      <div className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">
-                        <div className='text-12px'>Generate File</div>
-                      </div>
+                      <Button disabled={row.original.hs_is_closed} className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">       
+                          <div className='text-12px'>Generate File</div>
+                      </Button>
                     }
                     title="Schedule Details"
                     description={`Details for ${schedule.hs_level} on ${formatDate(schedule.summon_date.sd_date, "long")}`}
@@ -345,7 +343,6 @@ export default function LuponCaseDetails() {
                 }
                 content="Preview"
               />
-            )}
           </div>
         )
       },

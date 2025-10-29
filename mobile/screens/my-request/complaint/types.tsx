@@ -70,6 +70,7 @@ export interface ComplaintData {
   complaint_files: ComplaintFile[];
   comp_status: string;
   staff: any;
+  rp_id: string;
 }
 
 
@@ -135,10 +136,20 @@ export type PaymentRequest = {
     pay_date_paid: string | null;
     comp_id: number;
     pr_id: number | null;
+    pay_amount: number;
 }
 
 export type CaseTrackingType = {
     payment_request: PaymentRequest | null;
     summon_case: SummonCaseDetails | null;
     hearing_schedules: HearingSchedule[] | null;
+}
+
+export type ScheduleList = {
+    ss_id: string;
+    ss_mediation_level: string;
+    ss_is_rescheduled: boolean;
+    ss_reason: string;
+    hearing_date: string;
+    hearing_time: string;
 }

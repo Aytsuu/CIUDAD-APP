@@ -152,7 +152,6 @@ export default function MediaPicker({
           <View className="items-center p-5">
             <View className="bg-blue-50 p-3 rounded-full">
                 <CloudUpload className="text-primaryBlue" />
-                <CloudUpload className="text-primaryBlue" />
             </View>
             <Text className="text-gray-700 text-[12px] mt-2">
               <Text className="text-primaryBlue font-medium">

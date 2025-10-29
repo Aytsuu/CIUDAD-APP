@@ -190,8 +190,12 @@ export function AppSidebar() {
     ...(featureValidator("complaint")
       ? [
           {
-            title: "Complaint",
-            url: "/complaint",
+            title: "Blotter",
+            url: "/",
+            items: [
+              {title: "Process", url: "/complaint"},
+              {title: "Record", url: "/record"}
+            ]
           },
         ]
       : []),

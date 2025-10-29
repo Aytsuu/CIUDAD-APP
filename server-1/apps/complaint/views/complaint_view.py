@@ -38,7 +38,6 @@ class ResidentsComplaintListView(generics.ListAPIView):
                 return Complaint.objects.none()
             
             rp_id = user.rp.rp_id
-            
             if not rp_id:
                 return Complaint.objects.none()
             

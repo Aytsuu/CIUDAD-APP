@@ -100,38 +100,95 @@ def create_notification(
     print(f"Notification sent. Total sent: {total_sent}, failed: {total_failed}")
     return notification
 
+
 def reminder_notification(
     title: str,
     message: str,
     sender,
     recipients: list,
     notif_type: str,
-    remind_at: datetime,
-    web_route=None,
-    web_params=None,
-    mobile_route=None,
-    mobile_params=None,
+    send_at: datetime,
+    web_route: str = None,
+    web_params: dict = None,
+    mobile_route: str = None,
+    mobile_params: dict = None,
 ):
-    if timezone.is_naive(remind_at):
-        remind_at = timezone.make_aware(remind_at)
+    if timezone.is_naive(send_at):
+        send_at = timezone.make_aware(send_at)
 
-    sched_id = f"reminder_{notif_type}_{remind_at.timestamp()}"
+    # Don't schedule past times
+    if send_at <= timezone.now():
+        print(f"⚠️ Cannot schedule notification in the past: {send_at}")
+        return None
 
-    trigger = DateTrigger(run_date=remind_at)
-    scheduler.add_job(
-        create_notification,
-        trigger=trigger,
-        id=sched_id,
-        replace_existing=True,
-        args=[
-            title, message, sender, recipients, notif_type,
-            web_route, web_params, mobile_route, mobile_params
-        ],
-    )
+    # Create unique job ID
+    job_id = f"notif_{notif_type}_{int(send_at.timestamp())}"
 
-    print(f"Reminder scheduled for {remind_at} - sched_id={sched_id}")
+    # Schedule the job
+    trigger = DateTrigger(run_date=send_at)
+    
+    try:
+        scheduler.add_job(
+            create_notification,
+            trigger=trigger,
+            id=job_id,
+            replace_existing=True,
+            args=[
+                title, message, sender, recipients, notif_type,
+                web_route, web_params, mobile_route, mobile_params
+            ],
+        )
+        
+        print(f"⏰ Scheduled notification for {len(recipients)} recipients at {send_at}")
+        print(f"   Job ID: {job_id}")
+        return job_id
+        
+    except Exception as e:
+        print(f"❌ Error scheduling notification: {str(e)}")
+        return None
+
+
+def get_scheduled_jobs():
+    """
+    Get all pending scheduled notifications.
+    
+    Returns:
+        list: List of job info dictionaries
+    
+    Example:
+        jobs = get_scheduled_jobs()
+        for job in jobs:
+            print(f"{job['job_id']}: {job['next_run_time']}")
+    """
+    jobs = scheduler.get_jobs()
+    
+    job_list = []
+    for job in jobs:
+        job_list.append({
+            'job_id': job.id,
+            'next_run_time': job.next_run_time,
+            'function': job.func.__name__,
+        })
+    
+    # Sort by next_run_time
+    job_list.sort(key=lambda x: x['next_run_time'])
+    
+    return job_list
+
+
+def cancel_scheduled_notification(job_id: str):
+    try:
+        scheduler.remove_job(job_id)
+        print(f"✅ Cancelled job: {job_id}")
+        return True
+    except Exception as e:
+        print(f"❌ Error cancelling job: {str(e)}")
+        return False
+
 
 def start_scheduler():
     if not scheduler.running:
         scheduler.start()
-        print("Notification scheduler started.")
+        print("✅ Notification scheduler started")
+    else:
+        print("⚠️ Scheduler is already running")

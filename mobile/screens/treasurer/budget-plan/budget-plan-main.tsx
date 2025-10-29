@@ -333,5 +333,5 @@ export default function BudgetPlanMain() {
       
       <LoadingModal visible={isArchivePending || isRestorePending || isDeletePending} />
     </>
-  );
+  );  
 }

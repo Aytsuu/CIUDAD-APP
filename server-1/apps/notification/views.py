@@ -64,7 +64,6 @@ class CreateNotificationView(APIView):
             logger.error(f"❌ Error creating notification from Server-2: {str(e)}")
             return Response({'error': 'Failed to create notification'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
 
@@ -83,22 +82,21 @@ class CreateReminderNotificationView(APIView):
             
             recipients = list(ResidentProfile.objects.filter(rp_id__in=request.data.get('recipients', [])))
 
-            remind_at = datetime.fromisoformat(request.data.get('remind_at'))
-            if remind_at.tzinfo is None:
-                remind_at = pytz.utc.localize(remind_at)
+            send_at = datetime.fromisoformat(request.data.get('send_at'))
+            if send_at.tzinfo is None:
+                send_at = pytz.utc.localize(send_at)
 
             reminder_notification(
                 title=request.data.get('title'),
                 message=request.data.get('message'),
                 notif_type=request.data.get('notif_type'),
-                remind_at=remind_at,
+                send_at=send_at,
                 sender=sender, 
                 recipients=recipients,
                 web_route=request.data.get('web_route'),
                 web_params=request.data.get('web_params'),
                 mobile_route=request.data.get('mobile_route'),
                 mobile_params=request.data.get('mobile_params'),
-                target_obj=request.data.get('target_obj')
             )
 
             return Response(

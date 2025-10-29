@@ -228,7 +228,6 @@ export default function ComplaintMainView(): React.JSX.Element {
   // State
   const [activeTab, setActiveTab] = useState<TabType>('details');
   const [complaintData, setComplaintData] = useState<ComplaintData | null>(null);
-  const [showGoBackModal, setShowGoBackModal] = useState(false);
 
   // Load complaint from params (if passed directly)
   useEffect(() => {
@@ -266,14 +265,6 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Loading state
   const isDataLoading = isLoading || (!complaintData && shouldFetch);
 
-  // Handle navigation back
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const handleGoBackRequest = () => {
-    setShowGoBackModal(true);
-  };
 
   // Tab Button Component
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress }) => (
@@ -284,16 +275,6 @@ export default function ComplaintMainView(): React.JSX.Element {
       <Text className={`font-medium ${isActive ? "text-blue-600" : "text-gray-500"}`}>
         {title}
       </Text>
-    </TouchableOpacity>
-  );
-
-  // Shared Header Actions
-  const LeftHeader = (
-    <TouchableOpacity
-      onPress={handleGoBackRequest}
-      className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
-    >
-      <ChevronLeft size={20} color="#374151" />
     </TouchableOpacity>
   );
 
@@ -314,9 +295,17 @@ export default function ComplaintMainView(): React.JSX.Element {
     
     return (
       <PageLayout
-        leftAction={LeftHeader}
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={20} color="#374151" />
+          </TouchableOpacity>
+        }
         headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
         rightAction={RightHeader}
+        wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center px-4 bg-gray-50">
           <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mb-4">
@@ -331,7 +320,7 @@ export default function ComplaintMainView(): React.JSX.Element {
               : "The complaint you're looking for doesn't exist or couldn't be loaded."}
           </Text>
           <TouchableOpacity
-            onPress={handleGoBack}
+            onPress={() => router.back()}
             className="mt-6 bg-blue-500 px-8 py-3 rounded-xl shadow-sm"
             activeOpacity={0.8}
           >
@@ -345,9 +334,17 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Main Render
   return (
     <PageLayout
-      leftAction={LeftHeader}
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#374151" />
+        </TouchableOpacity>
+      }
       headerTitle={<Text className="flex items-start text-gray-900 font-medium">Blotter Request</Text>}
       rightAction={RightHeader}
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Tab Navigation */}
