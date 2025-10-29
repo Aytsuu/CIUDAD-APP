@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -348,6 +349,14 @@ const CertPermit: React.FC = () => {
     addBusinessPermit.mutate(payload);
   };
 
+  if (isLoading || isLoadingPurposes || isLoadingBusiness) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -361,12 +370,9 @@ const CertPermit: React.FC = () => {
       headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 p-6">
-        {/* Loading Modal */}
-        <LoadingModal visible={addBusinessPermit.status === 'pending' || isUploadingFiles} />
-        {isLoading || isLoadingPurposes || isLoadingBusiness ? (
-          <LoadingState />
-        ) : (
+        <View className="flex-1 p-6">
+          {/* Loading Modal */}
+          <LoadingModal visible={addBusinessPermit.status === 'pending' || isUploadingFiles} />
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {error && (
               <Text className="text-red-500 mb-2 text-sm">{error}</Text>
@@ -585,8 +591,7 @@ const CertPermit: React.FC = () => {
               </>
             )}
           </ScrollView>
-        )}
-      </View>
+        </View>
     </PageLayout>
   );
 };

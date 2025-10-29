@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import PageLayout from '@/screens/_PageLayout';
@@ -80,6 +81,14 @@ const CertForm: React.FC = () => {
     });
   };
 
+  if (isLoading || isLoadingPurposes) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -93,12 +102,9 @@ const CertForm: React.FC = () => {
       headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 p-6">
-        {/* Loading Modal */}
-        <LoadingModal visible={addPersonalCert.status === 'pending'} />
-        {isLoading || isLoadingPurposes ? (
-          <LoadingState />
-        ) : (
+        <View className="flex-1 p-6">
+          {/* Loading Modal */}
+          <LoadingModal visible={addPersonalCert.status === 'pending'} />
           <>
             {error && (
               <Text className="text-red-500 mb-2 text-sm">{error}</Text>
@@ -168,8 +174,7 @@ const CertForm: React.FC = () => {
               )}
             </TouchableOpacity>
           </>
-        )}
-      </View>
+        </View>
     </PageLayout>
   );
 };

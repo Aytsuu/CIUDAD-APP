@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getAnnualDevPlanYears } from './restful-api/annualDevPlanGetAPI';
@@ -45,6 +46,14 @@ const AnnualDevPlanMain = () => {
     });
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -59,35 +68,31 @@ const AnnualDevPlanMain = () => {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 p-6">
-        {isLoading ? (
-          <LoadingState />
-        ) : (
-          <View className="flex-row flex-wrap justify-between">
-            {folders.map((folder, index) => (
-            <TouchableOpacity
-              key={folder.id}
-              className="w-[48%] mb-6 items-center"
-              onPress={() => handleFolderPress(folder)}
-              activeOpacity={0.7}
-            >
-              <View className="items-center">
-                {/* Folder Icon */}
-                <View className="relative">
-                  <View className="w-16 h-12 bg-yellow-400 rounded-t-lg relative">
-                    {/* Folder tab */}
-                    <View className="absolute -top-1 left-2 w-8 h-3 bg-yellow-400 rounded-t-lg" />
-                  </View>
+        <View className="flex-row flex-wrap justify-between">
+          {folders.map((folder, index) => (
+          <TouchableOpacity
+            key={folder.id}
+            className="w-[48%] mb-6 items-center"
+            onPress={() => handleFolderPress(folder)}
+            activeOpacity={0.7}
+          >
+            <View className="items-center">
+              {/* Folder Icon */}
+              <View className="relative">
+                <View className="w-16 h-12 bg-yellow-400 rounded-t-lg relative">
+                  {/* Folder tab */}
+                  <View className="absolute -top-1 left-2 w-8 h-3 bg-yellow-400 rounded-t-lg" />
                 </View>
-                
-                {/* Folder name */}
-                <Text className="text-sm font-medium text-gray-800 mt-2 text-center">
-                  {folder.name}
-                </Text>
               </View>
-            </TouchableOpacity>
-          ))}
-          </View>
-        )}
+              
+              {/* Folder name */}
+              <Text className="text-sm font-medium text-gray-800 mt-2 text-center">
+                {folder.name}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+        </View>
       </View>
     </PageLayout>
   );

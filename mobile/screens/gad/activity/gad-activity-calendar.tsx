@@ -7,6 +7,7 @@ import {
   Dimensions,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { format, parseISO, isSameMonth, isSameDay, addMonths } from "date-fns";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -212,17 +213,9 @@ const GADActivityCalendar = () => {
 
   if (isLoading) {
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" className="text-black" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-[13px]">GAD Activity Calendar</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
         <LoadingState />
-      </PageLayout>
+      </SafeAreaView>
     );
   }
 
