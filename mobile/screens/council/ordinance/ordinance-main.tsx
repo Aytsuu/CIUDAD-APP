@@ -1,16 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Linking,
-  Alert,
-  Modal,
-  ScrollView,
-  Image
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image} from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, Search, Eye, FileText, X, Plus, Edit } from 'lucide-react-native';
@@ -161,13 +151,6 @@ function OrdinancePage() {
     }
   };
 
-  // Loading state component (same as certificates module)
-  const renderLoadingState = () => (
-    <View className="flex-1 justify-center items-center p-6">
-      <LoadingState />
-    </View>
-  );
-
   const renderFolderItem = ({ item: folder }: { item: OrdinanceFolder }) => {
     const categoryColor = getCategoryColor(folder.baseOrdinance.ord_category);
     
@@ -299,6 +282,14 @@ function OrdinancePage() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   if (isError) {
     return (
       <PageLayout
@@ -390,22 +381,18 @@ function OrdinancePage() {
         </View>
 
         {/* Ordinances List */}
-        {isLoading ? (
-          renderLoadingState()          
-        ) : (
-          <FlatList
-            data={ordinanceFolders}
-            renderItem={renderFolderItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={{ paddingBottom: 500 }}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <Text className="text-center text-gray-500 py-4">
-                No ordinances found
-              </Text>
-            }
-          />
-        )}
+        <FlatList
+          data={ordinanceFolders}
+          renderItem={renderFolderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: 500 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text className="text-center text-gray-500 py-4">
+              No ordinances found
+            </Text>
+          }
+        />
 
         {/* Folder View Modal */}
         <Modal

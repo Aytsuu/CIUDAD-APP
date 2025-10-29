@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
+import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
 import { getCertificates, Certificate } from '../queries/certificateQueries'
 import PageLayout from '../../_PageLayout'
@@ -144,6 +145,14 @@ const CertList = () => {
     return filtered;
   }, [certificates, residentTypeFilter, purposeFilter, searchQuery])
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -208,11 +217,7 @@ const CertList = () => {
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
-          {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <LoadingState />
-            </View>
-          ) : error ? (
+          {error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <Text className="text-red-800 text-sm text-center">Failed to load certificates.</Text>

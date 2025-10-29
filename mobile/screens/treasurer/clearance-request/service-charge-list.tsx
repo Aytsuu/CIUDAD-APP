@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
+import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
 import { getUnpaidServiceCharges, UnpaidServiceCharge } from './queries/ClearanceQueries'
 import PageLayout from '../../_PageLayout'
@@ -133,6 +134,14 @@ const ServiceChargeClearanceList = () => {
     return filtered;
   }, [serviceCharges, searchQuery, paymentStatusFilter])
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -181,9 +190,7 @@ const ServiceChargeClearanceList = () => {
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
-          {loading ? (
-            <LoadingState />
-          ) : error ? (
+          {error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <Text className="text-red-800 text-sm text-center">Failed to load unpaid service charges.</Text>
