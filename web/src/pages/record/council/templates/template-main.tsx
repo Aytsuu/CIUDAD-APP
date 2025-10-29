@@ -1247,7 +1247,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `AGE                        :            /*${age?.toUpperCase()}*/\n` +
       `BIRTHDATE\t  :                  /*${FormattedBirthdate}*/\n` +
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
-      `This certification is being issued upon the request of the above mentioned name to support the application for the /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/   ` +
+      `This certification is being issued upon the request of the above mentioned name to support the application for the /*BURIAL PURPOSES ONLY.*/   ` +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },
@@ -1271,7 +1271,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `AGE                        :            /*${calculateAge(deceasedBirthdate || "N/A")}*/\n` +
       `BIRTHDATE\t  :                  /*${FormattedDeceasedBirthdate}*/\n` +
       `ADDRESS              :            /*${deceasedAddress}*/\n\n` +
-      `This certification is being issued upon the request of the above mentioned name to support the application for the /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/   \n\n` +
+      `This certification is being issued upon the request of the above mentioned name to support the application for the /*BURIAL PURPOSES ONLY.*/   \n\n` +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     }
   ];
@@ -1513,7 +1513,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*MCWD PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     }, 
     {
       temp_id: "Scholarship",
@@ -1536,7 +1536,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*SCHOLARSHIP PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },        
     {
       temp_id: "Postal ID",
@@ -1559,7 +1559,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*POSTAL ID PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },    
     {
       temp_id: "NBI",
@@ -1582,7 +1582,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*NATIONAL BUREAU OF INVESTIGATION (NBI) PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },        
     {
       temp_id: "Board Examination",
@@ -1605,7 +1605,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*BOARD EXAMINATION PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },          
     {
       temp_id: "TESDA",
@@ -1628,7 +1628,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*TESDA REQUIREMENTS PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },     
     {
       temp_id: "PWD Identification",
@@ -1651,7 +1651,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD IDENTIFICATION PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },        
     {
       temp_id: "Señior Citizen Identification",
@@ -1674,7 +1674,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*SEÑIOR CITIZEN IDENTIFICATION PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },  
     {
       temp_id: "Señior Citizen Financial Assistance",
@@ -1697,7 +1697,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*SEÑIOR CITIZEN FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },        
     {
       temp_id: "Bail Bond",
@@ -1720,7 +1720,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${address?.toUpperCase()}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*BAIL BOND PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },  
     {
       temp_id: "Fire Victim",
