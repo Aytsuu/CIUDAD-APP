@@ -10,45 +10,39 @@ export default () => {
   const menuItem = [
     {
       title: "Garbage Pickup Request",
-      description: "Monitor garbage pickup request.",
       route: "/(my-request)/garbage-pickup/garbage-pickup-tracker",
       icon: "",
-      gradient: ['#10b981', '#059669'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Certification Request",
-      description: "Request official certification documents for personal or legal use.",
       route: "/(my-request)/certification-tracking/certificate-request-tracker",
       icon: "",
-      gradient: ['#8b5cf6', '#7c3aed'],
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Blotter Request",
-      description: "File a request to document the incident and promtoe a peaceful settlement.",
       route: "/(my-request)/complaint-tracking/compMain",
       icon: "",
-      gradient: ['#6d28d9', '#a78bfa'],
+      gradient: ['#2563eb', '#1e40af'],
     },
     {
       title: "Medicine Request",
-      description: "Monitor your medicine requests.",
       route: "/(health)/medicine-request/my-requests",
       icon: "",
-      gradient: ['#f59e0b', '#d97706'],
+      gradient: ['#93c5fd', '#60a5fa'],
     },
     {
       title: "Maternal Appointment",
-      description: "Track your maternal health appointments.",
       route: "",
       icon: "",
-      gradient: ['#ec4899', '#db2777'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Medical Consultation",
-      description: "Monitor your medical consultation requests.",
       route: "",
       icon: "",
-      gradient: ['#06b6d4', '#0891b2'],
+      gradient: ['#2563eb', '#1e40af'],
     },
   ]
 

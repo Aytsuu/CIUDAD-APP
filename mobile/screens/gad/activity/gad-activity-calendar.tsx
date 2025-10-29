@@ -7,13 +7,13 @@ import {
   Dimensions,
   RefreshControl,
 } from "react-native";
-import { format, parseISO, isSameMonth, isSameDay, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { format, parseISO, isSameMonth, isSameDay, addMonths } from "date-fns";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { getAnnualDevPlansByYear } from "../annual-dev-plan/restful-api/annualDevPlanGetAPI";
+import { ChevronLeft } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 const DAY_SIZE = width / 7 - 10;
@@ -111,93 +111,95 @@ const GADActivityCalendar = () => {
   // Get events for the selected date
   const selectedDateEvents = getEventsForDate(selectedDate);
 
-  // Calendar generation
-  const generateCalendarDays = () => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
-    const days = eachDayOfInterval({ start, end });
-    
-    // Add empty cells for days before the first day of the month
-    const firstDayOfWeek = getDay(start);
-    const emptyDays = Array(firstDayOfWeek).fill(null);
-    
-    return [...emptyDays, ...days];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blankDays = Array.from({ length: firstDayOfMonth }, (_, i) => null);
+
+  const handleMonthChange = (increment: number) => {
+    setCurrentMonth(addMonths(currentMonth, increment));
+    setSelectedDate(addMonths(selectedDate, increment));
   };
 
-  const calendarDays = generateCalendarDays();
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => addMonths(prev, direction === 'next' ? 1 : -1));
+  const handleDateSelect = (date: number) => {
+    setSelectedDate(new Date(year, month, date));
   };
 
-  const renderCalendarDay = (day: Date | null, index: number) => {
-    if (!day) {
-      return <View key={index} style={{ width: DAY_SIZE, height: DAY_SIZE }} />;
+  const renderDayHeader = (day: string) => (
+    <View key={day} className="items-center py-2">
+      <Text className="text-gray-500 text-sm font-medium">{day}</Text>
+    </View>
+  );
+
+  const renderDateCell = (date: number | null, index: number) => {
+    if (date === null) {
+      return (
+        <View
+          key={`blank-${index}`}
+          style={{ width: DAY_SIZE, height: DAY_SIZE }}
+        />
+      );
     }
 
-    const dayEvents = getEventsForDate(day);
-    const isSelected = isSameDay(day, selectedDate);
-    const isCurrentMonth = isSameMonth(day, currentMonth);
-    const isToday = isSameDay(day, new Date());
+    const dateObj = new Date(year, month, date);
+    const hasEvent = filteredEvents.some((event) => {
+      const eventDate = parseISO(event.date);
+      return isSameDay(eventDate, dateObj);
+    });
+    const isSelected = isSameDay(selectedDate, dateObj);
+    const isToday = isSameDay(dateObj, new Date());
 
     return (
       <TouchableOpacity
-        key={index}
-        onPress={() => setSelectedDate(day)}
-        className={`w-${DAY_SIZE} h-${DAY_SIZE} items-center justify-center rounded-lg mx-1 my-1 ${
-          isSelected ? 'bg-blue-500' : isToday ? 'bg-blue-100' : ''
+        key={date}
+        className={`items-center justify-center rounded-full m-1 ${
+          isSelected
+            ? "bg-primaryBlue"
+            : hasEvent
+            ? "bg-blue-100"
+            : isToday
+            ? "bg-gray-200"
+            : "bg-white"
         }`}
         style={{ width: DAY_SIZE, height: DAY_SIZE }}
+        onPress={() => handleDateSelect(date)}
       >
-        <Text className={`text-sm font-medium ${
-          isSelected ? 'text-white' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-        }`}>
-          {format(day, 'd')}
+        <Text
+          className={`text-lg ${
+            isSelected
+              ? "text-white font-bold"
+              : isToday
+              ? "text-primaryBlue font-bold"
+              : "text-gray-800"
+          }`}
+        >
+          {date}
         </Text>
-        {dayEvents.length > 0 && (
-          <View className="w-2 h-2 bg-orange-500 rounded-full mt-1" />
+        {hasEvent && !isSelected && (
+          <View className="w-1 h-1 rounded-full bg-primaryBlue mt-1" />
         )}
       </TouchableOpacity>
     );
   };
 
   const renderEventItem = ({ item }: { item: GADEvent }) => (
-    <View className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200">
-      <View className="flex-row justify-between items-start mb-2">
-        <Text className="text-lg font-semibold text-gray-800 flex-1">
-          {item.title}
-        </Text>
-        <View className="bg-blue-100 px-2 py-1 rounded">
-          <Text className="text-xs text-blue-600 font-medium">
-            {item.type.replace('_', ' ').toUpperCase()}
+    <View className="mb-3">
+      <View className="bg-white shadow-sm rounded-lg p-4 mx-2 border-2 border-gray-200">
+        <View className="flex-row justify-between items-start">
+          <Text className="text-[#1a2332] text-lg font-semibold flex-1">
+            {item.title}
           </Text>
         </View>
-      </View>
-      
-      <View className="space-y-2">
-        <View className="flex-row items-center">
-          <MaterialIcons name="schedule" size={16} color="#6B7280" />
-          <Text className="text-sm text-gray-600 ml-2">
-            {format(parseISO(item.date), 'MMM d, yyyy')} at {item.time}
-          </Text>
-        </View>
-        
-        <View className="flex-row items-center">
-          <MaterialIcons name="location-on" size={16} color="#6B7280" />
-          <Text className="text-sm text-gray-600 ml-2">{item.place}</Text>
-        </View>
-        
-        {item.description && (
-          <Text className="text-sm text-gray-600 mt-2">{item.description}</Text>
-        )}
-        
+        <Text className="text-gray-600 mt-2">{item.description}</Text>
         {item.project && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Project:</Text>
             <Text className="text-sm text-gray-700">{item.project}</Text>
           </View>
         )}
-        
         {item.responsible_person && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Responsible Person:</Text>
@@ -212,11 +214,8 @@ const GADActivityCalendar = () => {
     return (
       <PageLayout
         leftAction={
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={20} color="#374151" />
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
         headerTitle={<Text className="text-[13px]">GAD Activity Calendar</Text>}
@@ -230,79 +229,80 @@ const GADActivityCalendar = () => {
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity 
-          onPress={() => router.back()} 
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <ChevronLeft size={20} color="#374151" />
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-[13px]">GAD Activity Calendar</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">GAD Activity Calendar</Text>
+      }
+      rightAction={<View />}
     >
-      <View className="flex-1 p-6">
-        {/* Calendar Header */}
-        <View className="bg-white rounded-lg p-4 mb-4 shadow-sm">
-          <View className="flex-row justify-between items-center mb-4">
-            <TouchableOpacity onPress={() => navigateMonth('prev')}>
-              <ChevronLeft size={24} color="#374151" />
-            </TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-800">
-              {format(currentMonth, 'MMMM yyyy')}
-            </Text>
-            <TouchableOpacity onPress={() => navigateMonth('next')}>
-              <ChevronRight size={24} color="#374151" />
-            </TouchableOpacity>
-          </View>
+      {/* Calendar Header */}
+      <View className="bg-white shadow-sm py-4 px-6">
+        <View className="flex-row justify-between items-center mb-4 px-2">
+          <TouchableOpacity
+            onPress={() => handleMonthChange(-1)}
+            className="p-2"
+          >
+            <MaterialIcons name="chevron-left" size={24} color="#3B82F6" />
+          </TouchableOpacity>
 
-          {/* Calendar Grid */}
-          <View className="flex-row justify-between mb-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <Text key={day} className="text-xs font-medium text-gray-500 text-center" style={{ width: DAY_SIZE }}>
-                {day}
-              </Text>
-            ))}
-          </View>
-          
-          <View className="flex-row flex-wrap">
-            {calendarDays.map((day, index) => renderCalendarDay(day, index))}
+          <Text className="text-xl font-bold text-gray-800">
+            {format(currentMonth, "MMMM yyyy")}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => handleMonthChange(1)}
+            className="p-2"
+          >
+            <MaterialIcons name="chevron-right" size={24} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
+
+        <View className="flex-row justify-around mb-2">
+          {days.map(renderDayHeader)}
+        </View>
+
+        <View className="flex-row flex-wrap justify-around">
+          {blankDays.map((date, index) => renderDateCell(date, index))}
+          {dates.map(renderDateCell)}
+        </View>
+      </View>
+
+      {/* Events Section */}
+      <View className="flex-1 px-6 pt-4">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-lg font-bold text-gray-800">
+            {format(selectedDate, "EEEE, MMMM d")}
+          </Text>
+          <View className="flex-row items-center gap-5 space-x-2">
+            <Text className="text-primaryBlue">
+              {selectedDateEvents.length}{" "}
+              {selectedDateEvents.length === 1 ? "Event" : "Events"}
+            </Text>
           </View>
         </View>
 
-        {/* Events Section */}
-        <View className="flex-1">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-bold text-gray-800">
-              {format(selectedDate, "EEEE, MMMM d")}
+        {selectedDateEvents.length > 0 ? (
+          <FlatList
+            data={selectedDateEvents}
+            renderItem={renderEventItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+        ) : (
+          <View className="flex-1 justify-center items-center">
+            <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
+            <Text className="text-gray-400 mt-4 text-lg">
+              No events scheduled for this date
             </Text>
-            <View className="flex-row items-center gap-2">
-              <Text className="text-primaryBlue">
-                {selectedDateEvents.length}{" "}
-                {selectedDateEvents.length === 1 ? "Event" : "Events"}
-              </Text>
-            </View>
           </View>
-
-          {selectedDateEvents.length > 0 ? (
-            <FlatList
-              data={selectedDateEvents}
-              renderItem={renderEventItem}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            />
-          ) : (
-            <View className="flex-1 justify-center items-center">
-              <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
-              <Text className="text-gray-400 mt-4 text-lg">
-                No events scheduled for this date
-              </Text>
-            </View>
-          )}
-        </View>
+        )}
       </View>
     </PageLayout>
   );
