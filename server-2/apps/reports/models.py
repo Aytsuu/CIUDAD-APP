@@ -58,7 +58,7 @@ class BHWDailyNotes(models.Model):
     class Meta:
         db_table = 'bhw_daily_notes'
         indexes = [
-            models.Index(fields=['staff_id', 'created_at']),
+            models.Index(fields=['bhwdn_id', 'staff_id', 'created_at']),
         ]
 
 
@@ -70,3 +70,6 @@ class BHWReferOrFollowUp(models.Model):
 
     class Meta:
         db_table = 'bhw_refer_or_follow_up'
+        indexes = [
+            models.Index(fields=['bhwrof_id', 'bhwdn_id', 'ill_id']),
+        ]
