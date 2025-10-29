@@ -1,7 +1,7 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { router } from 'expo-router'
-import { getCertificates, Certificate } from '../queries/certificateQueries'
+import { getUnpaidCertificates, UnpaidCertificate } from './queries/ClearanceQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -9,22 +9,23 @@ import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
 import { CustomDropdown } from '@/components/ui/custom-dropdown'
 
-const CertList = () => {
-  const [certificates, setCertificates] = useState<Certificate[]>([])
+const CertificateClearanceList = () => {
+  const [certificates, setCertificates] = useState<UnpaidCertificate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [residentTypeFilter, setResidentTypeFilter] = useState<'all' | 'resident' | 'nonresident'>('all')
-  const [purposeFilter, setPurposeFilter] = useState<string>('all')
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
+  const [residentTypeFilter, setResidentTypeFilter] = useState<'all' | 'resident' | 'nonresident'>('all')
 
-  // Fetch certificates from API
+  // Fetch certificates from API (fetch all, filter client-side like web)
   useEffect(() => {
     const fetchCertificates = async () => {
       try {
         setLoading(true)
-        const data = await getCertificates()
+        // Fetch all data without payment_status filter (like web does)
+        const data = await getUnpaidCertificates(searchQuery, 1, 1000)
         setCertificates(data.results)
         setError(null)
       } catch (err) {
@@ -36,28 +37,23 @@ const CertList = () => {
     }
 
     fetchCertificates()
-  }, [])
+  }, [searchQuery])
 
-  const getStatusBadge = (status?: string) => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("reject") || normalized === "rejected") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Rejected</Text>
+  const getPaymentBadge = (certificate: UnpaidCertificate) => {
+    // First check if request status is Declined
+    const reqStatus = (certificate.req_status || "").toLowerCase();
+    if (reqStatus === "declined" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>
     }
-    if (normalized.includes("approve") || normalized === "approved") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Approved</Text>
+    
+    // Then check payment status
+    const paymentStatus = (certificate.req_payment_status || "").toLowerCase();
+    if (paymentStatus === "paid") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Paid</Text>
     }
-    if (normalized.includes("complete") || normalized === "completed") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-800">Completed</Text>
-    }
-    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
-  }
-
-  const getNormalizedStatus = (status?: string): 'approved' | 'pending' | 'rejected' | 'completed' => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("reject")) return 'rejected';
-    if (normalized.includes("approve")) return 'approved';
-    if (normalized.includes("complete")) return 'completed';
-    return 'pending';
+    
+    // Default to Unpaid
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Unpaid</Text>
   }
 
   const formatDate = (d?: string) => {
@@ -79,70 +75,89 @@ const CertList = () => {
     return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
   }
 
-  // Search function
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Extract unique purposes from certificates
-  const purposes = useMemo(() => {
-    const uniquePurposes = new Set<string>();
-    certificates.forEach(cert => {
-      if (cert.req_purpose) {
-        uniquePurposes.add(cert.req_purpose);
-      }
-    });
-    return Array.from(uniquePurposes).sort();
-  }, [certificates])
-
-  // Filter certificates based on resident type, purpose, and search
+  // Filter certificates based on payment status, resident type, and search (like web does)
   const filteredCertificates = useMemo(() => {
-    let filtered = certificates.filter(cert => {
-      // Resident type filter
-      if (residentTypeFilter !== 'all') {
+    let filtered = certificates;
+    
+    // Filter out cancelled requests first
+    filtered = filtered.filter(cert => {
+      const status = cert.req_status || '';
+      return status !== 'Cancelled' && status.toLowerCase() !== 'cancelled';
+    });
+    
+    // Filter by resident type first
+    if (residentTypeFilter !== 'all') {
+      filtered = filtered.filter(cert => {
         const isNonResident = cert.is_nonresident || false;
         if (residentTypeFilter === 'resident' && isNonResident) return false;
         if (residentTypeFilter === 'nonresident' && !isNonResident) return false;
-      }
-
-      // Purpose filter
-      if (purposeFilter !== 'all' && cert.req_purpose !== purposeFilter) {
+        return true;
+      });
+    }
+    
+    // Filter by payment status (exactly like web component does)
+    if (paymentStatusFilter === 'Declined') {
+      // Show only declined requests (check req_status field like web does)
+      filtered = filtered.filter(cert => {
+        const status = cert.req_status || '';
+        return status === 'Declined' || status.toLowerCase() === 'declined';
+      });
+    } else {
+      // For paid/unpaid/all, filter out declined requests first
+      filtered = filtered.filter(cert => {
+        const status = cert.req_status || '';
+        // Filter out declined requests (like web does)
+        if (status === 'Declined' || status.toLowerCase() === 'declined') {
+          return false;
+        }
+        
+        // Then filter by payment status
+        const paymentStatus = (cert.req_payment_status || '').toLowerCase();
+        if (paymentStatusFilter === 'Paid') {
+          return paymentStatus === 'paid';
+        } else if (paymentStatusFilter === 'Unpaid') {
+          return paymentStatus !== 'paid';
+        }
+        // Declined already handled above
         return false;
-      }
-
-      return true;
-    });
-
+      });
+    }
+    
     // Apply search filter
     if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(cert => {
-        const searchLower = searchQuery.toLowerCase();
         const isNonRes = cert.is_nonresident || false;
         
         if (isNonRes) {
-          // Search in non-resident fields
           return (
             cert.cr_id?.toLowerCase().includes(searchLower) ||
             cert.nrc_id?.toLowerCase().includes(searchLower) ||
             cert.nrc_fname?.toLowerCase().includes(searchLower) ||
             cert.nrc_lname?.toLowerCase().includes(searchLower) ||
             cert.nrc_mname?.toLowerCase().includes(searchLower) ||
-            cert.req_type?.toLowerCase().includes(searchLower)
+            cert.req_type?.toLowerCase().includes(searchLower) ||
+            cert.req_purpose?.toLowerCase().includes(searchLower)
           );
         } else {
-          // Search in resident fields
           return (
             cert.cr_id?.toLowerCase().includes(searchLower) ||
             cert.resident_details?.per_fname?.toLowerCase().includes(searchLower) ||
             cert.resident_details?.per_lname?.toLowerCase().includes(searchLower) ||
-            cert.req_type?.toLowerCase().includes(searchLower)
+            cert.resident_details?.per_mname?.toLowerCase().includes(searchLower) ||
+            cert.req_type?.toLowerCase().includes(searchLower) ||
+            cert.req_purpose?.toLowerCase().includes(searchLower)
           );
         }
       });
     }
-
+    
     return filtered;
-  }, [certificates, residentTypeFilter, purposeFilter, searchQuery])
+  }, [certificates, searchQuery, paymentStatusFilter, residentTypeFilter])
 
   return (
     <PageLayout
@@ -154,7 +169,7 @@ const CertList = () => {
           <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Personal Clearance Request</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Certificate Requests</Text>}
       rightAction={
         <TouchableOpacity 
           onPress={() => setShowSearch(!showSearch)} 
@@ -192,15 +207,16 @@ const CertList = () => {
               />
             </View>
             <View className="flex-1">
-              <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
+              <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status Filter</Text>
               <CustomDropdown
-                value={purposeFilter}
-                onSelect={(value: string) => setPurposeFilter(value)}
+                value={paymentStatusFilter}
+                onSelect={(value: string) => setPaymentStatusFilter(value as any)}
                 data={[
-                  { label: 'All', value: 'all' },
-                  ...purposes.map(purpose => ({ label: purpose, value: purpose }))
+                  { label: 'Unpaid', value: 'Unpaid' },
+                  { label: 'Paid', value: 'Paid' },
+                  { label: 'Declined', value: 'Declined' }
                 ]}
-                placeholder="Select purpose"
+                placeholder="Select payment status"
               />
             </View>
           </View>
@@ -209,13 +225,11 @@ const CertList = () => {
         {/* Scrollable Content Area */}
         <View className="flex-1">
           {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <LoadingState />
-            </View>
+            <LoadingState />
           ) : error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <Text className="text-red-800 text-sm text-center">Failed to load certificates.</Text>
+                <Text className="text-red-800 text-sm text-center">Failed to load unpaid certificates.</Text>
               </View>
             </View>
           ) : (
@@ -232,36 +246,34 @@ const CertList = () => {
                     <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                       <View className="flex-row justify-between items-center">
                         <View className="flex-1">
-                          <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.req_type || "Personal Certificate")}</Text>
+                          <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.req_type || "Certificate")}</Text>
                           {isNonResident && (
                             <Text className="text-purple-600 text-[10px] mt-1 font-medium">Non-Resident</Text>
                           )}
                         </View>
-                        {getStatusBadge(certificate.req_status)}
+                        {getPaymentBadge(certificate)}
                       </View>
                       <Text className="text-gray-500 text-xs mt-1">ID: {id}</Text>
                       <Text className="text-gray-500 text-xs mt-1">Name: {name || '—'}</Text>
                       <Text className="text-gray-500 text-xs mt-1">Purpose: {certificate.req_purpose || certificate.req_type || '—'}</Text>
                       <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(certificate.req_request_date)}</Text>
-                      {certificate.req_claim_date && (
-                        <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(certificate.req_claim_date)}</Text>
+                      {certificate.amount && (
+                        <Text className="text-gray-500 text-xs mt-1">Amount: ₱{parseFloat(certificate.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+                      )}
+                      {certificate.req_status === 'Declined' && certificate.decline_reason && (
+                        <Text className="text-gray-500 text-xs mt-1">Decline Reason: {certificate.decline_reason}</Text>
                       )}
                     </View>
                   );
                 })
               ) : (
                 <View className="flex-1 items-center justify-center py-12">
-                  <View className="items-center">
-                    <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      <Text className="text-gray-500 text-2xl">📋</Text>
-                    </View>
-                    <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                      {searchQuery ? 'No certificates found matching your search' : 'No certificates yet'}
-                    </Text>
-                    <Text className="text-gray-500 text-sm text-center">
-                      {searchQuery ? 'Try adjusting your search terms' : 'Your certificates will appear here'}
-                    </Text>
-                  </View>
+                  <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                    {searchQuery ? 'No certificates found matching your search' : 'No certificates yet'}
+                  </Text>
+                  <Text className="text-gray-500 text-sm text-center">
+                    {searchQuery ? 'Try adjusting your search terms' : 'Certificate requests will appear here'}
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -272,4 +284,5 @@ const CertList = () => {
   )
 }
 
-export default CertList
+export default CertificateClearanceList
+

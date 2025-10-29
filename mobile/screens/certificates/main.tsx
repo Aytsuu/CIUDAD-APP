@@ -17,6 +17,9 @@ const CertificatesMain = () => {
       case 'certificates':
         router.push('/(certificates)/issued-cert-list')
         break
+      case 'service_charge':
+        router.push('/(certificates)/service-charge-list')
+        break
       default:
         break
     }
@@ -36,6 +39,13 @@ const CertificatesMain = () => {
       description: 'View business permits',
       icon: Building2,
       gradient: ['#059669', '#047857'],
+    },
+    {
+      id: 'service_charge',
+      title: 'Service Charge',
+      description: 'View service charge requests',
+      icon: Award,
+      gradient: ['#dc2626', '#991b1b'],
     },
     {
       id: 'certificates',

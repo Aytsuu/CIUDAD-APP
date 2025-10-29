@@ -480,7 +480,8 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'requestor',
             'purpose',
             'amount_to_pay',
-            'req_amount',  
+            'req_amount',
+            'bus_reason',
         ]
 
     def get_business_name(self, obj):

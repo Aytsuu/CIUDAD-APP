@@ -10,6 +10,7 @@ import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 
 const CertPermit: React.FC = () => {
@@ -381,18 +382,8 @@ const CertPermit: React.FC = () => {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 p-6">
-        {/* Loading Overlay */}
-        {addBusinessPermit.status === 'pending' && (
-          <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
-            <View className="bg-white rounded-xl p-6 items-center shadow-lg">
-              <ActivityIndicator size="large" color="#00AFFF" />
-              <Text className="text-gray-800 font-semibold text-lg mt-4">Submitting...</Text>
-              <Text className="text-gray-600 text-sm mt-2 text-center">
-                Please wait while we process your request
-              </Text>
-            </View>
-          </View>
-        )}
+        {/* Loading Modal */}
+        <LoadingModal visible={addBusinessPermit.status === 'pending' || isUploadingFiles} />
 
         <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         

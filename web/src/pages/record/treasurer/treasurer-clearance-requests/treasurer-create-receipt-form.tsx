@@ -63,8 +63,6 @@ import { Loader2 } from "lucide-react";
    console.log('stat', pay_status, 'staffId', staffId)
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
-   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
-   console.log('DEBUG ReceiptForm props:', { id, purpose, rate, requester, pay_status, nat_col, is_resident, voter_id })
    const isFree = Boolean(
      effectiveIsResident && (
        voter_id !== null && voter_id !== undefined ||
@@ -249,7 +247,7 @@ import { Loader2 } from "lucide-react";
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
                     <div>
-                        <label className="text-sm font-medium text-gray-600">Resident Name</label>
+                        <label className="text-sm font-medium text-gray-600">{is_resident ? 'Resident Name' : 'Name'}</label>
                         <p className="text-base text-gray-900 font-medium mt-1">{requester}</p>
                     </div>
                     <div>
@@ -258,7 +256,14 @@ import { Loader2 } from "lucide-react";
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                        <p className="text-base text-green-600 font-semibold mt-1">{isFree ? 'Free (Registered Voter)' : pay_status}</p>
+                        <p className="text-base text-green-600 font-semibold mt-1">
+                            {isFree ? (
+                                voter_id ? 'Free (Registered Voter)' : 
+                                isSeniorEligible ? 'Free (Senior Citizen)' : 
+                                hasDisabilityEligible ? 'Free (PWD)' : 
+                                'Free'
+                            ) : pay_status}
+                        </p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
@@ -381,7 +386,7 @@ import { Loader2 } from "lucide-react";
                     {isPending || isAddReceiptPending || isAcceptPending || isAcceptNonResPending ? (
                         <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
+                            <span>Creating...</span>
                         </div>
                     ) : isAlreadyPaid ? (
                         "Cannot Proceed"

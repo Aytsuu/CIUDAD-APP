@@ -1,7 +1,14 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { router } from 'expo-router'
-import { getIssuedCertificates, IssuedCertificate } from '../queries/issuedCertificateQueries'
+import { 
+  getIssuedCertificates, 
+  getIssuedBusinessPermits, 
+  getIssuedServiceCharges,
+  IssuedCertificate,
+  IssuedBusinessPermit,
+  IssuedServiceCharge 
+} from '../queries/issuedCertificateQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -9,33 +16,47 @@ import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
 
 const IssuedCertList = () => {
+  const [activeMainTab, setActiveMainTab] = useState<'certificates' | 'businessPermits' | 'serviceCharges'>('certificates')
+  
   const [certificates, setCertificates] = useState<IssuedCertificate[]>([])
+  const [businessPermits, setBusinessPermits] = useState<IssuedBusinessPermit[]>([])
+  const [serviceCharges, setServiceCharges] = useState<IssuedServiceCharge[]>([])
+  
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [purposeFilter, setPurposeFilter] = useState<'all' | 'Barangay Clearance' | 'Certificate of Residency' | 'Certificate of Indigency' | 'Business Clearance'>('all')
-  const [activeTab, setActiveTab] = useState<'all' | 'Barangay Clearance' | 'Certificate of Residency' | 'Certificate of Indigency' | 'Business Clearance'>('all')
+  
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
 
-  // Fetch issued certificates from API
+  // Fetch data based on active tab
   useEffect(() => {
-    const fetchIssuedCertificates = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const data = await getIssuedCertificates()
-        setCertificates(data.results)
+        
+        if (activeMainTab === 'certificates') {
+          const data = await getIssuedCertificates(searchQuery, 1, 10)
+          setCertificates(data.results)
+        } else if (activeMainTab === 'businessPermits') {
+          const data = await getIssuedBusinessPermits(searchQuery, 1, 10)
+          setBusinessPermits(data.results)
+        } else if (activeMainTab === 'serviceCharges') {
+          const data = await getIssuedServiceCharges(searchQuery, 1, 10)
+          setServiceCharges(data.results)
+        }
+        
         setError(null)
       } catch (err) {
-        console.error('Error fetching issued certificates:', err)
-        setError('Failed to load issued certificates')
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchIssuedCertificates()
-  }, [])
+    fetchData()
+  }, [searchQuery, activeMainTab])
 
   const getStatusBadge = () => {
     return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Issued</Text>
@@ -60,32 +81,77 @@ const IssuedCertList = () => {
     return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
   }
 
-  // Search function
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Filter certificates based on purpose and search
-  const filteredCertificates = useMemo(() => {
-    let filtered = certificates.filter(cert => {
-      if (activeTab === 'all') return true;
-      return cert.purpose === activeTab;
-    });
+  const renderCertificates = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {certificates.length ? (
+        certificates.map((certificate, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.purpose || "Certificate")}</Text>
+              {getStatusBadge()}
+            </View>
+            <Text className="text-gray-500 text-xs mt-1">ID: {certificate.ic_id}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Requester: {certificate.requester}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(certificate.dateIssued)}</Text>
+          </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No certificates found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(cert => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          cert.ic_id?.toLowerCase().includes(searchLower) ||
-          cert.requester?.toLowerCase().includes(searchLower) ||
-          cert.purpose?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
+  const renderBusinessPermits = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {businessPermits.length ? (
+        businessPermits.map((permit, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{wrapPurpose(permit.business_name || "Business Permit")}</Text>
+              {getStatusBadge()}
+            </View>
+            <Text className="text-gray-500 text-xs mt-1">ID: {permit.ibp_id}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Purpose: {permit.purpose}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(permit.dateIssued)}</Text>
+          </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No business permits found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
 
-    return filtered;
-  }, [certificates, activeTab, searchQuery])
+  const renderServiceCharges = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {serviceCharges.length ? (
+        serviceCharges.map((serviceCharge, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{serviceCharge.sr_code || "Service Charge"}</Text>
+              {getStatusBadge()}
+            </View>
+            <Text className="text-gray-500 text-xs mt-1">ID: {serviceCharge.sr_id}</Text>
+            {serviceCharge.complainant_names && serviceCharge.complainant_names.length > 0 && (
+              <Text className="text-gray-500 text-xs mt-1">Complainant: {serviceCharge.complainant_names.join(', ')}</Text>
+            )}
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(serviceCharge.sr_req_date)}</Text>
+          </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No service charges found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
 
   return (
     <PageLayout
@@ -118,63 +184,49 @@ const IssuedCertList = () => {
           />
         )}
 
-        {/* Fixed Tab Headers */}
+        {/* Main Tabs */}
         <View className="bg-white border-b border-gray-200">
           <View className="flex-row">
             <TouchableOpacity
               className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'all' ? 'border-blue-500' : 'border-transparent'
+                activeMainTab === 'certificates' ? 'border-blue-500' : 'border-transparent'
               }`}
-              onPress={() => setActiveTab('all')}
+              onPress={() => setActiveMainTab('certificates')}
             >
-              <Text className={`font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-500'}`}>
-                All
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'certificates' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Certificates
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'Barangay Clearance' ? 'border-blue-500' : 'border-transparent'
+                activeMainTab === 'businessPermits' ? 'border-blue-500' : 'border-transparent'
               }`}
-              onPress={() => setActiveTab('Barangay Clearance')}
+              onPress={() => setActiveMainTab('businessPermits')}
             >
-              <Text className={`font-medium ${activeTab === 'Barangay Clearance' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Barangay
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'businessPermits' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Business Permits
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'Certificate of Residency' ? 'border-blue-500' : 'border-transparent'
+                activeMainTab === 'serviceCharges' ? 'border-blue-500' : 'border-transparent'
               }`}
-              onPress={() => setActiveTab('Certificate of Residency')}
+              onPress={() => setActiveMainTab('serviceCharges')}
             >
-              <Text className={`font-medium ${activeTab === 'Certificate of Residency' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Residency
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'Certificate of Indigency' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('Certificate of Indigency')}
-            >
-              <Text className={`font-medium ${activeTab === 'Certificate of Indigency' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Indigency
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'Business Clearance' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('Business Clearance')}
-            >
-              <Text className={`font-medium ${activeTab === 'Business Clearance' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Business
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'serviceCharges' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Service Charges
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Scrollable Content Area */}
+        {/* Content Area */}
         <View className="flex-1">
           {loading ? (
             <View className="flex-1 justify-center items-center">
@@ -183,39 +235,15 @@ const IssuedCertList = () => {
           ) : error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <Text className="text-red-800 text-sm text-center">Failed to load issued certificates.</Text>
+                <Text className="text-red-800 text-sm text-center">Failed to load data.</Text>
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
-              {filteredCertificates.length ? (
-                filteredCertificates.map((certificate, idx) => (
-                  <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                    <View className="flex-row justify-between items-center">
-                      <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.purpose || "Certificate")}</Text>
-                      {getStatusBadge()}
-                    </View>
-                    <Text className="text-gray-500 text-xs mt-1">ID: {certificate.ic_id}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Requester: {certificate.requester}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(certificate.dateIssued)}</Text>
-                  </View>
-                ))
-              ) : (
-                <View className="flex-1 items-center justify-center py-12">
-                  <View className="items-center">
-                    <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      <Text className="text-gray-500 text-2xl">🏆</Text>
-                    </View>
-                    <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                      {searchQuery ? 'No certificates found matching your search' : `No ${activeTab === 'all' ? '' : activeTab.toLowerCase()} certificates yet`}
-                    </Text>
-                    <Text className="text-gray-500 text-sm text-center">
-                      {searchQuery ? 'Try adjusting your search terms' : `Your ${activeTab === 'all' ? '' : activeTab.toLowerCase()} certificates will appear here`}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
+            <>
+              {activeMainTab === 'certificates' && renderCertificates()}
+              {activeMainTab === 'businessPermits' && renderBusinessPermits()}
+              {activeMainTab === 'serviceCharges' && renderServiceCharges()}
+            </>
           )}
         </View>
       </View>

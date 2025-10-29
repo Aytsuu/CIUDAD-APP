@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
-import Video from "react-native-video";
+import { View, StyleSheet, Image } from "react-native";
+// import Video from "react-native-video";
 
 interface IntroScreenProps {
   onAnimationFinish: () => void;
@@ -16,10 +16,9 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <Video
-        source={require("@/assets/animated/ciudad_intro.mp4")}
+      <Image
+        source={require("@/assets/images/Logo.png")}
         style={{ width: "100%", height: 250 }}
-        controls={false}
         resizeMode="contain"
       />
     </View>

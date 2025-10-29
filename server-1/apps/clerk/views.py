@@ -577,12 +577,16 @@ class CancelBusinessPermitView(APIView):
     def post(self, request, bpr_id):
         try:
             permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
-            permit.req_status = 'Cancelled'
-            permit.save(update_fields=['req_status'])
+            # Accept req_status from request, default to 'Cancelled' if not provided
+            permit.req_status = request.data.get('req_status', 'Cancelled')
+            # Save the decline/cancel reason
+            permit.bus_reason = request.data.get('bus_reason')
+            permit.save(update_fields=['req_status', 'bus_reason'])
             return Response({
-                'message': 'Cancelled',
+                'message': permit.req_status,
                 'bpr_id': permit.bpr_id,
-                'req_status': permit.req_status
+                'req_status': permit.req_status,
+                'bus_reason': permit.bus_reason
             }, status=status.HTTP_200_OK)
         except BusinessPermitRequest.DoesNotExist:
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)

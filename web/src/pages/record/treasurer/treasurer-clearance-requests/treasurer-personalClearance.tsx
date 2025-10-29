@@ -11,11 +11,12 @@ import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
+import { getResidentsTable } from "../../profiling/restful-api/profilingGetAPI";
 import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 function PersonalClearance() {
     
@@ -44,9 +45,59 @@ function PersonalClearance() {
     } | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
+    const [residentTableData, setResidentTableData] = useState<any[]>([]);
 
     const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize);
     const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize);
+
+    // Function to fetch resident table data for PWD/senior/voter status
+    const fetchResidentTableData = async () => {
+        try {
+            const data = await getResidentsTable(1, 1000); // Get first 1000 residents
+            setResidentTableData(data.results || data || []);
+        } catch (error) {
+            console.error('Failed to fetch resident table data:', error);
+        }
+    };
+
+    // Function to get resident eligibility info from table data
+    const getResidentEligibility = (residentDetails: any) => {
+        const fullName = `${residentDetails.per_fname} ${residentDetails.per_lname}`.trim();
+        const resident = residentTableData.find(r => 
+            `${r.fname} ${r.lname}`.trim().toLowerCase() === fullName.toLowerCase()
+        );
+        
+        if (!resident) return { isVoter: false, isSenior: false, isPWD: false };
+        
+        // Check voter status
+        const isVoter = resident.voter === "Yes";
+        
+        // Check senior status (age 60+)
+        let isSenior = false;
+        if (resident.dob) {
+            try {
+                const dob = new Date(resident.dob);
+                if (!isNaN(dob.getTime())) {
+                    const today = new Date();
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const m = today.getMonth() - dob.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                    isSenior = age >= 60;
+                }
+            } catch {}
+        }
+        
+        // Check PWD status
+        const isPWD = resident.pwd && resident.pwd.trim() !== '';
+        
+        return { isVoter, isSenior, isPWD };
+    };
+
+
+    // Fetch resident table data on component mount
+    useEffect(() => {
+        fetchResidentTableData();
+    }, []);
 
     // Handle loading state
     useEffect(() => {
@@ -238,7 +289,6 @@ function PersonalClearance() {
                                     isResident = {false}
                                     onSuccess={() => {
                                         setIsDialogOpen(false);
-                                        showSuccessToast("Request declined successfully!");
                                     }}
                                 />
                             }
@@ -312,7 +362,10 @@ function PersonalClearance() {
                 </div>
             ),
             cell: ({ row }) => {
-                const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                // Get resident eligibility from table data
+                const eligibility = getResidentEligibility(row.original.resident_details);
+                const isFree = eligibility.isVoter || eligibility.isSenior || eligibility.isPWD;
+                
                 const raw = row.original.purpose ? Number(row.original.purpose.pr_rate) : 0;
                 const value = isFree ? 0 : raw;
                 return (
@@ -344,7 +397,10 @@ function PersonalClearance() {
                 accessorKey: "action",
                 header: "Action",
                 cell: ({ row }: { row: Row<ResidentReq> }) => {
-                    const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                    // Get resident eligibility from table data
+                    const eligibility = getResidentEligibility(row.original.resident_details);
+                    const isFree = eligibility.isVoter || eligibility.isSenior || eligibility.isPWD;
+                    
                     return (
                         <div className="flex justify-center gap-1">
                             {isFree ? (
@@ -352,23 +408,9 @@ function PersonalClearance() {
                                     trigger={
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
-                                            onClick={() => {
-                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
-                                                let isSenior = false;
-                                                if (dobStr) {
-                                                    try {
-                                                        const dob = new Date(dobStr);
-                                                        if (!isNaN(dob.getTime())) {
-                                                            const today = new Date();
-                                                            let age = today.getFullYear() - dob.getFullYear();
-                                                            const m = today.getMonth() - dob.getMonth();
-                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                                            isSenior = age >= 60;
-                                                        }
-                                                    } catch {}
-                                                }
-                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
-                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+                                            onClick={async () => {
+                                                // Get resident eligibility from table data
+                                                const eligibility = getResidentEligibility(row.original.resident_details);
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
@@ -386,9 +428,9 @@ function PersonalClearance() {
                                                     pay_status: row.original.cr_req_payment_status,
                                                     nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
-                                                    isSeniorEligible: isSenior,
-                                                    hasDisabilityEligible: hasDisability
+                                                    voter_id: eligibility.isVoter ? 1 : null,
+                                                    isSeniorEligible: eligibility.isSenior,
+                                                    hasDisabilityEligible: eligibility.isPWD
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);
@@ -405,23 +447,9 @@ function PersonalClearance() {
                                     trigger={
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
-                                            onClick={() => {
-                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
-                                                let isSenior = false;
-                                                if (dobStr) {
-                                                    try {
-                                                        const dob = new Date(dobStr);
-                                                        if (!isNaN(dob.getTime())) {
-                                                            const today = new Date();
-                                                            let age = today.getFullYear() - dob.getFullYear();
-                                                            const m = today.getMonth() - dob.getMonth();
-                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                                            isSenior = age >= 60;
-                                                        }
-                                                    } catch {}
-                                                }
-                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
-                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+                                            onClick={async () => {
+                                                // Get resident eligibility from table data
+                                                const eligibility = getResidentEligibility(row.original.resident_details);
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
@@ -440,9 +468,9 @@ function PersonalClearance() {
                                                     nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     // Paid resident without voter_id should still be treated as resident
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
-                                                    isSeniorEligible: isSenior,
-                                                    hasDisabilityEligible: hasDisability
+                                                    voter_id: eligibility.isVoter ? 1 : null,
+                                                    isSeniorEligible: eligibility.isSenior,
+                                                    hasDisabilityEligible: eligibility.isPWD
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);
@@ -470,7 +498,6 @@ function PersonalClearance() {
                                         isResident={true}
                                         onSuccess={() => {
                                             setIsDialogOpen(false);
-                                            showSuccessToast("Request declined successfully!");
                                         }}
                                     />
                                 }
@@ -566,7 +593,6 @@ function PersonalClearance() {
                                     <PersonalClearanceForm 
                                         onSuccess={() => {
                                             setIsDialogOpen(false);
-                                            showSuccessToast("Personal clearance request created successfully!");
                                         }} 
                                     />
                                 </div>
@@ -596,7 +622,7 @@ function PersonalClearance() {
                                      onClick={() => setActiveTab("unpaid")}
                                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "unpaid"
-                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                             ? "bg-[#fffbe6] text-[#b59f00] border-[#f7e7b6] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
@@ -607,7 +633,7 @@ function PersonalClearance() {
                                      onClick={() => setActiveTab("paid")}
                                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "paid"
-                                             ? "bg-[#eaffea] text-[#15803d] border-[#b6e7c3] shadow-sm"
+                                             ? "bg-[#e6f7e6] text-[#16a34a] border-[#d1f2d1] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
@@ -618,7 +644,7 @@ function PersonalClearance() {
                                      onClick={() => setActiveTab("declined")}
                                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "declined"
-                                             ? "bg-[#f3f3f3] text-[#6b7280] border-[#e5e7eb] shadow-sm"
+                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
@@ -678,7 +704,6 @@ function PersonalClearance() {
                             discountReason={appliedDiscountReason}
                             onComplete={() => {
                                 setIsReceiptModalOpen(false);
-                                showSuccessToast("Receipt created successfully!");
                             }}
                             onRequestDiscount={() => {
                                 setIsReceiptModalOpen(false);

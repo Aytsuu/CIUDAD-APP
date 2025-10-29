@@ -14,7 +14,7 @@ import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLoading } from "@/context/LoadingContext";
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 
 
@@ -94,7 +94,7 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             );
         }
     },
-    // Conditionally show Request Status column only for unpaid tab
+    
     ...(activeTab === "unpaid" ? [{
         accessorKey: "sr_req_status" as const, 
         header: "Request Status",
@@ -197,8 +197,6 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
                         onSuccess={async () => {
                             // Refresh the data
                             await handleDeclineSuccess();
-                            // Show success message
-                            showSuccessToast("Service charge request declined successfully!");
                         }}
                         />
                     }
@@ -252,7 +250,6 @@ function ServiceCharge(){
     // Function to refresh data after successful payment
     const handlePaymentSuccess = async () => {
         console.log("Payment successful, refreshing data...");
-        showSuccessToast("Payment processed successfully!");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();

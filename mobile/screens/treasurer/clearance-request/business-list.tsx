@@ -1,7 +1,7 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { router } from 'expo-router'
-import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
+import { getUnpaidBusinessPermits, UnpaidBusinessPermit } from './queries/ClearanceQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -9,20 +9,22 @@ import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
 import { CustomDropdown } from '@/components/ui/custom-dropdown'
 
-const BusinessList = () => {
-  const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
+const BusinessClearanceList = () => {
+  const [businessPermits, setBusinessPermits] = useState<UnpaidBusinessPermit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [purposeFilter, setPurposeFilter] = useState<string>('all')
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
 
+  // Fetch business permits from API (fetch all, filter client-side like web)
   useEffect(() => {
     const fetchBusinessPermits = async () => {
       try {
         setLoading(true)
-        const data = await getBusinessPermits()
+        // Fetch all data without payment_status filter (like web does)
+        const data = await getUnpaidBusinessPermits(searchQuery, 1, 1000)
         setBusinessPermits(data.results)
         setError(null)
       } catch (err) {
@@ -34,20 +36,23 @@ const BusinessList = () => {
     }
 
     fetchBusinessPermits()
-  }, [])
+  }, [searchQuery])
 
-  const getStatusBadge = (status?: string) => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("reject") || normalized === "rejected") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Rejected</Text>
+  const getPaymentBadge = (business: UnpaidBusinessPermit) => {
+    // First check if request status is Declined
+    const reqStatus = (business.req_status || "").toLowerCase();
+    if (reqStatus === "declined" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>
     }
-    if (normalized.includes("approve") || normalized === "approved") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Approved</Text>
+    
+    // Then check payment status
+    const paymentStatus = (business.req_payment_status || "").toLowerCase();
+    if (paymentStatus === "paid") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Paid</Text>
     }
-    if (normalized.includes("complete") || normalized === "completed") {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-800">Completed</Text>
-    }
-    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
+    
+    // Default to Unpaid
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Unpaid</Text>
   }
 
   const formatDate = (d?: string) => {
@@ -69,36 +74,52 @@ const BusinessList = () => {
     return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
   }
 
-  // Search function
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Extract unique purposes (business types) from business permits
-  const purposes = useMemo(() => {
-    const uniquePurposes = new Set<string>();
-    businessPermits.forEach(business => {
-      if (business.business_type) {
-        uniquePurposes.add(business.business_type);
-      }
-    });
-    return Array.from(uniquePurposes).sort();
-  }, [businessPermits])
-
-  // Filter business permits based on purpose and search
+  // Filter business permits based on payment status and search (like web does)
   const filteredBusinesses = useMemo(() => {
-    let filtered = businessPermits.filter(business => {
-      // Purpose filter (using business_type as purpose)
-      if (purposeFilter !== 'all' && business.business_type !== purposeFilter) {
-        return false;
-      }
-      return true;
+    let filtered = businessPermits;
+    
+    // Filter out cancelled requests first
+    filtered = filtered.filter(business => {
+      const status = business.req_status || '';
+      return status !== 'Cancelled' && status.toLowerCase() !== 'cancelled';
     });
-
+    
+    // Filter by payment status (exactly like web component does)
+    if (paymentStatusFilter === 'Declined') {
+      // Show only declined requests (check req_status field like web does)
+      filtered = filtered.filter(business => {
+        const status = business.req_status || '';
+        return status === 'Declined' || status.toLowerCase() === 'declined';
+      });
+    } else {
+      // For paid/unpaid/all, filter out declined requests first
+      filtered = filtered.filter(business => {
+        const status = business.req_status || '';
+        // Filter out declined requests (like web does)
+        if (status === 'Declined' || status.toLowerCase() === 'declined') {
+          return false;
+        }
+        
+        // Then filter by payment status
+        const paymentStatus = (business.req_payment_status || '').toLowerCase();
+        if (paymentStatusFilter === 'Paid') {
+          return paymentStatus === 'paid';
+        } else if (paymentStatusFilter === 'Unpaid') {
+          return paymentStatus !== 'paid';
+        }
+        // Declined already handled above
+        return false;
+      });
+    }
+    
     // Apply search filter
     if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(business => {
-        const searchLower = searchQuery.toLowerCase();
         return (
           business.bp_id?.toLowerCase().includes(searchLower) ||
           business.business_name?.toLowerCase().includes(searchLower) ||
@@ -107,9 +128,9 @@ const BusinessList = () => {
         );
       });
     }
-
+    
     return filtered;
-  }, [businessPermits, purposeFilter, searchQuery])
+  }, [businessPermits, searchQuery, paymentStatusFilter])
 
   return (
     <PageLayout
@@ -121,7 +142,7 @@ const BusinessList = () => {
           <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Business Permit Request</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Business Permit Requests</Text>}
       rightAction={
         <TouchableOpacity 
           onPress={() => setShowSearch(!showSearch)} 
@@ -142,30 +163,29 @@ const BusinessList = () => {
           />
         )}
 
-        {/* Purpose Filter */}
+        {/* Payment Status Filter */}
         <View className="bg-white px-6 py-4 border-b border-gray-200">
-          <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
+          <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status Filter</Text>
           <CustomDropdown
-            value={purposeFilter}
-            onSelect={(value: string) => setPurposeFilter(value)}
+            value={paymentStatusFilter}
+            onSelect={(value: string) => setPaymentStatusFilter(value as any)}
             data={[
-              { label: 'All', value: 'all' },
-              ...purposes.map(purpose => ({ label: purpose, value: purpose }))
+              { label: 'Unpaid', value: 'Unpaid' },
+              { label: 'Paid', value: 'Paid' },
+              { label: 'Declined', value: 'Declined' }
             ]}
-            placeholder="Select purpose"
+            placeholder="Select payment status"
           />
         </View>
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
           {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <LoadingState />
-            </View>
+            <LoadingState />
           ) : error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <Text className="text-red-800 text-sm text-center">Failed to load business permits.</Text>
+                <Text className="text-red-800 text-sm text-center">Failed to load unpaid business permits.</Text>
               </View>
             </View>
           ) : (
@@ -175,30 +195,25 @@ const BusinessList = () => {
                   <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                     <View className="flex-row justify-between items-center">
                       <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
-                      {getStatusBadge(business.req_status)}
+                      {getPaymentBadge(business)}
                     </View>
                     <Text className="text-gray-500 text-xs mt-1">ID: {business.bp_id}</Text>
                     <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name}</Text>
                     <Text className="text-gray-500 text-xs mt-1">Type: {business.business_type}</Text>
                     <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
-                    {business.req_claim_date && (
-                      <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(business.req_claim_date)}</Text>
+                    {business.req_status === 'Declined' && business.decline_reason && (
+                      <Text className="text-gray-500 text-xs mt-1">Decline Reason: {business.decline_reason}</Text>
                     )}
                   </View>
                 ))
               ) : (
                 <View className="flex-1 items-center justify-center py-12">
-                  <View className="items-center">
-                    <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      <Text className="text-gray-500 text-2xl">🏢</Text>
-                    </View>
-                    <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                      {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
-                    </Text>
-                    <Text className="text-gray-500 text-sm text-center">
-                      {searchQuery ? 'Try adjusting your search terms' : 'Your business permits will appear here'}
-                    </Text>
-                  </View>
+                  <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                    {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
+                  </Text>
+                  <Text className="text-gray-500 text-sm text-center">
+                    {searchQuery ? 'Try adjusting your search terms' : 'Business permit requests will appear here'}
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -209,4 +224,5 @@ const BusinessList = () => {
   )
 }
 
-export default BusinessList
+export default BusinessClearanceList
+

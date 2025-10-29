@@ -1,6 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getTreasurerServiceCharges, getServiceChargeRate, PurposeRate, createServiceChargePaymentRequest, acceptSummonRequest, ServiceChargeResponse } from '../restful-api/serviceChargeGetAPI';
 import { updateServiceChargeStatus, declineServiceChargeRequest } from '../restful-api/serviceChargePostAPI';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 export function useTreasurerServiceCharges(search?: string, page?: number, pageSize?: number) {
   return useQuery<ServiceChargeResponse>({
@@ -41,9 +42,19 @@ export function useUpdateServiceChargeStatus(onSuccess?: () => void) {
 }
 
 export function useDeclineServiceChargeRequest(onSuccess?: () => void) {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: ({ pay_id, reason }: { pay_id: string | number; reason: string }) => 
       declineServiceChargeRequest(pay_id, reason),
-    onSuccess,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
+      showSuccessToast('Request Declined!');
+      onSuccess?.();
+    },
+    onError: (err) => {
+      console.error("Error declining service charge request", err);
+      showErrorToast("Failed to decline request. Please check the data and try again.");
+    }
   });
 }
