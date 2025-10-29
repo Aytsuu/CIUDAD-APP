@@ -129,26 +129,6 @@ const CertForm: React.FC = () => {
     });
   };
 
-  // Show loading screen while auth or purposes are loading
-  if (isLoading || isLoadingPurposes) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <Ionicons name="chevron-back" size={20} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
-        <LoadingState />
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout
       leftAction={
@@ -165,79 +145,80 @@ const CertForm: React.FC = () => {
       <View className="flex-1 p-6">
         {/* Loading Modal */}
         <LoadingModal visible={addPersonalCert.status === 'pending'} />
-
-
-      
-
-      
-      {error && (
-        <Text className="text-red-500 mb-2 text-sm">{error}</Text>
-      )}
-      {addPersonalCert.status === 'error' && (
-        <Text className="text-red-500 mb-2 text-sm">Failed to submit request.</Text>
-      )}
-
-      {/* Form Fields */}
-      <View className="space-y-6">
-        {/* Purpose */}
-        <SelectLayout
-          options={purposeOptions}
-          selectedValue={purpose}
-          onSelect={(option) => {
-            setPurpose(option.value);
-            setPersonalType(option.value);
-          }}
-          placeholder={isLoadingPurposes ? "Loading..." : "Select purpose"}
-          label="Purpose of Request"
-          disabled={isLoadingPurposes}
-        />
-
-        {/* Claim Date removed */}
-
-        {/* Payment Mode */}
-        {/* Removed payment mode field */}
-      </View>
-
-      {/* Amount Display - show only for residents without voter_id */}
-      {personalType && !hasVoterId && (
-        <View className="rounded-lg p-4 mb-6 mt-4 bg-blue-50 border border-blue-200">
-          <View className="flex-row items-center mb-2">
-            <Ionicons name="information-circle" size={16} color="#2563EB" />
-            <Text className="text-sm font-medium ml-2 text-blue-800">Amount to be Paid:</Text>
-          </View>
-          <Text className="text-lg font-bold text-blue-700">
-            {(() => {
-              const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
-              return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
-            })()}
-          </Text>
-        </View>
-      )}
-
-      {/* Submit Button */}
-      <TouchableOpacity
-        className={`rounded-xl py-4 items-center mt-2 mb-8 ${
-          addPersonalCert.status === 'pending' 
-            ? 'bg-gray-400 opacity-50' 
-            : 'bg-[#00AFFF]'
-        }`}
-        activeOpacity={0.85}
-        onPress={handleSubmit}
-        disabled={addPersonalCert.status === 'pending'}
-      >
-        {addPersonalCert.status === 'pending' ? (
-          <View className="flex-row items-center">
-            <ActivityIndicator size="small" color="white" />
-            <Text className="text-white font-semibold text-base ml-2">
-              Submitting...
-            </Text>
-          </View>
+        {isLoading || isLoadingPurposes ? (
+          <LoadingState />
         ) : (
-          <Text className="text-white font-semibold text-base">
-            Submit Request
-          </Text>
+          <>
+            {error && (
+              <Text className="text-red-500 mb-2 text-sm">{error}</Text>
+            )}
+            {addPersonalCert.status === 'error' && (
+              <Text className="text-red-500 mb-2 text-sm">Failed to submit request.</Text>
+            )}
+
+            {/* Form Fields */}
+            <View className="space-y-6">
+              {/* Purpose */}
+              <SelectLayout
+                options={purposeOptions}
+                selectedValue={purpose}
+                onSelect={(option) => {
+                  setPurpose(option.value);
+                  setPersonalType(option.value);
+                }}
+                placeholder={isLoadingPurposes ? "Loading..." : "Select purpose"}
+                label="Purpose of Request"
+                disabled={isLoadingPurposes}
+              />
+
+              {/* Claim Date removed */}
+
+              {/* Payment Mode */}
+              {/* Removed payment mode field */}
+            </View>
+
+            {/* Amount Display - show only for residents without voter_id */}
+            {personalType && !hasVoterId && (
+              <View className="rounded-lg p-4 mb-6 mt-4 bg-blue-50 border border-blue-200">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="information-circle" size={16} color="#2563EB" />
+                  <Text className="text-sm font-medium ml-2 text-blue-800">Amount to be Paid:</Text>
+                </View>
+                <Text className="text-lg font-bold text-blue-700">
+                  {(() => {
+                    const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
+                    return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
+                  })()}
+                </Text>
+              </View>
+            )}
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              className={`rounded-xl py-4 items-center mt-2 mb-8 ${
+                addPersonalCert.status === 'pending' 
+                  ? 'bg-gray-400 opacity-50' 
+                  : 'bg-[#00AFFF]'
+              }`}
+              activeOpacity={0.85}
+              onPress={handleSubmit}
+              disabled={addPersonalCert.status === 'pending'}
+            >
+              {addPersonalCert.status === 'pending' ? (
+                <View className="flex-row items-center">
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-white font-semibold text-base ml-2">
+                    Submitting...
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-white font-semibold text-base">
+                  Submit Request
+                </Text>
+              )}
+            </TouchableOpacity>
+          </>
         )}
-      </TouchableOpacity>
       </View>
     </PageLayout>
   );
