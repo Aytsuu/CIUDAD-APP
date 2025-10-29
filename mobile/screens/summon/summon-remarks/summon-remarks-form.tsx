@@ -2,7 +2,7 @@ import '@/global.css';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Button } from '@/components/ui/button';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -67,39 +67,20 @@ export default function SummonRemarksForm() {
     };
 
     return (
-        <_ScreenLayout
-            showExitButton={false}
-            customLeftAction={
-                <TouchableOpacity onPress={() => router.back()}>
-                    <ChevronLeft size={30} className="text-black" />
+        <PageLayout
+            leftAction={
+                <TouchableOpacity 
+                    onPress={() => router.back()} 
+                    className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+                >
+                    <ChevronLeft size={24} className="text-gray-700" />
                 </TouchableOpacity>
             }
-            headerBetweenAction={<Text className="text-[13px]">Add Remarks</Text>}
-            stickyFooter={true}
-            footer={
-                 <View className="py-3">
-                        <Button
-                            onPress={handleSubmit(onSubmit)}
-                            disabled={isSubmitDisabled}
-                            className={`w-full rounded-xl shadow-lg ${
-                                isSubmitDisabled ? 'bg-gray-400' : 'bg-primaryBlue'
-                            }`}
-                        >
-                            <Text className="text-white font-PoppinsSemiBold text-[16px]">
-                                {isPending ? "Submitting..." : "Submit"}
-                            </Text>
-                        </Button>
-                        
-                        {isSubmitDisabled && !isPending && (
-                            <Text className="text-center text-[12px] text-gray-500 mt-2 font-PoppinsRegular">
-                                Please upload files and enter remarks to submit
-                            </Text>
-                        )}
-                    </View>
-            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">Add Remarks</Text>}
+            wrapScroll={false}
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                <View className="p-6">
+            <View className="flex-1 bg-gray-50">
+                <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                     {/* Media Upload Section */}
                     <View className="space-y-3">
                         <View>
@@ -182,10 +163,31 @@ export default function SummonRemarksForm() {
                             )}
                         />
                     </View>
-                </View>
-            </ScrollView>
 
-            <LoadingModal visible={isPending} />
-        </_ScreenLayout>
+                    <View className="py-6 bg-white border-t border-gray-200">
+                        <Button
+                            onPress={handleSubmit(onSubmit)}
+                            disabled={isSubmitDisabled}
+                            className={`w-full rounded-xl shadow-lg native:h-[56px] ${
+                                isSubmitDisabled ? 'bg-gray-400' : 'bg-primaryBlue'
+                            }`}
+                        >
+                            <Text className="text-white font-PoppinsSemiBold text-[16px]">
+                                {isPending ? "Submitting..." : "Submit"}
+                            </Text>
+                        </Button>
+                        
+                        {isSubmitDisabled && !isPending && (
+                            <Text className="text-center text-[12px] text-gray-500 mt-2 font-PoppinsRegular">
+                                Please upload files and enter remarks to submit
+                            </Text>
+                        )}
+                    </View>
+                </ScrollView>
+
+                <LoadingModal visible={isPending} />
+            </View>
+        </PageLayout>
     );
 }
+
