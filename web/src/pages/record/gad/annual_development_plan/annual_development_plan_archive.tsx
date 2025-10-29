@@ -130,16 +130,12 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
       {/* Header */}
       <div className="flex gap-2 justify-between pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <Button
-            className="text-black p-2 self-start"
-            variant="outline"
-            onClick={onBack}
-          >
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={onBack}>
             <ChevronLeft />
           </Button>
           <div className="flex flex-col">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Archive / <span className="text-gray-400">Annual Development Plans</span>
+              Archive Annual Development Plans
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
               View and manage all archived annual development plans
