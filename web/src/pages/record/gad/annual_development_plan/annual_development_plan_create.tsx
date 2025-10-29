@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useCreateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
@@ -11,6 +11,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+
+const toDisplayDate = (dateStr: string): string => {
+  if (!dateStr) return "";
+  const [year, month, day] = dateStr.split("-");
+  return month && day && year ? `${month}/${day}/${year}` : "";
+};
 
 const clientOptions = [
   { value: "Women", label: "Women" },
@@ -228,11 +237,37 @@ export default function AnnualDevelopmentPlanCreate() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Date</label>
-              <input 
-                type="date" 
-                {...form.register("dev_date")}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={toDisplayDate(form.watch("dev_date"))}
+                      readOnly
+                      placeholder="MM/DD/YYYY"
+                      className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                    />
+                    <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.watch("dev_date") ? new Date(form.watch("dev_date") + "T00:00:00") : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateStr = format(date, "yyyy-MM-dd");
+                        form.setValue("dev_date", dateStr, { shouldValidate: true });
+                      }
+                    }}
+                    disabled={(date) => {
+                      const currentYear = new Date().getFullYear();
+                      return date.getFullYear() < currentYear;
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {form.formState.errors.dev_date && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_date.message}</p>
               )}
