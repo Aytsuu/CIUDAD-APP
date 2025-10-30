@@ -8,6 +8,9 @@ from .views.pregnancy_views import *
 from .views.labresult_views import *
 
 urlpatterns=[
+    # Forwarded
+    path('forwarded/midwife/', ForwardedMidwifeMaternalListView.as_view(), name='forwarded-midwife-maternal-list'),
+
     # Maternal
     path('maternal-patients/charts/<str:month>/', MaternalPatientsListView.as_view(), name='maternal-patients-charts'),
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),

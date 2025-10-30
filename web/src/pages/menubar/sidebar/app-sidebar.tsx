@@ -355,6 +355,10 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
+        {
+          title: "Maternal",
+          url: "/forwarded-records/maternal",
+        },
       ],
     }] : []),
     ...(featureValidator("referred patients") ? [{

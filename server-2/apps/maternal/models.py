@@ -150,6 +150,12 @@ class Prenatal_Form(models.Model):
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='assigned_prenatal_forms', db_column='assigned_to', null=True)
 
     def save(self, *args, **kwargs):
+        # Strip whitespace from status and forwarded_status fields
+        if self.status:
+            self.status = self.status.strip()
+        if self.forwarded_status:
+            self.forwarded_status = self.forwarded_status.strip()
+            
         if not self.pf_id:
             with transaction.atomic():
                 # Get current date

@@ -16,6 +16,7 @@ import { noteColumns } from "./bhw-columns";
 interface NoteDiv {
       no: number;
       date: string;
+      name: string;
       description: string;
    }
    
@@ -27,16 +28,19 @@ export default function BHWAllNotes() {
       {
          no: 1,
          date: "2023-10-01",
+         name: 'Babo, Junita',
          description: "Note content for October 1st"
       },
       {
          no: 2,
          date: "2023-10-02",
+         name: 'Babo, Junita',
          description: "Note content for October 2nd"
       },
       {
          no: 3,
          date: "2023-10-03",
+         name: 'Estrada, Maria',
          description: "Note content for October 3rd"
       }
    ]

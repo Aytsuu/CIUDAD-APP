@@ -142,18 +142,19 @@ export default function BHWNoteForm() {
                            onStatusChange={handleNutritionalStatusChange}
                         />
 
-                        {/* <div className="flex flex-col border p-5 rounded-lg">
-                              <Label>Measurement Completion List</Label>
+                        <div className="flex flex-col border p-5 rounded-lg mt-5">
+                              <Label>Measurement Completion List for the Month of October</Label>
                            <div className="flex h-[200px] border p-5 mt-3 rounded-md overflow-y-auto">
 
                            </div>
-                        </div> */}
+                        </div>
                      </div>
 
+
                      <div className="mb-5">
-                        <Label className=" text-md font-semibold">Disease Surveillance Cases</Label>
+                        <Label className=" text-md font-semibold">Referrals/Follow-up Cases</Label>
                         <Separator className="mt-2 mb-4"/>
-                        <div className="grid grid-cols-5 gap-2 border p-3">
+                        {/* <div className="grid grid-cols-5 gap-2 border p-3">
                            <FormInput
                               control={form.control}
                               label="Fever"
@@ -240,12 +241,12 @@ export default function BHWNoteForm() {
                               name="surveillanceCasesCount.leprosyCount"
                               type="number"
                            />
-                        </div>
+                        </div> */}
 
                         {/* Others - Dynamic Fields */}
                         <div className="mt-4">
                            <div className="flex items-center justify-between mb-3">
-                              <Label className="text-sm font-semibold">Other Diseases</Label>
+                              <Label className="text-sm font-semibold">Illness</Label>
                               <Button
                                  type="button"
                                  variant="outline"
@@ -253,7 +254,7 @@ export default function BHWNoteForm() {
                                  onClick={() => append({ diseaseName: "", count: 0 })}
                               >
                                  <Plus className="w-4 h-4 mr-1" />
-                                 Add Disease
+                                 Add Illness
                               </Button>
                            </div>
 
@@ -264,8 +265,8 @@ export default function BHWNoteForm() {
                                        <div className="flex-1">
                                           <FormInput
                                              control={form.control}
-                                             label={index === 0 ? "Disease Name" : ""}
-                                             placeholder="Enter disease name"
+                                             label={index === 0 ? "Illness Name" : ""}
+                                             placeholder="Enter illness name"
                                              name={`surveillanceCasesCount.others.${index}.diseaseName`}
                                           />
                                        </div>
@@ -294,13 +295,13 @@ export default function BHWNoteForm() {
 
                            {fields.length === 0 && (
                               <div className="text-center py-4 text-sm text-gray-500 border rounded-md bg-gray-50">
-                                 No other diseases added. Click "Add Disease" to add custom diseases.
+                                 No illnesses added. Click "Add Illness" to add count cases for an illness.
                               </div>
                            )}
                         </div>
                      </div>
                      <div className="flex justify-end">
-                        <Button type="submit">Save Note</Button>
+                        <Button type="submit">Submit</Button>
                      </div>
                   </div>
                </div>

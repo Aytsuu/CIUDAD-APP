@@ -15,7 +15,6 @@ import { useAuth } from "@/context/AuthContext";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import TableLoading from "../../table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useChildImmunizationColumns } from "./columns/childimmunization-col";
 
 export const getChildHealthHistoryRecordRecords = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {

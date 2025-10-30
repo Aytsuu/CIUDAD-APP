@@ -292,21 +292,11 @@ class MaternalPatientListView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # queryset = Patient.objects.filter(
-        #     Exists(PatientRecord.objects.filter(
-        #         pat_id=OuterRef('pat_id'),
-        #         patrec_type__in=['Prenatal', 'Postpartum Care']
-        #     ))
-        # ).annotate(
-        #     completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
-        # ).distinct()
-
         queryset = Patient.objects.filter(
             Exists(Pregnancy.objects.filter(
                 pat_id=OuterRef('pat_id')
             ))
         )
-
 
         params = self.request.query_params
         status = params.get('status')
@@ -340,6 +330,77 @@ class MaternalPatientListView(generics.ListAPIView):
             queryset = queryset.filter(filters)
             
         return queryset
+
+
+class ForwardedMidwifeMaternalListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get all prenatal forms that match and strip in Python since DB has trailing spaces
+        matching_pf_ids = []
+        for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False):
+            status = (pf.status or '').strip()
+            forwarded_status = (pf.forwarded_status or '').strip()
+            if status == 'tbc_by_midwife' and forwarded_status == 'pending':
+                matching_pf_ids.append(pf.pf_id)
+        
+        logger.info(f"Debug: Found {len(matching_pf_ids)} matching prenatal forms: {matching_pf_ids}")
+        
+        # Now get patients from these forms
+        if not matching_pf_ids:
+            return Patient.objects.none()
+        
+        queryset = Patient.objects.filter(
+            Exists(PatientRecord.objects.filter(
+                pat_id=OuterRef('pat_id'),
+                prenatal_form__pf_id__in=matching_pf_ids
+            ))
+        )
+        
+        logger.info(f"Debug: ForwardedMidwifeMaternalListView returning {queryset.count()} patients")
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Override list to include patrec_type in response"""
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = serializer.data
+            
+            # Add patrec_type for each patient
+            for patient_data in data:
+                patient_id = patient_data.get('pat_id')
+                patrec = PatientRecord.objects.filter(
+                    pat_id=patient_id,
+                    prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+                ).first()
+                if patrec:
+                    patient_data['patrec_type'] = patrec.patrec_type
+                else:
+                    patient_data['patrec_type'] = None
+            
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        
+        # Add patrec_type for each patient
+        for patient_data in data:
+            patient_id = patient_data.get('pat_id')
+            patrec = PatientRecord.objects.filter(
+                pat_id=patient_id,
+                prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+            ).first()
+            if patrec:
+                patient_data['patrec_type'] = patrec.patrec_type
+            else:
+                patient_data['patrec_type'] = None
+        
+        return Response(data)
 
 
 # Counts

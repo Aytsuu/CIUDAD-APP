@@ -2,6 +2,7 @@ import ForwardedCHimmunizationTable from "@/pages/healthServices/forwardedrecord
 import ForwardedCombinedHealthRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedCombineConsultation";
 import ForwardedScheduledVaccinationsTables from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedScheduledVaccinations";
 import ChildImmunization from "@/pages/healthServices/childservices/immunization/Main";
+import ForwardedMaternal from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedMaternal";
 
 export const forwardedhealthrecord_router = [
  
@@ -20,5 +21,9 @@ export const forwardedhealthrecord_router = [
   {
     path: "/child-immunization",
     element: <ChildImmunization />,
-  }
+  },
+  {
+    path: "/forwarded-records/maternal",
+    element: <ForwardedMaternal />
+  },
 ];

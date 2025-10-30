@@ -82,3 +82,21 @@ export function useCHimmunizationCount() {
     });
   }
   
+
+  // forwarded maternal records 
+  export function useForwardedMaternal(page: number = 1, pageSize: number = 10, search: string = "") {
+    return useQuery({
+      queryKey: ["forwardedmaternal-records", page, pageSize, search],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          page_size: pageSize.toString(),
+          search: search
+        });
+        const response = await api2.get(`/maternal/forwarded/midwife/?${params}`);
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0
+    })
+  }

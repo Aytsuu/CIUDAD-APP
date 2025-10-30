@@ -8,6 +8,7 @@ import { Trash2, SquarePen, Eye } from "lucide-react";
 type Note = {
    no: number;
    date: string;
+   name: string;
    description: string;
 }
 
@@ -25,6 +26,11 @@ export const noteColumns: ColumnDef<Note>[] = [
       header: "Date",
       // pass 'long' to formatDate to render a human-friendly string (e.g., October 1, 2023)
       cell: ({ row }) => <div>{formatDate(row.original.date, 'long')}</div>
+   },
+   {
+      accessorKey: "name",
+      header: "BHW Name",
+      cell: ({ row }) => <div>{row.original.name}</div> 
    },
    {
       accessorKey: "description",

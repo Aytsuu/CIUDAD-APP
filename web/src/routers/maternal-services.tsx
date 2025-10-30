@@ -9,6 +9,7 @@ import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/postpa
 import PostpartumCareHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-care-history";
 import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-indiv-history";
 
+
 export const maternal_router = [
     {
         path: "/services/maternal",
@@ -49,5 +50,5 @@ export const maternal_router = [
     {
         path: "/services/maternal/postpartum/view",
         element: <PostpartumViewing />,
-    }
+    },
 ]
