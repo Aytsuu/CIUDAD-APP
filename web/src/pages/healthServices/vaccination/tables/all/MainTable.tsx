@@ -4,6 +4,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { Shield, UserX } from "lucide-react";
 import AllVaccinationRecords from "./AllVaccinationRecord";
 import UnvaccinatedResident from "./UnvaccineResidents";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 export default function VaccinationManagement() {
   const [selectedView, setSelectedView] = useState(() => {
@@ -57,18 +58,23 @@ export default function VaccinationManagement() {
       <CardLayout
         content={
           <Tabs defaultValue={selectedView} value={selectedView} onValueChange={handleTabChange} className="w-full">
-            <div className="px-2 pt-4">
-              <TabsList className="w-full grid grid-cols-2 gap-2 h-auto p-1">
-                <TabsTrigger value="vaccinated" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Shield className="h-4 w-4" />
+              <TabsList
+                className="grid w-full sm:w-[450px]"
+                style={{
+                  gridTemplateColumns: "1fr 1fr",
+                }}
+              >
+                <TabsTrigger value="vaccinated" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <span>Vaccination Records</span>
                 </TabsTrigger>
-                <TabsTrigger value="unvaccinated" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <UserX className="h-4 w-4" />
-                  <span>Resident Vaccination Tracking</span>
-                </TabsTrigger>
+
+                <ProtectedComponent exclude={["DOCTOR"]}>
+                  <TabsTrigger value="unvaccinated"  className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                    <span>Resident Vaccination Tracking</span>
+                  </TabsTrigger>
+                </ProtectedComponent>
               </TabsList>
-            </div>
+ 
 
             <div className="p-2 pt-6">
               <TabsContent value="vaccinated" className="mt-0">

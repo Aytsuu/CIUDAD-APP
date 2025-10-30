@@ -1,9 +1,8 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Syringe, ChevronDown, ArrowRight } from "lucide-react";
+import { AlertCircle, Syringe, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import { useVaccinationChart } from "./queries/chart";
-import { useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 
@@ -12,7 +11,7 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 export function VaccinationDistributionSidebar() {
   const initialMonth = format(new Date(), "yyyy-MM");
   const { data, isLoading, error } = useVaccinationChart(initialMonth);
-  const [showAll, setShowAll] = useState(false);
+  // const [showAll, setShowAll] = useState(false);
 
   // Transform and sort data
   const allVaccines = data?.vaccine_counts
@@ -23,8 +22,8 @@ export function VaccinationDistributionSidebar() {
     : [];
 
   // Determine which vaccines to show
-  const vaccinesToShow = showAll ? allVaccines : allVaccines.slice(0, 10);
-  const totalVaccines = allVaccines.length;
+  const vaccinesToShow =  allVaccines.slice(0, 10);
+  // const totalVaccines = allVaccines.length;
   const totalDoses = allVaccines.reduce((sum, item) => sum + item.count, 0);
 
   // Common link state for all vaccine cards and "View More" button
@@ -55,8 +54,15 @@ export function VaccinationDistributionSidebar() {
     <Card className="rounded-md shadow-none">
       <CardContent className="pt-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="p-4 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="h-4 bg-black/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-black/20 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : !data || allVaccines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">

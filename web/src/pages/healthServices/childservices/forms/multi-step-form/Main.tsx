@@ -337,9 +337,7 @@ export default function ChildHealthRecordForm() {
 
         // The API response is a paginated list under "results", not "child_health_histories"
         // So we should use childHealthRecord.results (an array of histories)
-        const selectedChhistRecord = childHealthRecord?.results?.find(
-          (history: any) => history.chhist_id === Number.parseInt(chhistId)
-        );
+        const selectedChhistRecord = childHealthRecord?.results?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
 
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`);
@@ -440,19 +438,15 @@ export default function ChildHealthRecordForm() {
     navigate(-1);
   };
 
-  if (isLoading || isRecordLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <TableLoading />
-      </div>
-    );
-  }
+  useEffect(() => {
+    // Reset currentPage when the route changes
+    setCurrentPage(1);
+  }, [location.pathname]);
 
   if (error || recordError) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <div className="text-red-500">{error || recordError?.message}</div>
-        <Button onClick={handleBack}>Go Back</Button>
+           <TableLoading />
       </div>
     );
   }
@@ -468,75 +462,82 @@ export default function ChildHealthRecordForm() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <Button className="self-start p-2 text-black" variant={"outline"} onClick={handleBack}>
-          <ChevronLeft />
-        </Button>
-        <div className="mb-4 flex-col items-center">
-          <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">Child Health Record</h1>
-          <p className="text-xs text-darkGray sm:text-sm">
-            Manage and view child's health record for {formData.childFname} {formData.childLname}
-          </p>
+      {isLoading || isRecordLoading ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <TableLoading />
         </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
-      {/* Step Indicator */}
-      <StepIndicator currentStep={currentPage} totalSteps={4} onStepClick={handleStepClick} allowClickNavigation={true} completedSteps={completedSteps} />
-
-      <CardLayout
-        cardClassName="px-4"
-        contentClassName="space-y-6"
-        title={""}
-        content={
-          <div>
-            {currentPage === 1 && (
-              <ChildHRPage1
-                onNext={() => setCurrentPage(2)}
-                updateFormData={updateFormData}
-                formData={formData}
-                mode={mode || "newchildhealthrecord"}
-                selectedPatient={selectedPatient}
-                setSelectedPatient={setSelectedPatient}
-                selectedPatientId={selectedPatientId}
-                setSelectedPatientId={setSelectedPatientId}
-              />
-            )}
-            {currentPage === 2 && (
-              <ChildHRPage2
-                onPrevious={() => setCurrentPage(1)}
-                onNext={() => setCurrentPage(3)}
-                selectedPatient={selectedPatient}
-                updateFormData={updateFormData}
-                formData={formData}
-                historicalBFChecks={historicalBFChecks}
-                mode={mode || "newchildhealthrecord"}
-              />
-            )}
-            {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
-            {currentPage === 4 && (
-              <LastPage
-                onPrevious={() => setCurrentPage(3)}
-                onSubmit={handleSubmit}
-                updateFormData={updateFormData}
-                formData={formData}
-                historicalSupplementStatuses={historicalSupplementStatuses}
-                onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus}
-                latestHistoricalNoteContent={latestHistoricalNoteContent}
-                latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
-                latestHistoricalFollowUpDate={latestHistoricalFollowUpDate}
-                historicalMedicines={historicalMedicines}
-                mode={mode || "newchildhealthrecord"}
-                isSubmitting={isSubmitting}
-                newVitalSigns={newVitalSigns}
-                setNewVitalSigns={setNewVitalSigns}
-                passed_status={passed_status || ""}
-                chrecId={chrecId}
-              />
-            )}
+      ) : (
+        <>
+          
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <Button className="self-start p-2 text-black" variant={"outline"} onClick={handleBack}>
+              <ChevronLeft />
+            </Button>
+            <div className="mb-4 flex-col items-center">
+              <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">Child Health Record</h1>
+              <p className="text-xs text-darkGray sm:text-sm">
+                Manage and view child's health record for {formData.childFname} {formData.childLname}
+              </p>
+            </div>
           </div>
-        }
-      />
+          <hr className="border-gray mb-5 sm:mb-8" />
+          {/* Step Indicator */}
+          <StepIndicator currentStep={currentPage} totalSteps={4} onStepClick={handleStepClick} allowClickNavigation={true} completedSteps={completedSteps} />
+          <CardLayout
+            cardClassName="px-4"
+            contentClassName="space-y-6"
+            title={""}
+            content={
+              <div>
+                {currentPage === 1 && (
+                  <ChildHRPage1
+                    onNext={() => setCurrentPage(2)}
+                    updateFormData={updateFormData}
+                    formData={formData}
+                    mode={mode || "newchildhealthrecord"}
+                    selectedPatient={selectedPatient}
+                    setSelectedPatient={setSelectedPatient}
+                    selectedPatientId={selectedPatientId}
+                    setSelectedPatientId={setSelectedPatientId}
+                  />
+                )}
+                {currentPage === 2 && (
+                  <ChildHRPage2
+                    onPrevious={() => setCurrentPage(1)}
+                    onNext={() => setCurrentPage(3)}
+                    selectedPatient={selectedPatient}
+                    updateFormData={updateFormData}
+                    formData={formData}
+                    historicalBFChecks={historicalBFChecks}
+                    mode={mode || "newchildhealthrecord"}
+                  />
+                )}
+                {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
+                {currentPage === 4 && (
+                  <LastPage
+                    onPrevious={() => setCurrentPage(3)}
+                    onSubmit={handleSubmit}
+                    updateFormData={updateFormData}
+                    formData={formData}
+                    historicalSupplementStatuses={historicalSupplementStatuses}
+                    onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus}
+                    latestHistoricalNoteContent={latestHistoricalNoteContent}
+                    latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
+                    latestHistoricalFollowUpDate={latestHistoricalFollowUpDate}
+                    historicalMedicines={historicalMedicines}
+                    mode={mode || "newchildhealthrecord"}
+                    isSubmitting={isSubmitting}
+                    newVitalSigns={newVitalSigns}
+                    setNewVitalSigns={setNewVitalSigns}
+                    passed_status={passed_status || ""}
+                    chrecId={chrecId}
+                  />
+                )}
+              </div>
+            }
+          />
+        </>
+      )}
     </>
   );
 }

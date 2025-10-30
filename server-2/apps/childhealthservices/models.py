@@ -57,7 +57,9 @@ class ChildHealth_History(models.Model):
     chrec = models.ForeignKey(ChildHealthrecord, on_delete=models.CASCADE, related_name='child_health_histories')
     tt_status = models.CharField(max_length=100, blank=True, null=True)
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories', null=True, blank=True)
-
+    assigned_doc =  models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories_assigned_doc', null=True, blank=True,db_column='assigned_doc')
+    created_by = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories_created_by', null=True, blank=True,db_column='created_by')
+    
     status = models.CharField(
         max_length=20,
         choices=[

@@ -405,15 +405,31 @@ class UpdateChildHealthRecordAPIView(APIView):
                 assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
             except Staff.DoesNotExist:
                 raise ValueError(f"Staff with ID {selected_staff_id} does not exist")
-
-        # Create new child health history
-        new_chhist = ChildHealth_History.objects.create(
-            created_at=timezone.now(),
-            chrec_id=chrec_id,
-            status=submitted_data.get('status', 'recorded'),
-            tt_status=submitted_data.get('tt_status'),
-            assigned_to=assigned_staff
-        )
+            
+          # Set assigned_doc or assigned_to to None based on status
+        status_val = submitted_data.get('status', '').lower()
+       
+        if status_val == 'immunization':
+             # Create new child health history
+            new_chhist = ChildHealth_History.objects.create(
+                created_at=timezone.now(),
+                chrec_id=chrec_id,
+                status=status_val,
+                tt_status=submitted_data.get('tt_status'),
+                assigned_to=assigned_staff,
+                created_by=staff_instance
+            )
+            
+        elif status_val == 'check-up':
+            new_chhist = ChildHealth_History.objects.create(
+                created_at=timezone.now(),
+                chrec_id=chrec_id,
+                status=status_val,
+                tt_status=submitted_data.get('tt_status'),
+                assigned_doc=assigned_staff,
+                created_by=staff_instance
+            )
+            
         current_chhist_id = new_chhist.chhist_id
         
         followv_id = None

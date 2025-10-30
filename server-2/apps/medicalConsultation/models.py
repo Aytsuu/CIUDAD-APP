@@ -57,9 +57,8 @@ class PhilHealthLaboratory(models.Model):
             self.others = self.others.title()
         super().save(*args, **kwargs)
     class Meta:
-        db_table = 'philhealth_laboratory'
-        verbose_name = "Philhealth Laboratory"
-        verbose_name_plural = "Philhealth Laboratories"
+        db_table = 'laboratory'
+        verbose_name = "Laboratory"
         ordering = ['-created_at']
 
 class PhilhealthDetails(models.Model):
@@ -85,8 +84,7 @@ class PhilhealthDetails(models.Model):
    
     tts = models.ForeignKey(TT_Status, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
     obs = models.ForeignKey(Obstetrical_History, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
-    lab = models.ForeignKey(PhilHealthLaboratory, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
-
+    
     class Meta:
         db_table = 'philhealth_details'
         
@@ -130,6 +128,7 @@ class MedicalConsultation_Record(models.Model):
     # PhilHealth flag only
     is_phrecord = models.BooleanField(default=False)
     app_id =models.ForeignKey(MedConsultAppointment, on_delete=models.SET_NULL, null=True, blank=True, db_column='app_id')
+    lab = models.ForeignKey(PhilHealthLaboratory, on_delete=models.SET_NULL, related_name='medical_consultation_record', null=True, blank=True)
 
 
     class Meta:

@@ -5,8 +5,8 @@ import MedicalConsultationForm from "@/pages/healthServices/medicalconsultation/
 import MainMedicalConsultation from "@/pages/healthServices/medicalconsultation/tables/main-medicalconsultation";
 import AppointmentForm from "@/pages/healthServices/medicalconsultation/Forms/AppointmentForm";
 import MedconRecordsLayout from "@/pages/healthServices/medicalconsultation/tables/main-medconlayout";
-import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/tables/appointments/main-appointmentlayout";
-import MainAppointments from "@/pages/healthServices/medicalconsultation/tables/appointments/main-appoimnents";
+import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appointmentlayout";
+import MainAppointments from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appoimnents";
 
 export const medicalConsultation = [
   {

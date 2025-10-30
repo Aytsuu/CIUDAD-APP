@@ -1,5 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Pill, ChevronDown, ArrowRight } from "lucide-react";
+import { AlertCircle, Pill, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries";
@@ -65,8 +65,15 @@ export function MedicineDistributionSidebar() {
     <Card className="rounded-md shadow-none">
       <CardContent className="pt-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="p-4 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="h-4 bg-black/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-black/20 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : !data || allMedicines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">

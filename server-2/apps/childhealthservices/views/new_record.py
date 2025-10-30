@@ -247,13 +247,30 @@ class CompleteChildHealthRecordAPIView(APIView):
             except Staff.DoesNotExist:
                 print(f"Staff with ID {selected_staff_id} does not exist")
        
-        # Create the child health history record
-        child_health_history = ChildHealth_History.objects.create(
-            chrec=child_health_record,
-            status=submitted_data.get('status', 'recorded'),
-            tt_status=submitted_data.get('tt_status'),
-            assigned_to=assigned_staff
-        )
+        status_val = submitted_data.get('status', '').lower()
+        
+       
+        if status_val == 'immunization':
+             # Create the child health history record
+            child_health_history = ChildHealth_History.objects.create(
+                chrec=child_health_record,
+                status=status_val,
+                tt_status=submitted_data.get('tt_status'),
+                assigned_to=assigned_staff,
+                created_by=staff_instance   
+            )
+           
+        elif status_val == 'check-up':
+             # Create the child health history record
+            child_health_history = ChildHealth_History.objects.create(
+                chrec=child_health_record,
+                status=status_val,
+                tt_status=submitted_data.get('tt_status'),
+                assigned_doc=assigned_staff,
+                created_by=staff_instance
+            )
+                
+       
         
         # Handle follow-up visit
         followv_id = None

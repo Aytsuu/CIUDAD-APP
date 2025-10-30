@@ -80,7 +80,7 @@ export default function MonthlyMedicineDetails() {
       const personalInfo = patient?.pat_details?.personal_info;
       const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ").toLowerCase();
 
-      const recordMedicineName = record.minv_details?.med_detail?.med_name?.toLowerCase() || "";
+      const recordMedicineName = record?.med_details?.med_name?.toLowerCase() || "";
       const reason = record.reason?.toLowerCase() || "";
       const date = record.requested_at ? new Date(record.requested_at).toLocaleDateString().toLowerCase() : "";
       const patientId = patient?.pat_details?.pat_id?.toLowerCase() || "";

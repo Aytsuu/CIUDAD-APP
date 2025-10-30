@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import {  ChevronRight, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { usePendingMedRequest } from "@/pages/healthServices/medicineservices/Request/queries/fetch";
 
 export const PendingMedicineRequestsSidebar = () => {
@@ -13,9 +12,9 @@ export const PendingMedicineRequestsSidebar = () => {
   const requests = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
 
-  const formatName = (firstName: string, middleName: string, lastName: string) => {
-    const middle = middleName ? `${middleName[0]}.` : "";
-    return `${firstName} ${middle} ${lastName}`;
+  const formatName = (firstName: string, middleName: string | null, lastName: string) => {
+    const middle = middleName && middleName.trim() ? `${middleName[0].toUpperCase()}.` : "";
+    return `${firstName.trim()} ${middle} ${lastName.trim()}`.replace(/\s+/g, " ").trim();
   };
 
   const calculateDaysPending = (requestedDate: string) => {
@@ -89,9 +88,9 @@ export const PendingMedicineRequestsSidebar = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-sm font-medium text-gray-700 truncate">{formatName(request.personal_info?.per_fname || "Unknown", request.personal_info?.per_mname || "", request.personal_info?.per_lname || "")}</h3>
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 text-blue-600 bg-blue-50 border-blue-500">
+                        {/* <Badge variant="outline" className="text-xs px-2 py-0.5 text-blue-600 bg-blue-50 border-blue-500">
                           {request.total_quantity || 0} items
-                        </Badge>
+                        </Badge> */}
                       </div>
 
                       <div className="flex items-center gap-3 text-xs text-gray-500">

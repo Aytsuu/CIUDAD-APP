@@ -10,6 +10,7 @@ from apps.maternal.models import *
 from apps.vaccination.models import *
 from apps.familyplanning.models import *
 from apps.animalbites.models import *
+from django.db.models import Count
 
 class ReportsCount(APIView):
     def get(self, request):
@@ -43,11 +44,20 @@ class ReportsCount(APIView):
             confirmed_appointments_count = MedConsultAppointment.objects.filter(status='confirmed').count()
             total_appointments_count = pending_appointments_count + confirmed_appointments_count
             total_medicine_requests =  medrequest_count + apprequest_count
+            
         
             # Total count
             antigen_count =  vaccine_count + immunization_count
             inv_antigen_count = inv_vaccination + inv_immunization
             
+            # Count completed consultations by doctor
+            doctor_id = request.query_params.get('doctor_id')
+            completed_consultations_by_doctor = None
+            if doctor_id:
+                completed_consultations_by_doctor = count_completed_consultations_by_doctor(doctor_id)
+                completed_childconsultations_by_doctor = count_consulted_children_by_assigned(doctor_id)
+
+            # Add the count to the response
             return Response({
                 'success': True,
                 'data': {
@@ -75,8 +85,8 @@ class ReportsCount(APIView):
                     'pending_appointments_count': pending_appointments_count,
                     'confirmed_appointments_count': confirmed_appointments_count,
                     'total_appointments_count': total_appointments_count,
-                    
-                    
+                    'completed_consultations_by_doctor': completed_consultations_by_doctor,
+                    'completed_childconsultations_by_doctor': completed_childconsultations_by_doctor
                 }
             }, status=status.HTTP_200_OK)
             
@@ -84,4 +94,18 @@ class ReportsCount(APIView):
             return Response({
                 'success': False,
                 'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+def count_completed_consultations_by_doctor(doctor_id):
+   
+    return MedicalConsultation_Record.objects.filter(
+        medrec_status="completed",
+        assigned_to_id=doctor_id
+    ).count()
+
+def count_consulted_children_by_assigned(doctor_id):
+    return ChildHealth_History.objects.filter(
+        assigned_doc=doctor_id
+    ).count()

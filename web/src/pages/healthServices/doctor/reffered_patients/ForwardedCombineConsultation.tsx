@@ -10,11 +10,12 @@ import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { useCombinedHealthRecords } from "../queries/fetch";
 import TableLoading from "../../table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useCombinedConsultationColumns } from "./columns/combineconsult-col";
+import { useCombinedHealthRecords } from "./queries/fetch";
+import { Link } from "react-router";
+import { useReportsCount } from "../../count-return/count";
 
 export default function ForwardedCombinedHealthRecordsTable() {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordTypeFilter, setRecordTypeFilter] = useState("all");
   const { showLoading, hideLoading } = useLoading();
+  const { data: count_data, isLoading: count_loading } = useReportsCount();
 
   const { data: combinedData, isLoading: combinedLoading } = useCombinedHealthRecords(staffId, debouncedSearchQuery, recordTypeFilter, currentPage, pageSize);
   const columns = useCombinedConsultationColumns();
@@ -78,11 +80,43 @@ export default function ForwardedCombinedHealthRecordsTable() {
   return (
     <MainLayoutComponent title="Referred Patients" description="List of referred patient for consultation ">
       <div className="w-full h-full flex flex-col">
+        <div className="flex gap-4 mb-4 justify-end">
+          <Link to="/referred-patients/upcoming-consultations" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white font-medium transition border-2">
+            Upcoming Appointments
+            {!count_loading && count_data?.data?.confirmed_appointments_count > 0 && (
+              <span className="ml-2 text-xs font-semibold text-white bg-red-600 rounded-full px-2 h-5 min-w-[20px] flex items-center justify-center ">
+                {count_data.data.confirmed_appointments_count > 99 ? "99+" : count_data.data.confirmed_appointments_count}
+              </span>
+            )}
+          </Link>
+        
+        </div>
         {/* Enhanced Card Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <EnhancedCardLayout title="Total Records" description="All health consultation records" value={totalCount} valueDescription="Total records" icon={<Users className="h-6 w-6 text-blue-600" />} cardClassName="border-blue-100" />
-          <EnhancedCardLayout title="Residents" description="Resident consultation records" value={residents} valueDescription="Resident records" icon={<Home className="h-6 w-6 text-green-600" />} cardClassName="border-green-100" />
-          <EnhancedCardLayout title="Transients" description="Transient consultation records" value={transients} valueDescription="Transient records" icon={<UserCheck className="h-6 w-6 text-purple-600" />} cardClassName="border-purple-100" />
+          <EnhancedCardLayout
+            title="Total Records"
+            description="All health consultation records"
+            value={totalCount}
+            valueDescription="Total records"
+            icon={<Users className="h-6 w-6 text-blue-600" />}
+            cardClassName="border-blue-100"
+          />
+          <EnhancedCardLayout
+            title="Residents"
+            description="Resident consultation records"
+            value={residents}
+            valueDescription="Resident records"
+            icon={<Home className="h-6 w-6 text-green-600" />}
+            cardClassName="border-green-100"
+          />
+          <EnhancedCardLayout
+            title="Transients"
+            description="Transient consultation records"
+            value={transients}
+            valueDescription="Transient records"
+            icon={<UserCheck className="h-6 w-6 text-purple-600" />}
+            cardClassName="border-purple-100"
+          />
         </div>
 
         {/* Filters Section */}
@@ -100,7 +134,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
                 { id: "all", name: "All Types" },
                 { id: "child-health", name: "Child Health" },
                 { id: "medical-consultation", name: "Medical Consultation" },
-                { id: "prenatal", name: "Prenatal" }
+                { id: "prenatal", name: "Prenatal" },
               ]}
               value={recordTypeFilter}
               onChange={(value) => setRecordTypeFilter(value)}

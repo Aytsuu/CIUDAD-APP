@@ -65,9 +65,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     return today.toDateString() === checkDate.toDateString();
   };
 
-  // Helper function to get current dates from BFchecks
-  const currentDates = (BFchecks || []).map((check) => check.ebf_date);
-
   // Debug form state
   useEffect(() => {
     console.log("Form errors:", errors);
@@ -94,17 +91,13 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     }
   };
 
-  // Helper function to check if date exists in historical data
-  const isDateInHistorical = (date: string): boolean => {
-    return historicalBFChecks.some((check) => check.ebf_date === date);
-  };
-
   // Validate if date is not in the future
   const isDateValid = (date: string): boolean => {
     const currentMonth = getCurrentMonth();
     return date <= currentMonth;
   };
 
+  // Added validation to prevent duplicate BF check dates
   const handleAddDate = () => {
     if (!currentBFDate) {
       showErrorToast("Please select a date");
@@ -129,21 +122,19 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       return;
     }
 
+    const currentBFChecks = getValues("BFchecks") || [];
+
+    // Check if the date already exists in current or historical data
+    const isDuplicate =
+      currentBFChecks.some((check) => check.ebf_date === currentBFDate && editingIndex === null) ||
+      historicalBFChecks.some((check) => check.ebf_date === currentBFDate && editingHistoricalId === null);
+
+    if (isDuplicate) {
+      showErrorToast("This date already exists in the records");
+      return;
+    }
+
     try {
-      const currentBFChecks = getValues("BFchecks") || [];
-
-      // Check if date already exists in current form data (excluding the one being edited)
-      if (editingIndex === null && editingHistoricalId === null && currentDates.includes(currentBFDate)) {
-        showErrorToast("This date has already been added");
-        return;
-      }
-
-      // Check if date exists in historical data and we're not editing a historical record
-      if (editingIndex === null && editingHistoricalId === null && isDateInHistorical(currentBFDate)) {
-        showErrorToast("This date already exists in historical records");
-        return;
-      }
-
       if (editingHistoricalId !== null) {
         // Editing a historical record
         const historicalCheck = historicalBFChecks.find((check) => check.ebf_id === editingHistoricalId);
@@ -156,9 +147,10 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
         };
 
         const existingIndex = currentBFChecks.findIndex((check) => check.ebf_id === editingHistoricalId);
-        const updatedBFChecks = existingIndex >= 0 
-          ? currentBFChecks.map((check, i) => (i === existingIndex ? updatedBFCheck : check)) 
-          : [...currentBFChecks, updatedBFCheck];
+        const updatedBFChecks =
+          existingIndex >= 0
+            ? currentBFChecks.map((check, i) => (i === existingIndex ? updatedBFCheck : check))
+            : [...currentBFChecks, updatedBFCheck];
 
         setValue("BFchecks", updatedBFChecks, {
           shouldValidate: true,
@@ -175,9 +167,10 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
         };
 
         // Update BF checks array
-        const updatedBFChecks = editingIndex !== null 
-          ? currentBFChecks.map((check, i) => (i === editingIndex ? newBFCheck : check)) 
-          : [...currentBFChecks, newBFCheck];
+        const updatedBFChecks =
+          editingIndex !== null
+            ? currentBFChecks.map((check, i) => (i === editingIndex ? newBFCheck : check))
+            : [...currentBFChecks, newBFCheck];
 
         setValue("BFchecks", updatedBFChecks, {
           shouldValidate: true,

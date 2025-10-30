@@ -4,11 +4,11 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useAuth } from "@/context/AuthContext";
 import { useReportsCount } from "../../count-return/count";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 export default function MainMedicalConsultation() {
   const [selectedView, setSelectedView] = useState("records");
   const [isMounted, setIsMounted] = useState(false);
-  const { user } = useAuth();
   const { data, isLoading } = useReportsCount();
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,22 +27,7 @@ export default function MainMedicalConsultation() {
     }
   }, [selectedView, isMounted]);
 
-  // Get user position for conditional logic
-  const userPosition = user?.staff?.pos;
-  const userPositionTitle = typeof userPosition === "string" ? userPosition : userPosition?.pos_title || "";
-
-  // Check if user should have access to requests
-  const canAccessRequests = !["Nurse", "Midwife"].some((excludedPos) => 
-    userPositionTitle.toLowerCase().includes(excludedPos.toLowerCase())
-  );
-
-  // Ensure selectedView is valid based on permissions
-  useEffect(() => {
-    if (isMounted && selectedView === "requests" && !canAccessRequests) {
-      setSelectedView("records");
-    }
-  }, [isMounted, canAccessRequests, selectedView]);
-
+ 
   // Sync tab selection with current route
   useEffect(() => {
     const path = location.pathname;
@@ -76,7 +61,7 @@ export default function MainMedicalConsultation() {
           <TabsList
             className="grid w-full sm:w-[300px]"
             style={{
-              gridTemplateColumns: canAccessRequests ? "1fr 1fr" : "1fr"
+              gridTemplateColumns:  "1fr 1fr" 
             }}
           >
             <TabsTrigger 
@@ -87,19 +72,20 @@ export default function MainMedicalConsultation() {
             </TabsTrigger>
 
             {/* Only show Requests tab if user has permission */}
-            {canAccessRequests && (
-              <TabsTrigger 
-                value="requests" 
-                className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative"
-              >
-                Appointments
-                {!isLoading && data?.data?.total_appointments_count > 0 && (
-                  <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center absolute -top-1 -right-1 min-w-[20px]">
-                    {data.data.total_appointments_count}
-                  </span>
-                )}
-              </TabsTrigger>
-            )}
+              <ProtectedComponent exclude={["DOCTOR"]}>
+                <TabsTrigger 
+                  value="requests" 
+                  className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative"
+                >
+                  Appointments
+                  {!isLoading && data?.data?.total_appointments_count > 0 && (
+                    <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center absolute -top-1 -right-1 min-w-[20px]">
+                      {data.data.total_appointments_count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </ProtectedComponent>
+          
           </TabsList>
         </Tabs>
 
