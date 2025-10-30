@@ -285,7 +285,11 @@ class Ordinance(models.Model):
     ord_num = models.CharField(max_length=50, unique=True, primary_key=True)
     ord_title = models.CharField(max_length=255)
     ord_date_created = models.DateField()
-    ord_category = models.CharField(max_length=100)
+    ord_category = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True
+    )
     ord_details = models.TextField()
     ord_year = models.IntegerField()
     ord_is_archive = models.BooleanField(default=False)

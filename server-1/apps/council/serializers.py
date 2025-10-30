@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from apps.announcement.models import Announcement, AnnouncementRecipient
 import logging
 from django.utils import timezone
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -518,40 +519,28 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
         fields = ['of_id', 'of_name', 'of_type', 'of_path', 'of_url']
     
     def _upload_files(self, files):
-        """Upload files to Supabase storage (same as web version)"""
+        import time, base64
+        BUCKET = "ordinance-bucket"
         created_files = []
         for file_data in files:
             print(f"Processing file: {file_data['name']}, type: {file_data['type']}")
-            
-            # Generate unique file name to avoid conflicts (same as web)
-            import time
-            unique_name = f"{int(time.time())}-{file_data['name']}"
+            unique_name = f"{int(time.time())}-{file_data['name'].replace(' ', '_')}"
             file_path = f"ordinances/{unique_name}"
-            
             of_file = OrdinanceFile(
                 of_name=file_data['name'],
                 of_type=file_data['type'],
                 of_path=file_path,
             )
-
             print(f"Uploading to Supabase: {unique_name}")
-            
-            # Use direct Supabase upload like web version
             try:
-                # Convert base64 to bytes
                 b64_string = file_data['file']
                 if b64_string.startswith('data:'):
                     b64_string = b64_string.split(',')[1]
-                
-                # Add padding if necessary
                 missing_padding = len(b64_string) % 4
                 if missing_padding:
                     b64_string += '=' * (4 - missing_padding)
-                
                 file_bytes = base64.b64decode(b64_string)
-                
-                # Upload directly to ordinance bucket
-                upload_result = supabase.storage.from_('ordinance-bucket').upload(
+                upload_result = supabase.storage.from_(BUCKET).upload(
                     file_path,
                     file_bytes,
                     {
@@ -560,29 +549,20 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
                         'upsert': False,
                     }
                 )
-                
-                if upload_result.error:
+                if hasattr(upload_result, 'error') and upload_result.error:
                     print(f"❌ Upload error: {upload_result.error}")
-                    raise upload_result.error
-                
-                # Get public URL
-                url_result = supabase.storage.from_('ordinance-bucket').get_public_url(file_path)
-                url = url_result.data['publicUrl']
-                
+                    raise Exception(upload_result.error)
+                url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{file_path}"
                 print(f"✅ Upload successful, URL: {url}")
-                
             except Exception as e:
-                print(f"❌ Direct upload failed: {e}")
-                # Fallback to upload_to_storage
-                print("🔄 Trying upload_to_storage as fallback...")
-                url = upload_to_storage(file_data, 'ordinance-bucket', 'ordinances')
-                print(f"Fallback upload successful, URL: {url}")
-            
+                print(f"❌ Upload failed: {e}")
+                url = None
+            if not url:
+                raise Exception("Failed to upload file to Supabase. No URL associated.")
             of_file.of_url = url
-            of_file.save()  # Save individually to get the ID
+            of_file.save()
             print(f"Saved to database with ID: {of_file.of_id}")
             created_files.append(of_file)
-
         return created_files
 
 class OrdinanceSerializer(serializers.ModelSerializer):
@@ -590,6 +570,10 @@ class OrdinanceSerializer(serializers.ModelSerializer):
     staff_id = serializers.CharField(write_only=True, required=False, source='staff')
     of_id = serializers.PrimaryKeyRelatedField(read_only=True)
     file = serializers.SerializerMethodField()
+    ord_category = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=True
+    )
 
     class Meta:
         model = Ordinance

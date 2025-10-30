@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form"
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
 import { Badge } from '@/components/ui/badge';
+import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 
 // Type for ordinances only
 type OrdinanceItem = Ordinance;
@@ -65,7 +66,9 @@ function OrdinancePage() {
             // Apply filter
             let filtered = ordinances;
             if (filter !== "all" && filter !== "Template") {
-                filtered = ordinances.filter((item: Ordinance) => item.ord_category === filter);
+                filtered = ordinances.filter((item: Ordinance) => 
+                    Array.isArray(item.ord_category) ? item.ord_category.includes(filter) : item.ord_category === filter
+                );
             }
 
             setOrdinanceItems(filtered);
@@ -303,12 +306,12 @@ function OrdinancePage() {
         const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
         
         // Transform form data to API format
-        const transformFormData = (formValues: any, category: string) => {
+        const transformFormData = (formValues: any, categories: string[]) => {
             return {
                 ordinanceTitle: formValues.ordTitle,
                 ordinanceDate: formValues.ordDate,
                 ordinanceDetails: formValues.ordDetails,
-                ordinanceCategory: category,
+                ordinanceCategory: categories, // *** now always an array ***
                 ord_repealed: formValues.ordRepealed,
                 ordTag: formValues.ordTag,
                 ordDesc: formValues.ordDesc,
@@ -339,9 +342,15 @@ function OrdinancePage() {
                 ord.ord_num === selectedOrdinance
             ).length;
             
-            const category = parent?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus)
+              ? values.ordAreaOfFocus.map((id: string) =>
+                  ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id
+                )
+              : [];
+
             const amendmentData = {
-                ...transformFormData(values, category),
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array
+                ord_category: normalizedOrdCategories,
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
@@ -349,19 +358,25 @@ function OrdinancePage() {
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
             // Find the original ordinance to get its category
-            const originalOrdinance = ordinanceItems.find(o => o.ord_num === selectedOrdinance);
-            const category = originalOrdinance?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus) ? values.ordAreaOfFocus.map(
+                (id: string) => (ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id)
+            ) : [];
             const repealData = {
-                ...transformFormData(values, category),
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array
+                ord_category: normalizedOrdCategories,
                 ord_repealed: true,
-                // Link to the ordinance being repealed (optional business rule)
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
             };
             addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
-            const category = values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "";
-            const newData = transformFormData(values, category);
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus) ? values.ordAreaOfFocus.map(
+                (id: string) => (ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id)
+            ) : [];
+            const newData = {
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array, NOT [0]
+                ord_category: normalizedOrdCategories,
+            };
             addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };
@@ -399,6 +414,22 @@ function OrdinancePage() {
 
 
     // Removed unused color functions for risk and compliance badges
+
+    // Category color utility —matching resolutionPage.tsx:
+    const getCategoryColor = (focus: string) => {
+      switch ((focus || '').toLowerCase()) {
+        case 'gad':
+          return 'bg-purple-100 text-purple-800';
+        case 'finance':
+          return 'bg-orange-100 text-orange-800';
+        case 'council':
+          return 'bg-primary/10 text-primary';
+        case 'waste':
+          return 'bg-green-100 text-green-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    };
 
     const filteredItems = ordinanceFolders.filter(folder => {
         // If no search term, show all items
@@ -504,14 +535,21 @@ function OrdinancePage() {
                                     cardClassName={`border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200 ${isRepealed ? 'opacity-75' : ''}`}
                                     title={
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
                                                 <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-white shadow-sm ${isRepealed ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'}`}>
                                                     <FileText className="h-4 w-4" />
                                                 </div>
-                                                <div>
-                                                    <h3 className={`font-semibold text-lg ${isRepealed ? 'text-gray-600' : 'text-gray-900'}`}>{folder.baseOrdinance.ord_title}</h3>
+                                                <div className="min-w-0">
+                                                    <TooltipLayout
+                                                        trigger={
+                                                            <span className="block font-semibold text-base md:text-lg text-gray-900 overflow-hidden whitespace-nowrap text-ellipsis max-w-[120px] sm:max-w-[170px] md:max-w-[220px] lg:max-w-[290px] xl:max-w-[350px]">
+                                                                {folder.baseOrdinance.ord_title}
+                                                            </span>
+                                                        }
+                                                        content={folder.baseOrdinance.ord_title}
+                                                    />
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</span>
+                                                        <span className="text-xs text-gray-500">{folder.baseOrdinance.ord_num}</span>
                                                         {isRepealed && (
                                                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                                                                 REPEALED
@@ -542,15 +580,17 @@ function OrdinancePage() {
                                             >
                                                 {getFolderStatus(folder).text}
                                             </Badge>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                folder.baseOrdinance.ord_category === 'Council' ? 'bg-purple-100 text-purple-800' :
-                                                folder.baseOrdinance.ord_category === 'Waste Committee' ? 'bg-green-100 text-green-800' :
-                                                folder.baseOrdinance.ord_category === 'GAD' ? 'bg-pink-100 text-pink-800' :
-                                                folder.baseOrdinance.ord_category === 'Finance' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {folder.baseOrdinance.ord_category}
-                                            </span>
+                                            {/* CATEGORY BADGES (Multi-category!) */}
+                                            <div className="flex flex-wrap gap-1">
+                                                {Array.isArray(folder.baseOrdinance.ord_category)
+                                                    ? folder.baseOrdinance.ord_category.map((cat: string, i: number) => (
+                                                        <span key={i} className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(cat)}`}>{cat}</span>
+                                                    ))
+                                                    : (
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(folder.baseOrdinance.ord_category)}`}>{folder.baseOrdinance.ord_category}</span>
+                                                    )
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 }
@@ -559,18 +599,18 @@ function OrdinancePage() {
                                         {/* Ordinance Details */}
                                         <div className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <FileText size={14} className="text-blue-500" />
                                                 <span className="font-semibold text-blue-700 text-sm">Details</span>
                                             </div>
-                                            <div className="text-xs text-gray-700 leading-relaxed pl-4 border-l-2 border-blue-100 pt-1">
-                                                {folder.baseOrdinance.ord_details ? (
-                                                    folder.baseOrdinance.ord_details.length > 80 ? 
-                                                    `${folder.baseOrdinance.ord_details.substring(0, 80)}...` : 
-                                                    folder.baseOrdinance.ord_details
-                                                ) : (
-                                                    <span className="text-gray-500 italic">No details available</span>
-                                                )}
-                                            </div>
+                                            <TooltipLayout
+                                                trigger={
+                                                    <div className="text-xs text-gray-700 leading-relaxed pl-4 border-l-2 border-blue-100 pt-1 line-clamp-2 max-w-[95%] truncate cursor-pointer" style={{overflowWrap:'anywhere'}}>
+                                                        {folder.baseOrdinance.ord_details && folder.baseOrdinance.ord_details.length > 80
+                                                            ? `${folder.baseOrdinance.ord_details.substring(0,80)}...`
+                                                            : folder.baseOrdinance.ord_details || <span className="text-gray-500 italic">No details available</span>}
+                                                    </div>
+                                                }
+                                                content={folder.baseOrdinance.ord_details}
+                                            />
                                         </div>
 
                                         {/* Action Buttons */}
@@ -803,46 +843,12 @@ function OrdinancePage() {
                                     label="Ordinance Details"
                                 />
 
-                                {/* Area of Focus Field */}
-                                <FormField
-                                    control={form.control}
-                                    name="ordAreaOfFocus"
-                                    render={({ field }) => {
-                                        // For amend/repeal modes, get the original ordinance's category
-                                        const originalCategory = (creationMode === 'amend' || creationMode === 'repeal') && selectedExistingOrdinance 
-                                            ? ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance)?.ord_category
-                                            : null;
-                                        
-                                        // Set the form field value to the original category if it exists
-                                        if (originalCategory && (!field.value || field.value.length === 0)) {
-                                            field.onChange([originalCategory]);
-                                        }
-                                        
-                                        return (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <SelectLayout
-                                                        label="Select area of focus"
-                                                        placeholder="Select area of focus"
-                                                        options={ordinanceCategories}
-                                                        value={originalCategory || (field.value && field.value.length > 0 ? field.value[0] : "")}
-                                                        onChange={(value) => {
-                                                            if (originalCategory) {
-                                                                return; // Don't allow changes if using original category
-                                                            }
-                                                            field.onChange([value]);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                {originalCategory && (
-                                                    <p className="text-xs text-blue-600 mt-1">
-                                                        Using the same category as the original ordinance: <strong>{originalCategory}</strong>
-                                                    </p>
-                                                )}
-                                                <FormMessage />
-                                            </FormItem>
-                                        );
-                                    }}
+                                {/* Area of Focus Field (replaces old manual checkboxes with advanced dropdown) */}
+                                <FormComboCheckbox
+                                  control={form.control}
+                                  name="ordAreaOfFocus"
+                                  label="Select Area of Focus"
+                                  options={ordinanceCategories}
                                 />
 
                                
@@ -932,7 +938,7 @@ function OrdinancePage() {
                                                     </div>
                                                     
                                                     <div className="text font-medium text-lg">{selectedFolder.baseOrdinance.ord_title}</div>
-                                                    <div className="text-xs text-gray-600">ORD: {selectedFolder.baseOrdinance.ord_num} • {selectedFolder.baseOrdinance.ord_date_created}</div>
+                                                    <div className="text-xs text-gray-600">{selectedFolder.baseOrdinance.ord_num} • {selectedFolder.baseOrdinance.ord_date_created}</div>
                                                     <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
                                                         {selectedFolder.baseOrdinance.ord_details || 'No details available'}
                                                     </div>
@@ -985,7 +991,7 @@ function OrdinancePage() {
                                                     </div>
                                                     
                                                     <div className="text font-medium text-lg">{amendment.ord_title}</div>
-                                                    <div className="text-xs text-gray-600">ORD: {amendment.ord_num} • {amendment.ord_date_created}</div>
+                                                    <div className="text-xs text-gray-600">{amendment.ord_num} • {amendment.ord_date_created}</div>
                                                     <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
                                                         {amendment.ord_details || 'No details available'}
                                                     </div>
@@ -1030,7 +1036,7 @@ function OrdinancePage() {
                                                             </div>
 
                                                             <div className="text font-medium text-lg">{repeal.ord_title}</div>
-                                                            <div className="text-xs text-gray-600">ORD: {repeal.ord_num} • {repeal.ord_date_created}</div>
+                                                            <div className="text-xs text-gray-600">{repeal.ord_num} • {repeal.ord_date_created}</div>
                                                             <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
                                                                 {repeal.ord_details || 'No details available'}
                                                             </div>
@@ -1046,10 +1052,6 @@ function OrdinancePage() {
                     </div>
                 }
             />
-
-
-
-
         </div>
     );
 }
