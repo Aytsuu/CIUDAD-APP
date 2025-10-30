@@ -317,7 +317,7 @@ export default function LuponCaseDetails() {
                           <div className='text-12px'>Generate File</div>
                       </Button>
                     }
-                    title="Schedule Details"
+                    title="Generate Document"
                     description={`Details for ${schedule.hs_level} on ${formatDate(schedule.summon_date.sd_date, "long")}`}
                     className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
                     mainContent={
