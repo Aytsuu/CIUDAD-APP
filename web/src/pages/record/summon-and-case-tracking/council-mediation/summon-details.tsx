@@ -102,7 +102,7 @@ export default function SummonDetails() {
 
   // Check if current mediation is 3rd level and closed
   const isThirdMediation = hearing_schedules.some(schedule => 
-    schedule.hs_level === "3rd Mediation" && schedule.hs_is_closed
+    schedule.hs_level === "3rd MEDIATION" && schedule.hs_is_closed
   )
 
   // Check if all hearing schedules have remarks
@@ -303,7 +303,7 @@ export default function SummonDetails() {
                           <div className='text-12px'>Generate File</div>
                       </Button>
                     }
-                    title="Schedule Details"
+                    title="Generate Document"
                     description={`Details for ${schedule.hs_level} on ${new Date(
                       schedule.summon_date.sd_date
                     ).toLocaleDateString()}`}

@@ -109,16 +109,6 @@ export default function MOMEdit() {
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Edit Minutes of Meeting</Text>}
       wrapScroll={false}
-      footer={
-        <View className="p-6 bg-white border-t border-gray-200">
-          <Button
-            className="bg-primaryBlue py-3 rounded-md w-full items-center native:h-[56px]"
-            onPress={handleSubmit(onSubmit)}
-          >
-            <Text className="text-white text-base font-semibold">Update</Text>
-          </Button>
-        </View>
-      }
     >
       <View className="flex-1 bg-gray-50">
         <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
@@ -176,6 +166,17 @@ export default function MOMEdit() {
                     limit={10}
                     editable={true}
                 />
+            </View>
+
+            <View className="py-6 bg-white border-t border-gray-200">
+              <View className="py-6 bg-white border-t border-gray-200">
+                  <Button
+                    onPress={handleSubmit(onSubmit)}
+                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+                  >
+                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Update</Text>
+                  </Button>
+              </View>
             </View>
           </View>
         </ScrollView>
