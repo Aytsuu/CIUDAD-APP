@@ -132,7 +132,6 @@ def sync_income_expense_main(sender, instance, created, **kwargs):
         # Update the remaining balance by adding the difference
         new_remaining_balance = obj.ie_remaining_bal + budget_difference
         
-        # Ensure remaining balance doesn't go negative
         if new_remaining_balance < 0:
             new_remaining_balance = 0
         
@@ -146,6 +145,7 @@ def sync_income_expense_main(sender, instance, created, **kwargs):
         obj.ie_is_archive = instance.plan_is_archive
         obj.save(update_fields=['ie_is_archive'])
 
+@receiver(post_save, sender='treasurer.Budget_Plan_Detail')
 @receiver(post_save, sender='treasurer.Budget_Plan_Detail')
 def sync_gad_budget_year(sender, instance, **kwargs):
     if instance.dtl_budget_item == 'GAD Program':
@@ -164,22 +164,31 @@ def sync_gad_budget_year(sender, instance, **kwargs):
         )
 
         if not created:
-            # Calculate the difference in proposed budget
-            old_budget = obj.gbudy_budget
-            new_budget = instance.dtl_proposed_budget
-            budget_difference = new_budget - old_budget
+            # Get current values
+            budget_from_plan = instance.dtl_proposed_budget
+            current_gad_budget = obj.gbudy_budget
+            current_gad_expenses = obj.gbudy_expenses
             
-            # Update the budget by adding the difference
-            new_gad_budget = obj.gbudy_budget + budget_difference
+            # Calculate the current available GAD budget (budget - expenses)
+            current_available_gad = current_gad_budget - current_gad_expenses
             
-            # Ensure budget doesn't go negative
-            if new_gad_budget < 0:
-                new_gad_budget = 0
+            # Calculate the adjustment needed (same logic as expense particular)
+            adjustment_amount = budget_from_plan - current_available_gad    
             
-            # Update budget and archive fields
-            obj.gbudy_budget = new_gad_budget
-            obj.gbudy_is_archive = is_archived
-            obj.save(update_fields=['gbudy_budget', 'gbudy_is_archive'])
+            # Only update if adjustment is needed
+            if adjustment_amount != 0:
+                # Apply the adjustment to the GAD budget
+                new_gad_budget = current_gad_budget + adjustment_amount
+                
+                # Ensure budget doesn't go negative
+                if new_gad_budget < 0:
+                    new_gad_budget = 0
+                
+                # Update the GAD budget
+                obj.gbudy_budget = new_gad_budget
+                obj.gbudy_is_archive = is_archived
+                obj.save(update_fields=['gbudy_budget', 'gbudy_is_archive'])
+                
         else:
             # For newly created records, just update archive status if needed
             obj.gbudy_is_archive = is_archived

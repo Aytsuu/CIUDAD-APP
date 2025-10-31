@@ -19,6 +19,7 @@ urlpatterns=[
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryView.as_view(), name='budget-plan-history-record'),
     path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
+    path('gad-budget-year/<int:year>/', GADBudgetYearByYearView.as_view(), name='gad-budget-year'),
 
 
     #Disbursement URL

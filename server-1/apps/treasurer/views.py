@@ -16,6 +16,8 @@ from rest_framework.permissions import AllowAny
 import logging
 from apps.pagination import StandardResultsPagination
 from django.db.models.functions import ExtractYear
+from apps.gad.serializers import GADBudgetYearSerializer
+from apps.gad.models import GAD_Budget_Year
 
 logger = logging.getLogger(__name__)
 
@@ -278,6 +280,19 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class GADBudgetYearByYearView(generics.RetrieveAPIView):
+    serializer_class = GADBudgetYearSerializer
+    lookup_field = 'gbudy_year'
+    lookup_url_kwarg = 'year'
+
+    def get_object(self):
+        year = self.kwargs.get('year')
+        try:
+            return GAD_Budget_Year.objects.get(gbudy_year=year)
+        except GAD_Budget_Year.DoesNotExist:
+            raise NotFound(f"GAD budget record for year {year} not found")
     
 # -------------------------------- DISBURSEMENT ------------------------------------
 class DisbursementArchiveMixin:
@@ -624,21 +639,6 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# class GetParticularsView(generics.ListAPIView):
-#     serializer_class = Budget_Plan_DetailSerializer
-
-#     def get_queryset(self):
-#         current_year = timezone.now().year
-#         # Get the current year's budget plan
-#         current_plan = Budget_Plan.objects.filter(plan_year=str(current_year)).first()
-        
-#         if current_plan:
-#             # Return all details for the current year's plan
-#             return Budget_Plan_Detail.objects.filter(plan=current_plan)
-#         return Budget_Plan_Detail.objects.none()
-    
-
 class GetParticularsView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
@@ -709,14 +709,6 @@ class Expense_LogView(generics.ListCreateAPIView):
         return queryset.order_by('-el_datetime')  # Add ordering
 
 # ------------------------- INCOME --------------------------------------
-
- 
-
-# class Income_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_TrackingSerializers
-#     queryset = Income_Tracking.objects.all().select_related('incp_id')
-
-
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
