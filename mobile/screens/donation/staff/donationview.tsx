@@ -19,8 +19,11 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { StaffSelect } from "../personalizedCompo/staff_select";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DonationView = () => {
+  const { user } = useAuth();
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
   const router = useRouter();
   const { don_num } = useLocalSearchParams();
   const { data: donationsData = { results: [], count: 0 }, isLoading } = useGetDonations();
@@ -162,47 +165,49 @@ const DonationView = () => {
           <ChevronLeft size={30} color="black" className="text-white" />
         </TouchableOpacity>
       }
-      footer={<View>
-          {isEditing ? (
-            <>
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
-                  onPress={handleCancel}
-                >
-                  <Text className="text-primaryBlue text-base font-semibold text-center">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
+      footer={
+        // Only show footer buttons if user is secretary
+        isSecretary ? (
+          <View>
+            {isEditing ? (
+              <>
+                <View className="flex-row gap-2">
+                  <TouchableOpacity
+                    className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
+                    onPress={handleCancel}
+                  >
+                    <Text className="text-primaryBlue text-base font-semibold text-center">
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
 
-                <ConfirmationModal
-                  trigger={
-                    <TouchableOpacity
-                      className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
-                      disabled={isSubmitting}
-                    >
-                      <Text className="text-white text-base font-semibold text-center">
-                        {isSubmitting ? "Saving" : "Save"}
-                      </Text>
-                      {isSubmitting && (
-                        <Loader2
-                          size={16}
-                          color="white"
-                          className="ml-2 animate-spin"
-                        />
-                      )}
-                    </TouchableOpacity>
-                  }
-                  title="Confirm Changes"
-                  description="Are you sure you want to save these changes?"
-                  actionLabel="Save"
-                  onPress={handleSubmit(handleSave)}
-                  loading={isSubmitting}
-                />
-              </View>
-            </>
-          ) : (
-           (
+                  <ConfirmationModal
+                    trigger={
+                      <TouchableOpacity
+                        className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
+                        disabled={isSubmitting}
+                      >
+                        <Text className="text-white text-base font-semibold text-center">
+                          {isSubmitting ? "Saving" : "Save"}
+                        </Text>
+                        {isSubmitting && (
+                          <Loader2
+                            size={16}
+                            color="white"
+                            className="ml-2 animate-spin"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    }
+                    title="Confirm Changes"
+                    description="Are you sure you want to save these changes?"
+                    actionLabel="Save"
+                    onPress={handleSubmit(handleSave)}
+                    loading={isSubmitting}
+                  />
+                </View>
+              </>
+            ) : (
               <TouchableOpacity
                 className="bg-primaryBlue py-3 rounded-lg"
                 onPress={() => setIsEditing(true)}
@@ -211,9 +216,13 @@ const DonationView = () => {
                   Edit
                 </Text>
               </TouchableOpacity>
-            )
-          )}
-        </View>}
+            )}
+          </View>
+        ) : (
+          // Empty view for non-secretary users
+          <View />
+        )
+      }
     >
       <View className="space-y-4 p-4 flex-1 px-6">
         <Text className="text-sm font-medium mb-1">Condition</Text>
