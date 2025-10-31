@@ -22,6 +22,8 @@ import { useForm } from "react-hook-form"
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
 import { Badge } from '@/components/ui/badge';
+import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
+import ViewOrdinance from "./viewOrdinance";
 
 // Type for ordinances only
 type OrdinanceItem = Ordinance;
@@ -33,19 +35,18 @@ function OrdinancePage() {
     const [ordinanceFolders, setOrdinanceFolders] = useState<OrdinanceFolder[]>([]);
     const [filter, setFilter] = useState<string>("all");
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const pageSize = 12; // fixed page size
     const [_totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     
     // Debounced values for API calls
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const debouncedPageSize = useDebounce(pageSize, 100);
     
     // Use paginated query
     const { data: ordinancesData, isLoading: isOrdinancesLoading } = useOrdinancesPaginated(
         currentPage,
-        debouncedPageSize,
+        pageSize,
         debouncedSearchTerm
     );
 
@@ -65,7 +66,9 @@ function OrdinancePage() {
             // Apply filter
             let filtered = ordinances;
             if (filter !== "all" && filter !== "Template") {
-                filtered = ordinances.filter((item: Ordinance) => item.ord_category === filter);
+                filtered = ordinances.filter((item: Ordinance) => 
+                    Array.isArray(item.ord_category) ? item.ord_category.includes(filter) : item.ord_category === filter
+                );
             }
 
             setOrdinanceItems(filtered);
@@ -101,6 +104,10 @@ function OrdinancePage() {
     // State for folder view popup
     const [selectedFolder, setSelectedFolder] = useState<OrdinanceFolder | null>(null);
     const [folderViewOpen, setFolderViewOpen] = useState(false);
+    
+    // Add state:
+    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+    const [activeOrdinance, setActiveOrdinance] = useState<OrdinanceFolder | null>(null);
     
     
     const {mutate: addOrdinance} = useInsertOrdinanceUpload(() => {
@@ -303,12 +310,12 @@ function OrdinancePage() {
         const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
         
         // Transform form data to API format
-        const transformFormData = (formValues: any, category: string) => {
+        const transformFormData = (formValues: any, categories: string[]) => {
             return {
                 ordinanceTitle: formValues.ordTitle,
                 ordinanceDate: formValues.ordDate,
                 ordinanceDetails: formValues.ordDetails,
-                ordinanceCategory: category,
+                ordinanceCategory: categories, // *** now always an array ***
                 ord_repealed: formValues.ordRepealed,
                 ordTag: formValues.ordTag,
                 ordDesc: formValues.ordDesc,
@@ -339,9 +346,15 @@ function OrdinancePage() {
                 ord.ord_num === selectedOrdinance
             ).length;
             
-            const category = parent?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus)
+              ? values.ordAreaOfFocus.map((id: string) =>
+                  ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id
+                )
+              : [];
+
             const amendmentData = {
-                ...transformFormData(values, category),
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array
+                ord_category: normalizedOrdCategories,
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
@@ -349,19 +362,25 @@ function OrdinancePage() {
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
             // Find the original ordinance to get its category
-            const originalOrdinance = ordinanceItems.find(o => o.ord_num === selectedOrdinance);
-            const category = originalOrdinance?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus) ? values.ordAreaOfFocus.map(
+                (id: string) => (ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id)
+            ) : [];
             const repealData = {
-                ...transformFormData(values, category),
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array
+                ord_category: normalizedOrdCategories,
                 ord_repealed: true,
-                // Link to the ordinance being repealed (optional business rule)
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
             };
             addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
-            const category = values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "";
-            const newData = transformFormData(values, category);
+            const normalizedOrdCategories = Array.isArray(values.ordAreaOfFocus) ? values.ordAreaOfFocus.map(
+                (id: string) => (ordinanceCategories.find(option => option.id.toLowerCase() === id.toLowerCase())?.id || id)
+            ) : [];
+            const newData = {
+                ...transformFormData(values, normalizedOrdCategories), // <-- pass full array, NOT [0]
+                ord_category: normalizedOrdCategories,
+            };
             addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };
@@ -375,6 +394,18 @@ function OrdinancePage() {
             form.setValue('ordinanceFile', 'no-image-url-fetched');
         }
     }, [mediaFiles, form]);
+
+    useEffect(() => {
+      if ((creationMode === 'amend' || creationMode === 'repeal') && selectedExistingOrdinance && selectedExistingOrdinance !== 'new') {
+        const ord = ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance);
+        if (ord) {
+          let categories = Array.isArray(ord.ord_category) ? ord.ord_category : [ord.ord_category];
+          categories = categories.map((cat: string) => (cat || '').toLowerCase());
+          form.setValue('ordAreaOfFocus', categories, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+          (form as any).clearErrors('ordAreaOfFocus');
+        }
+      }
+    }, [creationMode, selectedExistingOrdinance, ordinanceItems]);
 
 
     const resetUploadForm = () => {
@@ -399,6 +430,22 @@ function OrdinancePage() {
 
 
     // Removed unused color functions for risk and compliance badges
+
+    // Category color utility —matching resolutionPage.tsx:
+    const getCategoryColor = (focus: string) => {
+      switch ((focus || '').toLowerCase()) {
+        case 'gad':
+          return 'bg-purple-100 text-purple-800';
+        case 'finance':
+          return 'bg-orange-100 text-orange-800';
+        case 'council':
+          return 'bg-primary/10 text-primary';
+        case 'waste':
+          return 'bg-green-100 text-green-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    };
 
     const filteredItems = ordinanceFolders.filter(folder => {
         // If no search term, show all items
@@ -449,16 +496,7 @@ function OrdinancePage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-x-2 items-center">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input 
-                            type="number" 
-                            className="w-14 h-8" 
-                            value={pageSize}
-                            onChange={(e) => setPageSize(Number(e.target.value))}
-                        />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>
+                    
 
                     <SelectLayout
                         className="bg-white"
@@ -499,108 +537,108 @@ function OrdinancePage() {
                         {filteredItems.map((folder) => {
                             const isRepealed = isOrdinanceRepealed(folder);
                             return (
-                                <CardLayout
+                                <div
                                     key={folder.id}
-                                    cardClassName={`border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200 ${isRepealed ? 'opacity-75' : ''}`}
-                                    title={
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-white shadow-sm ${isRepealed ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'}`}>
-                                                    <FileText className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <h3 className={`font-semibold text-lg ${isRepealed ? 'text-gray-600' : 'text-gray-900'}`}>{folder.baseOrdinance.ord_title}</h3>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</span>
-                                                        {isRepealed && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                                                REPEALED
-                                                            </span>
-                                                        )}
+                                    className="outline-none focus:ring-2 rounded-lg transition-shadow duration-200 cursor-pointer"
+                                    tabIndex={0} // for accessibility
+                                    onClick={() => {
+                                        handleFolderView(folder);
+                                    }}
+                                >
+                                    <CardLayout
+                                        cardClassName={`border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200 ${isRepealed ? 'opacity-75' : ''}`}
+                                        title={
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-white shadow-sm ${isRepealed ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'}`}>
+                                                        <FileText className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <span className="block font-semibold text-base md:text-lg text-gray-900 line-clamp-2 max-h-[2.8em] break-words">{folder.baseOrdinance.ord_title}</span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs text-gray-500">{folder.baseOrdinance.ord_num}</span>
+                                                            {isRepealed && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                    REPEALED
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            {folder.totalOrdinances > 1 && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleFolderView(folder)}
-                                                    className="h-7 px-2 text-xs hover:bg-blue-50"
-                                                >
-                                                    <Eye className="h-3 w-3 mr-1" />
-                                                    View All
-                                                </Button>
-                                            )}
-                                        </div>
-                                    }
-                                description={
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <Badge 
-                                                variant="secondary" 
-                                                className={`text-xs px-2 py-0.5 ${getFolderStatus(folder).bgColor} ${getFolderStatus(folder).color}`}
-                                            >
-                                                {getFolderStatus(folder).text}
-                                            </Badge>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                folder.baseOrdinance.ord_category === 'Council' ? 'bg-purple-100 text-purple-800' :
-                                                folder.baseOrdinance.ord_category === 'Waste Committee' ? 'bg-green-100 text-green-800' :
-                                                folder.baseOrdinance.ord_category === 'GAD' ? 'bg-pink-100 text-pink-800' :
-                                                folder.baseOrdinance.ord_category === 'Finance' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {folder.baseOrdinance.ord_category}
-                                            </span>
-                                        </div>
-                                    </div>
-                                }
-                                content={
-                                    <div className="space-y-4">
-                                        {/* Ordinance Details */}
-                                        <div className="bg-gray-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <FileText size={14} className="text-blue-500" />
-                                                <span className="font-semibold text-blue-700 text-sm">Details</span>
+                                        }
+                                        description={
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge 
+                                                        variant="secondary" 
+                                                        className={`text-xs px-2 py-0.5 ${getFolderStatus(folder).bgColor} ${getFolderStatus(folder).color}`}
+                                                    >
+                                                        {getFolderStatus(folder).text}
+                                                    </Badge>
+                                                    {/* CATEGORY BADGES (Multi-category!) */}
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {Array.isArray(folder.baseOrdinance.ord_category)
+                                                            ? folder.baseOrdinance.ord_category.map((cat: string, i: number) => (
+                                                                <span key={i} className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(cat)}`}>{cat}</span>
+                                                            ))
+                                                            : (
+                                                                <span className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(folder.baseOrdinance.ord_category)}`}>{folder.baseOrdinance.ord_category}</span>
+                                                            )
+                                                        }
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-gray-700 leading-relaxed pl-4 border-l-2 border-blue-100 pt-1">
-                                                {folder.baseOrdinance.ord_details ? (
-                                                    folder.baseOrdinance.ord_details.length > 80 ? 
-                                                    `${folder.baseOrdinance.ord_details.substring(0, 80)}...` : 
-                                                    folder.baseOrdinance.ord_details
-                                                ) : (
-                                                    <span className="text-gray-500 italic">No details available</span>
-                                                )}
-                                            </div>
-                                        </div>
+                                        }
+                                        content={
+                                            <div className="space-y-4">
+                                                {/* Ordinance Details */}
+                                                <div className="bg-gray-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="font-semibold text-blue-700 text-sm">Details</span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-700 leading-relaxed pl-4 border-l-2 border-blue-100 pt-1 line-clamp-2 max-w-[95%] break-words">
+                                                        {folder.baseOrdinance.ord_details || <span className="text-gray-500 italic">No details available</span>}
+                                                    </div>
+                                                </div>
 
-                                        {/* Action Buttons */}
-                                        <div className="flex items-center justify-end gap-2">
-
-                                            <TooltipLayout
-                                                trigger={
+                                                {/* Action Buttons */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    {/* Bottom-left: View More / View All */}
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-8 w-8 p-0 hover:bg-green-50 hover:border-green-300"
-                                                        onClick={() => {
-                                                            if (folder.baseOrdinance.file && folder.baseOrdinance.file.file_url) {
-                                                                window.open(folder.baseOrdinance.file.file_url, '_blank');
-                                                            } else {
-                                                                showErrorToast('No file available to view');
-                                                            }
-                                                        }}
+                                                        onClick={(e) => { e.stopPropagation(); handleFolderView(folder); }}
+                                                        className="h-7 px-2 text-xs hover:bg-blue-50"
                                                     >
-                                                        <Eye size={12} className="text-green-600" />
+                                                        <Eye className="h-3 w-3 mr-1" />
+                                                        {folder.totalOrdinances > 1 ? 'View All' : 'View More'}
                                                     </Button>
-                                                }
-                                                content="View File"
-                                            />
-                                        </div>
-                                    </div>
-                                }
-                                headerClassName="pb-3"
-                                contentClassName="pt-0"
-                            />
+
+                                                    {/* Bottom-right: View file */}
+                                                    <div className="flex items-center gap-2">
+                                                         
+                                                         <TooltipLayout
+                                                             trigger={
+                                                                 <Button
+                                                                     variant="outline"
+                                                                     size="sm"
+                                                                     className="h-8 w-8 p-0 hover:bg-green-50 hover:border-green-300"
+                                                                     onClick={(e) => { e.stopPropagation(); if (folder.baseOrdinance.file && folder.baseOrdinance.file.file_url) { window.open(folder.baseOrdinance.file.file_url, '_blank'); } else { showErrorToast('No file available to view'); } }}
+                                                                 >
+                                                                     <Eye size={12} className="text-green-600" />
+                                                                 </Button>
+                                                             }
+                                                             content="View File"
+                                                         />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        headerClassName="pb-3"
+                                        contentClassName="pt-0"
+                                    />
+                                </div>
                             );
                         })}
                     </div>
@@ -803,46 +841,13 @@ function OrdinancePage() {
                                     label="Ordinance Details"
                                 />
 
-                                {/* Area of Focus Field */}
-                                <FormField
-                                    control={form.control}
-                                    name="ordAreaOfFocus"
-                                    render={({ field }) => {
-                                        // For amend/repeal modes, get the original ordinance's category
-                                        const originalCategory = (creationMode === 'amend' || creationMode === 'repeal') && selectedExistingOrdinance 
-                                            ? ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance)?.ord_category
-                                            : null;
-                                        
-                                        // Set the form field value to the original category if it exists
-                                        if (originalCategory && (!field.value || field.value.length === 0)) {
-                                            field.onChange([originalCategory]);
-                                        }
-                                        
-                                        return (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <SelectLayout
-                                                        label="Select area of focus"
-                                                        placeholder="Select area of focus"
-                                                        options={ordinanceCategories}
-                                                        value={originalCategory || (field.value && field.value.length > 0 ? field.value[0] : "")}
-                                                        onChange={(value) => {
-                                                            if (originalCategory) {
-                                                                return; // Don't allow changes if using original category
-                                                            }
-                                                            field.onChange([value]);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                {originalCategory && (
-                                                    <p className="text-xs text-blue-600 mt-1">
-                                                        Using the same category as the original ordinance: <strong>{originalCategory}</strong>
-                                                    </p>
-                                                )}
-                                                <FormMessage />
-                                            </FormItem>
-                                        );
-                                    }}
+                                {/* Area of Focus Field (replaces old manual checkboxes with advanced dropdown) */}
+                                <FormComboCheckbox
+                                  control={form.control}
+                                  name="ordAreaOfFocus"
+                                  label="Select Area of Focus"
+                                  options={ordinanceCategories}
+                                  readOnly={creationMode !== 'new'}
                                 />
 
                                
@@ -890,166 +895,60 @@ function OrdinancePage() {
             />
 
             {/* Folder View Popup Dialog */}
+            <ViewOrdinance folder={selectedFolder} isOpen={folderViewOpen} onOpenChange={setFolderViewOpen} />
+
+            {/* Details Dialog when card is clicked */}
             <DialogLayout
-                isOpen={folderViewOpen}
-                onOpenChange={setFolderViewOpen}
-                className="max-w-4xl"
-                title={`Ordinance Folder: ${selectedFolder?.baseOrdinance.ord_title}`}
-                description={`Viewing all ordinances in this folder (${selectedFolder?.totalOrdinances} total)`}
-                mainContent={
-                    <div className="max-h-[80vh] overflow-y-auto p-4">
-                        {selectedFolder && (
-                            <div className="space-y-6">
-                                {/* Base Ordinance */}
-                                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                        <span className="text-sm font-semibold text-blue-700">Base Ordinance</span>
-                                        <Badge variant="outline" className="text-xs">Original</Badge>
-                                    </div>
-                                    
-                                                                                    <div className="space-y-3">
-                                                    {/* Base Ordinance Actions - Moved above title */}
-                                                    <div className="flex items-center gap-2">
-                                                        
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                if (selectedFolder.baseOrdinance.file && selectedFolder.baseOrdinance.file.file_url) {
-                                                                    window.open(selectedFolder.baseOrdinance.file.file_url, '_blank');
-                                                                } else {
-                                                                    showErrorToast('No file available to view');
-                                                                }
-                                                            }}
-                                                            className="text-xs px-3 py-1 h-7"
-                                                        >
-                                                            <Eye className="h-3 w-3 mr-1" />
-                                                            View File
-                                                        </Button>
-                                                        
-                                                        
-                                                    </div>
-                                                    
-                                                    <div className="text font-medium text-lg">{selectedFolder.baseOrdinance.ord_title}</div>
-                                                    <div className="text-xs text-gray-600">ORD: {selectedFolder.baseOrdinance.ord_num} • {selectedFolder.baseOrdinance.ord_date_created}</div>
-                                                    <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                                                        {selectedFolder.baseOrdinance.ord_details || 'No details available'}
-                                                    </div>
-                                        
-
-                                    </div>
-                                </div>
-
-                                {/* Amendments & Repeals separated */}
-                                {selectedFolder.amendments.length > 0 && (() => {
-                                    const amendmentItems = selectedFolder.amendments.filter(a => Boolean(a.ord_is_ammend));
-                                    const repealItems = selectedFolder.amendments.filter(a => Boolean(a.ord_repealed) && !a.ord_is_ammend);
-                                    return (
-                                    <div className="space-y-6">
-                                        {amendmentItems.length > 0 && (
-                                            <>
-                                                <div className="flex items-center justify-between border-b pb-2">
-                                                    <h3 className="text-lg font-semibold text-gray-800">Amendments ({amendmentItems.length})</h3>
-                                                </div>
-
-
-                                        {amendmentItems.map((amendment, index) => (
-                                            <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                                    <span className="text-sm font-semibold text-green-700">Amendment {index + 1}</span>
-                                                    <Badge variant="outline" className="text-xs">Version {amendment.ord_ammend_ver || index + 1}</Badge>
-                                                </div>
-                                                
-                                                <div className="space-y-3">
-                                                                                                        {/* Amendment Actions - Moved above title */}
-                                                    <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                if (amendment.file && amendment.file.file_url) {
-                                                                    window.open(amendment.file.file_url, '_blank');
-                                                                } else {
-                                                                    showErrorToast('No file available to view');
-                                                                }
-                                                            }}
-                                                            className="text-xs px-3 py-1 h-7"
-                                                        >
-                                                            <Eye className="h-3 w-3 mr-1" />
-                                                            View File
-                                                        </Button>
-                                                        
-                                                        
-                                                    </div>
-                                                    
-                                                    <div className="text font-medium text-lg">{amendment.ord_title}</div>
-                                                    <div className="text-xs text-gray-600">ORD: {amendment.ord_num} • {amendment.ord_date_created}</div>
-                                                    <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                                                        {amendment.ord_details || 'No details available'}
-                                                    </div>
-                                                    
-
-                                                </div>
-                                            </div>
-                                        ))}
-                                        </>
-                                        )}
-
-                                        {repealItems.length > 0 && (
-                                            <>
-                                                <div className="flex items-center justify-between border-b pb-2">
-                                                    <h3 className="text-lg font-semibold text-gray-800">Repeals ({repealItems.length})</h3>
-                                                </div>
-                                                {repealItems.map((repeal) => (
-                                                    <div key={repeal.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
-                                                        <div className="flex items-center gap-2 mb-3">
-                                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                                            <span className="text-sm font-semibold text-red-700">Repeal</span>
-                                                        </div>
-
-                                                        <div className="space-y-3">
-                                                            <div className="flex items-center gap-2">
-
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => {
-                                                                        if (repeal.file && repeal.file.file_url) {
-                                                                            window.open(repeal.file.file_url, '_blank');
-                                                                        } else {
-                                                                            showErrorToast('No file available to view');
-                                                                        }
-                                                                    }}
-                                                                    className="text-xs px-3 py-1 h-7"
-                                                                >
-                                                                    <Eye className="h-3 w-3 mr-1" />
-                                                                    View File
-                                                                </Button>
-                                                            </div>
-
-                                                            <div className="text font-medium text-lg">{repeal.ord_title}</div>
-                                                            <div className="text-xs text-gray-600">ORD: {repeal.ord_num} • {repeal.ord_date_created}</div>
-                                                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                                                                {repeal.ord_details || 'No details available'}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </>
-                                        )}
-                                    </div>
-                                    )})()}
-                            </div>
+                isOpen={detailsDialogOpen && !!activeOrdinance}
+                onOpenChange={setDetailsDialogOpen}
+                className="max-w-2xl"
+                title={activeOrdinance ? (
+                    activeOrdinance.baseOrdinance.ord_title.length > 120
+                      ? activeOrdinance.baseOrdinance.ord_title.slice(0, 117) + '...'
+                      : activeOrdinance.baseOrdinance.ord_title
+                ) : ''}
+                description={null}
+                mainContent={activeOrdinance && (
+                    <div className="p-2 space-y-6">
+                        {/* Full/multi-line title displayed inside dialog for best spacing */}
+                        <div className="font-bold text-lg md:text-xl line-clamp-2 break-words max-w-full mb-1">
+                            {activeOrdinance.baseOrdinance.ord_title}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">{getFolderStatus(activeOrdinance).text}</span>
+                            {Array.isArray(activeOrdinance.baseOrdinance.ord_category) ? (
+                                activeOrdinance.baseOrdinance.ord_category.map((cat, i) => (
+                                    <span key={i} className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(cat)}`}>{cat}</span>
+                                ))
+                            ) : (
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1 ${getCategoryColor(activeOrdinance.baseOrdinance.ord_category)}`}>{activeOrdinance.baseOrdinance.ord_category}</span>
+                            )}
+                            {activeOrdinance.baseOrdinance.ord_repealed && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">REPEALED</span>
+                            )}
+                            <span className="text-xs text-gray-500">{activeOrdinance.baseOrdinance.ord_num}</span>
+                            <span className="text-xs text-gray-500">{activeOrdinance.baseOrdinance.ord_date_created}</span>
+                        </div>
+                        <div className="text-lg font-semibold text-darkBlue2">Ordinance Details</div>
+                        <div className="text-gray-700 text-sm whitespace-pre-line bg-gray-50 p-3 rounded max-h-[240px] overflow-y-auto">
+                            {activeOrdinance.baseOrdinance.ord_details || <span className="text-gray-400 italic">No details available</span>}
+                        </div>
+                        {activeOrdinance.baseOrdinance.file?.file_url && (
+                            <a
+                                href={activeOrdinance.baseOrdinance.file.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 underline mt-2 block"
+                            >
+                                View Ordinance File
+                            </a>
                         )}
+                        <div className="flex gap-2 mt-6 justify-end">
+                            <Button onClick={() => setDetailsDialogOpen(false)} variant="outline">Close</Button>
+                        </div>
                     </div>
-                }
+                )}
             />
-
-
-
-
         </div>
     );
 }

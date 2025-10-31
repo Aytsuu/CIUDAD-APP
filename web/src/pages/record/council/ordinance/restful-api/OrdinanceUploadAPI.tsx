@@ -89,7 +89,11 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
         const ordinanceData: any = {
             ord_title: ordinanceInfo.ordinanceTitle,
             ord_date_created: ordinanceInfo.ordinanceDate,
-            ord_category: ordinanceInfo.ordinanceCategory,
+            ord_category: Array.isArray(ordinanceInfo.ordinanceCategory)
+                ? ordinanceInfo.ordinanceCategory
+                : ordinanceInfo.ordinanceCategory
+                    ? [ordinanceInfo.ordinanceCategory]
+                    : [],
             ord_details: ordinanceInfo.ordinanceDetails,
             ord_year: year,
             ord_is_archive: false,

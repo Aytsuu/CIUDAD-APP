@@ -5,7 +5,7 @@ export interface Ordinance {
     ord_num: string;
     ord_title: string;
     ord_date_created: string;
-    ord_category: string;
+    ord_category: string[];
     ord_details: string;
     ord_year: number;
     ord_is_archive: boolean;
@@ -18,10 +18,8 @@ export interface Ordinance {
     ord_ammend_ver?: number;
    
 }
-
-
 export interface OrdinanceFolder {
-    id: string; // Unique identifier for the folder
+    id: string;
     baseOrdinance: Ordinance; // The original ordinance
     amendments: Ordinance[]; // All amendments to this ordinance
     totalOrdinances: number; // Total count of ordinances in this folder
