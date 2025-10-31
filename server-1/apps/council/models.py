@@ -340,20 +340,55 @@ class Ordinance(models.Model):
         # Generate ord_num if not provided BEFORE validation
         if not self.ord_num:  # If no ordinance number provided
             from django.utils import timezone
+            import re
             
             # Use the ordinance's year, or current year if not set
             year = getattr(self, 'ord_year', timezone.now().year)
             year_suffix = year % 100
             
-            # Count existing ordinances for this year
+            # Find the maximum sequence number for this year by extracting numbers from existing ord_nums
             try:
-                existing_count = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}").count()
-            except Exception:
-                existing_count = Ordinance.objects.count()
-            
-            # Generate next sequence number
-            seq = existing_count + 1
-            self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                existing_ordinances = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}")
+                max_seq = 0
+                
+                # Extract sequence numbers from existing ord_num values
+                for ord in existing_ordinances.values_list('ord_num', flat=True):
+                    # Match pattern like "ORD###-YY" and extract the number
+                    match = re.match(r'ORD(\d+)-', str(ord))
+                    if match:
+                        seq_num = int(match.group(1))
+                        max_seq = max(max_seq, seq_num)
+                
+                # Start from max_seq + 1, but ensure we find a unique number
+                seq = max_seq + 1
+                max_attempts = 100  # Prevent infinite loop
+                attempt = 0
+                
+                while attempt < max_attempts:
+                    candidate_ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                    if not Ordinance.objects.filter(ord_num=candidate_ord_num).exists():
+                        self.ord_num = candidate_ord_num
+                        break
+                    seq += 1
+                    attempt += 1
+                else:
+                    # Fallback if we somehow can't find a unique number
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                    
+            except Exception as e:
+                # Fallback: use simple count + 1 if extraction fails
+                try:
+                    existing_count = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}").count()
+                    seq = existing_count + 1
+                    # Ensure uniqueness by checking
+                    while Ordinance.objects.filter(ord_num=f"ORD{seq:03d}-{year_suffix:02d}").exists():
+                        seq += 1
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                except Exception:
+                    # Last resort: use total count
+                    existing_count = Ordinance.objects.count()
+                    seq = existing_count + 1
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
         
         # Run validations after generating ord_num
         try:

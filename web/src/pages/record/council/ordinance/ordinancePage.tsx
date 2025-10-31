@@ -52,13 +52,16 @@ function OrdinancePage() {
 
     // Handle both paginated and non-paginated API responses
     const ordinances = Array.isArray(ordinancesData) ? ordinancesData : (ordinancesData?.results || []);
-    const totalCount = Array.isArray(ordinancesData) ? ordinancesData.length : (ordinancesData?.count || 0);
-    const totalPagesFromAPI = ordinancesData?.total_pages || 1;
     
     // Reset to page 1 when search changes
     useEffect(() => {
         setCurrentPage(1);
     }, [debouncedSearchTerm]);
+    
+    // Also reset to page 1 when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter]);
     
     // Process ordinances when data changes
     useEffect(() => {
@@ -107,7 +110,7 @@ function OrdinancePage() {
     
     // Add state:
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-    const [activeOrdinance, setActiveOrdinance] = useState<OrdinanceFolder | null>(null);
+    const [activeOrdinance, _setActiveOrdinance] = useState<OrdinanceFolder | null>(null);
     
     
     const {mutate: addOrdinance} = useInsertOrdinanceUpload(() => {
@@ -468,8 +471,20 @@ function OrdinancePage() {
         );
         
         return baseMatches || amendmentMatches;
+    })
+    .sort((a, b) => {
+        // Sort by ord_num (extract number and year for proper sorting)
+        const aNum = a.baseOrdinance.ord_num || '';
+        const bNum = b.baseOrdinance.ord_num || '';
+        return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
     });
 
+    // Calculate pagination for filtered items (client-side pagination)
+    const filteredTotalCount = filteredItems.length;
+    const filteredTotalPages = Math.ceil(filteredTotalCount / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedItems = filteredItems.slice(startIndex, endIndex);
 
     return (
         <div className="w-full h-full px-2 md:px-4 lg:px-6">
@@ -534,7 +549,7 @@ function OrdinancePage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-                        {filteredItems.map((folder) => {
+                        {paginatedItems.map((folder) => {
                             const isRepealed = isOrdinanceRepealed(folder);
                             return (
                                 <div
@@ -647,14 +662,14 @@ function OrdinancePage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing {totalCount > 0 ? ((currentPage - 1) * pageSize) + 1 : 0}-
-                    {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+                    Showing {filteredTotalCount > 0 ? startIndex + 1 : 0}-
+                    {Math.min(endIndex, filteredTotalCount)} of {filteredTotalCount} rows
                 </p>
 
                 <div className="w-full sm:w-auto flex justify-center">
                     <PaginationLayout 
                         currentPage={currentPage}
-                        totalPages={totalPagesFromAPI}
+                        totalPages={filteredTotalPages || 1}
                         onPageChange={setCurrentPage}
                     />
                 </div>
