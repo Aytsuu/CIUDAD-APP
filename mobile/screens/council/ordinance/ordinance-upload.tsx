@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
-import { X, Calendar } from 'lucide-react-native';
+import { X, Calendar, Check } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SelectLayout } from '@/components/ui/select-layout';
 import DocumentPickerComponent, { DocumentItem } from '@/components/ui/document-upload';
@@ -22,7 +22,7 @@ interface OrdinanceFormData {
   ordTitle: string;
   ordDate: string;
   ordDetails: string;
-  ordCategory: string;
+  ordCategory: string[]; // Changed to array for multiple categories
   ordParent?: string;
   ordIsAmend?: boolean;
   ordRepealed?: boolean;
@@ -36,12 +36,11 @@ interface OrdinanceUploadProps {
   setCreationMode: (mode: 'new' | 'amend' | 'repeal') => void;
   selectedOrdinance: string;
   setSelectedOrdinance: (value: string) => void;
-  availableOrdinances: Array<{ id: string; name: string; category: string }>;
+  availableOrdinances: Array<{ id: string; name: string; category: string | string[] }>;
   onSuccess: () => void;
 }
 
 const categoryOptions = [
-  { id: "all", name: "All" },
   { id: "Council", name: "Council" },
   { id: "Waste Committee", name: "Waste Committee" },
   { id: "GAD", name: "GAD" },
@@ -62,7 +61,7 @@ export default function OrdinanceUpload({
     ordTitle: "",
     ordDate: "",
     ordDetails: "",
-    ordCategory: "",
+    ordCategory: [], // Changed to empty array for multiple categories
     ordParent: "",
     ordIsAmend: false,
     ordRepealed: false,
@@ -81,7 +80,15 @@ export default function OrdinanceUpload({
     if ((creationMode === 'amend' || creationMode === 'repeal') && selectedOrdinance) {
       const selectedOrd = availableOrdinances.find(ord => ord.id === selectedOrdinance);
       if (selectedOrd && selectedOrd.category) {
-        setFormData(prev => ({ ...prev, ordCategory: selectedOrd.category }));
+        // Handle both array and string categories
+        const categories = Array.isArray(selectedOrd.category) 
+          ? selectedOrd.category 
+          : [selectedOrd.category];
+        // Normalize to lowercase for matching with categoryOptions
+        const normalizedCategories = categories.map((cat: string) => 
+          categoryOptions.find(opt => opt.name.toLowerCase() === (cat || '').toLowerCase())?.id || cat
+        ).filter(Boolean);
+        setFormData(prev => ({ ...prev, ordCategory: normalizedCategories }));
       }
     }
   }, [selectedOrdinance, creationMode, availableOrdinances]);
@@ -92,7 +99,7 @@ export default function OrdinanceUpload({
       ordTitle: "",
       ordDate: "",
       ordDetails: "",
-      ordCategory: "",
+      ordCategory: [],
       ordParent: "",
       ordIsAmend: false,
       ordRepealed: false,
@@ -118,8 +125,8 @@ export default function OrdinanceUpload({
       Alert.alert('Error', 'Please enter ordinance details');
       return;
     }
-    if (!formData.ordCategory) {
-      Alert.alert('Error', 'Please select category');
+    if (!formData.ordCategory || formData.ordCategory.length === 0) {
+      Alert.alert('Error', 'Please select at least one category');
       return;
     }
     if (creationMode === 'repeal' && selectedDocuments.length === 0) {
@@ -156,11 +163,18 @@ export default function OrdinanceUpload({
       // 2. Create ordinance with file ID
       const ordYear = new Date(formData.ordDate).getFullYear();
       
+      // Normalize categories to match backend expectations
+      const normalizedCategories = Array.isArray(formData.ordCategory) 
+        ? formData.ordCategory.map((id: string) =>
+            categoryOptions.find(opt => opt.id.toLowerCase() === id.toLowerCase())?.name || id
+          )
+        : [formData.ordCategory];
+      
       const submitData = {
         ord_title: formData.ordTitle,
         ord_date_created: formData.ordDate,
         ord_details: formData.ordDetails,
-        ord_category: formData.ordCategory,
+        ord_category: normalizedCategories, // Send as array
         ord_repealed: formData.ordRepealed || false,
         ord_year: ordYear,
         of_id: fileId,
@@ -331,26 +345,65 @@ export default function OrdinanceUpload({
                 />
               </View>
 
-              {/* Category Field */}
+              {/* Category Field - Multiple Checkboxes */}
               <View className="pt-5">
-                <Text className="text-[13px] font-PoppinsRegular">Category</Text>
+                <Text className="text-[13px] font-PoppinsRegular mb-2">Select Area of Focus</Text>
                 {(creationMode === 'amend' || creationMode === 'repeal') && selectedOrdinance ? (
                   <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-                    <Text className="text-[13px] font-PoppinsRegular text-gray-700">
-                      {formData.ordCategory || 'Loading...'}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
+                    <View className="flex-row flex-wrap gap-2">
+                      {formData.ordCategory.length > 0 ? (
+                        formData.ordCategory.map((catId: string) => {
+                          const cat = categoryOptions.find(opt => opt.id === catId);
+                          return cat ? (
+                            <View key={catId} className="px-2 py-1 rounded bg-blue-100">
+                              <Text className="text-xs text-blue-800">{cat.name}</Text>
+                            </View>
+                          ) : null;
+                        })
+                      ) : (
+                        <Text className="text-[13px] font-PoppinsRegular text-gray-500">Loading...</Text>
+                      )}
+                    </View>
+                    <Text className="text-xs text-gray-500 mt-2">
                       Automatically set from selected ordinance
                     </Text>
                   </View>
                 ) : (
-                  <SelectLayout
-                    options={categoryOptions.map(cat => ({ label: cat.name, value: cat.id }))}
-                    selectedValue={formData.ordCategory}
-                    onSelect={(option) => setFormData(prev => ({ ...prev, ordCategory: option.value }))}
-                    placeholder="Select category"
-                    isInModal={false}
-                  />
+                  <View className="border border-gray-300 rounded-lg p-3 bg-white">
+                    {categoryOptions.map((category) => {
+                      const isSelected = formData.ordCategory.includes(category.id);
+                      return (
+                        <TouchableOpacity
+                          key={category.id}
+                          onPress={() => {
+                            const newCategories = isSelected
+                              ? formData.ordCategory.filter((id: string) => id !== category.id)
+                              : [...formData.ordCategory, category.id];
+                            setFormData(prev => ({ ...prev, ordCategory: newCategories }));
+                          }}
+                          className="flex-row items-center py-2"
+                        >
+                          <View
+                            className={`w-5 h-5 border rounded mr-2 items-center justify-center ${
+                              isSelected
+                                ? 'bg-blue-500 border-blue-500'
+                                : 'bg-white border-gray-300'
+                            }`}
+                          >
+                            {isSelected && <Check size={14} color="white" />}
+                          </View>
+                          <Text className="text-[13px] font-PoppinsRegular text-gray-700">
+                            {category.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    {formData.ordCategory.length === 0 && (
+                      <Text className="text-xs text-gray-500 mt-2">
+                        Please select at least one category
+                      </Text>
+                    )}
+                  </View>
                 )}
               </View>
 
