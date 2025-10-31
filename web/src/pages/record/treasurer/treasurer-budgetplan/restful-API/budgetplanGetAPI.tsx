@@ -78,3 +78,14 @@ export const getBudgetPlanDetailFromPreviousYear = async () => {
         console.error(err)
     }
 }
+
+export const getExpenseParticulars = async (year?: number) => {
+    try {
+        const params = year ? { params: { year } } : {};
+        const res = await api.get('treasurer/get-expense_particular/', params);
+        return res.data;
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+};

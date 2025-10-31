@@ -101,7 +101,7 @@
 #     ).delete()
 
 # signals.py
-# signals.py
+
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from .models import Budget_Plan, Income_Expense_Main, Budget_Plan_Detail
@@ -119,7 +119,7 @@ def sync_income_expense_main(sender, instance, created, **kwargs):
             'ie_main_inc': 0.0,
             'ie_main_exp': 0.0,
             'ie_is_archive': instance.plan_is_archive,
-            'ie_remaining_bal': instance.plan_budgetaryObligations  # Start with full budget
+            'ie_remaining_bal': instance.plan_budgetaryObligations  
         }
     )
 
@@ -185,27 +185,40 @@ def sync_gad_budget_year(sender, instance, **kwargs):
             obj.gbudy_is_archive = is_archived
             obj.save(update_fields=['gbudy_is_archive'])
 
+# for updating
 @receiver(post_save, sender='treasurer.Budget_Plan_Detail')
 def sync_expense_particular(sender, instance, created, **kwargs):
     Expense_Particular = apps.get_model('treasurer', 'Expense_Particular')
     
-    defaults = {
-        'exp_proposed_budget': instance.dtl_proposed_budget
-    }
-    
-    # Use get_or_create to handle both creation and updates
-    expense_particular, created = Expense_Particular.objects.get_or_create(
-        exp_budget_item=instance.dtl_budget_item,
-        plan=instance.plan,
-        defaults=defaults
-    )
-    
-    # If it already existed, update it
-    if not created:
-        for key, value in defaults.items():
-            setattr(expense_particular, key, value)
-        expense_particular.save()
+    try:
+        # Try to get existing expense particular
+        expense_particular = Expense_Particular.objects.get(
+            exp_budget_item=instance.dtl_budget_item,
+            plan=instance.plan
+        )
+        
+        # Calculate the difference between budget plan and expense particular
+        budget_from_budget_plan = instance.dtl_proposed_budget
+        current_expense_particular = expense_particular.exp_proposed_budget
+        
+        # Only update if there's a difference
+        if budget_from_budget_plan != current_expense_particular:
+            # Calculate the amount needed to adjust
+            amount_needed = budget_from_budget_plan - current_expense_particular
+            
+            # Update by adding the difference
+            expense_particular.exp_proposed_budget += amount_needed
+            expense_particular.save(update_fields=['exp_proposed_budget'])
 
+    except Expense_Particular.DoesNotExist:
+        # Create new expense particular with the budget plan amount
+        Expense_Particular.objects.create(
+            exp_budget_item=instance.dtl_budget_item,
+            exp_proposed_budget=instance.dtl_proposed_budget,
+            plan=instance.plan
+        )
+
+# for archiving and deleting
 @receiver(post_save, sender='treasurer.Budget_Plan')
 def sync_archive_status(sender, instance, **kwargs):
     if hasattr(instance, 'plan_is_archive'):

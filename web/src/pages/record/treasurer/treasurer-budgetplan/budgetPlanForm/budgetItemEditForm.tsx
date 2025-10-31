@@ -503,6 +503,7 @@
 //     </div>
 //   );
 // }
+
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -516,16 +517,10 @@ import { useFieldArray } from "react-hook-form";
 import { useEffect } from "react";
 import { useUpdateBudgetItem } from "../queries/budgetPlanUpdateQueries";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
-import { useBudgetItems } from "../../treasurer-income-expense-tracker/queries/treasurerIncomeExpenseFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGetExpenseParticulars } from "../queries/budgetplanFetchQueries";
 
-export default function BudgetItemEditForm({
-  planId,
-  budgetItems,
-  balanceUnappropriated,
-  budgetaryObligations,
-  plan_year,
-  onSuccess,
+export default function BudgetItemEditForm({ planId, budgetItems, balanceUnappropriated, budgetaryObligations, plan_year, onSuccess,
 }: {
   planId: number;
   budgetItems: BudgetPlanDetail[];
@@ -535,7 +530,13 @@ export default function BudgetItemEditForm({
   onSuccess: () => void;
 }) {
   const { mutate: updateItems, isPending } = useUpdateBudgetItem(onSuccess);
-  const { data: expenseData, isLoading} = useBudgetItems(Number(plan_year))
+  const {  data: expenseData,  isLoading,  refetch: refetchExpenseParticulars} = useGetExpenseParticulars(Number(plan_year))
+
+    // Refetch when component mounts
+  useEffect(() => {
+    refetchExpenseParticulars();
+  }, [refetchExpenseParticulars]);
+
 
   // Helper function to get available amount from budget plan (original)
   const getAvailableBudgetAmount = (dtl_id: string) => {
@@ -877,7 +878,7 @@ export default function BudgetItemEditForm({
     <div className="h-full flex flex-col">
       <Form {...form}>
         <div className="mb-3 mt-2 flex justify-end">
-          <Button type="button" onClick={handleAddItem}>
+          <Button type="button" onClick={handleAddItem} disabled={isPending}>
             <Plus size={16} color="#fff" />
             Add
           </Button>
