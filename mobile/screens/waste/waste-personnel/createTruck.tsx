@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, ActivityIndicator, Text } from "react-native";
+import { View, TouchableOpacity, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { useAddTruck } from "./waste-personnel-truck-queries";
 import { TruckFormValues } from "./waste-personnel-types";
 import { useAuth } from "@/contexts/AuthContext";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function WasteTruckCreate() {
   const { user } = useAuth();
@@ -53,7 +54,7 @@ export default function WasteTruckCreate() {
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator size="small" color="white" />
+              <LoadingModal visible={isSubmitting} />
             ) : (
               <Text className="text-white text-base font-semibold text-center">
                 {isSubmitting ? "Creating..." : "Create"}

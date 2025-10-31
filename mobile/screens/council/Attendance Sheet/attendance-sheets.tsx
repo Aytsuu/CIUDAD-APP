@@ -34,6 +34,7 @@ import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 import EmptyState from "@/components/ui/emptyState";
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal"; // Import the LoadingModal
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -121,9 +122,6 @@ const AttendanceSheets = () => {
       <CardHeader className="pb-3">
         <View className="flex-row justify-between items-start">
           <View className="flex-1">
-            {/* <Text className="font-semibold text-lg text-[#1a2332] mb-1">
-              Attendance Sheet
-            </Text> */}
             <Text className="text-sm text-gray-500">
               {sheet.att_file_type}
             </Text>
@@ -360,14 +358,10 @@ const AttendanceSheets = () => {
               >
                 {isUploading ? (
                   <>
-                    <Loader2
-                      size={20}
-                      color="white"
-                      className="animate-spin mr-2"
-                    />
                     <Text className="text-white text-base font-medium">
                       Uploading...
                     </Text>
+                    <LoadingModal visible={isUploading} />
                   </>
                 ) : (
                   <Text className="text-white text-base font-medium">
