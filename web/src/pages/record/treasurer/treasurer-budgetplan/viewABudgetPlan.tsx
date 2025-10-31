@@ -145,7 +145,7 @@ function ViewBudgetPlan() {
                     />
                   </div>
                 ) : isEditingItem ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-5">
                     <Button
                       variant="outline"
                       className="w-fit"
@@ -171,16 +171,10 @@ function ViewBudgetPlan() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => setIsEditingHeader(true)}
-                    >
+                    <Button className="w-full" onClick={() => setIsEditingHeader(true)} >
                       Budget Plan Header
                     </Button>
-                    <Button
-                      className="w-full"
-                      onClick={() => setIsEditingItem(true)}
-                    >
+                    <Button className="w-full" onClick={() => setIsEditingItem(true)}>
                       Budget Plan Items
                     </Button>
                   </div>
@@ -190,7 +184,7 @@ function ViewBudgetPlan() {
               onOpenChange={(open) =>
                 setEditingRowId(open ? Number(planId) : null)
               }
-              className="min-w-[800px]"
+              className="min-w-[1500px]"
             />
           )}
       </div>
