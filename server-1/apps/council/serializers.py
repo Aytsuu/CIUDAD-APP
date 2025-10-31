@@ -359,10 +359,11 @@ class ResolutionSerializer(serializers.ModelSerializer):
 
 class GADProposalSerializer(serializers.ModelSerializer):
     dev_project = serializers.CharField(source='dev.dev_project', read_only=True)
+    dev_id = serializers.IntegerField(source='dev.dev_id', read_only=True)
     
     class Meta:
         model = ProjectProposal
-        fields = ['gpr_id', 'dev_project']
+        fields = ['gpr_id', 'dev_project', 'dev_id']
 
 
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):

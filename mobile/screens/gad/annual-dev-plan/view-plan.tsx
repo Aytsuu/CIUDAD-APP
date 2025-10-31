@@ -9,6 +9,8 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { ChevronLeft } from 'lucide-react-native';
 import { useApprovedProposals } from '@/screens/council/resolution/queries/resolution-fetch-queries';
 import { useResolution } from '@/screens/council/resolution/queries/resolution-fetch-queries';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/api/api';
 
 interface BudgetItem {
   gdb_id?: number;
@@ -57,33 +59,83 @@ const ViewPlan = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch GAD Project Proposals and Resolutions to determine status
-  const { data: proposals = [] } = useApprovedProposals();
+  // Fetch full proposal data directly to access dev_id
+  const { data: proposalsRaw = [] } = useQuery({
+    queryKey: ['approvedProposalsFull'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('council/approved-proposals/');
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error('Error fetching proposals:', err);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
   const { data: resolutionData = { results: [], count: 0 } } = useResolution();
 
   // Build quick lookup maps for status determination
   const proposalByDevId = useMemo(() => {
     const map = new Map<number, any>();
-    const proposalsList = Array.isArray(proposals) ? proposals : [];
-    // Note: Mobile proposals don't have devId field, so we can't link them to development plans
-    // This means "With Project Proposal" badge won't show in mobile version
+    const proposalsList = Array.isArray(proposalsRaw) ? proposalsRaw : [];
+    proposalsList.forEach((p: any) => {
+      // Try to get dev_id from various possible locations
+      let devId: number | null = null;
+      if (p?.dev_id !== undefined) {
+        devId = typeof p.dev_id === 'number' ? p.dev_id : Number(p.dev_id);
+      } else if (p?.dev !== undefined) {
+        // If dev is a nested object
+        if (typeof p.dev === 'object' && p.dev !== null) {
+          devId = typeof p.dev.dev_id === 'number' ? p.dev.dev_id : Number(p.dev.dev_id);
+        } else if (typeof p.dev === 'number') {
+          devId = p.dev;
+        } else if (typeof p.dev === 'string') {
+          devId = Number(p.dev);
+        }
+      }
+      
+      if (devId !== null && !isNaN(devId)) {
+        map.set(devId, p);
+      }
+    });
     return map;
-  }, [proposals]);
+  }, [proposalsRaw]);
 
-  const resolutionByGprId = useMemo(() => {
+  // Only allow resolutions that belong to an existing proposal
+  const validGprIds = useMemo(() => {
     const set = new Set<number>();
-    const resolutionsList = resolutionData.results || [];
-    resolutionsList.forEach((r: any) => {
-      const gprId = r?.gpr_id;
+    const proposalsList = Array.isArray(proposalsRaw) ? proposalsRaw : [];
+    proposalsList.forEach((p: any) => {
+      const gprId = p?.gpr_id;
       if (gprId && typeof gprId === 'number') {
         set.add(gprId);
       }
     });
     return set;
-  }, [resolutionData]);
+  }, [proposalsRaw]);
+
+  const resolutionByGprId = useMemo(() => {
+    const map = new Map<number, any>();
+    const resolutionsList = resolutionData.results || [];
+    resolutionsList.forEach((r: any) => {
+      const gprId = r?.gpr_id;
+      if (gprId && typeof gprId === 'number' && validGprIds.has(gprId)) {
+        map.set(gprId, r);
+      }
+    });
+    return map;
+  }, [resolutionData, validGprIds]);
 
   // Function to get status badges for a plan
   const getStatusBadges = (plan: DevelopmentPlan) => {
     const badges: React.ReactElement[] = [];
+    
+    // Check for proposal and resolution
+    const proposal = proposalByDevId.get(plan.dev_id);
+    const hasProposal = Boolean(proposal && proposal.gpr_id);
+    const hasResolution = hasProposal && resolutionByGprId.has(proposal.gpr_id);
 
     if (plan.dev_mandated) {
       badges.push(
@@ -93,18 +145,33 @@ const ViewPlan = () => {
       );
     }
 
-    // Note: Mobile API doesn't support linking proposals and resolutions to development plans
-    // So we can only show the mandated status
-    
-    if (badges.length === 0) {
+    if (hasProposal) {
       badges.push(
-        <View key="no-status" className="bg-gray-100 px-2 py-1 rounded-full mr-1 mb-1">
-          <Text className="text-xs font-medium text-gray-600">No Status</Text>
+        <View key="with-proposal" className="bg-yellow-100 px-2 py-1 rounded-full mr-1 mb-1">
+          <Text className="text-xs font-medium text-yellow-800">With Project Proposal</Text>
         </View>
       );
     }
 
-    return badges;
+    if (hasResolution) {
+      badges.push(
+        <View key="with-resolution" className="bg-blue-100 px-2 py-1 rounded-full mr-1 mb-1">
+          <Text className="text-xs font-medium text-blue-800">With Resolution</Text>
+        </View>
+      );
+    }
+    
+    if (badges.length === 0) {
+      return (
+        <Text className="text-sm text-gray-500">-</Text>
+      );
+    }
+
+    return (
+      <View className="flex-row flex-wrap">
+        {badges}
+      </View>
+    );
   };
 
   useEffect(() => {
