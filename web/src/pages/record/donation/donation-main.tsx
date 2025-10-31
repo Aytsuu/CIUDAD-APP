@@ -17,8 +17,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext"; 
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatTableDate } from "@/helpers/dateHelper";
+import { useAuth } from "@/context/AuthContext"; 
 
 function DonationTracker() {
+  const { user } = useAuth(); 
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -243,30 +246,33 @@ function DonationTracker() {
           </div>
         </div>
 
-        <div className="w-full sm:w-auto flex justify-end">
-          <DialogLayout
-            trigger={
-              <Button className="w-full sm:w-auto">
-                <Plus size={15} /> Create
-              </Button>
-            }
-            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-            title="Add Donation"
-            description="Fill out all necessary fields"
-            mainContent={
-              <div className="w-full h-full">
-                <ClerkDonateCreate
-                  onSuccess={() => {
-                    setIsDialogOpen(false);
-                    refetch();
-                  }}
-                />
-              </div>
-            }
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          />
-        </div>
+        {/* Only show Create button if user is secretary */}
+        {isSecretary && (
+          <div className="w-full sm:w-auto flex justify-end">
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <Plus size={15} /> Create
+                </Button>
+              }
+              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title="Add Donation"
+              description="Fill out all necessary fields"
+              mainContent={
+                <div className="w-full h-full">
+                  <ClerkDonateCreate
+                    onSuccess={() => {
+                      setIsDialogOpen(false);
+                      refetch();
+                    }}
+                  />
+                </div>
+              }
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+            />
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-md">

@@ -25,8 +25,6 @@ export default () => {
         <Stack.Screen name="minutes-of-meeting/mom-edit" options={{ headerShown: false }} />    
 
         <Stack.Screen name="ordinance/ordinance-main" options={{ headerShown: false }} />
-        <Stack.Screen name="ordinance/ordinance-view" options={{ headerShown: false }} />
-        <Stack.Screen name="ordinance/ordinance-create" options={{ headerShown: false }} />
       
       </Stack>
     </ToastProvider>
