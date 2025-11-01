@@ -20,7 +20,7 @@ urlpatterns = [
     path('fp_record/', FP_RecordListCreateView.as_view(), name='fp_record_list_create'),
     # path('fp_record/<int:fprecord_id>/', FP_RecordDetailView.as_view(), name='fp_record_detail'),
     path('fp-methods-count/<str:patient_id>/', get_fp_methods_count_for_patient, name='get_fp_methods_count_for_patient'),
-  
+    path('fp-records/monthly/', get_fp_monthly_records, name='fp-monthly-records'),
     # Patient Record CRUD (if needed separately)
     path('patient-record/', PatientRecordCreateView.as_view(), name='patient_record_create'), 
     path('commodities/filtered/',get_filtered_commodity_list, name='filtered_commodity_list'),

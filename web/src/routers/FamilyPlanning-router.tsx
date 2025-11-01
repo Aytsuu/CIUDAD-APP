@@ -9,6 +9,9 @@ import MultiRecordComparisonPage from "@/pages/familyplanning/ComparisonPage"
 import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2"
 import { FamilyPlanningView } from "@/pages/familyplanning/ViewPage1"
 import ReportPage from "@/pages/healthServices/reports/famplanning-report/monthly-reports"
+import MonthlyFPRecords from "@/pages/healthServices/reports/famplanning-report/monthly"
+import FPReportDetails from "@/pages/healthServices/reports/famplanning-report/FPRecordDetails"
+import MultiPageFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
 
 
 export const famplanning_route = [
@@ -18,16 +21,28 @@ export const famplanning_route = [
   },
   {
     path: "/familyplanning/report",
-    element: <ReportPage/>
+    element: <ReportPage />
+  },
+  {
+    path: "/familyplanning/monthly-records",
+    element: <MonthlyFPRecords />
+  },
+  {
+    path: "/familyplanning/report/details",
+    element: <FPReportDetails />
+  },
+  {
+    path: "/familyplanning/report/details",
+    element: <MultiPageFormFHIS />
   },
   {
     path: "services/familyplanning",
     element: <FamPlanning_table />,
   },
- 
+
   {
     path: "services/familyplanning/new-record",
-    element: <FamilyPlanningPage/>,
+    element: <FamilyPlanningPage />,
   },
   {
     path: "services/familyplanning/new-record/:patientId",
@@ -48,7 +63,7 @@ export const famplanning_route = [
   },
   {
     path: "services/familyplanning/records",
-    element: <IndividualFamPlanningTable/>,
+    element: <IndividualFamPlanningTable />,
   },
   {
     path: "services/familyplanning/view",
