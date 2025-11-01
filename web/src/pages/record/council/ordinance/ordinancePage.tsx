@@ -627,7 +627,7 @@ function OrdinancePage() {
                                                         className="h-7 px-2 text-xs hover:bg-blue-50"
                                                     >
                                                         <Eye className="h-3 w-3 mr-1" />
-                                                        {folder.totalOrdinances > 1 ? 'View All' : 'View More'}
+                                                        {folder.totalOrdinances > 1 ? 'View All' : 'View'}
                                                     </Button>
 
                                                     {/* Bottom-right: View file */}
