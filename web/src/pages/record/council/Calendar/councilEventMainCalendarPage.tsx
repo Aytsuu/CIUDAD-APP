@@ -32,7 +32,8 @@ function CalendarPage() {
   const [viewWasteEvent, setViewWasteEvent] = useState<WasteEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
   const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";
-  const isWaste = ["waste", "admin"].includes(user?.staff?.pos?.toLowerCase() || "");
+  const isWaste = user?.staff?.pos?.toLowerCase() === "waste";
+  // const isWaste = ["waste", "admin"].includes(user?.staff?.pos?.toLowerCase() || "");
   
 
 
