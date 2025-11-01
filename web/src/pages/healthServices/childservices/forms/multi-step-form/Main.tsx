@@ -21,6 +21,7 @@ import { isToday } from "@/helpers/isToday";
 import StepIndicator from "./StepsIndicator";
 import TableLoading from "@/pages/healthServices/table-loading";
 import { useLocalStorage } from "@/helpers/useLocalStorage"; // <-- import
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export default function ChildHealthRecordForm() {
   const location = useLocation();
@@ -107,10 +108,12 @@ export default function ChildHealthRecordForm() {
     return sortedNotes[0];
   };
 
+  // Updated the data access logic to align with the new serializer structure
   const transformApiDataToFormData = (chhistRecord: any): FormData => {
     if (!chhistRecord) {
       return {} as FormData;
     }
+
     const chrecDetails = chhistRecord?.chrec_details;
     const patrecDetails = chrecDetails?.patrec_details;
     const patient = patrecDetails?.pat_details;
@@ -119,12 +122,12 @@ export default function ChildHealthRecordForm() {
     const vaccinesFromApi: VaccineRecord[] =
       chhistRecord.child_health_vaccines?.map((vac: any) => ({
         vacStck_id: vac.vacStck_id?.toString() || "",
-        vaccineType: vac.vaccine_stock_details?.vaccinelist?.vac_name || "Unknown",
+        vaccineType: vac.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
         dose: vac.dose?.toString() || "",
         date: vac.date_administered ? new Date(vac.date_administered).toISOString().split("T")[0] : "",
         vac_id: vac.vac_id?.toString() || "",
-        vac_name: vac.vaccine_stock_details?.vaccinelist?.vac_name || "Unknown",
-        expiry_date: vac.vaccine_stock_details?.inv_details?.expiry_date || "",
+        vac_name: vac.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+        expiry_date: vac.vaccine_stock?.inv_details?.expiry_date || "",
       })) || [];
 
     const existingVaccinesFromApi: ExistingVaccineRecord[] =
@@ -136,7 +139,6 @@ export default function ChildHealthRecordForm() {
         vac_name: exVac.vaccine_list_details?.vac_name || "Unknown",
       })) || [];
 
-    // Transform BF checks from API
     const BFchecksFromApi: BFCheck[] =
       chhistRecord.exclusive_bf_checks?.map((check: any) => ({
         ebf_id: check.ebf_id,
@@ -146,7 +148,6 @@ export default function ChildHealthRecordForm() {
         chhist: check.chhist,
       })) || [];
 
-    // Keep backward compatibility for BF dates
     const BFdatesFromApi = chhistRecord.exclusive_bf_checks?.map((check: any) => check.ebf_date) || [];
 
     return {
@@ -161,7 +162,7 @@ export default function ChildHealthRecordForm() {
       childFname: patient?.personal_info?.per_fname || "",
       childLname: patient?.personal_info?.per_lname || "",
       childMname: patient?.personal_info?.per_mname || "",
-      childSex: patient?.personal_info?.per_sex || "",
+      childSex: toTitleCase(patient?.personal_info?.per_sex || ""),
       childDob: patient?.personal_info?.per_dob || "",
       birth_order: chrecDetails?.birth_order || 1,
       placeOfDeliveryType: chrecDetails?.place_of_delivery_type || "Home",
@@ -184,12 +185,12 @@ export default function ChildHealthRecordForm() {
       landmarks: chrecDetails?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
       edemaSeverity: chhistRecord.edemaSeverity || "None",
-      BFdates: BFdatesFromApi, // Keep for backward compatibility
-      BFchecks: BFchecksFromApi, // New field with full BF check data
+      BFdates: BFdatesFromApi,
+      BFchecks: BFchecksFromApi,
       nbscreening_result: chrecDetails?.nbscreening_result || "",
       newbornInitiatedbf: chrecDetails.newbornInitiatedbf || false,
-      vitalSigns: chhistRecord.vitalSigns || [],
-      medicines: chhistRecord.medicines || [],
+      vitalSigns: chhistRecord.child_health_vital_signs || [],
+      medicines: chhistRecord.child_health_supplements || [],
       anemic: chhistRecord.anemic || initialFormData.anemic,
       birthwt: chhistRecord.birthwt || initialFormData.birthwt,
       status: chhistRecord.status || "recorded",
@@ -210,8 +211,7 @@ export default function ChildHealthRecordForm() {
       try {
         setIsLoading(true);
         setError(null);
-        const chrecRecord = childHealthRecord && childHealthRecord.length > 0 ? childHealthRecord[0] : null;
-
+        const chrecRecord = childHealthRecord?.results?.[0];
         if (!chrecRecord) {
           throw new Error("Parent child health record (chrec) not found.");
         }
@@ -225,7 +225,7 @@ export default function ChildHealthRecordForm() {
         const allHistoricalSupplementStatuses: CHSSupplementStat[] = [];
         const allImmunizationTracking: ImmunizationTracking[] = [];
 
-        chrecRecord.child_health_histories?.forEach((history: any) => {
+        childHealthRecord?.results?.forEach((history: any) => {
           const latestNote = getLatestNoteForRecord(history.child_health_notes || []);
 
           // Process vital signs
@@ -335,7 +335,11 @@ export default function ChildHealthRecordForm() {
         setHistoricalBFChecks(allHistoricalBFChecks); // Set BF checks with IDs
         setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
 
-        const selectedChhistRecord = chrecRecord.child_health_histories?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
+        // The API response is a paginated list under "results", not "child_health_histories"
+        // So we should use childHealthRecord.results (an array of histories)
+        const selectedChhistRecord = childHealthRecord?.results?.find(
+          (history: any) => history.chhist_id === Number.parseInt(chhistId)
+        );
 
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`);

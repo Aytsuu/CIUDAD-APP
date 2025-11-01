@@ -22,7 +22,6 @@ from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasu
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import * 
-from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 
 
 

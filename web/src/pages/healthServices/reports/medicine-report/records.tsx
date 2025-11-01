@@ -114,30 +114,30 @@ export default function MonthlyMedicineDetails() {
         "Patient ID": patient?.pat_details?.pat_id || "",
         "Medicine Name": record.minv_details?.med_detail?.med_name ?? "N/A",
         Quantity: record.medrec_qty ?? "N/A",
-        Reason: record.reason || "No reason provided"
+        Reason: record.reason || "No reason provided",
       };
     });
   };
 
   const handleExportCSV = () => {
     const dataToExport = prepareExportData();
-    const fileName = searchTerm 
-      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+    const fileName = searchTerm
+      ? `medicine_${searchTerm.replace(/\s+/g, "_")}_${monthName}_${new Date().toISOString().slice(0, 10)}`
       : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
     exportToCSV(dataToExport, fileName);
   };
 
   const handleExportExcel = () => {
     const dataToExport = prepareExportData();
-    const fileName = searchTerm 
-      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+    const fileName = searchTerm
+      ? `medicine_${searchTerm.replace(/\s+/g, "_")}_${monthName}_${new Date().toISOString().slice(0, 10)}`
       : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
     exportToExcel(dataToExport, fileName);
   };
 
   const handleExportPDF = () => {
-    const fileName = searchTerm 
-      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+    const fileName = searchTerm
+      ? `medicine_${searchTerm.replace(/\s+/g, "_")}_${monthName}_${new Date().toISOString().slice(0, 10)}`
       : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
     exportToPDF(fileName);
   };
@@ -199,20 +199,21 @@ export default function MonthlyMedicineDetails() {
     window.location.reload();
   };
 
-  const tableHeader = ["Date Requested", "Patient Name", "Patient ID", "Medicine Name", "Quantity", "Reason"];
+  const tableHeader = ["Date", "Patient Name", "Patient ID", "Medicine Name", "Quantity", "Reason"];
 
   const tableRows = paginatedRecords.map((record: any) => {
-    const patient = record.patrec_details;
-    const personalInfo = patient?.pat_details?.personal_info;
+    const personalInfo = record?.pat_details?.personal_info;
     const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
 
     return [
-      record.requested_at ? new Date(record.requested_at).toLocaleDateString() : "N/A",
+      record.medreq_details?.fulfilled_at ? new Date(record.medreq_details?.fulfilled_at).toLocaleDateString() : "N/A",
       <div className="w-32">{fullName || "N/A"}</div>,
-      patient?.pat_details?.pat_id || "N/A",
-      record.minv_details?.med_detail?.med_name ?? "N/A",
-      record.medrec_qty ?? "N/A",
-      record.reason || "No reason provided"
+      record?.pat_details?.pat_id || "N/A",
+      // Combine med_dsg, med_form, med_dsg_unit
+      [record.med_details?.med_name ?? "N/A", record.med_details?.med_dsg ?? "N/A", record.med_details?.med_form ?? "N/A", record.med_details?.med_dsg_unit ?? "N/A"].filter(Boolean).join(" "),
+
+      record.total_allocated_qty ?? "N/A",
+      record.reason || "No reason provided",
     ];
   });
 
@@ -227,15 +228,15 @@ export default function MonthlyMedicineDetails() {
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  type="text" 
-                  placeholder="Search records..." 
-                  className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200" 
-                  value={searchTerm} 
+                <Input
+                  type="text"
+                  placeholder="Search records..."
+                  className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200"
+                  value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
-                  }} 
+                  }}
                 />
                 {searchTerm && (
                   <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100" onClick={() => setSearchTerm("")}>
@@ -246,14 +247,10 @@ export default function MonthlyMedicineDetails() {
               {/* Show current filter info */}
               {medicineName && searchTerm === medicineName && (
                 <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                  <span>Showing results for: <strong>{medicineName}</strong></span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 hover:bg-blue-100" 
-                    onClick={() => setSearchTerm("")}
-                    title="Clear filter"
-                  >
+                  <span>
+                    Showing results for: <strong>{medicineName}</strong>
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-blue-100" onClick={() => setSearchTerm("")} title="Clear filter">
                     ×
                   </Button>
                 </div>
@@ -263,8 +260,17 @@ export default function MonthlyMedicineDetails() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex gap-2">
-                <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
-                <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 transition-all duration-200">
+                <ExportDropdown
+                  onExportCSV={handleExportCSV}
+                  onExportExcel={handleExportExcel}
+                  onExportPDF={handleExportPDF}
+                  className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handlePrint}
+                  className="gap-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 transition-all duration-200"
+                >
                   <Printer className="h-4 w-4" />
                   <span className="text-sm">Print Report</span>
                 </Button>
@@ -273,7 +279,7 @@ export default function MonthlyMedicineDetails() {
               <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Link
                   to={{
-                    pathname: "/edit-monthly-recipient-list"
+                    pathname: "/edit-monthly-recipient-list",
                   }}
                   state={{
                     reports: report,
@@ -281,7 +287,7 @@ export default function MonthlyMedicineDetails() {
                     recordCount: totalItems,
                     state_office: report?.office || "",
                     state_control: report?.control_no || "",
-                    year: month?.split("-")[0] || new Date().getFullYear().toString()
+                    year: month?.split("-")[0] || new Date().getFullYear().toString(),
                   }}
                 >
                   <span className="font-medium">Edit Monthly List</span>
@@ -341,7 +347,7 @@ export default function MonthlyMedicineDetails() {
               backgroundColor: "white",
               display: "flex",
               flexDirection: "column",
-              height: "13in"
+              height: "13in",
             }}
           >
             {/* Main Content Area */}
@@ -378,9 +384,7 @@ export default function MonthlyMedicineDetails() {
               <div className="text-center py-2 mb-6 pb-4">
                 <Label className="text-lg font-bold uppercase tracking-widest underline block">MEDICINE DISTRIBUTION RECORDS</Label>
                 <Label className="font-medium text-gray-700 block text-sm">Month: {monthName}</Label>
-                {searchTerm && (
-                  <Label className="font-medium text-gray-700 block text-sm">Medicine: {searchTerm}</Label>
-                )}
+                {searchTerm && <Label className="font-medium text-gray-700 block text-sm">Medicine: {searchTerm}</Label>}
               </div>
 
               {/* Report Info */}
@@ -416,12 +420,12 @@ export default function MonthlyMedicineDetails() {
                 </div>
               ) : (
                 <div className="w-full">
-                  <TableLayout 
-                    header={tableHeader} 
-                    rows={tableRows} 
-                    tableClassName="border rounded w-full" 
-                    bodyCellClassName="border text-center text-xs p-2" 
-                    headerCellClassName="font-bold text-xs border text-gray-900 text-center p-2" 
+                  <TableLayout
+                    header={tableHeader}
+                    rows={tableRows}
+                    tableClassName="border rounded w-full"
+                    bodyCellClassName="border text-center text-xs p-2"
+                    headerCellClassName="font-bold text-xs border text-gray-900 text-center p-2"
                   />
                 </div>
               )}

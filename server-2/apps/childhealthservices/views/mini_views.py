@@ -85,17 +85,7 @@ class ChildHealthSupplementStatusView(generics.ListCreateAPIView):
     serializer_class = ChildHealthSupplementStatusSerializer
 
  
-class NutritionalStatusView(generics.ListCreateAPIView):
-    serializer_class = NutritionalStatusSerializerBase
-    
-    def get_queryset(self):
-        queryset = NutritionalStatus.objects.all()
-        pat_id = self.kwargs.get('pat_id')
-        
-        if pat_id:
-            queryset = queryset.filter(pat_id=pat_id)
-        
-        return queryset
+
     
 class ChildHealthVitalSignsView(generics.ListCreateAPIView):
     queryset = ChildHealthVitalSigns.objects.all()

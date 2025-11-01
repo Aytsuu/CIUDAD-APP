@@ -1,4 +1,3 @@
-
 from django.shortcuts import render
 from rest_framework import generics
 from django.db.models import Q, Count, Sum
@@ -21,19 +20,21 @@ from apps.reports.serializers import *
 from pagination import *
 from django.db.models import Q, Prefetch
 from utils import *  # Assuming you have this
-from apps.medicineservices.serializers import MedicineRecordSerialzer
+from apps.medicineservices.serializers import *
 
 
 
 class MonthlyMedicineSummariesAPIView(APIView):
     def get(self, request):
         try:
-            queryset = MedicineRecord.objects.select_related(
-                'minv_id', 
-                'minv_id__inv_id', 
-                'minv_id__med_id',  
-                'patrec_id'
-            ).order_by('-fulfilled_at')
+            queryset = MedicineRequestItem.objects.select_related(
+                'medreq_id', 
+                'med', 
+                'action_by', 
+                'completed_by'
+            ).order_by('-medreq_id__fuollfilled_at').filter(
+                status='completed'
+            )
 
             year_param = request.GET.get('year')  # '2025' or '2025-07'
 
@@ -42,13 +43,13 @@ class MonthlyMedicineSummariesAPIView(APIView):
                     if '-' in year_param:
                         year, month = map(int, year_param.split('-'))
                         queryset = queryset.filter(
-                            fulfilled_at__year=year,
-                            fulfilled_at__month=month
+                            medreq_id__fulfilled_at__year=year,
+                            medreq_id__fulfilled_at__month=month
                         )
                     else:
                         year = int(year_param)
                         queryset = queryset.filter(
-                            fulfilled_at__year=year
+                            medreq_id__fulfilled_at__year=year
                         )  
                 except ValueError:
                     return Response({
@@ -58,21 +59,28 @@ class MonthlyMedicineSummariesAPIView(APIView):
 
             # Annotate and count records by month
             monthly_data = queryset.annotate(
-                month=TruncMonth('fulfilled_at')
+                month=TruncMonth('medreq_id__fulfilled_at')
             ).values('month').annotate(
-                record_count=Count('medrec_id')
+                record_count=Count('medreqitem_id')
             ).order_by('-month')
 
             formatted_data = []
 
             for item in monthly_data:
-                month_str = item['month'].strftime('%Y-%m')
+                month_value = item['month']
+                if not month_value:
+                    continue  # Skip records with invalid or missing month
+
+                month_str = month_value.strftime('%Y-%m')
 
                 # Get or create report record for this month
                 report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
                     month_year=month_str,
                     rcp_type='Medicine'
                 )
+
+                if created:
+                    report_obj.save()  # Ensure the report is saved if newly created
 
                 report_data = MonthlyRCPReportSerializer(report_obj).data
 
@@ -96,7 +104,6 @@ class MonthlyMedicineSummariesAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
     def get(self, request, month):
         try:
@@ -112,15 +119,16 @@ class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Get records for the specified month
-            queryset = MedicineRecord.objects.select_related(
-                'minv_id', 
-                'minv_id__inv_id', 
-                'minv_id__med_id',  
-                'patrec_id'
+            queryset = MedicineRequestItem.objects.select_related(
+                'medreq_id', 
+                'med', 
+                'action_by', 
+                'completed_by'
             ).filter(
-                fulfilled_at__year=year,
-                fulfilled_at__month=month_num
-            ).order_by('-fulfilled_at')
+                medreq_id__fulfilled_at__year=year,
+                medreq_id__fulfilled_at__month=month_num,
+                status='completed'
+            ).order_by('-created_at')
 
             # Get or create report record for this month
             report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
@@ -129,9 +137,7 @@ class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
             )
 
             report_data = MonthlyRCPReportSerializer(report_obj).data
-            serialized_records = [
-                MedicineRecordSerialzer(record).data for record in queryset
-            ]
+            serialized_records = MedicineRecordSerialzer(queryset, many=True).data  # Updated to serialize the queryset directly
 
             return Response({
                 'success': True,
@@ -176,18 +182,18 @@ class MonthlyMedicineChart(APIView):
                 monthly_id = None
 
             # Get medicine counts for the specified month
-            queryset = MedicineRecord.objects.filter(
-                fulfilled_at__year=year,
-                fulfilled_at__month=month_num
+            queryset = MedicineRequestItem.objects.filter(
+                medreq_id__fulfilled_at__year=year,
+                medreq_id__fulfilled_at__month=month_num
             ).values(
-                'minv_id__med_id__med_name'  # Assuming this is the path to medicine name
+                'med__med_name'  # Assuming this is the path to medicine name
             ).annotate(
-                count=Count('minv_id__med_id')
+                count=Count('med')
             ).order_by('-count')
 
             # Convert to dictionary format {medicine_name: count}
             medicine_counts = {
-                item['minv_id__med_id__med_name']: item['count'] 
+                item['med__med_name']: item['count'] 
                 for item in queryset
             }
 

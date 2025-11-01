@@ -1,23 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
+import { useNavigate } from "react-router-dom";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
-export const vaccinationColumns: ColumnDef<any>[] = [
+export const firstAidColumns: ColumnDef<any>[] = [
   {
-    accessorKey: "patient_no",
-    header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Patient No. <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.pat_id}</div>
-      </div>
-    )
+    accessorKey: "pat_id",
+    header: "Patient ID",
+    cell: ({ row }) => <div className="flex justify-center">{row.original.pat_id}</div>
   },
   {
     accessorKey: "patient",
@@ -72,22 +64,22 @@ export const vaccinationColumns: ColumnDef<any>[] = [
     )
   },
   {
-    accessorKey: "vaccination_count",
+    accessorKey: "firstaid_count",
     header: "No of Records",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vaccination_count}</div>
+        <div className="text-center w-full">{row.original.firstaid_count}</div>
       </div>
     )
   },
   {
-    accessorKey: "latest_vaccination_date",
-    header: "Latest Vaccination Date",
+    accessorKey: "latest_firstaid_date",
+    header: "Latest Record Date",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[120px] px-2">
+      <div className="flex justify-center min-w-[150px] px-2">
         <div className="text-center w-full">
-          {row.original.latest_vaccination_date
-            ? new Date(row.original.latest_vaccination_date).toLocaleDateString("en-US", {
+          {row.original.latest_firstaid_date
+            ? new Date(row.original.latest_firstaid_date).toLocaleDateString("en-US", {
                 year: "2-digit",
                 month: "short",
                 day: "2-digit",
@@ -106,7 +98,7 @@ export const vaccinationColumns: ColumnDef<any>[] = [
         pat_id: row.original.pat_id,
         pat_type: row.original.pat_type,
         age: row.original.age,
-        addressFull: row.original.address || "No address provided",
+        addressFull: row.original.address,
         address: {
           add_street: row.original.street,
           add_barangay: row.original.barangay,
@@ -123,11 +115,10 @@ export const vaccinationColumns: ColumnDef<any>[] = [
           per_sex: row.original.sex
         }
       };
-
       return (
         <ViewButton
           onClick={() => {
-            navigate("/services/vaccination/records", {
+            navigate("/services/firstaid/records", {
               state: {
                 params: {
                   patientData

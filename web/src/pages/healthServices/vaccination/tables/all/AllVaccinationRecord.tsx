@@ -15,7 +15,7 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import TableLoading from "@/pages/healthServices/table-loading";
@@ -256,7 +256,7 @@ export default function AllVaccinationRecords() {
             <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <ProtectedComponent exclude={["DOCTOR"]}>
             <div className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto">
                 <Link to="/services/vaccination/form" state={{ mode: "newvaccination_record" }}>
@@ -264,7 +264,7 @@ export default function AllVaccinationRecords() {
                 </Link>
               </Button>
             </div>
-          </ProtectedComponentButton>
+          </ProtectedComponent>
         </div>
       </div>
 

@@ -19,7 +19,7 @@ from rest_framework.exceptions import ValidationError
 from apps.medicineservices.serializers import MedicineRequestSerializer
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.patientrecords.serializers.physicalexam_serializers import PEResultSerializer
-from apps.medicineservices.models import FindingsPlanTreatment
+from apps.medicineservices.models import *
 from apps.childhealthservices.models import ChildHealthVitalSigns,ChildHealth_History
 from apps.childhealthservices.serializers import ChildHealthHistoryFullSerializer
 from apps.inventory.models import MedicineInventory
@@ -828,34 +828,27 @@ class CreateMedicalConsultationView(APIView):
             )
 
 # ========MEDICAL CONSULTATION END SOAP FORM
-
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
             data = request.data
-            print(data)
-            staff_id = data.get('staff_id') or None
-            medrec_id = data.get('medrec_id') or None
-            patrec_id = data.get('patrec_id') or None
-            app_id = data.get('app_id') or None  # Get appointment ID
+            staff_id = data.get('staff_id')
+            staff = None
+            if staff_id:
+                try:
+                    staff = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    return Response({"error": f"Staff with ID {staff_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+            medrec_id = data.get('medrec_id')
+            patrec_id = data.get('patrec_id')
+            app_id = data.get('app_id')
+            appointment = None
+            phil_id = data.get('phil_id')
+            pat_id = data.get('pat_id')
 
-            # only enforce medrec_id and patrec_id as required
             if not all([medrec_id, patrec_id]):
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
-
-            # Get the medical record to check PhilHealth status
-            phil_id = data.get('phil_id')
-
-            # 🔹 Handle Appointment if provided - Update status to "completed"
-            appointment = None
-            if app_id and app_id not in [None, "", "null"]:
-                try:
-                    appointment = MedConsultAppointment.objects.get(id=app_id)
-                    print(f"DEBUG: Found appointment with ID: {appointment.id}, current status: '{appointment.status}'")
-                except MedConsultAppointment.DoesNotExist:
-                    print(f"DEBUG: Appointment with ID {app_id} not found")
-                    appointment = None
 
             # 1. Create Findings
             finding_data = {
@@ -871,56 +864,96 @@ class SoapFormSubmissionView(APIView):
 
             # 2. Medicine Request (only if medicines exist)
             med_request_id = None
-            medicine_request_data = data.get('medicineRequest')  # Note: changed from medicine_request to medicineRequest
+            medicine_request_data = data.get('medicineRequest')
             if medicine_request_data and medicine_request_data.get('medicines'):
-                # Create MedicineRequest first
-                med_request_data = {
-                    'rp_id': staff_id,  # Use staff_id as physician ID
-                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                # Get rp_id or trans_id from Patient
+                pat_id = medicine_request_data.get('pat_id')
+                rp_id = None
+                trans_id = None
+                try:
+                    patient = Patient.objects.get(pat_id=pat_id)
+                    rp_id = getattr(patient, 'rp_id', None)
+                    trans_id = getattr(patient, 'trans_id', None)
+                except Patient.DoesNotExist:
+                    return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+                # # Create PatientRecord for Medicine Record
+                # medicine_patrec = PatientRecord.objects.create(
+                #     pat_id=patient,
+                #     patrec_type="Medicine Record"
+                # )
+
+                # Create MedicineRequest and link to PatientRecord
+                med_request_payload = {
+                    'rp_id': rp_id.rp_id if rp_id else None,
+                    'trans_id': trans_id.trans_id if trans_id else None,
+                    # 'patrec': medicine_patrec.patrec_id,  # Link to new PatientRecord
                     'status': 'pending',
-                    'mode': 'walk-in'
+                    'mode': 'walk-in',
+                    'requested_at': timezone.now(),
                 }
-                
-                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
+                med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
-                # Create MedicineRequestItem for each medicine and update inventory
-                for medicine in medicine_request_data['medicines']:
-                    minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medrec_qty', 0)  # Note: changed from medreqitem_qty to medrec_qty
-                    
-                    # Update MedicineInventory with temporary deduction
-                    if minv_id and requested_qty > 0:
-                        try:
-                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
-                            
-                            # Add the requested quantity to existing temporary_deduction
-                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
-                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
-                            medicine_inventory.save()
-                            
-                        except MedicineInventory.DoesNotExist:
-                            # Log warning or handle missing inventory
-                            return Response(
-                                {"error": f"Medicine inventory with ID {minv_id} not found"},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                    
-                    # Create the medicine request item
+                # Group medicines by med_id (from MedicineInventory FK)
+                medicines = medicine_request_data['medicines']
+                medid_to_allocations = {}
+                for med in medicines:
+                    minv_id = med.get('minv_id')
+                    if not minv_id:
+                        continue
+                    try:
+                        minv = MedicineInventory.objects.get(minv_id=minv_id)
+                        med_id = str(minv.med_id.med_id)
+                    except MedicineInventory.DoesNotExist:
+                        return Response(
+                            {"error": f"Medicine inventory with ID {minv_id} not found"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    if med_id not in medid_to_allocations:
+                        medid_to_allocations[med_id] = []
+                    medid_to_allocations[med_id].append({
+                        'minv_id': minv_id,
+                        'allocated_qty': med.get('medrec_qty', 0),
+                        'reason': med.get('reason', ''),
+                    })
+
+                # Create MedicineRequestItem and MedicineAllocation
+                for med_id, allocations in medid_to_allocations.items():
+                    reason = allocations[0]['reason']
+                    signature = allocations[0].get('signature', '')
                     medicine_item_data = {
-                        'medreqitem_qty': requested_qty,
-                        'reason': medicine.get('reason', ''),
-                        'minv_id': minv_id,  # Medicine inventory ID
-                        'med_id': medicine.get('med_id'),  # Medicine list ID
-                        'medreq_id': med_request.medreq_id,  # Link to the parent request
-                        'status': 'confirmed'
+                        'reason': reason,
+                        'med': med_id,
+                        'medreq_id': med_request.medreq_id,
+                        'status': 'confirmed',
+                        'created_at': timezone.now(),
+                        'action_by': staff,
                     }
-                    
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
-                    medicine_item_serializer.save()
+                    medicine_item = medicine_item_serializer.save()
+
+                    for alloc in allocations:
+                        minv_id = alloc['minv_id']
+                        allocated_qty = alloc['allocated_qty']
+                        if minv_id and allocated_qty > 0:
+                            try:
+                                medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                                medicine_inventory.temporary_deduction += allocated_qty
+                                medicine_inventory.save()
+                            except MedicineInventory.DoesNotExist:
+                                return Response(
+                                    {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
+                            MedicineAllocation.objects.create(
+                                medreqitem=medicine_item,
+                                minv=medicine_inventory,
+                                allocated_qty=allocated_qty
+                            )
 
                 # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
@@ -929,7 +962,7 @@ class SoapFormSubmissionView(APIView):
                 )
 
             # 3. Physical Exam Results
-            physical_exam_results = data.get('physicalExamResults')  # Note: changed from physical_exam_results to physicalExamResults
+            physical_exam_results = data.get('physicalExamResults')
             if physical_exam_results:
                 per_data = [
                     {'pe_option': pe, 'find': finding.find_id}
@@ -940,7 +973,7 @@ class SoapFormSubmissionView(APIView):
                 per_serializer.save()
 
             # 4. Medical History
-            selected_illnesses = data.get('selectedIllnesses')  # Note: changed from selected_illnesses to selectedIllnesses
+            selected_illnesses = data.get('selectedIllnesses')
             if selected_illnesses:
                 medical_history_data = [
                     {
@@ -958,10 +991,7 @@ class SoapFormSubmissionView(APIView):
             # 5. Handle PhilHealth Laboratory Data if it's a PhilHealth record
             if phil_id:
                 try:
-                    # Get the existing PhilHealth details
                     philhealth_details = PhilhealthDetails.objects.get(phil_id=phil_id)
-                    
-                    # Create or update PhilHealth Laboratory record
                     lab_data = {
                         'is_cbc': data.get('is_cbc', False),
                         'is_urinalysis': data.get('is_urinalysis', False),
@@ -978,35 +1008,24 @@ class SoapFormSubmissionView(APIView):
                         'is_ecg': data.get('is_ecg', False),
                         'others': data.get('others', ''),
                     }
-                    
-                    # Check if lab already exists for this PhilHealth record
                     if philhealth_details.lab:
-                        # Update existing lab record
                         lab_serializer = PhilHealthLaboratorySerializer(
                             philhealth_details.lab, 
                             data=lab_data, 
                             partial=True
                         )
                     else:
-                        # Create new lab record
                         lab_serializer = PhilHealthLaboratorySerializer(data=lab_data)
-                    
                     lab_serializer.is_valid(raise_exception=True)
                     lab_instance = lab_serializer.save()
-                    
-                    # Link the lab to PhilHealth details
                     philhealth_details.lab = lab_instance
                     philhealth_details.save()
-                    
-                    print(f"PhilHealth laboratory data updated for phil_id: {phil_id}")
-                    
                 except PhilhealthDetails.DoesNotExist:
                     return Response(
                         {"error": f"PhilHealth details with ID {phil_id} not found"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 except Exception as e:
-                    # Log the error but don't fail the entire request
                     print(f"Error updating PhilHealth laboratory: {str(e)}")
 
             # 6. Update Medical Consultation Record
@@ -1017,19 +1036,19 @@ class SoapFormSubmissionView(APIView):
             )
 
             # 🔹 Update appointment status to "completed" if appointment exists
-            if appointment:
-                print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'completed'")
-                appointment.status = "completed"
-                appointment.save()
-                print(f"DEBUG: Appointment status updated to '{appointment.status}'")
+            if app_id:
+                try:
+                    appointment = MedConsultAppointment.objects.get(id=app_id)
+                    appointment.status = "completed"
+                    appointment.save()
+                except MedConsultAppointment.DoesNotExist:
+                    pass
 
             response_data = {
                 'success': True,
             }
-
-            # Add appointment info to response if appointment was updated
-            if appointment:
-                response_data["appointment_id"] = appointment.id
+            if app_id:
+                response_data["appointment_id"] = app_id
                 response_data["appointment_status_updated"] = "completed"
 
             return Response(response_data, status=status.HTTP_201_CREATED)
@@ -1047,92 +1066,129 @@ class SoapFormSubmissionView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
-            
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
             data = request.data
-            staff_id = data.get("staff_id")  # can be null
-            patrec_id = data.get("patrec_id")  # required
-            chhist_id = data.get("chhist_id")  # can be null
-            chvital_id = data.get("chvital_id")  # can be null
+            staff_id = data.get("staff_id")
+            patrec_id = data.get("patrec_id")
+            chhist_id = data.get("chhist_id")
+            chvital_id = data.get("chvital_id")
+            pat_id = data.get("pat_id")
 
-            # Require only patrec_id
             if not patrec_id:
                 raise ValidationError("Missing required field: patrec_id")
 
-            # 1. Findings (staff may be null)
+            # 1. Findings
             finding_data = {
                 "assessment_summary": data.get("assessment_summary", ""),
                 "plantreatment_summary": data.get("plantreatment_summary", ""),
                 "subj_summary": data.get("subj_summary", ""),
                 "obj_summary": data.get("obj_summary", ""),
-                "staff": staff_id,  # will be None if not provided
+                "staff": staff_id,
             }
             finding_serializer = FindingSerializer(data=finding_data)
             finding_serializer.is_valid(raise_exception=True)
             finding = finding_serializer.save()
 
             # 2. Medicine Request (only if medicines exist)
-            med_request = None
             med_request_id = None
-            medicine_request_data = data.get("medicine_request")
+            medicine_request_data = data.get("medicineRequest")
             if medicine_request_data and medicine_request_data.get("medicines"):
-                # Create MedicineRequest first
-                med_request_data = {
-                    'rp_id': medicine_request_data.get('rp_id'),  
-                    'pat_id': medicine_request_data.get('pat_id'), 
-                    'status': 'pending',
-                    'mode': medicine_request_data.get('mode', 'walk-in')
+                # Get rp_id or trans_id from Patient
+                pat_id = medicine_request_data.get("pat_id")
+                rp_id = None
+                trans_id = None
+                try:
+                    patient = Patient.objects.get(pat_id=pat_id)
+                    rp_id = getattr(patient, "rp_id", None)
+                    trans_id = getattr(patient, "trans_id", None)
+                except Patient.DoesNotExist:
+                    return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+                # # Create PatientRecord for Medicine Record
+                # medicine_patrec = PatientRecord.objects.create(
+                #     pat_id=patient,
+                #     patrec_type="Medicine Record"
+                # )
+
+                # Create MedicineRequest and link to PatientRecord
+                med_request_payload = {
+                    "rp_id": rp_id.rp_id if rp_id else None,
+                    "trans_id": trans_id.trans_id if trans_id else None,
+                    # "patrec": medicine_patrec.patrec_id,  # Link to new PatientRecord
+                    "status": "pending",
+                    "mode": medicine_request_data.get("mode", "walk-in"),
+                    "requested_at": timezone.now(),
                 }
-                
-                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
+                med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
-                # Create MedicineRequestItem for each medicine and update inventory
-                for medicine in medicine_request_data['medicines']:
-                    minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medrec_qty', 0)  # Note: using 'quantity' key for child health
-                    
-                    # Update MedicineInventory with temporary deduction
-                    if minv_id and requested_qty > 0:
-                        try:
-                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
-                            
-                            # Add the requested quantity to existing temporary_deduction
-                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
-                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
-                            medicine_inventory.save()
-                            
-                        except MedicineInventory.DoesNotExist:
-                            # Log warning or handle missing inventory
-                            return Response(
-                                {"error": f"Medicine inventory with ID {minv_id} not found"},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                    
-                    # Create the medicine request item
+                # Group medicines by med_id (from MedicineInventory FK)
+                medicines = medicine_request_data["medicines"]
+                medid_to_allocations = {}
+                for med in medicines:
+                    minv_id = med.get("minv_id")
+                    if not minv_id:
+                        continue
+                    try:
+                        minv = MedicineInventory.objects.get(minv_id=minv_id)
+                        med_id = str(minv.med_id.med_id)
+                    except MedicineInventory.DoesNotExist:
+                        return Response(
+                            {"error": f"Medicine inventory with ID {minv_id} not found"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    if med_id not in medid_to_allocations:
+                        medid_to_allocations[med_id] = []
+                    medid_to_allocations[med_id].append({
+                        "minv_id": minv_id,
+                        "allocated_qty": med.get("medrec_qty", 0),
+                        "reason": med.get("reason", ""),
+                    })
+
+                # Create MedicineRequestItem and MedicineAllocation
+                for med_id, allocations in medid_to_allocations.items():
+                    reason = allocations[0]["reason"]
+                    signature = allocations[0].get("signature", "")
                     medicine_item_data = {
-                        'medreqitem_qty': requested_qty,
-                        'reason': medicine.get('reason', ''),
-                        'minv_id': minv_id,  # Medicine inventory ID
-                        'med_id': medicine.get('med_id'),  # Medicine list ID
-                        'medreq_id': med_request.medreq_id,  # Link to the parent request
-                        'status': 'confirmed'
+                        "reason": reason,
+                        "med": med_id,
+                        "medreq_id": med_request.medreq_id,
+                        "status": "confirmed",
+                        "created_at": timezone.now(),
+                        "action_by": staff,
                     }
-                    
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
-                    medicine_item_serializer.save()
+                    medicine_item = medicine_item_serializer.save()
 
-                # Link medicine request to findings
+                    for alloc in allocations:
+                        minv_id = alloc["minv_id"]
+                        allocated_qty = alloc["allocated_qty"]
+                        if minv_id and allocated_qty > 0:
+                            try:
+                                medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                                medicine_inventory.temporary_deduction += allocated_qty
+                                medicine_inventory.save()
+                            except MedicineInventory.DoesNotExist:
+                                return Response(
+                                    {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+                            MedicineAllocation.objects.create(
+                                medreqitem=medicine_item,
+                                minv=medicine_inventory,
+                                allocated_qty=allocated_qty,
+                            )
+
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
-                    find=finding
+                    find=finding,
                 )
 
             # 3. Physical Exam Results
@@ -1148,7 +1204,6 @@ class ChildHealthSoapFormSubmissionView(APIView):
             # 4. Update Vital Signs link
             if chhist_id:
                 ChildHealth_History.objects.filter(pk=chhist_id).update(status="recorded")
-                
             if chvital_id:
                 ChildHealthVitalSigns.objects.filter(pk=chvital_id).update(find=finding)
 
@@ -1158,8 +1213,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        ill_date=date.today().strftime('%y-%m-%d'),
-                        is_for_surveillance=True  
+                        ill_date=date.today().strftime("%Y-%m-%d"),
+                        is_for_surveillance=True,
                     )
                     for ill_id in data["selected_illnesses"]
                 ])
@@ -1168,7 +1223,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {
                     "success": True,
                     "finding_id": finding.find_id,
-                    "med_request_id": med_request_id,  # only set if medicines exist
+                    "med_request_id": med_request_id,
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -1180,8 +1235,6 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-   
-
 
 
 

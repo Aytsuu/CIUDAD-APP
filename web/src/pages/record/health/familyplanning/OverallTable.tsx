@@ -13,7 +13,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
 import { api2 } from "@/api/api";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 interface FPRecord {
   fprecord_id: number;
@@ -398,15 +398,16 @@ export default function FamPlanningTable() {
           />
         </div>
 
-        <ProtectedComponentButton exclude={["DOCTOR"]}>
-          <div className="w-full sm:w-auto">
+        <ProtectedComponent exclude={["DOCTOR"]}>
+          <div className="flex justify-end">
             <Link to={`/services/familyplanning/new-record`} state={{ gender: "Unknown" }}>
               <Button className="w-full sm:w-auto font-medium py-2 px-4 rounded-md shadow-sm">
                 New Record
               </Button>
             </Link>
           </div>
-        </ProtectedComponentButton>
+        </ProtectedComponent>
+        
       </div>
 
       {/* Table Controls */}

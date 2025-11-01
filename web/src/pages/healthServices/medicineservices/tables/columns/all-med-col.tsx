@@ -1,8 +1,9 @@
-// components/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
+import { toTitleCase } from "@/helpers/ToTitleCase";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 export const medicineColumns: ColumnDef<any>[] = [
   {
@@ -29,9 +30,9 @@ export const medicineColumns: ColumnDef<any>[] = [
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
         <div className="text-center py-2 px-4">
-          <div className="font-medium break-words ">{fullName}</div>
+          <div className="font-medium break-words">{toTitleCase(fullName)}</div>
           <div className="text-sm text-darkGray">
-            {row.original.sex}, {row.original.age}
+            {toTitleCase(row.original.sex || "")}, {row.original.age}
           </div>
         </div>
       );
@@ -46,7 +47,7 @@ export const medicineColumns: ColumnDef<any>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
-        {row.original.address ? row.original.address : "No address provided"}
+        {toTitleCase(row.original.address || "No address provided")}
       </div>
     )
   },
@@ -55,16 +56,18 @@ export const medicineColumns: ColumnDef<any>[] = [
     header: "Sitio",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
+        <div className="text-center w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     )
   },
   {
-    accessorKey: "type",
+    accessorKey: "pat_type",
     header: "Type",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.pat_type}</div>
+        <div className={getPatType(row.original.pat_type)}>
+          {toTitleCase(row.original.pat_type)}
+        </div>
       </div>
     )
   },
@@ -83,7 +86,13 @@ export const medicineColumns: ColumnDef<any>[] = [
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[80px] px-2">
         <div className="text-center w-full">
-          {new Date(row.original.latest_medicine_date).toLocaleDateString()}
+          {row.original.latest_medicine_date
+            ? new Date(row.original.latest_medicine_date).toLocaleDateString("en-US", {
+                year: "2-digit",
+                month: "short",
+                day: "2-digit",
+              })
+            : "N/A"}
         </div>
       </div>
     )
@@ -95,7 +104,24 @@ export const medicineColumns: ColumnDef<any>[] = [
       const navigate = useNavigate();
       const patientData = {
         pat_id: row.original.pat_id,
-       
+        pat_type: row.original.pat_type,
+        age: row.original.age,
+        addressFull: row.original.address || "No address provided",
+        address: {
+          add_street: row.original.street,
+          add_barangay: row.original.barangay,
+          add_city: row.original.city,
+          add_province: row.original.province,
+          add_sitio: row.original.sitio
+        },
+        households: [{ hh_id: row.original.householdno }],
+        personal_info: {
+          per_fname: row.original.fname,
+          per_mname: row.original.mname,
+          per_lname: row.original.lname,
+          per_dob: row.original.dob,
+          per_sex: row.original.sex
+        }
       };
 
       return (

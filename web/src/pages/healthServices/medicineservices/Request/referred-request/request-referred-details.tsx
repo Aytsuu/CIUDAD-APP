@@ -25,18 +25,12 @@ export default function RefferedRequestDetail() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch reffered request details
-  const {
-    data: apiResponse,
-    isLoading,
-    error: refferedRequestError,
-  } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "reffered");
+  const { data: apiResponse, isLoading, error: refferedRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "reffered");
 
   // Extract data from paginated response
   const medicineData = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
-
-
 
   if (refferedRequestError) {
     return (
@@ -72,8 +66,7 @@ export default function RefferedRequestDetail() {
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
               <CardTitle>
-                reffered Medicine Items{" "}
-                <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
+                reffered Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
               </CardTitle>
               <CardDescription>All reffered medicine request items with allocation details</CardDescription>
             </div>
@@ -83,7 +76,7 @@ export default function RefferedRequestDetail() {
                 state={{
                   params: {
                     patientData: {
-                      pat_id:  patientData?.pat_id,
+                      pat_id: patientData?.pat_id,
                       pat_type: patientData?.pat_type,
                       age: patientData?.age,
                       addressFull: patientData?.address?.full_address || "No address provided",
@@ -106,10 +99,12 @@ export default function RefferedRequestDetail() {
                   },
                 }}
               >
-                <Button size="sm">
-                  <History className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
+                {patientData?.pat_id && (
+                  <Button size="sm">
+                    <History className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                )}
               </Link>
             </div>
           </CardHeader>
@@ -168,8 +163,6 @@ export default function RefferedRequestDetail() {
             </div>
           </CardContent>
         </Card>
-
-    
       </div>
     </LayoutWithBack>
   );

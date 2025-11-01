@@ -308,9 +308,9 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
   const onSubmit = useCallback(
-    (data: SoapFormType) => {
+    (data: any) => {
       // Create clean submission data with only the necessary fields
-      const submissionData: SoapFormType = {
+      const submissionData: any = {
         subj_summary: data.subj_summary,
         obj_summary: data.obj_summary,
         assessment_summary: data.assessment_summary,
@@ -338,7 +338,8 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         staff_id: data.staff_id || MedicalConsultation?.staff_id || "",
         medrec_id: data.medrec_id || MedicalConsultation?.medrec_id || "",
         patrec_id: data.patrec_id || MedicalConsultation?.patrec || "",
-        app_id: data.app_id || MedicalConsultation?.app_id || ""
+        app_id: data.app_id || MedicalConsultation?.app_id || "",
+        pat_id: patientData?.pat_id || "",
       };
 
       console.log("Clean submission data:", submissionData);

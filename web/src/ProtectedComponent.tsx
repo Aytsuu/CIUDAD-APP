@@ -6,7 +6,7 @@ interface ProtectedComponentProps {
   children: React.ReactNode;
 }
 
-export const ProtectedComponentButton = ({
+export const ProtectedComponent = ({
   exclude = [],
   children,
 }: ProtectedComponentProps) => {
