@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useGetGarbageCardAnalytics } from "./garbage-pickup-analytics-queries";
+import { useEffect } from "react";
 
 // Memoized card component with hover effects and navigation
 const GarbagePickupCard = React.memo(({ 
@@ -74,14 +75,18 @@ const garbagePickupCards = [
 // Hook version (similar to your waste personnel example)
 export const useGarbagePickupSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetGarbageCardAnalytics();
+  const { data, isLoading, refetch: refetchGarbagePickup , isFetching} = useGetGarbageCardAnalytics();
+
+  useEffect(() => {
+    refetchGarbagePickup();
+  }, [refetchGarbagePickup]);
 
   const cards = garbagePickupCards.map(card => (
     <GarbagePickupCard 
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       onClick={() => {
         navigate("/garbage-pickup-request")
       }}

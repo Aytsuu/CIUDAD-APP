@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBudgetPlanActive, getBudgetPlanInactive } from "../restful-API/budgetplanGetAPI";
-import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear, getExpenseParticulars } from "../restful-API/budgetplanGetAPI";
+import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear, getExpenseParticulars, getBudgetYear } from "../restful-API/budgetplanGetAPI";
 import { BudgetPlanDetail } from "../budgetPlanInterfaces"; 
 import { BudgetPlan } from "../budgetPlanInterfaces";
 
@@ -46,6 +46,23 @@ export const useGetBudgetPlanDetailFromPrev = () => {
     return useQuery<BudgetPlanDetail[]>({
         queryKey: ['budgetDetailsPrev'],
         queryFn: getBudgetPlanDetailFromPreviousYear,
+        staleTime: 1000 * 60 * 30,
+        enabled: false 
+    });
+}
+
+export type GADBudget = {
+  gbudy_num: number;
+  gbudy_budget: number;
+  gbudy_year: number;
+  gbudy_expenses: number
+  gbudy_is_archive: boolean;
+}
+
+export const useGetGADBudgetYear = (year:number) => {
+    return useQuery<GADBudget>({
+        queryKey: ['gadBudget', year],
+        queryFn:() => getBudgetYear(year),
         staleTime: 1000 * 60 * 30,
         enabled: false 
     });

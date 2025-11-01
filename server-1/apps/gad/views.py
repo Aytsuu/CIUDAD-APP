@@ -602,7 +602,7 @@ class ProjectProposalForBT(generics.ListAPIView):
             projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
             
             # Get budget items from dev_gad_items
-            budget_items = dev_plan.dev_gad_items or []
+            budget_items = dev_plan.dev_budget_items or []
             
             for project_index, project_title in enumerate(projects):
                 if not project_title:  # Skip empty project titles

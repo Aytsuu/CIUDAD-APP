@@ -89,3 +89,14 @@ export const getExpenseParticulars = async (year?: number) => {
         throw err;
     }
 };
+
+
+export const getBudgetYear = async(year: number) => {
+    try{
+        const res = await api.get(`treasurer/gad-budget-year/${year}`)
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}

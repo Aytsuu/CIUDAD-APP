@@ -19,8 +19,12 @@ import {
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/context/AuthContext"; 
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
+  const { user } = useAuth();
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
   const {
@@ -270,7 +274,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
               />
             )}
           />
-
+          <div className="mb-5">
           <FormDateTimeInput
             control={form.control}
             name="don_dist_date"
@@ -278,51 +282,54 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             label="Distributed Date"
             readOnly={!isEditing}
           />
+        </div>
 
-          {/* Edit/Save Button */}
-          <div className="mt-8 flex justify-end gap-3 mb-2">
-            {isEditing ? (
-              <>
+          {/* Edit/Save Button - Only show if user is secretary */}
+          {isSecretary && (
+            <div className="flex justify-end gap-3 mb-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      form.reset();
+                      setIsEditing(false);
+                    }}
+                    variant="outline"
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <ConfirmationModal
+                    trigger={
+                      <Button type="button" className="" disabled={isPending}>
+                        {isPending ? (
+                          <>
+                            <Spinner size="sm" className="mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Changes"
+                        )}
+                      </Button>
+                    }
+                    title="Confirm Save"
+                    description="Are you sure you want to save the changes?"
+                    actionLabel="Confirm"
+                    onClick={handleConfirmSave}
+                  />
+                </>
+              ) : (
                 <Button
                   type="button"
-                  onClick={() => {
-                    form.reset();
-                    setIsEditing(false);
-                  }}
-                  variant="outline"
-                  disabled={isPending}
+                  onClick={() => setIsEditing(true)}
+                  className=""
                 >
-                  Cancel
+                  Edit
                 </Button>
-                <ConfirmationModal
-                  trigger={
-                    <Button type="button" className="" disabled={isPending}>
-                      {isPending ? (
-                        <>
-                          <Spinner size="sm" className="mr-2" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  }
-                  title="Confirm Save"
-                  description="Are you sure you want to save the changes?"
-                  actionLabel="Confirm"
-                  onClick={handleConfirmSave}
-                />
-              </>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className=""
-              >
-                Edit
-              </Button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </form>
       </Form>
     </div>
