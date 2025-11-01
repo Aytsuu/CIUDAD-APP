@@ -28,7 +28,7 @@ function AnnualDevelopmentPlan(){
         try {
             setIsLoading(true);
             showLoading();
-            const response = await getAnnualDevPlans(undefined, 1, 10000);
+            const response = await getAnnualDevPlans(undefined, 1, 10000, false); // Exclude archived for main view
             const allPlans = (response.results || response) as any[];
             const uniqueYears: number[] = [...new Set(allPlans.map((plan: any) => new Date(plan.dev_date).getFullYear()))].sort((a: number, b: number) => b - a); // Sort descending
             setYears(uniqueYears);

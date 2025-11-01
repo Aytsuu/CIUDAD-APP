@@ -111,7 +111,7 @@ export const useGetAnnualDevPlansByYear = (year: number) => {
     return useQuery({
         queryKey: ["annualDevPlans", year],
         queryFn: async () => {
-            return await getAnnualDevPlansByYear(year);
+            return await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for main view
         },
         enabled: Boolean(year),
     });

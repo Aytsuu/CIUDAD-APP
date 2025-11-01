@@ -122,7 +122,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const fetchPlans = async () => {
     try {
-      const data = await getAnnualDevPlansByYear(year);
+      const data = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for view
       // Handle both array and paginated response formats
       const plansData = Array.isArray(data) ? data : data?.results || [];
       setPlans(plansData);
