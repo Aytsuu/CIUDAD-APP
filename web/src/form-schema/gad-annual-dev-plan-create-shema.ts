@@ -29,6 +29,8 @@ export const GADAnnualDevPlanCreateSchema = z.object({
     dev_budget_items: z.string().default("0"),
     dev_gad_budget: z.string().optional(),
     staff: z.string().optional().nullable(),
+    selectedAnnouncements: z.array(z.string()).optional(),
+    eventSubject: z.string().optional(),
 });
 
 export type GADAnnualDevPlanCreateInput = z.infer<typeof GADAnnualDevPlanCreateSchema>;

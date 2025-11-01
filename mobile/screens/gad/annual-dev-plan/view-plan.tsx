@@ -7,10 +7,11 @@ import { getAnnualDevPlansByYear } from './restful-api/annualDevPlanGetAPI';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ChevronLeft } from 'lucide-react-native';
-import { useApprovedProposals } from '@/screens/council/resolution/queries/resolution-fetch-queries';
 import { useResolution } from '@/screens/council/resolution/queries/resolution-fetch-queries';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/api';
+import { useArchiveAnnualDevPlans } from './queries/annualDevPlanQueries';
+import { ConfirmationModal } from '@/components/ui/confirmationModal';
 
 interface BudgetItem {
   gdb_id?: number;
@@ -57,6 +58,9 @@ const ViewPlan = () => {
   const { year } = useLocalSearchParams();
   const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Archive mutation
+  const archivePlansMutation = useArchiveAnnualDevPlans();
 
   // Fetch GAD Project Proposals and Resolutions to determine status
   // Fetch full proposal data directly to access dev_id
@@ -128,11 +132,8 @@ const ViewPlan = () => {
     return map;
   }, [resolutionData, validGprIds]);
 
-  // Function to get status badges for a plan
   const getStatusBadges = (plan: DevelopmentPlan) => {
     const badges: React.ReactElement[] = [];
-    
-    // Check for proposal and resolution
     const proposal = proposalByDevId.get(plan.dev_id);
     const hasProposal = Boolean(proposal && proposal.gpr_id);
     const hasResolution = hasProposal && resolutionByGprId.has(proposal.gpr_id);
@@ -172,6 +173,24 @@ const ViewPlan = () => {
         {badges}
       </View>
     );
+  };
+
+  // Helper function to check if a dev plan has a resolution
+  const hasResolution = (devId: number): boolean => {
+    const proposal = proposalByDevId.get(devId);
+    if (!proposal || !proposal.gpr_id) return false;
+    return resolutionByGprId.has(proposal.gpr_id);
+  };
+
+  // Handle single plan archive
+  const handleConfirmArchive = async (planId: number) => {
+    try {
+      await archivePlansMutation.mutateAsync([planId]);
+      // Remove the archived plan from the view
+      setPlans(prev => prev.filter(plan => plan.dev_id !== planId));
+    } catch (error) {
+      console.error('Failed to archive plan:', error);
+    }
   };
 
   useEffect(() => {
@@ -328,9 +347,27 @@ const ViewPlan = () => {
                 {/* Plan Header */}
                 <View className="flex-row justify-between items-start mb-5">
                   <View className="flex-1">
-                    <Text className="text-xl font-bold text-gray-900 mb-2">
-                      {plan.dev_client}
-                    </Text>
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xl font-bold text-gray-900 mb-2 flex-1">
+                        {plan.dev_client}
+                      </Text>
+                      {!hasResolution(plan.dev_id) && (
+                        <ConfirmationModal
+                          trigger={
+                            <TouchableOpacity className="ml-2">
+                              <Ionicons name="close-circle" size={24} color="#EF4444" />
+                            </TouchableOpacity>
+                          }
+                          title="Archive Development Plan"
+                          description="Are you sure you want to archive this development plan?"
+                          actionLabel="Archive"
+                          variant="destructive"
+                          onPress={() => handleConfirmArchive(plan.dev_id)}
+                          loading={archivePlansMutation.isPending}
+                          loadingMessage="Archiving plan..."
+                        />
+                      )}
+                    </View>
                     <View className="bg-blue-50 px-3 py-2 rounded-lg">
                       <Text className="text-sm font-medium text-blue-700">
                         {formatDate(plan.dev_date)}
@@ -402,7 +439,7 @@ const ViewPlan = () => {
                   <Text className="text-base font-bold text-gray-800 mb-3">
                     Gender Issue or GAD Mandate
                   </Text>
-                  <View className="bg-red-50 p-4 rounded-xl border-l-4 border-red-400">
+                  <View className="bg-red-50 p-4 rounded-xl">
                     <Text className="text-sm text-gray-800 leading-6">
                       {plan.dev_issue}
                     </Text>
@@ -414,7 +451,7 @@ const ViewPlan = () => {
                   <Text className="text-base font-bold text-gray-800 mb-3">
                     GAD Program/Project/Activity
                   </Text>
-                  <View className="bg-green-50 p-4 rounded-xl border-l-4 border-green-400">
+                  <View className="bg-green-50 p-4 rounded-xl">
                     <Text className="text-sm text-gray-800 leading-6">
                       {plan.dev_project}
                     </Text>
@@ -426,7 +463,7 @@ const ViewPlan = () => {
                   <Text className="text-base font-bold text-gray-800 mb-3">
                     Performance Indicator and Target
                   </Text>
-                  <View className="bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400">
+                  <View className="bg-yellow-50 p-4 rounded-xl">
                     <Text className="text-sm text-gray-800 leading-6">
                       {formatIndicator(plan.dev_indicator)}
                     </Text>
@@ -459,7 +496,7 @@ const ViewPlan = () => {
                       return (
                         <View>
                           {plan.budgets.map((item, idx) => (
-                            <View key={item.gdb_id || idx} className="bg-purple-50 p-4 rounded-xl mb-3 border-l-4 border-purple-400">
+                            <View key={item.gdb_id || idx} className="bg-purple-50 p-4 rounded-xl mb-3">
                               <View className="flex-row justify-between items-center mb-2">
                                 <Text className="text-sm font-semibold text-gray-800">
                                   {item.gdb_name}
@@ -545,7 +582,7 @@ const ViewPlan = () => {
 
                     // No budget items - show total budget
                     return (
-                      <View className="bg-purple-50 p-4 rounded-xl border-l-4 border-purple-400">
+                      <View className="bg-purple-50 p-4 rounded-xl">
                         <View className="flex-row items-center justify-between">
                           <Text className="text-sm font-medium text-gray-700">Total Budget</Text>
                           <View className="bg-green-100 px-3 py-1 rounded-full">
@@ -566,7 +603,7 @@ const ViewPlan = () => {
                     <Text className="text-base font-bold text-gray-800 mb-3">
                       Documents
                     </Text>
-                    <View className="bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400">
+                    <View className="bg-yellow-50 p-4 rounded-xl">
                       {plan.project_proposal && (
                         <View className="mb-2">
                           <Text className="text-xs font-semibold text-gray-600 mb-1">Project Proposal:</Text>
@@ -589,7 +626,7 @@ const ViewPlan = () => {
                     <Text className="text-base font-bold text-gray-800 mb-3">
                       Date Created
                     </Text>
-                    <View className="bg-red-50 p-4 rounded-xl border-l-4 border-red-400">
+                    <View className="bg-red-50 p-4 rounded-xl">
                       <Text className="text-sm text-gray-800">
                         {new Date(plan.date_created).toLocaleDateString('en-US', { 
                           year: 'numeric', 
@@ -610,7 +647,7 @@ const ViewPlan = () => {
                         Description
                       </Text>
                     </View>
-                    <View className="bg-gray-50 p-4 rounded-xl border-l-4 border-gray-400">
+                    <View className="bg-gray-50 p-4 rounded-xl">
                       <Text className="text-sm text-gray-800">
                         {plan.description}
                       </Text>

@@ -1,7 +1,7 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from django.utils import timezone
-from .models import WasteHotspot
+from .models import WasteHotspot, WasteEvent
 
 def archive_completed_hotspots():
     print('Running trigger...')
@@ -26,3 +26,26 @@ def archive_completed_hotspots():
     updated = WasteHotspot.objects.filter(wh_num__in=to_archive).update(wh_is_archive=True)
     print(f"Archived {updated} hotspot(s)")
     return updated
+
+def archive_passed_waste_events():
+    """Automatically archive waste events when their date and time have passed"""
+    local_tz = ZoneInfo("Asia/Manila")
+    now = timezone.now().astimezone(local_tz)
+    
+    events = WasteEvent.objects.filter(we_is_archive=False, we_date__isnull=False, we_time__isnull=False)
+    to_archive = []
+    
+    for event in events:
+        # Combine we_date and we_time, assume local time
+        naive_event_dt = datetime.combine(event.we_date, event.we_time)
+        local_event_dt = timezone.make_aware(naive_event_dt, local_tz)
+        
+        if local_event_dt < now:
+            to_archive.append(event.we_num)
+    
+    if to_archive:
+        updated = WasteEvent.objects.filter(we_num__in=to_archive).update(we_is_archive=True)
+        print(f"Archived {updated} waste event(s)")
+        return updated
+    
+    return 0

@@ -4,6 +4,8 @@ from .views import *
 urlpatterns = [
     # Waste Event URLs
     path("waste-event/", WasteEventView.as_view(), name="waste-event-list"),
+    path("waste-event/<int:we_num>/", WasteEventDetailView.as_view(), name="waste-event-detail"),
+    path("waste-event/<int:we_num>/restore/", WasteEventRestoreView.as_view(), name="waste-event-restore"),
 
     # Waste Collection Staff URLs
     path("waste-collection-staff/", WasteCollectionStaffView.as_view(), name="waste-collection-staff-list"),

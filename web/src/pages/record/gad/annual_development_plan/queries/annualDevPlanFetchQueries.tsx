@@ -26,11 +26,11 @@ export const useCreateAnnualDevPlan = () => {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[] }) => {
-            const { formData, budgetItems, resPersons } = args;
+        mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[]; selectedAnnouncements?: string[]; eventSubject?: string }) => {
+            const { formData, budgetItems, resPersons, selectedAnnouncements, eventSubject } = args;
             const { staff, ...restFormData } = formData;
 
-            const payload = {
+            const payload: any = {
                 ...restFormData,
                 dev_project: restFormData.dev_project, // Keep as text
                 dev_activity: restFormData.dev_activity || null, // Keep as JSON string
@@ -47,6 +47,15 @@ export const useCreateAnnualDevPlan = () => {
                 ),
                 staff: staff || null,
             };
+            
+            // Add announcement fields if provided
+            if (selectedAnnouncements && selectedAnnouncements.length > 0) {
+                payload.selectedAnnouncements = selectedAnnouncements;
+            }
+            if (eventSubject) {
+                payload.eventSubject = eventSubject;
+            }
+            
             return await createAnnualDevPlan(payload);
         },
         onSuccess: () => {
