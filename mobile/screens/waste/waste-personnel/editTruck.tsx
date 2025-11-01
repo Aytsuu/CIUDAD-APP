@@ -14,6 +14,7 @@ import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function WasteTruckEdit() {
   const router = useRouter();
@@ -155,7 +156,7 @@ export default function WasteTruckEdit() {
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color="white" />
+                       <LoadingModal visible={isSubmitting} />
                     ) : (
                       <Text className="text-white text-base font-semibold">Save</Text>
                     )}

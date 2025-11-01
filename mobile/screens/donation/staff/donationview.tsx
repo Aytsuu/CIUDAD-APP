@@ -188,14 +188,10 @@ const DonationView = () => {
                         disabled={isSubmitting}
                       >
                         <Text className="text-white text-base font-semibold text-center">
-                          {isSubmitting ? "Saving" : "Save"}
+                          {isSubmitting ? "Saving..." : "Save"}
                         </Text>
                         {isSubmitting && (
-                          <Loader2
-                            size={16}
-                            color="white"
-                            className="ml-2 animate-spin"
-                          />
+                           <LoadingModal visible={isSubmitting} />
                         )}
                       </TouchableOpacity>
                     }
