@@ -15,6 +15,7 @@ import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function HouseholdRecords() {
   // ============= STATE INITIALIZATION =============
@@ -109,18 +110,21 @@ export default function HouseholdRecords() {
         }}
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+        <View className="flex-1 py-5 border-t border-gray-100">
           {/* Header Section */}
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
               <View className="flex-1">
                 <Text
-                  className="text-gray-900 font-semibold text-base"
+                  className="text-gray-700 font-semibold text-base"
                   numberOfLines={1}
                 >
-                  Household {item.hh_id}
+                  House {item.hh_id}
                 </Text>
-                <Text className="text-gray-500 text-sm">
+                <Text className="text-muted-foreground text-sm truncate" numberOfLines={1}>
+                  {`Owned by ${capitalize(item.head)}` || "Not specified"}
+                </Text>
+                <Text className="text-muted-foreground text-sm">
                   {item.total_families > 0 ? `${item.total_families} ` : ""}
                   {item.total_families > 0 ? item.total_families === 1 ? "family" : "families" : "No family registered"}
                 </Text>
@@ -128,23 +132,15 @@ export default function HouseholdRecords() {
             </View>
 
             {/* NHTS Badge */}
-            {item.nhts && (
-              <View className="bg-green-100 px-2 py-1 rounded-full mr-2">
+            {item.nhts == "YES" && (
+              <View className="bg-green-100 px-2 py-1 rounded-full mr-5">
                 <Text className="text-green-600 text-xs font-medium">NHTS</Text>
               </View>
             )}
 
-            <ChevronRight size={20} className="text-gray-400" />
+            <ChevronRight size={20} className="text-primaryBlue" />
           </View>
-
-          {/* Household Head */}
-          <View className="flex-row items-center mb-2">
-            <Text className="text-gray-600 text-sm font-medium">Owner: </Text>
-            <Text className="text-gray-900 text-sm truncate" numberOfLines={1}>
-              {item.head || "Not specified"}
-            </Text>
-          </View>
-        </Card>
+        </View>
       </TouchableOpacity>
     );
   });

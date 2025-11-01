@@ -167,7 +167,16 @@ export function AppSidebar() {
             title: "Report",
             url: "/",
             items: [
-              { title: "Incident", url: "/report/incident" },
+              { 
+                title: "Incident", 
+                url: "/report/incident",
+                items: [
+                  {
+                    title: "Securado",
+                    url: "/report/incident/securado"
+                  }
+                ]
+              },
               { title: "Acknowledgement", url: "/report/acknowledgement" },
               {
                 title: "Weekly Accomplishment",
@@ -178,9 +187,6 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator() ? [
-      {title: "Map", url: "/map"}
-    ] : []),
     ...(featureValidator("complaint")
       ? [
           {
@@ -411,7 +417,7 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              { title: "All", url: "/profiling/all" },
+              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

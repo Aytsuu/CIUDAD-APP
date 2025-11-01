@@ -9,7 +9,7 @@ import {
 import { Controller } from "react-hook-form";
 import { MaterialIcons } from "@expo/vector-icons";
 import { cn } from "@/lib/utils";
-import { Drawer } from "../drawer";
+import { Drawer } from "../drawer-deprecated";
 
 type Option = { label: string; value: string };
 

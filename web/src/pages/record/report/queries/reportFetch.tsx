@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/api";
+import { api, mapApi } from "@/api/api";
 
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean) => {
+export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean, severity?: string) => {
   return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive],
+    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive, severity],
     queryFn: async () => {
       try {
         const res = await api.get('report/ir/list/table/', {
@@ -11,7 +11,9 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
             page,
             page_size: pageSize,
             search: searchQuery,
-            is_archive: isArchive
+            is_archive: isArchive,
+            get_tracker,
+            severity
           }
         });
         return res.data;
@@ -23,6 +25,29 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
   })
 }
 
+export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
+  return useQuery({
+    queryKey: ["convertCoordinates", lat, lng],
+    queryFn: async () => {
+      try {
+        const res = await mapApi.get(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+          {
+            headers: {
+              "User-Agent": "ciudad-app/1.0",
+            },
+          }
+        );
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000,
+    retry: false
+  });
+};
+
 export const useGetIRInfo = (ir_id: string) => {
   return useQuery({
     queryKey: ['IRInfo', ir_id],
@@ -33,20 +58,23 @@ export const useGetIRInfo = (ir_id: string) => {
       } catch (err) {
         throw err;
       }
-    }
+    },
+    staleTime: 5000,
+    enabled: !!ir_id,
   })
 }
 
-export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string, status?: string) => {
   return useQuery({
-    queryKey: ['arReports', page, pageSize, searchQuery],
+    queryKey: ['arReports', page, pageSize, searchQuery, status],
     queryFn: async () => {
       try {
         const res = await api.get('report/ar/list/table/', {
           params: {
             page,
             page_size: pageSize,
-            search: searchQuery
+            search: searchQuery,
+            status
           }
         });
         return res.data;

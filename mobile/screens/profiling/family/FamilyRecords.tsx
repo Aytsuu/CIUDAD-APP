@@ -17,6 +17,8 @@ import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { capitalize } from "@/helpers/capitalize";
+import { UsersRound } from "@/lib/icons/UsersRound";
+import { UserRound } from "@/lib/icons/UserRound";
 
 const INITIAL_PAGE_SIZE = 15;
 
@@ -95,22 +97,18 @@ export default function FamilyRecords() {
 
   // ============ RENDER HELPERS ============
   const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => {
-    const memberCount = item.members || 0;
+    const membersCount = item.members || 0;
     const sitio = item.sitio || "N/A";
     const street = item.street || "N/A";
     const building = item.fam_building || "N/A";
-    const isIndigenous = item.fam_indigenous == "YES";
 
-    // Parent information
     const mother = item.mother || "N/A";
     const father = item.father || "N/A";
     const guardian = item.guardian || "N/A";
 
-    // Determine primary guardian/head
     const primaryHead =
       father !== "N/A" ? father : mother !== "N/A" ? mother : guardian;
 
-    // Format location
     const location = building !== "N/A" ? `${sitio}, ${street}` : sitio;
 
     return (
@@ -125,68 +123,38 @@ export default function FamilyRecords() {
         }}
         activeOpacity={0.7}
       >
-        <Card className="bg-white border border-gray-100 rounded-xl">
-          {/* Header with Family ID and Status */}
-          <View className=" p-4 flex-row items-center justify-between mb-3">
-            <View className="flex-1">
+        <View className="flex-row justify-between items-center bg-white border-t border-gray-100 py-5">
+          <View className="flex-shrink pr-4" style={{ maxWidth: "60%" }}>
+            <View className="flex-row gap-4">
               <Text
-                className="text-gray-900 font-medium text-md"
+                className="text-gray-700 font-medium text-md"
                 numberOfLines={1}
               >
                 {item.fam_id}
               </Text>
-              <Text className="text-gray-500 text-xs font-medium">
-                {isIndigenous ? "Indigenous" : "Not Indigenous"}
-              </Text>
 
+              <View className="flex-row gap-1 items-center">
+                {membersCount > 1 ? (
+                  <UsersRound size={14} className="text-primaryBlue" />
+                ) : (
+                  <UserRound size={14} className="text-primaryBlue" />
+                )}
+                <Text className="text-primaryBlue text-xs">- {membersCount}</Text>
+              </View>
             </View>
 
-            <View className="flex-row items-center">
-              <ChevronRight size={20} className="text-primaryBlue" />
-            </View>
+            <Text
+              className="text-muted-foreground text-xs mt-1"
+              numberOfLines={1}
+            >
+              {capitalize(location)}
+            </Text>
           </View>
 
-          {/* Family Head */}
-          {primaryHead !== "N/A" && (
-            <View className="mx-4 flex-row items-center mb-3 bg-blue-50 p-3 rounded-lg">
-              <View className="flex-1">
-                <Text className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                  Family Head
-                </Text>
-                <Text
-                  className="text-gray-700 font-semibold text-sm mt-1"
-                  numberOfLines={1}
-                >
-                  {capitalize(primaryHead)}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Key Information Row */}
-          <View className="p-3 flex-row gap-2 items-center pt-3 border-t border-gray-100">
-            {/* Members Count */}
-            <View>
-              <View className="flex-1 bg-blue-50 px-4 rounded-full">
-                <Text className="text-primaryBlue font-semibold text-xs">
-                  {memberCount} {memberCount > 1 ? "Members" : "Member"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Location */}
-            <View>
-              <View className="flex-1 bg-blue-50 px-4 rounded-full">
-                <Text
-                  className="text-primaryBlue font-medium text-xs"
-                  numberOfLines={1}
-                >
-                  {location}
-                </Text>
-              </View>
-            </View>
+          <View className="ml-4">
+            <ChevronRight size={20} className="text-primaryBlue" />
           </View>
-        </Card>
+        </View>
       </TouchableOpacity>
     );
   });
@@ -245,7 +213,6 @@ export default function FamilyRecords() {
             contentContainerStyle={{
               paddingTop: 0,
               paddingBottom: 20,
-              gap: 15,
             }}
             windowSize={21}
             removeClippedSubviews

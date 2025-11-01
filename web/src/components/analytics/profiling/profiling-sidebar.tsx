@@ -10,6 +10,9 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 export const ProfilingSidebar = () => {
   const navigate = useNavigate();
   const { data: profilingSidebar, isLoading } = useGetSidebarAnalytics();
+  const requests = profilingSidebar?.data || [];
+  const total = profilingSidebar?.count || 0;
+
   const formatName = (
     firstName: string,
     middleName: string,
@@ -20,7 +23,7 @@ export const ProfilingSidebar = () => {
   };
 
   const formatRequestList = React.useCallback(() => {
-    const formatted = profilingSidebar?.map((request: any) => {
+    const formatted = requests?.map((request: any) => {
       if (request?.compositions?.length == 1) {
         const personal = request.compositions[0];
         return {
@@ -56,7 +59,7 @@ export const ProfilingSidebar = () => {
     });
 
     return formatted || [];
-  }, [profilingSidebar]);
+  }, [requests]);
 
   const handleClick = (data: Record<string, any>) => {
     console.log(data)
@@ -97,7 +100,7 @@ export const ProfilingSidebar = () => {
               </div>
             ))}
           </div>
-        ) : profilingSidebar?.length > 0 ? (
+        ) : total > 0 ? (
           <div className="p-4 space-y-3">
             {formatRequestList().map((data: any, index: number) => (
               <Card
@@ -157,7 +160,7 @@ export const ProfilingSidebar = () => {
       </div>
 
       {/* Footer */}
-      {profilingSidebar?.length > 0 && (
+      {total > 0 && (
         <div className="p-4 border-t border-gray-100">
           <Link to="/profiling/request/pending/individual">
             <Button variant={"link"}>View All Requests ({formatRequestList()?.length > 100 ? "100+" : formatRequestList().length})</Button>

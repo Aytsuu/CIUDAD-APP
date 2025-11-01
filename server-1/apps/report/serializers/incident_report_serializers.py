@@ -22,7 +22,7 @@ class IRTableSerializer(serializers.ModelSerializer):
     fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
              'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
              'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
-             'ir_track_user_lng', 'ir_track_user_contact']
+             'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name']
   
   def get_ir_type(self, obj):
     if obj.rt:
@@ -38,6 +38,18 @@ class IRTableSerializer(serializers.ModelSerializer):
       info = obj.rp.per
       return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
+  
+  def get_files(self, obj):
+    files = [
+      {
+        'id': file.irf_id,
+        'name': file.irf_name,
+        'type': file.irf_type,
+        'url': file.irf_url
+      }
+      for file in obj.report_files.filter(ir=obj.ir_id)]
+    
+    return files
 
 class IRCreateSerializer(serializers.ModelSerializer):
   ir_type = serializers.CharField(write_only=True, required=False)
@@ -94,4 +106,3 @@ class IRCreateSerializer(serializers.ModelSerializer):
       IncidentReportFile.objects.bulk_create(report_files)
       
     return incident_report
-    
