@@ -44,21 +44,51 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
   });
   
   
-  return filteredPlans.map((plan: any) => ({
-    id: plan.dev_id,
-    title: plan.dev_client,
-    date: plan.dev_date,
-    time: "09:00", // Default time since plans don't have specific times
-    place: "Municipal Office", // Default place
-    description: plan.dev_issue,
-    project: plan.dev_project,
-    activity: plan.dev_activity,
-    indicator: plan.dev_indicator,
-    responsible_person: plan.dev_res_person,
-    staff: plan.staff,
-    total: plan.total,
-    type: "annual_development_plan"
-  }));
+  return filteredPlans.map((plan: any) => {
+    // Parse budget items to calculate correct total
+    let budgetItems = [];
+    let calculatedTotal = 0;
+    
+    try {
+      const rawBudgetItems = plan.dev_budget_items;
+      if (rawBudgetItems) {
+        if (typeof rawBudgetItems === 'string') {
+          budgetItems = JSON.parse(rawBudgetItems);
+        } else if (Array.isArray(rawBudgetItems)) {
+          budgetItems = rawBudgetItems;
+        }
+        
+        // Calculate total from budget items
+        calculatedTotal = budgetItems.reduce((sum: number, item: any) => {
+          const quantity = Number(item.quantity || item.pax || 0);
+          const price = Number(item.price || item.amount || 0);
+          return sum + (quantity * price);
+        }, 0);
+      }
+    } catch (error) {
+      console.error('Error parsing budget items:', error);
+    }
+    
+    // Use calculated total if available, otherwise fall back to plan.total
+    const finalTotal = calculatedTotal > 0 ? calculatedTotal : (Number(plan.total) || 0);
+    
+    return {
+      id: plan.dev_id,
+      title: plan.dev_client,
+      date: plan.dev_date,
+      time: "09:00", // Default time since plans don't have specific times
+      place: "Municipal Office", // Default place
+      description: plan.dev_issue,
+      project: plan.dev_project,
+      activity: plan.dev_activity,
+      indicator: plan.dev_indicator,
+      responsible_person: plan.dev_res_person,
+      staff: plan.staff,
+      total: finalTotal,
+      budget_items: budgetItems,
+      type: "annual_development_plan"
+    };
+  });
 };
 
 const createDevIdsWithProposals = (projectProposals: any[], resolutions: any[]) => {
@@ -195,10 +225,55 @@ const annualDevPlanColumns = [
   },
   { accessorKey: "responsible_person", header: "Responsible Person" },
   { 
-    accessorKey: "total", 
-    header: "Budget",
+    accessorKey: "budget_items", 
+    header: "Budget Breakdown",
     cell: ({ row }: { row: { original: any } }) => {
-      return formatBudget(row.original.total);
+      const budgetItems = row.original.budget_items || [];
+      if (!Array.isArray(budgetItems) || budgetItems.length === 0) {
+        return (
+          <div className="text-gray-600">
+            <p className="font-semibold mb-2">GAD Budget:</p>
+            <p className="text-lg">{formatBudget(row.original.total)}</p>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="w-full">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b border-gray-300">CLIENT FOCUSED</th>
+                  <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b border-gray-300">pax/quantity</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b border-gray-300">amount (PHP)</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b border-gray-300">total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {budgetItems.map((item: any, index: number) => {
+                  const quantity = Number(item.quantity || item.pax || 0);
+                  const price = Number(item.price || item.amount || 0);
+                  const itemTotal = quantity * price;
+                  
+                  return (
+                    <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="px-3 py-2 text-sm text-gray-900 border-b border-gray-200">{item.name || "-"}</td>
+                      <td className="px-3 py-2 text-sm text-center text-gray-700 border-b border-gray-200">{quantity}</td>
+                      <td className="px-3 py-2 text-sm text-right text-gray-700 border-b border-gray-200">₱{price.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 border-b border-gray-200">₱{itemTotal.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="bg-blue-50">
+                  <td colSpan={3} className="px-3 py-2 text-sm font-semibold text-gray-900 text-right border-t-2 border-gray-400">Total GAD Budget:</td>
+                  <td className="px-3 py-2 text-sm font-bold text-blue-700 text-right border-t-2 border-gray-400">{formatBudget(row.original.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
     }
   },
 ];
