@@ -1252,6 +1252,7 @@ class PersonalClearancesView(generics.ListAPIView):
     def get_queryset(self):
         queryset = ClerkCertificate.objects.select_related(
             'rp_id__per',
+            'rp_id__voter',  # Include voter for eligibility check
             'pr_id'
         ).only(
             'cr_id',
@@ -1260,6 +1261,9 @@ class PersonalClearancesView(generics.ListAPIView):
             'cr_req_status',
             'rp_id__per__per_fname',
             'rp_id__per__per_lname',
+            'rp_id__per__per_dob',
+            'rp_id__per__per_disability',
+            'rp_id__voter',
             'pr_id__pr_purpose',
             'pr_id__pr_rate'
         ).all()

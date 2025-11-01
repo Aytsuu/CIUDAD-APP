@@ -54,6 +54,10 @@ export type ResidentReq = {
         per_fname: string;
         per_mname?: string;
         per_lname: string;
+        is_voter?: boolean;
+        is_pwd?: boolean;
+        is_senior?: boolean;
+        is_free_eligible?: boolean;
     };
     cr_req_request_date: string;
     cr_req_payment_status: string;

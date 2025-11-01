@@ -81,15 +81,17 @@ import { Loader2 } from "lucide-react";
      )
    );
     const ReceiptSchema = useMemo(() => {
-        return createReceiptSchema(discountedAmount || rate);
-    }, [discountedAmount, rate]);
+        // For free services, pass undefined to skip rate validation
+        const effectiveRate = (effectiveIsResident && isEligibleForFreeService) ? undefined : (discountedAmount || rate);
+        return createReceiptSchema(effectiveRate, effectiveIsResident && isEligibleForFreeService);
+    }, [discountedAmount, rate, effectiveIsResident, isEligibleForFreeService]);
 
 
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
             inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
-            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "" : (rate || ""),
+            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : "", // Always empty, don't pre-fill with rate
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
             cr_id: effectiveIsResident ? id.toString() : undefined,
@@ -155,7 +157,10 @@ import { Loader2 } from "lucide-react";
             const values = form.getValues();
             const payload: any = {
                 inv_date: new Date().toISOString(),
-                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '')),
+                // For free services, use 0 as amount
+                inv_amount: (effectiveIsResident && isEligibleForFreeService) 
+                    ? 0 
+                    : parseFloat(values.inv_amount || (discountedAmount || rate || '')),
                 inv_nat_of_collection: values.inv_nat_of_collection,
                 inv_serial_num: values.inv_serial_num || 'N/A',
             };

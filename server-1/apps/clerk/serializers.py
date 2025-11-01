@@ -150,6 +150,7 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
     amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
     nrc_id = serializers.SerializerMethodField()  # Override nrc_id to return formatted version
     staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    nrc_mname = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = NonResidentCertificateRequest
@@ -223,6 +224,10 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
         """Create non-resident certificate request with formatted ID like NRC001-25"""
         from django.utils import timezone
         
+        # Set empty string or None for middle name if not provided
+        if 'nrc_mname' not in validated_data or not validated_data.get('nrc_mname'):
+            validated_data['nrc_mname'] = ''
+        
         if 'nrc_id' not in validated_data or not validated_data['nrc_id']:
             year_suffix = timezone.now().year % 100
             try:
@@ -287,6 +292,26 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     else:
                         dob_value = str(dob_value)
                 
+                # Calculate eligibility for free service
+                # Check voter status
+                is_voter = obj.rp_id.voter is not None
+                
+                # Check PWD status
+                pwd_value = getattr(obj.rp_id.per, 'per_disability', None)
+                is_pwd = pwd_value and str(pwd_value).strip() != ''
+                
+                # Check senior status (age 60+)
+                is_senior = False
+                if dob_value:
+                    try:
+                        from datetime import date
+                        dob = obj.rp_id.per.per_dob
+                        today = date.today()
+                        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                        is_senior = age >= 60
+                    except Exception:
+                        pass
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
                     'per_mname': getattr(obj.rp_id.per, 'per_mname', None),
@@ -294,7 +319,12 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     'per_dob': dob_value,
                     'per_address': address_str,
                     'per_is_deceased': getattr(obj.rp_id.per, 'per_is_deceased', False),
-                    'voter_id': getattr(obj.rp_id, 'voter_id', None)
+                    'voter_id': getattr(obj.rp_id, 'voter_id', None),
+                    # Eligibility fields for instant frontend rendering
+                    'is_voter': is_voter,
+                    'is_pwd': is_pwd,
+                    'is_senior': is_senior,
+                    'is_free_eligible': is_voter or is_pwd or is_senior
                 }
             return None
         except Exception as e:

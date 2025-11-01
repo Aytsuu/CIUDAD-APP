@@ -377,7 +377,7 @@ function IssuedCertificates() {
 
   const { data: serviceChargesData, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery({
     queryKey: ["issuedServiceCharges", serviceChargeSearchQuery, currentPage, pageSize],
-    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize),
+    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize, 'completed'),
   });
 
   const serviceCharges = serviceChargesData?.results || [];

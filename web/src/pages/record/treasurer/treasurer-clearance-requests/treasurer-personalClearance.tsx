@@ -5,13 +5,12 @@ import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban, Clock, CheckCircle } from 'lucide-react';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
-import { getResidentsTable } from "../../profiling/restful-api/profilingGetAPI";
 import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
@@ -45,59 +44,23 @@ function PersonalClearance() {
     } | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [residentTableData, setResidentTableData] = useState<any[]>([]);
 
     const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize);
     const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize);
-
-    // Function to fetch resident table data for PWD/senior/voter status
-    const fetchResidentTableData = async () => {
-        try {
-            const data = await getResidentsTable(1, 1000); // Get first 1000 residents
-            setResidentTableData(data.results || data || []);
-        } catch (error) {
-            console.error('Failed to fetch resident table data:', error);
-        }
-    };
-
-    // Function to get resident eligibility info from table data
+    
+    // Function to get resident eligibility info directly from API response (backend calculates it)
     const getResidentEligibility = (residentDetails: any) => {
-        const fullName = `${residentDetails.per_fname} ${residentDetails.per_lname}`.trim();
-        const resident = residentTableData.find(r => 
-            `${r.fname} ${r.lname}`.trim().toLowerCase() === fullName.toLowerCase()
-        );
-        
-        if (!resident) return { isVoter: false, isSenior: false, isPWD: false };
-        
-        // Check voter status
-        const isVoter = resident.voter === "Yes";
-        
-        // Check senior status (age 60+)
-        let isSenior = false;
-        if (resident.dob) {
-            try {
-                const dob = new Date(resident.dob);
-                if (!isNaN(dob.getTime())) {
-                    const today = new Date();
-                    let age = today.getFullYear() - dob.getFullYear();
-                    const m = today.getMonth() - dob.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                    isSenior = age >= 60;
-                }
-            } catch {}
+        if (!residentDetails) {
+            return { isVoter: false, isSenior: false, isPWD: false };
         }
         
-        // Check PWD status
-        const isPWD = resident.pwd && resident.pwd.trim() !== '';
-        
-        return { isVoter, isSenior, isPWD };
+        // Use eligibility fields directly from backend API response
+        return {
+            isVoter: residentDetails.is_voter || false,
+            isSenior: residentDetails.is_senior || false,
+            isPWD: residentDetails.is_pwd || false
+        };
     };
-
-
-    // Fetch resident table data on component mount
-    useEffect(() => {
-        fetchResidentTableData();
-    }, []);
 
     // Handle loading state
     useEffect(() => {
@@ -310,8 +273,8 @@ function PersonalClearance() {
         ] : []),
     ];
 
-    // Resident Columns
-    const residentColumns: ColumnDef<ResidentReq>[] = [
+    // Resident Columns - memoized to recalculate when residentTableData changes
+    const residentColumns: ColumnDef<ResidentReq>[] = useMemo(() => [
         {
             accessorKey: "resident_details",
             header: ({ column }) => (
@@ -518,7 +481,7 @@ function PersonalClearance() {
                 ),
             }
         ] : []),
-    ];
+    ], [activeTab]); // Recalculate when activeTab changes (eligibility now comes from API)
 
     // Select the appropriate columns based on resident type
     const columns = residentType === "non-resident" 
