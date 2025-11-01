@@ -28,7 +28,7 @@ interface AnnualDevelopmentPlanArchiveProps {
 
 export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopmentPlanArchiveProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlans, setSelectedPlans] = useState<number[]>([]);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -145,7 +145,7 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
       </div>
       <hr className="border-gray mb-6 sm:mb-8" />
 
-      <div className="flex w-full h-full gap-4">
+      <div className="flex w-full gap-4 flex-col">
         <Card className="w-full shadow-lg border border-gray-200">
           <CardHeader className="pb-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -161,12 +161,15 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="text-sm font-medium text-gray-700">Show</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                  <Select value={pageSize.toString()} onValueChange={(value) => {
+                    setPageSize(Number.parseInt(value));
+                    setCurrentPage(1);
+                  }}>
                     <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="6">6</SelectItem>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="25">25</SelectItem>
                       <SelectItem value="50">50</SelectItem>
@@ -237,8 +240,8 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
 
             {/* Plans List */}
             {!isLoading && archivedPlans.length > 0 && (
-              <div className="h-[600px] overflow-y-auto px-4 pb-4">
-                <div className="flex items-center justify-between mb-4 py-2">
+              <div className="px-4 py-4">
+                <div className="flex items-center justify-between mb-4 py-2 pb-4 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -423,19 +426,24 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
             )}
           </CardContent>
         </Card>
+
       </div>
 
-      {/* Pagination Section */}
-      {totalPages > 0 && !isLoading && archivedPlans.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-600">
-            Showing {totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+      {/* Pagination Controls */}
+      {!isLoading && archivedPlans.length > 0 && totalCount > 0 && (
+        <div className="mt-8 w-full">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Showing <span className="font-medium">{((currentPage - 1) * pageSize) + 1}</span>-<span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> rows
+            </div>
+            {totalPages > 1 && (
+              <PaginationLayout
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </div>
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
         </div>
       )}
 
