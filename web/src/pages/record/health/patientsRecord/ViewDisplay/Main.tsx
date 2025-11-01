@@ -58,12 +58,11 @@ export default function ViewPatientRecord() {
   const { data: medconCountData } = useMedConCount(patientId ?? "");
   const medconCount = medconCountData?.medcon_count;
 
-  const { data: famplanCountData } = useFamplanCount(patientId ?? "");
-  const famplanCount = famplanCountData?.count;
+  const { data: famplanCount  } = useFamplanCount(patientId ?? "");
+  console.log("Main.tsx - famplanCount:", famplanCount);
 
   const { data: animalbitesCountData } = useAnimalbitesCount(patientId ?? "");
   const animalbitesCount = animalbitesCountData?.count;
-  console.log("Animal Bites Count:", animalbitesCount);
 
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");

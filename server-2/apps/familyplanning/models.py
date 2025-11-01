@@ -73,7 +73,7 @@ class FP_RiskVaw(models.Model):
     vaw_unpleasant_rs = models.BooleanField(default=False)
     vaw_partner_disapproval = models.BooleanField(default=False)
     vaw_domestic_violence = models.BooleanField(default=False)
-    vaw_referred_to = models.CharField(max_length=40,blank=True)
+    vaw_referred_to = models.CharField(max_length=40,blank=True,null=True)
     
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE, related_name='fp_risk_vaws')
     

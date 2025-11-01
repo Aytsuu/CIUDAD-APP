@@ -182,11 +182,11 @@ export default function FamilyPlanningPage() {
   })
 
   // Query for fetching latest record for prefill (for 'create' mode with patientId)
-const { data: latestRecord, isLoading: isFetchingLatestRecord,refetch: refetchLatest } = useQuery<FormData, Error>({
+const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormData, Error>({
   queryKey: ["latestFpRecord", internalPatientId, currentMode, isNewMethod],
   queryFn: () => getLatestCompleteFPRecordForPatient(internalPatientId!),
   enabled: !!internalPatientId && 
-    (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup"),refetchOnMount: "always"})
+    (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup")})
 
   console.log("=== LATEST RECORD DEBUG ===");
 console.log("latestRecord:", latestRecord);
@@ -196,7 +196,7 @@ console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
 
   // Effect to update internalPatientId when fetchedRecord changes (for view/edit modes)
   useEffect(() => {
-    if (fetchedRecord && fetchedRecord.pat_id && internalPatientId !== fetchedRecord.pat_id) {
+    if (fetchedRecord && fetchedRecord.pat_id && !internalPatientId) {
       setInternalPatientId(fetchedRecord.pat_id);
     }
   }, [fetchedRecord, internalPatientId]);
@@ -206,28 +206,13 @@ console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
   if (actualPatientId && !internalPatientId) {
     setInternalPatientId(actualPatientId);
   }
-
-   if (currentMode === "followup" && actualPatientId && internalPatientId !== actualPatientId) {
+  
+  // Additional check for follow-up mode
+  if (currentMode === "followup" && actualPatientId && internalPatientId !== actualPatientId) {
     setInternalPatientId(actualPatientId);
   }
 }, [actualPatientId, internalPatientId, currentMode]);
 
-  useEffect(() => {
-    if (internalPatientId && (shouldPrefill || isNewMethod || currentMode === "followup")) {
-      refetchLatest(); // Explicitly refetch if conditions met
-    }
-  }, [internalPatientId, shouldPrefill, isNewMethod, currentMode, refetchLatest]);
-
-  
-  useEffect(() => {
-    console.log("=== DEBUG: internalPatientId updated to", internalPatientId);
-    console.log("Query enabled?", !!internalPatientId && (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup"));
-  }, [internalPatientId, currentMode, shouldPrefill, isNewMethod]);
-
-
-
-  // Additional check for follow-up mode
- 
 
   // Effect to set formData when fetchedRecord changes (edit/view mode)
   useEffect(() => {

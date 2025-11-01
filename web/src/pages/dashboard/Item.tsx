@@ -154,12 +154,9 @@ export const getItemsConfig = (
       },
       {
         dashboard: "ANIMAL BITES",
-        card: [
-          {
-            title: "Animal Bite Summary",
-            element: <AnimalBiteSectionCards initialMonth={currentMonth} />,
-          },
-        ],
+       card: [
+    <AnimalBiteSectionCards key="animal-bite-cards" initialMonth={currentMonth} />,
+  ],
         chart: [
           {
             title: "Animal Bite Analytics",
@@ -217,7 +214,7 @@ export const getItemsConfig = (
           },
           {
             title: "Family Planning",
-            element: <FamilyPlanningAnalytics />,
+            element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
           },
         ],
         sidebar: [

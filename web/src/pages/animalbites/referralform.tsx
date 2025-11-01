@@ -15,6 +15,7 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { getAllPatients } from "./api/get-api"
 import { Link } from "react-router"
 import { useSubmitAnimalBiteReferralMutation } from "./db-request/get-query"
+
 type ReferralFormModalProps = {
   onClose: () => void
   onAddPatient?: (patient: any) => void
@@ -36,6 +37,11 @@ interface PatientRecord {
 interface SelectOption {
   id: string
   name: string
+}
+
+interface FormattedPatient {
+  id: string
+  name: React.ReactNode
 }
 
 const getTodayDate = (): string => {
@@ -77,7 +83,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   })
 
   // State management
-  const [patients, setPatients] = useState<SelectOption[]>([])
+  const [patients, setPatients] = useState<FormattedPatient[]>([])
   const [patientsData, setPatientsData] = useState<PatientRecord[]>([])
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [loading, setLoading] = useState(false)
@@ -124,18 +130,31 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
         const patientData = await getAllPatients()
         console.log("📥 Fetched patients:", patientData)
         if (patientData && patientData.length > 0) {
-    const formattedPatients: SelectOption[] = patientData.map((patient: any) => {
-        const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim();
-        const patientId = patient.pat_id.toString();
+          // Use the same formatting as FpPage1.tsx
+          const formattedPatients = patientData.map((patient: any) => {
+            const patientId = patient.pat_id?.toString() || "";
+            const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
 
-        return {
-            id: `${fullName} (${patientId})`, 
-            name: fullName,
-        };
-    });
-    setPatients(formattedPatients);
-    setPatientsData(patientData);
-} 
+            // CRITICAL CHANGE: Create a single searchable string for the ID (same as FpPage1)
+            const searchableId = `${patientId} ${fullName}`;
+
+            return {
+              // Use the searchable string as the 'id' which gets searched
+              id: searchableId,
+              // The name can remain the JSX for display purposes (same styling as FpPage1)
+              name: (
+                <>
+                  <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
+                    {patientId}
+                  </span>
+                  {fullName}
+                </>
+              ),
+            };
+          });
+          setPatients(formattedPatients);
+          setPatientsData(patientData);
+        } 
         else {
           console.warn("⚠️ No patients found in database")
           setPatients([])
@@ -157,12 +176,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
   const handlePatientSelection = (id: string | undefined) => {
     if (!id) return
-    setSelectedPatientId(id)
-    const patIdMatch = id.match(/\(([^)]+)\)$/);
-    const realPatId = patIdMatch ? patIdMatch[1] : id.split(' ')[0]; 
-
-    setSelectedPatientId(realPatId) 
+    
+    // Use the same logic as FpPage1 to extract the real patient ID
+    const realPatId = id.split(' ')[0];
+    setSelectedPatientId(realPatId);
     setSelectedPatientId(id);
+    
     const selectedPatient = patientsData.find((p) => p.pat_id.toString() === realPatId)
     if (selectedPatient) {
       const personalInfo = selectedPatient.personal_info
@@ -371,24 +390,28 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
             <div className="mb-6">
               <Label className="text-sm font-medium mb-2 block">Select Patient</Label>
-              <div className="max-w-md">
-                <Combobox
-                  options={patients}
-                  value={selectedPatientId}
-                  onChange={handlePatientSelection}
-                  placeholder="Select a patient"
-                  triggerClassName="font-normal w-full"
-                  emptyMessage={
-                    <div className="flex gap-2 justify-center items-center">
-                      <Label className="font-normal text-[13px]">No patient found.</Label>
-                      <Link to="/patient-records/new">
-                        <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                          Register New Patient
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full">
+                <div className="grid gap-2">
+                  <Combobox
+                    options={patients}
+                    value={selectedPatientId}
+                    onChange={handlePatientSelection}
+                    placeholder={loading ? "Loading patients..." : "Select a patient"}
+                    triggerClassName="font-normal w-[30rem]"
+                    emptyMessage={
+                      <div className="flex gap-2 justify-center items-center">
+                        <Label className="font-normal text-[13px]">
+                          {loading ? "Loading..." : "No patient found."}
                         </Label>
-                      </Link>
-                    </div>
-                  }
-                />
+                        <Link to="/patientrecords">
+                          <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
+                            Register New Patient
+                          </Label>
+                        </Link>
+                      </div>
+                    }
+                  />
+                </div>
               </div>
             </div>
 

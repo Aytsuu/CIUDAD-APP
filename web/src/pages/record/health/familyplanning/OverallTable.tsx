@@ -52,7 +52,7 @@ export default function FamPlanningTable() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300);
+    }, 2000);
 
     return () => {
       clearTimeout(handler);
@@ -73,7 +73,7 @@ export default function FamPlanningTable() {
         page_size: pageSize,
         search: debouncedSearchQuery,
         client_type: selectedClientType === "all" ? undefined : selectedClientType,
-        // patient_type: selectedPatientType === "all" ? undefined : selectedPatientType,
+        patient_type: selectedPatientType === "all" ? undefined : selectedPatientType,
       })
   });
 
@@ -126,17 +126,17 @@ export default function FamPlanningTable() {
     { id: "transient", name: "Transient" },
   ];
 
-  // Helper function to map backend client_type to display name
-  const getClientTypeDisplayName = (clientType: string) => {
-    switch (clientType) {
-      case "newacceptor":
-        return "New Acceptor";
-      case "currentuser":
-        return "Current User";
-      default:
-        return clientType || "N/A";
-    }
-  };
+  // // Helper function to map backend client_type to display name
+  // const getClientTypeDisplayName = (clientType: string) => {
+  //   switch (clientType) {
+  //     case "newacceptor":
+  //       return "New Acceptor";
+  //     case "currentuser":
+  //       return "Current User";
+  //     default:
+  //       return clientType || "N/A";
+  //   }
+  // };
 
   const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [
@@ -430,7 +430,7 @@ export default function FamPlanningTable() {
         {fpRecords.length === 0 && !isLoading ? (
           <div className="p-8 text-center text-gray-500">
             {searchQuery || selectedClientType !== "all" || selectedPatientType !== "all" 
-              ? "No records found matching your search criteria." 
+              ? "No records found." 
               : "No Family Planning records available."}
           </div>
         ) : (

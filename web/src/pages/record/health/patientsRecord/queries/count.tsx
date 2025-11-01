@@ -14,14 +14,24 @@ export function useMedConCount(patientId: string) {
 }
 
 export function useFamplanCount(patientId: string) {
+  console.log("useFamplanCount called with patientId:", patientId);
+  
   return useQuery({
-    queryKey: ["fam-count"],
+    queryKey: ["fam-count", patientId],
     queryFn: async () => {
-      const response = await api2.get(`/familyplanning/count/${patientId}/`);
-      return response.data;
+      try {
+        console.log("Making API call to fetch FP count...");
+        const response = await api2.get(`/familyplanning/fp-methods-count/${patientId}/`);
+        console.log("API Response:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching FP count:", error);
+        throw error;
+      }
     },
-    refetchOnMount: true,
-    staleTime: 0,
+    enabled: !!patientId, // Only run if patientId exists
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

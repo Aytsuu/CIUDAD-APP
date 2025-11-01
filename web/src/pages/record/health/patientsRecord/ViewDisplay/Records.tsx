@@ -4,7 +4,6 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { SyringeIcon, Pill, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { FaDog, FaFirstAid } from "react-icons/fa";
 import { MdPregnantWoman } from "react-icons/md";
 import { useGetChildren } from "../queries/fetch";
@@ -91,12 +90,13 @@ export default function Records({
 }: any) {
   // Use the hook to get children data
   const { data: childrenData } = useGetChildren(patientLinkData?.pat_id);
-
+  const famplanCountValue = famplanCount?.fp_methods_count || 0;
   // Format children data
   const formattedChildren = childrenData ? formatChildrenData(childrenData) : [];
   const firstChildHealthRecord =
     childHealthRecords && childHealthRecords.length > 0 ? childHealthRecords[0] : null;
 
+    
   // Check if all service counts are zero or undefined (excluding children)
   const hasNoRecords =
     (!vaccinationCount || vaccinationCount === 0) &&
@@ -162,24 +162,30 @@ export default function Records({
       state: { params: { patientData: patientLinkData } },
     },
     {
-      count: famplanCount,
+      count: famplanCountValue,
       title: "Family Planning",
       icon: <Baby className="w-5 h-5 text-yellow-600" />,
-      link: "/fammilyplannifrouterari",
+      link: "/services/familyplanning/records",
       borderColor: "border-yellow-200",
       bgColor: "bg-yellow-200",
       textColor: "text-yellow-600",
-      state: { params: { patientData: patientLinkData } },
+      state: { 
+        patientId: patientLinkData?.pat_id,
+        patientData: patientLinkData 
+      },
     },
     {
       count: animalbitesCount,
       title: "Animal Bites",
       icon: <FaDog className="w-5 h-5 text-yellow-600" />,
-      link: "/animalbites",
+      link: "/services/animalbites/records",
       borderColor: "border-yellow-200",
       bgColor: "bg-yellow-200",
       textColor: "text-yellow-600",
-      state: { params: { patientData: patientLinkData } },
+      state: { 
+    patientId: patientLinkData?.pat_id,
+    patientData: patientLinkData 
+  },
     },
     // Child Health Record - for the patient's own child health record
     {

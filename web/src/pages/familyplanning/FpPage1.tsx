@@ -59,7 +59,19 @@ export default function FamilyPlanningForm({
 
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
+  // const patientId = formData?.pat_id
+  // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
+ 
+  //  useEffect(() => {
+  //   if (formData.obstetricalHistory?.numOfLivingChildren !== undefined) {
+  //     form.setValue("numOfLivingChildren", formData.obstetricalHistory.numOfLivingChildren);
+  //     updateFormData({
+  //       ...form.getValues(),
+  //       numOfLivingChildren: formData.obstetricalHistory.numOfLivingChildren,
+  //     });
+  //   }
+  // }, [formData.obstetricalHistory?.numOfLivingChildren, form, updateFormData]);
 
   useEffect(() => {
     if (patientGender && !isPatientPreSelected) {
@@ -85,7 +97,21 @@ export default function FamilyPlanningForm({
 
   const [commodities, setCommodities] = useState<FormattedCommodity[]>([])
   const [loadingCommodities, setLoadingCommodities] = useState(false)
+const { setValue, getValues } = form
+  const watchedNumOfLivingChildren = form.watch("numOfLivingChildren")
 
+  // 💡 ADD THIS useEffect TO SYNC THE FIELDS
+  useEffect(() => {
+    // Get the current value from the *other* field
+    const currentObsValue = getValues("obstetricalHistory.numOfLivingChildren")
+    // Coerce the watched value to a number, defaulting to 0
+    const newNumValue = watchedNumOfLivingChildren || 0
+
+    // Only update if they are different to prevent unnecessary re-renders
+    if (currentObsValue !== newNumValue) {
+      setValue("obstetricalHistory.numOfLivingChildren", newNumValue)
+    }
+  }, [watchedNumOfLivingChildren, setValue, getValues]) // Dependencies
   // Set selected patient ID if pre-selected
   useEffect(() => {
     if (isPatientPreSelected && formData.pat_id) {
@@ -98,13 +124,8 @@ export default function FamilyPlanningForm({
           setOriginalClientType(formData.typeOfClient);
         }
       }
-      if (formData.dateOfBirth) {
-        form.setValue("age", calculateAge(formData.dateOfBirth));
-        form.trigger("age"); // Re-validate age
-      }
     }
-    
-  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode,form]);
+  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
   useEffect(() => {
     if (!isPatientPreSelected) {
@@ -175,8 +196,6 @@ export default function FamilyPlanningForm({
       const response = await api2.get(`patientrecords/patient/${realPatId}/`);
       const patientData = response.data;
 
-
-
       // Initialize default spouse info
       let spouseInfo = {
         s_lastName: "",
@@ -218,11 +237,11 @@ export default function FamilyPlanningForm({
 
       const requests = [
         api2.get(`familyplanning/body-measurements/${realPatId}`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/obstetrical-history/${realPatId}/`).catch(() => ({ data: {} })),
+        // api2.get(`familyplanning/obstetrical-history/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/last-previous-pregnancy/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
-      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
+      const [bodyMeasurementsResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
       console.log("Body measurement: ", bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
@@ -238,33 +257,32 @@ export default function FamilyPlanningForm({
         };
       }
 
-      const bodyMeasurementDate = bodyMeasurementsResponse.data?.body_measurement?.created_at ||
-        personalResponse.data?.bodyMeasurementRecordedAt ||
-        "";
-
-
+      // Build the form data with proper fallbacks
       const newFormData = {
         ...formData,
         ...patientData,
         pat_id: patientData.pat_id || id,
         lastName: patientData.personal_info?.per_lname || "",
         givenName: patientData.personal_info?.per_fname || "",
-        client_id: patientData.client_id || "",
+        client_id: personalResponse.data?.client_id || "",
         middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
         dateOfBirth: patientData.personal_info?.per_dob || "",
         gender: patientData.personal_info?.per_sex || "",
         obstetricalHistory: {
-          ...(obsHistoryResponse.data || {}),
-          numOfLivingChildren: obsHistoryResponse.data?.livingChildren || 0
+          ...(personalResponse.data?.obstetricalHistory || {}),
+          numOfLivingChildren: personalResponse.data?.obstetricalHistory?.livingChildren || 0
         },
+        numOfLivingChildren: personalResponse?.data?.numOfLivingChildren || 0,
         height: bodyMeasurementsResponse.data?.body_measurement?.height || 0,
         weight: bodyMeasurementsResponse.data?.body_measurement?.weight || 0,
-        bodyMeasurementRecordedAt: bodyMeasurementDate,
+        avg_monthly_income: personalResponse.data?.avg_monthly_income || "",
+        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.body_measurement?.created_at || "",
         philhealthNo: personalResponse.data?.philhealthNo || "",
         nhts_status: personalResponse.data?.nhts_status || false,
         fourps: personalResponse.data?.fourps || false,
+        plan_more_children: personalResponse.data?.plan_more_children || false,
         educationalAttainment: personalResponse.data?.educationalAttainment || "",
-        occupation: personalResponse.data?.ocupation || "", // Note: there's a typo in the original (ocupation vs occupation)
+        occupation: personalResponse.data?.occupation || "",
         acknowledgement: {
           ...formData.acknowledgement,
           clientName: fullName,
@@ -278,13 +296,6 @@ export default function FamilyPlanningForm({
       console.log("New form data:", newFormData); // Debug log
       console.log("Final form data address:", newFormData.address); // Debug log
 
-      console.log("Patient Details Response:", {
-        weight: newFormData.weight,
-        height: newFormData.height,
-        bodyMeasurementRecordedAt: newFormData.bodyMeasurementRecordedAt,
-        fullResponse: newFormData
-      });
-
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);
       }
@@ -297,15 +308,7 @@ export default function FamilyPlanningForm({
       toast.error("Failed to load patient details. Some information may be incomplete.");
     }
   };
-  useEffect(() => {
-    if (formData.obstetricalHistory?.numOfLivingChildren !== undefined) {
-      form.setValue("numOfLivingChildren", formData.obstetricalHistory.numOfLivingChildren);
-      updateFormData({
-        ...form.getValues(),
-        numOfLivingChildren: formData.obstetricalHistory.numOfLivingChildren,
-      });
-    }
-  }, [formData.obstetricalHistory?.numOfLivingChildren, form, updateFormData]);
+
   const dateOfBirth = form.watch("dateOfBirth")
   const spouseDOB = form.watch("spouse.s_dateOfBirth")
   const methodCurrentlyUsed = form.watch("methodCurrentlyUsed");
@@ -324,6 +327,7 @@ export default function FamilyPlanningForm({
       subTypeOfClient === "changingclinic" ||
       subTypeOfClient === "dropoutrestart");
 
+  
   useEffect(() => {
     if (dateOfBirth) {
       form.setValue("age", calculateAge(dateOfBirth))
@@ -454,6 +458,7 @@ export default function FamilyPlanningForm({
   }, [typeOfClient, subTypeOfClient, watchedGender, patientGender]);
 
 
+  
   const onSubmit = async (data: FormData) => {
     const currentValues = form.getValues()
 
@@ -488,65 +493,6 @@ export default function FamilyPlanningForm({
       toast.error(errorMessage)
     }
   }
-
-  // Replace the entire Next button with this:
-  <Button
-    type="button"
-    onClick={async () => {
-      // First trigger validation for all fields
-      const isValid = await form.trigger(undefined, { shouldFocus: true })
-
-      if (isValid) {
-        const currentValues = form.getValues()
-
-        // Business logic checks
-        if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
-          toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
-          return
-        }
-
-        if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
-          toast.error("You cannot select the same method when changing methods. Please choose a different method.");
-          return;
-        }
-
-        if (isAgeInvalid) {
-          toast.error("Age is outside the allowed range for family planning");
-          return;
-        }
-
-        // If all validations pass, proceed
-        updateFormData(currentValues)
-        onNext2()
-      } else {
-        // Show specific error messages based on validation failures
-        const errors = form.formState.errors
-
-        // Check for specific field errors and show appropriate messages
-        if (errors.reasonForFP) {
-          toast.error(errors.reasonForFP.message || "Reason for Family Planning is required");
-        } else if (errors.subTypeOfClient) {
-          toast.error(errors.subTypeOfClient.message || "Sub Type of Client is required for Current Users");
-        } else if (errors.reason) {
-          toast.error(errors.reason.message || "Please specify the side effects");
-        } else if (errors.otherReasonForFP) {
-          toast.error(errors.otherReasonForFP.message || "Please specify the other reason");
-        } else if (errors.methodCurrentlyUsed) {
-          toast.error(errors.methodCurrentlyUsed.message || "Method is required");
-        } else if (errors.otherMethod) {
-          toast.error(errors.otherMethod.message || "Please specify the other method");
-        } else {
-          // General validation error
-          toast.error("Please fill in all required fields correctly.");
-        }
-      }
-    }}
-    disabled={isReadOnly || isAgeInvalid}
-  >
-    Next
-  </Button>
-
-
   const inputProps = {
     disabled: isReadOnly,
     readOnly: isReadOnly,
@@ -1003,6 +949,7 @@ export default function FamilyPlanningForm({
                       {...inputProps}
                     />
                   )}
+
                 </div>
 
                 <div className="col-span-5">
