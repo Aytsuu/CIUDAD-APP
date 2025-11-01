@@ -75,7 +75,7 @@ const conciliationCards = [
 // Hook version (similar to your waste personnel example)
 export const useMediationSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch: refetchMediation } = useGetMediationAnalytics();
+  const { data, isLoading, refetch: refetchMediation, isFetching } = useGetMediationAnalytics();
 
   useEffect(() => {
     refetchMediation();
@@ -86,7 +86,7 @@ export const useMediationSectionCards = () => {
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       onClick={() => {
         navigate("/summon-cases")
       }}

@@ -75,7 +75,7 @@ const conciliationCards = [
 // Hook version (similar to your waste personnel example)
 export const useConciliationSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch: refetchConciliation } = useGetConciliationAnalytics();
+  const { data, isLoading, refetch: refetchConciliation, isFetching } = useGetConciliationAnalytics();
 
   useEffect(() => {
     refetchConciliation();
@@ -86,7 +86,7 @@ export const useConciliationSectionCards = () => {
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       onClick={() => {
         navigate("/conciliation-proceedings")
       }}

@@ -8,7 +8,7 @@ import { useEffect } from "react";
 
 export const BudgetPlanSidebar = () => {
   const navigate = useNavigate();
-  const { data: budgetPlan, isLoading, refetch: refetchBudgetPlan } = useGetCurrentYearBudgetPlan();
+  const { data: budgetPlan,  isLoading,  refetch: refetchBudgetPlan, isFetching } = useGetCurrentYearBudgetPlan();
 
   useEffect(() => {
     refetchBudgetPlan();
@@ -18,10 +18,14 @@ export const BudgetPlanSidebar = () => {
     navigate("/treasurer-budget-plan"); 
   };
 
+  // Check if we should show "no budget plan" message
+  const showNoBudgetPlanMessage = !budgetPlan || budgetPlan.plan_is_archive;
+
+
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none">
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+        {isLoading || isFetching? (
           <div className="p-4 space-y-3">
             {[...Array(1)].map((_, i) => (
               <div key={i} className="animate-pulse">
@@ -33,7 +37,19 @@ export const BudgetPlanSidebar = () => {
               </div>
             ))}
           </div>
-        ) : budgetPlan ? (
+        ) : showNoBudgetPlanMessage ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-sm font-medium text-green-700 mb-1">
+              No Budget Plan for This Year
+            </h3>
+            <p className="text-sm text-gray-500">
+              Budget plan for {new Date().getFullYear()} will appear here once created
+            </p>
+          </div>
+        ) : (
           <div className="p-4 space-y-3">
             <Link to="/treasurer-budgetplan-view" state={{ type: "viewing", planId: budgetPlan.plan_id }}>
               <Card className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200">
@@ -104,23 +120,11 @@ export const BudgetPlanSidebar = () => {
               </Card>
             </Link>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-green-500" />
-            </div>
-            <h3 className="text-sm font-medium text-green-700 mb-1">
-              No Budget Plan for This Year
-            </h3>
-            <p className="text-sm text-gray-500">
-              Budget plan for {new Date().getFullYear()} will appear here once created
-            </p>
-          </div>
         )}
       </div>
 
-      {/* Footer */}
-      {budgetPlan && (
+      {/* Footer - Only show if there's an active budget plan */}
+      {!showNoBudgetPlanMessage && budgetPlan && (
         <div className="p-4 border-t border-gray-100">
           <Button
             variant={"link"}

@@ -29,8 +29,7 @@ class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
         current_year = str(timezone.now().year)
         
         budget_plan = Budget_Plan.objects.filter(
-            plan_year=current_year,
-            plan_is_archive=False
+            plan_year=current_year
         ).select_related(
             'staff_id__rp__per'
         ).only(
@@ -39,6 +38,7 @@ class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
             'plan_budgetaryObligations',
             'plan_balUnappropriated',
             'plan_issue_date',
+            'plan_is_archive',  
             'staff_id__rp__per__per_lname',
             'staff_id__rp__per__per_fname',
             'staff_id__rp__per__per_mname',

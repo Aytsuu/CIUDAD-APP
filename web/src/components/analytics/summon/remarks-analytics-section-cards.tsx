@@ -51,7 +51,7 @@ RemarkCard.displayName = "RemarkCard";
 // Hook version for single card
 export const useNoRemarksSectionCard = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch: refetchRemarks } = useGetRemarksAnalytics();
+  const { data, isLoading, refetch: refetchRemarks, isFetching } = useGetRemarksAnalytics();
 
   useEffect(() => {
     refetchRemarks();
@@ -61,7 +61,7 @@ export const useNoRemarksSectionCard = () => {
     <RemarkCard 
       title="No Remarks"
       value={data?.no_remarks_count ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       description=""
       onClick={() => {
         navigate("/summon-remarks") // Update with your actual route

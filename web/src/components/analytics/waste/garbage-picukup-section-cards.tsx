@@ -75,8 +75,8 @@ const garbagePickupCards = [
 // Hook version (similar to your waste personnel example)
 export const useGarbagePickupSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch: refetchGarbagePickup } = useGetGarbageCardAnalytics();
-  
+  const { data, isLoading, refetch: refetchGarbagePickup , isFetching} = useGetGarbageCardAnalytics();
+
   useEffect(() => {
     refetchGarbagePickup();
   }, [refetchGarbagePickup]);
@@ -86,7 +86,7 @@ export const useGarbagePickupSectionCards = () => {
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       onClick={() => {
         navigate("/garbage-pickup-request")
       }}
