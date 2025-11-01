@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { useGetCurrentYearBudgetPlan } from "./budgetplan-analytics-queries";
 import { Link } from "react-router";
+import { useEffect } from "react";
 
 export const BudgetPlanSidebar = () => {
   const navigate = useNavigate();
-  const { data: budgetPlan, isLoading } = useGetCurrentYearBudgetPlan();
+  const { data: budgetPlan, isLoading, refetch: refetchBudgetPlan } = useGetCurrentYearBudgetPlan();
+
+  useEffect(() => {
+    refetchBudgetPlan();
+  }, [refetchBudgetPlan]);
   
   const handleViewAll = () => {
     navigate("/treasurer-budget-plan"); 

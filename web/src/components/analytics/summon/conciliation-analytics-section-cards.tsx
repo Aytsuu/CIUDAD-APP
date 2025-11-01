@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useGetConciliationAnalytics } from "./conciliation-analytics-queries";
+import { useEffect } from "react";
 
 // Memoized card component with hover effects and navigation
 const ConciliationCards = React.memo(({ 
@@ -74,7 +75,11 @@ const conciliationCards = [
 // Hook version (similar to your waste personnel example)
 export const useConciliationSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetConciliationAnalytics();
+  const { data, isLoading, refetch: refetchConciliation } = useGetConciliationAnalytics();
+
+  useEffect(() => {
+    refetchConciliation();
+  }, [refetchConciliation]);
 
   const cards = conciliationCards.map(card => (
     <ConciliationCards 
