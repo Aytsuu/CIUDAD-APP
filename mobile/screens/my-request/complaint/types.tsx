@@ -146,10 +146,9 @@ export type CaseTrackingType = {
 }
 
 export type ScheduleList = {
-    ss_id: string;
-    ss_mediation_level: string;
-    ss_is_rescheduled: boolean;
-    ss_reason: string;
+    hs_id: string;
+    hs_level: string;
+    hs_is_closed: boolean;
     hearing_date: string;
     hearing_time: string;
 }

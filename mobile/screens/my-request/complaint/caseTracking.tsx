@@ -106,7 +106,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
             Please pay the mediation fee at the barangay hall to proceed with scheduling your hearing session.
           </Text>
           <Text className="text-red-600 text-xs italic leading-4 mt-1">
-            Important: Unpaid requests will be automatically cancelled after the due date.
+            Important: Unpaid requests will be automatically declined after the due date.
           </Text>
         </View>
       ),
