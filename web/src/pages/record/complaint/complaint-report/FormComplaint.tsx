@@ -165,7 +165,7 @@ export const ComplaintForm = () => {
   return (
     <LayoutWithBack
       title={"Blotter Form"}
-      description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
+      description="Ensure all blotter details are complete and accurate to facilitate proper action by the barangay."
     >
       {/* Progress Indicator */}
       <div className="px-4 sm:px-6 lg:px-8">

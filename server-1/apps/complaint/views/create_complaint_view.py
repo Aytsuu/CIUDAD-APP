@@ -10,14 +10,15 @@ from apps.complaint.serializers import ComplaintSerializer
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
-from apps.notification.utils import create_notification
+from apps.notification.utils import create_notification, reminder_notification
 from ..serializers import ComplaintFileSerializer
 
 # Django imports
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-
+from django.utils import timezone
+from datetime import timedelta
 # Utility imports
 from utils.supabase_client import upload_to_storage
 
@@ -231,7 +232,7 @@ class ComplaintCreateView(APIView):
                         
                         complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
                         
-                        create_notification(
+                        notification = create_notification(
                             title="New Complaint Filed",
                             message=(
                                 f"A {complaint.comp_incident_type} complaint is awaiting your review. "
@@ -242,6 +243,13 @@ class ComplaintCreateView(APIView):
                             web_params={"comp_id": str(complaint.comp_id),},
                             mobile_route="/(my-request)/complaint-tracking/compMainView",
                             mobile_params={"comp_id": str(complaint.comp_id)},
+                        )
+                        
+                        # Schedule reminder notification in 1 minute
+                        send_time = timezone.now() + timedelta(minutes=1)
+                        reminder_notification(
+                            notification_id=str(notification.notif_id),
+                            send_at=send_time
                         )
                         
                         logger.info(

@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
 
+# ===============================================================
+#  CREATE NEW NOTIFICATION IMMEDIATELY
+# ===============================================================
 def create_notification(
     title: str,
     message: str,
@@ -33,15 +36,11 @@ def create_notification(
     recipient_accounts = []
     for recipient in recipients:
         if isinstance(recipient, Account):
-            # Already an Account object
             recipient_accounts.append(recipient)
-            logger.debug(f"✓ Account: {recipient.username}")
         elif isinstance(recipient, ResidentProfile):
-            # It's a ResidentProfile, get the associated Account
             account = Account.objects.filter(rp=recipient).first()
             if account:
                 recipient_accounts.append(account)
-                logger.debug(f"✓ ResidentProfile -> Account: {account.username}")
             else:
                 logger.warning(f"⚠️ No Account found for ResidentProfile: {recipient.rp_id}")
         else:
@@ -53,145 +52,136 @@ def create_notification(
 
     logger.info(f"✅ Found {len(recipient_accounts)} valid account(s)")
 
-    # Create the notification
+    # Create notification record
     notification_data = {
-        'notif_title': title,
-        'notif_message': message,
-        'notif_type': notif_type,
-        'web_route': web_route,
-        'web_params': web_params,
-        'mobile_route': mobile_route,
-        'mobile_params': mobile_params,
+        "notif_title": title,
+        "notif_message": message,
+        "notif_type": notif_type,
+        "web_route": web_route,
+        "web_params": web_params,
+        "mobile_route": mobile_route,
+        "mobile_params": mobile_params,
     }
 
     notification = Notification.objects.create(**notification_data)
     logger.info(f"✅ Notification created: ID {notification.notif_id}")
 
-    # Create recipient records using 'acc' field
-    recipient_objects = []
+    # Create recipient records
     for acc in recipient_accounts:
-        recipient_obj = Recipient.objects.create(notif=notification, acc=acc)
-        recipient_objects.append(recipient_obj)
-    
-    logger.info(f"✅ Created {len(recipient_objects)} recipient records")
+        Recipient.objects.create(notif=notification, acc=acc)
 
-    # Send push notifications
+    logger.info(f"✅ Created {len(recipient_accounts)} recipient records")
+
+    # Send push notification
+    _send_push(notification, recipient_accounts)
+
+    return notification
+
+
+# ===============================================================
+#  SEND REMINDER FOR EXISTING NOTIFICATION AT SCHEDULED TIME
+# ===============================================================
+def reminder_notification(notification_id: str, send_at: datetime):
+    try:
+        notification = Notification.objects.get(notif_id=notification_id)
+    except Notification.DoesNotExist:
+        logger.error(f"❌ Notification with ID {notification_id} not found.")
+        return None
+
+    recipients = [
+        r.acc for r in Recipient.objects.filter(notif=notification)
+    ]
+
+    if not recipients:
+        logger.warning(f"⚠️ No recipients found for Notification ID {notification_id}")
+        return None
+
+    # Ensure send_at is timezone-aware
+    if timezone.is_naive(send_at):
+        send_at = timezone.make_aware(send_at)
+
+    if send_at <= timezone.now():
+        logger.warning(f"⚠️ Cannot schedule reminder in the past: {send_at}")
+        return None
+
+    job_id = f"reminder_{notification_id}_{int(send_at.timestamp())}"
+    trigger = DateTrigger(run_date=send_at)
+
+    try:
+        scheduler.add_job(
+            _send_push,
+            trigger=trigger,
+            id=job_id,
+            replace_existing=True,
+            kwargs={"notification": notification, "recipient_accounts": recipients},
+        )
+        logger.info(f"⏰ Reminder scheduled for notification {notification_id} at {send_at}")
+        return job_id
+    except Exception as e:
+        logger.error(f"❌ Error scheduling reminder: {str(e)}")
+        return None
+
+
+# ===============================================================
+#  INTERNAL PUSH SENDER (USED BY BOTH CREATE & REMINDER)
+# ===============================================================
+def _send_push(notification, recipient_accounts):
     total_sent = 0
     total_failed = 0
     device_tokens = {}
 
-    # Collect unique device tokens for all recipients
+    # Collect device tokens
     for acc in recipient_accounts:
         tokens = FCMToken.objects.filter(acc=acc)
         for token_obj in tokens:
-            if not token_obj.fcm_device_id:
-                continue
-            # Avoid duplicate tokens
-            if token_obj.fcm_device_id not in device_tokens:
+            if token_obj.fcm_device_id and token_obj.fcm_device_id not in device_tokens:
                 device_tokens[token_obj.fcm_device_id] = token_obj.fcm_token
 
     logger.info(f"📱 Found {len(device_tokens)} unique device tokens")
 
-    # Prepare FCM payload
+    # FCM payload
     fcm_payload = {
         "notification_id": str(notification.notif_id),
-        "notif_type": notif_type,
-        "web_route": web_route or "",
-        "web_params": json.dumps(web_params or {}),
-        "mobile_route": mobile_route or "",
-        "mobile_params": json.dumps(mobile_params or {}),
+        "notif_type": notification.notif_type,
+        "web_route": notification.web_route or "",
+        "web_params": json.dumps(notification.web_params or {}),
+        "mobile_route": notification.mobile_route or "",
+        "mobile_params": json.dumps(notification.mobile_params or {}),
     }
 
-    # Send push notifications to all devices
+    # Send push
     for device_id, token in device_tokens.items():
         try:
             result = send_push_notification(
                 token=token,
-                title=title,
-                message=message,
+                title=notification.notif_title,
+                message=notification.notif_message,
                 data=fcm_payload,
             )
             if result:
                 total_sent += 1
-                logger.debug(f"✅ Push sent to device: {device_id}")
             else:
                 total_failed += 1
-                logger.warning(f"⚠️ Push failed to device: {device_id}")
         except Exception as e:
-            logger.error(f"❌ Error sending push to device {device_id}: {str(e)}")
+            logger.error(f"❌ Error sending to device {device_id}: {str(e)}")
             total_failed += 1
 
-    logger.info(f"📊 Push notifications: {total_sent} sent, {total_failed} failed")
-    return notification
+    logger.info(f"📊 Reminder push: {total_sent} sent, {total_failed} failed")
 
 
-def reminder_notification(
-    title: str,
-    message: str,
-    recipients: list,
-    notif_type: str,
-    send_at: datetime,
-    web_route: str = None,
-    web_params: dict = None,
-    mobile_route: str = None,
-    mobile_params: dict = None,
-):
-    if timezone.is_naive(send_at):
-        send_at = timezone.make_aware(send_at)
-
-    # Don't schedule past times
-    if send_at <= timezone.now():
-        logger.warning(f"⚠️ Cannot schedule notification in the past: {send_at}")
-        return None
-
-    # Create unique job ID
-    job_id = f"notif_{notif_type}_{int(send_at.timestamp())}"
-
-    # Schedule the job
-    trigger = DateTrigger(run_date=send_at)
-    
-    try:
-        scheduler.add_job(
-            create_notification,
-            trigger=trigger,
-            id=job_id,
-            replace_existing=True,
-            kwargs={
-                'title': title,
-                'message': message,
-                'recipients': recipients,
-                'notif_type': notif_type,
-                'web_route': web_route,
-                'web_params': web_params,
-                'mobile_route': mobile_route,
-                'mobile_params': mobile_params,
-            },
-        )
-        
-        logger.info(f"⏰ Scheduled notification for {len(recipients)} recipients at {send_at}")
-        logger.info(f"   Job ID: {job_id}")
-        return job_id
-        
-    except Exception as e:
-        logger.error(f"❌ Error scheduling notification: {str(e)}")
-        return None
-
-
+# ===============================================================
+#  SCHEDULER HELPERS
+# ===============================================================
 def get_scheduled_jobs():
     jobs = scheduler.get_jobs()
-    
-    job_list = []
-    for job in jobs:
-        job_list.append({
-            'job_id': job.id,
-            'next_run_time': job.next_run_time,
-            'function': job.func.__name__,
-        })
-    
-    # Sort by next_run_time
-    job_list.sort(key=lambda x: x['next_run_time'])
-    
-    return job_list
+    return [
+        {
+            "job_id": job.id,
+            "next_run_time": job.next_run_time,
+            "function": job.func.__name__,
+        }
+        for job in sorted(jobs, key=lambda j: j.next_run_time or datetime.max)
+    ]
 
 
 def cancel_scheduled_notification(job_id: str):
@@ -209,4 +199,4 @@ def start_scheduler():
         scheduler.start()
         logger.info("✅ Notification scheduler started")
     else:
-        logger.warning("⚠️ Scheduler is already running")
+        logger.warning("⚠️ Scheduler already running")

@@ -113,7 +113,7 @@ export function ComplaintViewRecord() {
   if (isLoading && !stateData) {
     return (
       <LayoutWithBack
-        title="Complaint Details"
+        title="Blotter Details"
         description="Review and manage complaint record information"
       >
         <div className="flex items-center justify-center h-64 space-x-4">
