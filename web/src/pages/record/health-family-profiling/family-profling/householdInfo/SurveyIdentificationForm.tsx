@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { surveyFormSchema } from "@/form-schema/family-profiling-schema"
 import type { SurveyFormData } from "@/form-schema/health-data-types"
 import { useAuth } from "@/context/AuthContext"
-import { useHealthStaffList } from "../../queries/administrationFetchQueries"
+import { useHealthStaffList } from "../queries/administrationFetchQueries"
 import { formatHealthStaff } from "../../HealthStaffFormats"
 
 interface SurveyIdentificationFormProps {

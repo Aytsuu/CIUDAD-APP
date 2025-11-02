@@ -11,14 +11,24 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 export default function HealthcareReports() {
-  const [activeTab, setActiveTab] = useState<"all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis" | "profiling">("all");
   const [searchTerm, setSearchTerm] = useState("");
 
+
+  const profilingReports = [
+    {
+      title: "Health Profiling",
+      icon: <Users className="w-6 h-6 text-violet-600" />,
+      bgColor: "bg-gradient-to-br from-violet-50 to-purple-50",
+      description: "Profiling Population Structure Report and Records",
+      link: "/health-family-profiling"
+    }
+  ];
   const bhwReport = [
     {
       title: "BHW Report",
       icon: <Activity className="w-6 h-6 text-green-600" />,
-      bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+      bgColor: "bg-gradient-to-br from-green-50 to-emerald-50", 
       description:
         "Monthly accomplishment report of Barangay Health Workers",
       link: "/reports/bhw-accomplishment-reports/monthly",
@@ -146,7 +156,9 @@ export default function HealthcareReports() {
 
   ];
 
-  const allReports = [...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports, ...fhisReports];
+
+
+  const allReports = [...profilingReports, ...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports, ...fhisReports];
 
   const filterReports = (reports: any[]) => {
     if (!searchTerm) return reports;
@@ -192,7 +204,7 @@ export default function HealthcareReports() {
     onClick
   }: {
     active: boolean;
-    type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis";
+    type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis" | "profiling";
     icon: React.ComponentType<{ className?: string }>;
     count: number;
     onClick: () => void;
@@ -253,6 +265,14 @@ export default function HealthcareReports() {
         bgColor: "bg-pink-100",
         textColorDark: "text-pink-800",
         iconColor: "text-pink-600"
+      },
+      profiling: {
+        color: "violet",
+        borderColor: "border-violet-600",
+        textColor: "text-violet-700",
+        bgColor: "bg-violet-100",
+        textColorDark: "text-violet-800",
+        iconColor: "text-violet-600"
       }
     }[type];
 
@@ -265,6 +285,7 @@ export default function HealthcareReports() {
         case "opt": return "OPT";
         case "masterlist": return "Masterlist";
         case "fhis": return "FHIS";
+        case "profiling": return "Profiling";
         default: return type;
       }
     };
@@ -300,6 +321,13 @@ export default function HealthcareReports() {
             icon={ClipboardList}
             count={allReports.length}
             onClick={() => setActiveTab("all")}
+          />
+          <TabButton 
+            active={activeTab === "profiling"} 
+            type="profiling" 
+            icon={Users} 
+            count={profilingReports.length} 
+            onClick={() => setActiveTab("profiling")} 
           />
           <TabButton
             active={activeTab === "bhw"}
@@ -376,6 +404,27 @@ export default function HealthcareReports() {
               ) : (
                 <div className="text-center py-8 sm:py-12">
                   <p className="text-gray-500">No reports found matching your search</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Profiling Reports Tab */}
+          <TabsContent value="profiling" className="space-y-8">
+            <div className="bg-white p-4 sm:p-6">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                  <Users className="w-4 h-4 sm:w-6 sm:h-6 text-violet-600" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Profiling Reports</h2>
+              </div>
+              {filterReports(profilingReports).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {filterReports(profilingReports).map(renderCard)}
+                </div>
+              ) : (
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-gray-500">No profiling reports found matching your search</p>
                 </div>
               )}
             </div>
@@ -506,6 +555,8 @@ export default function HealthcareReports() {
               )}
             </div>
           </TabsContent>
+
+        
         </div>
       </Tabs>
     </MainLayoutComponent>

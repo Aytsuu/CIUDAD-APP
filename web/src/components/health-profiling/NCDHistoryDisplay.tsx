@@ -1,4 +1,4 @@
-import { useNCDHistory } from '../family-profling/queries/profilingHistoryQueries';
+import { useNCDHistory } from '../../pages/record/health-family-profiling/family-profling/queries/profilingHistoryQueries';
 import { HistoryList } from '@/components/health-profiling/HistoryList';
 
 interface NCDHistoryDisplayProps {

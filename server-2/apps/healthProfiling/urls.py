@@ -19,6 +19,7 @@ from .views.survey_form_views import *
 from .views.all_record_views import *
 from .views.dependents_views import *
 from .views.history_views import *
+from .views.population_report_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -143,6 +144,12 @@ urlpatterns = [
     # Comprehensive Family Health Profiling Views
     path("family-health-profiling/<str:fam_id>/", FamilyHealthProfilingDetailView.as_view(), name="family-health-profiling-detail"),
     path("family-health-profiling/summary/all/", FamilyHealthProfilingSummaryView.as_view(), name="family-health-profiling-summary"),
+
+    # Population Structure Report
+    path("population-structure-report/", PopulationStructureReportView.as_view(), name="population-structure-report"),
+    path("population-yearly-records/", PopulationYearlyRecordsView.as_view(), name="population-yearly-records"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
 
     # Survey Identification URLs
     path("survey-identification/list/", SurveyIdentificationListView.as_view(), name="survey-identification-list"),

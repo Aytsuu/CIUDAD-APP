@@ -27,8 +27,8 @@ export const api2 = axios.create({
   baseURL: "http://localhost:8001",
   withCredentials: true, 
   headers: {
-    // "Content-Type": "application/json",
-    // "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
   },
 });
 
