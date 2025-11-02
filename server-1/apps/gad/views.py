@@ -903,7 +903,26 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
             selected_announcements = request.data.get('selectedAnnouncements', [])
             event_subject = request.data.get('eventSubject', '')
             
-            if selected_announcements and len(selected_announcements) > 0:
+            # Check if plan is eligible for announcement (mandated OR has project proposal with resolution)
+            is_mandated = development_plan.dev_mandated == True
+            has_proposal_with_resolution = False
+            
+            if not is_mandated:
+                # Check if there's a project proposal with a resolution
+                from apps.gad.models import ProjectProposal
+                from apps.council.models import Resolution
+                
+                # Optimized query: Check if any proposal has a resolution in a single query
+                has_proposal_with_resolution = ProjectProposal.objects.filter(
+                    dev_id=development_plan.dev_id,
+                    gpr_is_archive=False,
+                    resolution_set__res_is_archive=False  # Using reverse relation from Resolution.gpr_id (default: modelname_set)
+                ).exists()
+            
+            # Only create announcement if eligible (mandated OR has proposal with resolution)
+            announcement_eligible = is_mandated or has_proposal_with_resolution
+            
+            if selected_announcements and len(selected_announcements) > 0 and announcement_eligible:
                 try:
                     from apps.announcement.models import Announcement
                     from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
@@ -942,6 +961,9 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                     for announcement_type in selected_announcements:
                         recipient_dict = {'ann': announcement.ann_id}
                         
+                        # Map client-focused options (from frontend)
+                        announcement_type_lower = announcement_type.lower()
+                        
                         if announcement_type == "all":
                             recipient_dict['ar_category'] = "all"
                             recipient_dict['ar_type'] = "ALL"
@@ -963,6 +985,32 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                         elif announcement_type == "watchmen":
                             recipient_dict['ar_category'] = "staff"
                             recipient_dict['ar_type'] = "WATCHMAN"
+                        # (GAD)
+                        elif announcement_type_lower == "women":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "WOMEN"
+                        elif announcement_type_lower in ["lgbtqia+", "lgbtqia"]:
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "LGBTQIA+"
+                        elif announcement_type_lower == "senior":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "SENIOR"
+                        elif announcement_type_lower == "pwd":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "PWD"
+                        elif announcement_type_lower == "soloparent":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "SOLO_PARENT"
+                        elif announcement_type_lower == "erpat":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "ERPAT"
+                        elif announcement_type_lower == "children":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "CHILDREN"
+                        else:
+                            # Default to all residents if type not recognized
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "RESIDENT"
                         
                         recipients_data.append(recipient_dict)
                     
@@ -987,11 +1035,16 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                         serializer.data['announcement_id'] = announcement.ann_id
                         serializer.data['announcement_created'] = False
                         serializer.data['announcement_error'] = bulk_serializer.errors
-                    
                 except Exception as e:
-                    logger.error(f"Error creating announcement for GAD activity: {str(e)}")
+                    logger.error(f"Error creating announcement: {str(e)}")
                     serializer.data['announcement_created'] = False
                     serializer.data['announcement_error'] = str(e)
+            elif selected_announcements and len(selected_announcements) > 0 and not announcement_eligible:
+                # Announcement requested but plan is not eligible (not mandated and no proposal with resolution)
+                logger.info(f"Announcement requested for dev_id {development_plan.dev_id} but plan is not eligible (not mandated and no proposal with resolution)")
+                serializer.data['announcement_created'] = False
+                serializer.data['announcement_skipped'] = True
+                serializer.data['announcement_skip_reason'] = "Plan must be mandated or have a project proposal with resolution to send announcements"
             
             # Log the activity
             try:

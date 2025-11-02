@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Dimensions } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -475,9 +474,7 @@ const ArchivePlan = ({ onBack }: ArchivePlanProps) => {
       headerTitle={<Text className="text-[13px]">Archived Plans</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
-        <ArchivePlanContent />
-      </SafeAreaView>
+      <ArchivePlanContent />
     </PageLayout>
   );
 };

@@ -42,14 +42,11 @@ const getClientOptions = () => (
   </>
 );
 
-const announcementOptions = [
-    { id: "all", label: "All", checked: false },
-    { id: "allbrgystaff", label: "All Barangay Staff", checked: false },
-    { id: "residents", label: "Residents", checked: false },
-    { id: "wmstaff", label: "Waste Committee", checked: false },
-    { id: "drivers", label: "Driver Loader", checked: false },
-    { id: "collectors", label: "Loaders", checked: false },
-];
+const announcementOptions = clientOptions.map(option => ({
+    id: option.value.toLowerCase().replace(/\s+/g, ''),
+    label: option.label,
+    checked: false
+}));
 
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
@@ -688,20 +685,13 @@ export default function AnnualDevelopmentPlanCreate() {
                           checked={form.watch("selectedAnnouncements")?.includes(option.id) || false}
                           onCheckedChange={(checked) => {
                             const currentValue = form.watch("selectedAnnouncements") || [];
-                            
-                            if (option.id === "all") {
-                              // If "All" is checked, only select "All"
-                              form.setValue("selectedAnnouncements", checked ? ["all"] : []);
+                            let newSelected;
+                            if (checked) {
+                              newSelected = [...currentValue, option.id];
                             } else {
-                              // If another option is checked, remove "All" if it exists
-                              let newSelected;
-                              if (checked) {
-                                newSelected = [...currentValue.filter(id => id !== "all"), option.id];
-                              } else {
-                                newSelected = currentValue.filter((id) => id !== option.id);
-                              }
-                              form.setValue("selectedAnnouncements", newSelected);
+                              newSelected = currentValue.filter((id) => id !== option.id);
                             }
+                            form.setValue("selectedAnnouncements", newSelected);
                           }}
                         />
                         <Label htmlFor={option.id} className="text-sm cursor-pointer">{option.label}</Label>

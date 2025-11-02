@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { Search } from "lucide-react-native";
 import { ChevronDown } from "lucide-react-native";
-import { useCertTracking, useCancelCertificate, useCancelBusinessPermit } from "./queries/certTrackingQueries";
+import { useCertTracking, useCancelCertificate, useCancelBusinessPermit, useCancelServiceCharge } from "./queries/certTrackingQueries";
 import { SearchInput } from "@/components/ui/search-input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -18,8 +18,9 @@ export default function CertTrackingMain() {
 
   const { data, isLoading, isError } = useCertTracking(user?.rp || "");
   const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.rp || "");
-  const { mutate: cancelBusiness } = useCancelBusinessPermit(user?.rp || "");
-  const [activeTab, setActiveTab] = React.useState<'personal' | 'business' | 'service_charge'>('personal');
+  const { mutate: cancelBusiness, isPending: isCancellingBusiness } = useCancelBusinessPermit(user?.rp || "");
+  const { mutate: cancelService, isPending: isCancellingService } = useCancelServiceCharge(user?.rp || "");
+  const [activeTab, setActiveTab] = React.useState<'personal' | 'business' | 'serviceCharge'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled' | 'declined'>('all');
   const [paymentFilter, setPaymentFilter] = React.useState<'all' | 'unpaid' | 'paid'>('all');
   const [searchInputVal, setSearchInputVal] = React.useState("");
@@ -99,27 +100,24 @@ export default function CertTrackingMain() {
     // Try multiple possible payment status fields
     const paymentStatus = item?.cr_req_payment_status ?? 
                           item?.req_payment_status ?? 
+                          item?.pay_status ??
                           item?.payment_status ?? 
                           '';
     return paymentStatus.toString().trim();
   }
 
   const getDeclineReason = (item: any): string => {
-   
-    const declineReason = item?.cr_reason ?? '';
+    const declineReason = item?.cr_reason ?? item?.bus_reason ?? item?.pay_reason ?? '';
     return declineReason.toString().trim();
   }
 
   const extractStatus = (item: any) => {
-    // Try multiple possible status fields
-    const status = item?.cr_req_status ?? '';
+    const status = item?.cr_req_status ?? item?.req_status ?? item?.sr_req_status ?? item?.pay_req_status ?? '';
     const extracted = status.toString().trim();
-    
-    // Debug logging to help understand what statuses we're getting
+
     if (extracted) {
-      console.log('Extracted status:', extracted, 'for item:', item?.bpr_id || item?.cr_id);
+      console.log('Extracted status:', extracted, 'for item:', item?.bpr_id || item?.cr_id || item?.pay_id);
     }
-    
     return extracted;
   };
 
@@ -156,17 +154,17 @@ export default function CertTrackingMain() {
   }
 
   const formatTabName = (tab: string) => {
-    if (tab === 'service_charge') return 'Service Charge';
+    if (tab === 'serviceCharge') return 'Service Charge';
     return tab.charAt(0).toUpperCase() + tab.slice(1);
   }
 
   const handleCancel = (item: any) => {
-    // Use cr_id for personal certificates, bpr_id for business permits
-    const itemId = item?.cr_id || item?.bpr_id;
-    setCancellingItemId(String(itemId));
+    // Use cr_id for personal certificates, bpr_id for business permits, pay_id for service charges
+    const itemId = item?.cr_id || item?.bpr_id || item?.pay_id;
     
     if (item?.cr_id) {
       // Cancel personal certificate
+      setCancellingItemId(String(itemId));
       cancelCert(String(itemId), {
         onSuccess: () => {
           setCancellingItemId(null);
@@ -177,7 +175,19 @@ export default function CertTrackingMain() {
       });
     } else if (item?.bpr_id) {
       // Cancel business permit
+      setCancellingItemId(String(itemId));
       cancelBusiness(String(itemId), {
+        onSuccess: () => {
+          setCancellingItemId(null);
+        },
+        onError: () => {
+          setCancellingItemId(null);
+        }
+      });
+    } else if (item?.pay_id) {
+      // Cancel service charge
+      setCancellingItemId(String(itemId));
+      cancelService(String(itemId), {
         onSuccess: () => {
           setCancellingItemId(null);
         },
@@ -193,10 +203,10 @@ export default function CertTrackingMain() {
     setShowSearch(false);
   };
 
-  // Show loading screen while auth is loading
   if (authLoading) {
     return (
       <PageLayout
+        wrapScroll={false}
         leftAction={
           <TouchableOpacity
             onPress={() => router.back()}
@@ -217,6 +227,7 @@ export default function CertTrackingMain() {
   if (isLoading) {
     return (
       <PageLayout
+        wrapScroll={false}
         leftAction={
           <TouchableOpacity
             onPress={() => router.back()}
@@ -302,12 +313,12 @@ export default function CertTrackingMain() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   className={`flex-1 py-4 items-center border-b-2 ${
-                    activeTab === 'service_charge' ? 'border-blue-500' : 'border-transparent'
+                    activeTab === 'serviceCharge' ? 'border-blue-500' : 'border-transparent'
                   }`}
-                  onPress={() => setActiveTab('service_charge')}
+                  onPress={() => setActiveTab('serviceCharge')}
                 >
                   <Text className={`text-sm font-medium ${
-                    activeTab === 'service_charge' ? 'text-blue-600' : 'text-gray-500'
+                    activeTab === 'serviceCharge' ? 'text-blue-600' : 'text-gray-500'
                   }`}>
                     Service Charge
                   </Text>
@@ -425,11 +436,11 @@ export default function CertTrackingMain() {
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'declined' && (
                           <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.cr_date_rejected || item?.date_declined)}</Text>
+                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
                             {getDeclineReason(item) && (
                               <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
                             )}
@@ -440,12 +451,12 @@ export default function CertTrackingMain() {
                             <ConfirmationModal
                               trigger={
                                 <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                                   className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
                                   activeOpacity={0.8}
                                 >
                                   <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id) ? 'Cancelling…' : 'Cancel Request'}
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
                                   </Text>
                                 </TouchableOpacity>
                               }
@@ -454,7 +465,7 @@ export default function CertTrackingMain() {
                               actionLabel="Yes, Cancel"
                               variant="destructive"
                               onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                               loadingMessage="Cancelling request..."
                             />
                           </View>
@@ -544,11 +555,11 @@ export default function CertTrackingMain() {
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_business_permit?.ibp_date_of_issuance || item?.req_date_completed)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'declined' && (
                           <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.cr_date_rejected || item?.date_declined)}</Text>
+                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
                             {getDeclineReason(item) && (
                               <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
                             )}
@@ -559,12 +570,12 @@ export default function CertTrackingMain() {
                             <ConfirmationModal
                               trigger={
                                 <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                                   className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
                                   activeOpacity={0.8}
                                 >
                                   <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id) ? 'Cancelling…' : 'Cancel Request'}
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
                                   </Text>
                                 </TouchableOpacity>
                               }
@@ -573,7 +584,7 @@ export default function CertTrackingMain() {
                               actionLabel="Yes, Cancel"
                               variant="destructive"
                               onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                               loadingMessage="Cancelling request..."
                             />
                           </View>
@@ -595,7 +606,7 @@ export default function CertTrackingMain() {
                 </>
               ) : (
                 <>
-                  {(data as any)?.service_charge?.filter((i: any) => {
+                  {(data as any)?.serviceCharge?.filter((i: any) => {
                     const normalizedStatus = getNormalizedStatus(extractStatus(i));
                     const paymentStatus = getPaymentStatus(i).toLowerCase();
                     
@@ -606,7 +617,7 @@ export default function CertTrackingMain() {
                     
                     return statusMatch && paymentMatch && searchMatch;
                   }).length ? (
-                    (data as any).service_charge
+                    (data as any).serviceCharge
                       .filter((i: any) => {
                         const normalizedStatus = getNormalizedStatus(extractStatus(i));
                         const paymentStatus = getPaymentStatus(i).toLowerCase();
@@ -614,7 +625,7 @@ export default function CertTrackingMain() {
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                         const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
                         const searchMatch = !searchQuery || 
-                          (i?.purpose ?? "service_charge").toLowerCase().includes(searchQuery.toLowerCase());
+                          (i?.purpose ?? "serviceCharge").toLowerCase().includes(searchQuery.toLowerCase());
                         
                         return statusMatch && paymentMatch && searchMatch;
                       })
@@ -654,20 +665,20 @@ export default function CertTrackingMain() {
                           <Text className="text-gray-500 text-xs">Payment Status:</Text>
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        <Text className="text-gray-500 text-xs mt-1">Due Date: {calculateDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date)}</Text>
+                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
+                        <Text className="text-gray-500 text-xs mt-1">Due Date: {calculateDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid) && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_service_charge?.isc_date_of_issuance || item?.req_date_completed)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_serviceCharge?.isc_date_of_issuance || item?.req_date_completed)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'declined' && (
                           <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.cr_date_rejected || item?.date_declined)}</Text>
+                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
                             {getDeclineReason(item) && (
                               <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
                             )}
@@ -678,12 +689,12 @@ export default function CertTrackingMain() {
                             <ConfirmationModal
                               trigger={
                                 <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                                   className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
                                   activeOpacity={0.8}
                                 >
                                   <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id) ? 'Cancelling…' : 'Cancel Request'}
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
                                   </Text>
                                 </TouchableOpacity>
                               }
@@ -692,7 +703,7 @@ export default function CertTrackingMain() {
                               actionLabel="Yes, Cancel"
                               variant="destructive"
                               onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id)}
+                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
                               loadingMessage="Cancelling request..."
                             />
                           </View>

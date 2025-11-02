@@ -860,7 +860,7 @@ function OrdinancePage() {
                                 <FormComboCheckbox
                                   control={form.control}
                                   name="ordAreaOfFocus"
-                                  label="Select Area of Focus"
+                                  label="Category"
                                   options={ordinanceCategories}
                                   readOnly={creationMode !== 'new'}
                                 />

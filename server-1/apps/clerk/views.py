@@ -579,13 +579,16 @@ class CancelBusinessPermitView(APIView):
             permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
             # Accept req_status from request, default to 'Cancelled' if not provided
             permit.req_status = request.data.get('req_status', 'Cancelled')
+            # Set cancellation date for cancelled requests
+            permit.req_date_completed = timezone.now().date()
             # Save the decline/cancel reason
             permit.bus_reason = request.data.get('bus_reason')
-            permit.save(update_fields=['req_status', 'bus_reason'])
+            permit.save(update_fields=['req_status', 'req_date_completed', 'bus_reason'])
             return Response({
                 'message': permit.req_status,
                 'bpr_id': permit.bpr_id,
                 'req_status': permit.req_status,
+                'req_date_completed': permit.req_date_completed,
                 'bus_reason': permit.bus_reason
             }, status=status.HTTP_200_OK)
         except BusinessPermitRequest.DoesNotExist:
@@ -1631,6 +1634,14 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             'comp_id__complaintcomplainant_set__cpnt',
             'comp_id__complaintaccused_set__acsd'
         ) 
+
+        # Filter by resident if provided (can be complainant OR accused)
+        rp_filter = self.request.GET.get('rp', None) or self.request.GET.get('rp_id', None)
+        if rp_filter:
+            queryset = queryset.filter(
+                Q(comp_id__complaintcomplainant__cpnt__rp_id__rp_id=rp_filter) |
+                Q(comp_id__complaintaccused__acsd__rp_id__rp_id=rp_filter)
+            ).distinct()
 
         sr_type_filter = self.request.GET.get('sr_type', None)
         if sr_type_filter:

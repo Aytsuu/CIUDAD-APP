@@ -497,6 +497,7 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'bpr_id',
             'req_request_date',
             'req_status',
+            'req_date_completed',
             'req_payment_status',
             'ags_id',
             'bus_id',
@@ -744,6 +745,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     sr_req_status = serializers.SerializerMethodField()
     sr_case_status = serializers.SerializerMethodField()
     staff_id = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()
     
     class Meta:
         from .models import ServiceChargePaymentRequest
@@ -755,8 +757,10 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             'pay_date_req',
             'pay_due_date',
             'pay_date_paid',
+            'pay_reason',
             'comp_id',
             'pr_id',
+            'purpose',
             'sr_id',
             'sr_code',  # This will now read from database
             'sr_type',
@@ -859,6 +863,15 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         # Return None for now
         return None
 
+    def get_purpose(self, obj):
+        # Get purpose from pr_id relationship
+        try:
+            if obj.pr_id:
+                return obj.pr_id.pr_purpose
+            return None
+        except Exception:
+            return None
+
     def get_payment_request(self, obj):
         try:
             # Calculate due date (7 days from request date)
@@ -877,7 +890,6 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
                 'spay_status': obj.pay_status,
                 'spay_due_date': obj.pay_due_date,
                 'spay_date_paid': obj.pay_date_paid,
-                'pr_id': obj.pr_id.pr_id if obj.pr_id else None,
                 'calculated_due_date': due_date,
                 'is_overdue': is_overdue
             }
