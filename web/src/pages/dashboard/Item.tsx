@@ -17,6 +17,7 @@ import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
 import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
 // import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
 
 // import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
@@ -100,13 +101,7 @@ export const getItemsConfig = (
       {
         dashboard: "WASTE",
       },
-      {
-        dashboard: "ANIMAL BITES ",
-        card: [
-          <AnimalBiteSectionCards key="animal-bite-cards" initialMonth={currentMonth} />,
-        ],
-      },
-    ];
+    ]
   }
 
   if (user?.staff?.staff_type.toLowerCase() == "health staff") {
@@ -156,6 +151,11 @@ export const getItemsConfig = (
           title: "Animal Bites",
           element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
         },
+        {
+          title: "Family Planning",
+          element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
+        },
+        
         ],
         sidebar:[
           {

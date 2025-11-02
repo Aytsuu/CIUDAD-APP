@@ -39,6 +39,44 @@ export default function InvMedicalConRecords() {
 
   const mode = typeof params.mode === "string" ? params.mode : null;
 
+    useEffect(() => {
+    console.log("All incoming params:", params);
+    
+    // Priority 1: Check if notification passed pat_id
+    const notificationPatId = params.pat_id as string;
+    const notificationAppointmentId = params.appointment_id as string;
+    const notificationFocusTab = params.focus_tab as string;
+
+    if (notificationPatId) {
+      console.log("Notification navigation - Setting patId to:", notificationPatId);
+      setPatientId(notificationPatId);
+      
+      // Optional: Auto-focus on consultations tab if specified
+      if (notificationFocusTab === "consultations") {
+        // You could add logic here to highlight or focus on consultations
+        console.log("Notification focus on consultations tab");
+      }
+      
+      // Optional: If you want to show a specific appointment
+      if (notificationAppointmentId) {
+        console.log("Notification for specific appointment:", notificationAppointmentId);
+        // You could add logic to highlight the specific appointment
+      }
+    } 
+    else if (mode === "admin") {
+      // Admin mode - get patient data from params
+      const adminPatId = params.pat_id as string;
+      console.log("Admin mode - Setting patId to:", adminPatId);
+      setPatientId(adminPatId || "");
+    } 
+    else {
+      // Regular mode - use authenticated user's data
+      console.log("Regular mode - Setting patId to:", pat_id);
+      setPatientId(pat_id || "");
+    }
+  }, [mode, params.pat_id, params.appointment_id, params.focus_tab, params.patientData, pat_id]);
+
+  
   // Handle patient ID setup
   useEffect(() => {
     console.log("MODE:", mode);
@@ -312,7 +350,7 @@ export default function InvMedicalConRecords() {
           <View className="flex-row items-center justify-between mb-4">
             <View className="flex-row items-center space-x-3">
               <Syringe size={20} color="#2563EB" />
-              <Text className="text-md font-semibold text-gray-900 ">Consultation Records</Text>
+              <Text className="text-md font-semibold text-gray-900">  Consultation Records</Text>
             </View>
             <View className="bg-blue-100 px-3 py-1 rounded-full">
               <Text className="text-blue-700 text-sm font-medium">{isMedicalRecordsLoading ? "..." : totalCount} records</Text>
@@ -321,7 +359,7 @@ export default function InvMedicalConRecords() {
 
           {/* Search Bar */}
           <View className="flex-row items-center space-x-2 mb-4">
-            <View className="flex-1 p-2 flex-row items-center  border border-gray-300 bg-gray-50 rounded-lg">
+            <View className="flex-1 p-1 flex-row items-center  border border-gray-300 bg-gray-50 rounded-lg">
               <Search size={20} color="#6B7280" />
               <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={handleSearchChange} />
             </View>

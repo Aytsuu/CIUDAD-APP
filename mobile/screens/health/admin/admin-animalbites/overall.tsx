@@ -34,7 +34,7 @@ export default function AnimalBiteOverallScreen() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
 
   const {
     data: patientSummary,
@@ -101,9 +101,9 @@ export default function AnimalBiteOverallScreen() {
     }
   };
 
-  if (isLoading && currentPage === 1) {
-    return <LoadingState />;
-  }
+if (isLoading && typeof refetch === 'function' && currentPage === 1) {
+  return <LoadingState />;
+}
 
   if (isError) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useMemo, useCallback } from "react";
 import { View, TouchableOpacity, FlatList, TextInput, RefreshControl, Image } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -7,11 +7,14 @@ import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api2 } from "@/api/api";
-import { useFirstAidCount } from "./queries/FirstAidCountQueries";
+import { useFirstAidCount, useFirstAidRecords } from "./queries/FirstAidCountQueries";
 import { FirstAidRecord } from "./types";
 import { calculateAge } from "@/helpers/ageCalculator";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useDebounce } from "@/hooks/use-debounce"; // Add this
+import { PaginationControls } from "../components/pagination-layout";
+
 
 const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   const formatAddress = () => {
@@ -117,24 +120,14 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
   </Card>
 );
 
-const useFirstAidRecords = (patientId: string) => {
-  return useQuery({
-    queryKey: ["patientFirstAidDetails", patientId],
-    queryFn: async () => {
-      if (!patientId) return [];
-      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientId}/`);
-      return response.data.results || [];
-    },
-    enabled: !!patientId,
-    refetchOnMount: true,
-    staleTime: 0
-  });
-};
 
 export default function IndivFirstAidRecords() {
   const { patientData: patientDataString } = useLocalSearchParams();
   const [patientData, setPatientData] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1); // Add for pagination
+  const [pageSize] = useState(2); // Keep this
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
@@ -148,32 +141,51 @@ export default function IndivFirstAidRecords() {
     }
   }, [patientDataString]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
   const { data: firstAidCountData } = useFirstAidCount(patientData?.pat_id);
   const firstAidCount = firstAidCountData?.firstaidrecord_count || 0;
 
-  const { data: firstAidRecords, isLoading, isError, refetch } = useFirstAidRecords(patientData?.pat_id);
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: debouncedSearchQuery || '',
+      patientId: patientData?.pat_id,
+    }),
+    [currentPage, pageSize, debouncedSearchQuery, patientData?.pat_id]
+  );
+  
+  const { data: apiResponse, isLoading, isError, refetch,isFetching } = useFirstAidRecords(queryParams);
 
-  const filteredData = React.useMemo(() => {
-    if (!firstAidRecords) return [];
-    return firstAidRecords.filter((record: FirstAidRecord) => {
-      const searchText = `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [firstAidRecords, searchQuery]);
+  const firstAidRecords = useMemo(() => apiResponse?.results || [], [apiResponse?.results]);
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  const onRefresh = React.useCallback(async () => {
+  // const filteredData = React.useMemo(() => {
+  //   if (!apiResponse) return [];
+  //   return apiResponse.filter((record: FirstAidRecord) => {
+  //     const searchText = `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
+  //     return searchText.includes(searchQuery.toLowerCase());
+  //   });
+  // }, [apiResponse, searchQuery]);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      await refetch(); // Just refetch the main data query
     } catch (e) {
       console.error("Refetch error:", e);
     }
     setRefreshing(false);
   }, [refetch]);
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  if (isLoading) { return <LoadingState />;}
 
   if (isError) {
     return (
@@ -262,28 +274,38 @@ export default function IndivFirstAidRecords() {
           </View>
         </View>
 
+        <View className="px-4 flex-row items-center justify-between mb-4">
+          <Text className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+          </Text>
+          <Text className="text-sm font-medium text-gray-800">
+            Page {currentPage} of {totalPages}
+          </Text>
+        </View>
+        
         {/* Records List */}
         <FlatList
-          data={filteredData}
+          data={firstAidRecords }
           renderItem={({ item }) => <FirstAidRecordCard item={item} />}
           keyExtractor={(item) => item.farec_id?.toString() || `record-${Math.random()}`}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={() => (
-            <View className="flex-1 justify-center items-center py-20">
-              <FileText size={48} color="#D1D5DB" />
-              <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
-                No records found
-              </Text>
-              <Text className="text-gray-500 text-center">
-                {searchQuery
-                  ? ""
-                  : "No first aid records available for this patient."}
-              </Text>
-            </View>
-          )}
+          ListFooterComponent={
+            isFetching ? (
+              <View className="py-4 items-center">
+                <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+              </View>
+            ) : null
+          }          
         />
+        {totalPages > 1 && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </View>
     </PageLayout>
   );

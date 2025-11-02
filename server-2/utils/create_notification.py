@@ -42,10 +42,10 @@ class NotificationQueries:
         self,
         title: str,
         message: str,
-        sender,
+        # sender,
         recipients: list,
         notif_type: str,
-        target_obj=None,
+        # target_obj=None,
         web_route: str = None,
         web_params: dict = None,
         mobile_route: str = None,
@@ -54,15 +54,16 @@ class NotificationQueries:
         payload = {
             "title": title,
             "message": message,
-            "sender_id": sender,
+            # "sender": sender,
             "recipients": recipients or [],
             "notif_type": notif_type,
-            "target_obj": target_obj,
+            # "target_obj": target_obj,
             "web_route": web_route,
             "web_params": web_params or {},
             "mobile_route": mobile_route,
             "mobile_params": mobile_params or {},
         }
+        print("Payload",payload)
         try:
             response = requests.post(
                 f"{self.client}/notification/create/", 
@@ -80,11 +81,11 @@ class NotificationQueries:
         self,
         title: str,
         message: str,
-        sender,
+        # sender,
         recipients: list,
         notif_type: str,
         remind_at: datetime,
-        target_obj=None,
+        # target_obj=None,
         web_route=None,
         web_params=None,
         mobile_route=None,
@@ -93,11 +94,11 @@ class NotificationQueries:
         payload = {
             "title": title,
             "message": message,
-            "sender_id": sender,
+            # "sender_id": sender,
             "recipients": recipients or [],
             "notif_type": notif_type,
             "remind_at": remind_at,  # must be ISO 8601 string
-            "target_obj": target_obj,
+            # "target_obj": target_obj,
             "web_route": web_route,
             "web_params": web_params or {},
             "mobile_route": mobile_route,
@@ -115,3 +116,4 @@ class NotificationQueries:
         except requests.RequestException as e:
             print(f"Error creating reminder notification: {e}")
             return None
+        

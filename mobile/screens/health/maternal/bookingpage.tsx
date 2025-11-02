@@ -329,25 +329,7 @@ const PrenatalBookingPage: React.FC = () => {
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity 
-            className={`rounded-2xl p-5 items-center shadow-lg mb-4 ${
-              hasPendingAppointment || addPrenatalAppointmentMutation.isPending
-                ? 'bg-gray-300' 
-                : 'bg-blue-500'
-            }`} 
-            onPress={handleSubmit} disabled={hasPendingAppointment || addPrenatalAppointmentMutation.isPending} >
-            {addPrenatalAppointmentMutation.isPending ? (
-              <View className="flex-row items-center">
-                <ActivityIndicator size="small" color="blue" />
-                <Text className="text-lg font-bold text-white ml-3">Scheduling...</Text>
-              </View>
-            ) : hasPendingAppointment ? (
-              <Text className="text-lg font-bold text-gray-600">Appointment Pending</Text>
-            ) : (
-              <Text className="text-lg font-bold text-white">Schedule Appointment</Text>
-            )}
-          </TouchableOpacity>
-
+        
           {/* Warning message */}
           {hasPendingAppointment && (
             <View className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-4">
@@ -374,6 +356,25 @@ const PrenatalBookingPage: React.FC = () => {
             </Text>
           </View>
 
+            <TouchableOpacity 
+            className={`rounded-2xl p-5 items-center shadow-lg mb-4 ${
+              hasPendingAppointment || addPrenatalAppointmentMutation.isPending
+                ? 'bg-gray-300' 
+                : 'bg-blue-500'
+            }`} 
+            onPress={handleSubmit} disabled={hasPendingAppointment || addPrenatalAppointmentMutation.isPending} >
+            {addPrenatalAppointmentMutation.isPending ? (
+              <View className="flex-row items-center">
+                <ActivityIndicator size="small" color="blue" />
+                <Text className="text-lg font-bold text-white ml-3">Scheduling...</Text>
+              </View>
+            ) : hasPendingAppointment ? (
+              <Text className="text-lg font-bold text-gray-600">Appointment Pending</Text>
+            ) : (
+              <Text className="text-lg font-bold text-white">Schedule Appointment</Text>
+            )}
+          </TouchableOpacity>
+
           <View className='bg-white rounded-2xl shadow-lg p-6 mb-6'>
             <View className='flex-row items-center mb-4'>
               <View className='w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3'>
@@ -384,7 +385,7 @@ const PrenatalBookingPage: React.FC = () => {
             <View className='ml-5'>
               <View className='flex-row items-center mb-2'>
                 <Clock size={16} color="#6b7280" className='mr-2' />
-                <Text className='text-sm font-semibold text-gray-800'>Monday - Friday</Text>
+                <Text className='text-sm font-semibold text-gray-800'>  Monday - Friday</Text>
               </View>
               <Text className='text-sm text-gray-600 ml-6'>8:00 AM - 5:00 PM</Text>
             </View>

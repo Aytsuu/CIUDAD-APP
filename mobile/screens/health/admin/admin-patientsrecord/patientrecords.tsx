@@ -177,7 +177,7 @@ export default function PatientsRecord() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500)
 
   // Build query parameters for backend
   const queryParams = useMemo(

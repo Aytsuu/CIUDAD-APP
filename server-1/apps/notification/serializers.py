@@ -3,8 +3,6 @@ from .models import Notification, FCMToken, Recipient
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    sender_name = serializers.CharField(source='sender.username', read_only=True)
-    sender_profile = serializers.CharField(source='sender.profile_image', read_only=True)
     recipients = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -14,9 +12,6 @@ class NotificationSerializer(serializers.ModelSerializer):
             'notif_title',
             'notif_message',
             'notif_type',
-            'sender',
-            'sender_name',
-            'sender_profile',
             'notif_created_at',
             'recipients',
             'web_route',
@@ -24,7 +19,8 @@ class NotificationSerializer(serializers.ModelSerializer):
             'mobile_route',
             'mobile_params',
         ]
-        read_only_fields = ['notif_id', 'notif_created_at', 'sender']
+        read_only_fields = ['notif_id', 'notif_created_at']
+
 
 class RecipientSerializer(serializers.ModelSerializer):
     notif_id = serializers.IntegerField(source='notif.notif_id', read_only=True)
@@ -33,10 +29,9 @@ class RecipientSerializer(serializers.ModelSerializer):
     notif_type = serializers.CharField(source='notif.notif_type', read_only=True)
     notif_created_at = serializers.DateTimeField(source='notif.notif_created_at', read_only=True)
     resident = serializers.SerializerMethodField()
-    sender_name = serializers.CharField(source='notif.sender.username', read_only=True)
-    sender_profile = serializers.CharField(source='notif.sender.profile_image', read_only=True)
     redirect_url = serializers.SerializerMethodField()
-    mobile_screen = serializers.SerializerMethodField()
+    mobile_route = serializers.SerializerMethodField()
+    
     class Meta:
         model = Recipient
         fields = [
@@ -47,28 +42,38 @@ class RecipientSerializer(serializers.ModelSerializer):
             'is_read',
             'notif_created_at',
             'resident',
-            'sender_name',
-            'sender_profile',
             'redirect_url',
-            'mobile_screen',
+            'mobile_route',
         ]
         read_only_fields = fields
 
     def get_resident(self, obj):
-        if obj.rp:
+        # Access ResidentProfile through Account (obj.acc.rp)
+        if obj.acc and hasattr(obj.acc, 'rp') and obj.acc.rp:
+            rp = obj.acc.rp
             name = None
-            if hasattr(obj.rp, 'per') and obj.rp.per:
+            
+            # Try to get name from PersonalInfo
+            if hasattr(rp, 'per') and rp.per:
                 name = (
-                    getattr(obj.rp.per, 'per_fullname', None)
-                    or getattr(obj.rp.per, 'full_name', None)
-                    or f"{getattr(obj.rp.per, 'first_name', '')} {getattr(obj.rp.per, 'last_name', '')}".strip()
+                    getattr(rp.per, 'per_fullname', None)
+                    or getattr(rp.per, 'full_name', None)
+                    or f"{getattr(rp.per, 'first_name', '')} {getattr(rp.per, 'last_name', '')}".strip()
                     or None
                 )
 
             return {
-                "rp_id": obj.rp.rp_id,
+                "acc_id": obj.acc.acc_id,
+                "rp_id": rp.rp_id,
                 "name": name
             }
+        
+        if obj.acc:
+            return {
+                "acc_id": obj.acc.acc_id,
+                "name": obj.acc.username or obj.acc.email
+            }
+        
         return None
 
     def get_redirect_url(self, obj):
@@ -79,13 +84,14 @@ class RecipientSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def get_mobile_screen(self, obj):
+    def get_mobile_route(self, obj):
         if obj.notif.mobile_route:
             return {
-                'path': obj.notif.mobile_route,
+                'screen': obj.notif.mobile_route,
                 'params': obj.notif.mobile_params or {}
             }
         return None
+
 
 class FCMTokenSerializer(serializers.ModelSerializer):
     class Meta:

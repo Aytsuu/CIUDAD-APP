@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router"; // UPDATED: Added useLocalSearchParams
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,13 +36,15 @@ const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: an
 
 export default function MyFpRecordsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params if in admin mode
+  const patIdFromParams = params.pat_id;
   const { user } = useAuth();
   // If 'resident' is not part of User type, add a type guard or update the type definition
   const rp_id = user?.rp;
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 
-  // Fetch patient to get pat_id
+  // Fetch patient to get pat_id (only if no pat_id provided in params)
   const {
     data: patientData,
     isLoading: isPatientLoading,
@@ -50,9 +52,11 @@ export default function MyFpRecordsScreen() {
     error: patientError,
     refetch: refetchPatient,
     isFetching: isPatientFetching
-  } = usePatientByResidentId(rp_id || "");
+  } = usePatientByResidentId(rp_id || "", {
+    enabled: !patIdFromParams && !!rp_id, // Skip if pat_id provided (admin mode)
+  });
 
-  const pat_id = patientData?.pat_id || null;
+  const pat_id = patIdFromParams || patientData?.pat_id || null;
 
   // Fetch FP records using pat_id
   const {
@@ -122,7 +126,7 @@ export default function MyFpRecordsScreen() {
             <TouchableOpacity 
               onPress={() => router.push({
                 pathname: "/(health)/family-planning/fp-details",
-                params: { fprecordId: item.fprecord }
+                params: { fprecordId: item.fprecord, pat_id: pat_id } // UPDATED: Pass pat_id for consistency in downstream screens
               })}
               className="p-4"
             >
@@ -219,7 +223,7 @@ export default function MyFpRecordsScreen() {
         >
           <ChevronLeft size={24} className="text-slate-700" />
         </TouchableOpacity>}
-        headerTitle={<Text className="text-slate-900 text-[13px]">My Family Planning Records</Text>}
+        headerTitle={<Text className="text-slate-900 text-[13px]">{patIdFromParams ? 'Family Planning Records' : 'My Family Planning Records'}</Text>} // UPDATED: Dynamic title based on admin mode
         rightAction={<View className="w-10 h-10" />} 
         children={undefined}
       />

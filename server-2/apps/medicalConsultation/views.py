@@ -26,7 +26,7 @@ from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
-
+from utils.create_notification import NotificationQueries
 
 
 
@@ -136,7 +136,7 @@ class CombinedHealthRecordsView(APIView):
             'assigned_to'
         ).prefetch_related(
             'child_health_vital_signs__vital',
-            'child_health_vital_signs__bm',  # Important: prefetch body measurements
+            'child_health_vital_signs__bm',  # Important: prefetch body measuents
             'child_health_vital_signs__find',  # Important: prefetch findings
             'child_health_notes',
             'child_health_supplements__medrec',
@@ -685,6 +685,40 @@ class CreateMedicalConsultationView(APIView):
                 app_id=appointment,  # Link the appointment if exists
             )
 
+            # Create or update PhilHealthLaboratory instance
+            lab_data = {
+                'is_cbc': data.get('is_cbc', False),
+                'is_urinalysis': data.get('is_urinalysis', False),
+                'is_fecalysis': data.get('is_fecalysis', False),
+                'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
+                'is_creatine': data.get('is_creatine', False),
+                'is_hba1c': data.get('is_hba1c', False),
+                'is_chestxray': data.get('is_chestxray', False),
+                'is_papsmear': data.get('is_papsmear', False),
+                'is_fbs': data.get('is_fbs', False),
+                'is_oralglucose': data.get('is_oralglucose', False),
+                'is_lipidprofile': data.get('is_lipidprofile', False),
+                'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
+                'is_ecg': data.get('is_ecg', False),
+                'others': data.get('others', ''),
+            }
+
+            lab_instance = PhilHealthLaboratory.objects.create(**lab_data)
+
+            # Create MedicalConsultation_Record and link the lab instance
+            medrec = MedicalConsultation_Record.objects.create(
+                patrec=patrec,
+                vital=vital,
+                bm=bm,
+                find=None,
+                medrec_chief_complaint=data["medrec_chief_complaint"],
+                staff=staff,
+                assigned_to=assigned_staff,
+                is_phrecord=is_phrecord,
+                app_id=appointment,
+                lab=lab_instance  # Link the lab instance here
+            )
+
             # 🔹 Update appointment status if appointment exists
             if appointment:
                 print(f"DEBUG: Updating appointment status from '{appointment.status}' to 'in queue'")
@@ -791,25 +825,13 @@ class CreateMedicalConsultationView(APIView):
                 "is_phrecord": is_phrecord,
                 "family_illnesses_count": len(famselected_illnesses),
                 "personal_illnesses_count": len(myselected_illnesses),
+                "lab_id": lab_instance.lab_id  # Include lab ID in the response
             }
 
             # Add appointment info if appointment was linked
             if appointment:
                 response_data["appointment_id"] = appointment.id
                 response_data["appointment_status_updated"] = "in queue"
-
-            # Add PhilHealth details info ONLY if it's a PhilHealth record
-            if is_phrecord and phil_details_instance:
-                response_data["phil_details_id"] = phil_details_instance.phil_id
-                
-                if tts_instance:
-                    response_data["tts_id"] = tts_instance.tts_id
-                    response_data["tts_status"] = tts_instance.tts_status
-                    response_data["tts_linked_to_phil"] = True  # ✅ Confirm linkage
-
-                if obs_instance:
-                    response_data["obs_id"] = obs_instance.obs_id
-                    response_data["obs_linked_to_phil"] = True  # ✅ Confirm linkage
 
             return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -1505,7 +1527,7 @@ class MedicalConsultationBookingView(APIView):
     @transaction.atomic
     def post(self, request):
         data = request.data
-
+        
         # 1. Get and validate required data
         rp_id = data.get('rp_id')
         scheduled_date_str = data.get('scheduled_date')
@@ -1573,7 +1595,7 @@ class MedicalConsultationBookingView(APIView):
             date_slot.pm_current_bookings += 1
 
         date_slot.save()
-
+        
         # Create appointment
         try:
             resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
@@ -1585,11 +1607,51 @@ class MedicalConsultationBookingView(APIView):
                 status='pending'
             )
             
+            
+            notifier = NotificationQueries()
+            resident_name = self._get_resident_name(resident_profile)
+            formatted_date = scheduled_date.strftime("%B %d, %Y")
+            
+            # resident_success = notifier.create_notification(
+            #     title="Appointment Scheduled",
+            #     message=f"Your medical consultation is scheduled on {formatted_date} ({meridiem}).",
+            #     recipients=[str(resident_profile.rp_id)],
+            #     notif_type="APPOINTMENT_SCHEDULED",
+            #     web_route="/services/medical-consultation/my-appointments",
+            #     web_params={"appointment_id": str(appointment.id)},
+            #     mobile_route="/(health)/medconsultation/my-medappointments",
+            #     mobile_params={},
+            # )
+            
+            # 2. Notify Staff (all active medical staff)
+            medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
+            print(f"Found {medical_staff.count()} medical staff members")
+    
+            staff_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
+            print("STAFFS: ",staff_recipients)
+            
+            if staff_recipients:
+                staff_success = notifier.create_notification(
+                    title="New Medical Consultation Appointment",
+                    message=f"Patient: {resident_name} on {formatted_date} ({meridiem}). Complaint: {chief_complaint}",
+                    recipients=staff_recipients,
+                    notif_type="NEW_MEDICAL_APPOINTMENT",
+                    web_route="/services/medical-consultation/appointments/pending",
+                    web_params="",
+                    mobile_route="/(health)/medconsultation/my-records",
+                    mobile_params={
+                        # "appointment_id": str(appt.id),
+                        # "pat_id": resident_rp_id,  # ✅ Add patient ID
+                        # "mode": "admin",
+                        # "focus_tab": "consultations"  # ✅ Optional: specify which tab to focus on
+                    },
+                )
             return Response({
                 'success': True,
                 'appointment_id': appointment.id,
                 'scheduled_date': scheduled_date.isoformat(),
-                'meridiem': meridiem
+                'meridiem': meridiem,
+                
             }, status=201)
             
         except ResidentProfile.DoesNotExist:
@@ -1600,7 +1662,14 @@ class MedicalConsultationBookingView(APIView):
                 date_slot.pm_current_bookings -= 1
             date_slot.save()
             return Response({'error': 'Resident not found.'}, status=400)
-        
+
+    def _get_resident_name(self, resident_profile):
+            """Helper to get resident name"""
+            if resident_profile and hasattr(resident_profile, 'per'):
+                per = resident_profile.per
+                return f"{getattr(per, 'per_fname', '')} {getattr(per, 'per_lname', '')}".strip()
+            return "Resident"
+    
 class UserAppointmentsView(generics.ListAPIView):
     serializer_class = MedConsultAppointmentSerializer
     pagination_class = StandardResultsPagination
@@ -1802,8 +1871,7 @@ class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
         search_query = self.request.GET.get('search', '').strip()
         date_filter = self.request.GET.get('date_filter', 'all').strip()
         
-        # Base queryset for pending appointments with related data
-        queryset = MedConsultAppointment.objects.filter(status='confirmed')
+        # Base queryset for pending appointments with related data        queryset = MedConsultAppointment.objects.filter(status='confirmed')
         
         # Apply search filter if provided
         if search_query:
@@ -2023,3 +2091,332 @@ class MedicalUserAppointmentsView(generics.ListAPIView):
                 'success': False,
                 'error': f'Error fetching appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+# =====DOCTOR REPORT==========
+
+class  MonthlyReportConsulted(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request, assigned_to=None):
+        # Get query parameters
+        search_query = request.query_params.get('search', '')
+        record_type = request.query_params.get('record_type', 'all')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
+        
+        # Prefetch related data for child health records with proper joins
+        child_health_queryset = ChildHealth_History.objects.select_related(
+            'chrec__patrec__pat_id__rp_id__per',
+            'chrec__patrec__pat_id__trans_id__tradd_id',
+            'assigned_to'
+        ).prefetch_related(
+            'child_health_vital_signs__vital',
+            'child_health_vital_signs__bm',  # Important: prefetch body measurements
+            'child_health_vital_signs__find',  # Important: prefetch findings
+            'child_health_notes',
+            'child_health_supplements__medrec',
+            'exclusive_bf_checks',
+            'immunization_tracking__vachist',
+            'supplements_statuses'
+        )
+        
+        # Prefetch related data for medical consultation records
+        med_consult_queryset = MedicalConsultation_Record.objects.select_related(
+            'patrec__pat_id__rp_id__per',
+            'patrec__pat_id__trans_id__tradd_id',
+            'vital',
+            'bm',
+            'find',
+            'staff__rp__per',
+            'assigned_to'
+        ).filter(medrec_status='completed')
+        
+        # Apply assigned_to filter
+        if assigned_to:
+            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to, status="check-up")
+            med_consult_queryset = med_consult_queryset.filter(assigned_to_id=assigned_to)
+        
+        # Apply search filter
+        if search_query:
+            child_health_queryset = child_health_queryset.filter(
+                Q(chrec__ufc_no__icontains=search_query) |
+                Q(chrec__family_no__icontains=search_query) |
+                Q(tt_status__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_fname__icontains=search_query)
+            )
+            
+            med_consult_queryset = med_consult_queryset.filter(
+                Q(medrec_chief_complaint__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=search_query)
+            )
+        
+        # Apply record type filter
+        if record_type != 'all':
+            if record_type == 'child-health':
+                med_consult_queryset = MedicalConsultation_Record.objects.none()
+            elif record_type == 'medical-consultation':
+                child_health_queryset = ChildHealth_History.objects.none()
+        
+        combined_data = []
+        
+        # Process child health records using serializers
+        for record in child_health_queryset:
+            # Use the ChildHealthHistoryFullSerializer to get all related data properly
+            serializer = ChildHealthHistoryFullSerializer(record)
+            serialized_data = serializer.data
+            
+            # Extract patient details using your existing method
+            chrec = record.chrec
+            patrec = chrec.patrec
+            patient = patrec.pat_id
+            patient_details = self._get_patient_details(patient)
+            
+            # Add patient details to the serialized data
+            if 'chrec_details' not in serialized_data:
+                serialized_data['chrec_details'] = {}
+            if 'patrec_details' not in serialized_data['chrec_details']:
+                serialized_data['chrec_details']['patrec_details'] = {}
+            
+            serialized_data['chrec_details']['patrec_details']['pat_details'] = patient_details
+            
+            combined_data.append({
+                'record_type': 'child-health',
+                'data': serialized_data
+            })
+        
+        # Process medical consultation records
+        for record in med_consult_queryset:
+            patrec = record.patrec
+            patient = patrec.pat_id
+            serializer = MedicalConsultationRecordSerializer(record)
+            serialized_data = serializer.data
+            # Get patient details
+            patient_details = self._get_patient_details(patient)
+            
+            # Get staff details
+            staff_details = None
+            if record.staff and hasattr(record.staff, 'rp') and record.staff.rp:
+                staff_details = {
+                    'rp': {
+                        'per': {
+                            'per_fname': record.staff.rp.per.per_fname if hasattr(record.staff.rp.per, 'per_fname') else '',
+                            'per_lname': record.staff.rp.per.per_lname if hasattr(record.staff.rp.per, 'per_lname') else '',
+                            'per_mname': record.staff.rp.per.per_mname if hasattr(record.staff.rp.per, 'per_mname') else '',
+                            'per_suffix': record.staff.rp.per.per_suffix if hasattr(record.staff.rp.per, 'per_suffix') else '',
+                            'per_dob': record.staff.rp.per.per_dob.isoformat() if hasattr(record.staff.rp.per, 'per_dob') and record.staff.rp.per.per_dob else ''
+                        }
+                    }
+                }
+            
+            # Get vital signs
+            vital_data = {}
+            if record.vital:
+                vital_data = {
+                    'vital_bp_systolic': record.vital.vital_bp_systolic,
+                    'vital_bp_diastolic': record.vital.vital_bp_diastolic,
+                    'vital_temp': record.vital.vital_temp,
+                    'vital_pulse': record.vital.vital_pulse,
+                    'vital_RR': record.vital.vital_RR
+                }
+            
+            # Get BMI details
+            bmi_data = {}
+            if record.bm:
+                bmi_data = {
+                    'height': record.bm.height,
+                    'weight': record.bm.weight
+                }
+            
+            combined_data.append({
+                'record_type': 'medical-consultation',
+                'data': serialized_data  # This contains ALL attributes from your serializer
+
+            })
+        
+        # Sort by created_at (most recent first)
+        combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=True)
+        
+        # Manual pagination
+        total_count = len(combined_data)
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_data = combined_data[start_index:end_index]
+        
+        # Calculate totals
+        residents = 0
+        transients = 0
+        
+        for record in combined_data:
+            pat_details = None
+            if record['record_type'] == 'child-health':
+                pat_details = record['data'].get('chrec_details', {}).get('patrec_details', {}).get('pat_details', {})
+            else:
+                pat_details = record['data'].get('patrec_details', {}).get('patient_details', {})
+            
+            if pat_details and pat_details.get('pat_type') == 'Resident':
+                residents += 1
+            elif pat_details:
+                transients += 1
+        
+        total_patients = residents + transients
+        
+        # Build response
+        response_data = {
+            'count': total_count,
+            'next': None if end_index >= total_count else page + 1,
+            'previous': None if page == 1 else page - 1,
+            'results': paginated_data,
+            'totals': {
+                'residents': residents,
+                'transients': transients,
+                'total_patients': total_patients
+            }
+        }
+        
+        return Response(response_data)
+    
+    def _get_patient_details(self, patient):
+        """Helper method to extract patient details"""
+        if patient.pat_type == 'Resident' and patient.rp_id and hasattr(patient.rp_id, 'per'):
+            per = patient.rp_id.per
+            address = getattr(patient.rp_id, 'address', None)
+            
+            return {
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type,
+                'personal_info': {
+                    'per_fname': per.per_fname,
+                    'per_lname': per.per_lname,
+                    'per_mname': per.per_mname,
+                    'per_sex': per.per_sex,
+                    'per_dob': per.per_dob.isoformat() if per.per_dob else None
+                },
+                'address': {
+                    'add_street': address.add_street if address else '',
+                    'add_sitio': address.add_sitio if address else '',
+                    'add_barangay': address.add_barangay if address else '',
+                    'add_city': address.add_city if address else '',
+                    'add_province': address.add_province if address else '',
+                    'full_address': f"{address.add_street if address else ''}, {address.add_sitio if address else ''}, {address.add_barangay if address else ''}, {address.add_city if address else ''}, {address.add_province if address else ''}".strip(', ')
+                },
+                'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
+            }
+        
+        elif patient.pat_type == 'Transient' and patient.trans_id:
+            trans = patient.trans_id
+            
+            # Get address from TransientAddress if available
+            address = trans.tradd_id if hasattr(trans, 'tradd_id') else None
+            
+            return {
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type,
+                'personal_info': {
+                    'per_fname': trans.tran_fname,
+                    'per_lname': trans.tran_lname,
+                    'per_mname': trans.tran_mname,
+                    'per_sex': trans.tran_sex,
+                    'per_dob': trans.tran_dob.isoformat() if trans.tran_dob else None
+                },
+                'address': {
+                    'add_street': address.tradd_street if address else '',
+                    'add_sitio': address.tradd_sitio if address else '',
+                    'add_barangay': address.tradd_barangay if address else '',
+                    'add_city': address.tradd_city if address else '',
+                    'add_province': address.tradd_province if address else '',
+                    'full_address': f"{address.tradd_street if address else ''}, {address.tradd_sitio if address else ''}, {address.tradd_barangay if address else ''}, {address.tradd_city if address else ''}, {address.tradd_province if address else ''}".strip(', ')
+                } if address else {
+                    'add_street': '',
+                    'add_sitio': '',
+                    'add_barangay': '',
+                    'add_city': '',
+                    'add_province': '',
+                    'full_address': ''
+                },
+                'households': []  # Transients typically don't have households
+            }
+        
+        return {}
+    
+def send_missed_appointment_notifications(appointment):
+    """
+    Sends notifications when a MedConsultAppointment is marked as 'missed'
+    """
+    try:
+        notifier = NotificationQueries()
+
+        # 1. Get Resident (Patient)
+        resident = appointment.rp
+        resident_name = "Resident"
+        resident_rp_id = None
+
+        if resident and resident.per:
+            resident_name = f"{resident.per.per_fname} {resident.per.per_lname}".strip()
+            resident_rp_id = str(resident.rp_id)
+
+        # 2. Prepare common data
+        scheduled = appointment.scheduled_date
+        meridiem = "AM" if appointment.meridiem == "AM" else "PM"
+        formatted_date = scheduled.strftime("%B %d, %Y")
+        complaint = appointment.chief_complaint or "Medical Consultation"
+
+        # === NOTIFY RESIDENT ===
+        if resident_rp_id:
+            resident_success = notifier.create_notification(
+                title="Missed Appointment",
+                message=(
+                    f"You missed your scheduled appointment on {formatted_date} ({meridiem}).\n"
+                    f"Chief Complaint: {complaint}\n"
+                    "Please reschedule at your earliest convenience."
+                ),
+                # sender="00001250924",  # System
+                recipients=[resident_rp_id],
+                notif_type="APPOINTMENT_MISSED",
+                # target_obj=None,
+                web_route="/services/medical-consultation/my-appointments",
+                web_params={"appointment_id": str(appointment.id)},
+                mobile_route="/(health)/medical-consultation/my-appointments",
+                mobile_params={"appointment_id": str(appointment.id)},
+            )
+            print(f"{'Success' if resident_success else 'Failed'}: Resident missed appointment notification → {resident_name}")
+
+        # === NOTIFY ADMIN / STAFF ===
+        # Option: Notify all active staff with role 'admin', 'nurse', or 'doctor'
+        medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
+
+        admin_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
+
+        if admin_recipients:
+            admin_success = notifier.create_notification(
+                title="Patient Missed Appointment",
+                message=(
+                    f"Resident {resident_name} missed their appointment.\n"
+                    f"Date: {formatted_date} ({meridiem})\n"
+                    f"Complaint: {complaint}\n"
+                    f"Appointment ID: {appointment.id}"
+                ),
+                # sender="00001250924",
+                recipients=admin_recipients,
+                notif_type="APPOINTMENT_MISSED_ADMIN",
+                # target_obj=None,
+                web_route="/services/medical-consultation/records",
+                web_params={"status": "missed"},
+                mobile_route="/(admin)/appointments/missed",
+                mobile_params={},
+            )
+            print(f"{'Success' if admin_success else 'Failed'}: Admin missed appointment notification → {len(admin_recipients)} staff")
+
+        return True
+
+    except Exception as e:
+        print(f"Error sending missed appointment notifications: {str(e)}")
+        return False
+    
+    
