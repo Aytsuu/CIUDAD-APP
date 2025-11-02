@@ -13,6 +13,14 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
+import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
+import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
+import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
+import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+
+// import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
@@ -92,6 +100,12 @@ export const getItemsConfig = (
       {
         dashboard: "WASTE",
       },
+      {
+        dashboard: "ANIMAL BITES ",
+        card: [
+          <AnimalBiteSectionCards key="animal-bite-cards" initialMonth={currentMonth} />,
+        ],
+      },
     ];
   }
 
@@ -138,18 +152,40 @@ export const getItemsConfig = (
           title: "Maternal",
           element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
         },
+        {
+          title: "Animal Bites",
+          element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
+        },
         ],
+        sidebar:[
+          {
+            title: "Pending Medical Appointments",
+            element: <PendingMedicalAppointmentsSidebar />,
+          },
+          // {
+          //   title: "Pending Prenatal Appointments",
+          //   element: <PendingPrenatalAppSidebar />,
+          // },
+          {
+            title: "Pending Medicine Requests",
+            element: <PendingMedicineRequestsSidebar />,
+          },
+        ]
       },
 
       {
         dashboard: "INVENTORY",
         sidebar: [
+          // {
+          //   title: "Weekly Schedule",
+          //   element: <SchedulerSidebar />,
+          // },
           {
-            title: "Most Requested Medicine",
+            title: "Medicine",
             element: <MedicineDistributionSidebar />,
           },
           {
-            title: "Most used FirstAid",
+            title: "First Aid",
             element: <FirstAidDistributionSidebar />,
           },
           {
