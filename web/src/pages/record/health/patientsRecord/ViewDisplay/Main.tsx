@@ -32,7 +32,7 @@ import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
 import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent} from "@/ProtectedComponent";
 
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
@@ -58,12 +58,11 @@ export default function ViewPatientRecord() {
   const { data: medconCountData } = useMedConCount(patientId ?? "");
   const medconCount = medconCountData?.medcon_count;
 
-  const { data: famplanCountData } = useFamplanCount(patientId ?? "");
-  const famplanCount = famplanCountData?.count;
+  const { data: famplanCount  } = useFamplanCount(patientId ?? "");
+  console.log("Main.tsx - famplanCount:", famplanCount);
 
   const { data: animalbitesCountData } = useAnimalbitesCount(patientId ?? "");
   const animalbitesCount = animalbitesCountData?.count;
-  console.log("Animal Bites Count:", animalbitesCount);
 
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
@@ -94,7 +93,7 @@ export default function ViewPatientRecord() {
         barangay: currentPatient.address?.add_barangay,
         city: currentPatient.address?.add_city,
         province: currentPatient.address?.add_province,
-        sitio: currentPatient.address?.add_sitio
+        sitio: currentPatient.address?.add_sitio,
       });
     }
   }, [currentPatient]);
@@ -122,14 +121,14 @@ export default function ViewPatientRecord() {
         sitio: currentPatient.address?.add_sitio || "",
         barangay: currentPatient.address?.add_barangay || "",
         city: currentPatient.address?.add_city || "",
-        province: currentPatient.address?.add_province || ""
+        province: currentPatient.address?.add_province || "",
       },
       philhealthId,
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
       chronicConditions: currentPatient.chronicConditions ?? "N/A",
       lastVisit: currentPatient.lastVisit ?? "",
-      visits: currentPatient.visits ?? []
+      visits: currentPatient.visits ?? [],
     };
   }, [currentPatient]);
   console.log("Transformed Patient Data:", patientData);
@@ -145,8 +144,8 @@ export default function ViewPatientRecord() {
       dateOfBirth: "",
       patientType: "",
       houseNo: "",
-      address: { street: "", sitio: "", barangay: "", city: "", province: "" }
-    }
+      address: { street: "", sitio: "", barangay: "", city: "", province: "" },
+    },
   });
 
   useEffect(() => {
@@ -157,7 +156,13 @@ export default function ViewPatientRecord() {
 
   const getFullAddress = () => {
     if (!currentPatient || !currentPatient.address) return "No address provided";
-    const addressParts = [currentPatient.address.add_street, currentPatient.address.add_sitio, currentPatient.address.add_barangay, currentPatient.address.add_city, currentPatient.address.add_province].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
+    const addressParts = [
+      currentPatient.address.add_street,
+      currentPatient.address.add_sitio,
+      currentPatient.address.add_barangay,
+      currentPatient.address.add_city,
+      currentPatient.address.add_province,
+    ].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
     return addressParts.length > 0 ? addressParts.join(", ") : "No address provided";
   };
 
@@ -179,12 +184,12 @@ export default function ViewPatientRecord() {
         add_barangay: getAddressField(currentPatient?.address?.add_barangay),
         add_city: getAddressField(currentPatient?.address?.add_city),
         add_province: getAddressField(currentPatient?.address?.add_province),
-        add_sitio: getAddressField(currentPatient?.address?.add_sitio)
+        add_sitio: getAddressField(currentPatient?.address?.add_sitio),
       },
       households: [
         {
-          hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? ""
-        }
+          hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? "",
+        },
       ],
       personal_info: {
         per_fname: currentPatient?.personal_info.per_fname ?? patientData?.firstName ?? "",
@@ -192,8 +197,8 @@ export default function ViewPatientRecord() {
         per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
         per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
         per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
-        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? ""
-      }
+        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? "",
+      },
     };
 
     return linkData;
@@ -201,7 +206,9 @@ export default function ViewPatientRecord() {
 
   const formatFullAddressForChildHealth = (address: any): string => {
     if (!address) return "No address provided";
-    const addressParts = [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
+    const addressParts = [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province].filter(
+      (part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a"
+    );
     return addressParts.length > 0 ? addressParts.join(", ") : "No address provided";
   };
 
@@ -259,7 +266,7 @@ export default function ViewPatientRecord() {
         place_of_delivery_type: chrecDetails.place_of_delivery_type || "",
         pod_location: chrecDetails.pod_location || "",
         birth_order: chrecDetails.birth_order || 0,
-        tt_status: record.tt_status || ""
+        tt_status: record.tt_status || "",
       };
     });
   }, [rawChildHealthRecords]);
@@ -300,13 +307,13 @@ export default function ViewPatientRecord() {
             tradd_province: formData.address.province,
           },
         },
-      }
+      };
       await updatePatientData.mutateAsync({
         patientId: currentPatient.pat_id,
-        patientData: updatedData
-      })
-      setIsEditable(false)
-      showSuccessToast("Patient data updated successfully!")
+        patientData: updatedData,
+      });
+      setIsEditable(false);
+      showSuccessToast("Patient data updated successfully!");
     } catch (error) {
       console.error("Error saving patient data: ", error);
       showErrorToast("Failed to update patient data. Please try again.");
@@ -380,7 +387,7 @@ export default function ViewPatientRecord() {
                   </div>
                 </div>
 
-                <ProtectedComponentButton exclude={["DOCTOR"]}>
+                <ProtectedComponent exclude={["DOCTOR"]}>
                   <div className="flex gap-2 sm:ml-auto">
                     {isTransient && activeTab === "personal" && isEditable == false && (
                       <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
@@ -389,7 +396,7 @@ export default function ViewPatientRecord() {
                       </Button>
                     )}
                   </div>
-                </ProtectedComponentButton>
+                </ProtectedComponent>
               </div>
             }
             cardClassName="border shadow-sm rounded-lg"
@@ -411,7 +418,9 @@ export default function ViewPatientRecord() {
             </TabsTrigger>
           </TabsList>
 
-          {activeTab === "personal" && <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />}
+          {activeTab === "personal" && (
+            <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />
+          )}
 
           {activeTab === "medical" && (
             <Records

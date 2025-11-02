@@ -10,7 +10,7 @@ from apps.complaint.serializers import ComplaintSerializer
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
-from apps.notification.create_notification import create_notification
+from apps.notification.utils import create_notification
 from ..serializers import ComplaintFileSerializer
 # from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 

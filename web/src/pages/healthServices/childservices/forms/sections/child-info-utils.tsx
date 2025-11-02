@@ -15,8 +15,8 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     childMname: toTitleCase(patient.personal_info?.per_mname || ""),
     childSex: toTitleCase(patient.personal_info?.per_sex || ""),
     childDob: patient.personal_info?.per_dob || "",
-    residenceType: toTitleCase(patient.pat_type || "Resident"),
-    address: toTitleCase(patient.address?.full_address || "No address provided"),
+    residenceType: toTitleCase(patient.pat_type || ""),
+    address: toTitleCase(patient.address?.full_address || ""),
     landmarks: "",
     trans_id: patient.trans_id || "",
     rp_id: patient.rp_id?.rp_id || "",
@@ -35,7 +35,7 @@ export const populatePatientData = (patient: any | null): Partial<FormData> => {
     fatherdob: "",
     fatherAge: "",
     fatherOccupation: "",
-    tt_status: patient.family_head_info?.family_heads?.tt_status || "",
+    tt_status: patient.additional_info?.mother_tt_status?.status || "",
   };
 
   if (patient.personal_info?.per_dob) {

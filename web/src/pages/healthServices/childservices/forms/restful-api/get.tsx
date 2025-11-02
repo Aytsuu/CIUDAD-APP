@@ -35,22 +35,43 @@ export const getNutrionalSummary = async (chrec_id: string) => {
     throw error;
   }
 };
-
-export const getChildHealthHistory = async (chrec: string) => {
+export const getChildHealthHistory = async (
+  chrec: string,
+  params?: { page?: number; page_size?: number }
+) => {
   try {
-    const response = await api2.get(`/child-health/history/${chrec}/`);
+    const queryParams = new URLSearchParams();
+    queryParams.append("page_size", (params?.page_size ?? 10).toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const url = `/child-health/history/${chrec}/${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    const response = await api2.get(url);
     return response.data;
   } catch (err) {
     console.error(err);
     throw err;
-
   }
 };
 
+
+
+export const getChildHealthCurrentAndPreviousHistory = async (
+  chrec: string,
+  chhist: string,
+) => {
+  try {
+    const url = `/child-health/history-current-previous/${chrec}/${chhist}/`;
+    const response = await api2.get(url);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
 
 export const getNutritionalStatus = async (id: string) => {
   try {
-    const response = await api2.get(`/patientrecords/body-measurements/${id}/`);
+    const response = await api2.get(`/patientrecords/children-body-measurements/${id}/`);
     return response.data;
   } catch (err) {
     console.error(err);
@@ -58,6 +79,7 @@ export const getNutritionalStatus = async (id: string) => {
 
   }
 };
+
 export const getNextufc = async () => {
   try {
     const response = await api2.get(`/child-health/next-ufcno/`);

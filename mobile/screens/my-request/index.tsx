@@ -1,7 +1,7 @@
 import { Text, View, TouchableOpacity } from "react-native"
-import ScreenLayout from "../_ScreenLayout"
 import { useRouter } from "expo-router";
 import {ChevronRight} from "@/lib/icons/ChevronRight"
+import PageLayout from "../_PageLayout";
 
 export default () => {
   const router = useRouter();
@@ -40,10 +40,8 @@ export default () => {
 ]
 
   return (
-    <ScreenLayout
-      showBackButton={false}
-      showExitButton={false}
-      headerBetweenAction={<Text className="text-[13px]">My Requests</Text>}
+    <PageLayout
+      headerTitle={<Text className="text-gray-900 text-[13px]">Inbox</Text>}
     >
       <View className="flex-1 px-5">
         <Text className="text-sm text-center text-gray-600 leading-6 px-5 mb-4">
@@ -81,6 +79,6 @@ export default () => {
           ))
         }
       </View>
-    </ScreenLayout>
+    </PageLayout>
   )
 }

@@ -17,6 +17,9 @@ class Medicinelist(models.Model):
     med_id = models.CharField(primary_key=True, max_length=20, editable=False)
     med_name = models.CharField(max_length=100)
     med_type = models.CharField(max_length=100, default='')
+    med_dsg = models.PositiveIntegerField(default=0)
+    med_dsg_unit = models.CharField(max_length=100,default="")
+    med_form = models.CharField(max_length=100, default="") 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     cat = models.ForeignKey(Category, on_delete=models.PROTECT)   
@@ -171,9 +174,6 @@ class Inventory(models.Model):
         
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
-    # minv_dsg = models.PositiveIntegerField(default=0)
-    minv_dsg_unit = models.CharField(max_length=100,default="N/A")
-    minv_form = models.CharField(max_length=100, default="N/A") 
     minv_qty = models.PositiveIntegerField(default=0,)
     minv_qty_unit = models.CharField(max_length=100, default="N/A") 
     minv_pcs = models.PositiveIntegerField(default=0)

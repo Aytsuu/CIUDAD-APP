@@ -11,6 +11,7 @@ import { useAddPrenatalAppointment, useCheckOrCreatePatient } from './queries/ad
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetScheduler } from '../admin/admin-scheduler/queries/schedulerFetchQueries';
 import { usePrenatalAppointmentRequestsByDate } from './queries/fetch';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface User {
   name: string;
@@ -52,16 +53,35 @@ const PrenatalBookingPage: React.FC = () => {
   const { data: schedulersData = [] } = useGetScheduler();
 
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
-  };
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+  const getDisplayDate = (date: Date): string => {
+  return date.toLocaleDateString('en-PH', {
+    timeZone: 'Asia/Manila',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
 
   const formattedSelectedDate = formatDate(selectedDate);
+  useEffect(() => {
+  console.log('Selected date:', selectedDate);
+  console.log('Formatted date for API:', formattedSelectedDate);
+  console.log('Current Philippines time:', new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }));
+}, [selectedDate, formattedSelectedDate]);
 
   const { data: appointmentRequests = [], isLoading: isLoadingAppointments } = usePrenatalAppointmentRequestsByDate(
     rp_id || '', 
     formattedSelectedDate
   );
 
+ 
+  
   useEffect(() => {
     if (appointmentRequests && appointmentRequests.requests) {
       const pendingAppointment = appointmentRequests.requests.find(
@@ -75,6 +95,11 @@ const PrenatalBookingPage: React.FC = () => {
     }
   }, [appointmentRequests, formattedSelectedDate]);
 
+   if(isLoadingAppointments){
+    return <LoadingState/>
+
+  }
+  
   const availableDays = new Set(
     schedulersData
       .filter((s) => s.service_name.toLowerCase() === 'prenatal' || s.service_name.toLowerCase() === 'maternal')
@@ -245,11 +270,7 @@ const PrenatalBookingPage: React.FC = () => {
               onPress={() => setShowDatePicker(true)}
             >
               <Text className='text-base font-semibold text-gray-900 mb-1'>
-                {selectedDate.toLocaleDateString('en-PH', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+                {getDisplayDate(selectedDate)}
               </Text>
               <Text className='text-sm text-gray-500'>
                 {selectedDate.getFullYear()}

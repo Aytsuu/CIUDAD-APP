@@ -12,7 +12,7 @@ from apps.healthProfiling.serializers.resident_profile_serializers import *
 from apps.familyplanning.models import *
 from .spouse_serializers import SpouseSerializer
 from apps.childhealthservices.models import ChildHealthrecord
-
+from ..utils import *
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):
@@ -57,6 +57,39 @@ class TransientSerializer(serializers.ModelSerializer):
         model = Transient
         fields = '__all__'
 
+class PatientMiniMalSerializer(serializers.ModelSerializer):
+    personal_info = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+     
+    def get_personal_info(self, obj):
+        return extract_personal_info(obj)
+
+    def get_address(self, obj):
+        return extract_address(obj)
+    
+    class Meta:
+        model = Patient
+        fields = ['pat_id', 'pat_type', 'personal_info', 'address']
+
+class PatientMChildreniniMalSerializer(serializers.ModelSerializer):
+    personal_info = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    family_head_info = serializers.SerializerMethodField()
+     
+    def get_personal_info(self, obj):
+        return extract_personal_info(obj)
+
+    def get_address(self, obj):
+        return extract_address(obj)
+    
+    def get_family_head_info(self, obj):
+        return get_family_head_info(obj, context=self.context)
+    
+    class Meta:
+        model = Patient
+        fields ='__all__'
+
+
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
@@ -90,27 +123,7 @@ class PatientSerializer(serializers.ModelSerializer):
         return None
     
     def get_personal_info(self, obj):
-        """Get personal information for both resident and transient patients"""
-        if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
-            return PersonalSerializer(obj.rp_id.per, context=self.context).data
-        
-        elif obj.pat_type == 'Transient' and obj.trans_id:
-            trans = obj.trans_id
-            return {
-                'per_fname': trans.tran_fname,
-                'per_lname': trans.tran_lname,
-                'per_mname': trans.tran_mname,
-                'per_suffix': trans.tran_suffix,
-                'per_dob': trans.tran_dob,
-                'per_sex': trans.tran_sex,
-                'per_status': trans.tran_status,
-                'per_edAttainment': trans.tran_ed_attainment,
-                'per_religion': trans.tran_religion,
-                'per_contact': trans.tran_contact,
-                'philhealth_id': trans.philhealth_id,
-            }
-        
-        return None
+        return get_personal_info(obj, context=self.context)
 
     def get_family_compositions(self, obj):
         if obj.pat_type == 'Resident' and obj.rp_id:
@@ -131,69 +144,10 @@ class PatientSerializer(serializers.ModelSerializer):
                 return []
         return []
     
-    
+
     def get_family(self, obj):
-        if obj.pat_type == 'Resident' and obj.rp_id:
-            try:
-                current_composition = FamilyComposition.objects.filter(
-                    rp=obj.rp_id
-                ).order_by('-fam_id__fam_date_registered','-fc_id').first()
-                
-                if not current_composition:
-                    print(f'No family composition found for resident {obj.rp_id.rp_id}')
-                    return None
+        return get_family(obj)
 
-                fam_id = current_composition.fam_id
-
-                all_compositions = FamilyComposition.objects.filter(
-                    fam_id=fam_id
-                ).select_related('rp', 'rp__per')
-
-                current_role = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered','-fc_id').first()
-                if current_role:
-                    return{
-                        'fam_id': str(current_role.fam_id),
-                        'fc_role': current_role.fc_role,
-                        'fc_id': current_role.fc_id
-                    }
-
-                mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
-                if mother_composition:
-                    return {
-                        'fam_id': str(mother_composition.fam_id),
-                        'fc_role': 'Mother',
-                        'fc_id': mother_composition.fc_id
-                    }
-                
-                father_composition = all_compositions.filter(fc_role__iexact='Father').first()
-                if father_composition:
-                    return {
-                        'fam_id': str(father_composition.fam_id),
-                        'fc_role': 'Father',
-                        'fc_id': father_composition.fc_id
-                    }
-                
-                other_composition = all_compositions.exclude(
-                    fc_role__iexact='Mother'
-                ).exclude(
-                    fc_role__iexact='Father'
-                ).first()
-
-                if other_composition:
-                    return {
-                        'fam_id': str(other_composition.fam_id),
-                        'fc_role': other_composition.fc_role,
-                        'fc_id': other_composition.fc_id
-                    }
-                
-                return None
-            
-            except Exception as e:
-                print(f'Error fetching fam_id for resident {obj.rp_id.rp_id}: {str(e)}')
-                return None
-            
-        return None
-    
     def get_mother_tt_status(self, mother_rp):
         """Method to retrieve a mother's TT Status"""
         try:
@@ -209,97 +163,8 @@ class PatientSerializer(serializers.ModelSerializer):
             print(f'Error in getting mother tt status: {str(e)}')
             return f'TT Status not found - {str(e)}'
 
-
     def get_family_head_info(self, obj):
-        """Get family head information, including family planning method for mother and/or father"""
-        family_heads = {}
-        if obj.pat_type == 'Resident' and obj.rp_id:
-            try:
-                current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                if not current_composition:
-                    return None
-
-                fam_id = current_composition.fam_id
-
-                family_compositions = FamilyComposition.objects.filter(
-                    fam_id=fam_id
-                ).select_related('rp', 'rp__per')
-
-                for composition in family_compositions:
-                    role = composition.fc_role.lower()
-                    if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
-                        personal = composition.rp.per
-                        patient = Patient.objects.filter(rp_id=composition.rp).first()
-                        family_planning_method = None
-                        if patient:
-                            latest_fp_record = patient.fp_records.order_by('-created_at').first()
-                            if latest_fp_record:
-                                fp_type = latest_fp_record.fp_type_set.first()
-                                family_planning_method = fp_type.fpt_method_used if fp_type else None
-
-                        # Get address information for this family head
-                        address_info = self._get_family_head_address(composition.rp)
-
-                        family_heads[role] = {
-                            'rp_id': composition.rp.rp_id,
-                            'role': composition.fc_role,
-                            'personal_info': PersonalSerializer(personal, context=self.context).data,
-                            'composition_id': composition.fc_id,
-                            'family_planning_method': family_planning_method,
-                            'address': address_info
-                        }
-                
-                return {
-                    'fam_id': fam_id,
-                    'family_heads': family_heads,
-                    'has_mother': 'mother' in family_heads,
-                    'has_father': 'father' in family_heads,
-                    'total_heads': len(family_heads)
-                }
-            except Exception as e:
-                print(f"Error in get_family_head_info: {str(e)}")
-                return None
-
-        elif obj.pat_type == 'Transient' and obj.trans_id:
-            try:
-                trans = obj.trans_id
-                if trans.mother_fname or trans.mother_lname:
-                    family_heads['mother'] = {
-                        'role': 'Mother',
-                        'personal_info': {
-                            'per_fname': trans.mother_fname,
-                            'per_lname': trans.mother_lname,
-                            'per_mname': trans.mother_mname,
-                            'per_dob': trans.mother_dob,
-                        },
-                        'family_planning_method': None
-                    }
-
-                if trans.father_fname or trans.father_lname:
-                    family_heads['father'] = {
-                        'role': 'Father',
-                        'personal_info': {
-                            'per_fname': trans.father_fname,
-                            'per_lname': trans.father_lname,
-                            'per_mname': trans.father_mname,
-                            'per_dob': trans.father_dob,
-                        },
-                        'family_planning_method': None
-                    }
-
-                return {
-                    'fam_id': None,
-                    'family_heads': family_heads,
-                    'has_mother': 'mother' in family_heads,
-                    'has_father': 'father' in family_heads,
-                    'total_heads': len(family_heads)
-                }
-            except Exception as e:
-                print(f"Error in get_family_head_info: {str(e)}")
-                return None
-
-        return None
-
+        return get_family_head_info(obj, context=self.context)
 
     def get_households(self, obj):
         if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
@@ -309,82 +174,7 @@ class PatientSerializer(serializers.ModelSerializer):
         return []
 
     def get_address(self, obj):
-        """Get address information with improved error handling"""
-        try:
-            if obj.pat_type == 'Resident' and obj.rp_id:
-                personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
-                if personal_address and personal_address.add:
-                    address = personal_address.add
-                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                    address_parts = [
-                        address.add_barangay if address.add_barangay else None,
-                        address.add_city if address.add_city else None,
-                        address.add_province if address.add_province else None,
-                        address.add_street if address.add_street else None,
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    result = {
-                        'add_street': address.add_street,
-                        'add_barangay': address.add_barangay,
-                        'add_city': address.add_city,
-                        'add_province': address.add_province,
-                        'add_sitio': sitio,
-                        'full_address': full_address
-                    }
-                    return result
-
-                household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
-                if household and household.add:
-                    address = household.add
-                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                    address_parts = [
-                        address.add_barangay if address.add_barangay else None,
-                        address.add_city if address.add_city else None,
-                        address.add_province if address.add_province else None,
-                        address.add_street if address.add_street else None,
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    result = {
-                        'add_street': address.add_street,
-                        'add_barangay': address.add_barangay,
-                        'add_city': address.add_city,
-                        'add_province': address.add_province,
-                        'add_sitio': sitio,
-                        'full_address': full_address
-                    }
-                    print("⚠️ No PersonalAddress. Used Household instead →", result)
-                    return result
-
-                print("❌ No PersonalAddress or Household address found.")
-            
-            elif obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
-                trans_addr = obj.trans_id.tradd_id
-                sitio = trans_addr.tradd_sitio
-                address_parts = [
-                    trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
-                    trans_addr.tradd_city if trans_addr.tradd_city else None,
-                    trans_addr.tradd_province if trans_addr.tradd_province else None,
-                    trans_addr.tradd_street if trans_addr.tradd_street else None,
-                ]
-                full_address = ", ".join(filter(None, address_parts))
-                result = {
-                    'add_street': trans_addr.tradd_street,
-                    'add_barangay': trans_addr.tradd_barangay,
-                    'add_city': trans_addr.tradd_city,
-                    'add_province': trans_addr.tradd_province,
-                    'add_sitio': sitio,
-                    'full_address': full_address
-                }
-                print("📦 Transient Address →", result)
-                return result
-
-            print("❓ Address not found for any type.")
-            return None
-            
-        except Exception as e:
-            print(f"Error retrieving address: {str(e)}")
-            return None
-    
+            return get_address(obj)
 
     def get_spouse_info(self, obj):
         try:
@@ -879,10 +669,23 @@ class PatientSerializer(serializers.ModelSerializer):
             traceback.print_exc()
             return None
 
-   
+class PatientRecordChildrenSerializer(serializers.ModelSerializer):
+    pat_details = PatientMChildreniniMalSerializer(source='pat_id', read_only=True)
+
+    class Meta:
+        model = PatientRecord
+        fields = '__all__'
+
+class PatientRecordMiniSerializer(serializers.ModelSerializer):
+    pat_details = PatientMiniMalSerializer(source='pat_id', read_only=True)
+
+    class Meta:
+        model = PatientRecord 
+        fields = '__all__'
+
 class PatientRecordSerializer(serializers.ModelSerializer):
     pat_details = PatientSerializer(source='pat_id', read_only=True)
 
     class Meta:
-        model = PatientRecord
+        model = PatientRecord 
         fields = '__all__'

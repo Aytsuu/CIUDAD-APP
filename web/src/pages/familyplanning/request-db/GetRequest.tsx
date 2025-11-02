@@ -6,6 +6,7 @@ export interface IndividualFPRecordDetail {
 
   fprecord: any
   patrec_id: string
+  patrec: string
   fprecord_id: number
   client_id: string
   patient_name: string
@@ -66,6 +67,7 @@ export interface GetFPRecordsParams {
   page_size?: number;
   search?: string;
   client_type?: string;
+  patient_type?: string;
 }
 
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
@@ -279,15 +281,26 @@ export const getFPRecordsForPatient = async (patientId: string | number): Promis
 // NEW: Function to get the LATEST complete FP record for a patient (for pre-filling form)
 export const getLatestCompleteFPRecordForPatient = async (patientId: string): Promise<any | null> => {
   try {
-    const response = await api2.get(`familyplanning/latest-fp-record-by-patient/${patientId}/`)
-    return response.data
+    console.log("🔍 Fetching latest FP record for patient:", patientId);
+    const response = await api2.get(`familyplanning/latest-fp-record-by-patient/${patientId}/`);
+    console.log("✅ Latest FP record response:", response.data);
+    return response.data;
   } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.status === 404) {
-      console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
-      return null; // Return null if no existing record, so the form can load defaults
+    if (axios.isAxiosError(err)) {
+      console.log("❌ Axios error details:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        url: err.config?.url
+      });
+      
+      if (err.response?.status === 404) {
+        console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
+        return null;
+      }
     }
     console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err);
-    throw err; // Re-throw other errors
+    throw err;
   }
 }
 

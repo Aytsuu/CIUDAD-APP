@@ -14,7 +14,7 @@ import { useGetSitio } from "@/screens/_global_queries/Retrieve";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatSitio } from "@/helpers/formatSitio";
 import { useToastContext } from "@/components/ui/toast";
-import { Drawer } from "@/components/ui/drawer";
+import { Drawer } from "@/components/ui/drawer-deprecated";
 
 export const AddressDrawer = ({
   visible,

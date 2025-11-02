@@ -357,6 +357,7 @@ class PostpartumRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(null=True, blank=True)
+    forwarded_status = models.CharField(null=True, blank=True)
 
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
@@ -365,6 +366,7 @@ class PostpartumRecord(models.Model):
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
     staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
+    tts_id = models.ForeignKey(TT_Status, on_delete=models.CASCADE, related_name='postpartum_record', db_column='tts_id', null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.ppr_id:

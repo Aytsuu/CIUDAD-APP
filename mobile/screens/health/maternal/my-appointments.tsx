@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, CalendarClock, Clock, CheckCircle, XCircle, AlertCircle, X, CalendarCheck } from "lucide-react-native";
+import { ChevronLeft, CalendarClock, Clock, CheckCircle, XCircle, AlertCircle, X, CalendarCheck, Calendar } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrenatalAppointmentRequests } from "./queries/fetch";
 import { useCancelPrenatalAppointment } from "./queries/update";
@@ -334,12 +334,12 @@ export default function MyPrenatalAppointments() {
                     </Text>
                   </View>
 
-                   <View className="flex-row items-center">
+                   {/* <View className="flex-row items-center">
                     <Calendar size={16} color="#6B7280" />
                     <Text className="text-gray-600 text-sm ml-2">
                       Date of appointment: {formatDate(appointment.requested_date)}
                     </Text>
-                  </View>
+                  </View> */}
 
 
                   {appointment.approved_at && (

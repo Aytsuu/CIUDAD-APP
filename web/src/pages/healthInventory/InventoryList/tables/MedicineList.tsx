@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
 import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
@@ -22,7 +21,7 @@ export default function MedicineList() {
   const [medToDelete, setMedToDelete] = useState<string | null>(null);
   const [showMedicineModal, setShowMedicineModal] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [selectedMedicine, setSelectedMedicine] = useState<MedicineRecords | null>(null);
+  const [selectedMedicine, setSelectedMedicine] = useState<any | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function MedicineList() {
 
   const deleteMutation = useDeleteMedicine();
 
-  const formatMedicineData = useCallback((): MedicineRecords[] => {
+  const formatMedicineData = useCallback((): any[] => {
     console.log("Formatting medicine data:", medicineData);
 
     // Handle different response formats
@@ -65,8 +64,11 @@ export default function MedicineList() {
 
     return medicineResults.map((medicine: any) => ({
       id: medicine.med_id,
-      medicineName: medicine.med_name,
+      med_name: medicine.med_name,
       cat_id: medicine.cat,
+      med_dsg: medicine.med_dsg,
+      med_dsg_unit: medicine.med_dsg_unit,
+      med_form: medicine.med_form,
       cat_name: medicine.catlist || "N/A",
       med_type: medicine.med_type || "N/A"
     }));

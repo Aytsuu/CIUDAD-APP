@@ -142,7 +142,7 @@ export function SchedulerSidebar() {
 
   return (
     <Card className="rounded-md shadow-none">
-      <CardContent className="pt-4 overflow-y-auto">
+      <CardContent className="pt-4 overflow-y-auto max-h-[600px]">
         {isLoading ? (
           <div className="flex items-center justify-center h-[300px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

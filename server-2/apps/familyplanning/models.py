@@ -29,19 +29,6 @@ class FP_Record(models.Model):
 
     def __str__(self):
         return f"FP Record {self.fprecord_id} for Patient {self.pat.pat_id}"
-
-    def get_absolute_url(self):
-        return {
-            'path': '/services/familyplanning/records',
-            'params': {'fprecordId': self.fprecord_id}
-        }
-    
-    # def get_mobile_route(self):
-    #     return {
-    #         'screen' : '/(my-request)/complaint-tracking/compMainView',
-    #         'params' : {'comp_id': str(self.comp_id)}
-    #     }
-    
     
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
@@ -86,7 +73,7 @@ class FP_RiskVaw(models.Model):
     vaw_unpleasant_rs = models.BooleanField(default=False)
     vaw_partner_disapproval = models.BooleanField(default=False)
     vaw_domestic_violence = models.BooleanField(default=False)
-    vaw_referred_to = models.CharField(max_length=40,blank=True)
+    vaw_referred_to = models.CharField(max_length=40,blank=True,null=True)
     
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE, related_name='fp_risk_vaws')
     

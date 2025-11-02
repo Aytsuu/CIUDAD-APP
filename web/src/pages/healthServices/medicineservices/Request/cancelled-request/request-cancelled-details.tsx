@@ -25,18 +25,12 @@ export default function CancelledRequestDetail() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch cancelled request details
-  const {
-    data: apiResponse,
-    isLoading,
-    error: cancelledRequestError,
-  } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "cancelled");
+  const { data: apiResponse, isLoading, error: cancelledRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "cancelled");
 
   // Extract data from paginated response
   const medicineData = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
-
-
 
   if (cancelledRequestError) {
     return (
@@ -60,7 +54,7 @@ export default function CancelledRequestDetail() {
   }
 
   return (
-    <LayoutWithBack title="cancelled Medicine Request" description="View details of cancelled medicine request">
+    <LayoutWithBack title="Cancelled Medicine Request" description="View details of cancelled medicine request">
       <div className="">
         {/* Patient Information Card */}
         <div className="mb-5">
@@ -72,8 +66,7 @@ export default function CancelledRequestDetail() {
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
               <CardTitle>
-                cancelled Medicine Items{" "}
-                <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
+                cancelled Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
               </CardTitle>
               <CardDescription>All cancelled medicine request items with allocation details</CardDescription>
             </div>
@@ -83,7 +76,7 @@ export default function CancelledRequestDetail() {
                 state={{
                   params: {
                     patientData: {
-                      pat_id:  patientData?.pat_id,
+                      pat_id: patientData?.pat_id,
                       pat_type: patientData?.pat_type,
                       age: patientData?.age,
                       addressFull: patientData?.address?.full_address || "No address provided",
@@ -106,10 +99,12 @@ export default function CancelledRequestDetail() {
                   },
                 }}
               >
-                <Button size="sm">
-                  <History className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
+                {patientData?.pat_id && (
+                  <Button size="sm">
+                    <History className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                )}
               </Link>
             </div>
           </CardHeader>
@@ -168,8 +163,6 @@ export default function CancelledRequestDetail() {
             </div>
           </CardContent>
         </Card>
-
-    
       </div>
     </LayoutWithBack>
   );

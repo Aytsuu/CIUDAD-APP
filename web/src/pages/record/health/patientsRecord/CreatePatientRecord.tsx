@@ -29,6 +29,7 @@ import { capitalize } from "@/helpers/capitalize"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
+import { useQueryClient } from "@tanstack/react-query";
 
 // typescript interfaces
 interface ResidentProfile {
@@ -250,13 +251,17 @@ export default function CreatePatientRecord() {
     }
   }
 
+  const queryClient=useQueryClient()
   const createNewPatient = useAddPatient();
   const handleCreatePatientId = async (patientData: PatientCreationData) => {
     try {
       const result = await createNewPatient.mutateAsync(patientData);
 
       if (result) {
+         queryClient.invalidateQueries({ queryKey: ['patients'] });
+         queryClient.invalidateQueries({ queryKey: ['patients5yearsbelow'] });
         showSuccessToast("Patient record has been created successfully")
+
         return true
       } else {
         toast("Patient record may have been created. Please refresh to verify.");

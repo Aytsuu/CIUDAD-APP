@@ -24,22 +24,23 @@ import { formatDate } from "@/helpers/dateHelper";
 const IndividualFamPlanningTable: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { patientId } = location.state || {};
+  const { patientId,patientData } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
   const [showFollowUpConfirm, setShowFollowUpConfirm] = useState(false);
   const [selectedRecordForFollowUp, setSelectedRecordForFollowUp] = useState<IndividualFPRecordDetail | null>(null);
+ const actualPatientId = patientId || patientData?.pat_id;
 
   const {
     data: fpPatientRecords = [], isLoading: isLoadingFPRecords, isError: isErrorFPRecords,error: errorFPRecords } = useQuery<IndividualFPRecordDetail[]>({
-    queryKey: ["individualFPRecordsList", patientId],
-    queryFn: () => getFPRecordsForPatient(patientId),
-    enabled: !!patientId
+    queryKey: ["individualFPRecordsList", actualPatientId],
+    queryFn: () => getFPRecordsForPatient(actualPatientId),
+    enabled: !!actualPatientId
   });
 
   const { data: patientInfoForCard, isLoading: isLoadingPatientInfo, isError: isErrorPatientInfo,error: errorPatientInfo } = useQuery({
-    queryKey: ["patientDetails", patientId],
-    queryFn: () => getPatientDetails(patientId!),
-    enabled: !!patientId
+    queryKey: ["patientDetails", actualPatientId],
+    queryFn: () => getPatientDetails(actualPatientId!),
+    enabled: !!actualPatientId
   });
 
   const handleCheckboxChange = (record: IndividualFPRecordDetail, isChecked: boolean) => {
@@ -62,6 +63,13 @@ const IndividualFamPlanningTable: React.FC = () => {
 
   const handleAddFollowUp = (record: IndividualFPRecordDetail) => {
     const { showWarning } = shouldShowFollowUpWarning(record);
+    console.log("🔄 [Individual] Adding follow-up with state:", {
+      patientId,
+      patrecId: record.patrec_id,
+      prefillFromFpRecord: record.fprecord,
+      gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown",
+      timestamp: Date.now() // CRITICAL: Add timestamp
+    });
     if (showWarning) {
       setSelectedRecordForFollowUp(record);
       setShowFollowUpConfirm(true);
@@ -86,7 +94,8 @@ const IndividualFamPlanningTable: React.FC = () => {
         patientId: patientId,
         patrecId: record.patrec_id,
         prefillFromFpRecord: record.fprecord,
-        gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
+        gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown",
+        timestamp: Date.now()
       }
     });
   };
@@ -106,6 +115,15 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Patient ID not found");
       return;
     }
+    console.log("🔄 [Individual] Creating new record with state:", {
+      patientId,
+      isNewMethod: true,
+      prefill: true,
+      gender: patientInfoForCard?.personal_info.per_sex || "Unknown",
+      patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined,
+      timestamp: Date.now() // CRITICAL: Add timestamp to force re-render
+    });
+    
     navigate("/services/familyplanning/new-record", {
       state: {
         mode: "create",
@@ -113,7 +131,8 @@ const IndividualFamPlanningTable: React.FC = () => {
         isNewMethod: true,
         prefill: true,
         gender: patientInfoForCard?.personal_info.per_sex || "Unknown",
-        patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined
+        patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined,
+        timestamp: Date.now()
       },
     });
   };
@@ -141,13 +160,7 @@ const IndividualFamPlanningTable: React.FC = () => {
     });
   }, [fpPatientRecords]);
 
-  const latestUpcomingFollowUp = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return fpPatientRecords
-      .filter(record => record.dateOfFollowUp && new Date(record.dateOfFollowUp) >= today)
-      .sort((a, b) => new Date(a.dateOfFollowUp!).getTime() - new Date(b.dateOfFollowUp!).getTime())[0];
-  }, [fpPatientRecords]);
+
 
   const tableColumns = useMemo<ColumnDef<IndividualFPRecordDetail>[]>(
     () => [
@@ -320,17 +333,24 @@ const IndividualFamPlanningTable: React.FC = () => {
         <PatientOverviewStats records={fpPatientRecords} />
 
         {/* Upcoming Follow-up Visit */}
-          {latestUpcomingFollowUp && (
-          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg shadow-md">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-green-500" />
-                <h3 className="text-green-800 font-medium">Upcoming follow-up visit (YYYY/M/D)</h3>
-              </div>
-              <span className="text-green-600 font-semibold">Date: {formatDate(latestUpcomingFollowUp.dateOfFollowUp!)}</span>
-            </div>
-          </div>
+          {groupedRecords.length > 0 && groupedRecords[0][1][0]?.dateOfFollowUp && (
+  <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg shadow-md">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Calendar className="h-5 w-5 text-green-500" />
+        <h3 className="text-green-800 font-medium">Upcoming follow-up visit</h3>
+      </div>
+      <span className="text-green-600 font-semibold">
+        Date: {formatDate(groupedRecords[0][1][0].dateOfFollowUp!)}
+        {groupedRecords[0][1][0].followv_status === "Pending" && (
+          <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
+            Pending
+          </Badge>
         )}
+      </span>
+    </div>
+  </div>
+)}
 
         {/* Warning Banner */}
         {hasLatestGroupMissedFollowUps(groupedRecords) && (
@@ -388,7 +408,7 @@ const IndividualFamPlanningTable: React.FC = () => {
                             <span className="font-bold text-lg">{getGroupHeader(records)}</span>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                                {records.length} {records.length === 1 ? 'Record' : 'Records'}
+                                {records.length} {records.length === 1 ? 'visit' : 'visits'}
                               </Badge>
                               {/* {isLatestGroup && (
                                 <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
@@ -480,7 +500,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               This follow-up appointment was missed (more than 3 days late).
-              Proceeding will create a follow-up record anyway. Are you sure you want to continue?
+              Proceeding will continue the record anyway. Are you sure you want to continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

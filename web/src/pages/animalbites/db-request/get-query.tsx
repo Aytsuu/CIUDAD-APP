@@ -169,10 +169,10 @@ function useToastContext(): { toast: any } {
 }
 
 
-export const useAnimalBiteAnalytics = (months: number = 12) => {
+export const useAnimalBiteAnalytics = ({ months = 12, month }: { months?: number; month?: string }) => {
   return useQuery({
-    queryKey: ["animal-bite-analytics", months],
-    queryFn: () => getAnimalBiteAnalytics(months),
+    queryKey: ["animal-bite-analytics", months, month],
+    queryFn: () => getAnimalBiteAnalytics({ months, month }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

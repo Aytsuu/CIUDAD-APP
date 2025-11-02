@@ -7,8 +7,173 @@ from ..models import *
 import traceback
 from dateutil.relativedelta import relativedelta
 from django.db.models import *
+from django.shortcuts import get_object_or_404
+from ..serializers import *
+from rest_framework.pagination import PageNumberPagination
+from venv import logger
+from django.db.models.functions import ExtractMonth, ExtractYear, TruncMonth,TruncYear
 
 
+def calculate_age_from_dob(dob_string):
+    if not dob_string:
+        return 0
+    try:
+        from datetime import datetime
+
+        birth_date = datetime.strptime(dob_string, "%Y-%m-%d").date()
+        today = date.today()
+        return (
+            today.year
+            - birth_date.year
+            - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        )
+    except:
+        return 0
+    
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+class PatientListForOverallTable(generics.ListAPIView):
+    serializer_class = OverallFPRecordSerializer
+    pagination_class = StandardResultsSetPagination
+    
+    def get_queryset(self):
+        # Start with FP_type objects since that's where the main data is
+        queryset = FP_type.objects.select_related(
+            "fprecord",
+            "fprecord__pat",
+            "fprecord__pat__rp_id__per", 
+            "fprecord__pat__trans_id",
+        ).order_by("-fprecord__created_at")
+        
+        # Apply search filter if 'search' query parameter is present
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(fprecord__pat__rp_id__per__per_lname__icontains=search_query) |
+                Q(fprecord__pat__rp_id__per__per_fname__icontains=search_query) |
+                Q(fprecord__pat__trans_id__tran_lname__icontains=search_query) |
+                Q(fprecord__pat__trans_id__tran_fname__icontains=search_query) |
+                Q(fprecord__client_id__icontains=search_query) |
+                Q(fpt_client_type__icontains=search_query) |
+                Q(fpt_method_used__icontains=search_query)
+            ).distinct()
+        
+        # Apply client_type filter if 'client_type' query parameter is present
+        client_type_filter = self.request.query_params.get('client_type', None)
+        if client_type_filter and client_type_filter != "all":
+            queryset = queryset.filter(fpt_client_type__iexact=client_type_filter).distinct()
+        
+        # NEW: Apply patient_type filter if 'patient_type' query parameter is present
+        patient_type_filter = self.request.query_params.get('patient_type', None)
+        if patient_type_filter and patient_type_filter != "all":
+            queryset = queryset.filter(fprecord__pat__pat_type__iexact=patient_type_filter).distinct()
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Get distinct patients with their latest record
+        patient_data_map = {}
+        for fp_type in queryset:
+            record = fp_type.fprecord
+            patient_id = record.pat.pat_id
+            
+            # Only take the latest record per patient
+            if patient_id not in patient_data_map:
+                patient_entry = self._build_patient_entry(record, fp_type)
+                patient_data_map[patient_id] = patient_entry
+        
+        # Convert to list for pagination
+        patient_list = list(patient_data_map.values())
+        
+        # Manual pagination since we transformed the data
+        page = self.paginate_queryset(patient_list)
+        if page is not None:
+            return self.get_paginated_response(page)
+        
+        return Response(patient_list)
+    
+    def _build_patient_entry(self, record, fp_type):
+        """Helper method to build patient entry data"""
+        patient_id = record.pat.pat_id
+        patient_type = record.pat.pat_type
+        
+        raw_subtype = fp_type.fpt_subtype if fp_type else "N/A"
+        subtype = map_subtype_display(raw_subtype)
+        
+        # Count distinct methods instead of total records
+        from django.db.models import Count
+        
+        # Get distinct method count for this patient
+        method_count = FP_type.objects.filter(
+            fprecord__pat=record.pat
+        ).values('fpt_method_used').distinct().count()
+        
+        # Get total visits count (optional - for reference)
+        total_visits = FP_Record.objects.filter(pat=record.pat).count()
+        
+        # Build basic patient entry
+        patient_entry = {
+            "patient_id": patient_id,
+            "patient_name": "",
+            "patient_age": None,
+            "sex": "",
+            "client_type": map_client_type(fp_type.fpt_client_type) if fp_type else "N/A",
+            "subtype": subtype,
+            "patient_type": patient_type,
+            "method_used": fp_type.fpt_method_used if fp_type else "N/A",
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+            "fprecord_id": record.fprecord_id,
+            "record_count": method_count,  # Use distinct method count instead of total visits
+            "total_visits": total_visits,  # Keep this for reference if needed
+        }
+        
+        # Add patient details based on type
+        if patient_type == "Resident" and record.pat.rp_id and record.pat.rp_id.per:
+            personal = record.pat.rp_id.per
+            patient_entry["patient_name"] = f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
+            patient_entry["patient_age"] = calculate_age_from_dob(personal.per_dob.isoformat()) if personal.per_dob else None
+            patient_entry["sex"] = personal.per_sex
+        
+        elif patient_type == "Transient" and record.pat.trans_id:
+            transient = record.pat.trans_id
+            patient_entry["patient_name"] = f"{transient.tran_lname}, {transient.tran_fname} {transient.tran_mname or ''}".strip()
+            patient_entry["patient_age"] = calculate_age_from_dob(transient.tran_dob.isoformat()) if transient.tran_dob else None
+            patient_entry["sex"] = transient.tran_sex
+        
+        return patient_entry
+    
+    
+@api_view(["GET"])
+def get_fp_methods_count_for_patient(request, patient_id):
+    try:
+        patient = get_object_or_404(Patient, pat_id=patient_id)
+        
+        # Count distinct patient records (each should represent a method episode)
+        distinct_patrec_count = FP_Record.objects.filter(pat=patient)\
+            .values('patrec_id')\
+            .distinct()\
+            .count()
+            
+        total_records_count = FP_Record.objects.filter(pat=patient).count()
+        
+        return Response({
+            "patient_id": patient_id,
+            "fp_methods_count": distinct_patrec_count,
+            "fp_total_records": total_records_count
+        })
+        
+    except Patient.DoesNotExist:
+        return Response(
+            {"detail": f"Patient with ID {patient_id} not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        
+        
 @api_view(['GET'])
 def get_filtered_commodity_list(request):
     client_type = request.query_params.get('client_type', None)
@@ -97,30 +262,6 @@ def get_detailed_monthly_fp_report(request, year, month):
         prev_month_start = month_start - relativedelta(months=1)
         prev_month_end = (month_start - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
 
-        # Debug: Print date range
-        # print(f"Date range: {month_start} to {month_end}")
-        # print(f"Previous month range: {prev_month_start} to {prev_month_end}")
-
-        # Debug: Print unique fpt_method_used values
-        unique_methods = FP_Record.objects.values('fp_type__fpt_method_used').distinct()
-        # print("Unique fpt_method_used values:", [m['fp_type__fpt_method_used'] for m in unique_methods])
-
-        # Debug: Print all FP_Record details
-        all_records = FP_Record.objects.select_related('fp_type').values(
-            'fp_type__fpt_method_used', 'created_at', 'fp_type__fpt_client_type', 'fprecord_id', 'pat__pat_id'
-        )
-        # print("All FP_Record details:")
-        # for record in all_records:
-            # print(f"Method: {record['fp_type__fpt_method_used']}, Created: {record['created_at']}, Client Type: {record['fp_type__fpt_client_type']}, Record ID: {record['fprecord_id']}, Patient ID: {record['pat__pat_id']}")
-
-        # Debug: Print FP_Assessment_Record details
-        assessment_records = FP_Assessment_Record.objects.select_related('fprecord__fp_type').values(
-            'fprecord__fp_type__fpt_method_used', 'followv__followv_status', 'followv__followv_date', 'fprecord_id'
-        )
-        # print("FP_Assessment_Record details:")
-        # for record in assessment_records:
-            # print(f"Method: {record['fprecord__fp_type__fpt_method_used']}, Status: {record['followv__followv_status']}, Date: {record['followv__followv_date']}, Record ID: {record['fprecord_id']}")
-
         # Check and update dropouts
         cutoff_start = month_start - timedelta(days=3)
         cutoff_end = month_end + timedelta(days=3)
@@ -131,7 +272,6 @@ def get_detailed_monthly_fp_report(request, year, month):
         ).select_related('patrec__pat_id')
         
         patient_ids = set(fu.patrec.pat_id.pat_id for fu in pending_follow_ups if fu.patrec and fu.patrec.pat_id)
-        # print(f"Pending follow-ups patient IDs: {patient_ids}")
         for pat_id in patient_ids:
             _check_and_update_dropouts_for_patient(pat_id)
 
@@ -170,21 +310,6 @@ def get_detailed_monthly_fp_report(request, year, month):
             for name in method_names:
                 method_filter |= Q(fp_type__fpt_method_used__iexact=name)
             
-            # Debug: Print raw record count
-            raw_count = FP_Record.objects.filter(
-                method_filter,
-                created_at__range=(month_start, month_end)
-            ).count()
-            print(f"Method {method}: {raw_count} records in {month_start} to {month_end}")
-
-            # Debug: Print records outside date range
-            outside_count = FP_Record.objects.filter(
-                method_filter
-            ).exclude(
-                created_at__range=(month_start, month_end)
-            ).count()
-            # print(f"Method {method}: {outside_count} records outside {month_start} to {month_end}")
-
             for age_group in age_groups:
                 # DOB annotation
                 dob_annotation = Case(
@@ -209,7 +334,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                 else:
                     age_filter = Q()
 
-                # 1. Previous month new acceptors
+                # 1. Previous month new acceptors - DISTINCT PATIENTS
                 prev_month_new_query = FP_Record.objects.annotate(
                     dob=dob_annotation,
                     first_record_date=Min('pat__fp_records__created_at'),
@@ -227,22 +352,20 @@ def get_detailed_monthly_fp_report(request, year, month):
                     fp_type__fpt_client_type__iexact='newacceptor',
                     first_record_date=F('created_at'),
                     has_current=False
-                )
-                # Debug: Print matching records
-                # print(f"Prev month new {method} (age {age_group}): {list(prev_month_new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
+                
                 prev_month_new_counts[method][age_group] = prev_month_new_query.count()
 
-                # 2. BOM: Previous month's active users + new acceptors
-                bom_carryover_subquery = Subquery(
-                    FP_Record.objects.filter(
-                        pat__pat_id=OuterRef('pat__pat_id'),
-                        created_at__lt=prev_month_start
-                    ).order_by('-created_at').values('fprecord_id')[:1]
-                )
-                
-                bom_carryover_query = FP_Record.objects.annotate(
+                # 2. BOM: Previous month's active users + new acceptors - DISTINCT PATIENTS
+                # Get distinct patients from previous month who were active
+                bom_active_patients = FP_Record.objects.annotate(
                     dob=dob_annotation,
-                    latest_fp_record_id=bom_carryover_subquery
+                    latest_fp_record_id=Subquery(
+                        FP_Record.objects.filter(
+                            pat__pat_id=OuterRef('pat__pat_id'),
+                            created_at__lt=prev_month_start
+                        ).order_by('-created_at').values('fprecord_id')[:1]
+                    )
                 ).filter(
                     age_filter,
                     method_filter,
@@ -258,12 +381,12 @@ def get_detailed_monthly_fp_report(request, year, month):
                     )
                 ).filter(
                     has_dropout=False
-                )
-                # Debug: Print matching records
-                # print(f"BOM {method} (age {age_group}): {list(bom_carryover_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
-                bom_counts[method][age_group] = bom_carryover_query.count() + prev_month_new_query.count()
+                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
+                
+                bom_carryover_count = bom_active_patients.count()
+                bom_counts[method][age_group] = bom_carryover_count + prev_month_new_counts[method][age_group]
 
-                # 3. NEW: Current month new acceptors
+                # 3. NEW: Current month new acceptors - DISTINCT PATIENTS
                 new_query = FP_Record.objects.annotate(
                     dob=dob_annotation,
                     first_record_date=Min('pat__fp_records__created_at'),
@@ -281,12 +404,11 @@ def get_detailed_monthly_fp_report(request, year, month):
                     fp_type__fpt_client_type__iexact='newacceptor',
                     first_record_date=F('created_at'),
                     has_current=False
-                )
-                # Debug: Print matching records
-                # print(f"New {method} (age {age_group}): {list(new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
+                
                 new_counts[method][age_group] = new_query.count()
 
-                # 4. OTHER: Current users with previous records
+                # 4. OTHER: Current users with previous records - DISTINCT PATIENTS
                 other_query = FP_Record.objects.annotate(
                     dob=dob_annotation,
                     first_record_date=Min('pat__fp_records__created_at')
@@ -296,12 +418,11 @@ def get_detailed_monthly_fp_report(request, year, month):
                     created_at__range=(month_start, month_end),
                     fp_type__fpt_client_type__iexact='currentuser',
                     first_record_date__lt=F('created_at')
-                )
-                # Debug: Print matching records
-                # print(f"Other {method} (age {age_group}): {list(other_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
+                
                 other_counts[method][age_group] = other_query.count()
 
-                # 5. DROP-OUTS
+                # 5. DROP-OUTS - DISTINCT PATIENTS
                 dropout_method_filter = Q()
                 for name in method_names:
                     dropout_method_filter |= Q(fprecord__fp_type__fpt_method_used__iexact=name)
@@ -331,9 +452,8 @@ def get_detailed_monthly_fp_report(request, year, month):
                     Q(followv__followv_status__iexact='Missed') | 
                     Q(followv__followv_status__iexact='Pending', followv__followv_date__lte=today - timedelta(days=3)),
                     dropout_date__range=(month_start, month_end)
-                )
-                # Debug: Print matching dropouts
-                # print(f"Dropouts for {method} (age {age_group}): {list(dropout_query.values('fprecord_id', 'fprecord__fp_type__fpt_method_used', 'followv__followv_date'))}")
+                ).values('fprecord__pat__pat_id').distinct()  # DISTINCT PATIENTS
+                
                 drop_outs_counts[method][age_group] = dropout_query.count()
 
         response_data = {
@@ -347,8 +467,44 @@ def get_detailed_monthly_fp_report(request, year, month):
         return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
-        traceback.print_exc()
-        return Response({"detail": f"Error generating report: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        print(f"Error in get_detailed_monthly_fp_report: {str(e)}")
+        return Response(
+            {'error': f'Failed to generate report: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+@api_view(['GET'])
+def get_fp_monthly_records(request):
+    year = request.GET.get('year')               # optional filter
+    qs = FP_Record.objects.all()
+    if year and year != 'all':
+        qs = qs.filter(created_at__year=year)
+
+    monthly = (
+        qs.annotate(
+            month=TruncMonth('created_at'),
+            year=TruncYear('created_at')
+        )
+        .values('month', 'year')
+        .annotate(record_count=Count('fprecord_id'))
+        .order_by('-year', '-month')
+    )
+
+    data = [
+        {
+            "month": item['month'].strftime('%Y-%m'),          # 2025-11
+            "month_name": item['month'].strftime('%B %Y'),    # November 2025
+            "record_count": item['record_count'],
+        }
+        for item in monthly
+    ]
+
+    return Response({
+        "success": True,
+        "data": data,
+        "total_records": len(data)
+    })
+    
     
 def map_subtype_display(subtype):
     """Map subtype IDs to human-readable labels"""
@@ -472,29 +628,348 @@ def map_physical_exam_display_values(data):
 
 
 
-# @api_view(['GET'])
-# def get_illness_list(request):
-#     try:
-#         illnesses = Illness.objects.all().order_by('ill_id')
+@api_view(['GET'])
+def get_fp_method_distribution(request):
+    """
+    Get distribution of family planning methods by distinct patients for a specific month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = (start_date + relativedelta(months=1)) - timezone.timedelta(days=1)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-#         # NEW: Get ill_code_prefix from query parameters
-#         ill_code_prefix = request.query_params.get('ill_code_prefix', None)
-#         if ill_code_prefix:
-#             illnesses = illnesses.filter(ill_code__startswith=ill_code_prefix)
+        method_distribution = FP_type.objects.filter(
+            fprecord__created_at__gte=start_date,
+            fprecord__created_at__lte=end_date
+        ).values('fpt_method_used').annotate(
+            patient_count=Count('fprecord__pat', distinct=True)
+        ).filter(patient_count__gt=0).order_by('-patient_count')
 
-#         illness_data = []
-#         for illness in illnesses:
-#             illness_data.append({
-#                 'ill_id': illness.ill_id,
-#                 'illname': illness.illname,
-#                 'ill_description': illness.ill_description,
-#                 'ill_code': illness.ill_code
-#             })
+        data = [
+            {
+                'name': item['fpt_method_used'] if item['fpt_method_used'] != "Others" else "Others",
+                'value': item['patient_count']
+            }
+            for item in method_distribution
+        ]
 
-#         return Response(illness_data, status=status.HTTP_200_OK)
-#     except Exception as e:
-#         return Response(
-#             {'error': f'Error fetching illnesses: {str(e)}'},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
+        return Response(data, status=status.HTTP_200_OK)
 
+    except Exception as e:
+        logger.error(f"Error in get_fp_method_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching method distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_client_type_distribution(request):
+    """
+    Get distribution of client types by distinct patients for a specific month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = (start_date + relativedelta(months=1)) - timezone.timedelta(days=1)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        client_type_distribution = FP_type.objects.filter(
+            fprecord__created_at__gte=start_date,
+            fprecord__created_at__lte=end_date
+        ).values('fpt_client_type').annotate(
+            patient_count=Count('fprecord__pat', distinct=True)
+        ).filter(patient_count__gt=0).order_by('-patient_count')
+
+        data = [
+            {
+                'name': map_client_type(item['fpt_client_type']),
+                'value': item['patient_count']
+            }
+            for item in client_type_distribution
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_fp_client_type_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching client type distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_analytics_summary(request):
+    """
+    Get summary statistics for Family Planning dashboard cards for a specific month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            first_day_this_month = datetime(year, month_num, 1)
+            first_day_last_month = first_day_this_month - relativedelta(months=1)
+            last_month_end = first_day_this_month - timezone.timedelta(days=1)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get all distinct patients with FP records up to the end of the selected month
+        total_patients = FP_Record.objects.filter(
+            created_at__lte=first_day_this_month + relativedelta(months=1) - timezone.timedelta(days=1)
+        ).values('pat').distinct().count()
+
+        # Get new acceptors and current users for the selected month
+        new_acceptors = FP_Record.objects.filter(
+            fp_type__fpt_client_type='newacceptor',
+            created_at__gte=first_day_this_month,
+            created_at__lte=first_day_this_month + relativedelta(months=1) - timezone.timedelta(days=1)
+        ).values('pat').distinct().count()
+
+        current_users = FP_Record.objects.filter(
+            fp_type__fpt_client_type='currentuser',
+            created_at__lte=first_day_this_month + relativedelta(months=1) - timezone.timedelta(days=1)
+        ).values('pat').distinct().count()
+
+        # Monthly registrations
+        this_month_registrations = FP_Record.objects.filter(
+            created_at__gte=first_day_this_month,
+            created_at__lte=first_day_this_month + relativedelta(months=1) - timezone.timedelta(days=1)
+        ).values('pat').distinct().count()
+
+        last_month_registrations = FP_Record.objects.filter(
+            created_at__gte=first_day_last_month,
+            created_at__lte=last_month_end
+        ).values('pat').distinct().count()
+
+        # Calculate growth rate
+        growth_rate = 0
+        if last_month_registrations > 0:
+            growth_rate = round(
+                ((this_month_registrations - last_month_registrations) / last_month_registrations) * 100, 1
+            )
+        elif this_month_registrations > 0:
+            growth_rate = 100
+
+        data = {
+            'total_patients': total_patients,
+            'new_acceptors': new_acceptors,
+            'current_users': current_users,
+            'this_month_registrations': this_month_registrations,
+            'growth_rate': growth_rate,
+            'average_children': FP_Record.objects.filter(
+                created_at__lte=first_day_this_month + relativedelta(months=1) - timezone.timedelta(days=1)
+            ).aggregate(
+                avg_children=Avg('num_of_children')
+            )['avg_children'] or 0
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_fp_analytics_summary: {str(e)}")
+        return Response(
+            {'error': 'Error fetching FP analytics summary'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+@api_view(['GET'])
+def get_fp_monthly_trends(request):
+    """
+    Get monthly trends for FP records for the past 12 months ending in the specified month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            end_date = datetime(year, month_num, 1) + relativedelta(months=1) - timezone.timedelta(days=1)
+            start_date = end_date - relativedelta(months=11)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Single database query to get monthly aggregates
+        monthly_data = FP_Record.objects.filter(
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        ).annotate(
+            month=ExtractMonth('created_at'),
+            year=ExtractYear('created_at')
+        ).values('year', 'month').annotate(
+            total=Count('fprecord_id', distinct=True),
+            new_acceptors=Count('fp_type__fpt_id', filter=Q(fp_type__fpt_client_type='newacceptor'), distinct=True),
+            current_users=Count('fp_type__fpt_id', filter=Q(fp_type__fpt_client_type='currentuser'), distinct=True)
+        ).order_by('year', 'month')
+
+        # Create a dictionary for easy lookup
+        monthly_dict = {(item['year'], item['month']): item for item in monthly_data}
+
+        # Generate data for the last 12 months
+        months = []
+        current_date = start_date
+        while current_date <= end_date:
+            months.append((current_date.year, current_date.month))
+            current_date += relativedelta(months=1)
+
+        data = []
+        for year, month in months:
+            month_name = datetime(year, month, 1).strftime('%b')
+            month_data = monthly_dict.get((year, month), {
+                'total': 0,
+                'new_acceptors': 0,
+                'current_users': 0
+            })
+
+            data.append({
+                'month': month_name,
+                'newAcceptors': month_data['new_acceptors'],
+                'currentUsers': month_data['current_users'],
+                'total': month_data['total']
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_fp_monthly_trends: {str(e)}")
+        return Response(
+            {'error': 'Error fetching monthly trends'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def get_fp_age_distribution(request):
+    """
+    Get age distribution of FP patients for a specific month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = start_date + relativedelta(months=1) - timezone.timedelta(days=1)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get distinct patients with FP records in the specified month
+        distinct_patient_ids = FP_Record.objects.filter(
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        ).values_list('pat', flat=True).distinct()
+
+        # Get patient objects with related data
+        patients = Patient.objects.filter(
+            pat_id__in=distinct_patient_ids
+        ).select_related('rp_id__per', 'trans_id')
+
+        today = end_date.date()
+        age_groups = {
+            '15-19': 0,
+            '20-24': 0,
+            '25-29': 0,
+            '30-34': 0,
+            '35-39': 0,
+            '40-44': 0,
+            '45+': 0
+        }
+
+        for patient in patients:
+            dob = None
+            if patient.pat_type == 'Resident' and patient.rp_id and patient.rp_id.per:
+                dob = patient.rp_id.per.per_dob
+            elif patient.pat_type == 'Transient' and patient.trans_id:
+                dob = patient.trans_id.tran_dob
+
+            if dob:
+                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                if 15 <= age <= 19:
+                    age_groups['15-19'] += 1
+                elif 20 <= age <= 24:
+                    age_groups['20-24'] += 1
+                elif 25 <= age <= 29:
+                    age_groups['25-29'] += 1
+                elif 30 <= age <= 34:
+                    age_groups['30-34'] += 1
+                elif 35 <= age <= 39:
+                    age_groups['35-39'] += 1
+                elif 40 <= age <= 44:
+                    age_groups['40-44'] += 1
+                elif age >= 45:
+                    age_groups['45+'] += 1
+
+        # Convert to list format
+        data = [
+            {'ageGroup': age_group, 'count': count}
+            for age_group, count in age_groups.items()
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_fp_age_distribution: {str(e)}")
+        return Response(
+            {'error': 'Error fetching age distribution'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_fp_follow_up_compliance(request):
+    """
+    Get follow-up visit compliance statistics for a specific month
+    """
+    try:
+        month = request.query_params.get('month', datetime.now().strftime('%Y-%m'))
+        try:
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = start_date + relativedelta(months=1) - timezone.timedelta(days=1)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Single query to get compliance statistics
+        compliance_data = FP_Assessment_Record.objects.filter(
+            followv__followv_date__gte=start_date,
+            followv__followv_date__lte=end_date
+        ).select_related('followv').aggregate(
+            completed=Count('followv_id', filter=Q(followv__followv_status='completed')),
+            pending=Count('followv_id', filter=Q(followv__followv_status='pending') & Q(followv__followv_date__gte=end_date)),
+            overdue=Count('followv_id', filter=Q(followv__followv_status='pending') & Q(followv__followv_date__lt=end_date))
+        )
+
+        data = [
+            {'name': 'Completed', 'value': compliance_data['completed'] or 0},
+            {'name': 'Pending', 'value': compliance_data['pending'] or 0},
+            {'name': 'Overdue', 'value': compliance_data['overdue'] or 0}
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_fp_follow_up_compliance: {str(e)}")
+        return Response(
+            {'error': 'Error fetching follow-up compliance'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

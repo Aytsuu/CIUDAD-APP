@@ -16,7 +16,7 @@ import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQue
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import { formatChildHealthData } from "./formattedData";
@@ -241,7 +241,7 @@ export default function AllChildHealthRecords() {
                 className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
               />
             </div>
-            <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <ProtectedComponent exclude={["DOCTOR"]}>
                 <div className="w-full sm:w-auto">
                 <Link
                   to="/services/childhealthrecords/form"
@@ -259,7 +259,7 @@ export default function AllChildHealthRecords() {
                   <Button className="w-full sm:w-auto">New Record</Button>
                 </Link>
                 </div>
-            </ProtectedComponentButton>
+            </ProtectedComponent>
           </div>
         </div>
 

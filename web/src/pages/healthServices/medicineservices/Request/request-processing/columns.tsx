@@ -130,12 +130,12 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
     }
   },
   {
-    accessorKey: "total_quantity",
+    accessorKey: "total_allocated_quantity",
     header: () => <div className="text-center">Total Items</div>,
     size: 100,
     cell: ({ row }) => (
       <div className="text-center py-2">
-        <div className="font-semibold text-blue-600">{row.original.total_confirmed ?? 0}</div>
+        <div className="font-semibold text-blue-600">{row.original.total_allocated_quantity ?? 0}</div>
       </div>
     )
   },
@@ -207,6 +207,9 @@ export const confirmedItemsColumns: ColumnDef<any>[] = [
         <div className="px-3 py-2">
           <div className="text-center space-y-1">
             <div className="font-semibold text-gray-900">{medName}</div>
+         <div className="text-sm text-gray-600 mt-1">
+            {row.original.med_dsg} {row.original.med_dsg_unit}  . {row.original.med_form}
+          </div>
             <div className="text-sm text-gray-600">{medType}</div>
           </div>
         </div>

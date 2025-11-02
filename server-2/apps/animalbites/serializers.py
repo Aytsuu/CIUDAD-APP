@@ -13,11 +13,7 @@ class AnimalBiteDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnimalBite_Details
         fields = '__all__'
-        
-class AnimalBiteInfographicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AnimalBiteInfographic
-        fields = ['id', 'content', 'updated_at']
+
         
         
 class AnimalBiteCreateSerializer(serializers.Serializer):

@@ -6,11 +6,80 @@ from apps.maternal.models import *
 from apps.patientrecords.models import MedicalHistory
 from apps.healthProfiling.models import PersonalAddress, FamilyComposition
 from apps.pagination import StandardResultsPagination
-
+from utils.create_notification import NotificationQueries
 import logging
 
 logger = logging.getLogger(__name__)
 
+
+def send_prenatal_status_notification(appointment, new_status, reason=None):
+    """
+    Send notification for prenatal appointment status changes
+    """
+    try:
+        notifier = NotificationQueries()
+        
+        # Determine recipient (resident)
+        recipient_rp_ids = []
+        resident_name = "Resident"
+        
+        if appointment.rp_id:
+            # Direct resident request
+            recipient_rp_ids = [str(appointment.rp_id.rp_id)]
+            if appointment.rp_id.per:
+                resident_name = f"{appointment.rp_id.per.per_fname} {appointment.rp_id.per.per_lname}"
+        
+        if not recipient_rp_ids:
+            logger.warning(f"No recipient found for prenatal appointment notification for appointment {appointment.par_id}")
+            return False
+        
+        # Different messages based on status
+        status_messages = {
+            'approved': {
+                'title': 'Prenatal Appointment Approved',
+                'message': f'Your prenatal appointment request for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the requested date"} has been approved. Please proceed to the health center on the scheduled date.'
+            },
+            'rejected': {
+                'title': 'Prenatal Appointment Not Approved',
+                'message': f'Your prenatal appointment request was not approved. Reason: {reason or "Please contact the health center for more information."}'
+            },  
+            'missed': {
+                'title': 'Missed Prenatal Appointment',
+                'message': 'You missed your scheduled prenatal appointment. Please book an appointment again to ensure continuous care for you and your baby.'
+            }
+        }
+        
+        message_info = status_messages.get(new_status)
+        if not message_info:
+            logger.warning(f"No message template for status: {new_status}")
+            return False
+        
+        # Create notification
+        success = notifier.create_notification(
+            title=message_info['title'],
+            message=message_info['message'],
+            sender="00001250924",  # System sender
+            recipients=recipient_rp_ids,
+            notif_type=f"PRENATAL_{new_status.upper()}",
+            target_obj=None,
+            web_route="/services/maternal/prenatal",
+            web_params={"appointment_id": str(appointment.par_id), "status": new_status},
+            mobile_route="/(health)/maternal/prenatal/appointments",
+            mobile_params={"appointmentId": str(appointment.par_id)},
+        )
+        
+        if success:
+            logger.info(f"Prenatal {new_status} notification sent to {resident_name} for appointment {appointment.par_id}")
+        else:
+            logger.error(f"Failed to send prenatal {new_status} notification to {resident_name} for appointment {appointment.par_id}")
+            
+        return success
+        
+    except Exception as e:
+        logger.error(f"Error sending prenatal {new_status} notification for appointment {appointment.par_id}: {str(e)}")
+        return False
+    
+    
 class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
     queryset = PrenatalAppointmentRequest.objects.all()
@@ -19,18 +88,30 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
         logger.info(f"Creating prenatal appointment request with data: {request.data}")
         
         try:
-            serializers = self.get_serializer(data=request.data)
+            # Ensure the requested_date is interpreted in Philippines timezone
+            if 'requested_date' in request.data:
+                from django.utils import timezone
+                import datetime
+                
+                date_str = request.data['requested_date']
+                # Parse and ensure it's treated as Philippines time
+                requested_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                # Create a copy of request.data to modify
+                data = request.data.copy()
+                data['requested_date'] = requested_date
+                serializers = self.get_serializer(data=data)
+            else:
+                serializers = self.get_serializer(data=request.data)
 
             if not serializers.is_valid():
                 logger.error(f"Validation errors: {serializers.errors}")
-                
-                return Response ({
+                return Response({
                     'error': 'Validation failed',
                     'details': serializers.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             pa_request = serializers.save()
-            logger.info(f"Prenatal appointment request created successfully with ID: {pa_request.par_id}")
+            logger.info(f"Prenatal appointment request created successfully with ID: {pa_request.par_id} for date: {pa_request.requested_date}")
             
             return Response({
                 'message': 'Prenatal appointment request created successfully',
@@ -283,6 +364,8 @@ class PrenatalAppointmentRequestApproveView(generics.UpdateAPIView):
             staff_id = request.data.get('staff_id')  # Optional staff who approved
             appointment.approve(staff=staff_id)
             
+            send_prenatal_status_notification(appointment, 'approved')
+            
             logger.info(f"Successfully approved prenatal appointment request: {par_id}")
             
             return Response({
@@ -352,6 +435,8 @@ class PrenatalAppointmentRequestRejectView(generics.UpdateAPIView):
             # Use the model's reject method
             staff_id = request.data.get('staff_id')  # Optional staff who rejected
             appointment.reject(reason=reason, staff=staff_id)
+            
+            send_prenatal_status_notification(appointment, 'rejected', reason)
             
             logger.info(f"Successfully rejected prenatal appointment request: {par_id}")
             
@@ -597,21 +682,162 @@ class CheckPendingAppointmentView(generics.RetrieveAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            # Parse the date string in Philippines timezone
+            import datetime
+            from django.utils import timezone
+            
+            # Parse the date string
+            selected_date = datetime.datetime.strptime(date_param, '%Y-%m-%d').date()
+            
+            # Check for pending appointments on that specific date
             pending_appointment = PrenatalAppointmentRequest.objects.filter(
                 rp_id=rp_id,
-                requested_date=date_param,
+                requested_date=selected_date,  # Direct date comparison
                 status='pending'
             ).exists()
             
+            logger.info(f"Checked pending appointments for {rp_id} on {selected_date}: {pending_appointment}")
+            
             return Response({
                 'has_pending': pending_appointment,
-                'date': date_param
+                'date': date_param,
+                'timezone': 'Asia/Manila'
             }, status=status.HTTP_200_OK)
             
+        except ValueError as e:
+            logger.error(f"Invalid date format: {date_param}, error: {str(e)}")
+            return Response({
+                'error': 'Invalid date format. Use YYYY-MM-DD.'
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error checking pending appointment: {str(e)}")
             return Response({
                 'error': 'An error occurred while checking pending appointments'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class PrenatalAppointmentCompleteView(generics.UpdateAPIView):
+    """Mark prenatal appointment as completed"""
+    serializer_class = PARequestConfirmSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+    lookup_field = 'par_id'
+
+    def update(self, request, *args, **kwargs):
+        try:
+            par_id = kwargs.get('par_id')
+            logger.info(f"Attempting to mark prenatal appointment as completed: {par_id}")
+            
+            # Get the appointment request
+            try:
+                appointment = PrenatalAppointmentRequest.objects.get(par_id=par_id)
+            except PrenatalAppointmentRequest.DoesNotExist:
+                logger.error(f"Prenatal appointment request not found: {par_id}")
+                return Response({
+                    'error': 'Appointment request not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if already completed
+            if appointment.status == 'completed':
+                return Response({
+                    'message': 'Appointment request is already completed',
+                    'data': {
+                        'par_id': appointment.par_id,
+                        'status': appointment.status,
+                        'completed_at': appointment.completed_at
+                    }
+                }, status=status.HTTP_200_OK)
+            
+            # Update status to completed
+            appointment.status = 'completed'
+            appointment.completed_at = timezone.now()
+            appointment.save()
+            
+            # ✅ SEND NOTIFICATION FOR COMPLETION
+            send_prenatal_status_notification(appointment, 'completed')
+            
+            logger.info(f"Successfully marked prenatal appointment as completed: {par_id}")
+            
+            return Response({
+                'message': 'Prenatal appointment marked as completed',
+                'data': {
+                    'par_id': appointment.par_id,
+                    'status': appointment.status,
+                    'completed_at': appointment.completed_at.strftime('%Y-%m-%d') if appointment.completed_at else None,
+                    'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error completing prenatal appointment: {str(e)}")
+            return Response({
+                'error': 'An error occurred while completing the appointment',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+# Notifications for missed appointments
+
+class PrenatalAppointmentMissedView(generics.UpdateAPIView):
+    """Mark prenatal appointment as missed"""
+    serializer_class = PARequestRejectSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+    lookup_field = 'par_id'
+
+    def update(self, request, *args, **kwargs):
+        try:
+            par_id = kwargs.get('par_id')
+            reason = request.data.get('reason', 'Missed appointment')
+            
+            logger.info(f"Attempting to mark prenatal appointment as missed: {par_id}")
+            
+            # Get the appointment request
+            try:
+                appointment = PrenatalAppointmentRequest.objects.get(par_id=par_id)
+            except PrenatalAppointmentRequest.DoesNotExist:
+                logger.error(f"Prenatal appointment request not found: {par_id}")
+                return Response({
+                    'error': 'Appointment request not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if already missed
+            if appointment.status == 'missed':
+                return Response({
+                    'message': 'Appointment request is already marked as missed',
+                    'data': {
+                        'par_id': appointment.par_id,
+                        'status': appointment.status,
+                        'missed_at': appointment.missed_at,
+                        'reason': appointment.reason
+                    }
+                }, status=status.HTTP_200_OK)
+            
+            # Update status to missed
+            appointment.status = 'missed'
+            appointment.missed_at = timezone.now()
+            appointment.reason = reason
+            appointment.save()
+            
+            # ✅ SEND NOTIFICATION FOR MISSED APPOINTMENT
+            send_prenatal_status_notification(appointment, 'missed', reason)
+            
+            logger.info(f"Successfully marked prenatal appointment as missed: {par_id}")
+            
+            return Response({
+                'message': 'Prenatal appointment marked as missed',
+                'data': {
+                    'par_id': appointment.par_id,
+                    'status': appointment.status,
+                    'missed_at': appointment.missed_at.strftime('%Y-%m-%d') if appointment.missed_at else None,
+                    'reason': appointment.reason,
+                    'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error marking prenatal appointment as missed: {str(e)}")
+            return Response({
+                'error': 'An error occurred while marking the appointment as missed',
+                'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 

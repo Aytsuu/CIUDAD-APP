@@ -72,6 +72,9 @@ class MedicineListAvailableTable(APIView):
             medicines = medicines.filter(
                 Q(med_name__icontains=search_query) |
                 Q(med_type__icontains=search_query) |
+                Q(med_dsg__icontains=search_query) |
+                Q(med_form__icontains=search_query) |
+                Q(med_tablet__icontains=search_query) |
                 Q(medicineinventory__minv_form__icontains=search_query) |
                 Q(medicineinventory__minv_dsg_unit__icontains=search_query)
             ).distinct()
@@ -106,14 +109,16 @@ class MedicineListAvailableTable(APIView):
                             'quantity_unit': med_inv.minv_qty_unit,
                             'expiry_date': med_inv.inv_id.expiry_date,
                             'inventory_type': med_inv.inv_id.inv_type,
-                            'dosage': med_inv.minv_dsg,  # ✅ Also add dosage if needed
-                            'form': med_inv.minv_form,   # ✅ Also add form if needed
+                            # 'dosage': med_inv.med_id.med_dsg,  # ✅ Also add dosage if needed
+                            # 'form': med_inv.med_id.med_form,   # ✅ Also add form if needed
                         })
                 
                 medicine_data.append({
                     'med_id': medicine.med_id,
                     'med_name': medicine.med_name,
                     'med_type': medicine.med_type,
+                    'form': medicine.med_form,
+                    'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
                     'total_qty_available': medicine.total_qty_available,
                     'inventory_items': inventory_items,
                     'status': 'Available'
@@ -123,6 +128,8 @@ class MedicineListAvailableTable(APIView):
                     'med_id': medicine.med_id,
                     'med_name': medicine.med_name,
                     'med_type': medicine.med_type,
+                    'form': medicine.med_form,
+                    'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
                     'total_qty_available': 0,
                     'inventory_items': [],
                     'status': 'No available stocks'
@@ -319,9 +326,9 @@ class MedicineStockTableView(APIView):
                     'category': stock.med_id.cat.cat_name if stock.med_id and stock.med_id.cat else "N/A",
                     'item': {
                         'medicineName': stock.med_id.med_name if stock.med_id else "Unknown Medicine",
-                        'dosage': stock.minv_dsg,
-                        'dsgUnit': stock.minv_dsg_unit,
-                        'form': stock.minv_form,
+                        'dosage': stock.med_id.med_dsg,
+                        'dsgUnit': stock.med_id.med_dsg_unit,
+                        'form': stock.med_id.med_form,
                     },
                     'qty': {
                         'qty': stock.minv_qty,
@@ -522,9 +529,7 @@ class MedicineStockCreate(APIView):
         
         # Map frontend fields to backend fields and set calculated fields
         medicine_data.update({
-            'minv_dsg': int(medicine_data.get('dosage', 0)),
-            'minv_dsg_unit': medicine_data.get('dsgUnit', 'N/A'),
-            'minv_form': medicine_data.get('form', 'N/A'),
+            
             'minv_qty': qty,
             'minv_qty_unit': medicine_data.get('unit', 'N/A'),
             'minv_pcs': pcs_per_box
@@ -638,9 +643,9 @@ class TableMedicineTransactionView(APIView):
                     'inv_id': inventory.inv_id if inventory else "N/A", 
                     'med_detail': {
                         'med_name': medicine.med_name if medicine else "Unknown Medicine",
-                        'minv_dsg': medicine_inventory.minv_dsg if medicine_inventory else 0,
-                        'minv_dsg_unit': medicine_inventory.minv_dsg_unit if medicine_inventory else "N/A",
-                        'minv_form': medicine_inventory.minv_form if medicine_inventory else "N/A",
+                        'minv_dsg': medicine.med_dsg if medicine else 0,
+                        'minv_dsg_unit': medicine.med_dsg_unit if medicine else "N/A",
+                        'minv_form': medicine.med_form if medicine else "N/A",
                     },
                     'mdt_qty': transaction.mdt_qty,
                     'mdt_action': transaction.mdt_action,

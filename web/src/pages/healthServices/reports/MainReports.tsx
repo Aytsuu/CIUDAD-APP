@@ -24,12 +24,12 @@ export default function HealthcareReports() {
       link: "/reports/bhw-accomplishment-reports/monthly",
     },
     {
-  title: "Family Planning Monthly Report",
-  icon: <ClipboardList className="w-6 h-6 text-purple-600" />,
-  bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
-  description: "Monthly report of family planning service provision and statistics",
-  link: "/familyplanning/report"
-},
+      title: "Family Planning Monthly Report",
+      icon: <ClipboardList className="w-6 h-6 text-purple-600" />,
+      bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+      description: "Monthly report of family planning service provision and statistics",
+      link: "/familyplanning/monthly-records"
+    },
   ];
 
   const recipientLists = [
@@ -143,15 +143,15 @@ export default function HealthcareReports() {
       description: "Monthly Field Health Services Information System report",
       link: "/reports/fhis-monthly-records"
     },
-   
+
   ];
 
   const allReports = [...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports, ...fhisReports];
 
   const filterReports = (reports: any[]) => {
     if (!searchTerm) return reports;
-    return reports.filter((report) => 
-      report.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    return reports.filter((report) =>
+      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
@@ -184,18 +184,18 @@ export default function HealthcareReports() {
     />
   );
 
-  const TabButton = ({ 
-    active, 
-    type, 
-    icon: Icon, 
-    count, 
-    onClick 
-  }: { 
-    active: boolean; 
-    type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis"; 
-    icon: React.ComponentType<{ className?: string }>; 
-    count: number; 
-    onClick: () => void; 
+  const TabButton = ({
+    active,
+    type,
+    icon: Icon,
+    count,
+    onClick
+  }: {
+    active: boolean;
+    type: "all" | "bhw" | "recipients" | "inventory" | "opt" | "masterlist" | "fhis";
+    icon: React.ComponentType<{ className?: string }>;
+    count: number;
+    onClick: () => void;
   }) => {
     const config = {
       all: {
@@ -270,9 +270,9 @@ export default function HealthcareReports() {
     };
 
     return (
-      <button 
-        type="button" 
-        onClick={onClick} 
+      <button
+        type="button"
+        onClick={onClick}
         className={`
           flex-1 min-w-0 py-3 px-1 text-xs sm:text-sm 
           flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 
@@ -294,54 +294,54 @@ export default function HealthcareReports() {
       <Tabs value={activeTab} className="w-full">
         {/* Mobile Responsive Tab Navigation */}
         <div className="flex flex-wrap gap-1 mb-2 bg-white rounded-md border border-gray-200 h-auto overflow-hidden">
-          <TabButton 
-            active={activeTab === "all"} 
-            type="all" 
-            icon={ClipboardList} 
-            count={allReports.length} 
-            onClick={() => setActiveTab("all")} 
+          <TabButton
+            active={activeTab === "all"}
+            type="all"
+            icon={ClipboardList}
+            count={allReports.length}
+            onClick={() => setActiveTab("all")}
           />
-          <TabButton 
-            active={activeTab === "bhw"} 
-            type="bhw" 
-            icon={Users} 
-            count={bhwReport.length} 
-            onClick={() => setActiveTab("bhw")} 
+          <TabButton
+            active={activeTab === "bhw"}
+            type="bhw"
+            icon={Users}
+            count={bhwReport.length}
+            onClick={() => setActiveTab("bhw")}
           />
-          <TabButton 
-            active={activeTab === "recipients"} 
-            type="recipients" 
-            icon={Syringe} 
-            count={recipientLists.length} 
-            onClick={() => setActiveTab("recipients")} 
+          <TabButton
+            active={activeTab === "recipients"}
+            type="recipients"
+            icon={Syringe}
+            count={recipientLists.length}
+            onClick={() => setActiveTab("recipients")}
           />
-          <TabButton 
-            active={activeTab === "inventory"} 
-            type="inventory" 
-            icon={Box} 
-            count={inventoryReports.length} 
-            onClick={() => setActiveTab("inventory")} 
+          <TabButton
+            active={activeTab === "inventory"}
+            type="inventory"
+            icon={Box}
+            count={inventoryReports.length}
+            onClick={() => setActiveTab("inventory")}
           />
-          <TabButton 
-            active={activeTab === "opt"} 
-            type="opt" 
-            icon={Activity} 
-            count={optReports.length} 
-            onClick={() => setActiveTab("opt")} 
+          <TabButton
+            active={activeTab === "opt"}
+            type="opt"
+            icon={Activity}
+            count={optReports.length}
+            onClick={() => setActiveTab("opt")}
           />
-          <TabButton 
-            active={activeTab === "masterlist"} 
-            type="masterlist" 
-            icon={ClipboardList} 
-            count={masterlistReports.length} 
-            onClick={() => setActiveTab("masterlist")} 
+          <TabButton
+            active={activeTab === "masterlist"}
+            type="masterlist"
+            icon={ClipboardList}
+            count={masterlistReports.length}
+            onClick={() => setActiveTab("masterlist")}
           />
-          <TabButton 
-            active={activeTab === "fhis"} 
-            type="fhis" 
-            icon={Heart} 
-            count={fhisReports.length} 
-            onClick={() => setActiveTab("fhis")} 
+          <TabButton
+            active={activeTab === "fhis"}
+            type="fhis"
+            icon={Heart}
+            count={fhisReports.length}
+            onClick={() => setActiveTab("fhis")}
           />
         </div>
 
@@ -350,12 +350,12 @@ export default function HealthcareReports() {
           <div className="flex justify-end mb-6">
             <div className="w-full sm:w-[50%] max-w-full sm:max-w-md relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input 
-                type="search" 
-                placeholder="Search reports..." 
-                className="pl-10 w-full" 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
+              <Input
+                type="search"
+                placeholder="Search reports..."
+                className="pl-10 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>

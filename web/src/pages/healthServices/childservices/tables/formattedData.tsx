@@ -55,16 +55,16 @@ export const formatChildHealthData = (childRecords: any[]): any[] => {
     };
   });
 };
+export const processHistoryData = (historyData: any[], dob: string): any[] => {
+  if (!Array.isArray(historyData) || historyData.length === 0) return [];
 
-export const processHistoryData = (historyData: any, dob: string): any[] => {
-  if (!historyData || historyData.length === 0) return [];
-  const mainRecord = historyData[0];
-  if (!mainRecord || !mainRecord.child_health_histories) return [];
-  
-  const sortedHistories = [...mainRecord.child_health_histories].sort(
+  // Sort histories by created_at descending
+  const sortedHistories = [...historyData].sort(
     (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
-  
+
+  const latestDate = sortedHistories.length > 0 ? sortedHistories[0].created_at : null;
+
   return sortedHistories.map((record: any, index: number) => {
     let bmi = "N/A";
     let findingsData = {
@@ -112,11 +112,13 @@ export const processHistoryData = (historyData: any, dob: string): any[] => {
     }
 
     return {
-      chrec_id: mainRecord.chrec, // note: adjust if necessary
-      patrec: mainRecord.patrec_id,
+      chrec_id: record.chrec, // note: adjust if necessary
+      patrec: record.patrec_id,
       status: record.status || "N/A",
       chhist_id: record.chhist_id,
-      id: index + 1,
+      id: record.index,
+
+      latestDate: latestDate,
       temp: record.child_health_vital_signs?.[0]?.temp || 0,
       age: dob ? calculateAgeFromDOB(dob, record.created_at).ageString : "N/A",
       wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
@@ -134,7 +136,7 @@ export const processHistoryData = (historyData: any, dob: string): any[] => {
         !!findingsData.subj_summary ||
         !!findingsData.obj_summary ||
         !!findingsData.assessment_summary ||
-        !!findingsData.plantreatment_summary
+        !!findingsData.plantreatment_summary,
     };
   });
 };

@@ -67,7 +67,21 @@ export default function FamilyPlanningForm2({
     values: formData,
     mode: "onChange",
   })
+const { setValue, getValues } = form
+  const watchedObsLivingChildren = form.watch("obstetricalHistory.numOfLivingChildren")
 
+  useEffect(() => {
+    // Get the current value from the *other* field
+    const currentNumValue = getValues("numOfLivingChildren")
+    // Coerce the watched value to a number, defaulting to 0
+    const newObsValue = watchedObsLivingChildren || 0
+
+    // Only update if they are different
+    if (currentNumValue !== newObsValue) {
+      setValue("numOfLivingChildren", newObsValue)
+    }
+  }, [watchedObsLivingChildren, setValue, getValues])
+  
   useEffect(() => {
     form.reset(formData)
   }, [form, formData])

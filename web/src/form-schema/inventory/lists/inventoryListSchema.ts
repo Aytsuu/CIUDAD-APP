@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
 export const MedicineListSchema = z.object({
   medicineName: z.string().min(1, "Medicine name is Required").default(""),
   cat_id: z.string().min(1, "Category is required"),
   med_type:z.string().min(1, "Medicine type is required").default(""),
+  med_dsg: positiveNumberSchema.pipe(z.number().min(1, "Dosage must be at least 1")),
+    med_dsg_unit: z.string().min(1, "Dosage unit is required"),
+    med_form: z.string().min(1, "Form is required"),
 
 
 });

@@ -231,7 +231,7 @@ export default function ReportDocument() {
                       setMediaFiles={setMediaFiles}
                       maxFiles={1}
                       viewMode="list"
-                      acceptableFiles="document"
+                      acceptableFiles="image"
                       onRemoveMedia={removeDocument}
                     />
                   </div>
@@ -253,7 +253,7 @@ export default function ReportDocument() {
                     <span className="text-muted-foreground">Created:</span>
                     <span>{type === "AR" ? ARInfo?.date : WARInfo?.created_at}</span>
                     <span className="text-muted-foreground">Document ID:</span>
-                    <span>{type === "AR" ? ARInfo?.id : WARInfo?.id}</span>
+                    <span>{type === "AR" ? `AR-${ARInfo?.id}` : `WAR-${WARInfo?.id}`}</span>
                   </div>
                 )}
               </div>

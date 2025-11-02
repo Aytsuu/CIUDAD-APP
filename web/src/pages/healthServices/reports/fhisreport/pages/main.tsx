@@ -40,7 +40,7 @@ export default function MultiPageFormFHIS() {
   };
 
   return (
-    <LayoutWithBack title="FHIS Monthly Report" description={`FHSIS Report for ${state?.monthName || ""}`}>
+    <LayoutWithBack title="FHSIS Monthly Report" description={`FHSIS Report for ${state?.monthName || ""}`}>
       {/* Page Indicator */}
       <div className="w-full mb-6">
         <div className="w-full bg-gray-200 rounded-full h-2 mb-4">

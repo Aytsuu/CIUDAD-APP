@@ -5,7 +5,7 @@ import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentRefferedColumns } from "../columns/referred-appointment";
+import { medicalAppointmentCancelledColumns } from "../columns/cancelled-appoinmtment";
 import { useAppointments } from "../../queries/fetch";
 
 export default function CancelledMedicalAppointments() {
@@ -47,7 +47,7 @@ export default function CancelledMedicalAppointments() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Referred</p>
+              <p className="text-sm font-medium text-gray-600">Total Cancelled</p>
               <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
             </div>
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -107,7 +107,7 @@ export default function CancelledMedicalAppointments() {
               <p className="text-sm">{debouncedSearch ? "No referred appointments match your search criteria" : "No referred appointments at the moment"}</p>
             </div>
           ) : (
-            <DataTable columns={medicalAppointmentRefferedColumns} data={appointments} />
+            <DataTable columns={medicalAppointmentCancelledColumns} data={appointments} />
           )}
         </div>
 

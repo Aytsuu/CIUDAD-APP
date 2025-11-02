@@ -37,6 +37,8 @@ export default function BusinessDetails() {
     error,
     refetch: refetchBusiness,
   } = useBusinessInfo(business?.bus_id);
+  
+  console.log(businessInfo)
 
   const InfoRow = ({
     label,
@@ -110,7 +112,7 @@ export default function BusinessDetails() {
     const registeredDate = item
       ? formatDate(item?.bus_date_registered, "long")
       : "";
-    const registeredBy = item?.bus_registered_by || "N/A";
+    const registeredBy = item?.registered_by || "N/A";
     const businessFiles = item?.files || [];
 
     return (
@@ -184,46 +186,6 @@ export default function BusinessDetails() {
               )}
             </View>
             <ImageCarousel images={businessFiles} />
-            {/* <Accordion type="single" className="border-0">
-              <AccordionItem value="business-documents" className="border-0">
-                <AccordionTrigger className="py-3">
-                  <View className="flex-row justify-between items-center flex-1 mr-2">
-                    <Text className="text-gray-900 font-medium text-sm">
-                      Documents
-                    </Text>
-                    {businessFiles.length > 0 && (
-                      <Text className="text-gray-500 text-xs">
-                        {businessFiles.length}
-                      </Text>
-                    )}
-                  </View>
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  {businessFiles.length > 0 ? (
-                    <ScrollView
-                      className="max-h-96"
-                      showsVerticalScrollIndicator={false}
-                      overScrollMode="never"
-                      nestedScrollEnabled={true}
-                    >
-                      {businessFiles.map((file: any, index: number) => (
-                        <DocumentCard
-                          key={`doc-${index}`}
-                          item={file}
-                          index={index}
-                        />
-                      ))}
-                    </ScrollView>
-                  ) : (
-                    <View className="items-center py-8">
-                      <Text className="text-gray-400 text-xs">
-                        No documents found
-                      </Text>
-                    </View>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion> */}
           </View>
         )}
       </View>

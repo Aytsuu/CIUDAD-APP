@@ -42,13 +42,13 @@ const getUserMedicineRequests = async (
 ): Promise<{ count: number; next: string | null; previous: string | null; results: MedicineRequestItem[] }> => {
   const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
   const userParam = isResident ? `rp_id=${userId}` : `pat_id=${userId}`;
-  
-  const response = await api2.get(`${endpoint}?${userParam}`, { 
-    params: { ...params, include_archived: true } 
+
+  const response = await api2.get(`${endpoint}?${userParam}`, {
+    params: { ...params, include_archived: true }
   });
-  
+
   const results = response.data.results || [];
-  
+
   // More robust data transformation
   return {
     count: response.data.count || 0,
@@ -56,22 +56,22 @@ const getUserMedicineRequests = async (
     previous: response.data.previous || null,
     results: results.map((item: any) => {
       let normalizedStatus = item.status?.toLowerCase() || 'pending';
-      
+
       if (['rejected', 'declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
       if (['fulfilled', 'completed'].includes(normalizedStatus)) normalizedStatus = 'completed';
       if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
       if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
-      
+
       return {
         medreqitem_id: item.medreqitem_id,
         medreqitem_qty: item.medreqitem_qty,
         reason: item.reason,
         status: normalizedStatus, // Use normalized status
         archive_reason: item.archive_reason || null,
-        med_details: item.med_details || (item.med?.med_name ? { 
-          med_id: item.med?.med_id, 
-          med_name: item.med?.med_name || item.med_details?.med_name, 
-          med_type: item.med?.med_type 
+        med_details: item.med_details || (item.med?.med_name ? {
+          med_id: item.med?.med_id,
+          med_name: item.med?.med_name || item.med_details?.med_name,
+          med_type: item.med?.med_type
         } : undefined),
         medreq_id: item.medreq_id || item.medreq_details?.medreq_id,
         requested_at: item.medreq_details?.requested_at || item.requested_at,
@@ -95,41 +95,41 @@ const getStatusConfig = (status: string) => {
   switch (lowerStatus) {
     case 'pending':
     case 'referred_to_doctor': // Group these together
-      return { 
-        color: 'text-yellow-700', 
-        bgColor: 'bg-yellow-100', 
-        borderColor: 'border-yellow-200', 
+      return {
+        color: 'text-yellow-700',
+        bgColor: 'bg-yellow-100',
+        borderColor: 'border-yellow-200',
         label: lowerStatus === 'referred_to_doctor' ? 'Referred to Doctor' : 'Pending'
       };
     case 'rejected':
     case 'declined':
     case 'cancelled':
-      return { 
-        color: 'text-red-700', 
-        bgColor: 'bg-red-100', 
-        borderColor: 'border-red-200', 
-        label: 'Cancelled' 
+      return {
+        color: 'text-red-700',
+        bgColor: 'bg-red-100',
+        borderColor: 'border-red-200',
+        label: 'Cancelled'
       };
     case 'confirmed':
-      return { 
-        color: 'text-orange-700', 
-        bgColor: 'bg-orange-100', 
-        borderColor: 'border-orange-200', 
-        label: 'Ready for Pickup' 
+      return {
+        color: 'text-orange-700',
+        bgColor: 'bg-orange-100',
+        borderColor: 'border-orange-200',
+        label: 'Ready for Pickup'
       };
     case 'completed':
-      return { 
-        color: 'text-green-700', 
-        bgColor: 'bg-green-100', 
-        borderColor: 'border-green-200', 
-        label: 'Completed' 
+      return {
+        color: 'text-green-700',
+        bgColor: 'bg-green-100',
+        borderColor: 'border-green-200',
+        label: 'Completed'
       };
     default:
-      return { 
-        color: 'text-gray-700', 
-        bgColor: 'bg-gray-100', 
-        borderColor: 'border-gray-200', 
-        label: status 
+      return {
+        color: 'text-gray-700',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-200',
+        label: status
       };
   }
 };
@@ -226,7 +226,7 @@ const MedicineRequestCard: React.FC<{
             Requested on {formatDate(item.requested_at)}
           </Text>
         </View>
-      
+
         {item.reason && (
           <View className="flex-row items-start">
             <FileText size={16} color="#6B7280" />
@@ -248,7 +248,7 @@ const MedicineRequestCard: React.FC<{
       {/* Footer for Cancellable Items */}
       {canCancel && (
         <View className="border-t border-gray-100">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={onCancel}
             disabled={isCancelPending}
             className="flex-row items-center justify-center py-3"
@@ -303,14 +303,14 @@ const CancelModal: React.FC<{
             numberOfLines={3}
           />
           <View className="flex-row justify-end space-x-3">
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onClose}
               disabled={isPending}
               className="px-4 py-2 rounded-lg bg-gray-100"
             >
               <Text className="text-gray-700 font-medium">Close</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onConfirm}
               disabled={isPending}
               className="px-4 py-2 rounded-lg bg-red-600 flex-row items-center"
@@ -354,7 +354,9 @@ const MedicineRequestTracker: React.FC = () => {
       status: getStatusForTab(activeTab),
     }),
     enabled: !!user?.rp && isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // always considered stale
+    refetchInterval: 3000, // every 3 seconds (adjust as needed)
+    refetchIntervalInBackground: true, // keeps polling even if tab is inactive
   });
 
   const requests = data?.results || [];
@@ -473,13 +475,13 @@ const MedicineRequestTracker: React.FC = () => {
           </View>
         </View>
 
-        {/* Results Info */} 
+        {/* Results Info */}
         {/* NOTE: This may show inaccurate totalCount until backend filters by status/search. For now, using filtered length for "Showing" */}
-       
 
-        {/* Tab Bar */} 
+
+        {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />  {/* No counts */}
-       <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
+        <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
           <Text className="text-sm text-gray-600">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} requests
           </Text>
@@ -496,7 +498,7 @@ const MedicineRequestTracker: React.FC = () => {
             </Text>
           </View>
         )}
-    
+
         {/* Reminder for To Pick Up Tab */}
         {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
@@ -527,70 +529,70 @@ const MedicineRequestTracker: React.FC = () => {
             )}
           </View>
         ) : (
-    <FlatList
-  data={filteredRequests}
-  keyExtractor={(item) => `medicine-request-${item.medreqitem_id}`}
-  refreshControl={
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      colors={['#3B82F6']}
-    />
-  }
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{
-    flexGrow: 1, // Ensure the FlatList takes up available space
-    padding: 16,
-    minHeight: '100%', // Ensure the container has enough height to be scrollable
-  }}
-  initialNumToRender={10}
-  maxToRenderPerBatch={10}
-  windowSize={10}
-  ListEmptyComponent={
-    <View className="flex-1 justify-center items-center px-6 py-12">
-      <Package size={64} color="#9CA3AF" />
-      <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
-        No requests found
-      </Text>
-      <Text className="text-gray-600 text-center mt-2 mb-8">
-        {searchQuery || activeTab !== 'pending'
-          ? "No requests match your current filters."
-          : "Start by requesting medicines you need."}
-      </Text>
-      {!searchQuery && activeTab === 'pending' && (
-        <TouchableOpacity
-          onPress={() => router.push('/medicine-request/med-request')}
-          className="bg-blue-600 px-6 py-3 rounded-lg"
-        >
-          <Text className="text-white font-medium">Request Medicine</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  }
-  renderItem={({ item }) => (
-    <MedicineRequestCard
-      item={item}
-      onCancel={() => {
-        setSelectedItem(item);
-        setShowCancelModal(true);
-      }}
-      isCancelPending={cancelMutation.isPending}
-    />
-  )}
-  ListFooterComponent={
-    filteredRequests.length > 0 && totalPages > 1 ? (
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
-    ) : isFetching ? (
-      <View className="py-4 items-center">
-        <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
-      </View>
-    ) : null
-  }
-/>
+          <FlatList
+            data={filteredRequests}
+            keyExtractor={(item) => `medicine-request-${item.medreqitem_id}`}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              flexGrow: 1, // Ensure the FlatList takes up available space
+              padding: 16,
+              minHeight: '100%', // Ensure the container has enough height to be scrollable
+            }}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center px-6 py-12">
+                <Package size={64} color="#9CA3AF" />
+                <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+                  No requests found
+                </Text>
+                <Text className="text-gray-600 text-center mt-2 mb-8">
+                  {searchQuery || activeTab !== 'pending'
+                    ? "No requests match your current filters."
+                    : "Start by requesting medicines you need."}
+                </Text>
+                {!searchQuery && activeTab === 'pending' && (
+                  <TouchableOpacity
+                    onPress={() => router.push('/medicine-request/med-request')}
+                    className="bg-blue-600 px-6 py-3 rounded-lg"
+                  >
+                    <Text className="text-white font-medium">Request Medicine</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            }
+            renderItem={({ item }) => (
+              <MedicineRequestCard
+                item={item}
+                onCancel={() => {
+                  setSelectedItem(item);
+                  setShowCancelModal(true);
+                }}
+                isCancelPending={cancelMutation.isPending}
+              />
+            )}
+            ListFooterComponent={
+              filteredRequests.length > 0 && totalPages > 1 ? (
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              ) : isFetching ? (
+                <View className="py-4 items-center">
+                  <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+                </View>
+              ) : null
+            }
+          />
         )}
       </View>
 

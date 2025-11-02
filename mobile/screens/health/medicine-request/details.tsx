@@ -64,7 +64,7 @@ export default function MedicineDetailsScreen() {
     };
 
     addToCart(itemToAdd);
-    console.log("➕ Adding to cart:", itemToAdd);
+    console.log("Adding to cart:", itemToAdd);
     
     Alert.alert("Success", "Medicine added to your request", [
       { text: "Continue Browsing", onPress: () => router.back() },
@@ -73,7 +73,6 @@ export default function MedicineDetailsScreen() {
   };
 
   if (!medicine) {
-    // This state indicates medicineData was not passed correctly or could not be parsed
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 justify-center items-center">
         <View className="bg-white p-6 rounded-2xl shadow-lg items-center">
@@ -98,11 +97,11 @@ export default function MedicineDetailsScreen() {
             <Text className="text-xl font-bold text-gray-800 flex-1">Medicine Details</Text>
         </View>
 
-        <View className="px-4 pt-6 pb-6">
+        <View className="px-4 pt-6">
           {/* Medicine Info Card */}
           <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
             {/* Medicine Header */}
-            <View className="flex-row items-start justify-between mb-4">
+            <View className="flex-row items-start justify-between">
               <View className="flex-1">
                 <View className="flex-row items-center mb-2">
                   <View className="bg-indigo-100 p-3 rounded-full mr-3">
@@ -110,7 +109,7 @@ export default function MedicineDetailsScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-2xl font-bold text-gray-800">{medicine.name}</Text>
-                    <Text className="text-gray-500">{medicine.dosage}</Text>
+                    {/* <Text className="text-gray-500">{medicine.dosage}</Text> */}
                   </View>
                 </View>
               </View>

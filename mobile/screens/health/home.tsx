@@ -55,7 +55,7 @@ const Homepage = () => {
 
 const modules: Module[] = [
   { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
-  { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+  // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
   { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
   { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
   { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
@@ -106,7 +106,8 @@ const modules: Module[] = [
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
       <Button
-        onPress={() => router.back()}
+      // onPress={() => router.push("/my-schedules/my-schedules" as Href)}
+        onPress={() => router.push("/(tabs)")}
         className="grid rounded-none bg-blue-800 pl-5 align-left items-start"
       >
         <ChevronLeft size={24} color="white" />

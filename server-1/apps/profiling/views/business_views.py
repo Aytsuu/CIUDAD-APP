@@ -41,6 +41,9 @@ class ActiveBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
+    search_query = self.request.query_params.get('search', '').strip()
+    size = self.request.query_params.get('size', None)
+
     queryset = Business.objects.filter(~Q(bus_status='PENDING')).select_related(
       'staff',
     ).prefetch_related(
@@ -56,7 +59,16 @@ class ActiveBusinessTableView(generics.ListAPIView):
       'staff__rp__per__per_mname',
     )
 
-    search_query = self.request.query_params.get('search', '').strip()
+    if size and size != "all":
+      if size == "micro":
+        queryset = queryset.filter(bus_gross_sales__lt=3000000)
+      elif size == "small":
+        queryset = queryset.filter(Q(bus_gross_sales__gte=3000000) & Q(bus_gross_sales__lt=20000000))
+      elif size == "medium":
+        queryset = queryset.filter(Q(bus_gross_sales__gte=20000000) & Q(bus_gross_sales__lt=1000000000))
+      else:
+        queryset = queryset.filter(bus_gross_sales__gte=1000000000)
+
     if search_query:
       queryset = queryset.filter(
         Q(bus_id__icontains=search_query) |

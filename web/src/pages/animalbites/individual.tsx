@@ -150,7 +150,7 @@ const IndividualPatientHistory: React.FC = () => {
 
   useEffect(() => {
     if (!patientId) {
-      navigate("/Animalbite_viewing");
+      navigate("/services/animalbites/records");
     }
   }, [patientId, navigate]);
 
@@ -326,7 +326,7 @@ const IndividualPatientHistory: React.FC = () => {
           />
           <StatCard
             icon={<PawPrint size={28} />}
-            title="Most Common Animal"
+            title="Common Animal Case"
             value={stats.mostCommonAnimal}
             bgColor="bg-gradient-to-br from-orange-100 to-orange-200"
             iconColor="text-orange-600"

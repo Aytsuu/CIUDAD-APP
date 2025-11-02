@@ -117,7 +117,7 @@ const FamilyPlanningBaseSchema = z.object({
     })
     .optional(),
 
-  numOfLivingChildren: z.coerce.number().min(0).optional(),
+  numOfLivingChildren: z.coerce.number().min(0).max(20).optional(),
   plan_more_children: z.boolean(),
   avg_monthly_income: z.string().nonempty("Average monthly income is required"),
 
@@ -159,12 +159,12 @@ const FamilyPlanningBaseSchema = z.object({
 
   num_of_children: z.number().min(0).optional(),
   obstetricalHistory: z.object({
-    g_pregnancies: z.coerce.number().min(0).default(0),
-    p_pregnancies: z.coerce.number().min(0).default(0),
-    fullTerm: z.coerce.number().min(0),
-    premature: z.coerce.number().min(0),
-    abortion: z.coerce.number().min(0),
-    numOfLivingChildren: z.coerce.number().min(0),
+    g_pregnancies: z.coerce.number().min(0).max(20).default(0),
+    p_pregnancies: z.coerce.number().min(0).max(20).default(0),
+    fullTerm: z.coerce.number().min(0).max(20),
+    premature: z.coerce.number().min(0).max(20),
+    abortion: z.coerce.number().min(0).max(20),
+    numOfLivingChildren: z.coerce.number().min(0).max(20),
     lastDeliveryDate: z
       .preprocess(
         (arg) => (arg === "" ? null : arg), // Preprocess empty string to null
@@ -216,7 +216,7 @@ const FamilyPlanningBaseSchema = z.object({
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
     referredTo: z.string().optional(),
-    otherReferral: z.string().optional(),
+    // otherReferral: z.string().optional(),
   }),
   weight: z.coerce
     .number({
@@ -489,7 +489,34 @@ export const page2Schema = FamilyPlanningBaseSchema.pick({
 export const page3Schema = FamilyPlanningBaseSchema.pick({
   sexuallyTransmittedInfections: true,
   violenceAgainstWomen: true,
+}).superRefine((data, ctx) => {
+  const { unpleasantRelationship, partnerDisapproval, domesticViolence, referredTo } = data.violenceAgainstWomen || {}
+
+  const hasVawRisk = unpleasantRelationship || partnerDisapproval || domesticViolence
+
+  if (hasVawRisk) {
+    if (!referredTo || referredTo.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Referral is required when there are risks for Violence Against Women. Put N/A if unsure",
+        path: ["violenceAgainstWomen", "referredTo"],
+      })
+      return // Stop further validation if referredTo is empty
+    }
+
+    if (referredTo === "Others" || (referredTo && !["DSWD", "WCPU", "NGOs"].includes(referredTo))) {
+      // This means it's either "Others" as a placeholder or a custom input
+      if (referredTo === "Others") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "",
+          path: ["violenceAgainstWomen", "referredTo"],
+        })
+      }
+    }
+  }
 })
+
 
 export const page4Schema = FamilyPlanningBaseSchema.pick({
   weight: true,

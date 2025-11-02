@@ -79,16 +79,16 @@ export const medicineRequestRejectedColumns: ColumnDef<any>[] = [
       );
     }
   },
-  {
-    accessorKey: "total_quantity",
-    header: () => <div className="text-center">Total Items</div>,
-    size: 100,
-    cell: ({ row }) => (
-      <div className="text-center py-2">
-        <div className="font-semibold text-blue-600">{row.original.item_counts.rejected || 0}</div>
-      </div>
-    )
-  },
+  // {
+  //   accessorKey: "total_quantity",
+  //   header: () => <div className="text-center">Total Items</div>,
+  //   size: 100,
+  //   cell: ({ row }) => (
+  //     <div className="text-center py-2">
+  //       <div className="font-semibold text-blue-600">{row.original.item_counts.rejected || 0}</div>
+  //     </div>
+  //   )
+  // },
   {
     accessorKey: "requested_at",
     header: ({ column }) => (
@@ -124,7 +124,7 @@ export const medicineRequestRejectedColumns: ColumnDef<any>[] = [
                   params: {
                     medreq_id: row.original.medreq_id,
                     patientData: {
-                      pat_id: row.original.pat_id_value,
+                      pat_id: row.original.pat_id || row.original.pat_id_value,
                       pat_type: row.original.pat_type,
                       age: row.original.age,
                       addressFull: address.full_address || "No address provided",

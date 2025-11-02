@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, Plus, ClockAlert, ChevronLeft, CircleAlert } from "lucide-react";
+import { Heart, Baby, Clock, CheckCircle, HeartHandshake, Plus, ClockAlert, ChevronLeft, CircleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { formatDate } from "./appointments/columns";
 import { usePregnancyDetails } from "../queries/maternalFetchQueries";
 import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import TableLoading from "../../table-loading";
 
 interface Patient {
   pat_id: string;
@@ -477,10 +478,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   if (pregnancyDataLoading) {
     return (
       <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin mr-2" />
-          <span>Loading records...</span>
-        </div>
+        <TableLoading />
       </LayoutWithBack>
     );
   }

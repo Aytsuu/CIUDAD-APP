@@ -25,6 +25,7 @@ import { ExportButton } from "@/components/ui/export";import TableLoading from "
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 interface maternalRecords {
     pat_id: string;
@@ -251,7 +252,7 @@ export default function MaternalAllRecords() {
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
+          <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
       ),
     },

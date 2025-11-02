@@ -28,6 +28,8 @@ import { Combobox } from "@/components/ui/combobox";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
 import { useUpdateFollowupStatus } from "../queries/update";
+import IndivMedicineRecords from "@/pages/healthServices/medicineservices/tables/IndivMedicineRecord";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog/dialog";
 
 export default function LastPage({
   onPrevious,
@@ -41,7 +43,7 @@ export default function LastPage({
   newVitalSigns,
   setNewVitalSigns,
   passed_status,
-  chrecId
+  chrecId,
 }: LastPageProps) {
   // Local state for editing form
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -52,10 +54,8 @@ export default function LastPage({
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [allowNotesEdit, setAllowNotesEdit] = useState(false);
-  // NEW: pending followup updates stored here (keyed by followv_id)
+  const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
   const [pendingFollowupUpdates, setPendingFollowupUpdates] = useState<Record<number, string>>({});
-
-  // We'll use the updateFollowup mutation on final submit
   const updateFollowupMutation = useUpdateFollowupStatus();
 
   // Fixed logic: allow notes edit when passed_status is NOT immunization
@@ -64,10 +64,9 @@ export default function LastPage({
   }, [passed_status]);
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
-  const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
+  const { data: latestVitalsData } = useChildLatestVitals(formData.pat_id || "");
   const { data: doctorOptions, isLoading: isDoctorLoading } = fetchDoctor();
   const { data: midwifeOptions, isLoading: isMidwifeLoading } = fetchMidwife();
-
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
@@ -81,14 +80,14 @@ export default function LastPage({
     setMedicineSearchParams((prev: any) => ({
       ...prev,
       search: searchTerm,
-      page: 1
+      page: 1,
     }));
   };
 
   const handleMedicinePageChange = (page: number) => {
     setMedicineSearchParams((prev: any) => ({
       ...prev,
-      page
+      page,
     }));
   };
 
@@ -114,19 +113,19 @@ export default function LastPage({
         seen: "",
         given_iron: "",
         is_anemic: false,
-        date_completed: ""
+        date_completed: "",
       },
       birthwt: formData.birthwt || {
         seen: "",
         given_iron: "",
-        date_completed: ""
+        date_completed: "",
       },
       medicines: formData.medicines || [],
       status: formData.status || "recorded",
       nutritionalStatus: formData.nutritionalStatus || {},
       edemaSeverity: formData.edemaSeverity || "None",
-      passed_status: passed_status
-    }
+      passed_status: passed_status,
+    },
   });
 
   const vitalSignForm = useForm<VitalSignType>({
@@ -142,8 +141,8 @@ export default function LastPage({
       followv_status: "pending",
       notes: "",
       is_opt: false,
-      remarks: ""
-    }
+      remarks: "",
+    },
   });
 
   const editVitalSignForm = useForm<VitalSignType>({
@@ -158,8 +157,8 @@ export default function LastPage({
       followUpVisit: "",
       notes: "",
       is_opt: false,
-      remarks: ""
-    }
+      remarks: "",
+    },
   });
 
   useEffect(() => {
@@ -175,12 +174,12 @@ export default function LastPage({
   }>({
     resolver: zodResolver(
       z.object({
-        date_completed: z.string().nullable().optional()
+        date_completed: z.string().nullable().optional(),
       })
     ),
     defaultValues: {
-      date_completed: null
-    }
+      date_completed: null,
+    },
   });
 
   const {
@@ -188,7 +187,7 @@ export default function LastPage({
     watch,
     setValue,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = form;
   const { control: editVitalSignFormControl, handleSubmit: editVitalSignFormHandleSubmit } = editVitalSignForm;
 
@@ -215,7 +214,7 @@ export default function LastPage({
     return newVitalSigns.map((vital, index) => ({
       ...vital,
       originalIndex: index,
-      age: vital.age || currentAge
+      age: vital.age || currentAge,
     }));
   }, [newVitalSigns, currentAge]);
 
@@ -254,17 +253,17 @@ export default function LastPage({
           seen: "",
           given_iron: "",
           is_anemic: false,
-          date_completed: ""
+          date_completed: "",
         },
         birthwt: formData.birthwt || {
           seen: "",
           given_iron: "",
-          date_completed: ""
+          date_completed: "",
         },
         medicines: formData.medicines || [],
         status: formData.status || "recorded",
         nutritionalStatus: formData.nutritionalStatus || {},
-        edemaSeverity: formData.edemaSeverity || "None"
+        edemaSeverity: formData.edemaSeverity || "None",
       };
       setInitialFormData(initial);
     }
@@ -280,7 +279,7 @@ export default function LastPage({
       medicines: selectedMedicines,
       status: currentStatus,
       nutritionalStatus: nutritionalStatus,
-      edemaSeverity: edemaSeverity
+      edemaSeverity: edemaSeverity,
     };
     const hasChanges = JSON.stringify(currentFormData) !== JSON.stringify(initialFormData);
     setHasFormChanges(hasChanges);
@@ -290,7 +289,7 @@ export default function LastPage({
     if (newVitalSigns.length > 0) {
       const updatedVitalSigns = newVitalSigns.map((vital) => ({
         ...vital,
-        age: vital.age || currentAge
+        age: vital.age || currentAge,
       }));
       const hasChanges = JSON.stringify(updatedVitalSigns) !== JSON.stringify(newVitalSigns);
       if (hasChanges) {
@@ -317,20 +316,33 @@ export default function LastPage({
       medicines: selectedMedicines,
       status: currentStatus,
       nutritionalStatus: nutritionalStatus,
-      edemaSeverity: edemaSeverity
+      edemaSeverity: edemaSeverity,
     });
     vitalSignForm.setValue("age", currentAge);
     setValue(
       "historicalSupplementStatuses",
       historicalSupplementStatusesProp.map((status) => ({
-        date_completed: status.date_completed ?? undefined
+        date_completed: status.date_completed ?? undefined,
       }))
     );
     if (currentAge && latestOverallVitalSign?.ht) {
       setValue("nutritionalStatus", { ...nutritionalStatus });
       updateFormData({ nutritionalStatus: { ...nutritionalStatus } });
     }
-  }, [currentStatus, currentAge, latestOverallVitalSign, historicalSupplementStatusesProp, setValue, updateFormData, vitalSignForm, anemicData, birthwtData, selectedMedicines, nutritionalStatus, edemaSeverity]);
+  }, [
+    currentStatus,
+    currentAge,
+    latestOverallVitalSign,
+    historicalSupplementStatusesProp,
+    setValue,
+    updateFormData,
+    vitalSignForm,
+    anemicData,
+    birthwtData,
+    selectedMedicines,
+    nutritionalStatus,
+    edemaSeverity,
+  ]);
 
   const handleMedicineSelectionChange = (
     selectedMedicines: {
@@ -341,7 +353,7 @@ export default function LastPage({
   ) => {
     const updatedMedicines = selectedMedicines.map((med) => ({
       ...med,
-      medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0
+      medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0,
     }));
     setValue("medicines", updatedMedicines);
     updateFormData({ medicines: updatedMedicines });
@@ -351,7 +363,7 @@ export default function LastPage({
     const updatedVitalSigns = [...newVitalSigns];
     updatedVitalSigns[index] = {
       ...values,
-      age: values.age || currentAge
+      age: values.age || currentAge,
     };
     setNewVitalSigns(updatedVitalSigns);
     setEditingRowIndex(null);
@@ -360,7 +372,7 @@ export default function LastPage({
   const handleAddVitalSign = (values: VitalSignType) => {
     const vitalSignWithAge = {
       ...values,
-      age: values.age || currentAge
+      age: values.age || currentAge,
     };
     if (newVitalSigns.length > 0) {
       handleUpdateVitalSign(0, vitalSignWithAge);
@@ -379,7 +391,7 @@ export default function LastPage({
       followv_status: "pending",
       notes: "",
       is_opt: false,
-      remarks: ""
+      remarks: "",
     });
   };
 
@@ -393,7 +405,7 @@ export default function LastPage({
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
-        date_completed: newDateCompleted
+        date_completed: newDateCompleted,
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }
@@ -405,7 +417,7 @@ export default function LastPage({
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
-        date_completed: newDateCompleted
+        date_completed: newDateCompleted,
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }
@@ -419,7 +431,7 @@ export default function LastPage({
     const updatePromises = updates.map(async ([followvId, status]) => {
       return updateFollowupMutation.mutateAsync({
         followv_id: followvId.toString(),
-        status
+        status,
       });
     });
     await Promise.all(updatePromises);
@@ -469,6 +481,14 @@ export default function LastPage({
     [editingAnemiaIndex, editingBirthWeightIndex, supplementStatusEditForm.control, supplementStatusEditForm.handleSubmit, supplementStatusEditForm.reset]
   );
 
+  const medicineHistory = {
+    patientData: {
+      pat_id: formData.pat_id,
+      mode: "view_history",
+    },
+  };
+  console.log("shit", medicineHistory);
+
   return (
     <>
       <Form {...form}>
@@ -479,7 +499,11 @@ export default function LastPage({
               <pre className="mt-2 text-sm text-red-700">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-          <PendingFollowupsSection chrecId={chrecId || ""} pendingStatuses={pendingFollowupUpdates} onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))} />
+          <PendingFollowupsSection
+            chrecId={chrecId || ""}
+            pendingStatuses={pendingFollowupUpdates}
+            onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))}
+          />
           {/* Always show today's vital signs if they exist */}
           {hasTodaysVitalSigns && (
             <div className="pt-4">
@@ -493,7 +517,7 @@ export default function LastPage({
                   editVitalSignFormControl={editVitalSignFormControl}
                   editVitalSignFormHandleSubmit={editVitalSignFormHandleSubmit}
                   onUpdateVitalSign={handleUpdateVitalSign}
-                  onStartEdit={(index: number, __) => {
+                  onStartEdit={(index: number) => {
                     setEditingRowIndex(index);
                   }}
                   onCancelEdit={() => {
@@ -633,19 +657,49 @@ export default function LastPage({
                   </div>
                 </div>
               ) : (
-                <MedicineDisplay
-                  medicines={medicineStocksOptions || []}
-                  initialSelectedMedicines={selectedMedicines || []}
-                  onSelectedMedicinesChange={handleMedicineSelectionChange}
-                  itemsPerPage={medicineSearchParams.pageSize}
-                  currentPage={medicineSearchParams.page}
-                  onPageChange={handleMedicinePageChange}
-                  onSearch={handleMedicineSearch}
-                  searchQuery={medicineSearchParams.search}
-                  totalPages={medicinePagination?.totalPages}
-                  totalItems={medicinePagination?.totalItems}
-                  isLoading={isMedicinesLoading}
-                />
+                <>
+                  <div>
+                    <div>
+                      <Dialog open={openHistoryDialog} onOpenChange={setOpenHistoryDialog}>
+                        <DialogTrigger asChild>
+                          <div className="flex justify-end">
+                            <span className="text-sm italic text-blue-800 font-bold underline  cursor-pointer">View History</span>
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent
+                          className="w-full max-w-full sm:max-w-3xl px-8"
+                          style={{
+                            width: "100%",
+                            maxWidth: "100vw",
+                            height: "80vh",
+                            maxHeight: "90vh",
+                            minHeight: "350px",
+                            padding: 0,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div className="w-full h-full overflow-auto">
+                            <IndivMedicineRecords patientDataProps={medicineHistory} />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>{" "}
+                  </div>
+
+                  <MedicineDisplay
+                    medicines={medicineStocksOptions || []}
+                    initialSelectedMedicines={selectedMedicines || []}
+                    onSelectedMedicinesChange={handleMedicineSelectionChange}
+                    itemsPerPage={medicineSearchParams.pageSize}
+                    currentPage={medicineSearchParams.page}
+                    onPageChange={handleMedicinePageChange}
+                    onSearch={handleMedicineSearch}
+                    searchQuery={medicineSearchParams.search}
+                    totalPages={medicinePagination?.totalPages}
+                    totalItems={medicinePagination?.totalItems}
+                    isLoading={isMedicinesLoading}
+                  />
+                </>
               )}
             </div>
           </div>

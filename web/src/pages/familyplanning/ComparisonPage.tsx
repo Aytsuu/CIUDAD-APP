@@ -58,7 +58,6 @@ type FullFPRecordDetail = {
   fprecord_id: number;
   client_id: string;
   avg_monthly_income_display: string;
-  philhealth_id: string;
   fourps: boolean;
   plan_more_children: boolean;
   avg_monthly_income: string;
@@ -86,6 +85,7 @@ type FullFPRecordDetail = {
     fpt_otherreason_cu: string | null;
     fpt_method_used: string;
     fpt_other_method: string | null;
+    fpt_reason: string;
     fprecord_id: number;
   };
   typeOfClient: string;
@@ -486,8 +486,8 @@ const MultiRecordComparisonPage: React.FC = () => {
                 />
                  <FieldRow
                   label="Philhealth ID"
-                  values={recordsToDisplay.map(r => r.philhealth_id)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.philhealth_id))}
+                  values={recordsToDisplay.map(r => r.philhealthNo)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.philhealthNo))}
                 />
 
                 <FieldRow
@@ -495,6 +495,12 @@ const MultiRecordComparisonPage: React.FC = () => {
                   values={recordsToDisplay.map(r => r.fourps)}
                   isBoolean
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fourps))}
+                />
+                 <FieldRow
+                  label="NHTS?"
+                  values={recordsToDisplay.map(r => r.nhts_status)}
+                  isBoolean
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.nhts_status))}
                 />
                 <FieldRow
                   label="Plan More Children"
@@ -517,6 +523,7 @@ const MultiRecordComparisonPage: React.FC = () => {
                   values={recordsToDisplay.map(r => r.typeOfClient)}
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.typeOfClient))}
                 />
+                
                 <FieldRow
                   label="Subtype of Client (for Current User)"
                   values={recordsToDisplay.map(r => r.subTypeOfClient)}
@@ -529,8 +536,8 @@ const MultiRecordComparisonPage: React.FC = () => {
                 />
                 <FieldRow
                   label="Other Reason for Family Planning"
-                  values={recordsToDisplay.map(r => r.otherReasonForFP)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.otherReasonForFP))}
+                  values={recordsToDisplay.map(r => r.fp_type?.fpt_reason)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_type?.fpt_reason))}
                 />
                 <FieldRow
                   label="Method Currently Used"
@@ -539,8 +546,8 @@ const MultiRecordComparisonPage: React.FC = () => {
                 />
                 <FieldRow
                   label="Other Method"
-                  values={recordsToDisplay.map(r => r.otherMethod)}
-                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.otherMethod))}
+                  values={recordsToDisplay.map(r => r.fp_type?.fpt_other_method)}
+                  hasDifferences={hasDifferences(recordsToDisplay.map(r => r.fp_type?.fpt_other_method))}
                 />
               </Section>
               
@@ -720,7 +727,7 @@ const MultiRecordComparisonPage: React.FC = () => {
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.sexuallyTransmittedInfections.abnormalDischarge))}
                 />
                 <FieldRow
-                  label="Discharge From"
+                  label="Discharge from"
                   values={recordsToDisplay.map(r => r.sexuallyTransmittedInfections.dischargeFrom)}
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.sexuallyTransmittedInfections.dischargeFrom))}
                 />

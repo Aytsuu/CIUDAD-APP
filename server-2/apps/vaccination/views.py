@@ -23,7 +23,8 @@ from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, 
 from pagination import *
 from apps.healthProfiling.models import ResidentProfile, PersonalAddress
 from apps.medicalConsultation.utils import *
-
+from django.db.models import Window
+from django.db.models.functions import RowNumber
 
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
@@ -43,7 +44,6 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     pagination_class = StandardResultsPagination
-    
     def get_queryset(self):
         # Subquery to get the latest vaccination date for each patient
         latest_vaccination_subquery = VaccinationHistory.objects.filter(
@@ -83,6 +83,14 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         if patient_type_search and patient_type_search != 'all':
             queryset = apply_patient_type_filter(queryset, patient_type_search)
         
+        # Remove the total_count annotation to avoid window function conflicts
+        queryset = queryset.annotate(
+            index=Window(
+                expression=RowNumber(),
+                order_by=F('latest_vaccination_date').desc()
+            )
+        )
+
         return queryset
     
 # Fixed version of your TobeAdministeredVaccinationView
@@ -1652,7 +1660,7 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+
 class MonthlyVaccinationRecordsDetailAPIView(APIView):
     def get(self, request, month):
         try:
@@ -1667,233 +1675,32 @@ class MonthlyVaccinationRecordsDetailAPIView(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create cutoff date (last day of the selected month)
-            if month_num == 12:
-                next_month_year = year + 1
-                next_month = 1
-            else:
-                next_month_year = year
-                next_month = month_num + 1
-            
-            # Cutoff date is the first day of next month (exclusive)
-            cutoff_date = date(next_month_year, next_month, 1)
-
-            # Get records for the specified month with proper prefetching
-            current_month_records = VaccinationHistory.objects.select_related(
+            # Get records for the specified month
+            queryset = VaccinationHistory.objects.select_related(
                 'staff',
                 'vital',
                 'vacrec',
                 'vacrec__patrec_id',
-                'vacrec__patrec_id__pat_id',
-                'vacrec__patrec_id__pat_id__rp_id',
-                'vacrec__patrec_id__pat_id__rp_id__per',
-                'vacrec__patrec_id__pat_id__trans_id',
-                'vacrec__patrec_id__pat_id__trans_id__tradd_id',
                 'vacStck_id',
                 'vacStck_id__inv_id',
                 'vacStck_id__vac_id',
                 'vac',
                 'followv'
-            ).prefetch_related(
-                'vacrec__patrec_id__pat_id__rp_id__per__personal_addresses__add',
             ).filter(
-                date_administered__year=year,
-                date_administered__month=month_num
-            ).order_by('-date_administered')
+                created_at__year=year,
+                created_at__month=month_num
+            ).order_by('-created_at')
 
-            # Get unique patient-vaccine combinations from current month
-            patient_vaccine_combinations = set()
-            for record in current_month_records:
-                if record.vacrec and (record.vac or (record.vacStck_id and record.vacStck_id.vac_id)):
-                    vaccine = record.vac if record.vac else record.vacStck_id.vac_id
-                    patient_vaccine_combinations.add((
-                        record.vacrec.patrec_id.patrec_id,
-                        vaccine.vac_id
-                    ))
-
-            # Pre-fetch ALL doses for these patient-vaccine combinations
-            # BUT only doses administered ON OR BEFORE the selected month
-            all_related_doses = VaccinationHistory.objects.filter(
-                vacrec__patrec_id__in=[pv[0] for pv in patient_vaccine_combinations],
-                date_administered__lt=cutoff_date  # Only doses before the cutoff date
-            ).select_related('vacrec', 'vac', 'vacStck_id__vac_id').order_by('date_administered')
-
-            # Organize doses by patient and vaccine - store ALL doses with their unique vachist_id
-            dose_timelines = defaultdict(lambda: defaultdict(list))
-            
-            for dose in all_related_doses:
-                vaccine = dose.vac if dose.vac else (dose.vacStck_id.vac_id if dose.vacStck_id else None)
-                
-                if dose.vacrec and vaccine:
-                    key = (dose.vacrec.patrec_id.patrec_id, vaccine.vac_id)
-                    
-                    # Only include doses that match our patient-vaccine combinations
-                    if key in patient_vaccine_combinations:
-                        dose_timelines[key]['doses'].append({
-                            'vachist_id': dose.vachist_id,
-                            'date_administered': dose.date_administered,
-                            'dose_number': dose.vachist_doseNo,
-                            'status': dose.vachist_status,
-                            'created_at': dose.created_at
-                        })
-
-            # Track unique patient+vaccine combinations that were administered THIS month
-            enhanced_records = []
-            processed_combinations = set()
-
-            for record in current_month_records:
-                vaccine = record.vac if record.vac else (record.vacStck_id.vac_id if record.vacStck_id else None)
-                
-                if not (record.vacrec and vaccine):
-                    continue
-                
-                key = (record.vacrec.patrec_id.patrec_id, vaccine.vac_id)
-                
-                # Only process each unique patient+vaccine combination once
-                if key in processed_combinations:
-                    continue
-                
-                processed_combinations.add(key)
-                
-                # Get the dose that was administered THIS month for this patient+vaccine
-                current_month_dose = None
-                timeline_doses = dose_timelines.get(key, {}).get('doses', [])
-                
-                for dose_info in timeline_doses:
-                    if (dose_info['date_administered'].year == year and 
-                        dose_info['date_administered'].month == month_num):
-                        current_month_dose = dose_info
-                        break
-                
-                if not current_month_dose:
-                    continue
-                
-                # Format basic record data using the current month's dose
-                record_data = {
-                    'vachist_id': current_month_dose['vachist_id'],
-                    'date_administered': current_month_dose['date_administered'].strftime('%Y-%m-%d'),
-                    'vachist_doseNo': current_month_dose['dose_number'],
-                    'vachist_status': current_month_dose['status'],
-                    'created_at': current_month_dose['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                    'signature': record.signature,
-                }
-
-                # Format vaccine information
-                record_data['vaccine_name'] = vaccine.vac_name
-
-                # Format patient information
-                if record.vacrec and record.vacrec.patrec_id and record.vacrec.patrec_id.pat_id:
-                    patient = record.vacrec.patrec_id.pat_id
-                    
-                    if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
-                        personal_info = patient.rp_id.per
-                        
-                        name_parts = [
-                            personal_info.per_fname,
-                            personal_info.per_mname,
-                            personal_info.per_lname
-                        ]
-                        record_data['patient_name'] = ' '.join(filter(None, name_parts)) or "N/A"
-                        record_data['patient_dob'] = personal_info.per_dob.strftime('%Y-%m-%d') if personal_info.per_dob else None
-                        record_data['patient_gender'] = personal_info.per_sex if hasattr(personal_info, 'per_sex') else None
-                        
-                        address_parts = []
-                        if hasattr(personal_info, 'personal_addresses') and personal_info.personal_addresses.exists():
-                            personal_address = personal_info.personal_addresses.first()
-                            if personal_address and personal_address.add:
-                                address = personal_address.add
-                                address_parts = [
-                                    address.add_street,
-                                    address.add_barangay,
-                                    address.add_city,
-                                    address.add_province
-                                ]
-                        record_data['patient_address'] = ', '.join(filter(None, address_parts)) or "N/A"
-                        
-                    elif patient.pat_type == "Transient" and patient.trans_id:
-                        transient = patient.trans_id
-                        
-                        name_parts = [
-                            transient.tran_fname,
-                            transient.tran_mname,
-                            transient.tran_lname,
-                            transient.tran_suffix
-                        ]
-                        record_data['patient_name'] = ' '.join(filter(None, name_parts)) or "N/A"
-                        record_data['patient_dob'] = transient.tran_dob.strftime('%Y-%m-%d') if transient.tran_dob else None
-                        record_data['patient_gender'] = transient.tran_sex if hasattr(transient, 'tran_sex') else None
-                        
-                        address_parts = []
-                        if transient.tradd_id:
-                            address = transient.tradd_id
-                            address_parts = [
-                                address.tradd_street,
-                                address.tradd_barangay,
-                                address.tradd_city,
-                                address.tradd_province
-                            ]
-                        record_data['patient_address'] = ', '.join(filter(None, address_parts)) or "N/A"
-                    else:
-                        record_data['patient_name'] = "N/A"
-                        record_data['patient_dob'] = None
-                        record_data['patient_gender'] = None
-                        record_data['patient_address'] = "N/A"
-                    
-                    record_data['patient_id'] = patient.pat_id
-                    record_data['patient_type'] = patient.pat_type
-                else:
-                    record_data['patient_name'] = "N/A"
-                    record_data['patient_dob'] = None
-                    record_data['patient_gender'] = None
-                    record_data['patient_address'] = "N/A"
-                    record_data['patient_id'] = None
-                    record_data['patient_type'] = "Unknown"
-
-                # Format staff information
-                if record.staff:
-                    staff_info = record.staff.per if hasattr(record.staff, 'per') else None
-                    if staff_info:
-                        staff_name_parts = [
-                            staff_info.per_fname,
-                            staff_info.per_mname,
-                            staff_info.per_lname
-                        ]
-                        record_data['staff_name'] = ' '.join(filter(None, staff_name_parts)) or "N/A"
-                    else:
-                        record_data['staff_name'] = "N/A"
-                else:
-                    record_data['staff_name'] = "N/A"
-
-                # Build complete dose timeline with ONLY doses administered on or before selected month
-                complete_dose_timeline = {}
-                sorted_doses = sorted(timeline_doses, key=lambda x: x['date_administered'])
-                
-                for dose_info in sorted_doses:
-                    dose_num = dose_info['dose_number']
-                    suffix = get_ordinal_suffix(dose_num)
-                    dose_key = f"{dose_num}{suffix}_dose"
-                    
-                    complete_dose_timeline[dose_key] = {
-                        'vachist_id': dose_info['vachist_id'],
-                        'date': dose_info['date_administered'].strftime('%m/%d/%Y'),
-                        'created_at': dose_info['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                        'dose_number': dose_info['dose_number'],
-                        'status': dose_info['status']
-                    }
-                
-                record_data['dose_timeline'] = complete_dose_timeline
-                record_data['total_doses'] = len([d for d in sorted_doses if d['status'] == 'completed'])
-                record_data['max_dose_number'] = max([d['dose_number'] for d in sorted_doses]) if sorted_doses else 0
-                record_data['current_dose_position'] = current_month_dose['dose_number']
-                
-                enhanced_records.append(record_data)
+            serialized_records = [
+                VaccinationHistorySerializer(record).data for record in queryset
+            ]
 
             return Response({
                 'success': True,
                 'data': {
                     'month': month,
-                    'record_count': len(enhanced_records),
-                    'records': enhanced_records
+                    'record_count': len(serialized_records),
+                    'records': serialized_records
                 }
             }, status=status.HTTP_200_OK)
 
@@ -1901,7 +1708,8 @@ class MonthlyVaccinationRecordsDetailAPIView(APIView):
             return Response({
                 'success': False,
                 'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+
 
 
 def get_ordinal_suffix(n):
@@ -2148,6 +1956,7 @@ class MaternalVaccinationSubmissionView(APIView):
             patient_record = PatientRecord.objects.create(
                 pat_id_id=pat_id,
                 patrec_type="Vaccination Record",
+                
             )
             
             # Create new vaccination record
