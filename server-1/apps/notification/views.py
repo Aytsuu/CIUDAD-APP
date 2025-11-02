@@ -28,25 +28,32 @@ class CreateNotificationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # secret_key = request.headers.get('Secret-Key')
-        # expected_key = config('NOTIFICATION_SECRET_KEY')
-
-        # if secret_key != expected_key:
-            # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
         try:
-            sender = request.data.get('sender')
-            
-            if sender:
-                sender = str(sender) 
-            
-            recipients = list(ResidentProfile.objects.filter(rp_id__in=request.data.get('recipients', [])))
+            recipient_ids = request.data.get('recipients', [])
+            recipients = []
 
+            accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
+
+            if accounts:
+                recipients = accounts
+            else:
+                resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids)
+                recipients = [
+                    rp.account for rp in resident_profiles 
+                    if hasattr(rp, 'account') and rp.account
+                ]
+
+            if not recipients:
+                return Response(
+                    {'error': 'No valid recipients found for given IDs.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create the notification
             notification = create_notification(
                 title=request.data.get('title'),
                 message=request.data.get('message'),
                 notif_type=request.data.get('notif_type'),
-                sender=sender, 
                 recipients=recipients,
                 web_route=request.data.get('web_route'),
                 web_params=request.data.get('web_params'),
@@ -62,7 +69,8 @@ class CreateNotificationView(APIView):
 
         except Exception as e:
             logger.error(f"❌ Error creating notification from Server-2: {str(e)}")
-            return Response({'error': 'Failed to create notification'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Failed to create notification: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
@@ -75,12 +83,25 @@ class CreateReminderNotificationView(APIView):
             # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            sender = request.data.get('sender')
-            
-            if sender:
-                sender = str(sender)
-            
-            recipients = list(ResidentProfile.objects.filter(rp_id__in=request.data.get('recipients', [])))
+            recipient_ids = request.data.get('recipients', [])
+            recipients = []
+
+            accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
+
+            if accounts:
+                recipients = accounts
+            else:
+                resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids)
+                recipients = [
+                    rp.account for rp in resident_profiles 
+                    if hasattr(rp, 'account') and rp.account
+                ]
+
+            if not recipients:
+                return Response(
+                    {'error': 'No valid recipients found for given IDs.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             send_at = datetime.fromisoformat(request.data.get('send_at'))
             if send_at.tzinfo is None:
@@ -91,7 +112,6 @@ class CreateReminderNotificationView(APIView):
                 message=request.data.get('message'),
                 notif_type=request.data.get('notif_type'),
                 send_at=send_at,
-                sender=sender, 
                 recipients=recipients,
                 web_route=request.data.get('web_route'),
                 web_params=request.data.get('web_params'),
@@ -107,6 +127,7 @@ class CreateReminderNotificationView(APIView):
         except Exception as e:
             logger.error(f"❌ Error creating reminder notification from Server-2: {str(e)}")
             return Response({'error': 'Failed to create reminder notification'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 """ 
     Register FCM token (for mobile push)
@@ -141,14 +162,14 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        user_rp = getattr(self.request.user, "rp", None)
-
-        if not user_rp:
+        user = self.request.user
+        
+        if not user.is_authenticated:
             return Recipient.objects.none()
 
         return (
-            Recipient.objects.filter(rp=user_rp)
-            .select_related("notif", "notif__sender", "rp", "rp__per")
+            Recipient.objects.filter(acc=user)
+            .select_related("notif", "acc")
             .order_by("-notif__notif_created_at")
         )
 
@@ -161,11 +182,10 @@ class BulkMarkAsReadView(APIView):
 
     def put(self, request):
         notif_ids = request.data.get('notification_ids', [])
-        user_rp = getattr(request.user, "rp", None)
 
         try:
             updated_count = Recipient.objects.filter(
-                notif_id__in=notif_ids, rp=user_rp, is_read=False
+                notif_id__in=notif_ids, acc=request.user, is_read=False
             ).update(is_read=True)
 
             return Response(
@@ -185,11 +205,10 @@ class SingleMarkAsReadView(APIView):
 
     def put(self, request):
         notif_id = request.data.get('notification_id')
-        user_rp = getattr(request.user, "rp", None)
 
         try:
             updated_count = Recipient.objects.filter(
-                notif_id=notif_id, rp=user_rp, is_read=False
+                notif_id=notif_id, acc=request.user, is_read=False
             ).update(is_read=True)
 
             return Response(

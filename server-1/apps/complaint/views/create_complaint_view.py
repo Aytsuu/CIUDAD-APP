@@ -236,7 +236,6 @@ class ComplaintCreateView(APIView):
                             message=(
                                 f"A {complaint.comp_incident_type} complaint is awaiting your review. "
                             ),
-                            sender=sender, 
                             recipients=recipients,
                             notif_type="REQUEST",
                             web_route="complaint/view/",

@@ -328,11 +328,11 @@ export default function NotificationScreen() {
                   {/* Avatar/Icon */}
                   <View className="relative">
                     <Image
-                      source={
-                        item.sender_profile
-                          ? { uri: item.sender_profile }
-                          : require("@/assets/images/Logo.png")
-                      }
+                      // source={
+                      //   item.sender_profile
+                      //     ? { uri: item.sender_profile }
+                      //     : require("@/assets/images/Logo.png")
+                      // }
                       className="w-16 h-16 rounded-full mr-4"
                       style={{ backgroundColor: '#f3f4f6' }}
                     />

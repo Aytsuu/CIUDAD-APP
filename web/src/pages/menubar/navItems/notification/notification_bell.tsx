@@ -7,10 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
-import { toast } from "sonner";
+import { showNotificationToast } from "@/components/ui/toast";
 import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
 import { MdNotificationAdd } from "react-icons/md";
 import { Button } from "@/components/ui/button/button";
+import ciudadLogo from "@/assets/images/ciudad_logo.svg";
 
 interface Notification {
   notif_id: string;
@@ -23,10 +24,8 @@ interface Notification {
     path: string;
     params: Record<string, any>;
   };
-  sender_name?: string;
-  sender_profile?: string;
   resident?: {
-    rp_id: string;
+    acc_id: string;
     name?: string;
   };
 }
@@ -58,7 +57,24 @@ export const NotificationBell: React.FC = () => {
   const [filterType, setFilterType] = useState<"all" | "read" | "unread">("all");
   const [open, setOpen] = useState(false);
   const { data, isLoading, isError, refetch } = fetchNotification();
-  console.log(JSON.stringify(notifications, null, 2));
+  
+  // Auto-refetch notifications every 30 seconds as fallback
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+  
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
   
   useEffect(() => {
     if (data) {
@@ -87,65 +103,83 @@ export const NotificationBell: React.FC = () => {
 
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
+    console.log('Setting up FCM listener...');
+    
     const unsubscribe = listenForMessages((payload) => {
-      // Parse redirect_path and redirect_params from FCM data
-      let redirectUrl = undefined;
-      if (payload.data?.redirect_path) {
-        try {
-          const params = payload.data.redirect_params 
-            ? JSON.parse(payload.data.redirect_params) 
-            : {};
-          redirectUrl = {
-            path: payload.data.redirect_path,
-            params: params
-          };
-        } catch (e) {
-          console.error("Failed to parse redirect params:", e);
+      console.log('📩 FCM message received:', JSON.stringify(payload, null, 2));
+      
+      try {
+        // IMPORTANT: Backend sends 'web_route' but we need to map it to 'redirect_path'
+        let redirectUrl = undefined;
+        
+        // Check if data exists and has web_route
+        if (payload.data?.web_route) {
+          try {
+            // Parse web_params if it's a JSON string
+            let params = {};
+            if (payload.data.web_params) {
+              params = typeof payload.data.web_params === 'string' 
+                ? JSON.parse(payload.data.web_params)
+                : payload.data.web_params;
+            }
+            
+            redirectUrl = {
+              path: payload.data.web_route,
+              params: params
+            };
+            
+            console.log('📍 Parsed redirect URL:', redirectUrl);
+          } catch (e) {
+            console.error("Failed to parse web params:", e);
+          }
         }
+
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: payload.notification?.title || "No title",
+          notif_message: payload.notification?.body || "No message",
+          notif_type: payload.data?.notif_type || "",
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
+
+        console.log('✅ Created notification object:', newNotif);
+
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
+
+        // Show toast notification
+        console.log('🔔 Showing toast notification...');
+        showNotificationToast({
+          title: newNotif.notif_title,
+          description: newNotif.notif_message,
+          avatarSrc: ciudadLogo,
+          timestamp: "just now",
+          onClick: redirectUrl ? () => {
+            const url = buildRedirectUrl(redirectUrl);
+            if (url) navigate(url);
+          } : undefined,
+        });
+        
+        // Also refetch to ensure we're in sync with backend
+        console.log('🔄 Refetching notifications from backend...');
+        setTimeout(() => refetch(), 1000);
+        
+      } catch (error) {
+        console.error('❌ Error processing notification:', error);
       }
-
-      const newNotif: Notification = {
-        notif_id: payload.data?.notification_id || Date.now().toString(),
-        notif_title: payload.notification?.title || "No title",
-        notif_message: payload.notification?.body || "No message",
-        notif_type: payload.data?.notif_type || "",
-        is_read: false,
-        notif_created_at: new Date().toISOString(),
-        redirect_url: redirectUrl,
-        sender_name: payload.data?.sender_name,
-        sender_profile: payload.data?.sender_profile,
-      };
-
-      setNotifications((prev) => [newNotif, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-      toast(
-        <div className="flex items-center gap-3 w-full">
-          <Avatar className="h-16 w-16 ring-2 ring-white shadow-md flex-shrink-0">
-            <AvatarImage
-              src={newNotif.sender_profile}
-              alt={newNotif.sender_name || "System"}
-            />
-            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium text-sm">
-              {newNotif.sender_name?.charAt(0) || "S"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0 pr-4">
-            <p className="font-semibold text-sm text-gray-900 mb-0.5">
-              {newNotif.notif_title}
-            </p>
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {newNotif.notif_message}
-            </p>
-          </div>
-        </div>,
-        {
-          duration: 5000,
-        }
-      );
     });
 
-    return () => unsubscribe();
-  }, [navigate]);
+    return () => {
+      console.log('Cleaning up FCM listener');
+      unsubscribe();
+    };
+  }, [navigate, refetch]);
 
   const markAsRead = (notif_id: string) => {
     MarkAsRead(notif_id, {
@@ -239,7 +273,6 @@ export const NotificationBell: React.FC = () => {
 
   const getNotificationMenuOptions = (notification: Notification) => {
     const options = [];
-    // Show "View Notification" if there's a redirect URL
     if (notification.redirect_url) {
       options.push({
         id: "view",
@@ -327,7 +360,6 @@ export const NotificationBell: React.FC = () => {
               </div>
             </div>
             
-            {/* Filter Tabs */}
             <div className="flex-1 justify-start">
               <Button
                 onClick={() => {
@@ -388,13 +420,6 @@ export const NotificationBell: React.FC = () => {
                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                {/* <p className="text-gray-500 text-sm">
-                  {filterType === "read" 
-                    ? "No read notifications" 
-                    : filterType === "unread" 
-                    ? "No unread notifications" 
-                    : "No notifications yet"}
-                </p> */}
                 <p className="text-gray-400 text-xs mt-1">
                   {filterType === "all" && "We'll let you know when something happens"}
                 </p>
@@ -412,16 +437,11 @@ export const NotificationBell: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <div className="relative flex-shrink-0">
                         <Avatar className="h-16 w-16">
-                          <AvatarImage
-                            src={item.sender_profile}
-                            alt={item.sender_name || "System"}
-                          />
+                          <AvatarImage />
                           <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
-                            {item.sender_name?.charAt(0) || "S"}
+                            S
                           </AvatarFallback>
                         </Avatar>
-
-                        {/** Icons for specific type notifications */}
                         <div className="absolute -bottom-2 -right-1">
                           <NotificationIconType notif_type={item.notif_type}/>
                         </div>
@@ -468,7 +488,6 @@ export const NotificationBell: React.FC = () => {
                   </div>
                 ))}
 
-                {/* Load More Button */}
                 {hasMore && (
                   <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
                     <Button

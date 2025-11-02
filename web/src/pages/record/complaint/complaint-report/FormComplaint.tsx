@@ -108,7 +108,7 @@ export const ComplaintForm = () => {
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
 
-        toast.success(successMessage);
+        // toast.success(successMessage);
         methods.reset();
         setStep(1);
         setShowConfirmModal(false);
