@@ -18,9 +18,12 @@ function ViewOrdinance({
 
     if (!folder) return null;
 
-    const amendmentItems = (folder.amendments || []).slice().sort(
+    
+    const allItems = (folder.amendments || []).slice();
+    const amendmentItems = allItems.filter(item => item.ord_is_ammend === true).sort(
       (a, b) => (a.ord_ammend_ver || 0) - (b.ord_ammend_ver || 0)
     );
+    const repealItems = allItems.filter(item => item.ord_repealed === true && item.ord_is_ammend === false);
 
     return (
         <DialogLayout
@@ -125,6 +128,58 @@ function ViewOrdinance({
                                                 </div>
                                                 <div className="text-sm text-gray-700 whitespace-pre-line break-all break-words max-w-full overflow-x-hidden">
                                                     {amendment.ord_details || 'No details available'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Repeals */}
+                        {repealItems.length > 0 && (
+                            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
+                                <div className="flex items-center justify-between border-b pb-2 mb-4">
+                                    <h3 className="text-lg font-semibold text-red-700">Repeal</h3>
+                                </div>
+
+                                {repealItems.map((repeal) => (
+                                    <div key={repeal.ord_num} className="bg-grey-50 rounded-lg border p-4 mb-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                            <span className="text-sm font-semibold text-red-600">
+                                                Repeal
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (repeal.file && repeal.file.file_url) {
+                                                            window.open(repeal.file.file_url, '_blank');
+                                                        } else {
+                                                            showErrorToast('No file available to view');
+                                                        }
+                                                    }}
+                                                    className="text-xs px-3 py-1 h-7"
+                                                >
+                                                    <Eye className="h-3 w-3 mr-1" />
+                                                    View File
+                                                </Button>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                <div className="text-sm font-medium text-gray-800 break-all break-words">
+                                                    {repeal.ord_title}
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    ORD: {repeal.ord_num} • {repeal.ord_date_created}
+                                                </div>
+                                                <div className="text-sm text-gray-700 whitespace-pre-line break-all break-words max-w-full overflow-x-hidden">
+                                                    {repeal.ord_details || 'No details available'}
                                                 </div>
                                             </div>
                                         </div>

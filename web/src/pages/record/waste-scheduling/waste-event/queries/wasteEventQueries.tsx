@@ -1,4 +1,5 @@
 import { api } from "@/api/api";
+import { useQuery } from "@tanstack/react-query";
 
 export interface WasteEvent {
     we_num: number;
@@ -8,9 +9,15 @@ export interface WasteEvent {
     we_time: string | null;
     we_description: string;
     we_organizer: string;
-    we_invitees: string;
+    we_invitees: string | null;
     we_is_archive: boolean;
     staff: string | null;
+}
+
+export interface Staff {
+    staff_id: string;
+    full_name: string;
+    position_title?: string;
 }
 
 export const createWasteEvent = async (eventData: Omit<WasteEvent, 'we_num'>) => {
@@ -25,12 +32,47 @@ export const createWasteEvent = async (eventData: Omit<WasteEvent, 'we_num'>) =>
     }
 };
 
-export const getWasteEvents = async () => {
+export const getWasteEvents = async (isArchive?: boolean) => {
     try {
-        const response = await api.get('/waste/waste-event/');
+        const params: any = {};
+        if (isArchive !== undefined) {
+            params.is_archive = isArchive;
+        }
+        const response = await api.get('/waste/waste-event/', { params });
         return response.data;
     } catch (error) {
         console.error("Error fetching waste events:", error);
         throw error;
     }
+};
+
+export const useGetWasteEvents = (isArchive?: boolean) => {
+    return useQuery<WasteEvent[], Error>({
+        queryKey: ["wasteEvents", isArchive],
+        queryFn: () => {
+            return getWasteEvents(isArchive).then((data) => {
+                // Handle both array and paginated response formats
+                return Array.isArray(data) ? data : data?.results || [];
+            });
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+export const getStaffList = async () => {
+    try {
+        const res = await api.get('donation/dist/staff/');
+        const data = res.data?.data ?? res.data ?? [];
+        return Array.isArray(data) ? data : [];
+    } catch (err) {
+        return [];
+    }
+};
+
+export const useGetStaffList = () => {
+    return useQuery<Staff[], Error>({
+        queryKey: ["staffList"],
+        queryFn: () => getStaffList(),
+        staleTime: 1000 * 60 * 5,
+    });
 }; 

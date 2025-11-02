@@ -12,10 +12,13 @@ export const getAnnualDevPlanYears = async (search?: string) => {
 };
 
 // Get all plans for a specific year (with search and pagination support)
-export const getAnnualDevPlansByYear = async (year: string | number, search?: string, page?: number, pageSize?: number) => {
+export const getAnnualDevPlansByYear = async (year: string | number, search?: string, page?: number, pageSize?: number, includeArchived: boolean = true) => {
   const params = new URLSearchParams();
   params.append('year', year.toString());
-  params.append('dev_archived', 'false'); // Only get non-archived plans
+  // Only filter archived if explicitly requested (for calendar, we want all plans)
+  if (!includeArchived) {
+    params.append('dev_archived', 'false');
+  }
   if (search) {
     params.append('search', search);
   }
@@ -30,9 +33,12 @@ export const getAnnualDevPlansByYear = async (year: string | number, search?: st
 };
 
 // Get all plans with search and pagination support
-export const getAnnualDevPlans = async (search?: string, page?: number, pageSize?: number) => {
+export const getAnnualDevPlans = async (search?: string, page?: number, pageSize?: number, includeArchived: boolean = true) => {
   const params = new URLSearchParams();
-  params.append('dev_archived', 'false'); // Only get non-archived plans
+  // Only filter archived if explicitly requested (for calendar, we want all plans)
+  if (!includeArchived) {
+    params.append('dev_archived', 'false');
+  }
   if (search) {
     params.append('search', search);
   }
