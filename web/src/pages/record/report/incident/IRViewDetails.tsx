@@ -223,7 +223,7 @@ export default function IRViewDetails() {
               </p>
             </div>
             <div className="flex flex-col items-center sm:flex-row gap-6 w-full sm:w-auto">
-              <p className="text-sm text-gray-700">Submitted on {getDateTimeFormat(IRInfo?.ir_created_at)}</p>
+              <p className="text-sm text-gray-700">Received on {getDateTimeFormat(IRInfo?.ir_created_at)}</p>
               <Button
                 onClick={() => {
                   navigate("/report/acknowledgement/form", {
