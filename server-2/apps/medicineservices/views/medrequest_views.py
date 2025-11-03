@@ -6,7 +6,7 @@ from ..serializers import *
 from pagination import *
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q, Count, Sum, Prefetch
-
+from rest_framework.exceptions import ValidationError
 
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
@@ -20,47 +20,31 @@ class UserMedicineRequestsView(generics.ListAPIView):
             return MedicineRequest.objects.none()
 
         queryset = MedicineRequest.objects.select_related(
-            'pat_id', 'rp_id'
+            'patrec', 'rp_id'
         ).prefetch_related(
             Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
-                'minv_id', 'minv_id__med_id', 'med'
-            ).all())  # Include all items
+                'med'
+            ).prefetch_related('allocations__minv'))
         ).order_by('-requested_at')
 
         if pat_id:
-            queryset = queryset.filter(pat_id=pat_id)
+            # FIX: Filter by pat_id string value
+            queryset = queryset.filter(patrec__pat_id__pat_id=pat_id)
         elif rp_id:
-            queryset = queryset.filter(rp_id=rp_id)
+            # FIX: Filter by rp_id string value
+            queryset = queryset.filter(rp_id__rp_id=rp_id)
 
         return queryset
+
     
 
 class CheckPendingMedicineRequestView(APIView):
     def get(self, request, rp_id, med_id):
         try:
-            # Try to get the resident profile
-            try:
-                resident = ResidentProfile.objects.get(rp_id=rp_id)
-            except ResidentProfile.DoesNotExist:
-                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
-
-            # Try to get linked patient, if any
-            patient = None
-            try:
-                patient = Patient.objects.get(rp_id=resident)
-            except Patient.DoesNotExist:
-                pass
-
-            # Define user condition Q
-            user_q = Q(medreq_id__rp_id=rp_id) | (Q(medreq_id__pat_id=patient.pat_id) if patient else Q())
-
-            # Define medicine condition Q
-            medicine_q = Q(med__med_id=med_id) | Q(minv_id__med_id__med_id=med_id)
-
-            # Query MedicineRequestItem for pending items
+            # Check for pending medicine requests for this resident and medicine
             pending_items = MedicineRequestItem.objects.filter(
-                user_q,
-                medicine_q,
+                medreq_id__rp_id__rp_id=rp_id,  # FIX: Use string rp_id value
+                med_id=med_id,
                 status='pending',
                 is_archived=False
             ).exists()
@@ -69,6 +53,7 @@ class CheckPendingMedicineRequestView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class IndividualMedicineRecordView(generics.ListCreateAPIView):
@@ -85,33 +70,61 @@ class UserAllMedicineRequestItemsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Handle rp_id (residents) or pat_id (patients)
         rp_id = self.request.query_params.get('rp_id')
         pat_id = self.request.query_params.get('pat_id')
         
         if not rp_id and not pat_id:
             raise ValidationError({"error": "Either rp_id or pat_id is required"})
         
-        queryset = MedicineRequestItem.objects
-        
+        # Start with base queryset
+        queryset = MedicineRequestItem.objects.all()
+
+        # Apply basic filters first without complex joins
         if rp_id:
-            queryset = queryset.filter(medreq_id__rp_id=rp_id)
+            # Use the related_name from MedicineRequest model
+            queryset = queryset.filter(
+                medreq_id__rp_id__rp_id=rp_id
+            )
         elif pat_id:
-            queryset = queryset.filter(medreq_id__pat_id=pat_id)
-        
-        # Optional: Filter by include_archived param (default: True for "all")
+            queryset = queryset.filter(
+                medreq_id__patrec__pat_id__pat_id=pat_id
+            )
+
+        # Apply other filters
         include_archived = self.request.query_params.get('include_archived', 'true').lower() == 'true'
         if not include_archived:
-            queryset = queryset.filter(is_archived=False)   
-        
-        # Optimize with selects/prefetches
-        return queryset.select_related(
-            'minv_id', 'minv_id__med_id', 'medreq_id'
-        ).prefetch_related(
-            # 'medicine_files'
-        ).order_by('-created_at').distinct()
+            queryset = queryset.filter(is_archived=False)
 
-    
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(med__med_name__icontains=search) |
+                Q(medreq_id__medreq_id__icontains=search) |
+                Q(reason__icontains=search)
+            )
+
+        # Now we can safely use select_related/prefetch_related
+        return queryset.select_related(
+            'medreq_id',
+            'med',
+            'action_by',
+            'completed_by',
+            'medreq_id__patrec',
+            'medreq_id__patrec__pat_id',
+            'medreq_id__rp_id',
+            'medreq_id__trans_id',
+        ).prefetch_related(
+            Prefetch(
+                'allocations',
+                queryset=MedicineAllocation.objects.select_related('minv__med_id')
+            ),
+            'medreq_id__medicine_files'  # Add this for medicine files
+        ).order_by('-created_at')
+
 
 class MedicineRequestItemCancel(APIView):
     def patch(self, request, medreqitem_id):
@@ -124,6 +137,7 @@ class MedicineRequestItemCancel(APIView):
             item.is_archived = True
             item.archive_reason = archive_reason
             item.save()
+            
             return Response({"success": True, "message": "Item cancelled successfully"}, status=status.HTTP_200_OK)
         except MedicineRequestItem.DoesNotExist:
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -145,15 +159,12 @@ class MedicineRequestItemsByRequestView(generics.ListAPIView):
         return MedicineRequestItem.objects.filter(
             medreq_id=medreq_id
         ).select_related(
-            'minv_id', 'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__pat_id',
-            'medreq_id__rp_id__per',  # Add resident profile personal info
-            'medreq_id__pat_id__per',  # Add patient personal info
+            'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__patrec',
+            'medreq_id__patrec__pat_id'  # Add this to access patient
         ).prefetch_related(
-            'minv_id__med_id',
-            'medreq_id__rp_id__per__ppersonal_addresses__add',  # Prefetch addresses
-            'medreq_id__pat_id__per__ppersonal_addresses__add',  # Prefetch patient addresses
+            'allocations__minv',
+            'allocations__minv__med_id',
         ).order_by('-medreq_id__requested_at')
-        
 
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -205,14 +216,11 @@ class SubmitMedicineRequestView(APIView):
                 return Response({"error": "Either patient ID or resident ID must be provided"}, 
                               status=status.HTTP_400_BAD_REQUEST)
             
-            # Prioritize pat_id over rp_id
-            if pat_id and rp_id:
-                print("🔍 DEBUG: Both pat_id and rp_id provided - prioritizing pat_id")
-                rp_id = None
-            
             # Validate and get instances
             pat_instance = None
             trans_instance = None
+            
+            # FIX: Get patient instance from rp_id if pat_id is not provided
             if pat_id:
                 try:
                     pat_instance = Patient.objects.get(pat_id=pat_id)
@@ -220,109 +228,95 @@ class SubmitMedicineRequestView(APIView):
                     trans_instance = getattr(pat_instance, 'trans_id', None)
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-
-            rp_instance = None
-            if rp_id:
+            elif rp_id:
+                # FIX: Get patient instance from resident profile
                 try:
                     rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
                     print(f"✅ DEBUG: Validated rp_id: {rp_id}")
+                    
+                    # Get patient associated with this resident profile
+                    try:
+                        pat_instance = Patient.objects.get(rp_id=rp_instance)
+                        print(f"✅ DEBUG: Found patient for resident: {pat_instance.pat_id}")
+                    except Patient.DoesNotExist:
+                        return Response({"error": f"No patient found for resident ID {rp_id}"}, status=status.HTTP_404_NOT_FOUND)
+                        
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # FIX: Create PatientRecord with the patient instance
+            if not pat_instance:
+                return Response({"error": "Could not determine patient for this request"}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
             patient_record = PatientRecord.objects.create(
-                pat_id=pat_instance,
+                pat_id=pat_instance,  # This must be a Patient instance, not ID
                 patrec_type="Medicine Record",
             )
+            print(f"✅ DEBUG: Created PatientRecord: {patient_record.patrec_id} for patient: {pat_instance.pat_id}")
             
-            # Create MedicineRequest (include trans_id if available)
+            # Create MedicineRequest
             medicine_request = MedicineRequest.objects.create(
-                rp_id=rp_instance,
-                trans_id=trans_instance,
-                mode='walk-in',
+                rp_id=pat_instance.rp_id if pat_instance.pat_type == 'Resident' else None,
+                trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
+                mode='app',
                 requested_at=timezone.now(),
-                fulfilled_at=timezone.now(),
-                signature= med.get('signature', ''),
+                fulfilled_at=None,
+                signature=data.get('signature', ''),
                 patrec=patient_record
             )
             print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
             
-            # Group medicines by med_id (from MedicineInventory FK)
-            medid_to_allocations = {}
+            # Create MedicineRequestItem and MedicineAllocation for each medicine
             for med in medicines:
                 minv_id = med.get('minv_id')
                 if not minv_id:
-                    return Response({"error": f"minv_id is required for each medicine"}, 
+                    return Response({"error": "minv_id is required for each medicine"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
+                
                 try:
-                    medicine_inv = MedicineInventory.objects.get(minv_id=int(minv_id))
-                    med_id = str(medicine_inv.med_id.med_id)
+                    medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
                 except MedicineInventory.DoesNotExist:
-                    return Response({"error": f"Medicine with minv_id {minv_id} not found"}, 
+                    return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
                                   status=status.HTTP_404_NOT_FOUND)
-                if med_id not in medid_to_allocations:
-                    medid_to_allocations[med_id] = []
-                medid_to_allocations[med_id].append({
-                    'minv_id': minv_id,
-                    'allocated_qty': med.get('quantity', 0),
-                    'reason': med.get('reason', ''),
-                    'signature': med.get('signature', ''),
-                })
-            
-            # Create MedicineRequestItem and MedicineAllocation
-            for med_id, allocations in medid_to_allocations.items():
-                reason = allocations[0]['reason']
-                signature = allocations[0].get('signature', '')
+                
+                # Create MedicineRequestItem
                 medicine_item = MedicineRequestItem.objects.create(
                     medreq_id=medicine_request,
-                    med_id=med_id,
-                    reason=reason,
-                    status='pending',
-                    signature=signature
+                    med=medicine_inventory.med_id,
+                    reason=med.get('reason', ''),
+                    status='pending'
                 )
-                for alloc in allocations:
-                    minv_id = alloc['minv_id']
-                    allocated_qty = alloc['allocated_qty']
-                    if minv_id and allocated_qty > 0:
-                        try:
-                            medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
-                            medicine_inventory.temporary_deduction += allocated_qty
-                            medicine_inventory.save()
-                        except MedicineInventory.DoesNotExist:
-                            return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
-                                            status=status.HTTP_404_NOT_FOUND)
-                        MedicineAllocation.objects.create(
-                            medreqitem=medicine_item,
-                            minv=medicine_inventory,
-                            allocated_qty=allocated_qty
-                        )
+                
+                # Create MedicineAllocation
+                allocated_qty = med.get('quantity', 1)  # Default to 1 if not provided
+                if allocated_qty > 0:
+                    MedicineAllocation.objects.create(
+                        medreqitem=medicine_item,
+                        minv=medicine_inventory,
+                        allocated_qty=allocated_qty
+                    )
+                    
+                    # Update temporary deduction
+                    medicine_inventory.temporary_deduction += allocated_qty
+                    medicine_inventory.save()
             
-            print(f"✅ DEBUG: Created MedicineRequestItems and MedicineAllocations")
+            print(f"✅ DEBUG: Created {len(medicines)} MedicineRequestItems and MedicineAllocations")
             
             # Handle file uploads
             uploaded_files = []
             if files:
                 try:
-                    file_data_list = []
                     for file in files:
-                        file_content = file.read()
-                        import base64
-                        base64_content = base64.b64encode(file_content).decode('utf-8')
-                        data_url = f"data:{file.content_type};base64,{base64_content}"
-                        
-                        file_data_list.append({
-                            'name': file.name,
-                            'type': file.content_type,
-                            'file': data_url
-                        })
-                    
-                    # Upload files
-                    serializer = Medicine_FileSerializer(context={'request': request})
-                    uploaded_files = serializer._upload_files(
-                        file_data_list, 
-                        medreq_instance=medicine_request
-                    )
-                    
+                        medicine_file = Medicine_File.objects.create(
+                            medf_name=file.name,
+                            medf_type=file.content_type,
+                            medf_path=f"uploads/{file.name}",
+                            medf_url=f"/media/uploads/{file.name}",
+                            medreq=medicine_request
+                        )
+                        uploaded_files.append(medicine_file.medf_id)
                     print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
-                    
                 except Exception as e:
                     print(f"❌ ERROR: File upload failed: {str(e)}")
                     # Don't raise exception here, just log it

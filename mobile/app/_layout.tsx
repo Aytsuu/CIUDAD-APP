@@ -15,6 +15,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFCMToken } from '@/helpers/useFCMToken';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,

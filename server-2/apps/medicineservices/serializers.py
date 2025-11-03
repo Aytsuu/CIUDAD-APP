@@ -214,9 +214,34 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         return extract_address(obj)
   
 class MedicineRequestItemSerializer(serializers.ModelSerializer):
-    medreq_details = MedicineRecordSerialzer(source='medreq_id', read_only=True)
+    medreq_details = MedicineRequestBaseSerializer(source='medreq_id', read_only=True)
     med_details = MedicineListSerializers(source='med', read_only=True)
-    medicine_files = MedicineFileSerializer(many=True, read_only=True)  # Removed redundant `source`
+    
+    # FIX: Get medicine_files from the related MedicineRequest
+    medicine_files = serializers.SerializerMethodField()
+    
+    # Add allocations details
+    allocations = MedicineAllocationSerializer(many=True, read_only=True)
+    
+    # Add staff details
+    action_by_details = StaffTableSerializer(source='action_by', read_only=True)
+    completed_by_details = StaffTableSerializer(source='completed_by', read_only=True)
+    
+    # Add total allocated quantity
+    total_allocated_qty = serializers.SerializerMethodField()
+
+    def get_medicine_files(self, obj):
+        """Get medicine files from the related MedicineRequest"""
+        if obj.medreq_id and hasattr(obj.medreq_id, 'medicine_files'):
+            return MedicineFileSerializer(obj.medreq_id.medicine_files.all(), many=True).data
+        return []
+    
+    def get_total_allocated_qty(self, obj):
+        """Calculate total allocated quantity from all allocations"""
+        total_qty = MedicineAllocation.objects.filter(
+            medreqitem=obj
+        ).aggregate(total=models.Sum('allocated_qty'))['total'] or 0
+        return total_qty
 
     class Meta:
         model = MedicineRequestItem
