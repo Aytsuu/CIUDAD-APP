@@ -9,7 +9,7 @@ import { formatTime } from "@/helpers/timeFormatter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetGarbagePendingResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
-import { LoadingState } from "@/components/ui/loading-state"; // ✅ Import loading state component
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function ResidentPending() {
   const { user } = useAuth();
@@ -70,7 +70,7 @@ export default function ResidentPending() {
       {/* Loading / Empty / List */}
       {isDataLoading ? (
         <View className="h-64 justify-center items-center">
-          <LoadingState /> {/* ✅ Replaced plain text with animated loading state */}
+          <LoadingState /> 
         </View>
       ) : filteredData.length === 0 ? (
         <View className="justify-center items-center py-8">
@@ -150,7 +150,7 @@ export default function ResidentPending() {
                       </View>
                     )}
 
-                    {/* Cancel Button */}
+                    {/* Cancel Button - FIXED */}
                     <View className="flex-row justify-end mt-4">
                       <Button
                         className="border border-red-500 native:h-[40px] rounded-lg px-4"
@@ -190,20 +190,13 @@ export default function ResidentPending() {
           </View>
 
           {/* Image Viewer */}
-          <ScrollView
-            className="flex-1"
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-            zoomScale={currentZoomScale}
-            onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          >
+          <View className="flex-1 justify-center items-center">
             <Image
               source={{ uri: currentImage }}
               style={{ width: "100%", height: 400 }}
               resizeMode="contain"
             />
-          </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>

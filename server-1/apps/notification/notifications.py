@@ -36,8 +36,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
             priority='high',
             notification=messaging.AndroidNotification(
                 sound='default',
-                channel_id='default',  # Must match the one created in your React Native app
-                default_sound=True,
+                channel_id='default', 
             ),
         ),
         apns=messaging.APNSConfig(
@@ -54,7 +53,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
     # Try sending the message
     try:
         response = messaging.send(fcm_message)
-        print(f"✅ Successfully sent message: {response}")
+        print("Successfully sent message:", response)
         return response
 
     except exceptions.InvalidArgumentError as e:

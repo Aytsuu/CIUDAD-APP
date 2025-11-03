@@ -33,6 +33,7 @@ export type Remark = {
     rem_id: string;
     rem_remarks: string;
     rem_date: string;
+    staff_name: string;
     supp_docs: RemarkSuppDoc[];
 }
 
@@ -67,6 +68,7 @@ export type SummonCaseDetails = {
     sc_date_marked: string;
     sc_reason: string;
     comp_id: string;
+    staff_name: string;
     hearing_schedules: HearingSchedule[];
 }
 

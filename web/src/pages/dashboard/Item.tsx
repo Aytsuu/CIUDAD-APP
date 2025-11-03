@@ -11,8 +11,6 @@ import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
-import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
@@ -36,8 +34,11 @@ type DashboardItem = {
   sidebar?: { title: string; element: ReactElement }[];
   chart?: { title: string; element: ReactElement }[];
   upcomingEvents?: ReactElement;
-};
-
+};import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
+import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
@@ -48,6 +49,9 @@ export const getItemsConfig = (
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
   certificateCards: ReturnType<typeof useCertificateSectionCards>,
+  conciliationCards: ReturnType<typeof useConciliationSectionCards>,
+  mediationCards: ReturnType<typeof useMediationSectionCards>,
+  remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
   councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
 ): DashboardItem[] => {
   const { user } = useAuth();
@@ -68,7 +72,10 @@ export const getItemsConfig = (
   } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {accepted, rejected, completed, pending} = garbCards;
+  const { waiting, ongoing, escalated, resolved} = conciliationCards;
+  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved} = mediationCards;
   const { cashDonations } = donationCards;
+  const { noRemark } = remarkCard;
   const { 
     totalCertificates, 
     totalIssued, 
@@ -121,9 +128,19 @@ export const getItemsConfig = (
       },
       {
         dashboard: "COMPLAINT",
+        card: []
       },
       {
-        dashboard: "SUMMON & CASE TRACKER",
+        dashboard: "CONCILIATION PROCEEDINGS",
+        card: [waiting, ongoing, escalated, resolved], 
+      },
+      {
+        dashboard: "COUNCIL MEDIATION",
+        card: [mediationWaiting, mediationOngoing, forwarded, mediationResolved], 
+      },
+      {
+        dashboard: "SUMMON REMARKS",
+        card: [noRemark]
       },
       {
         dashboard: "GAD",

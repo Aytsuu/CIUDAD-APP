@@ -13,7 +13,7 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 // import { FormDateInput } from '@/components/ui/form/form-date-input';
 // import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useCreateIncomeExpense } from './queries/income-expense-AddQueries';
@@ -215,29 +215,14 @@ function ExpenseCreateForm() {
   };
 
   return (
-    <_ScreenLayout
+    <PageLayout
       // Header Configuration
-      headerBetweenAction={currentStep === 1 ? <Text>Step 1: Budget Details</Text> : <Text>Step 2: Transaction Details</Text>}
-      headerAlign="left"
-      
-      // Navigation Configuration
-      showBackButton={false}
-      showExitButton={false}
-      customLeftAction={
+      headerTitle={currentStep === 1 ? <Text>Step 1: Budget Details</Text> : <Text>Step 2: Transaction Details</Text>}      
+      leftAction={
         <TouchableOpacity onPress={() => currentStep === 1 ? router.back() : setCurrentStep(1)}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
-      }
-
-      // Layout Configuration
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      
-      // State Management
-      loading={isPending}
-      loadingMessage="Creating expense entry..."
-      
+      }    
       // Footer Configuration
       footer={
         <View className="w-full">
@@ -260,7 +245,6 @@ function ExpenseCreateForm() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
       {/* Main Content */}
       <View className="px-6">
@@ -340,7 +324,7 @@ function ExpenseCreateForm() {
           </View>
         )}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

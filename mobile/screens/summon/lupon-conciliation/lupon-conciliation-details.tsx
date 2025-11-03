@@ -17,8 +17,10 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { LoadingModal } from "@/components/ui/loading-modal"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LuponConciliationDetails() {
+    const {user} = useAuth()
     const router = useRouter()
     const params = useLocalSearchParams()
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
@@ -56,6 +58,7 @@ export default function LuponConciliationDetails() {
         sc_date_marked,
         sc_reason,
         comp_id,
+        staff_name,
         hearing_schedules = [],
     } = caseDetails || {}
 
@@ -98,13 +101,16 @@ export default function LuponConciliationDetails() {
     const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
     const handleResolve = () => {
+        const staff_id = user?.staff?.staff_id
         const status_type = "Lupon"
-        resolve({ status_type, sc_id: String(sc_id) })
+        resolve({ status_type, sc_id: String(sc_id), staff_id})
     }
     
     const handleEscalate = () => {
+        const staff_id = user?.staff?.staff_id
+
         if (comp_id) {
-            escalate({ sc_id: String(sc_id), comp_id: String(comp_id) })
+            escalate({ sc_id: String(sc_id), comp_id: String(comp_id), staff_id })
         } else {
             Alert.alert("Error", "Cannot escalate: Complaint ID is missing")
         }
@@ -222,11 +228,21 @@ export default function LuponConciliationDetails() {
                         )}
 
                         {sc_date_marked && (
-                            <View className="flex-row justify-between items-center py-2">
-                                <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
-                                <Text className="text-sm font-semibold text-gray-900">
-                                    {formatTimestamp(sc_date_marked)}
-                                </Text>
+                            <View className="py-2">
+                                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                    <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
+                                    <Text className="text-sm font-semibold text-gray-900">
+                                        {formatTimestamp(sc_date_marked)}
+                                    </Text>
+                                </View>
+                                {staff_name && (
+                                    <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                        <Text className="text-sm font-medium text-gray-600">Marked By</Text>
+                                        <Text className="text-sm font-semibold text-gray-900">
+                                            {staff_name}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         )}
                     </CardContent>
@@ -430,46 +446,46 @@ export default function LuponConciliationDetails() {
 
                                             {/* Remarks Section - UPDATED TO MATCH COUNCIL VERSION */}
                                             <View className="border-t border-gray-100 pt-3 mb-3">
-                                                {hasRemarks ? (
-                                                    <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                                        <View className="flex-row justify-between items-start mb-2">
-                                                            <Text className="text-sm font-semibold text-blue-800">
-                                                                Remarks Added
-                                                            </Text>
-                                                            <Text className="text-xs text-blue-600">
-                                                                {formatTimestamp(schedule.remark.rem_date)}
-                                                            </Text>
-                                                        </View>
-                                                        <Text className="text-sm text-gray-700 mb-2">
-                                                            {schedule.remark.rem_remarks}
+                                            {hasRemarks ? (
+                                                <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                                    <View className="mb-2">
+                                                        <Text className="text-sm font-semibold text-blue-800 mb-1">
+                                                            Remarks
                                                         </Text>
-                                                        {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
-                                                            <View className="mt-2">
-                                                                <TouchableOpacity 
-                                                                    onPress={() => handleViewImages(schedule.remark.supp_docs)}
-                                                                    className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
-                                                                >
-                                                                    <View className="flex-row items-center">
-                                                                        <Paperclip size={16} color="#3b82f6" />
-                                                                        <Text className="text-blue-700 text-sm font-semibold ml-2">
-                                                                            View Attached Files ({schedule.remark.supp_docs.length})
-                                                                        </Text>
-                                                                    </View>
-                                                                    <Eye size={16} color="#3b82f6" />
-                                                                </TouchableOpacity>
-                                                            </View>
-                                                        )}
+                                                        <Text className="text-xs text-blue-600 italic">
+                                                            by{schedule.remark.staff_name ? ` ${schedule.remark.staff_name}` : ' Unknown'}, on {formatTimestamp(schedule.remark.rem_date)}
+                                                        </Text>
                                                     </View>
-                                                ) : (
-                                                    <View className="bg-red-50 rounded-lg p-3 border border-red-200">
-                                                        <View className="flex-row items-center space-x-2 gap-2">
-                                                            <CircleAlert size={16} color="#dc2626" />
-                                                            <Text className="text-sm font-semibold text-red-800">
-                                                                No Remarks Available
-                                                            </Text>
+                                                    <Text className="text-sm text-gray-700 mb-2">
+                                                        {schedule.remark.rem_remarks}
+                                                    </Text>
+                                                    {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
+                                                        <View className="mt-2">
+                                                            <TouchableOpacity 
+                                                                onPress={() => handleViewImages(schedule.remark.supp_docs)}
+                                                                className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
+                                                            >
+                                                                <View className="flex-row items-center">
+                                                                    <Paperclip size={16} color="#3b82f6" />
+                                                                    <Text className="text-blue-700 text-sm font-semibold ml-2">
+                                                                        View Attached Files ({schedule.remark.supp_docs.length})
+                                                                    </Text>
+                                                                </View>
+                                                                <Eye size={16} color="#3b82f6" />
+                                                            </TouchableOpacity>
                                                         </View>
+                                                    )}
+                                                </View>
+                                            ) : (
+                                                <View className="bg-red-50 rounded-lg p-3 border border-red-200">
+                                                    <View className="flex-row items-center space-x-2 gap-2">
+                                                        <CircleAlert size={16} color="#dc2626" />
+                                                        <Text className="text-sm font-semibold text-red-800">
+                                                            No Remarks Available
+                                                        </Text>
                                                     </View>
-                                                )}
+                                                </View>
+                                            )}
                                             </View>
 
                                             {/* Minutes Section */}

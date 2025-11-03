@@ -1,22 +1,9 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  X,
-  Search,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  PlusCircle,
-} from "lucide-react";
+import { X, Search, Trash2, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
 import { Input } from "@/components/ui/input";
@@ -39,25 +26,13 @@ interface AccusedInfoProps {
   isSubmitting: boolean;
 }
 
-export const AccusedInfo: React.FC<AccusedInfoProps> = ({
-  onNext,
-  onPrevious,
-  isSubmitting,
-}) => {
+export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, isSubmitting}) => {
   const { control, watch, setValue } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "accused",
-  });
-
+  const { fields, append, remove } = useFieldArray({control, name: "accused",});
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResident, setSelectedResident] = useState<any>(null);
-  const [selectedResidentValue, setSelectedResidentValue] =
-    useState<string>("");
-
-  const { data: allResidents = [], isLoading: isResidentsLoading } =
-    useAllResidents();
-
+  const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
+  const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
   const currentAccused = watch(`accused.${activeTab}`);
 
   const addAccused = () => {

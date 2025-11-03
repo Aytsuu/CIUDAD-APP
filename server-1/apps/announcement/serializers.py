@@ -27,7 +27,7 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
     
     def get_staff(self, obj):
         info = obj.staff.rp.per
-        name = f"{info.per_lname}, {info.per_fname}{' ' + info.per_mname[0] + '.' if info.per_mname else ''}"
+        name = f"{info.per_lname}{f" {info.per_mname[0]}." if info.per_mname else ""} {info.per_fname}"
 
         return {
             "id": obj.staff.staff_id,
@@ -169,7 +169,7 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
             create_notification(
                 title="New Announcement",
                 message=f"A new announcement has been posted: {created_recipients[0].ann.ann_title}",
-                sender=self.context['request'].user,
+                # sender=self.context['request'].user,
                 recipients=rec_list,
                 notif_type="announcement",
                 target_obj=created_recipients[0].ann

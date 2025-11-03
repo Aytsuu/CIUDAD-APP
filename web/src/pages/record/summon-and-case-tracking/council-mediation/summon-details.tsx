@@ -27,6 +27,7 @@ import { formatDate } from "@/helpers/dateHelper"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
 import SummonRemarksView from "../summon-remarks-view"
+import { useAuth } from "@/context/AuthContext"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -43,6 +44,7 @@ function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
 }
 
 export default function SummonDetails() {
+  const {user} = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -88,6 +90,7 @@ export default function SummonDetails() {
     sc_date_marked,
     sc_reason,
     comp_id,
+    staff_name,
     hearing_schedules = [],
   } = caseDetails || {}
 
@@ -125,8 +128,9 @@ export default function SummonDetails() {
   const shouldShowResolveButton = !isCaseClosed
 
   const handleResolve = () => {
+    const staff_id = user?.staff?.staff_id
     const status_type = "Council"
-    resolve({status_type, sc_id})
+    resolve({status_type, sc_id, staff_id})
   }
   
   const handleForward = () => forward(sc_id)
@@ -188,6 +192,7 @@ export default function SummonDetails() {
                     rem_remarks={remark.rem_remarks}
                     rem_date={remark.rem_date}
                     supp_docs={remark.supp_docs}
+                    staff_name = {remark.staff_name}
                   />
                 }
                 title="Remarks"
@@ -545,8 +550,10 @@ export default function SummonDetails() {
               // Only show date marked if not null and case is closed
               sc_date_marked && (
                 <p className="text-sm text-gray-500">
-                  Marked on{" "}
-                  {formatTimestamp(new Date(sc_date_marked))}
+                  Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
+                  {staff_name && (
+                    <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
+                  )}
                 </p>
               )
             )}

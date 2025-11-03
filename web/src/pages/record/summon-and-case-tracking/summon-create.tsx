@@ -30,11 +30,11 @@ function CreateSummonSched({ sc_id, onSuccess }: {
 
     function getMediationLevel(scheduleCount: number){
         if (scheduleCount === 0) {
-            return "1st Mediation";
+            return "1st MEDIATION";
         } else if (scheduleCount === 1) {
-            return "2nd Mediation";
+            return "2nd MEDIATION";
         } else if (scheduleCount === 2) {
-            return "3rd Mediation";
+            return "3rd MEDIATION";
         } else if (scheduleCount === 3) {
             return "1st Conciliation Proceedings";
         } else if (scheduleCount === 4){

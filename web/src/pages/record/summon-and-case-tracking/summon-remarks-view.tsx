@@ -6,12 +6,14 @@ import { MediaGallery } from "@/components/ui/media-gallery";
 export default function SummonRemarksView({
   rem_remarks, 
   rem_date, 
+  staff_name, 
   supp_docs
 }: {
   rem_remarks: string;
   rem_date: string;
+  staff_name: string;
   supp_docs: RemarkSuppDoc[];
-}) {
+}) {``
 
   const mediaFiles = supp_docs?.map((doc) => ({
     id: doc.rsd_id,
@@ -60,13 +62,18 @@ export default function SummonRemarksView({
       {/* Date - Last Section */}
       <div className="flex justify-end pt-4 border-t border-gray-200">
         <div className="text-right">
-          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
-            Date of Remark
-          </p>
-          <p className="text-sm font-medium text-gray-800">
-            {formatTimestamp(new Date(rem_date))}
-          </p>
-        </div>
+          {staff_name ? (
+            <p className="text-sm text-gray-600">
+              {formatTimestamp(new Date(rem_date))}
+              <span className="text-gray-400 mx-2">•</span>
+              By <span className="font-medium text-gray-800">{staff_name}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">
+              {formatTimestamp(new Date(rem_date))}
+            </p>
+          )}
+        </div>  
       </div>
     </div>
   );

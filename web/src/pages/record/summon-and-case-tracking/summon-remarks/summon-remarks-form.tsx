@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAddRemarks } from "../queries/summonInsertQueries";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SummonRemarksForm({hs_id, st_id, sc_id, schedCount, onSuccess}:{
     hs_id: string;
@@ -13,6 +14,7 @@ export default function SummonRemarksForm({hs_id, st_id, sc_id, schedCount, onSu
     schedCount: number;
     onSuccess?: () => void
 }){
+    const {user} = useAuth();
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
@@ -34,8 +36,9 @@ export default function SummonRemarksForm({hs_id, st_id, sc_id, schedCount, onSu
         }))
 
         const status_type = schedCount > 3 ? "Lupon": "Council"
+        const staff_id = user?.staff?.staff_id
         
-        Addremarks({hs_id, st_id, sc_id, remarks, close, status_type, files});
+        Addremarks({hs_id, st_id, sc_id, remarks, close, status_type, files, staff_id});
     }
 
     const handleCheckboxChange = (checked: boolean) => {
@@ -70,11 +73,17 @@ export default function SummonRemarksForm({hs_id, st_id, sc_id, schedCount, onSu
                     onCheckedChange={handleCheckboxChange}
                     className="border-gray-300 w-5 h-5"
                 />
-                <Label
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                    Close hearing schedule
-                </Label>
+                <div className="grid gap-1.5 leading-none">
+                    <Label
+                        htmlFor="close-hearing"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        Close hearing schedule
+                    </Label>
+                    <p className="text-sm text-gray-500">
+                        Check this box if this hearing schedule should be marked as closed.
+                    </p>
+                </div>
             </div>
 
             <div className="flex items-center justify-end pt-4">

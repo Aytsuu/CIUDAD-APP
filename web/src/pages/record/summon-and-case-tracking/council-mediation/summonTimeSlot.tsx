@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Form } from "@/components/ui/form/form";
 import { SummonTimeSchema } from "@/form-schema/summon-time-schema";
-import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { useAddSummonTimeSlots } from "../queries/summonInsertQueries";
 
 type TimeSlot = {
@@ -77,50 +75,62 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Current Time Slots</h2>
-        <div className="space-y-2">
+    <div className="space-y-4">
+      {/* Current Time Slots - Pill Design */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h2 className="text-base font-semibold">Current Time Slots</h2>
+          <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded">
+            {timeSlots.length} added
+          </span>
+        </div>
+        
+        <div className="min-h-20 max-h-32 overflow-y-auto border rounded-lg p-3">
           {timeSlots.length > 0 ? (
-            timeSlots.map((slot) => (
-              <Card key={slot.id} className="flex items-center justify-between p-3">
-                <Label className="font-medium">
-                  {slot.displayStart}
-                </Label>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleDeleteTimeSlot(slot.id)}
+            <div className="flex flex-wrap gap-2">
+              {timeSlots.map((slot) => (
+                <div
+                  key={slot.id}
+                  className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200 text-sm font-medium"
                 >
-                  <Trash2 size={16} />
-                </Button>
-              </Card>
-            ))
+                  <span>{slot.displayStart}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTimeSlot(slot.id)}
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                  >
+                    <X size={14} className="text-red-500"/>
+                  </button>
+                </div>
+              ))}
+            </div>
           ) : (
-            <Card className="p-4">
-              <h4 className="text-muted-foreground">No time slots added yet</h4>
-            </Card>
+            <div className="text-center py-4">
+              <h4 className="text-sm text-muted-foreground">No time slots added yet</h4>
+              <p className="text-xs text-muted-foreground mt-1">Add your first time slot below</p>
+            </div>
           )}
         </div>
       </div>
 
+      {/* Add Time Slot Form */}
       <Form {...form}>
         <form className="space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row justify-center items-center w-full">
+          <div className="w-full">
             <FormDateTimeInput
               control={form.control}
-              label="Time"
+              label="Time"  
               type="time"
               name="start_time"
             />
           </div>
-          <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>
+          <div className='flex flex-col sm:flex-row gap-2 w-full'>
             <Button 
               type="button"  
               variant="outline" 
               onClick={handleAddTimeSlot}
               disabled={!currentTimeValue} 
+              className="w-full sm:flex-1"
             >
               <Plus size={16} className="mr-2" /> 
               Add Time Slot
@@ -130,8 +140,9 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
               type="button" 
               onClick={handleSubmit} 
               disabled={isPending || timeSlots.length === 0}
+              className="w-full sm:flex-1"
             >
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : "Save All"}
             </Button>
           </div>
         </form>

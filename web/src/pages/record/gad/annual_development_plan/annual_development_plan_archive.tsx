@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Archive, Search, RotateCcw } from "lucide-react";
-import { Link } from "react-router";
+import { ChevronLeft, Archive, Search, RotateCcw, Trash } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
+import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans, useDeleteAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import {
   AlertDialog,
@@ -28,7 +27,9 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlans, setSelectedPlans] = useState<number[]>([]);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -39,6 +40,7 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
   );
 
   const restorePlansMutation = useRestoreAnnualDevPlans();
+  const deletePlansMutation = useDeleteAnnualDevPlans();
 
   const archivedPlans = archivedPlansData?.results || [];
   const totalCount = archivedPlansData?.count || 0;
@@ -85,6 +87,27 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
     }
   };
 
+  const handleDeleteClick = () => {
+    if (selectedPlans.length > 0) {
+      setShowDeleteDialog(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePlansMutation.mutateAsync(selectedPlans);
+      showSuccessToast(`Successfully deleted ${selectedPlans.length} development plan(s) permanently`);
+      setSelectedPlans([]);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Failed to delete plans:", error);
+      showErrorToast("Failed to delete development plans");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const clearSearch = () => setSearchQuery("");
 
   return (
@@ -128,20 +151,36 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
         
         <div className="flex gap-2">
           {selectedPlans.length > 0 && (
-            <Button
-              variant="outline"
-              className="border-2 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
-              onClick={handleRestoreClick}
-              disabled={isRestoring}
-            >
-              <RotateCcw size={16} />
-              {isRestoring 
-                ? "Restoring..." 
-                : selectedPlans.length === 1
-                ? `Restore ${selectedPlans.length} plan`
-                : `Restore ${selectedPlans.length} plans`
-              }
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="border-2 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                onClick={handleRestoreClick}
+                disabled={isRestoring}
+              >
+                <RotateCcw size={16} />
+                {isRestoring 
+                  ? "Restoring..." 
+                  : selectedPlans.length === 1
+                  ? `Restore ${selectedPlans.length} plan`
+                  : `Restore ${selectedPlans.length} plans`
+                }
+              </Button>
+              <Button
+                variant="outline"
+                className="border-2 border-red-200 text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-800"
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
+              >
+                <Trash size={16} />
+                {isDeleting 
+                  ? "Deleting..." 
+                  : selectedPlans.length === 1
+                  ? `Delete ${selectedPlans.length} plan`
+                  : `Delete ${selectedPlans.length} plans`
+                }
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -216,23 +255,102 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
                       onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">
-                            {Array.isArray(plan.dev_project) ? plan.dev_project.join(', ') : plan.dev_project}
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-2">
+                      <div className="space-y-2">
+                        {/* Main Info */}
+                        <div>
+                          <h4 className="font-semibold text-blue-900">
                             {plan.dev_client}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Date: {new Date(plan.dev_date).toLocaleDateString()}
+                          </h4>
+                          {plan.dev_issue && (
+                            <p className="text-sm text-gray-700">
+                              {plan.dev_issue}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-700 font-medium">
+                            {(() => {
+                              try {
+                                if (typeof plan.dev_project === 'string' && plan.dev_project.startsWith('[')) {
+                                  const parsed = JSON.parse(plan.dev_project);
+                                  return Array.isArray(parsed) ? parsed[0] : plan.dev_project;
+                                }
+                                return plan.dev_project;
+                              } catch {
+                                return plan.dev_project;
+                              }
+                            })()}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <span className="text-sm font-medium text-blue-600">
-                            ₱{plan.dev_gad_budget?.toLocaleString() || '0'}
-                          </span>
+
+                        {/* Details */}
+                        <div className="space-y-0.5">
+                          {plan.dev_activity && (() => {
+                            try {
+                              const activities = typeof plan.dev_activity === 'string' ? JSON.parse(plan.dev_activity) : plan.dev_activity;
+                              if (Array.isArray(activities) && activities.length > 0) {
+                                return (
+                                  <div className="text-xs text-gray-600">
+                                    <span className="font-medium text-gray-700">Activities:</span> {activities.map((a: any) => a.activity || a).join(', ')}
+                                  </div>
+                                );
+                              }
+                            } catch {}
+                            return null;
+                          })()}
+                          {plan.dev_res_person && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-medium text-gray-700">Responsible Person:</span> {plan.dev_res_person}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500">
+                            <span className="font-medium text-gray-700">Date:</span> {new Date(plan.dev_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </div>
                         </div>
+                        
+                        {/* Budget Items */}
+                        {(() => {
+                          try {
+                            const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : 
+                                 (typeof plan.dev_budget_items === 'string' ? JSON.parse(plan.dev_budget_items || '[]') : []);
+                            
+                            if (!budgetItems || budgetItems.length === 0) return null;
+                            
+                            const total = budgetItems.reduce((sum: number, item: any) => {
+                              const quantity = Number(item.quantity || 0);
+                              const price = Number(item.price || 0);
+                              return sum + (quantity * price);
+                            }, 0);
+                            
+                            return (
+                              <div className="pt-2 border-t border-gray-200">
+                                <div className="text-xs font-semibold text-gray-700 mb-1.5">GAD BUDGET ITEMS</div>
+                                <div className="space-y-1.5">
+                                  {budgetItems.map((item: any, idx: number) => {
+                                    const quantity = Number(item.quantity || 0);
+                                    const price = Number(item.price || 0);
+                                    const itemTotal = quantity * price;
+                                    return (
+                                      <div key={idx} className="flex flex-col text-xs bg-gray-50 p-2 rounded">
+                                        <span className="font-medium text-gray-900">{item.name}</span>
+                                        <div className="flex items-center gap-x-6 text-gray-600 mt-0.5">
+                                          <span>Quantity: {quantity}</span>
+                                          <span>Price: ₱{price.toFixed(2)}</span>
+                                          <span className="font-semibold text-blue-600">Total ₱{itemTotal.toFixed(2)}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <div className="mt-1.5 pt-1.5 border-t border-gray-300">
+                                  <div className="flex justify-end text-sm font-bold text-blue-700">
+                                    Total: ₱{total.toFixed(2)}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          } catch {
+                            return null;
+                          }
+                          })()}
                       </div>
                     </div>
                   </div>
@@ -310,6 +428,36 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
               className="bg-green-600 hover:bg-green-700"
             >
               {isRestoring ? "Restoring..." : "Restore"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash className="h-5 w-5 text-red-600" />
+              Permanently Delete Development Plans?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to permanently delete {selectedPlans.length === 1 ? 'this development plan' : `these ${selectedPlans.length} development plans`}?
+              </p>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone. The development plans will be permanently deleted and cannot be recovered.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Deleting..." : "Delete Permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

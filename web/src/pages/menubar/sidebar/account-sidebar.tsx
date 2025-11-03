@@ -16,11 +16,11 @@ import type { MenuItem, SubMenuItemProps, MenuItemProps } from "./sidebarTypes";
 
 // Existing menu items
 const items: MenuItem[] = [
-  { title: "Personal Information", url: "manage/profile" },
-  { title: "Security", url: "manage/security" },
+  { title: "My Profile", url: "manage/profile" },
+  { title: "Security & Privacy", url: "manage/security" },
   { title: "Preferences", url: "manage/preferences" },
-  { title: "Your Activity", url: "manage/youractivity" },
-  { title: "About", url: "/about" },
+  { title: "Activity", url: "manage/youractivity" },
+  { title: "About", url: "account/about" },
 ];
 
 // ---------------------
@@ -174,7 +174,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 // ---------------------
 // AccountSidebar Component
 // ---------------------
-export function AccountSidebar() {
+export default function AccountSidebar() {
   const [activeItem, setActiveItem] = useState<string>("");
 
   return (
@@ -210,5 +210,3 @@ export function AccountSidebar() {
     </Sidebar>
   );
 }
-
-export default AccountSidebar;

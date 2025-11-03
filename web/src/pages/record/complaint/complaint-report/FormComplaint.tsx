@@ -1,30 +1,22 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import {
-  type ComplaintFormData,
-  complaintFormSchema,
-} from "@/form-schema/complaint-schema";
+import { type ComplaintFormData, complaintFormSchema } from "@/form-schema/complaint-schema";
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
-import {
-  FileText,
-  AlertTriangle,
-  User,
-  Users,
-  MapPin,
-  Info,
-} from "lucide-react";
+import { FileText, AlertTriangle, User, Users, MapPin, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useAuth } from "@/context/AuthContext";
 
 export const ComplaintForm = () => {
+  const {user} = useAuth();
   const [step, setStep] = useState(1);
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -98,17 +90,14 @@ export const ComplaintForm = () => {
         comp_location: data.incident.comp_location,
         comp_datetime: data.incident.comp_datetime,
         files: data.files || [],
+        staff: user?.rp
       };
       console.log("Payload to submit:", payload);
 
       const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
-        const successMessage = response.comp_id
-          ? `Complaint #${response.comp_id} submitted successfully`
-          : "Complaint submitted successfully";
-
-        toast.success(successMessage);
+        toast.success("Blotter successfully Filed");
         methods.reset();
         setStep(1);
         setShowConfirmModal(false);
@@ -165,7 +154,7 @@ export const ComplaintForm = () => {
   return (
     <LayoutWithBack
       title={"Blotter Form"}
-      description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
+      description="Ensure all blotter details are complete and accurate to facilitate proper action by the barangay."
     >
       {/* Progress Indicator */}
       <div className="px-4 sm:px-6 lg:px-8">

@@ -14,7 +14,8 @@ import { useAuth } from "@/context/AuthContext";
 
 
 type CertificateRequest = {
-    cr_id: string;
+    cr_id?: string;
+    bpr_id?: string; // Add bpr_id for permit clearances
     req_type: string;
     req_purpose: string;
     resident_details: {
@@ -116,8 +117,8 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
         const receiptData = {
             ...values,
             inv_nat_of_collection: "Permit Clearance", // Ensure this is set correctly
-            bpr_id: certificateRequest.cr_id, // Use cr_id as bpr_id for business clearance
-            nrc_id: "", // Set to empty string for business clearance (schema expects string)
+            bpr_id: certificateRequest.bpr_id || certificateRequest.cr_id, // Use bpr_id if available, otherwise cr_id
+            nrc_id: null, // Set to null for business clearance
             staff_id: staffId,
         };
         

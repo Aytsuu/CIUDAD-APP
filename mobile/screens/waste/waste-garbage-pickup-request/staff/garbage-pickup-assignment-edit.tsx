@@ -103,7 +103,7 @@ export default function EditAssignmentForm() {
                 <FormSelect
                     control = {control}
                     name="driver"
-                    label="Driver"
+                    label="Driver Loader"
                     placeholder="Select a driver"
                     options={driverOptions}
                 />
@@ -119,7 +119,7 @@ export default function EditAssignmentForm() {
                 <FormComboCheckbox
                     control={control}
                     name="collectors"
-                    label="Collector(s)"
+                    label="Loader(s)"
                     placeholder="Select collectors"
                     options={collectorOptions}
                 />

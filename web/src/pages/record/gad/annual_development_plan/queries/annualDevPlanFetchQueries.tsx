@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createAnnualDevPlan } from "../restful-api/annualPostAPI";
 import { getAnnualDevPlanById, getAnnualDevPlansByYear, getArchivedAnnualDevPlans, archiveAnnualDevPlans, restoreAnnualDevPlans } from "../restful-api/annualGetAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
+import { deleteAnnualDevPlans } from "../restful-api/annualDeleteAPI";
 
 export interface BudgetItem {
     name: string;
@@ -138,6 +139,21 @@ export const useRestoreAnnualDevPlans = () => {
     return useMutation({
         mutationFn: async (devIds: number[]) => {
             return await restoreAnnualDevPlans(devIds);
+        },
+        onSuccess: () => {
+            // Invalidate and refetch queries to update the data
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["archivedAnnualDevPlans"] });
+        },
+    });
+};
+
+export const useDeleteAnnualDevPlans = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: async (devIds: number[]) => {
+            return await deleteAnnualDevPlans(devIds);
         },
         onSuccess: () => {
             // Invalidate and refetch queries to update the data

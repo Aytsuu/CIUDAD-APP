@@ -118,6 +118,8 @@ export default function ResidentComplaint() {
         return "bg-gray-100 text-gray-500";
       case "Rejected":
         return "bg-red-100 text-red-700";
+      case "Accepted":
+        return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -314,7 +316,7 @@ export default function ResidentComplaint() {
       }
       customRightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1 text-black">
         <SearchWithTabs
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
@@ -323,7 +325,6 @@ export default function ResidentComplaint() {
           activeTab={activeStatus}
           onTabChange={setActiveStatus}
           showTabCounts={true}
-          searchPlaceholder="Search complaints..."
         />
         {renderContent()}
       </View>

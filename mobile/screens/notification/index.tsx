@@ -9,7 +9,7 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { ChevronLeft, Bell, MoreVertical, Check, BookCopy, CheckCheck } from "lucide-react-native";
+import { Bell, MoreVertical, Check, CheckCheck, ChevronLeft, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react-native";
 import GetNotification from "./queries/getNotification";
 import { Drawer } from "@/components/ui/drawer";
 import { useRouter } from "expo-router";
@@ -18,22 +18,42 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface notificationIcon {
-  notif_type: string;
+interface NotificationTypeIconProps {
+  notif_type?: string;
+  className?: string;
 }
 
-const NotificationType: React.FC<notificationIcon> = ({notif_type}) => {
-  switch(notif_type) {
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
+  switch (notif_type) {
     case "REQUEST":
       return (
-       <View className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white shadow-md p-1">
-          <BookCopy size={16} color="#fff" />
+        <View className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-5 h-5 text-blue-600" />
         </View>
-      )
-    default: 
-     return null;
+      );
+    case "REMINDER":
+      return (
+        <View className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-5 h-5 text-amber-600" />
+        </View>
+      );
+    case "INFO":
+      return (
+        <View className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-5 h-5 text-indigo-600" />
+        </View>
+      );
+    default:
+      return (
+        <View className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </View>
+      );
   }
-}
+};
 
 export default function NotificationScreen() {
   const router = useRouter();
@@ -326,20 +346,12 @@ export default function NotificationScreen() {
               >
                 <View className="flex-row items-start">
                   {/* Avatar/Icon */}
-                  <View className="relative">
-                    <Image
-                      source={
-                        item.sender_profile
-                          ? { uri: item.sender_profile }
-                          : require("@/assets/images/Logo.png")
-                      }
-                      className="w-16 h-16 rounded-full mr-4"
-                      style={{ backgroundColor: '#f3f4f6' }}
-                    />
+                  <View className="relative pr-4">
+                    <NotificationTypeIcon notif_type={item.notif_type} />
 
-                    <View className="absolute -bottom-2 right-2">
-                      <NotificationType notif_type={item.notif_type}/>
-                    </View>
+                    {!item.is_read && (
+                      <View className="absolute top-0.5 right-4 w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                    )}
                   </View>
                   
                   {/* Content */}
@@ -367,11 +379,6 @@ export default function NotificationScreen() {
                   >
                     <MoreVertical size={20} color="#6B7280" />
                   </TouchableOpacity>
-
-                  {/* Unread Indicator */}
-                  {!item.is_read && (
-                    <View className="absolute left-0 top-1/2 w-2 h-2 bg-blue-500 rounded-full -translate-y-1" />
-                  )}
                 </View>
               </TouchableOpacity>
             ))}

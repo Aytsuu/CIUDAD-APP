@@ -30,5 +30,6 @@ urlpatterns = [
     path('development-plans/<int:dev_id>/archive/', GADDevelopmentPlanArchiveView.as_view()),
     path('gad-annual-development-plan/<int:dev_id>/restore/', GADDevelopmentPlanRestoreView.as_view()),
     path('gad-annual-development-plan/bulk-update/', GADDevelopmentPlanBulkUpdate.as_view()),
+    path('gad-annual-development-plan/bulk-delete/', GADDevelopmentPlanBulkDelete.as_view()),
     
 ]

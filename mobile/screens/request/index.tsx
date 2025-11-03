@@ -26,6 +26,12 @@ export default () => {
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
+      title: "Blotter",
+      route: "/(request)/complaint/complaint-req-form",
+      icon: "",
+      gradient: ['#EBEFFE', '#0875DC']
+    },
+    {
       title: "Medicine Request",
       description: "",
       route: "/(health)/medicine-request/med-request",

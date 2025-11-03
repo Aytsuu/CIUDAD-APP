@@ -907,6 +907,24 @@ class GADDevelopmentPlanBulkUpdate(APIView):
             "updated": updated,
             "dev_archived": dev_archived
         }, status=status.HTTP_200_OK)
+
+class GADDevelopmentPlanBulkDelete(APIView):
+    permission_classes = [AllowAny]
+
+    def delete(self, request):
+        dev_ids = request.data.get('dev_ids', [])
+        if not dev_ids:
+            return Response(
+                {"error": "dev_ids is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        deleted_count, _ = DevelopmentPlan.objects.filter(dev_id__in=dev_ids).delete()
+
+        return Response(
+            {"deleted": deleted_count},
+            status=status.HTTP_200_OK
+        )
 class GADDevelopmentPlanArchiveView(generics.UpdateAPIView):
     queryset = DevelopmentPlan.objects.filter(dev_archived=False)
     serializer_class = GADDevelopmentPlanSerializer

@@ -133,7 +133,7 @@ export default function ViewCompletedRequestDetails() {
               <View className="py-3 border-b border-gray-100">
                 <View className="flex-row items-center mb-2 gap-2">
                   <User size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Driver:</Text>
+                  <Text className="text-gray-600 font-PoppinsMedium">Driver Loader:</Text>
                 </View>
                 <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails.assignment_info.driver}</Text>
               </View>
@@ -143,7 +143,7 @@ export default function ViewCompletedRequestDetails() {
               <View className="py-3 border-b border-gray-100">
                 <View className="flex-row items-center mb-2 gap-2">
                   <Users size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Collectors:</Text>
+                  <Text className="text-gray-600 font-PoppinsMedium">Loader(s):</Text>
                 </View>
                 <View className="ml-6">
                   <View className="flex-row flex-wrap gap-2">

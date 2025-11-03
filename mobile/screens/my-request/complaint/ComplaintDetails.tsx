@@ -105,7 +105,7 @@ const renderPerson = (person: PersonType) => {
             </View>
           ) : (
             <View className="bg-purple-100 px-2 py-1 rounded mt-1 self-start">
-              <Text className="text-xs text-purple-700 font-medium">Non-resident</Text>
+              <Text className="text-xs text-green-700 font-medium">Resident</Text>
             </View>
           )}
         </View>
