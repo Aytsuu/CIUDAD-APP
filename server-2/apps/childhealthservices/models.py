@@ -109,7 +109,7 @@ class ChildHealthSupplements(models.Model):
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     # medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
-    medreqitem =models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
+    medreq=models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     
     class Meta:
         db_table = 'child_health_supplements'

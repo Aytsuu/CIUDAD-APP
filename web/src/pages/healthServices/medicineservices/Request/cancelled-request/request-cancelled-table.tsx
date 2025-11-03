@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { medicineRequestCancelledColumns } from "./columns";
 import { useMedicineRequestStatuses } from "../queries/fetch";
 import TableLoading from "@/pages/healthServices/table-loading";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function CancelledRequest() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +63,11 @@ export default function CancelledRequest() {
 
   return (
     <div>
+
+
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <EnhancedCardLayout title="Cancelled Medicine Requests" description="" icon={<FileInput size={24} />} value={totalCount} valueDescription="Total Cancelled Requests" cardClassName="mb-6" />
+            </div>
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">

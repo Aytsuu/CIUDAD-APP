@@ -4,9 +4,9 @@ import DisplayMedicalConsultation from "@/pages/healthServices/medicalconsultati
 import MedicalConsultationForm from "@/pages/healthServices/medicalconsultation/Forms/MedicalConForm";
 import MainMedicalConsultation from "@/pages/healthServices/medicalconsultation/tables/main-medicalconsultation";
 import AppointmentForm from "@/pages/healthServices/medicalconsultation/Forms/AppointmentForm";
-import MedconRecordsLayout from "@/pages/healthServices/medicalconsultation/tables/main-medconlayout";
 import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appointmentlayout";
 import MainAppointments from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appoimnents";
+import Layout from "@/pages/healthServices/Layout";
 
 export const medicalConsultation = [
   {
@@ -21,7 +21,7 @@ export const medicalConsultation = [
       // RECORDS routes
       {
         path: "records",
-        element: <MedconRecordsLayout />,
+        element: <Layout />,
         children: [
           {
             index: true,

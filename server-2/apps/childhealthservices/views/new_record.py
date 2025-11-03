@@ -189,202 +189,221 @@ class CompleteChildHealthRecordAPIView(APIView):
         except Transient.DoesNotExist:
             raise Exception(f"Transient with ID {trans_id} not found")
     
+    @transaction.atomic
     def _handle_new_record_creation(self, submitted_data, staff_instance):
         """Handle creation of completely new child health record"""
-        
-        # Get patient instance
         try:
-            patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
-        except Patient.DoesNotExist:
-            raise Exception(f"Patient with ID {submitted_data['pat_id']} not found")
-        
-        # Create patient record
-        patient_record = PatientRecord.objects.create(
-            pat_id=patient,
-            patrec_type="Child Health Record"
-        )
-        
-        # Clean newborn_screening date
-        newborn_screening = self._clean_date_value(submitted_data.get('newborn_screening'))
-        
-        pregnancy_instance = None
-        # Correct way
-        # Get pregnancy instance if provided
-        pregnancy_id = submitted_data.get('pregnancy_id')
-        pregnancy = None
-        if pregnancy_id:
+            # Get patient instance
             try:
-                pregnancy = Pregnancy.objects.get(pregnancy_id=pregnancy_id)
-            except Pregnancy.DoesNotExist:
-                raise ValidationError(f"Pregnancy with id {pregnancy_id} does not exist.")
+                patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
+            except Patient.DoesNotExist:
+                raise Exception(f"Patient with ID {submitted_data['pat_id']} not found")
 
-        # Create child health record
-        child_health_record = ChildHealthrecord.objects.create(
-            ufc_no=submitted_data.get('ufc_no', ''),
-            family_no=submitted_data.get('family_no', ''),
-            place_of_delivery_type=submitted_data.get('place_of_delivery_type'),
-            pod_location=submitted_data.get('pod_location', ''),
-            mother_occupation=submitted_data.get('mother_occupation', ''),
-            father_occupation=submitted_data.get('father_occupation', ''),
-            birth_order=submitted_data.get('birth_order', 0),
-            newborn_screening=newborn_screening,
-            staff=staff_instance,
-            patrec=patient_record,  
-            landmarks=submitted_data.get('landmarks'),
-            nbscreening_result=submitted_data.get('nbscreening_result'), 
-            newbornInitiatedbf=submitted_data.get('newbornInitiatedbf', False),
-            pregnancy=pregnancy
-        )   
-        
-        # Create child health history
-        # Get the staff instance if selectedStaffId is provided
-        # This code might need a check:
-        assigned_staff = None
-        selected_staff_id = submitted_data.get('selectedStaffId')
-        if selected_staff_id:  # This checks for truthy values (not None, not empty string)
-            try:
-                assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
-            except Staff.DoesNotExist:
-                print(f"Staff with ID {selected_staff_id} does not exist")
-       
-        status_val = submitted_data.get('status', '').lower()
-        
-       
-        if status_val == 'immunization':
-             # Create the child health history record
-            child_health_history = ChildHealth_History.objects.create(
-                chrec=child_health_record,
-                status=status_val,
-                tt_status=submitted_data.get('tt_status'),
-                assigned_to=assigned_staff,
-                created_by=staff_instance   
+            # Create patient record
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type="Child Health Record"
             )
-           
-        elif status_val == 'check-up':
-             # Create the child health history record
-            child_health_history = ChildHealth_History.objects.create(
-                chrec=child_health_record,
-                status=status_val,
-                tt_status=submitted_data.get('tt_status'),
-                assigned_doc=assigned_staff,
-                created_by=staff_instance
-            )
-                
-       
-        
-        # Handle follow-up visit
-        followv_id = None
-        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
-            vital_sign = submitted_data['vitalSigns'][0]
-            follow_up_visit_date = self._clean_date_value(vital_sign.get('followUpVisit'))
+
+            # Clean newborn_screening date
+            newborn_screening = self._clean_date_value(submitted_data.get('newborn_screening'))
+
+            pregnancy_instance = None
+            # Correct way
+            # Get pregnancy instance if provided
+            pregnancy_id = submitted_data.get('pregnancy_id')
+            pregnancy = None
+            if pregnancy_id:
+                try:
+                    pregnancy = Pregnancy.objects.get(pregnancy_id=pregnancy_id)
+                except Pregnancy.DoesNotExist:
+                    raise ValidationError(f"Pregnancy with id {pregnancy_id} does not exist.")
+
+            # Create child health record
+            child_health_record = ChildHealthrecord.objects.create(
+                ufc_no=submitted_data.get('ufc_no', ''),
+                family_no=submitted_data.get('family_no', ''),
+                place_of_delivery_type=submitted_data.get('place_of_delivery_type'),
+                pod_location=submitted_data.get('pod_location', ''),
+                mother_occupation=submitted_data.get('mother_occupation', ''),
+                father_occupation=submitted_data.get('father_occupation', ''),
+                birth_order=submitted_data.get('birth_order', 0),
+                newborn_screening=newborn_screening,
+                staff=staff_instance,
+                patrec=patient_record,  
+                landmarks=submitted_data.get('landmarks'),
+                nbscreening_result=submitted_data.get('nbscreening_result'), 
+                newbornInitiatedbf=submitted_data.get('newbornInitiatedbf', False),
+                pregnancy=pregnancy
+            )   
             
-            if follow_up_visit_date:
-                follow_up_visit = FollowUpVisit.objects.create(
-                    followv_date=follow_up_visit_date,
-                    followv_description=vital_sign.get('follov_description', 'Follow Up for Child Health'),
-                    patrec=patient_record,
-                    followv_status="pending"
+            # Create child health history
+            # Get the staff instance if selectedStaffId is provided
+            # This code might need a check:
+            assigned_staff = None
+            selected_staff_id = submitted_data.get('selectedStaffId')
+            if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+                try:
+                    assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {selected_staff_id} does not exist")
+           
+            status_val = submitted_data.get('status', '').lower()
+            
+            # Initialize child_health_history to None
+            child_health_history = None
+
+            # Create child health history based on status_val
+            if status_val == 'immunization':
+                child_health_history = ChildHealth_History.objects.create(
+                    chrec=child_health_record,
+                    status=status_val,
+                    tt_status=submitted_data.get('tt_status'),
+                    assigned_to=assigned_staff,
+                    created_by=staff_instance   
                 )
-                followv_id = follow_up_visit.followv_id
-        
-        # Create health notes
-        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
-            vital_sign = submitted_data['vitalSigns'][0]
-            if vital_sign.get('notes'):
-                ChildHealthNotes.objects.create(
-                    chn_notes=vital_sign['notes'],
-                    followv_id=followv_id,
-                    chhist=child_health_history,
+            elif status_val == 'check-up':
+                child_health_history = ChildHealth_History.objects.create(
+                    chrec=child_health_record,
+                    status=status_val,
+                    tt_status=submitted_data.get('tt_status'),
+                    assigned_doc=assigned_staff,
+                    created_by=staff_instance
+                )
+            elif status_val == 'recorded':
+                child_health_history = ChildHealth_History.objects.create(
+                    chrec=child_health_record,
+                    status=status_val,
+                    created_by=staff_instance
+                )
+            else:
+                raise ValueError(f"Unsupported status value: {status_val}")
+
+            # Ensure child_health_history is not None before proceeding
+            if not child_health_history:
+                raise ValueError("Child health history could not be created. Ensure status is valid.")
+            
+            # Handle follow-up visit
+            followv_id = None
+            if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+                vital_sign = submitted_data['vitalSigns'][0]
+                follow_up_visit_date = self._clean_date_value(vital_sign.get('followUpVisit'))
+                
+                if follow_up_visit_date:
+                    follow_up_visit = FollowUpVisit.objects.create(
+                        followv_date=follow_up_visit_date,
+                        followv_description=vital_sign.get('follov_description', 'Follow Up for Child Health'),
+                        patrec=patient_record,
+                        followv_status="pending"
+                    )
+                    followv_id = follow_up_visit.followv_id
+            
+            # Create health notes
+            if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+                vital_sign = submitted_data['vitalSigns'][0]
+                if vital_sign.get('notes'):
+                    ChildHealthNotes.objects.create(
+                        chn_notes=vital_sign['notes'],
+                        followv_id=followv_id,
+                        chhist=child_health_history,
+                        staff=staff_instance
+                    )
+            
+            # Create body measurements and vital signs
+            bmi_id = None
+            chvital_id = None
+            
+            if (submitted_data.get('vitalSigns') and 
+                len(submitted_data['vitalSigns']) == 1 and 
+                submitted_data['vitalSigns'][0].get('date') and
+                submitted_data.get('nutritionalStatus')):
+                
+                vital_sign = submitted_data['vitalSigns'][0]
+                nutritional_status = submitted_data['nutritionalStatus']
+                
+                # Create body measurement
+                body_measurement = BodyMeasurement.objects.create(
+                    height=vital_sign.get('ht', Decimal('0.00')),
+                    weight=vital_sign.get('wt', Decimal('0.00')),
+                    wfa=nutritional_status.get('wfa', ''),
+                    lhfa=nutritional_status.get('lhfa', ''),
+                    wfl=nutritional_status.get('wfh', ''),
+                    muac=str(nutritional_status.get('muac', '')),
+                    muac_status=nutritional_status.get('muac_status', ''),
+                    edemaSeverity=submitted_data.get('edemaSeverity', 'none'),
+                    pat=patient,
+                    remarks=vital_sign.get('remarks', ''),
+                    is_opt=vital_sign.get('is_opt', False),
                     staff=staff_instance
                 )
-        
-        # Create body measurements and vital signs
-        bmi_id = None
-        chvital_id = None
-        
-        if (submitted_data.get('vitalSigns') and 
-            len(submitted_data['vitalSigns']) == 1 and 
-            submitted_data['vitalSigns'][0].get('date') and
-            submitted_data.get('nutritionalStatus')):
+                bmi_id = body_measurement.bm_id
             
-            vital_sign = submitted_data['vitalSigns'][0]
-            nutritional_status = submitted_data['nutritionalStatus']
-            
-            # Create body measurement
-            body_measurement = BodyMeasurement.objects.create(
-                height=vital_sign.get('ht', Decimal('0.00')),
-                weight=vital_sign.get('wt', Decimal('0.00')),
-                wfa=nutritional_status.get('wfa', ''),
-                lhfa=nutritional_status.get('lhfa', ''),
-                wfl=nutritional_status.get('wfh', ''),
-                muac=str(nutritional_status.get('muac', '')),
-                muac_status=nutritional_status.get('muac_status', ''),
-                edemaSeverity=submitted_data.get('edemaSeverity', 'none'),
-                pat=patient,
-                remarks=vital_sign.get('remarks', ''),
-                is_opt=vital_sign.get('is_opt', False),
-                staff=staff_instance
-            )
-            bmi_id = body_measurement.bm_id
-        
-        # Create vital signs
-        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
-            vital_sign = submitted_data['vitalSigns'][0]
-            vital_signs = VitalSigns.objects.create(
-                vital_temp=vital_sign.get('temp', ''),
-                staff=staff_instance,
-                patrec=patient_record
-            )
-            
-            # Create child health vital sign
-            child_vital_sign = ChildHealthVitalSigns.objects.create(
-                vital=vital_signs,
-                bm_id=bmi_id,
-                chhist=child_health_history
-            )
-            chvital_id = child_vital_sign.chvital_id
-        
-        # Handle breastfeeding dates
-        if submitted_data.get('BFchecks'):
-            self._handle_breastfeeding_dates(submitted_data['BFchecks'], child_health_history.chhist_id)
-        
-        # Handle supplement statuses (low birth weight and anemia)
-        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
-            weight = submitted_data['vitalSigns'][0].get('wt')
-            if weight and float(weight) < 2.5 and submitted_data.get('birthwt'):
-                self._create_supplement_status(
-                    'birthwt', 
-                    submitted_data['birthwt'], 
-                    child_health_history.chhist_id, 
-                    weight
+            # Create vital signs
+            if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+                vital_sign = submitted_data['vitalSigns'][0]
+                vital_signs = VitalSigns.objects.create(
+                    vital_temp=vital_sign.get('temp', ''),
+                    staff=staff_instance,
+                    patrec=patient_record
                 )
-            
-            if submitted_data.get('anemic', {}).get('is_anemic'):
-                self._create_supplement_status(
-                    'anemic', 
-                    submitted_data['anemic'], 
-                    child_health_history.chhist_id, 
-                    weight
+                
+                # Create child health vital sign
+                child_vital_sign = ChildHealthVitalSigns.objects.create(
+                    vital=vital_signs,
+                    bm_id=bmi_id,
+                    chhist=child_health_history
                 )
-        
-        # Handle medicines
-        if submitted_data.get('medicines'):
-            self._handle_medicines(
-                submitted_data['medicines'], 
-                submitted_data['pat_id'], 
-                child_health_history.chhist_id, 
-                staff_instance
-            ) 
-        
-        return Response({
-            "success": True,
-            "message": "Child health record created successfully",
-            "patrec_id": patient_record.patrec_id,
-            "chrec_id": child_health_record.chrec_id,
-            "chhist_id": child_health_history.chhist_id,
-            "chvital_id": chvital_id,
-            "followv_id": followv_id
-        }, status=status.HTTP_201_CREATED) 
+                chvital_id = child_vital_sign.chvital_id
+            
+            # Handle breastfeeding dates
+            if submitted_data.get('BFchecks'):
+                self._handle_breastfeeding_dates(submitted_data['BFchecks'], child_health_history.chhist_id)
+            
+            # Handle supplement statuses (low birth weight and anemia)
+            if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+                weight = submitted_data['vitalSigns'][0].get('wt')
+                if weight and float(weight) < 2.5 and submitted_data.get('birthwt'):
+                    self._create_supplement_status(
+                        'birthwt', 
+                        submitted_data['birthwt'], 
+                        child_health_history.chhist_id, 
+                        weight
+                    )
+                
+                if submitted_data.get('anemic', {}).get('is_anemic'):
+                    self._create_supplement_status(
+                        'anemic', 
+                        submitted_data['anemic'], 
+                        child_health_history.chhist_id, 
+                        weight
+                    )
+            
+            # Handle medicines
+            if submitted_data.get('medicines'):
+                self._handle_medicines(
+                    submitted_data['medicines'], 
+                    submitted_data['pat_id'], 
+                    child_health_history.chhist_id, 
+                    staff_instance
+                ) 
+            
+            return Response({
+                "success": True,
+                "message": "Child health record created successfully",
+                "patrec_id": patient_record.patrec_id,
+                "chrec_id": child_health_record.chrec_id,
+                "chhist_id": child_health_history.chhist_id,
+                "chvital_id": chvital_id,
+                "followv_id": followv_id
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            # Log the error and rollback
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"Error occurred: {str(e)}")
+            print(f"Traceback: {error_traceback}")
+
+            raise  # Re-raise the exception to trigger rollback
     
     def _handle_breastfeeding_dates(self, bf_dates, chhist_id):
         """Handle exclusive breastfeeding check dates"""
@@ -499,7 +518,8 @@ class CompleteChildHealthRecordAPIView(APIView):
                     # Link to child health supplements
                     ChildHealthSupplements.objects.create(
                         chhist=chhist,
-                        medrec=allocation
+                        #  medreqitem=medicine_item,
+                         medreq = med_request
                     )
             
            

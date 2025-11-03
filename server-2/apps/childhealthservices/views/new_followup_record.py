@@ -690,7 +690,9 @@ class UpdateChildHealthRecordAPIView(APIView):
                     # Link to child health supplements
                     ChildHealthSupplements.objects.create(
                         chhist_id=chhist_id,
-                        medreqitem=medicine_item
+                        # medreqitem=medicine_item
+                         medreq = med_request
+
                             )
 
     def _update_medicine_inventory(self, minv_id, quantity, staff_instance):

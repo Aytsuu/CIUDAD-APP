@@ -1,13 +1,12 @@
 import { Card } from "@/components/ui/card";
-import {  ChevronRight, Pill } from "lucide-react";
+import { ChevronRight, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";
-import { usePendingMedRequest } from "@/pages/healthServices/medicineservices/Request/queries/fetch";
-
-export const PendingMedicineRequestsSidebar = () => {
+import { useProcessingMedrequest } from "@/pages/healthServices/medicineservices/Request/queries/fetch";
+export const ToPickupMedicineRequestsSidebar = () => {
   const navigate = useNavigate();
 
-  const { data: apiResponse, isLoading } = usePendingMedRequest(1, 10);
+  const { data: apiResponse, isLoading } = useProcessingMedrequest();
 
   const requests = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
@@ -37,35 +36,35 @@ export const PendingMedicineRequestsSidebar = () => {
   };
 
   const handleClick = (request: any) => {
-    const address = request.address || {};
-
-    navigate(`/medicine-request/pending-items`, {
+    // const address = request.address || {};
+    navigate("/request/medicine/pending-pickup", {
       state: {
         params: {
-          medreq_id: request.medreq_id,
+          request,
           patientData: {
-            pat_id: request.pat_id_value,
             pat_type: request.pat_type,
             age: request.age,
-            addressFull: address.full_address || "No address provided",
-            address: {
-              add_street: address.add_street || "",
-              add_barangay: address.add_barangay || "",
-              add_city: address.add_city || "",
-              add_province: address.add_province || "",
-              add_sitio: address.add_sitio || ""
-            },
+            addressFull: request.address?.full_address || "No address provided",
+            address: request.address
+              ? {
+                  add_street: request.address.add_street,
+                  add_barangay: request.address.add_barangay,
+                  add_city: request.address.add_city,
+                  add_province: request.address.add_province,
+                  add_sitio: request.address.add_sitio,
+                }
+              : {},
             households: [{ hh_id: request.householdno }],
             personal_info: {
-              per_fname: request.personal_info?.per_fname || "",
-              per_mname: request.personal_info?.per_mname || "",
-              per_lname: request.personal_info?.per_lname || "",
-              per_dob: request.personal_info?.per_dob || "",
-              per_sex: request.personal_info?.per_sex || ""
-            }
-          }
-        }
-      }
+              per_fname: request.personal_info?.per_fname,
+              per_mname: request.personal_info?.per_mname,
+              per_lname: request.personal_info?.per_lname,
+              per_dob: request.personal_info?.per_dob,
+              per_sex: request.personal_info?.per_sex,
+            },
+          },
+        },
+      },
     });
   };
 
@@ -90,20 +89,23 @@ export const PendingMedicineRequestsSidebar = () => {
         ) : displayedRequests.length > 0 ? (
           <div className="p-4 space-y-3">
             {displayedRequests.map((request: any) => (
-              <Card key={request.medreq_id} className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200" onClick={() => handleClick(request)}>
+              <Card
+                key={request.medreq_id}
+                className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
+                onClick={() => handleClick(request)}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-14">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-sm font-medium text-gray-700 truncate">{formatName(request.personal_info?.per_fname || "Unknown", request.personal_info?.per_mname || "", request.personal_info?.per_lname || "")}</h3>
-                        {/* <Badge variant="outline" className="text-xs px-2 py-0.5 text-blue-600 bg-blue-50 border-blue-500">
-                          {request.total_quantity || 0} items
-                        </Badge> */}
+                        <h3 className="text-sm font-medium text-gray-700 truncate">
+                          {formatName(request.personal_info?.per_fname || "Unknown", request.personal_info?.per_mname || "", request.personal_info?.per_lname || "")}
+                        </h3>
                       </div>
 
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>{calculateDaysPending(request.requested_at)}</span>
-                        <p className="text-orange-500 font-semibold">Pending Request</p>
+                        <p className="text-green-500 font-semibold">To Pickup</p>
                       </div>
                     </div>
                   </div>
@@ -115,11 +117,11 @@ export const PendingMedicineRequestsSidebar = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <Pill className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+              <Pill className="w-8 h-8 text-green-500" />
             </div>
-            <h3 className="text-sm font-medium text-blue-700 mb-1">No pending requests</h3>
-            <p className="text-sm text-gray-500">Medicine requests will appear here</p>
+            <h3 className="text-sm font-medium text-green-700 mb-1">No requests to pickup</h3>
+            <p className="text-sm text-gray-500">Medicine requests ready for pickup will appear here</p>
           </div>
         )}
       </div>
@@ -127,7 +129,7 @@ export const PendingMedicineRequestsSidebar = () => {
       {/* Footer */}
       {totalCount > 0 && (
         <div className="p-4 border-t border-gray-100">
-          <Link to="/medicine-request/pending">
+          <Link to="/services/medicine/requests/pickup">
             <Button variant="link">
               View All Requests ({totalCount > 100 ? "100+" : totalCount}){totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}
             </Button>

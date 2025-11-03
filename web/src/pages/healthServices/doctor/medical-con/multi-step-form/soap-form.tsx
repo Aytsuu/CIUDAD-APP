@@ -1,12 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useEffect, useRef } from "react";
-import SoapFormFields from "./soap-with-ph";
+// import SoapFormFields from "./soap-with-ph";
 import { usePhysicalExamQueries } from "../queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "../queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../../types";
+import SoapFormFields from "@/components/ui/soap-form";
 
 interface SoapFormProps {
   patientData: any;
@@ -28,7 +29,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         // Ensure each medicine has a unique identifier for React keys
         _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
         medrec_qty: med.medrec_qty || 1, // Ensure quantity is always a number
-        reason: med.reason || ""
+        reason: med.reason || "",
       }));
     };
 
@@ -52,7 +53,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     page: 1,
     pageSize: 10,
     search: "",
-    is_temp: true
+    is_temp: true,
   });
 
   const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
@@ -68,14 +69,14 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     setMedicineSearchParams((prev: any) => ({
       ...prev,
       search: searchTerm,
-      page: 1
+      page: 1,
     }));
   };
 
   const handleMedicinePageChange = (page: number) => {
     setMedicineSearchParams((prev: any) => ({
       ...prev,
-      page
+      page,
     }));
   };
 
@@ -88,7 +89,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       plantreatment_summary: initialData?.plantreatment_summary || "",
       medicineRequest: {
         pat_id: initialData?.medicineRequest?.pat_id || "",
-        medicines: []
+        medicines: [],
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
@@ -112,8 +113,8 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       staff_id: initialData?.staff_id || "",
       medrec_id: initialData?.medrec_id || MedicalConsultation?.medrec_id || "",
       patrec_id: initialData?.patrec_id || MedicalConsultation?.patrec || "",
-      app_id: initialData?.app_id || ""
-    }
+      app_id: initialData?.app_id || "",
+    },
   });
 
   // FIX 2: Sync form values when selectedMedicines changes
@@ -121,7 +122,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     console.log(MedicalConsultation, "====Medixal===");
     form.setValue("medicineRequest", {
       pat_id: patientData?.pat_id || "",
-      medicines: selectedMedicines
+      medicines: selectedMedicines,
     });
   }, [selectedMedicines, form, patientData?.pat_id]);
 
@@ -135,11 +136,11 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         plantreatment_summary: initialData.plantreatment_summary || "",
         medicineRequest: {
           pat_id: patientData?.pat_id || "",
-          medicines: selectedMedicines
+          medicines: selectedMedicines,
         },
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
-        followv: initialData.followv || undefined
+        followv: initialData.followv || undefined,
       });
     }
   }, [initialData, form, patientData?.pat_id, selectedMedicines]);
@@ -151,7 +152,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     };
@@ -170,20 +171,20 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         ...med,
         _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
         medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
-        reason: med.reason || ""
+        reason: med.reason || "",
       }));
 
       // Better change detection - compare the actual content, not just order
       const currentMedicines = selectedMedicines.map((med) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
-        reason: med.reason
+        reason: med.reason,
       }));
 
       const newMedicines = updatedWithIds.map((med) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
-        reason: med.reason
+        reason: med.reason,
       }));
 
       const hasChanges = JSON.stringify(currentMedicines) !== JSON.stringify(newMedicines);
@@ -217,7 +218,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
-        medicines: updatedWithIds
+        medicines: updatedWithIds,
       });
 
       // Trigger form validation
@@ -227,7 +228,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines: updatedWithIds
+          selectedMedicines: updatedWithIds,
         });
       }
     },
@@ -249,7 +250,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         onFormDataUpdate({
           ...form.getValues(),
           selectedIllnesses: ids,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     },
@@ -265,7 +266,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         onFormDataUpdate({
           ...form.getValues(),
           assessment_summary: text,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     },
@@ -278,7 +279,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         pe_section_id: section.pe_section_id,
         title: section.title,
         isOpen: false,
-        options: []
+        options: [],
       }));
 
       optionsQuery.data.forEach((option: any) => {
@@ -287,7 +288,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
           section.options.push({
             pe_option_id: option.pe_option_id,
             text: option.text,
-            checked: form.getValues("physicalExamResults")?.includes(option.pe_option_id) || false
+            checked: form.getValues("physicalExamResults")?.includes(option.pe_option_id) || false,
           });
         }
       });
@@ -301,7 +302,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       const currentValues = form.getValues();
       onFormDataUpdate({
         ...currentValues,
-        selectedMedicines
+        selectedMedicines,
       });
     }
     onBack();
@@ -347,7 +348,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       submitSoapForm({
         formData: submissionData,
         patientData,
-        MedicalConsultation
+        MedicalConsultation,
       });
     },
     [selectedMedicines, patientData, MedicalConsultation, submitSoapForm]
@@ -378,7 +379,6 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         medicinePagination={medicinePagination}
         onMedicineSearch={handleMedicineSearch}
         onMedicinePageChange={handleMedicinePageChange}
-        medicalConsultation={MedicalConsultation}
       />
     </div>
   );

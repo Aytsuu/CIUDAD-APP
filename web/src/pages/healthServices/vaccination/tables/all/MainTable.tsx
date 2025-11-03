@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Shield, UserX } from "lucide-react";
+// import { Shield, UserX } from "lucide-react";
 import AllVaccinationRecords from "./AllVaccinationRecord";
 import UnvaccinatedResident from "./UnvaccineResidents";
 import { ProtectedComponent } from "@/ProtectedComponent";

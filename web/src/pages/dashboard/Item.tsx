@@ -16,6 +16,7 @@ import { VaccinationDistributionSidebar } from "@/components/analytics/health/va
 import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
+import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
@@ -166,7 +167,7 @@ export const getItemsConfig = (
 
         chart: [
           {
-            title: "OPT",
+            title: "0-72 mos Nutritional Status",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
@@ -187,6 +188,9 @@ export const getItemsConfig = (
           {
             title: "Pending Medicine Requests",
             element: <PendingMedicineRequestsSidebar />,
+          },
+          {            title: "To-Pickup Medicine Requests",
+            element: <ToPickupMedicineRequestsSidebar />,
           },
         ],
       },

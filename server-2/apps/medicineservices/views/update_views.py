@@ -40,6 +40,7 @@ class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
         # For other updates, use default behavior
         return super().update(request, *args, **kwargs)
 
+
 class UpdateConfirmAllPendingItemsView(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):

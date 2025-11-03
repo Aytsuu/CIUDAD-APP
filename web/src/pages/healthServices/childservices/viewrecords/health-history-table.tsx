@@ -40,7 +40,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
       fields: immunizationTrackingFields
     },
     {
-      title: "Supplements & Supplement Status",
+      title: "Medicine Given and Health Status (anemic/low birth weight)",
       icon: <Pill className="h-5 w-5 text-blue-600" />,
       fields: [...supplementsFields]
     }

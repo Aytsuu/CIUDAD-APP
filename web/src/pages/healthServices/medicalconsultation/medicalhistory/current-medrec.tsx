@@ -8,7 +8,8 @@ import { ConsultationHistoryTable } from "./table-history";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { toTitleCase } from "@/helpers/ToTitleCase";
-
+import { FamilyHistoryTab } from "../tables/family-history-card";
+  
 interface CurrentConsultationCardProps {
   consultation: any;
   patientData: any;
@@ -37,9 +38,10 @@ const TabButton = ({ active, onClick, children }: { active: boolean; onClick: ()
 
 export default function CurrentConsultationCard({ consultation, patientData, currentConsultationId, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<"medical" | "philhealth" | "history">("medical");
+  const [activeTab, setActiveTab] = useState<"medical" | "philhealth" | "history" | "family">("medical");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  
+  const [famHistorySearch, setFamHistorySearch] = useState("");
+
   const bhw = `${consultation?.staff_details?.fname || ""} ${consultation?.staff_details?.lname || ""} ${consultation?.staff_details?.mname || ""} ${consultation?.staff_details?.suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
@@ -382,6 +384,21 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
     </div>
   );
 
+  // Family History Content
+  const FamilyHistoryContent = () => (
+    <div>
+      <FamilyHistoryTab
+        pat_id={""}
+        searchValue={famHistorySearch}
+        onSearchChange={setFamHistorySearch}
+        onClearSearch={() => setFamHistorySearch("")}
+        famHistoryData={famHistoryData}
+        isFamHistoryLoading={false}
+        isFamHistoryError={false}
+      />
+    </div>
+  );
+
   return (
     <div className={`bg-white ${className}`}>
       {/* Tabs Navigation */}
@@ -397,6 +414,9 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
           )}
           <TabButton active={activeTab === "history"} onClick={() => setActiveTab("history")}>
             Consultation History
+          </TabButton>
+          <TabButton active={activeTab === "family"} onClick={() => setActiveTab("family")}>
+            Family History
           </TabButton>
         </div>
       </div>
@@ -417,6 +437,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
           {activeTab === "medical" && <MedicalConsultationContent />}
           {activeTab === "philhealth" && consultation.is_phrecord === true && <PhilHealthContent />}
           {activeTab === "history" && <ConsultationHistoryContent />}
+          {activeTab === "family" && <FamilyHistoryContent />}
         </div>
 
         {/* Print version shows all sections */}

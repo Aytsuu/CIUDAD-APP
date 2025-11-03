@@ -58,8 +58,9 @@ class MedicineRequestPendingTableView(generics.ListCreateAPIView):
             'rp_id__per',  # Requesting physician personal info
         ).prefetch_related(
             'items',  # Medicine request items
-            'items__minv_id',  # Medicine inventory
-            'items__minv_id__med_id',  # Medicine details
+            'items__allocations',  # Allocation details for items
+            'items__allocations__minv',  # Medicine inventory
+            'items__allocations__minv__med_id',  # Medicine details
             'items__med',  # Alternative medicine reference
             'patrec__pat_id__rp_id__per__personal_addresses__add',  # Patient addresses
             'patrec__pat_id__rp_id__per__personal_addresses__add__sitio',  # Patient sitios
