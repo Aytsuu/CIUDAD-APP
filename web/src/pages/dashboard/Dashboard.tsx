@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getItemsConfig } from "./Item";
@@ -7,6 +6,9 @@ import { useProfilingSectionCards } from "@/components/analytics/profiling/profi
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
+import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { Label } from "@/components/ui/label";
 import { ProtectedComponent } from "@/ProtectedComponent";
 
@@ -20,9 +22,12 @@ export default function Dashboard() {
   const adminCards = useAdminSectionCards();
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
+  const wasteCards = useWastePersonnelSectionCards();
+  const garbCards = useGarbagePickupSectionCards();
+  const donationCards = useDonationSectionCards();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards),
-    [profilingCards, adminCards, reportCards, healthCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards]
   );
 
   const validateFeature = (feature: string) => {

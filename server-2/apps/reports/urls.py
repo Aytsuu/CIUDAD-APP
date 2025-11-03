@@ -75,5 +75,5 @@ urlpatterns=[
         # MORBIDITY REPORTS
         path('morbidity/monthly-details/<str:month>/', MonthlyMorbidityView.as_view(), name='monthly-morbidity'),
         path('morbidity/monthly-summaries/', MonthlyMorbiditySummaryAPIView.as_view(), name='yearly-morbidity'),
-
+ 
 ]
