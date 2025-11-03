@@ -8,14 +8,16 @@ from apps.medicalConsultation.models import MedicalConsultation_Record
 from apps.medicalConsultation.serializers import MedicalConsultationRecordSerializer
 from apps.patientrecords.models import Patient
 from pagination import StandardResultsPagination
-
+from datetime import datetime
 
 class MonthlyConsultedSummariesAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
     def get(self, request):
         try:
-            # Get filter parameters - using staff_id for both
-            staff_id = request.GET.get('staff_id')  # Use staff_id for both medical consultation and child health
-            year_param = request.GET.get('year')  # '2025' or '2025-07'
+            # Get filter parameters
+            staff_id = request.GET.get('staff_id')
+            search_query = request.GET.get('search')  # Add this for text search
 
             # Base querysets for both record types
             child_health_queryset = ChildHealth_History.objects.select_related(
@@ -24,7 +26,7 @@ class MonthlyConsultedSummariesAPIView(APIView):
                 'assigned_to',
                 'assigned_doc'
             ).filter(status="recorded", assigned_doc__isnull=False)
-            
+
             med_consult_queryset = MedicalConsultation_Record.objects.select_related(
                 'patrec__pat_id__rp_id__per',
                 'patrec__pat_id__trans_id__tradd_id',
@@ -37,39 +39,8 @@ class MonthlyConsultedSummariesAPIView(APIView):
 
             # Apply staff_id filter for both record types
             if staff_id:
-                # For medical consultation: filter by assigned_to
                 med_consult_queryset = med_consult_queryset.filter(assigned_to_id=staff_id)
-                # For child health: filter by assigned_doc
                 child_health_queryset = child_health_queryset.filter(assigned_doc=staff_id)
-
-            # Apply year/month filtering
-            if year_param and year_param != 'all':
-                try:
-                    if '-' in year_param:
-                        year, month = map(int, year_param.split('-'))
-                        # Filter both querysets by year and month
-                        child_health_queryset = child_health_queryset.filter(
-                            created_at__year=year,
-                            created_at__month=month
-                        )
-                        med_consult_queryset = med_consult_queryset.filter(
-                            created_at__year=year,
-                            created_at__month=month
-                        )
-                    else:
-                        year = int(year_param)
-                        # Filter both querysets by year only
-                        child_health_queryset = child_health_queryset.filter(
-                            created_at__year=year
-                        )
-                        med_consult_queryset = med_consult_queryset.filter(
-                            created_at__year=year
-                        )
-                except ValueError:
-                    return Response({
-                        'success': False,
-                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
             # Combine both querysets and annotate by month
             from itertools import chain
@@ -77,42 +48,50 @@ class MonthlyConsultedSummariesAPIView(APIView):
                 child_health_queryset,
                 med_consult_queryset
             ))
-            
+
             # Create a dictionary to count records by month and type
             monthly_data = {}
             for record in combined_queryset:
                 if hasattr(record, 'created_at') and record.created_at:
                     month_key = record.created_at.strftime('%Y-%m')
+                    month_name = record.created_at.strftime('%B %Y')  # For search
+
+                    # Apply search filter if provided
+                    if search_query and search_query.lower() not in month_name.lower():
+                        continue
+
                     if month_key not in monthly_data:
                         monthly_data[month_key] = {
                             'total_count': 0,
                             'child_health_count': 0,
                             'medical_consultation_count': 0,
                             'residents': 0,
-                            'transients': 0
+                            'transients': 0,
+                            'month_name': month_name  # Store for display
                         }
-                    
+
                     monthly_data[month_key]['total_count'] += 1
-                    
+
                     # Count by record type
                     if isinstance(record, ChildHealth_History):
                         monthly_data[month_key]['child_health_count'] += 1
                     elif isinstance(record, MedicalConsultation_Record):
                         monthly_data[month_key]['medical_consultation_count'] += 1
-                    
+
                     # Count by patient type
                     patient_type = self._get_patient_type_from_record(record)
                     if patient_type == 'Resident':
                         monthly_data[month_key]['residents'] += 1
                     elif patient_type == 'Transient':
                         monthly_data[month_key]['transients'] += 1
-            
+
             # Convert to list format and sort by month (descending)
             formatted_data = []
             for month_str, data in sorted(monthly_data.items(), reverse=True):
                 formatted_data.append({
                     'month': month_str,
                     'record_count': data['total_count'],
+                    'month_name': data['month_name'],  # Include month name for frontend
                     'breakdown': {
                         'child_health': data['child_health_count'],
                         'medical_consultation': data['medical_consultation_count'],
@@ -121,10 +100,14 @@ class MonthlyConsultedSummariesAPIView(APIView):
                     }
                 })
 
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+
             # Build response with filter info
             response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data),
                 'summary': {
                     'total_records': sum(item['record_count'] for item in formatted_data),
@@ -135,14 +118,14 @@ class MonthlyConsultedSummariesAPIView(APIView):
                 },
                 'filters_applied': {
                     'staff_id': staff_id,
-                    'year': year_param
+                    'search': search_query
                 }
             }
 
-            return Response(response_data, status=status.HTTP_200_OK)
+            return paginator.get_paginated_response(response_data)
 
         except Exception as e:
-            return Response({ 
+            return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -154,21 +137,21 @@ class MonthlyConsultedSummariesAPIView(APIView):
                 if hasattr(record, 'chrec') and hasattr(record.chrec, 'patrec'):
                     patient = record.chrec.patrec.pat_id
                     return patient.pat_type if hasattr(patient, 'pat_type') else 'Unknown'
-            
+
             elif isinstance(record, MedicalConsultation_Record):
                 if hasattr(record, 'patrec'):
                     patient = record.patrec.pat_id
                     return patient.pat_type if hasattr(patient, 'pat_type') else 'Unknown'
-        
+
         except Exception:
             return 'Unknown'
-        
+
         return 'Unknown'
 
 
 class MonthlyConsultedDetailsAPIView(APIView):
     pagination_class = StandardResultsPagination
-    
+
     def get(self, request, month):
         try:
             # Validate month format (YYYY-MM)
@@ -188,7 +171,7 @@ class MonthlyConsultedDetailsAPIView(APIView):
             staff_id = request.query_params.get('staff_id')  # Use staff_id for both
             page = int(request.query_params.get('page', 1))
             page_size = int(request.query_params.get('page_size', 10))
-            
+
             # Prefetch related data for child health records
             child_health_queryset = ChildHealth_History.objects.select_related(
                 'chrec__patrec__pat_id__rp_id__per',
@@ -210,7 +193,7 @@ class MonthlyConsultedDetailsAPIView(APIView):
                 status="recorded",
                 assigned_doc__isnull=False
             )
-            
+
             # Prefetch related data for medical consultation records
             med_consult_queryset = MedicalConsultation_Record.objects.select_related(
                 'patrec__pat_id__rp_id__per',
@@ -225,14 +208,14 @@ class MonthlyConsultedDetailsAPIView(APIView):
                 created_at__month=month_num,
                 medrec_status='completed'
             )
-            
+
             # Apply staff_id filter for both record types
             if staff_id:
                 # For medical consultation: filter by assigned_to
                 med_consult_queryset = med_consult_queryset.filter(assigned_to_id=staff_id)
                 # For child health: filter by assigned_doc
                 child_health_queryset = child_health_queryset.filter(assigned_doc=staff_id)
-            
+
             # Apply search filter
             if search_query:
                 child_health_queryset = child_health_queryset.filter(
@@ -244,7 +227,7 @@ class MonthlyConsultedDetailsAPIView(APIView):
                     Q(chrec__patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
                     Q(chrec__patrec__pat_id__trans_id__tran_fname__icontains=search_query)
                 )
-                
+
                 med_consult_queryset = med_consult_queryset.filter(
                     Q(medrec_chief_complaint__icontains=search_query) |
                     Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
@@ -252,75 +235,75 @@ class MonthlyConsultedDetailsAPIView(APIView):
                     Q(patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
                     Q(patrec__pat_id__trans_id__tran_fname__icontains=search_query)
                 )
-            
+
             # Apply record type filter
             if record_type != 'all':
                 if record_type == 'child-health':
                     med_consult_queryset = MedicalConsultation_Record.objects.none()
                 elif record_type == 'medical-consultation':
                     child_health_queryset = ChildHealth_History.objects.none()
-            
+
             combined_data = []
             residents = 0
             transients = 0
             child_health_count = 0
             medical_consultation_count = 0
-            
+
             # Process child health records
             for record in child_health_queryset:
                 serializer = ChildHealthMinimalSerializer(record)
                 serialized_data = serializer.data
-                
+
                 chrec = record.chrec
                 patrec = chrec.patrec
                 patient = patrec.pat_id
                 patient_details = self._get_patient_details(patient)
-                
+
                 # Count patient types
                 if patient_details.get('pat_type') == 'Resident':
                     residents += 1
                 else:
                     transients += 1
-                
+
                 child_health_count += 1
-                
+
                 if 'chrec_details' not in serialized_data:
                     serialized_data['chrec_details'] = {}
                 if 'patrec_details' not in serialized_data['chrec_details']:
                     serialized_data['chrec_details']['patrec_details'] = {}
-                
+
                 serialized_data['chrec_details']['patrec_details']['pat_details'] = patient_details
-                
+
                 combined_data.append({
                     'record_type': 'child-health',
                     'data': serialized_data
                 })
-            
+
             # Process medical consultation records
             for record in med_consult_queryset:
                 patrec = record.patrec
                 patient = patrec.pat_id
                 serializer = MedicalConsultationRecordSerializer(record)
                 serialized_data = serializer.data
-                
+
                 patient_details = self._get_patient_details(patient)
-                
+
                 # Count patient types
                 if patient_details.get('pat_type') == 'Resident':
                     residents += 1
                 else:
                     transients += 1
-                
+
                 medical_consultation_count += 1
-                
+
                 combined_data.append({
                     'record_type': 'medical-consultation',
                     'data': serialized_data
                 })
-            
+
             # Sort by created_at (most recent first)
             combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=True)
-            
+
             # Manual pagination
             total_count = len(combined_data)
             start_index = (page - 1) * page_size
@@ -365,7 +348,7 @@ class MonthlyConsultedDetailsAPIView(APIView):
         if patient.pat_type == 'Resident' and patient.rp_id and hasattr(patient.rp_id, 'per'):
             per = patient.rp_id.per
             address = getattr(patient.rp_id, 'address', None)
-            
+
             return {
                 'pat_id': patient.pat_id,
                 'pat_type': patient.pat_type,
@@ -386,11 +369,11 @@ class MonthlyConsultedDetailsAPIView(APIView):
                 },
                 'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
             }
-        
+
         elif patient.pat_type == 'Transient' and patient.trans_id:
             trans = patient.trans_id
             address = trans.tradd_id if hasattr(trans, 'tradd_id') else None
-            
+
             return {
                 'pat_id': patient.pat_id,
                 'pat_type': patient.pat_type,
@@ -418,5 +401,5 @@ class MonthlyConsultedDetailsAPIView(APIView):
                 },
                 'households': []
             }
-        
+
         return {}

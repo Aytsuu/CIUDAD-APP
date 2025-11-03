@@ -20,6 +20,7 @@ type TableProps = {
   striped?: boolean;
   hoverEffect?: boolean;
   compact?: boolean;
+  defaultRowCount?: number; // New prop to specify default row count
 };
 
 export default function TableLayout({ 
@@ -34,11 +35,23 @@ export default function TableLayout({
   striped = false,
   hoverEffect = false,
   compact = false,
+  defaultRowCount = 0, // Default to 0 if not provided
 }: TableProps) {
   // Apply compact styling if enabled
   const resolvedBodyCellClassName = compact 
     ? `${bodyCellClassName} px-1 py-1 text-xs md:text-sm`
     : bodyCellClassName;
+
+  // Updated logic to ensure `defaultRowCount` overrides the display of table rows
+  const displayedRows = Array.from({ length: Math.max(defaultRowCount, rows.length) }, (_, index) => {
+    if (index < rows.length) {
+      return rows[index];
+    }
+    // Fill remaining rows with placeholders, each cell with px-4
+    return Array(header.length).fill(
+      <span className="px-2">&nbsp;</span>
+    );
+  });
 
   return (
     <div className="overflow-x-auto">
@@ -56,8 +69,8 @@ export default function TableLayout({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.length > 0 ? (
-            rows.map((row, rowIndex) => (
+          {displayedRows.length > 0 ? (
+            displayedRows.map((row, rowIndex) => (
               <TableRow 
                 key={`row-${rowIndex}`}
                 className={`
@@ -80,9 +93,9 @@ export default function TableLayout({
             <TableRow>
               <TableCell 
                 colSpan={header.length} 
-                className="text-center py-8 text-gray-500"
+                className="text-center py-8 text-gray-500 "
               >
-                {emptyState || "No data available"}
+                {emptyState || ""}
               </TableCell>
             </TableRow>
           )}

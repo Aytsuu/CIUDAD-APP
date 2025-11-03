@@ -354,9 +354,7 @@ class MedicalHistory(models.Model):
     remarks = models.TextField(default="", blank=True, null=True)
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
     is_from_famhistory=models.BooleanField(default=False)
-    remarks = models.TextField(default="", blank=True, null=True)
-    is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
-    is_from_famhistory=models.BooleanField(default=False)
+   
     class Meta:
         db_table = 'medical_history' 
         

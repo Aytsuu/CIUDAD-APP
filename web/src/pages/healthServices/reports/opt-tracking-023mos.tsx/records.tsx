@@ -84,7 +84,7 @@ export default function QuarterlyOPTDetails() {
 
   const { data: apiResponse, isLoading, error } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
 
-  const records = apiResponse?.results?.children_data || [];
+  const records = React.useMemo(() => apiResponse?.results?.children_data || [], [apiResponse]);
   const totalEntries = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 

@@ -255,7 +255,6 @@ class ChildHealthMinimalSerializer(serializers.ModelSerializer):
             'chrec',
             'chrec_details',
             'child_health_vital_signs',
-            'index',
         ]
 
 

@@ -15,17 +15,16 @@ export default function MonthlyMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter] = useState<string>("all");
 
-  const { data: apiResponse, isLoading, error } = useMedicineMonthly(yearFilter);
+  const { data: apiResponse, isLoading, error } = useMedicineMonthly(
+    currentPage, 
+    pageSize, 
+    searchQuery || "" // Send empty string instead of "all"
+  );
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch report");
-      toast("Retrying to fetch report...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
     }
   }, [error]);
 
@@ -37,29 +36,17 @@ export default function MonthlyMedicineRecords() {
     }
   }, [isLoading]);
 
-  const monthlyData = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
-  const totalMonths = monthlyData.length;
-
-  // Filter data based on search query
-  const filteredData = monthlyData.filter((monthData:any) => {
-    const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
-      month: "long",
-      year: "numeric"
-    });
-    const searchText = `${monthData.month} ${monthName}`.toLowerCase();
-    return searchText.includes(searchQuery.toLowerCase());
-  });
-
-  // Paginate the filtered data
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Access data from API response with proper pagination
+  const monthlyData = apiResponse?.results?.data || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, yearFilter]);
+  }, [searchQuery, pageSize]);
 
   return (
-    <LayoutWithBack title="Monthly Medicine Records" description={`View medicine records grouped by month (${totalMonths} months found)`}>
+    <LayoutWithBack title="Monthly Medicine Records" description={`View medicine records grouped by month (${totalCount} months found)`}>
       <div>
         <Card className="">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
@@ -67,9 +54,14 @@ export default function MonthlyMedicineRecords() {
 
             <div className="flex flex-col sm:flex-row gap-3 p-3 w-full sm:w-auto">
               {/* Search Input */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-[350px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <Input 
+                  placeholder="Search by month (e.g., November 2025)" 
+                  className="pl-10 bg-white w-full" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                />
               </div>
             </div>
           </div>
@@ -106,52 +98,47 @@ export default function MonthlyMedicineRecords() {
                   <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
                   <span>Loading medicine records...</span>
                 </div>
-              ) : paginatedData.length > 0 ? (
+              ) : monthlyData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {paginatedData.map((record:any) => {
-                    const monthName = new Date(record.month + "-01").toLocaleString("default", {
-                      month: "long",
-                      year: "numeric"
-                    });
-
-                    return (
-                      <MonthInfoCard
-                        key={record.month}
-                        monthItem={{
+                  {monthlyData.map((record: any) => (
+                    <MonthInfoCard
+                      key={record.month}
+                      monthItem={{
+                        month: record.month,
+                        total_items: record.record_count,
+                        month_name: record.month_name // Use from backend
+                      }}
+                      navigateTo={{
+                        path: "/reports/monthly-medicine/records",
+                        state: {
                           month: record.month,
-                          total_items: record.record_count,
-                          month_name: monthName
-                        }}
-                        navigateTo={{
-                          path: "/reports/monthly-medicine/records",
-                          state: {
-                            month: record.month,
-                            monthName: monthName,
-                            records: record.records,
-                            recordCount: record.record_count,
-                            monthlyrcplist_id: record.monthlyrcplist_id
-                          }
-                        }}
-                        className="[&_.icon-gradient]:from-blue-400 [&_.icon-gradient]:to-blue-600 
-                                  [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 
-                                  hover:scale-105 transition-transform duration-200"
-                      />
-                    );
-                  })}
+                          monthName: record.month_name,
+                          records: record.records,
+                          recordCount: record.record_count,
+                          monthlyrcplist_id: record.monthlyrcplist_id
+                        }
+                      }}
+                      className="[&_.icon-gradient]:from-blue-400 [&_.icon-gradient]:to-blue-600 
+                                [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 
+                                hover:scale-105 transition-transform duration-200"
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                   <Folder className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No months found</h3>
-                  <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No medicine records available"}</p>
+                  <p className="text-sm text-center text-gray-400">
+                    {searchQuery ? "Try adjusting your search criteria" : "No medicine records available"}
+                  </p>
                 </div>
               )}
 
               {/* Footer with Pagination */}
-              {paginatedData.length > 0 && (
+              {monthlyData.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full py-6 gap-3 border-t mt-6">
                   <p className="text-sm text-gray-600">
-                    Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} months
+                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} months
                   </p>
 
                   {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}

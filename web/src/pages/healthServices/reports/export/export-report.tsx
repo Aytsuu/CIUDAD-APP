@@ -27,7 +27,7 @@ export function exportToExcel(data: any[], filename: string) {
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-export function exportToPDF(filename: string) {
+export function exportToPDF(orientation: 'portrait' | 'landscape' = 'portrait') {
   try {
     const element = document.getElementById("printable-area");
     if (!element) {
@@ -42,14 +42,10 @@ export function exportToPDF(filename: string) {
     }).then((canvas: HTMLCanvasElement) => {
       const imgData = canvas.toDataURL("image/png");
 
-      // Determine orientation based on aspect ratio
-      const aspectRatio = canvas.width / canvas.height;
-      const orientation = aspectRatio > 1 ? "landscape" : "portrait";
-
       const pdf = new jsPDF({
         orientation: orientation,
         unit: "mm",
-        format: "a4"
+        format: "legal" // Ensure long format
       });
 
       const imgProps = pdf.getImageProperties(imgData);
@@ -57,7 +53,11 @@ export function exportToPDF(filename: string) {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${filename}.pdf`);
+
+      // Open the PDF in a new blank tab instead of saving/exporting
+      const pdfBlob = pdf.output("blob");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, "_blank");
     });
   } catch (error) {
     console.error("Error generating PDF:", error);

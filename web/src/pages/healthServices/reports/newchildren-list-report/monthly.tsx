@@ -16,17 +16,20 @@ export default function MonthlyNewChildrenRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter] = useState<string>("all");
 
-  const { data: apiResponse, isLoading, error } = useMonthlyChildrenCount(yearFilter);
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+  } = useMonthlyChildrenCount(
+    currentPage,
+    pageSize,
+    searchQuery || "" // Send empty string instead of "all"
+  );
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch children records");
-      toast("Retrying to fetch records...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
     }
   }, [error]);
 
@@ -38,47 +41,30 @@ export default function MonthlyNewChildrenRecords() {
     }
   }, [isLoading]);
 
-  const monthlyData = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
-  const totalMonths = monthlyData.length;
-
-  // Filter data based on search query
-  const filteredData = monthlyData.filter((monthData: any) => {
-    const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
-      month: "long",
-      year: "numeric"
-    });
-    const searchText = `${monthData.month} ${monthName}`.toLowerCase();
-    return searchText.includes(searchQuery.toLowerCase());
-  });
-
-  // Paginate the filtered data
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Access data from API response with proper pagination
+  const monthlyData = apiResponse?.results?.data || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, yearFilter]);
+  }, [searchQuery, pageSize]);
 
   return (
-    <LayoutWithBack title="Monthly New Children Records" description={`View new children records grouped by month (${totalMonths} months found)`}>
+    <LayoutWithBack title="Monthly New Children Records" description={`View new children records grouped by month (${totalCount} months found)`}>
       <div>
         <Card className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-            <div className="flex items-center gap-2">
-              <UserPlus className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">New Children Records</h2>
-            </div>
-
+          <div className="flex justify-end  mb-4">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               {/* Search Input */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-[350px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <Input placeholder="Search by month (e.g., November, 2025, Nove...)" className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
           </div>
 
-          <div className="h-full w-full rounded-md">
+          <div className="h-full w-full Frounded-md">
             {/* Table Header with Pagination Controls */}
             <div className="w-full h-auto sm:h-16 bg-slate-50 flex flex-col sm:flex-row justify-between sm:items-center p-4 mb-4 gap-3">
               <div className="flex items-center gap-3">
@@ -111,36 +97,29 @@ export default function MonthlyNewChildrenRecords() {
                   <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
                   <span>Loading children records...</span>
                 </div>
-              ) : paginatedData.length > 0 ? (
+              ) : monthlyData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {paginatedData.map((record: any) => {
-                    const monthName = new Date(record.year_month + "-01").toLocaleString("default", {
-                      month: "long",
-                      year: "numeric"
-                    });
-
-                    return (
-                      <MonthInfoCard
-                        key={record.year_month}
-                        monthItem={{
+                  {monthlyData.map((record: any) => (
+                    <MonthInfoCard
+                      key={record.year_month}
+                      monthItem={{
+                        month: record.year_month,
+                        total_items: record.count,
+                        month_name: record.month_name, // Use from backend
+                      }}
+                      navigateTo={{
+                        path: "/monthly-new-children-records/details",
+                        state: {
                           month: record.year_month,
-                          total_items: record.count,
-                          month_name: monthName
-                        }}
-                        navigateTo={{
-                          path: "/monthly-new-children-records/details",
-                          state: {
-                            month: record.year_month,
-                            monthName: monthName,
-                            recordCount: record.count
-                          }
-                        }}
-                        className="[&_.icon-gradient]:from-green-400 [&_.icon-gradient]:to-green-600 
-                                  [&_.item-count]:bg-green-100 [&_.item-count]:text-green-700 
-                                  hover:scale-105 transition-transform duration-200"
-                      />
-                    );
-                  })}
+                          monthName: record.month_name,
+                          recordCount: record.count,
+                        },
+                      }}
+                      className="[&_.icon-gradient]:from-green-400 [&_.icon-gradient]:to-green-600 
+                                [&_.item-count]:bg-green-100 [&_.item-count]:text-green-700 
+                                hover:scale-105 transition-transform duration-200"
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
@@ -151,10 +130,10 @@ export default function MonthlyNewChildrenRecords() {
               )}
 
               {/* Footer with Pagination */}
-              {paginatedData.length > 0 && (
+              {monthlyData.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full py-6 gap-3 border-t mt-6">
                   <p className="text-sm text-gray-600">
-                    Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} months
+                    Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} months
                   </p>
 
                   {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
