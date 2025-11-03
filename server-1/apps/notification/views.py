@@ -29,48 +29,71 @@ class CreateNotificationView(APIView):
 
     def post(self, request):
         try:
-            recipient_ids = request.data.get('recipients', [])
+            recipient_ids = request.data.get("recipients", [])
+            logger.info(f"📥 Received ResidentProfile IDs: {recipient_ids}")
+
+            if not recipient_ids:
+                return Response(
+                    {"error": "No ResidentProfile IDs provided."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids).select_related("account")
+
             recipients = []
+            skipped_ids = []
 
-            accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
-
-            if accounts:
-                recipients = accounts
-            else:
-                resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids)
-                recipients = [
-                    rp.account for rp in resident_profiles 
-                    if hasattr(rp, 'account') and rp.account
-                ]
+            for rp in resident_profiles:
+                if hasattr(rp, "account") and rp.account:
+                    recipients.append(rp.account)
+                else:
+                    skipped_ids.append(rp.rp_id)
+                    logger.warning(f"⚠️ ResidentProfile ID {rp.rp_id} has no linked Account")
 
             if not recipients:
                 return Response(
-                    {'error': 'No valid recipients found for given IDs.'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "No valid recipients found for given ResidentProfile IDs."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Create the notification
+            logger.info(f"✅ Found {len(recipients)} valid account(s)")
+            if skipped_ids:
+                logger.info(f"⚠️ Skipped IDs without linked accounts: {skipped_ids}")
+
             notification = create_notification(
-                title=request.data.get('title'),
-                message=request.data.get('message'),
-                notif_type=request.data.get('notif_type'),
+                title=request.data.get("title"),
+                message=request.data.get("message"),
+                notif_type=request.data.get("notif_type"),
                 recipients=recipients,
-                web_route=request.data.get('web_route'),
-                web_params=request.data.get('web_params'),
-                mobile_route=request.data.get('mobile_route'),
-                mobile_params=request.data.get('mobile_params'),
-                target_obj=request.data.get('target_obj')
+                web_route=request.data.get("web_route"),
+                web_params=request.data.get("web_params"),
+                mobile_route=request.data.get("mobile_route"),
+                mobile_params=request.data.get("mobile_params"),
             )
 
-            return Response(
-                {'message': '✅ Notification created successfully from Server-2'},
-                status=status.HTTP_201_CREATED
-            )
+            if not notification:
+                return Response(
+                    {"error": "Failed to create notification — invalid recipients or data."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            response_data = {
+                "message": "✅ Notification created successfully from Server-2",
+                "notification_id": notification.notif_id,
+                "recipients_count": len(recipients),
+            }
+
+            if skipped_ids:
+                response_data["skipped_ids"] = skipped_ids
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             logger.error(f"❌ Error creating notification from Server-2: {str(e)}")
-            return Response({'error': f'Failed to create notification: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response(
+                {"error": f"Failed to create notification: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
@@ -84,10 +107,11 @@ class CreateReminderNotificationView(APIView):
 
         try:
             recipient_ids = request.data.get('recipients', [])
+            print(f"Recipient IDs for reminder: {recipient_ids}")
             recipients = []
 
             accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
-
+            print(f"Accounts found for reminder: {accounts}")
             if accounts:
                 recipients = accounts
             else:

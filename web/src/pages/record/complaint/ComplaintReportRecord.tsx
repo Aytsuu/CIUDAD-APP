@@ -258,9 +258,9 @@ export function ComplaintViewRecord() {
               {c.complainant?.map((person: Complainant, index: number) => (
                 <div key={index} className="flex">
                   <div className="bg-blue-500 text-white rounded-lg w-full h-full px-4 py-2 col-span-3">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-start gap-4">
                       <MdAccountCircle className="text-white text-5xl" />
-                      <div className="flex flex-col w-full">
+                      <div className="flex flex-col w-full space-y-2">
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-2">
                             <h2 className="text-md font-semibold">
@@ -276,9 +276,6 @@ export function ComplaintViewRecord() {
                                 </span>
                                 )}
                           </div>
-                          <button className="text-sm text-white underline hover:text-gray-200 ml-auto">
-                            View Record
-                          </button>
                         </div>
                         <h3 className="text-sm text-white">
                           Age: {person.cpnt_age} yrs. old, Gender: {person.cpnt_gender}
@@ -311,9 +308,9 @@ export function ComplaintViewRecord() {
                   {c.accused.map((person: Accused, index: number) => (
                     <div key={index} className="flex">
                       <div className="bg-blue-500 text-white rounded-lg w-full h-full px-4 py-2 col-span-3">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start gap-4">
                           <MdAccountCircle className="text-white text-5xl" />
-                          <div className="flex flex-col w-full">
+                          <div className="flex flex-col w-full space-y-2">
                             <div className="flex items-center justify-between w-full">
                               <div className="flex items-center gap-2">
                                 <h2 className="text-md font-semibold">
@@ -323,9 +320,6 @@ export function ComplaintViewRecord() {
                                   Resident
                                 </span>
                               </div>
-                              <button className="text-sm text-white underline hover:text-gray-200 ml-auto">
-                                View Record
-                              </button>
                             </div>
                             <h3 className="text-sm text-white">
                               Age: {person.acsd_age} yrs. old, Gender: {person.acsd_gender}

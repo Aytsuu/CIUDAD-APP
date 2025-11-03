@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, BookCopy, Settings  } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
@@ -32,18 +31,38 @@ interface Notification {
 
 interface NotificationTypeIconProps {
   notif_type?: string;
+  className?: string;
 }
 
-const NotificationIconType: React.FC<NotificationTypeIconProps> = ({ notif_type }) => {
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
   switch (notif_type) {
     case "REQUEST":
       return (
-        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white shadow-md">
-          <BookCopy className="w-5 h-5 text-white" />
+        <div className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-5 h-5 text-blue-600" />
+        </div>
+      );
+    case "REMINDER":
+      return (
+        <div className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-5 h-5 text-amber-600" />
+        </div>
+      );
+    case "INFO":
+      return (
+        <div className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-5 h-5 text-indigo-600" />
         </div>
       );
     default:
-      return null;
+      return (
+        <div className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </div>
+      );
   }
 };
 
@@ -109,7 +128,6 @@ export const NotificationBell: React.FC = () => {
       console.log('📩 FCM message received:', JSON.stringify(payload, null, 2));
       
       try {
-        // IMPORTANT: Backend sends 'web_route' but we need to map it to 'redirect_path'
         let redirectUrl = undefined;
         
         // Check if data exists and has web_route
@@ -133,31 +151,30 @@ export const NotificationBell: React.FC = () => {
             console.error("Failed to parse web params:", e);
           }
         }
+        const notifTitle = payload.notification?.title || "No title";
+        const notifMessage = payload.notification?.body || "No message";
 
-        const newNotif: Notification = {
-          notif_id: payload.data?.notification_id || Date.now().toString(),
-          notif_title: payload.notification?.title || "No title",
-          notif_message: payload.notification?.body || "No message",
-          notif_type: payload.data?.notif_type || "",
-          is_read: false,
-          notif_created_at: new Date().toISOString(),
-          redirect_url: redirectUrl,
-        };
+        // const newNotif: Notification = {
+        //   notif_id: payload.data?.notification_id || Date.now().toString(),
+        //   notif_title: payload.notification?.title || "No title",
+        //   notif_message: payload.notification?.body || "No message",
+        //   notif_type: payload.data?.notif_type || "",
+        //   is_read: false,
+        //   notif_created_at: new Date().toISOString(),
+        //   redirect_url: redirectUrl,
+        // };
 
-        console.log('✅ Created notification object:', newNotif);
-
-        // Update state first
-        setNotifications((prev) => {
-          console.log('📝 Adding notification to state. Current count:', prev.length);
-          return [newNotif, ...prev];
-        });
-        setUnreadCount((prev) => prev + 1);
+        // // Update state first
+        // setNotifications((prev) => {
+        //   console.log('📝 Adding notification to state. Current count:', prev.length);
+        //   return [newNotif, ...prev];
+        // });
+        // setUnreadCount((prev) => prev + 1);
 
         // Show toast notification
-        console.log('🔔 Showing toast notification...');
         showNotificationToast({
-          title: newNotif.notif_title,
-          description: newNotif.notif_message,
+          title: notifTitle,
+          description: notifMessage,
           avatarSrc: ciudadLogo,
           timestamp: "just now",
           onClick: redirectUrl ? () => {
@@ -436,15 +453,7 @@ export const NotificationBell: React.FC = () => {
                   >
                     <div className="flex items-start gap-3">
                       <div className="relative flex-shrink-0">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage />
-                          <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
-                            S
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-2 -right-1">
-                          <NotificationIconType notif_type={item.notif_type}/>
-                        </div>
+                        <NotificationTypeIcon notif_type={item.notif_type} />
                         {!item.is_read && (
                           <div className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full border-2 border-white"></div>
                         )}

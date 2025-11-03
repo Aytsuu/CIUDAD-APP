@@ -201,16 +201,20 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
         return data
     
     def update(self, instance, validated_data):
-        """Update complaint with proper field handling"""
         staff_id = validated_data.pop('staff_id', None)
-        
-        # Update status and rejection reason
+
+        # Update main fields
         instance.comp_status = validated_data.get('comp_status', instance.comp_status)
         instance.comp_rejection_reason = validated_data.get('comp_rejection_reason', instance.comp_rejection_reason)
-        
-        # Update staff if provided
-        # if staff_id:
-        #     instance.staff_id = staff_id
-        
+
+        # ✅ Properly set staff instance if provided
+        if staff_id is not None:
+            from apps.administration.models import Staff
+            try:
+                staff_instance = Staff.objects.get(staff_id=staff_id)
+                instance.staff = staff_instance
+            except Staff.DoesNotExist:
+                raise serializers.ValidationError({'staff_id': 'Invalid staff ID'})
+
         instance.save()
         return instance

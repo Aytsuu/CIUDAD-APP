@@ -19,25 +19,25 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.base import ContentFile
+
 # Utility imports
 from utils.supabase_client import upload_to_storage
 
 # Python imports
 import json
 import logging
+import base64
+import io
 
 logger = logging.getLogger(__name__)
 
-import base64
-import io
-from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import InMemoryUploadedFile
 
 class ComplaintCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = ComplaintSerializer
 
-    # @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
             logger.info(f"Received data keys: {request.data.keys()}")
@@ -100,12 +100,13 @@ class ComplaintCreateView(APIView):
             }
 
             # Add staff_id if provided
-            if request.data.get("staff_id"):
+            if request.data.get("staff"):
                 try:
-                    staff_instance = Staff.objects.get(staff_id=request.data["staff_id"])
-                    complaint_data["staff_id"] = staff_instance.pk
+                    staff_instance = Staff.objects.get(staff_id=request.data["staff"])
+                    complaint_data["staff"] = staff_instance.pk
+                    complaint_data["comp_status"] = "Accepted"
                 except Staff.DoesNotExist:
-                    logger.warning(f"Staff with ID {request.data['staff_id']} not found")
+                    logger.warning(f"Staff with ID {request.data['staff']} not found")
 
             # Validate required fields
             required_fields = [
@@ -247,9 +248,18 @@ class ComplaintCreateView(APIView):
                         
                         # Schedule reminder notification in 1 minute
                         send_time = timezone.now() + timedelta(minutes=1)
-                        reminder_notification(
-                            notification_id=str(notification.notif_id),
-                            send_at=send_time
+                        reminder = reminder_notification(
+                            title="Reminder: Complaint Awaiting Review",
+                            message=(
+                                f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
+                            ),
+                            recipients=recipients,
+                            notif_type="REMINDER",
+                            send_at=send_time,
+                            web_route="complaint/view/",
+                            web_params={"comp_id": str(complaint.comp_id)},
+                            mobile_route="/(my-request)/complaint-tracking/compMainView",
+                            mobile_params={"comp_id": str(complaint.comp_id)},
                         )
                         
                         logger.info(

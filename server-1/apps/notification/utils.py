@@ -14,7 +14,7 @@ scheduler = BackgroundScheduler()
 
 
 # ===============================================================
-#  CREATE NEW NOTIFICATION IMMEDIATELY
+#  CREATE NEW NOTIFICATION 
 # ===============================================================
 def create_notification(
     title: str,
@@ -38,7 +38,7 @@ def create_notification(
         if isinstance(recipient, Account):
             recipient_accounts.append(recipient)
         elif isinstance(recipient, ResidentProfile):
-            account = Account.objects.filter(rp=recipient).first()
+            account = recipient.account if hasattr(recipient, 'account') else None
             if account:
                 recipient_accounts.append(account)
             else:
@@ -79,21 +79,25 @@ def create_notification(
 
 
 # ===============================================================
-#  SEND REMINDER FOR EXISTING NOTIFICATION AT SCHEDULED TIME
+#  SCHEDULE REMINDER NOTIFICATION AT SPECIFIC TIME
 # ===============================================================
-def reminder_notification(notification_id: str, send_at: datetime):
-    try:
-        notification = Notification.objects.get(notif_id=notification_id)
-    except Notification.DoesNotExist:
-        logger.error(f"❌ Notification with ID {notification_id} not found.")
-        return None
-
-    recipients = [
-        r.acc for r in Recipient.objects.filter(notif=notification)
-    ]
-
+def reminder_notification(
+    title: str,
+    message: str,
+    recipients: list,
+    notif_type: str,
+    send_at: datetime,
+    web_route: str = None,
+    web_params: dict = None,
+    mobile_route: str = None,
+    mobile_params: dict = None,
+):
+    """
+    Schedule a reminder notification to be sent at a specific time.
+    Uses the same parameters as create_notification plus send_at.
+    """
     if not recipients:
-        logger.warning(f"⚠️ No recipients found for Notification ID {notification_id}")
+        logger.warning("⚠️ No recipients provided for reminder")
         return None
 
     # Ensure send_at is timezone-aware
@@ -104,18 +108,28 @@ def reminder_notification(notification_id: str, send_at: datetime):
         logger.warning(f"⚠️ Cannot schedule reminder in the past: {send_at}")
         return None
 
-    job_id = f"reminder_{notification_id}_{int(send_at.timestamp())}"
+    # Generate unique job ID
+    job_id = f"reminder_{int(send_at.timestamp())}_{hash(title)}"
     trigger = DateTrigger(run_date=send_at)
 
     try:
         scheduler.add_job(
-            _send_push,
+            create_notification,
             trigger=trigger,
             id=job_id,
             replace_existing=True,
-            kwargs={"notification": notification, "recipient_accounts": recipients},
+            kwargs={
+                "title": title,
+                "message": message,
+                "recipients": recipients,
+                "notif_type": notif_type,
+                "web_route": web_route,
+                "web_params": web_params,
+                "mobile_route": mobile_route,
+                "mobile_params": mobile_params,
+            },
         )
-        logger.info(f"⏰ Reminder scheduled for notification {notification_id} at {send_at}")
+        logger.info(f"⏰ Reminder scheduled for {send_at} with job ID: {job_id}")
         return job_id
     except Exception as e:
         logger.error(f"❌ Error scheduling reminder: {str(e)}")
@@ -123,7 +137,7 @@ def reminder_notification(notification_id: str, send_at: datetime):
 
 
 # ===============================================================
-#  INTERNAL PUSH SENDER (USED BY BOTH CREATE & REMINDER)
+#  INTERNAL PUSH SENDER 
 # ===============================================================
 def _send_push(notification, recipient_accounts):
     total_sent = 0
@@ -136,8 +150,6 @@ def _send_push(notification, recipient_accounts):
         for token_obj in tokens:
             if token_obj.fcm_device_id and token_obj.fcm_device_id not in device_tokens:
                 device_tokens[token_obj.fcm_device_id] = token_obj.fcm_token
-
-    logger.info(f"📱 Found {len(device_tokens)} unique device tokens")
 
     # FCM payload
     fcm_payload = {
@@ -166,7 +178,7 @@ def _send_push(notification, recipient_accounts):
             logger.error(f"❌ Error sending to device {device_id}: {str(e)}")
             total_failed += 1
 
-    logger.info(f"📊 Reminder push: {total_sent} sent, {total_failed} failed")
+    logger.info(f"📊 Push notification: {total_sent} sent, {total_failed} failed")
 
 
 # ===============================================================

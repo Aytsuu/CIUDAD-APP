@@ -4,12 +4,13 @@ import {
   MoreHorizontal,
   Eye,
   ExternalLink,
-  BookCopy,
   Bell,
   CheckCheck,
   Settings,
+  FileText,
+  Clock,
+  Info,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
@@ -40,23 +41,38 @@ interface Notification {
 
 interface NotificationTypeIconProps {
   notif_type?: string;
+  className?: string;
 }
 
-// ======================
-// Notification Type Icon
-// ======================
-const NotificationIconType: React.FC<NotificationTypeIconProps> = ({
-  notif_type,
-}) => {
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
   switch (notif_type) {
     case "REQUEST":
       return (
-        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white shadow-md">
-          <BookCopy className="w-5 h-5 text-white" />
+        <div className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-7 h-7 text-blue-600" />
+        </div>
+      );
+    case "REMINDER":
+      return (
+        <div className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-7 h-7 text-amber-600" />
+        </div>
+      );
+    case "INFO":
+      return (
+        <div className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-7 h-7 text-indigo-600" />
         </div>
       );
     default:
-      return null;
+      return (
+        <div className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-7 h-7 text-gray-600" />
+        </div>
+      );
   }
 };
 
@@ -158,7 +174,6 @@ export default function Notification() {
 
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") markAllAsRead();
-    // You can extend this later for "notification_settings"
   };
 
   // ======================
@@ -311,19 +326,7 @@ export default function Notification() {
               >
                 <div className="flex items-start gap-3">
                   <div className="relative flex-shrink-0">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage
-                        src={(item as any).sender_profile}
-                        alt={(item as any).sender_name || "System"}
-                      />
-                      <AvatarFallback className="bg-blue-500 text-white">
-                        {(item as any).sender_name?.charAt(0) || "S"}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="absolute -bottom-2 -right-1">
-                      <NotificationIconType notif_type={item.notif_type} />
-                    </div>
+                    <NotificationTypeIcon notif_type={item.notif_type} />
                     {!item.is_read && (
                       <div className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full border-2 border-white" />
                     )}
