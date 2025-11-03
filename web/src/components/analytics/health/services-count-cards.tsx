@@ -3,7 +3,6 @@ import { useReportsCount } from "@/pages/healthServices/count-return/count"
 import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
-
 // Memoized card component that rerenders when props change
 const HealthCard = React.memo(({ 
   title, 
@@ -42,6 +41,7 @@ HealthCard.displayName = "HealthCard";
 export const useHealthServicesSectionCards = () => {
   const navigate = useNavigate();
   const { data: healthCardAnalytics, isLoading } = useReportsCount();
+  
 
   return {
     childHealth: (
@@ -123,6 +123,28 @@ export const useHealthServicesSectionCards = () => {
           navigate("/services/maternal")
         }}
       />
+    ),
+   
+    consultationsByDoctor: (
+      <HealthCard 
+        title="Adult Consultated" 
+        value={healthCardAnalytics?.data?.completed_consultations_by_doctor || 0} 
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/services/doctor-consultations");
+        }}
+      />
+    ),
+    chilrenConsulted:(
+      <HealthCard
+        title="Child Consultated"
+        value={healthCardAnalytics?.data?.completed_childconsultations_by_doctor || 0}
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/services/doctor-child-consultations");
+        }}
+      />
     )
+
   };
 };

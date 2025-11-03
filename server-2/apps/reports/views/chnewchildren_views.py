@@ -8,7 +8,7 @@ from django.db.models.functions import TruncMonth
 from apps.childhealthservices.models import ChildHealthrecord
 from apps.childhealthservices.serializers import ChildHealthrecordSerializer
 from ..utils import *
-
+from pagination import StandardResultsPagination
 
 
 
@@ -17,17 +17,15 @@ class MonthlyNewChildrenCountAPIView(APIView):
     API View to get monthly counts of child health records
     Returns months with record counts based on created_at field
     """
+    pagination_class = StandardResultsPagination
     
     def get(self, request):
         try:
-            # Get year filter if provided
-            year = request.GET.get('year', '').strip()
+            # Get search query if provided
+            search_query = request.GET.get('search', '').strip().lower()
             
             # Query to get monthly counts
             queryset = ChildHealthrecord.objects.all()
-            
-            if year:
-                queryset = queryset.filter(created_at__year=year)
             
             monthly_counts = (
                 queryset
@@ -37,22 +35,47 @@ class MonthlyNewChildrenCountAPIView(APIView):
                 .order_by('-month')
             )
             
-            # Format the response
+            # Format the response with search filtering
             formatted_data = []
             for item in monthly_counts:
+                month_date = item['month']
+                year_month = month_date.strftime('%Y-%m')
+                month_name = month_date.strftime('%B %Y')
+                short_month_name = month_date.strftime('%b %Y')
+                year_only = month_date.strftime('%Y')
+                month_only = month_date.strftime('%B')
+
+                # Apply search filter if provided
+                if search_query:
+                    matches_search = (
+                        search_query in month_name.lower() or
+                        search_query in short_month_name.lower() or
+                        search_query in year_only.lower() or
+                        search_query in month_only.lower() or
+                        search_query in year_month
+                    )
+                    if not matches_search:
+                        continue
+
                 formatted_data.append({
-                    'year': item['month'].year,
-                    'month': item['month'].month,
-                    'month_name': item['month'].strftime('%B'),
-                    'year_month': item['month'].strftime('%Y-%m'),
+                    'year': month_date.year,
+                    'month': month_date.month,
+                    'month_name': month_name,
+                    'year_month': year_month,
                     'count': item['count']
                 })
             
-            return Response({
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data)
-            }, status=status.HTTP_200_OK)
+            }
+            
+            return paginator.get_paginated_response(response_data)
             
         except Exception as e:
             return Response({
@@ -60,19 +83,22 @@ class MonthlyNewChildrenCountAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            
-            
-            
+      
+
+
 class MonthlyChildrenDetailAPIView(APIView):
-    """
-    Alternative implementation using kwargs and ChildHealthrecordSerializer
-    """
-    
+    pagination_class = StandardResultsPagination
+
     def get(self, request, *args, **kwargs):
         try:
             month = kwargs.get('month')
+            search_query = request.GET.get('search', '').strip().lower()
+            sitio_search = request.GET.get('sitio', '').strip().lower()
+            
             print(f"DEBUG ALT: kwargs = {kwargs}")
             print(f"DEBUG ALT: month from kwargs = {month}")
+            print(f"DEBUG ALT: search query = {search_query}")
+            print(f"DEBUG ALT: sitio search = {sitio_search}")
             
             if not month:
                 return Response({
@@ -131,7 +157,41 @@ class MonthlyChildrenDetailAPIView(APIView):
                 # Get address and sitio
                 address, sitio = self._get_address_and_sitio(pat)
                 
-            
+                # Apply search filter if provided
+                if search_query or sitio_search:
+                    # General search across multiple fields
+                    general_search_match = False
+                    if search_query:
+                        general_search_match = (
+                            search_query in child_name.lower() or
+                            search_query in (parents.get('mother', '')).lower() or
+                            search_query in (parents.get('father', '')).lower() or
+                            search_query in (address or '').lower() or
+                            search_query in (household_no or '').lower() or
+                            search_query in (sex or '').lower()
+                        )
+                    
+                    # Sitio-specific search
+                    sitio_search_match = False
+                    if sitio_search:
+                        sitio_search_match = (
+                            sitio_search in (sitio or '').lower()
+                        )
+                    
+                    # Apply combined search logic
+                    if search_query and sitio_search:
+                        # Both searches provided - require both to match
+                        if not (general_search_match and sitio_search_match):
+                            continue
+                    elif search_query and not sitio_search:
+                        # Only general search provided
+                        if not general_search_match:
+                            continue
+                    elif sitio_search and not search_query:
+                        # Only sitio search provided
+                        if not sitio_search_match:
+                            continue
+
                 # Format the data
                 child_info = {
                     'record_id': record.chrec_id,
@@ -144,17 +204,20 @@ class MonthlyChildrenDetailAPIView(APIView):
                     'parents': parents,
                     'address': address,
                     'sitio': sitio,
-                  
                 }
                 
                 formatted_data.append(child_info)
             
-            return Response({
+            # Apply pagination to the detail records
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            return paginator.get_paginated_response({
                 'success': True,
                 'month': month,
                 'total_records': len(formatted_data),
-                'records': formatted_data
-            }, status=status.HTTP_200_OK)
+                'records': paginated_data
+            })
             
         except Exception as e:
             print(f"DEBUG ALT: Error: {e}")
@@ -167,7 +230,10 @@ class MonthlyChildrenDetailAPIView(APIView):
         """Get child name based on patient type"""
         if pat_obj.pat_type == 'Resident' and pat_obj.rp_id and hasattr(pat_obj.rp_id, 'per'):
             per = pat_obj.rp_id.per
-            return f"{per.per_fname} {per.per_mname} {per.per_lname}".strip()
+            fname = per.per_fname or ""
+            mname = per.per_mname or ""
+            lname = per.per_lname or ""
+            return f"{fname} {mname} {lname}".strip()
         elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
             trans = pat_obj.trans_id
             return f"{trans.tran_fname} {trans.tran_mname} {trans.tran_lname}".strip()
@@ -241,38 +307,46 @@ class MonthlyChildrenDetailAPIView(APIView):
         Get parents information for a patient based on the reference PatientSerializer logic
         """
         parents = {}
-        
+
         if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
             try:
                 # Get family head info similar to PatientSerializer
                 current_composition = FamilyComposition.objects.filter(
                     rp=pat_obj.rp_id
                 ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
+
                 if current_composition:
                     fam_id = current_composition.fam_id
-                    
+
                     # Get all family members in the same family
                     family_compositions = FamilyComposition.objects.filter(
                         fam_id=fam_id
                     ).select_related('rp', 'rp__per')
-                    
+
                     for composition in family_compositions:
                         role = composition.fc_role.lower()
                         if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
                             personal = composition.rp.per
-                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
+                            fname = personal.per_fname or ""
+                            mname = personal.per_mname or ""
+                            lname = personal.per_lname or ""
+                            parents[role] = f"{fname} {mname} {lname}".strip()
             except Exception as e:
                 print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
+
         elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
             trans = pat_obj.trans_id
-            if trans.mother_fname or trans.mother_lname:
-                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname} {trans.mother_lname}".strip()
-            
-            if trans.father_fname or trans.father_lname:
-                parents['father'] = f"{trans.father_fname} {trans.father_mname} {trans.father_lname}".strip()
-        
+            mother_fname = trans.mother_fname or ""
+            mother_mname = trans.mother_mname or ""
+            mother_lname = trans.mother_lname or ""
+            father_fname = trans.father_fname or ""
+            father_mname = trans.father_mname or ""
+            father_lname = trans.father_lname or ""
+            if mother_fname or mother_lname:
+                parents['mother'] = f"{mother_fname} {mother_mname} {mother_lname}".strip()
+            if father_fname or father_lname:
+                parents['father'] = f"{father_fname} {father_mname} {father_lname}".strip()
+
         return parents
     
     def _get_address_and_sitio(self, pat_obj):
@@ -293,6 +367,12 @@ class MonthlyChildrenDetailAPIView(APIView):
                 
                 if personal_address and personal_address.add:
                     address = personal_address.add.add_street or "N/A"
+                    # Add province, city, barangay if available
+                    province = personal_address.add.add_province if hasattr(personal_address.add, 'add_province') else ""
+                    city = personal_address.add.add_city if hasattr(personal_address.add, 'add_city') else ""
+                    barangay = personal_address.add.add_barangay if hasattr(personal_address.add, 'add_barangay') else ""
+                    # Combine address fields
+                    address = ", ".join(filter(None, [address, barangay, city, province]))
                     if personal_address.add.sitio:
                         sitio = personal_address.add.sitio.sitio_name or "N/A"
             
@@ -300,6 +380,12 @@ class MonthlyChildrenDetailAPIView(APIView):
                 trans = pat_obj.trans_id
                 if hasattr(trans, 'tradd_id') and trans.tradd_id:
                     address = trans.tradd_id.tradd_street or "N/A"
+                    # Add province, city, barangay if available
+                    province = trans.tradd_id.tradd_province if hasattr(trans.tradd_id, 'tradd_province') else ""
+                    city = trans.tradd_id.tradd_city if hasattr(trans.tradd_id, 'tradd_city') else ""
+                    barangay = trans.tradd_id.tradd_barangay if hasattr(trans.tradd_id, 'tradd_barangay') else ""
+                    # Combine address fields
+                    address = ", ".join(filter(None, [address, barangay, city, province]))
                     sitio = trans.tradd_id.tradd_sitio or "N/A"
         
         except Exception as e:

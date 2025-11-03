@@ -22,14 +22,21 @@ export default function PendingDisplayMedicalConsultation({ patientData, Medical
     <div className="">
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
-
-      <div className="flex justify-end mb-4">
-          <Link to="/services/medical-consultation/records/individual-records" state={{ params: { patientData, mode: "doctor" } }}>
-            <Button className="flex gap-2 items-center text-white">
-              <History className="w-4 h-4" /> View History
-            </Button>
-          </Link>
-        </div>
+      {/* <div className="flex justify-end mb-4">
+        <Link
+          to="/patientrecords/view"
+          state={{
+            patientId: patientData.pat_id,
+            patientData: {
+              id: patientData?.pat_id,
+            },
+          }}
+        >
+          <Button className="flex gap-2 items-center text-white">
+            <History className="w-4 h-4" /> View patient records
+          </Button>
+        </Link>
+      </div> */}
 
       <div>
         {/* Current Consultation Card */}

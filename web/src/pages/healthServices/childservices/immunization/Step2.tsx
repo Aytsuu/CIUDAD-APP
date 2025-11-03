@@ -1,7 +1,7 @@
-// Main Immunization Component - FIXED
+// Main Immunization Component - WITH LOCALSTORAGE
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
+import { HeartPulse, ChevronLeft, Loader2, Pencil, History } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
@@ -16,44 +16,44 @@ import { useImmunizationMutations } from "./queries/submitStep2";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import CardLayout from "@/components/ui/card/card-layout";
+import { Link } from "react-router-dom";
 
-export interface ImmunizationProps {
-  ChildHealthRecord: any;
-  historicalVitalSigns?: VitalSignType[];
-  historicalNotes?: {
-    date: string;
-    notes: string;
-    followUpVisit?: string;
-    follov_description?: string;
-    followv_status?: string;
-    chnotes_id?: string;
-  }[];
-  onUpdateVitalSigns?: (updatedVitalSigns: VitalSignType[]) => void;
-  onBack?: () => void;
-  vaccines?: VaccineRecord[];
-  existingVaccines?: ExistingVaccineRecord[];
-  setVaccines?: (vaccines: VaccineRecord[]) => void;
-  setExistingVaccines?: (vaccines: ExistingVaccineRecord[]) => void;
-  showVaccineList: boolean;
-  setShowVaccineList: (value: boolean) => void;
-  vaccinesData?: {
-    default: any[];
-    formatted: {
-      id: string;
-      name: React.ReactNode;
-      quantity?: number;
-    }[];
+// Your existing useLocalStorage hook remains the same
+export const useLocalStorage = <T,>(key: string, initialValue: T): [T, (value: T) => void] => {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : initialValue;
+      }
+      return initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T) => {
+    try {
+      setStoredValue(value);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
-  vaccinesListData?: {
-    default: any[];
-    formattedOptions: { id: string; name: string }[];
-  };
-  isLoading: boolean;
-  vaccineHistory?: any[];
-  unvaccinatedVaccines?: any[];
-  vaccinations?: any[];
-  followUps?: any[];
-}
+
+  return [storedValue, setValue];
+};
+
+// Storage keys
+const STORAGE_KEYS = {
+  VACCINES: "immunization_vaccines",
+  EXISTING_VACCINES: "immunization_existing_vaccines",
+  VITAL_SIGNS: "immunization_vital_signs",
+  FORM_DATA: "immunization_form_data",
+};
 
 export default function Immunization({
   ChildHealthRecord,
@@ -73,14 +73,16 @@ export default function Immunization({
   vaccineHistory = [],
   unvaccinatedVaccines = [],
   vaccinations = [],
-  followUps = []
-}: ImmunizationProps) {
+  followUps = [],
+}: any) {
+  // Use localStorage for persistent state
+  const [vaccines, setVaccines] = useLocalStorage<VaccineRecord[]>(STORAGE_KEYS.VACCINES, propVaccines);
+  const [existingVaccines, setExistingVaccines] = useLocalStorage<ExistingVaccineRecord[]>(STORAGE_KEYS.EXISTING_VACCINES, propExistingVaccines);
+
   const [latestVitalSigns, setLatestVitalSigns] = useState<VitalSignType | null>(null);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [currentEditingData, setCurrentEditingData] = useState<any>(null);
-  const [vaccines, setVaccines] = useState<VaccineRecord[]>(propVaccines);
-  const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>(propExistingVaccines);
   const [selectedVaccineId, setSelectedVaccineId] = useState<string>("");
   const [selectedVaccineListId, setSelectedVaccineListId] = useState<string>("");
   const [vaccineListOptions, setVaccineListOptions] = useState<{ default: any[]; formatted: { id: string; name: string }[] }>({ default: [], formatted: [] });
@@ -96,7 +98,11 @@ export default function Immunization({
   const staff_id = user?.staff?.staff_id || null;
   const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
   const { mutate: saveImmunization, isPending: isSaving } = useImmunizationMutations();
-  
+
+  // NEW: State to track if vaccine already exists
+  const [vaccineAlreadyExists, setVaccineAlreadyExists] = useState<boolean>(false);
+  const [existingVaccineAlreadyExists, setExistingVaccineAlreadyExists] = useState<boolean>(false);
+
   console.log("eadadd", ChildHealthRecord);
 
   // Get the single vital signs record
@@ -104,27 +110,47 @@ export default function Immunization({
   const vital_id = vitalSigns?.vital || null;
   console.log("vital_id", vital_id);
 
+  // Clear localStorage when component unmounts or when record changes
+  useEffect(() => {
+    return () => {
+      // Optional: Clear storage when component unmounts if needed
+      // localStorage.removeItem(STORAGE_KEYS.VACCINES);
+      // localStorage.removeItem(STORAGE_KEYS.EXISTING_VACCINES);
+    };
+  }, []);
+
+  // Sync with props when they change
+  useEffect(() => {
+    if (propVaccines.length > 0) {
+      setVaccines(propVaccines);
+    }
+  }, [propVaccines, setVaccines]);
+
+  useEffect(() => {
+    if (propExistingVaccines.length > 0) {
+      setExistingVaccines(propExistingVaccines);
+    }
+  }, [propExistingVaccines, setExistingVaccines]);
+
   useEffect(() => {
     if (vaccinesListData) {
       setBasicVaccineList(vaccinesListData.default);
       setVaccineListOptions({
         default: vaccinesListData.default,
-        formatted: vaccinesListData.formattedOptions
+        formatted: vaccinesListData.formattedOptions,
       });
     }
   }, [vaccinesListData]);
 
-  useEffect(() => {
-    setVaccines(propVaccines);
-  }, [propVaccines]);
-
-  useEffect(() => {
-    setExistingVaccines(propExistingVaccines);
-  }, [propExistingVaccines]);
+  // Helper function to get today's date in DD-MM-YYYY format
+  const getTodayDate = () => {
+    const today = new Date();
+    return `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
+  };
 
   const form = useForm<ImmunizationFormData>({
     defaultValues: {
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayDate(),
       age: "",
       wt: "",
       ht: "",
@@ -133,89 +159,106 @@ export default function Immunization({
       followUpVisit: "",
       followv_status: "pending",
       notes: "",
-      existingVaccines: propExistingVaccines.map((v) => ({
+      existingVaccines: existingVaccines.map((v) => ({
         vac_id: v.vac_id,
         vac_name: v.vac_name,
         vaccineType: v.vaccineType,
         dose: v.dose,
-        date: v.date,
+        date: v.date || getTodayDate(),
         hasExistingVaccination: true,
         totalDoses: v.totalDoses || "",
-        vacrec: v.vacrec || ""
+        vacrec: v.vacrec || "",
       })),
-      vaccines: propVaccines.map((v) => ({
+      vaccines: vaccines.map((v) => ({
         vacStck_id: v.vacStck_id,
         vaccineType: v.vaccineType,
         dose: v.dose,
-        date: v.date,
+        date: v.date || getTodayDate(),
         vac_id: v.vac_id,
         vac_name: v.vac_name,
         expiry_date: v.expiry_date,
         totalDoses: v.totalDoses || "",
         nextFollowUpDate: v.nextFollowUpDate || "",
         vacrec: v.vacrec || "",
-        existingFollowvId: v.existingFollowvId
-      }))
-    }
+        existingFollowvId: v.existingFollowvId,
+      })),
+    },
   });
-
-
 
   useEffect(() => {
     if (historicalVitalSigns.length > 0) {
-      const todaysRecord = historicalVitalSigns.find((vital) => vital.date === new Date().toISOString().split("T")[0]);
+      const todaysDate = getTodayDate();
+      const todaysRecord = historicalVitalSigns.find((vital:any) => vital.date === todaysDate);
+
       if (todaysRecord) {
         setLatestVitalSigns(todaysRecord);
         form.reset({
-          ...todaysRecord, // This includes notes, follov_description, etc.
+          ...todaysRecord,
           existingVaccines: existingVaccines,
-          vaccines: vaccines
+          vaccines: vaccines,
         });
       } else {
-        const sortedVitalSigns = [...historicalVitalSigns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const sortedVitalSigns = [...historicalVitalSigns].sort((a, b) => {
+          // Convert DD-MM-YYYY to Date object for sorting
+          const dateA = new Date(a.date.split('-').reverse().join('-'));
+          const dateB = new Date(b.date.split('-').reverse().join('-'));
+          return dateB.getTime() - dateA.getTime();
+        });
         const latestRecord = sortedVitalSigns[0];
         setLatestVitalSigns(latestRecord);
         form.reset({
-          date: new Date().toISOString().split("T")[0],
+          date: todaysDate,
           age: latestRecord?.age || "",
           wt: latestRecord?.wt || "",
           ht: latestRecord?.ht || "",
           temp: latestRecord?.temp || "",
-          notes: latestRecord?.notes || "", // Include notes
-          follov_description: latestRecord?.follov_description || "", // Include follow-up reason
-          followUpVisit: latestRecord?.followUpVisit || "", // Include follow-up date
-          followv_status: latestRecord?.followv_status || "pending", // Include status
+          notes: latestRecord?.notes || "",
+          follov_description: latestRecord?.follov_description || "",
+          followUpVisit: latestRecord?.followUpVisit || "",
+          followv_status: latestRecord?.followv_status || "pending",
           existingVaccines: existingVaccines,
-          vaccines: vaccines
+          vaccines: vaccines,
         });
       }
     }
+
+    // Debugging log to verify the data being processed
+    console.log("Processed historicalVitalSigns:", historicalVitalSigns);
   }, [historicalVitalSigns, form, existingVaccines, vaccines]);
 
-  
-
   useEffect(() => {
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString("en-GB").split("/").reverse().join("-");
+    // Set today's date in DD-MM-YYYY format
+    const formattedDate = getTodayDate();
     form.setValue("vaccines.0.date", formattedDate);
     form.setValue("existingVaccines.0.date", formattedDate);
   }, [form]);
 
-  // All your existing vaccine change handlers remain the same...
+  // Modified handlers to work with localStorage state
   const handleVaccineChange = (value: string) => {
-    // ... existing implementation stays the same
+    // Clear previous form values when selecting a new vaccine
     form.setValue("vaccines.0.vaccineType", value);
+    form.setValue("vaccines.0.totalDoses", "");
+    form.setValue("vaccines.0.nextFollowUpDate", "");
+    
     setisVaccineComplted(false);
     setSelectedVaccineId(value);
     setNextVisitDate(null);
     setNextVisitDescription(null);
-    form.setValue("vaccines.0.nextFollowUpDate", "");
-    form.setValue("vaccines.0.totalDoses", "");
-    
-    if (!value) return;
+
+    // NEW: Reset already exists state
+    setVaccineAlreadyExists(false);
+
+    if (!value) {
+      // If value is empty, clear all related form fields
+      form.setValue("vaccines.0.vaccineType", "");
+      form.setValue("vaccines.0.dose", "1");
+      form.setValue("vaccines.0.totalDoses", "");
+      form.setValue("vaccines.0.nextFollowUpDate", "");
+      return;
+    }
 
     console.log("Selected vaccine value:", value);
-    
+
     let vacStck_id: any, vac_id: any, vac_name: any;
     if (!value.includes(",")) {
       vac_id = value;
@@ -230,7 +273,7 @@ export default function Immunization({
 
     const numericVacId = parseInt(vac_id, 10);
     let selectedVaccine = null;
-    
+
     if (vaccinesData?.default) {
       selectedVaccine = vaccinesData.default.find((v: any) => v.vac_id === numericVacId || v.vacStck_id === parseInt(vacStck_id, 10));
     }
@@ -245,7 +288,21 @@ export default function Immunization({
     }
 
     const vaccineInfo = selectedVaccine.vaccinelist || selectedVaccine;
-    const vaccineHistoryForThis = vaccineHistory.filter((record) => {
+    
+    // NEW: Check if this vaccine already exists in our current vaccines
+    const existingVaccine = vaccines.find(v => v.vac_id === vac_id.trim());
+    
+    if (existingVaccine) {
+      // If vaccine exists, disable the add button and show message
+      setVaccineAlreadyExists(true);
+      toast.warning(`${vac_name} already exists in today's vaccinations`);
+      return;
+    } else {
+      setVaccineAlreadyExists(false);
+    }
+
+    // Calculate next dose from vaccine history
+    const vaccineHistoryForThis = vaccineHistory.filter((record:any) => {
       const recordVacId = record.vacrec_details?.vacrec_vaccine || record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
       return recordVacId === numericVacId;
     });
@@ -255,7 +312,7 @@ export default function Immunization({
     let existingFollowvId = "";
     let existingTotalDoses = vaccineInfo.no_of_doses || 1;
 
-    vaccineHistoryForThis.forEach((record) => {
+    vaccineHistoryForThis.forEach((record:any) => {
       const doseNo = record.vachist_doseNo ? parseInt(record.vachist_doseNo) : 0;
       if (doseNo > highestDose) {
         highestDose = doseNo;
@@ -282,7 +339,7 @@ export default function Immunization({
     const isCompleted = nextDose > (vaccineInfo.no_of_doses || 1);
     const disableSubmit = (isCompleted && vaccineInfo.vac_type_choices === "primary") || (vaccineInfo.vac_type_choices === "conditional" && isCompleted);
     setisVaccineComplted(disableSubmit);
-    
+
     if (disableSubmit) {
       toast.warning(`${vac_name || vaccineInfo.vac_name} vaccine is already completed`);
       return;
@@ -297,7 +354,7 @@ export default function Immunization({
     } else if (nextDose < (vaccineInfo.no_of_doses || 1)) {
       const nextDoseNumber = nextDose + 1;
       const doseInterval = vaccineInfo.intervals?.find((interval: any) => interval.dose_number === nextDoseNumber);
-      
+
       if (doseInterval) {
         const nextDate = calculateNextVisitDate(doseInterval.interval, doseInterval.time_unit, new Date().toISOString());
         setNextVisitDate(nextDate.toISOString().split("T")[0]);
@@ -308,12 +365,24 @@ export default function Immunization({
   };
 
   const handleExistingVaccineChange = (value: string) => {
-    // ... existing implementation stays the same
+    // Clear previous form values when selecting a new vaccine
+    form.setValue("existingVaccines.0.vaccineType", value);
+    form.setValue("existingVaccines.0.totalDoses", "");
+    
     setisVaccineComplted(false);
     setSelectedVaccineListId(value);
-    form.setValue(`existingVaccines.0.vaccineType`, value);
-    
-    if (!value) return;
+
+    // NEW: Reset already exists state
+    setExistingVaccineAlreadyExists(false);
+
+    if (!value) {
+      // If value is empty, clear all related form fields
+      form.setValue("existingVaccines.0.vaccineType", "");
+      form.setValue("existingVaccines.0.dose", "1");
+      form.setValue("existingVaccines.0.totalDoses", "");
+      form.setValue("existingVaccines.0.vacrec", "");
+      return;
+    }
 
     const [vac_id, vac_name] = value.split(",");
     const numericVacId = parseInt(vac_id, 10);
@@ -324,7 +393,19 @@ export default function Immunization({
       return;
     }
 
-    const vaccineHistoryForThis = vaccineHistory.filter((record) => {
+    // NEW: Check if this vaccine already exists in our current existing vaccines
+    const existingVaccine = existingVaccines.find(v => v.vac_id === vac_id.trim());
+    
+    if (existingVaccine) {
+      // If vaccine exists, disable the add button and show message
+      setExistingVaccineAlreadyExists(true);
+      toast.warning(`${vac_name} already exists in previous vaccinations`);
+      return;
+    } else {
+      setExistingVaccineAlreadyExists(false);
+    }
+
+    const vaccineHistoryForThis = vaccineHistory.filter((record:any) => {
       const recordVacId = record.vacrec_details?.vacrec_vaccine || record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
       return recordVacId === numericVacId;
     });
@@ -333,7 +414,7 @@ export default function Immunization({
     let existingVacrecId = "";
     let existingTotalDoses = selectedVaccine.no_of_doses;
 
-    vaccineHistoryForThis.forEach((record) => {
+    vaccineHistoryForThis.forEach((record:any) => {
       const doseNo = record.vachist_doseNo ? parseInt(record.vachist_doseNo) : 0;
       if (doseNo > highestDose) {
         highestDose = doseNo;
@@ -357,122 +438,177 @@ export default function Immunization({
     const isCompleted = nextDose > selectedVaccine.no_of_doses;
     const disableSubmit = (isCompleted && selectedVaccine.vac_type_choices !== "routine") || (selectedVaccine.vac_type_choices === "conditional" && isCompleted);
     setisVaccineComplted(disableSubmit);
-    
+
     if (disableSubmit) {
       toast.warning(`${vac_name} vaccine is already completed`);
     }
   };
 
-  // Other handlers remain the same...
+  // FIXED: Modified addVac to prevent duplicates and show already exists message
   const addVac = () => {
     if (!selectedVaccineId) {
       toast.error("Please select a vaccine first");
       return;
     }
-    
-    const formValues = form.getValues();
+
+    // NEW: Double check if vaccine already exists
     const [vacStck_id, vac_id, vac_name, expiry_date] = selectedVaccineId.split(",");
+    const existingVaccine = vaccines.find(v => v.vac_id === vac_id.trim());
     
+    if (existingVaccine) {
+      toast.error(`${vac_name} already exists in today's vaccinations`);
+      return;
+    }
+
+    const formValues = form.getValues();
+
+    // Get today's date in DD-MM-YYYY format for the new vaccine
+    const formattedDate = getTodayDate();
+
     const vaccineToAdd: VaccineRecord = {
       vacStck_id: vacStck_id.trim(),
       vaccineType: vac_name.trim(),
       dose: formValues.vaccines?.[0]?.dose || "1",
-      date: formValues.vaccines?.[0]?.date || new Date().toISOString().split("T")[0],
+      date: formattedDate,
       vac_id: vac_id.trim(),
       vac_name: vac_name.trim(),
       expiry_date: expiry_date.trim(),
       totalDoses: formValues.vaccines?.[0]?.totalDoses || currentVaccineTotalDoses.toString(),
       nextFollowUpDate: formValues.vaccines?.[0]?.nextFollowUpDate || nextVisitDate || "",
       vacrec: formValues.vaccines?.[0]?.vacrec || "",
-      existingFollowvId: formValues.vaccines?.[0]?.existingFollowvId || ""
+      existingFollowvId: formValues.vaccines?.[0]?.existingFollowvId || "",
     };
 
     const newVaccines = [...vaccines, vaccineToAdd];
-    setVaccines(newVaccines);
+    setVaccines(newVaccines); // This saves to localStorage
     if (propSetVaccines) propSetVaccines(newVaccines);
+    
+    // Update form with new vaccines array (for the table)
     form.setValue("vaccines", newVaccines);
+    
+    // RESET ONLY THE FORM INPUT FIELDS (not the table data)
     form.setValue("vaccines.0.vaccineType", "");
     form.setValue("vaccines.0.dose", "1");
-    form.setValue("vaccines.0.date", new Date().toISOString().split("T")[0]);
     form.setValue("vaccines.0.totalDoses", "");
     form.setValue("vaccines.0.nextFollowUpDate", "");
+    
+    // Keep the date field populated with today's date
+    form.setValue("vaccines.0.date", formattedDate);
+    
+    // Clear selection state
     setSelectedVaccineId("");
+    setNextVisitDate(null);
+    setNextVisitDescription(null);
+    setVaccineAlreadyExists(false);
+    
+    toast.success(`Added ${vac_name} - Dose ${vaccineToAdd.dose}`);
   };
 
+  // FIXED: Modified addExistingVac to prevent duplicates and show already exists message
   const addExistingVac = async () => {
     if (!selectedVaccineListId) {
       toast.error("Please select a vaccine first");
       return;
     }
+
+    // NEW: Double check if vaccine already exists
+    const [vac_id, vac_name] = selectedVaccineListId.split(",");
+    const existingVaccine = existingVaccines.find(v => v.vac_id === vac_id.trim());
     
-    const isValid = await form.trigger(["vaccines.0.vaccineType", "vaccines.0.dose", "vaccines.0.date"]);
+    if (existingVaccine) {
+      toast.error(`${vac_name} already exists in previous vaccinations`);
+      return;
+    }
+
+    const isValid = await form.trigger(["existingVaccines.0.vaccineType", "existingVaccines.0.dose", "existingVaccines.0.date"]);
     if (!isValid) {
       toast.error("Please fill in the fields");
       return;
     }
-    
+
     const formValues = form.getValues();
-    const [vac_id, vac_name] = selectedVaccineListId.split(",");
-    
+
+    // Get today's date in DD-MM-YYYY format
+    const formattedDate = getTodayDate();
+
     const vaccineToAdd: ExistingVaccineRecord = {
       vac_id: vac_id.trim(),
       vac_name: vac_name.trim(),
       vaccineType: vac_name.trim(),
       dose: formValues.existingVaccines?.[0]?.dose || "1",
-      date: formValues.existingVaccines?.[0]?.date || "",
+      date: formattedDate,
       hasExistingVaccination: true,
       vacrec: formValues.existingVaccines?.[0]?.vacrec || "",
-      totalDoses: existingVaccineTotalDoses.toString()
+      totalDoses: existingVaccineTotalDoses.toString(),
     };
 
     const newExistingVaccines = [...existingVaccines, vaccineToAdd];
-    setExistingVaccines(newExistingVaccines);
+    setExistingVaccines(newExistingVaccines); // This saves to localStorage
     if (propSetExistingVaccines) propSetExistingVaccines(newExistingVaccines);
+    
+    // Update form with new existing vaccines array (for the table)
     form.setValue("existingVaccines", newExistingVaccines);
+    
+    // RESET ONLY THE FORM INPUT FIELDS (not the table data)
+    form.setValue("existingVaccines.0.dose", "");
+    form.setValue("existingVaccines.0.totalDoses", "");
+    form.setValue("existingVaccines.0.vacrec", "");
+    
+    // Keep the date field populated
+    form.setValue("existingVaccines.0.date", formattedDate);
+    
+    // Clear selection and reset other fields
     setSelectedVaccineListId("");
-    form.setValue("existingVaccines.0", {
-      dose: "",
-      date: "",
-      vac_id: "",
-      vac_name: "",
-      vaccineType: "",
-      hasExistingVaccination: false,
-      vacrec: "",
-      totalDoses: ""
-    });
+    form.setValue("existingVaccines.0.vaccineType", "");
+    form.setValue("existingVaccines.0.vac_id", "");
+    form.setValue("existingVaccines.0.vac_name", "");
+    setExistingVaccineAlreadyExists(false);
+    
+    toast.success(`Added existing vaccine: ${vac_name} - Dose ${vaccineToAdd.dose}`);
   };
 
+  // Updated delete functions
   const deleteVac = (index: number) => {
     const updatedVaccines = [...vaccines];
+    const deletedVaccine = updatedVaccines[index];
     updatedVaccines.splice(index, 1);
-    setVaccines(updatedVaccines);
+    setVaccines(updatedVaccines); // This will automatically save to localStorage
     if (propSetVaccines) propSetVaccines(updatedVaccines);
     form.setValue("vaccines", updatedVaccines);
-    toast.success("Vaccine removed successfully!");
+    
+    // NEW: Reset already exists state when vaccine is deleted
+    setVaccineAlreadyExists(false);
+    
+    toast.success(`Removed ${deletedVaccine.vac_name} - Dose ${deletedVaccine.dose}`);
   };
 
   const deleteExistingVac = (index: number) => {
     const updatedExistingVaccines = [...existingVaccines];
+    const deletedVaccine = updatedExistingVaccines[index];
     updatedExistingVaccines.splice(index, 1);
-    setExistingVaccines(updatedExistingVaccines);
+    setExistingVaccines(updatedExistingVaccines); // This will automatically save to localStorage
     if (propSetExistingVaccines) propSetExistingVaccines(updatedExistingVaccines);
     form.setValue("existingVaccines", updatedExistingVaccines);
-    toast.success("Existing vaccine removed successfully!");
+    
+    // NEW: Reset already exists state when vaccine is deleted
+    setExistingVaccineAlreadyExists(false);
+    
+    toast.success(`Removed existing vaccine: ${deletedVaccine.vac_name} - Dose ${deletedVaccine.dose}`);
   };
 
   const handleUpdateVitalSign = (values: VitalSignType) => {
     const updatedVitalSigns = [...historicalVitalSigns];
     const existingIndex = updatedVitalSigns.findIndex((v) => v.date === values.date);
-    
+
     if (existingIndex >= 0) {
       updatedVitalSigns[existingIndex] = values;
     } else {
       updatedVitalSigns.push(values);
     }
-    
+
     setLatestVitalSigns(values);
     setEditingRowIndex(null);
-    
+
     if (onUpdateVitalSigns) {
       onUpdateVitalSigns(updatedVitalSigns);
     }
@@ -480,10 +616,10 @@ export default function Immunization({
 
   const handleStartEdit = (index: number, vitalSignsData: any) => {
     setEditingRowIndex(index);
-    
+
     // Get the CURRENT form values
     const currentFormValues = form.getValues();
-    
+
     // Prepare editing data - prioritize CURRENT form values over historical data
     const editingData = {
       ...vitalSignsData, // Keep vital signs data
@@ -491,73 +627,83 @@ export default function Immunization({
       follov_description: currentFormValues.follov_description || vitalSignsData.follov_description || "",
       followUpVisit: currentFormValues.followUpVisit || vitalSignsData.followUpVisit || "",
       followv_status: currentFormValues.followv_status || vitalSignsData.followv_status || "pending",
-      date: vitalSignsData.date // Always use the row's date
+      date: vitalSignsData.date, // Always use the row's date
     };
-    
+
     setCurrentEditingData(editingData);
     setIsNotesDialogOpen(true);
-    
+
     console.log("Editing data (with current form values):", editingData);
     console.log("Current form values:", currentFormValues);
   };
 
-// Replace your handleSaveNotes function with this:
-const handleSaveNotes = (data: VitalSignType) => {
-  // Update the form values immediately with the new notes data
-  form.setValue("notes", data.notes || "");
-  form.setValue("follov_description", data.follov_description || "");
-  form.setValue("followUpVisit", data.followUpVisit || "");
-  form.setValue("followv_status", data.followv_status || "pending");
+  // Replace your handleSaveNotes function with this:
+  const handleSaveNotes = (data: VitalSignType) => {
+    // Update the form values immediately with the new notes data
+    form.setValue("notes", data.notes || "");
+    form.setValue("follov_description", data.follov_description || "");
+    form.setValue("followUpVisit", data.followUpVisit || "");
+    form.setValue("followv_status", data.followv_status || "pending");
 
-  if (editingRowIndex !== null) {
-    // Create the updated vital sign data with the NEW notes from the form
-    const updatedVitalSign = {
-      date: data.date,
-      age: data.age,
-      ht: data.ht,
-      wt: data.wt,
-      temp: data.temp,
-      notes: data.notes, // This should be the NEW notes you just entered
-      follov_description: data.follov_description, // NEW follow-up reason
-      followUpVisit: data.followUpVisit, // NEW follow-up date
-      followv_status: data.followv_status // NEW status
-    };
-    
-    handleUpdateVitalSign(updatedVitalSign);
-    
-    // Also update the latestVitalSigns to reflect the changes
-    setLatestVitalSigns(prev => prev ? { ...prev, ...updatedVitalSign } : updatedVitalSign);
-  }
-  
-  setIsNotesDialogOpen(false);
-  setEditingRowIndex(null);
-  setCurrentEditingData(null);
-  toast.success("Notes saved successfully!");
+    if (editingRowIndex !== null) {
+      // Create the updated vital sign data with the NEW notes from the form
+      const updatedVitalSign = {
+        date: data.date,
+        age: data.age,
+        ht: data.ht,
+        wt: data.wt,
+        temp: data.temp,
+        notes: data.notes, // This should be the NEW notes you just entered
+        follov_description: data.follov_description, // NEW follow-up reason
+        followUpVisit: data.followUpVisit, // NEW follow-up date
+        followv_status: data.followv_status, // NEW status
+      };
 
-  // Debug: Check what values are now in the form
-  console.log("Form values after saving notes:", form.getValues());
-};
+      handleUpdateVitalSign(updatedVitalSign);
+
+      // Also update the latestVitalSigns to reflect the changes
+      setLatestVitalSigns((prev) => (prev ? { ...prev, ...updatedVitalSign } : updatedVitalSign));
+    }
+
+    setIsNotesDialogOpen(false);
+    setEditingRowIndex(null);
+    setCurrentEditingData(null);
+    toast.success("Notes saved successfully!");
+
+    // Debug: Check what values are now in the form
+    console.log("Form values after saving notes:", form.getValues());
+  };
+
   const { vitalSignsColumns, vaccineColumns, existingVaccineColumns } = createImmunizationColumns({
     editingRowIndex,
     isLoading,
     historicalNotes, // Pass historicalNotes to the columns
     handleStartEdit,
     deleteVac,
-    deleteExistingVac
+    deleteExistingVac,
   });
 
+  // FIXED: Update handleShowVaccineListChange to clear form fields but keep localStorage
   const handleShowVaccineListChange = (checked: boolean) => {
     setShowVaccineList(checked);
     if (!checked) {
-      setExistingVaccines([]);
+      // Only clear the form input fields, not the localStorage data
       setSelectedVaccineListId("");
       setExistingVaccineErrors({});
+      setExistingVaccineAlreadyExists(false);
+      
+      // Reset the form fields for existing vaccines
+      form.setValue("existingVaccines.0.vaccineType", "");
+      form.setValue("existingVaccines.0.dose", "");
+      form.setValue("existingVaccines.0.totalDoses", "");
+      form.setValue("existingVaccines.0.vacrec", "");
+      
+      // But DON'T clear the existingVaccines array that's stored in localStorage
+      // This preserves the table data while clearing the form inputs
     }
   };
 
-
-  
-
+  // Clear localStorage on successful submit
   const onSubmit = async (data: ImmunizationFormData) => {
     saveImmunization({
       data,
@@ -566,13 +712,70 @@ const handleSaveNotes = (data: VitalSignType) => {
       ChildHealthRecord,
       vital_id,
       staff_id,
-      pat_id
+      pat_id,
     });
+
+    // Clear localStorage after successful submission
+    localStorage.removeItem(STORAGE_KEYS.VACCINES);
+    localStorage.removeItem(STORAGE_KEYS.EXISTING_VACCINES);
+
+    // Reset local state
+    setVaccines([]);
+    setExistingVaccines([]);
+    setVaccineAlreadyExists(false);
+    setExistingVaccineAlreadyExists(false);
   };
+
+  const chhistId = ChildHealthRecord.record?.chhist_id;
+  const chrecId = ChildHealthRecord.record?.chrec;
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Set initial index when fullHistoryData changes
+  useEffect(() => {
+    if (followUps.length > 0 && chhistId) {
+      const initialIndex = followUps.findIndex((record:any) => record.chhist_id === chhistId);
+      setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
+    }
+  }, [followUps, chhistId]);
 
   return (
     <>
-      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 2 of 2</div>
+      <div className="p-6">
+        <div className="space-y-6 p-6">
+          <div className="flex justify-end gap-4 mb-4">
+            <Link
+              to={`/services/childhealthrecords/records`}
+              state={{
+                ChildHealthRecord: ChildHealthRecord,
+              }}
+            >
+              <Button>
+                <History className="h-4 w-4" />
+                View History
+              </Button>
+            </Link>
+
+            <Link
+              to={`/services/childhealthrecords/form`}
+              state={{
+                params: {
+                  ChildHealthRecord: ChildHealthRecord,
+                  chrecId: chrecId,
+                  chhistId: chhistId,
+                  mode: "addnewchildhealthrecord",
+                  status: "immunization",
+                },
+              }}
+            >
+              <Button>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <div className="flex justify-end mt-6 sm:mt-8">{/* Removed the Next button */}</div>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col lg:flex-row gap-6">
@@ -583,7 +786,7 @@ const handleSaveNotes = (data: VitalSignType) => {
               <FollowUpsCard followupVaccines={followUps} />
             </div>
           </div>
-          
+
           <CardLayout
             title={
               <>
@@ -596,7 +799,7 @@ const handleSaveNotes = (data: VitalSignType) => {
             cardClassName="mt-4"
             content={<>{latestVitalSigns ? <DataTable columns={vitalSignsColumns} data={[latestVitalSigns]} /> : <div className="text-center py-4 text-gray-500">No vital signs recorded yet</div>}</>}
           />
-          
+
           <VaccinationSection
             showVaccineList={showVaccineList}
             handleShowVaccineListChange={handleShowVaccineListChange}
@@ -624,21 +827,24 @@ const handleSaveNotes = (data: VitalSignType) => {
             existingVaccineColumns={existingVaccineColumns}
             vaccines={vaccines}
             vaccineColumns={vaccineColumns}
+            // NEW: Pass the already exists states to VaccinationSection
+            // vaccineAlreadyExists={vaccineAlreadyExists}
+            // existingVaccineAlreadyExists={existingVaccineAlreadyExists}
           />
-<NotesDialog
-  isOpen={isNotesDialogOpen}
-  onClose={() => {
-    setIsNotesDialogOpen(false);
-    setEditingRowIndex(null);
-    setCurrentEditingData(null);
-  }}
-  form={form}
-  isLoading={isLoading}
-  onSave={handleSaveNotes}
-  editingData={currentEditingData}
-  historicalNotes={historicalNotes} // Add this line to pass historical notes
-/>
-          
+          <NotesDialog
+            isOpen={isNotesDialogOpen}
+            onClose={() => {
+              setIsNotesDialogOpen(false);
+              setEditingRowIndex(null);
+              setCurrentEditingData(null);
+            }}
+            form={form}
+            isLoading={isLoading}
+            onSave={handleSaveNotes}
+            editingData={currentEditingData}
+            historicalNotes={historicalNotes} // Add this line to pass historical notes
+          />
+
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" type="button" onClick={onBack}>
               <ChevronLeft />

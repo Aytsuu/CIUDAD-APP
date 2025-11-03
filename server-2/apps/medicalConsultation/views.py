@@ -17,7 +17,7 @@ from rest_framework import status
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from apps.medicineservices.serializers import MedicineRequestSerializer
-from apps.patientrecords.serializers.findings_serializers import FindingSerializer
+from apps.patientrecords.serializers.findings_serializers import *
 from apps.patientrecords.serializers.physicalexam_serializers import PEResultSerializer
 from apps.medicineservices.models import *
 from apps.childhealthservices.models import ChildHealthVitalSigns,ChildHealth_History
@@ -139,7 +139,7 @@ class CombinedHealthRecordsView(APIView):
             'child_health_vital_signs__bm',  # Important: prefetch body measuents
             'child_health_vital_signs__find',  # Important: prefetch findings
             'child_health_notes',
-            'child_health_supplements__medrec',
+            'child_health_supplements__medreq',
             'exclusive_bf_checks',
             'immunization_tracking__vachist',
             'supplements_statuses'
@@ -153,12 +153,13 @@ class CombinedHealthRecordsView(APIView):
             'bm',
             'find',
             'staff__rp__per',
-            'assigned_to'
+            'assigned_to',
+            
         ).filter(medrec_status='pending')
         
         # Apply assigned_to filter
         if assigned_to:
-            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to, status="check-up")
+            child_health_queryset = child_health_queryset.filter(assigned_doc=assigned_to, status="check-up")
             med_consult_queryset = med_consult_queryset.filter(assigned_to_id=assigned_to)
         
         # Apply search filter
@@ -265,7 +266,7 @@ class CombinedHealthRecordsView(APIView):
             })
         
         # Sort by created_at (most recent first)
-        combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=True)
+        combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=False)
         
         # Manual pagination
         total_count = len(combined_data)
@@ -310,8 +311,22 @@ class CombinedHealthRecordsView(APIView):
         """Helper method to extract patient details"""
         if patient.pat_type == 'Resident' and patient.rp_id and hasattr(patient.rp_id, 'per'):
             per = patient.rp_id.per
-            address = getattr(patient.rp_id, 'address', None)
-            
+            # Get address from PersonalAddress (latest if multiple)
+            address_obj = None
+            if hasattr(per, 'personal_addresses'):
+                addresses = per.personal_addresses.all()
+                if addresses.exists():
+                    address_obj = addresses.last().add  # Use latest address
+            address = address_obj
+
+            # Sitio name logic
+            sitio_name = ''
+            if address:
+                if address.sitio:
+                    sitio_name = address.sitio.sitio_name
+                elif address.add_external_sitio:
+                    sitio_name = address.add_external_sitio
+
             return {
                 'pat_id': patient.pat_id,
                 'pat_type': patient.pat_type,
@@ -324,21 +339,34 @@ class CombinedHealthRecordsView(APIView):
                 },
                 'address': {
                     'add_street': address.add_street if address else '',
-                    'add_sitio': address.add_sitio if address else '',
+                    'add_sitio': sitio_name,
                     'add_barangay': address.add_barangay if address else '',
                     'add_city': address.add_city if address else '',
                     'add_province': address.add_province if address else '',
-                    'full_address': f"{address.add_street if address else ''}, {address.add_sitio if address else ''}, {address.add_barangay if address else ''}, {address.add_city if address else ''}, {address.add_province if address else ''}".strip(', ')
+                    'full_address': ', '.join(filter(None, [
+                        address.add_street if address else '',
+                        sitio_name,
+                        address.add_barangay if address else '',
+                        address.add_city if address else '',
+                        address.add_province if address else ''
+                    ]))
                 },
                 'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
             }
-        
+
         elif patient.pat_type == 'Transient' and patient.trans_id:
             trans = patient.trans_id
-            
             # Get address from TransientAddress if available
             address = trans.tradd_id if hasattr(trans, 'tradd_id') else None
-            
+
+            # Sitio name logic for transient
+            sitio_name = ''
+            if address:
+                if address.sitio:
+                    sitio_name = address.sitio.sitio_name
+                elif address.add_external_sitio:
+                    sitio_name = address.add_external_sitio
+
             return {
                 'pat_id': patient.pat_id,
                 'pat_type': patient.pat_type,
@@ -351,11 +379,17 @@ class CombinedHealthRecordsView(APIView):
                 },
                 'address': {
                     'add_street': address.tradd_street if address else '',
-                    'add_sitio': address.tradd_sitio if address else '',
+                    'add_sitio': sitio_name,
                     'add_barangay': address.tradd_barangay if address else '',
                     'add_city': address.tradd_city if address else '',
                     'add_province': address.tradd_province if address else '',
-                    'full_address': f"{address.tradd_street if address else ''}, {address.tradd_sitio if address else ''}, {address.tradd_barangay if address else ''}, {address.tradd_city if address else ''}, {address.tradd_province if address else ''}".strip(', ')
+                    'full_address': ', '.join(filter(None, [
+                        address.tradd_street if address else '',
+                        sitio_name,
+                        address.tradd_barangay if address else '',
+                        address.tradd_city if address else '',
+                        address.tradd_province if address else ''
+                    ]))
                 } if address else {
                     'add_street': '',
                     'add_sitio': '',
@@ -476,8 +510,6 @@ class PendingMedConCountView(APIView):
             "count": total_count
         })
     
-
-
 class CreateMedicalConsultationView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -672,7 +704,7 @@ class CreateMedicalConsultationView(APIView):
                     obs_instance = Obstetrical_History.objects.create(**obs_data)
                     print(f"DEBUG: Created Obstetrical_History with ID: {obs_instance.obs_id}")
 
-            # 4. Create MedicalConsultation_Record (CORE CONSULTATION ONLY)
+            # 🔹 FIX: REMOVED THE DUPLICATE CREATION - CREATE MedicalConsultation_Record ONLY ONCE
             medrec = MedicalConsultation_Record.objects.create(
                 patrec=patrec,
                 vital=vital,
@@ -849,6 +881,7 @@ class CreateMedicalConsultationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -866,11 +899,31 @@ class SoapFormSubmissionView(APIView):
             patrec_id = data.get('patrec_id')
             app_id = data.get('app_id')
             appointment = None
-            phil_id = data.get('phil_id')
+            # phil_id = data.get('phil_id')
             pat_id = data.get('pat_id')
 
             if not all([medrec_id, patrec_id]):
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
+
+            lab_data = {
+                        'is_cbc': data.get('is_cbc', False),
+                        'is_urinalysis': data.get('is_urinalysis', False),
+                        'is_fecalysis': data.get('is_fecalysis', False),
+                        'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
+                        'is_creatine': data.get('is_creatine', False),
+                        'is_hba1c': data.get('is_hba1c', False),
+                        'is_chestxray': data.get('is_chestxray', False),
+                        'is_papsmear': data.get('is_papsmear', False),
+                        'is_fbs': data.get('is_fbs', False),
+                        'is_oralglucose': data.get('is_oralglucose', False),
+                        'is_lipidprofile': data.get('is_lipidprofile', False),
+                        'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
+                        'is_ecg': data.get('is_ecg', False),
+                        'others': data.get('others', ''),
+                    }
+            lab_serializer = LaboratorySerializer(data=lab_data)
+            lab_serializer.is_valid(raise_exception=True)
+            lab = lab_serializer.save()
 
             # 1. Create Findings
             finding_data = {
@@ -878,7 +931,8 @@ class SoapFormSubmissionView(APIView):
                 'plantreatment_summary': data.get('plantreatment_summary', ''),
                 'subj_summary': data.get('subj_summary', ''),
                 'obj_summary': data.get('obj_summary', ''),
-                'staff': staff_id
+                'staff': staff_id,
+                'lab': lab.lab_id
             }
             finding_serializer = FindingSerializer(data=finding_data)
             finding_serializer.is_valid(raise_exception=True)
@@ -910,7 +964,7 @@ class SoapFormSubmissionView(APIView):
                     'rp_id': rp_id.rp_id if rp_id else None,
                     'trans_id': trans_id.trans_id if trans_id else None,
                     # 'patrec': medicine_patrec.patrec_id,  # Link to new PatientRecord
-                    'status': 'pending',
+                    'status': 'confirmed',
                     'mode': 'walk-in',
                     'requested_at': timezone.now(),
                 }
@@ -1010,46 +1064,7 @@ class SoapFormSubmissionView(APIView):
                     MedicalHistory(**item) for item in medical_history_data
                 ])
 
-            # 5. Handle PhilHealth Laboratory Data if it's a PhilHealth record
-            if phil_id:
-                try:
-                    philhealth_details = PhilhealthDetails.objects.get(phil_id=phil_id)
-                    lab_data = {
-                        'is_cbc': data.get('is_cbc', False),
-                        'is_urinalysis': data.get('is_urinalysis', False),
-                        'is_fecalysis': data.get('is_fecalysis', False),
-                        'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
-                        'is_creatine': data.get('is_creatine', False),
-                        'is_hba1c': data.get('is_hba1c', False),
-                        'is_chestxray': data.get('is_chestxray', False),
-                        'is_papsmear': data.get('is_papsmear', False),
-                        'is_fbs': data.get('is_fbs', False),
-                        'is_oralglucose': data.get('is_oralglucose', False),
-                        'is_lipidprofile': data.get('is_lipidprofile', False),
-                        'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
-                        'is_ecg': data.get('is_ecg', False),
-                        'others': data.get('others', ''),
-                    }
-                    if philhealth_details.lab:
-                        lab_serializer = PhilHealthLaboratorySerializer(
-                            philhealth_details.lab, 
-                            data=lab_data, 
-                            partial=True
-                        )
-                    else:
-                        lab_serializer = PhilHealthLaboratorySerializer(data=lab_data)
-                    lab_serializer.is_valid(raise_exception=True)
-                    lab_instance = lab_serializer.save()
-                    philhealth_details.lab = lab_instance
-                    philhealth_details.save()
-                except PhilhealthDetails.DoesNotExist:
-                    return Response(
-                        {"error": f"PhilHealth details with ID {phil_id} not found"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                except Exception as e:
-                    print(f"Error updating PhilHealth laboratory: {str(e)}")
-
+          
             # 6. Update Medical Consultation Record
             MedicalConsultation_Record.objects.filter(medrec_id=medrec_id).update(
                 medrec_status='completed',
@@ -1088,177 +1103,305 @@ class SoapFormSubmissionView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
+
+
+
+
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
             data = request.data
+            print("🔍 DEBUG: Received ALL data keys:", list(data.keys()))
+            
             staff_id = data.get("staff_id")
+            staff = None
+            if staff_id:
+                try:
+                    staff = Staff.objects.get(staff_id=staff_id)
+                    print(f"🔍 DEBUG: Found staff: {staff.staff_id}")
+                except Staff.DoesNotExist:
+                    return Response({"error": f"Staff with ID {staff_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+            
             patrec_id = data.get("patrec_id")
             chhist_id = data.get("chhist_id")
             chvital_id = data.get("chvital_id")
             pat_id = data.get("pat_id")
 
+            print(f"🔍 DEBUG: patrec_id: {patrec_id}, chhist_id: {chhist_id}, chvital_id: {chvital_id}, pat_id: {pat_id}")
+
             if not patrec_id:
                 raise ValidationError("Missing required field: patrec_id")
 
-            # 1. Findings
+            # 1. Laboratory Data
+            lab_data = {
+                'is_cbc': data.get('is_cbc', False),
+                'is_urinalysis': data.get('is_urinalysis', False),
+                'is_fecalysis': data.get('is_fecalysis', False),
+                'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
+                'is_creatine': data.get('is_creatine', False),
+                'is_hba1c': data.get('is_hba1c', False),
+                'is_chestxray': data.get('is_chestxray', False),
+                'is_papsmear': data.get('is_papsmear', False),
+                'is_fbs': data.get('is_fbs', False),
+                'is_oralglucose': data.get('is_oralglucose', False),
+                'is_lipidprofile': data.get('is_lipidprofile', False),
+                'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
+                'is_ecg': data.get('is_ecg', False),
+                'others': data.get('others', ''),
+            }
+            print(f"🔍 DEBUG: Lab data: {lab_data}")
+            
+            lab_serializer = LaboratorySerializer(data=lab_data)
+            lab_serializer.is_valid(raise_exception=True)
+            lab = lab_serializer.save()
+            print(f"✅ DEBUG: Created Laboratory with ID: {lab.lab_id}")
+
+            # 2. Findings
             finding_data = {
                 "assessment_summary": data.get("assessment_summary", ""),
                 "plantreatment_summary": data.get("plantreatment_summary", ""),
                 "subj_summary": data.get("subj_summary", ""),
                 "obj_summary": data.get("obj_summary", ""),
                 "staff": staff_id,
+                "lab": lab.lab_id
             }
+            print(f"🔍 DEBUG: Finding data: {finding_data}")
+            
             finding_serializer = FindingSerializer(data=finding_data)
             finding_serializer.is_valid(raise_exception=True)
             finding = finding_serializer.save()
+            print(f"✅ DEBUG: Created Finding with ID: {finding.find_id}")
 
-            # 2. Medicine Request (only if medicines exist)
+            # 3. Medicine Request (only if medicines exist)
             med_request_id = None
             medicine_request_data = data.get("medicineRequest")
-            if medicine_request_data and medicine_request_data.get("medicines"):
-                # Get rp_id or trans_id from Patient
-                pat_id = medicine_request_data.get("pat_id")
-                rp_id = None
-                trans_id = None
-                try:
-                    patient = Patient.objects.get(pat_id=pat_id)
-                    rp_id = getattr(patient, "rp_id", None)
-                    trans_id = getattr(patient, "trans_id", None)
-                except Patient.DoesNotExist:
-                    return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
-
-                # # Create PatientRecord for Medicine Record
-                # medicine_patrec = PatientRecord.objects.create(
-                #     pat_id=patient,
-                #     patrec_type="Medicine Record"
-                # )
-
-                # Create MedicineRequest and link to PatientRecord
-                med_request_payload = {
-                    "rp_id": rp_id.rp_id if rp_id else None,
-                    "trans_id": trans_id.trans_id if trans_id else None,
-                    # "patrec": medicine_patrec.patrec_id,  # Link to new PatientRecord
-                    "status": "pending",
-                    "mode": medicine_request_data.get("mode", "walk-in"),
-                    "requested_at": timezone.now(),
-                }
-                med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
-                med_request_serializer.is_valid(raise_exception=True)
-                med_request = med_request_serializer.save()
-                med_request_id = med_request.medreq_id
-
-                # Group medicines by med_id (from MedicineInventory FK)
-                medicines = medicine_request_data["medicines"]
-                medid_to_allocations = {}
-                for med in medicines:
-                    minv_id = med.get("minv_id")
-                    if not minv_id:
-                        continue
+            print(f"🔍 DEBUG: medicineRequest data type: {type(medicine_request_data)}")
+            print(f"🔍 DEBUG: medicineRequest data: {medicine_request_data}")
+            
+            if medicine_request_data:
+                print(f"🔍 DEBUG: medicineRequest keys: {medicine_request_data.keys() if hasattr(medicine_request_data, 'keys') else 'No keys'}")
+                medicines = medicine_request_data.get("medicines", [])
+                print(f"🔍 DEBUG: Medicines in medicineRequest: {medicines}")
+                print(f"🔍 DEBUG: Number of medicines: {len(medicines)}")
+                
+                if medicines and len(medicines) > 0:
                     try:
-                        minv = MedicineInventory.objects.get(minv_id=minv_id)
-                        med_id = str(minv.med_id.med_id)
-                    except MedicineInventory.DoesNotExist:
-                        return Response(
-                            {"error": f"Medicine inventory with ID {minv_id} not found"},
-                            status=status.HTTP_400_BAD_REQUEST,
+                        patient = Patient.objects.get(pat_id=pat_id)
+                        rp_id = getattr(patient, "rp_id", None)
+                        trans_id = getattr(patient, "trans_id", None)
+                        print(f"🔍 DEBUG: Found patient: {pat_id}, rp_id: {rp_id}, trans_id: {trans_id}")
+
+                        # Create MedicineRequest
+                        med_request = MedicineRequest.objects.create(
+                            rp_id=rp_id,
+                            trans_id=trans_id,
+                            mode=medicine_request_data.get("mode", "walk-in"),
                         )
-                    if med_id not in medid_to_allocations:
-                        medid_to_allocations[med_id] = []
-                    medid_to_allocations[med_id].append({
-                        "minv_id": minv_id,
-                        "allocated_qty": med.get("medrec_qty", 0),
-                        "reason": med.get("reason", ""),
-                    })
+                        med_request_id = med_request.medreq_id
+                        print(f"✅ DEBUG: Created MedicineRequest with ID: {med_request_id}")
 
-                # Create MedicineRequestItem and MedicineAllocation
-                for med_id, allocations in medid_to_allocations.items():
-                    reason = allocations[0]["reason"]
-                    signature = allocations[0].get("signature", "")
-                    medicine_item_data = {
-                        "reason": reason,
-                        "med": med_id,
-                        "medreq_id": med_request.medreq_id,
-                        "status": "confirmed",
-                        "created_at": timezone.now(),
-                        "action_by": staff,
-                    }
-                    medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
-                    medicine_item_serializer.is_valid(raise_exception=True)
-                    medicine_item = medicine_item_serializer.save()
-
-                    for alloc in allocations:
-                        minv_id = alloc["minv_id"]
-                        allocated_qty = alloc["allocated_qty"]
-                        if minv_id and allocated_qty > 0:
+                        # Enhanced grouping logic with better debugging
+                        medid_to_allocations = {}
+                        for index, med in enumerate(medicines):
+                            minv_id = med.get("minv_id")
+                            if not minv_id:
+                                print(f"⚠️ DEBUG: Skipping medicine {index + 1} - no minv_id")
+                                continue
+                            
                             try:
-                                medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
-                                medicine_inventory.temporary_deduction += allocated_qty
-                                medicine_inventory.save()
+                                minv = MedicineInventory.objects.get(minv_id=minv_id)
+                                med_id = minv.med_id.med_id
+                                allocated_qty = med.get("medrec_qty", 0)
+                                reason = med.get("reason", "")
+                                
+                                print(f"🔍 DEBUG: Processing medicine {index + 1}: minv_id={minv_id}, med_id={med_id}, allocated_qty={allocated_qty}, reason={reason}")
+
+                                # Group by med_id
+                                if med_id not in medid_to_allocations:
+                                    medid_to_allocations[med_id] = {
+                                        'reason': reason,
+                                        'allocations': []
+                                    }
+                                    print(f"🔍 DEBUG: Created new group for med_id: {med_id}")
+                                
+                                # Add allocation for this inventory item
+                                medid_to_allocations[med_id]['allocations'].append({
+                                    'minv': minv,
+                                    'allocated_qty': allocated_qty,
+                                    'minv_id': minv_id
+                                })
+                                print(f"🔍 DEBUG: Added allocation to med_id {med_id}: minv_id={minv_id}, qty={allocated_qty}")
+
                             except MedicineInventory.DoesNotExist:
+                                print(f"❌ DEBUG: MedicineInventory with ID {minv_id} not found")
                                 return Response(
                                     {"error": f"Medicine inventory with ID {minv_id} not found"},
                                     status=status.HTTP_400_BAD_REQUEST,
                                 )
-                            MedicineAllocation.objects.create(
-                                medreqitem=medicine_item,
-                                minv=medicine_inventory,
-                                allocated_qty=allocated_qty,
+
+                        print(f"🔍 DEBUG: Final grouped medicines: {medid_to_allocations}")
+                        print(f"🔍 DEBUG: Number of unique med_ids: {len(medid_to_allocations)}")
+                        
+                        # Print detailed allocation info
+                        for med_id, med_data in medid_to_allocations.items():
+                            allocations = med_data['allocations']
+                            print(f"🔍 DEBUG: med_id {med_id} has {len(allocations)} allocations:")
+                            for alloc in allocations:
+                                print(f"  - minv_id: {alloc['minv_id']}, qty: {alloc['allocated_qty']}")
+
+                        # Create only one MedicineRequestItem per med_id
+                        total_medicine_items = 0
+                        total_allocations = 0
+                        
+                        for med_id, med_data in medid_to_allocations.items():
+                            reason = med_data['reason']
+                            allocations = med_data['allocations']
+                            
+                            # Create single MedicineRequestItem for this med_id
+                            medicine_item = MedicineRequestItem.objects.create(
+                                reason=reason,
+                                med_id=med_id,
+                                medreq_id=med_request,
+                                status="confirmed",
+                                action_by=staff,
                             )
+                            total_medicine_items += 1
+                            print(f"✅ DEBUG: Created MedicineRequestItem with ID: {medicine_item.medreqitem_id} for med_id: {med_id}")
 
-                FindingsPlanTreatment.objects.create(
-                    medreq=med_request,
-                    find=finding,
-                )
+                            # Create MedicineAllocation for each inventory item
+                            for alloc_index, alloc in enumerate(allocations):
+                                minv = alloc['minv']
+                                allocated_qty = alloc['allocated_qty']
+                                minv_id = alloc['minv_id']
+                                
+                                if allocated_qty > 0:
+                                    allocation = MedicineAllocation.objects.create(
+                                        medreqitem=medicine_item,
+                                        minv=minv,
+                                        allocated_qty=allocated_qty,
+                                    )
+                                    total_allocations += 1
+                                    print(f"✅ DEBUG: Created MedicineAllocation #{alloc_index + 1} with ID: {allocation.alloc_id} for minv_id: {minv_id}, qty: {allocated_qty}")
+                                    
+                                    # Update inventory temporary deduction
+                                    minv.temporary_deduction += allocated_qty
+                                    minv.save()
+                                    print(f"✅ DEBUG: Updated temporary_deduction for minv_id: {minv_id} to {minv.temporary_deduction}")
+                                else:
+                                    print(f"⚠️ DEBUG: Skipping allocation for minv_id {minv_id} - allocated_qty is 0")
+                            
+                            print(f"✅ DEBUG: Created {len(allocations)} allocations for med_id {med_id}")
 
-            # 3. Physical Exam Results
-            if data.get("physical_exam_results"):
+                        print(f"✅ DEBUG: TOTAL - MedicineRequestItems: {total_medicine_items}, MedicineAllocations: {total_allocations}")
+
+                        # Create FindingsPlanTreatment
+                        fpt = FindingsPlanTreatment.objects.create(
+                            medreq=med_request,
+                            find=finding
+                        )
+                        print(f"✅ DEBUG: Created FindingsPlanTreatment with ID: {fpt.fpt_id}")
+
+                    except Patient.DoesNotExist:
+                        print(f"❌ DEBUG: Patient with ID {pat_id} not found")
+                        return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    print("❌ DEBUG: Medicines array is empty or doesn't exist")
+            else:
+                print("❌ DEBUG: No medicineRequest data found in request")
+
+            # 4. Physical Exam Results
+            physical_exam_results = data.get("physical_exam_results")
+            print(f"🔍 DEBUG: physical_exam_results: {physical_exam_results}")
+            
+            if physical_exam_results:
                 per_data = [
                     {"pe_option": pe, "find": finding.find_id}
-                    for pe in data["physical_exam_results"]
+                    for pe in physical_exam_results
                 ]
                 per_serializer = PEResultSerializer(data=per_data, many=True)
                 per_serializer.is_valid(raise_exception=True)
-                per_serializer.save()
+                per_results = per_serializer.save()
+                print(f"✅ DEBUG: Created {len(per_results)} Physical Exam Results")
 
-            # 4. Update Vital Signs link
+            # ✅ RESTORED: 5. Update Child Health History status
             if chhist_id:
-                ChildHealth_History.objects.filter(pk=chhist_id).update(status="recorded")
+                try:
+                    child_health_history = ChildHealth_History.objects.get(pk=chhist_id)
+                    child_health_history.status = "recorded"
+                    child_health_history.save()
+                    print(f"✅ DEBUG: Updated ChildHealth_History {chhist_id} status to 'recorded'")
+                except ChildHealth_History.DoesNotExist:
+                    print(f"⚠️ DEBUG: ChildHealth_History with ID {chhist_id} not found")
+
+            # ✅ RESTORED: 6. Update Child Health Vital Signs link to finding
             if chvital_id:
-                ChildHealthVitalSigns.objects.filter(pk=chvital_id).update(find=finding)
+                try:
+                    child_health_vital = ChildHealthVitalSigns.objects.get(pk=chvital_id)
+                    child_health_vital.find = finding
+                    child_health_vital.save()
+                    print(f"✅ DEBUG: Updated ChildHealthVitalSigns {chvital_id} with find_id: {finding.find_id}")
+                except ChildHealthVitalSigns.DoesNotExist:
+                    print(f"⚠️ DEBUG: ChildHealthVitalSigns with ID {chvital_id} not found")
 
-            # 5. Medical History
-            if data.get("selected_illnesses"):
-                MedicalHistory.objects.bulk_create([
-                    MedicalHistory(
-                        patrec_id=patrec_id,
-                        ill_id=ill_id,
-                        ill_date=date.today().strftime("%Y-%m-%d"),
-                        is_for_surveillance=True,
-                    )
-                    for ill_id in data["selected_illnesses"]
+            # 7. Medical History
+            selected_illnesses = data.get("selected_illnesses")
+            print(f"🔍 DEBUG: selected_illnesses: {selected_illnesses}")
+            
+            if selected_illnesses:
+                medical_history_data = [
+                    {
+                        'patrec_id': patrec_id,
+                        'ill_id': ill_id,
+                        'ill_date': date.today().strftime("%Y-%m-%d"),
+                        'is_for_surveillance': True
+                    }
+                    for ill_id in selected_illnesses
+                ]
+                medical_history_records = MedicalHistory.objects.bulk_create([
+                    MedicalHistory(**item) for item in medical_history_data
                 ])
+                print(f"✅ DEBUG: Created {len(medical_history_records)} MedicalHistory records")
 
+            print("🎉 DEBUG: SUCCESS - All operations completed successfully!")
+            
             return Response(
                 {
                     "success": True,
                     "finding_id": finding.find_id,
                     "med_request_id": med_request_id,
+                    "debug": {
+                        "lab_created": True,
+                        "finding_created": True,
+                        "medicine_request_created": med_request_id is not None,
+                        "findings_plan_treatment_created": med_request_id is not None,
+                        "medicine_items_created": total_medicine_items if 'total_medicine_items' in locals() else 0,
+                        "allocations_created": total_allocations if 'total_allocations' in locals() else 0,
+                        "child_health_history_updated": chhist_id is not None,
+                        "child_health_vital_signs_updated": chvital_id is not None
+                    }
                 },
                 status=status.HTTP_201_CREATED,
             )
 
         except ValidationError as e:
+            print(f"❌ DEBUG: ValidationError: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"❌ DEBUG: Exception: {str(e)}")
+            print(f"❌ DEBUG: Traceback: {error_traceback}")
             return Response(
-                {"error": "Internal server error", "details": str(e)},
+                {
+                    "error": "Internal server error", 
+                    "details": str(e),
+                    "traceback": error_traceback
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-
+        
 
 # ===================FAMILY HISTORY===============================
 class FamilyPHIllnessCheckAPIView(APIView):
@@ -2106,328 +2249,5 @@ class MedicalUserAppointmentsView(generics.ListAPIView):
                 'success': False,
                 'error': f'Error fetching appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
 
-# =====DOCTOR REPORT==========
 
-class  MonthlyReportConsulted(APIView):
-    pagination_class = StandardResultsPagination
-    
-    def get(self, request, assigned_to=None):
-        # Get query parameters
-        search_query = request.query_params.get('search', '')
-        record_type = request.query_params.get('record_type', 'all')
-        page = int(request.query_params.get('page', 1))
-        page_size = int(request.query_params.get('page_size', 10))
-        
-        # Prefetch related data for child health records with proper joins
-        child_health_queryset = ChildHealth_History.objects.select_related(
-            'chrec__patrec__pat_id__rp_id__per',
-            'chrec__patrec__pat_id__trans_id__tradd_id',
-            'assigned_to'
-        ).prefetch_related(
-            'child_health_vital_signs__vital',
-            'child_health_vital_signs__bm',  # Important: prefetch body measurements
-            'child_health_vital_signs__find',  # Important: prefetch findings
-            'child_health_notes',
-            'child_health_supplements__medrec',
-            'exclusive_bf_checks',
-            'immunization_tracking__vachist',
-            'supplements_statuses'
-        )
-        
-        # Prefetch related data for medical consultation records
-        med_consult_queryset = MedicalConsultation_Record.objects.select_related(
-            'patrec__pat_id__rp_id__per',
-            'patrec__pat_id__trans_id__tradd_id',
-            'vital',
-            'bm',
-            'find',
-            'staff__rp__per',
-            'assigned_to'
-        ).filter(medrec_status='completed')
-        
-        # Apply assigned_to filter
-        if assigned_to:
-            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to, status="check-up")
-            med_consult_queryset = med_consult_queryset.filter(assigned_to_id=assigned_to)
-        
-        # Apply search filter
-        if search_query:
-            child_health_queryset = child_health_queryset.filter(
-                Q(chrec__ufc_no__icontains=search_query) |
-                Q(chrec__family_no__icontains=search_query) |
-                Q(tt_status__icontains=search_query) |
-                Q(chrec__patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
-                Q(chrec__patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
-                Q(chrec__patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
-                Q(chrec__patrec__pat_id__trans_id__tran_fname__icontains=search_query)
-            )
-            
-            med_consult_queryset = med_consult_queryset.filter(
-                Q(medrec_chief_complaint__icontains=search_query) |
-                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
-                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
-                Q(patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
-                Q(patrec__pat_id__trans_id__tran_fname__icontains=search_query)
-            )
-        
-        # Apply record type filter
-        if record_type != 'all':
-            if record_type == 'child-health':
-                med_consult_queryset = MedicalConsultation_Record.objects.none()
-            elif record_type == 'medical-consultation':
-                child_health_queryset = ChildHealth_History.objects.none()
-        
-        combined_data = []
-        
-        # Process child health records using serializers
-        for record in child_health_queryset:
-            # Use the ChildHealthHistoryFullSerializer to get all related data properly
-            serializer = ChildHealthHistoryFullSerializer(record)
-            serialized_data = serializer.data
-            
-            # Extract patient details using your existing method
-            chrec = record.chrec
-            patrec = chrec.patrec
-            patient = patrec.pat_id
-            patient_details = self._get_patient_details(patient)
-            
-            # Add patient details to the serialized data
-            if 'chrec_details' not in serialized_data:
-                serialized_data['chrec_details'] = {}
-            if 'patrec_details' not in serialized_data['chrec_details']:
-                serialized_data['chrec_details']['patrec_details'] = {}
-            
-            serialized_data['chrec_details']['patrec_details']['pat_details'] = patient_details
-            
-            combined_data.append({
-                'record_type': 'child-health',
-                'data': serialized_data
-            })
-        
-        # Process medical consultation records
-        for record in med_consult_queryset:
-            patrec = record.patrec
-            patient = patrec.pat_id
-            serializer = MedicalConsultationRecordSerializer(record)
-            serialized_data = serializer.data
-            # Get patient details
-            patient_details = self._get_patient_details(patient)
-            
-            # Get staff details
-            staff_details = None
-            if record.staff and hasattr(record.staff, 'rp') and record.staff.rp:
-                staff_details = {
-                    'rp': {
-                        'per': {
-                            'per_fname': record.staff.rp.per.per_fname if hasattr(record.staff.rp.per, 'per_fname') else '',
-                            'per_lname': record.staff.rp.per.per_lname if hasattr(record.staff.rp.per, 'per_lname') else '',
-                            'per_mname': record.staff.rp.per.per_mname if hasattr(record.staff.rp.per, 'per_mname') else '',
-                            'per_suffix': record.staff.rp.per.per_suffix if hasattr(record.staff.rp.per, 'per_suffix') else '',
-                            'per_dob': record.staff.rp.per.per_dob.isoformat() if hasattr(record.staff.rp.per, 'per_dob') and record.staff.rp.per.per_dob else ''
-                        }
-                    }
-                }
-            
-            # Get vital signs
-            vital_data = {}
-            if record.vital:
-                vital_data = {
-                    'vital_bp_systolic': record.vital.vital_bp_systolic,
-                    'vital_bp_diastolic': record.vital.vital_bp_diastolic,
-                    'vital_temp': record.vital.vital_temp,
-                    'vital_pulse': record.vital.vital_pulse,
-                    'vital_RR': record.vital.vital_RR
-                }
-            
-            # Get BMI details
-            bmi_data = {}
-            if record.bm:
-                bmi_data = {
-                    'height': record.bm.height,
-                    'weight': record.bm.weight
-                }
-            
-            combined_data.append({
-                'record_type': 'medical-consultation',
-                'data': serialized_data  # This contains ALL attributes from your serializer
-
-            })
-        
-        # Sort by created_at (most recent first)
-        combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=True)
-        
-        # Manual pagination
-        total_count = len(combined_data)
-        start_index = (page - 1) * page_size
-        end_index = start_index + page_size
-        paginated_data = combined_data[start_index:end_index]
-        
-        # Calculate totals
-        residents = 0
-        transients = 0
-        
-        for record in combined_data:
-            pat_details = None
-            if record['record_type'] == 'child-health':
-                pat_details = record['data'].get('chrec_details', {}).get('patrec_details', {}).get('pat_details', {})
-            else:
-                pat_details = record['data'].get('patrec_details', {}).get('patient_details', {})
-            
-            if pat_details and pat_details.get('pat_type') == 'Resident':
-                residents += 1
-            elif pat_details:
-                transients += 1
-        
-        total_patients = residents + transients
-        
-        # Build response
-        response_data = {
-            'count': total_count,
-            'next': None if end_index >= total_count else page + 1,
-            'previous': None if page == 1 else page - 1,
-            'results': paginated_data,
-            'totals': {
-                'residents': residents,
-                'transients': transients,
-                'total_patients': total_patients
-            }
-        }
-        
-        return Response(response_data)
-    
-    def _get_patient_details(self, patient):
-        """Helper method to extract patient details"""
-        if patient.pat_type == 'Resident' and patient.rp_id and hasattr(patient.rp_id, 'per'):
-            per = patient.rp_id.per
-            address = getattr(patient.rp_id, 'address', None)
-            
-            return {
-                'pat_id': patient.pat_id,
-                'pat_type': patient.pat_type,
-                'personal_info': {
-                    'per_fname': per.per_fname,
-                    'per_lname': per.per_lname,
-                    'per_mname': per.per_mname,
-                    'per_sex': per.per_sex,
-                    'per_dob': per.per_dob.isoformat() if per.per_dob else None
-                },
-                'address': {
-                    'add_street': address.add_street if address else '',
-                    'add_sitio': address.add_sitio if address else '',
-                    'add_barangay': address.add_barangay if address else '',
-                    'add_city': address.add_city if address else '',
-                    'add_province': address.add_province if address else '',
-                    'full_address': f"{address.add_street if address else ''}, {address.add_sitio if address else ''}, {address.add_barangay if address else ''}, {address.add_city if address else ''}, {address.add_province if address else ''}".strip(', ')
-                },
-                'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
-            }
-        
-        elif patient.pat_type == 'Transient' and patient.trans_id:
-            trans = patient.trans_id
-            
-            # Get address from TransientAddress if available
-            address = trans.tradd_id if hasattr(trans, 'tradd_id') else None
-            
-            return {
-                'pat_id': patient.pat_id,
-                'pat_type': patient.pat_type,
-                'personal_info': {
-                    'per_fname': trans.tran_fname,
-                    'per_lname': trans.tran_lname,
-                    'per_mname': trans.tran_mname,
-                    'per_sex': trans.tran_sex,
-                    'per_dob': trans.tran_dob.isoformat() if trans.tran_dob else None
-                },
-                'address': {
-                    'add_street': address.tradd_street if address else '',
-                    'add_sitio': address.tradd_sitio if address else '',
-                    'add_barangay': address.tradd_barangay if address else '',
-                    'add_city': address.tradd_city if address else '',
-                    'add_province': address.tradd_province if address else '',
-                    'full_address': f"{address.tradd_street if address else ''}, {address.tradd_sitio if address else ''}, {address.tradd_barangay if address else ''}, {address.tradd_city if address else ''}, {address.tradd_province if address else ''}".strip(', ')
-                } if address else {
-                    'add_street': '',
-                    'add_sitio': '',
-                    'add_barangay': '',
-                    'add_city': '',
-                    'add_province': '',
-                    'full_address': ''
-                },
-                'households': []  # Transients typically don't have households
-            }
-        
-        return {}
-    
-# def send_missed_appointment_notifications(appointment):
-#     try:
-#         notifier = NotificationQueries()
-
-#         # 1. Get Resident (Patient)
-#         resident = appointment.rp
-#         resident_name = "Resident"
-#         resident_rp_id = None
-
-#         if resident and resident.per:
-#             resident_name = f"{resident.per.per_fname} {resident.per.per_lname}".strip()
-#             resident_rp_id = str(resident.rp_id)
-
-#         # 2. Prepare common data
-#         scheduled = appointment.scheduled_date
-#         meridiem = "AM" if appointment.meridiem == "AM" else "PM"
-#         formatted_date = scheduled.strftime("%B %d, %Y")
-#         complaint = appointment.chief_complaint or "Medical Consultation"
-
-#         # === NOTIFY RESIDENT ===
-#         if resident_rp_id:
-#             resident_success = notifier.create_notification(
-#                 title="Missed Appointment",
-#                 message=(
-#                     f"You missed your scheduled appointment on {formatted_date} ({meridiem}).\n"
-#                     f"Chief Complaint: {complaint}\n"
-#                     "Please reschedule at your earliest convenience."
-#                 ),
-#                 # sender="00001250924",  # System
-#                 recipients=[resident_rp_id],
-#                 notif_type="APPOINTMENT_MISSED",
-#                 # target_obj=None,
-#                 web_route="",
-#                 web_params={},
-#                 mobile_route="/(health)/medical-consultation/my-appointments",
-#                 mobile_params={"appointment_id": str(appointment.id)},
-#             )
-#             print(f"{'Success' if resident_success else 'Failed'}: Resident missed appointment notification → {resident_name}")
-
-#         # === NOTIFY ADMIN / STAFF ===
-#         medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
-
-#         admin_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
-
-#         if admin_recipients:
-#             admin_success = notifier.create_notification(
-#                 title="Patient Missed Appointment",
-#                 message=(
-#                     f"Resident {resident_name} missed their appointment.\n"
-#                     f"Date: {formatted_date} ({meridiem})\n"
-#                     f"Complaint: {complaint}\n"
-#                     f"Appointment ID: {appointment.id}"
-#                 ),
-#                 # sender="00001250924",
-#                 recipients=admin_recipients,
-#                 notif_type="APPOINTMENT_MISSED_ADMIN",
-#                 # target_obj=None,
-#                 web_route="/services/medical-consultation/appointments/missed",
-#                 web_params={},
-#                 mobile_route="/(admin)/appointments/missed",
-#                 mobile_params={},
-#             )
-#             print(f"{'Success' if admin_success else 'Failed'}: Admin missed appointment notification → {len(admin_recipients)} staff")
-
-#         return True
-
-#     except Exception as e:
-#         print(f"Error sending missed appointment notifications: {str(e)}")
-#         return False
-    
-    

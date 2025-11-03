@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { medicineRequestRejectedColumns } from "./columns";
 import { useMedicineRequestStatuses } from "../queries/fetch";
 import TableLoading from "@/pages/healthServices/table-loading";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function RejectedRequest() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,7 +36,7 @@ export default function RejectedRequest() {
     data: apiResponse,
     isLoading,
     error,
-    refetch
+    refetch,
   } = useMedicineRequestStatuses(
     currentPage,
     pageSize,
@@ -62,6 +63,9 @@ export default function RejectedRequest() {
 
   return (
     <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <EnhancedCardLayout title="Rejected Medicine Requests" description="" icon={<FileInput size={24} />} value={totalCount} valueDescription="Total Rejected Requests" cardClassName="mb-6" />
+      </div>
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -77,7 +81,7 @@ export default function RejectedRequest() {
               { id: "all", name: "All Dates" },
               { id: "today", name: "Today" },
               { id: "this-week", name: "This Week" },
-              { id: "this-month", name: "This Month" }
+              { id: "this-month", name: "This Month" },
             ]}
             value={dateFilter}
             onChange={(value) => {
@@ -130,7 +134,7 @@ export default function RejectedRequest() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <TableLoading/>
+            <TableLoading />
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
               <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>

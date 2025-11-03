@@ -46,6 +46,12 @@ import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/new
 import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
 import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
 
+
+// DOCTOR REPORTS
+import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
+import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
+import path from "path";
+
 export const healthreports_router = [
   // {
   //   path: "/bhw-monthly-reports",
@@ -200,5 +206,17 @@ export const healthreports_router = [
   {
     path: "/reports/fhis-monthly-records/details",
     element: <MultiStepFormFHIS />
-  }
+  },
+
+
+
+  // DOCTOR REPORTTS
+  {
+    path: "/reports/monthly-consulted-summaries",
+    element: <MonthlyConsultedSummaries />
+  },
+  {
+    path: "/reports/monthly-consulted-summaries/records",
+    element: <MonthlyConsultedDetails />
+  },
 ];

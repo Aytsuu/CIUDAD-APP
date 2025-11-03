@@ -30,10 +30,10 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
         return None
       
       
-class PhilHealthLaboratorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhilHealthLaboratory
-        fields = '__all__'
+# class PhilHealthLaboratorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = PhilHealthLaboratory
+#         fields = '__all__'
 
 class PhilhealthDetailsSerializer(serializers.ModelSerializer):
     # Nested serializers for foreign keys
@@ -63,7 +63,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     patrec_details = PatientMedConsultationRecordSerializer(source='patrec.pat_id', read_only=True)
     staff_details = StaffTableSerializer(source='staff', read_only=True)
     assigned_to_details = StaffTableSerializer(source='assigned_to', read_only=True)
-    lab_details = PhilHealthLaboratorySerializer(source='lab', read_only=True)
+    # lab_details = PhilHealthLaboratorySerializer(source='lab', read_only=True)
     
     
     # PhilHealth nested serializers

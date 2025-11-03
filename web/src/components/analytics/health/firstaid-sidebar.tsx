@@ -1,9 +1,8 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, ChevronDown, ArrowRight } from "lucide-react";
+import { AlertCircle, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFirstAidChart } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
-import { useState } from "react";
 import { FaFirstAid } from "react-icons/fa";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
@@ -23,7 +22,7 @@ const COLORS = [
 export function FirstAidDistributionSidebar() {
   const initialMonth = format(new Date(), "yyyy-MM");
   const { data, isLoading, error } = useFirstAidChart(initialMonth);
-  const [showAll, setShowAll] = useState(false);
+  // const [showAll, setShowAll] = useState(false);
 
   // Transform and sort data with proper null checks
   const allFirstAidItems = data?.first_aid_counts
@@ -34,8 +33,8 @@ export function FirstAidDistributionSidebar() {
     : [];
 
   // Determine which items to show
-  const itemsToShow = showAll ? allFirstAidItems : allFirstAidItems.slice(0, 10);
-  const totalItems = allFirstAidItems.length;
+  const itemsToShow =allFirstAidItems.slice(0, 10);
+  // const totalItems = allFirstAidItems.length;
   const totalUses = allFirstAidItems.reduce((sum, item) => sum + item.count, 0);
 
   // Common link state for all first aid cards and "View More" button
@@ -64,8 +63,15 @@ export function FirstAidDistributionSidebar() {
     <Card className="rounded-md shadow-none">
       <CardContent className="pt-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+         <div className="p-4 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="h-4 bg-black/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-black/20 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : !data?.success || allFirstAidItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">

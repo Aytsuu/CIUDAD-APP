@@ -355,9 +355,8 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             )
 
             # Only update MedicineRequest.patrec if mode == 'app'
-            if mode == 'app':
-                medicine_request.patrec = patient_record
-                medicine_request.save()
+            medicine_request.patrec = patient_record
+            medicine_request.save()
 
             medicine_transactions = []
 

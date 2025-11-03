@@ -2,19 +2,21 @@
 import { api2 } from "@/api/api";
 
 
-export const getMedicineMonthly = async (year?: string): Promise<any> => {
+
+export const getMedicineMonthly = async (page: number, pageSize: number, search?: string): Promise<any> => {
   try {
-    const url = year
-      ? `/reports/medicine-records/monthly/?year=${year}`
-      : `/reports/medicine-records/monthly/`;
-    const response = await api2.get<any>(url);
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+
+    const response = await api2.get<any>(`/reports/medicine-records/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching Medicine records:", error);
+    console.error("Error fetching medicine records:", error);
     throw error;
   }
 };
-
 
 
 

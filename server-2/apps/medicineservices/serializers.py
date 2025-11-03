@@ -11,6 +11,7 @@ from apps.reports.serializers import FileInputSerializer
 from utils.supabase_client import upload_to_storage
 from apps.administration.serializers.staff_serializers import StaffTableSerializer
 from apps.patientrecords.utils import *
+from apps.medicineservices.models import *
 
 
 class PatientMedicineRecordSerializer(serializers.ModelSerializer):
@@ -30,11 +31,13 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         return count
 
     def get_latest_medicine_date(self, obj):
-        # Get the most recent medicine record date for this patient based on fulfilled_at
-        latest_medicine = MedicineRecord.objects.filter(
+        """
+        Get the most recent medicine record date for this patient based on fulfilled_at.
+        """
+        latest_medicine = MedicineRequest.objects.filter(
             patrec_id__pat_id=obj.pat_id
         ).order_by('-fulfilled_at').first()
-        
+
         if latest_medicine and latest_medicine.fulfilled_at:
             return latest_medicine.fulfilled_at
         return None

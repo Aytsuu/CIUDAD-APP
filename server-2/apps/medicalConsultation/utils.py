@@ -151,7 +151,7 @@ def create_future_date_slots(days_in_advance=60):
         
         try:
             # Only create if it doesn't exist (get_or_create)
-            _, created = DateSlot.objects.get_or_create(
+            _, created = DateSlots.objects.get_or_create(
                 date=target_date,
                 defaults={'am_max_slots': 10, 'pm_max_slots': 10}
             )

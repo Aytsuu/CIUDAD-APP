@@ -223,7 +223,7 @@ class MedicineStockTableView(APIView):
     
     def get(self, request):
         try:
-            self.auto_archive_expired_medicines()
+            # self.auto_archive_expired_medicines()
             
             # Get parameters
             search_query = request.GET.get('search', '').strip()
@@ -381,51 +381,51 @@ class MedicineStockTableView(APIView):
                 'error': f'Error fetching medicine stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def auto_archive_expired_medicines(self):
-        """Auto-archive medicines that expired more than 10 days ago and log transactions"""
-        from datetime import timedelta
+    # def auto_archive_expired_medicines(self):
+    #     """Auto-archive medicines that expired more than 10 days ago and log transactions"""
+    #     from datetime import timedelta
         
-        today = timezone.now().date()
-        archive_date = today - timedelta(days=10)
+    #     today = timezone.now().date()
+    #     archive_date = today - timedelta(days=10)
         
-        print(f"Auto-archiving medicine items expired before: {archive_date}")
+    #     print(f"Auto-archiving medicine items expired before: {archive_date}")
         
-        # Archive expired medicine stocks
-        medicine_stocks = MedicineInventory.objects.select_related('inv_id').filter(
-            inv_id__expiry_date__lte=archive_date,
-            inv_id__is_Archived=False
-        )
+    #     # Archive expired medicine stocks
+    #     medicine_stocks = MedicineInventory.objects.select_related('inv_id').filter(
+    #         inv_id__expiry_date__lte=archive_date,
+    #         inv_id__is_Archived=False
+    #     )
         
-        archived_medicine_count = 0
-        for stock in medicine_stocks:
-            # Get the current available quantity before archiving
-            current_qty = stock.minv_qty_avail or 0
+    #     archived_medicine_count = 0
+    #     for stock in medicine_stocks:
+    #         # Get the current available quantity before archiving
+    #         current_qty = stock.minv_qty_avail or 0
             
-            # Determine the unit and format quantity with unit
-            if stock.minv_qty_unit and stock.minv_qty_unit.lower() == "boxes":
-                # For boxes, show quantity in pieces
-                qty_with_unit = f"{current_qty} pcs"
-            else:
-                # For other units, use the actual unit
-                unit = stock.minv_qty_unit if stock.minv_qty_unit else "pcs"
-                qty_with_unit = f"{current_qty} {unit}"
+    #         # Determine the unit and format quantity with unit
+    #         if stock.minv_qty_unit and stock.minv_qty_unit.lower() == "boxes":
+    #             # For boxes, show quantity in pieces
+    #             qty_with_unit = f"{current_qty} pcs"
+    #         else:
+    #             # For other units, use the actual unit
+    #             unit = stock.minv_qty_unit if stock.minv_qty_unit else "pcs"
+    #             qty_with_unit = f"{current_qty} {unit}"
             
-            # Archive the inventory
-            stock.inv_id.is_Archived = True
-            stock.inv_id.save()
+    #         # Archive the inventory
+    #         stock.inv_id.is_Archived = True
+    #         stock.inv_id.save()
             
-            # Create transaction record for the archive action
-            MedicineTransactions.objects.create(
-                mdt_qty=qty_with_unit,  # Record the quantity with unit that was archived
-                mdt_action='Expired',  # Clear action indicating expiration-based archiving
-                minv_id=stock,  # Reference to the medicine inventory
-                staff=None  # System action, so no staff member
-            )
+    #         # Create transaction record for the archive action
+    #         MedicineTransactions.objects.create(
+    #             mdt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+    #             mdt_action='Expired',  # Clear action indicating expiration-based archiving
+    #             minv_id=stock,  # Reference to the medicine inventory
+    #             staff=None  # System action, so no staff member
+    #         )
             
-            archived_medicine_count += 1
-            print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
+    #         archived_medicine_count += 1
+    #         print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
         
-        print(f"Auto-archived {archived_medicine_count} medicine items with transaction records")
+    #     print(f"Auto-archived {archived_medicine_count} medicine items with transaction records")
 
 
 

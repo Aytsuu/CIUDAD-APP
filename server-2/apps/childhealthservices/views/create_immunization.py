@@ -298,7 +298,8 @@ class SaveImmunizationDataAPIView(APIView):
             vital=vital_instance,
             staff=staff_instance,
             followv=vaccine_followv_instance,
-            date_administered=self.parse_date(vaccine.get('date')) or date.today()
+            date_administered=self.parse_date(vaccine.get('date')) or date.today(),
+            assigned_to=staff_instance
         )
         created_records['vachist_ids'].append(vaccination_history.vachist_id)
         

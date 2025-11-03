@@ -2,13 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import {  getVaccineRecords ,getVaccineReports} from "../restful-api/getAPI";
 
-export const useVaccineRecords = (yearFilter: string) => {
+export const useVaccineRecords = (page: number, pageSize: number, search: string) => {
   return useQuery({
-    queryKey: ["vaccineRecords", yearFilter],
-    queryFn: () =>
-        getVaccineRecords(yearFilter === "all" ? undefined : yearFilter),
+    queryKey: ["vaccineRecords", page, pageSize, search],
+    queryFn: () => getVaccineRecords(page, pageSize, search),
   });
 };
+
 
 
 export const useVaccineReports = (month: string) => {

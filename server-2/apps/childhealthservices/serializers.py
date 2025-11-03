@@ -119,13 +119,85 @@ class ChildHealthNotesSerializer(serializers.ModelSerializer):
         model = ChildHealthNotes
         fields = '__all__'
 
-
 class ChildHealthSupplementsSerializer(serializers.ModelSerializer):
-    medreqitem_details = MedicineRecordMinimalSerialzer(source='medreqitem', read_only=True)
+    # Get all medicine items with their quantities for this request
+    medreqitem_details = serializers.SerializerMethodField()
 
     class Meta: 
         model = ChildHealthSupplements
         fields = '__all__'
+
+    def get_medreqitem_details(self, obj):
+        """Get all medicine request items with their allocations and quantities"""
+        if not obj.medreq:
+            return []
+        
+        # Get all items for this medicine request
+        items = MedicineRequestItem.objects.filter(medreq_id=obj.medreq)
+        
+        medicine_data = []
+        for item in items:
+            # Sum all allocations for this specific medreqitem
+            allocations = MedicineAllocation.objects.filter(medreqitem=item)
+            total_quantity = allocations.aggregate(total=models.Sum('allocated_qty'))['total'] or 0
+            
+            # Get medicine details
+            medicine_details = None
+            if item.med:
+                medicine_details = {
+                    'med_id': item.med.med_id,
+                    'med_name': item.med.med_name,
+                    'med_dsg': item.med.med_dsg,
+                    'med_dsg_unit': item.med.med_dsg_unit,
+                    'med_form': item.med.med_form,
+                }
+            
+            # Get the unit from the first allocation (if there are multiple)
+            display_unit = None
+            first_allocation = allocations.first()
+            if first_allocation and first_allocation.minv:
+                display_unit = self._get_display_unit(first_allocation.minv.minv_qty_unit)
+            
+            # Get allocation details
+            allocation_details = []
+            for allocation in allocations:
+                if allocation.minv:
+                    allocation_details.append({
+                        'alloc_id': allocation.alloc_id,
+                        'minv_id': allocation.minv.minv_id,
+                        'allocated_qty': allocation.allocated_qty,
+                        'unit': self._get_display_unit(allocation.minv.minv_qty_unit),
+                    })
+            
+            medicine_data.append({
+                'medreqitem_id': item.medreqitem_id,
+                'medicine': medicine_details,
+                'reason': item.reason,
+                'status': item.status,
+                'total_quantity': total_quantity,
+                'unit': display_unit,  # Add unit here from first allocation
+                'allocations': allocation_details,
+                'created_at': item.created_at,
+                'action_by': StaffTableSerializer(item.action_by).data if item.action_by else None,
+            })
+        
+        return medicine_data
+
+    def _get_display_unit(self, minv_qty_unit):
+        """Convert minv_qty_unit to display unit"""
+        if not minv_qty_unit:
+            return None
+        
+        # Convert to lowercase for case-insensitive comparison
+        unit_lower = minv_qty_unit.lower().strip()
+        
+        # If unit is "boxes", return "pc/s"
+        if unit_lower in ['boxes', 'box']:
+            return 'pc/s'
+        
+        # Otherwise return the original unit
+        return minv_qty_unit
+    
 
 class ChildHealthSupplementStatusSerializer(serializers.ModelSerializer):
     # chsupp_details = ChildHealthSupplementsSerializer(source='chsupplement', read_only=True)
@@ -168,6 +240,23 @@ class ChildHealthImmunizationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildHealthImmunizationHistory
         fields = '__all__'
+
+class ChildHealthMinimalSerializer(serializers.ModelSerializer):
+    chrec_details = ChildHealthrecordSerializer(source='chrec', read_only=True)
+    child_health_vital_signs = ChildHealthVitalSignsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChildHealth_History
+        fields = [
+            'chhist_id',            
+            'created_at',
+            'tt_status',
+            'status',
+            'chrec',
+            'chrec_details',
+            'child_health_vital_signs',
+        ]
+
 
 class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     chrec_details = ChildHealthrecordSerializer(source='chrec', read_only=True)

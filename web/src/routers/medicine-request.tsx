@@ -8,7 +8,6 @@ import AllMedicineRecords from "@/pages/healthServices/medicineservices/tables/A
 import MainMedicine from "@/pages/healthServices/medicineservices/Main";
 import PickupTable from "@/pages/healthServices/medicineservices/Request/request-processing/request-table";
 import PendingConfirmation from "@/pages/healthServices/medicineservices/Request/request-pending/request-pending-table";
-import MedicineLayout from "@/pages/healthServices/medicineservices/MedicineLayout";
 import CompletedRequest from "@/pages/healthServices/medicineservices/Request/completed-request/request-completed-table";
 import CompletedRequestDetail from "@/pages/healthServices/medicineservices/Request/completed-request/request-completed-details";
 import RejectedRequest from "@/pages/healthServices/medicineservices/Request/rejected-request/request-rejected-table";
@@ -17,12 +16,13 @@ import CancelledRequest from "@/pages/healthServices/medicineservices/Request/ca
 import CancelledRequestDetail from "@/pages/healthServices/medicineservices/Request/cancelled-request/request-cancelled-details";
 import ReferredRequest from "@/pages/healthServices/medicineservices/Request/referred-request/request-referred-table";
 import ReferredRequestDetail from "@/pages/healthServices/medicineservices/Request/referred-request/request-referred-details";
+import Layout from "@/pages/healthServices/Layout";
 
 
 export const medicineRequest = [
   {
     path: "services",
-    element: <MedicineLayout />, // Create this layout component
+    element: <Layout />, // Create this layout component
     children: [
       {
         path: "medicine",
