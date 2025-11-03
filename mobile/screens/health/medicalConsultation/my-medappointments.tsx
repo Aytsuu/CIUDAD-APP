@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, RefreshControl, Alert, Modal, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, RefreshControl, Alert, Modal, TextInput, FlatList, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle, ChevronRight, ChevronLeft as ChevronLeftIcon } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,10 +11,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { differenceInDays } from 'date-fns';
-import { AppointmentItem, useUserAppointments, cancelAppointment } from './queries/fetch'; // Make sure cancelAppointment is imported
+import { AppointmentItem, useUserAppointments, cancelAppointment } from './queries/fetch';
 
 // Types
-type TabType = "pending" | "confirmed" | "completed" | "cancelled" | "referred";
+type TabType = "pending" | "confirmed" | "completed" | "rejected" | "cancelled" | "referred";
 
 // Utility Functions
 const getStatusConfig = (status: string) => {
@@ -25,54 +25,67 @@ const getStatusConfig = (status: string) => {
         color: 'text-yellow-700', 
         bgColor: 'bg-yellow-100', 
         borderColor: 'border-yellow-200', 
-        label: 'Pending' 
+        label: 'Pending',
+        icon: '⏳'
       };
     case 'confirmed':
       return { 
         color: 'text-blue-700', 
         bgColor: 'bg-blue-100', 
         borderColor: 'border-blue-200', 
-        label: 'Confirmed' 
+        label: 'Confirmed',
+        icon: '✓'
       };
     case 'completed':
       return { 
         color: 'text-green-700', 
         bgColor: 'bg-green-100', 
         borderColor: 'border-green-200', 
-        label: 'Completed' 
+        label: 'Completed',
+        icon: '✓'
       };
     case 'cancelled':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Cancelled',
+        icon: '✕'
+      };
     case 'rejected':
       return { 
         color: 'text-red-700', 
         bgColor: 'bg-red-100', 
         borderColor: 'border-red-200', 
-        label: 'Cancelled' 
+        label: 'Rejected',
+        icon: '✕'
       };
     case 'referred':
       return { 
         color: 'text-purple-700', 
         bgColor: 'bg-purple-100', 
         borderColor: 'border-purple-200', 
-        label: 'Referred' 
+        label: 'Referred',
+        icon: '→'
       };
     default:
       return { 
         color: 'text-gray-700', 
         bgColor: 'bg-gray-100', 
         borderColor: 'border-gray-200', 
-        label: status 
+        label: status,
+        icon: '•'
       };
   }
 };
 
-// Convert tab to backend status parameter
 const getStatusParam = (tab: TabType): string => {
   const statusMap: Record<TabType, string> = {
     'pending': 'pending',
     'confirmed': 'confirmed',
     'completed': 'completed',
     'cancelled': 'cancelled',
+    'rejected': 'rejected',
     'referred': 'referred'
   };
   return statusMap[tab];
@@ -82,62 +95,68 @@ const getStatusParam = (tab: TabType): string => {
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const statusConfig = getStatusConfig(status);
   return (
-    <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
+    <View className={`px-3 py-1.5 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
       <Text className={`text-xs font-semibold ${statusConfig.color}`}>
-        {statusConfig.label}
+        {statusConfig.icon} {statusConfig.label}
       </Text>
     </View>
   );
 };
 
+// Improved Tab Bar with Horizontal Scroll
 const TabBar: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
-  counts: { pending: number; confirmed: number; completed: number; cancelled: number; referred: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('pending')}
-      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Pending ({counts.pending})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('confirmed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'confirmed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'confirmed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Confirmed ({counts.confirmed})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('completed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Completed ({counts.completed})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('cancelled')}
-      className={`flex-1 items-center py-3 ${activeTab === 'cancelled' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Cancelled ({counts.cancelled})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('referred')}
-      className={`flex-1 items-center py-3 ${activeTab === 'referred' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'referred' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Referred ({counts.referred})
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+  counts: { pending: number; confirmed: number; completed: number; rejected: number; cancelled: number; referred: number };
+}> = ({ activeTab, setActiveTab, counts }) => {
+  const tabs: { key: TabType; label: string; color: string; bgColor: string }[] = [
+    { key: 'pending', label: 'Pending', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+    { key: 'confirmed', label: 'Confirmed', color: 'text-blue-700', bgColor: 'bg-blue-50' },
+    { key: 'completed', label: 'Completed', color: 'text-green-700', bgColor: 'bg-green-50' },
+    { key: 'rejected', label: 'Rejected', color: 'text-red-700', bgColor: 'bg-red-50' },
+    { key: 'cancelled', label: 'Cancelled', color: 'text-gray-700', bgColor: 'bg-gray-50' },
+    { key: 'referred', label: 'Referred', color: 'text-purple-700', bgColor: 'bg-purple-50' },
+  ];
+
+  return (
+    <View className="bg-white border-b border-gray-200">
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              className={`mr-2 px-4 py-2.5 rounded-lg border-2 ${
+                isActive 
+                  ? `${tab.bgColor} border-blue-500` 
+                  : 'bg-white border-gray-200'
+              }`}
+              activeOpacity={0.7}
+            >
+              <View className="flex-row items-center">
+                <Text className={`text-sm font-semibold ${isActive ? tab.color : 'text-gray-600'}`}>
+                  {tab.label}
+                </Text>
+                <View className={`ml-2 px-2 py-0.5 rounded-full ${
+                  isActive ? 'bg-white' : 'bg-gray-100'
+                }`}>
+                  <Text className={`text-xs font-bold ${isActive ? tab.color : 'text-gray-600'}`}>
+                    {counts[tab.key]}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
 
 const AppointmentCard: React.FC<{
   item: AppointmentItem;
@@ -175,7 +194,7 @@ const AppointmentCard: React.FC<{
           <View className="flex-row items-center flex-1">
             <Calendar size={16} color="#6B7280" />
             <Text className="ml-2 text-sm text-gray-700">
-              {formatDate(item.scheduled_date)} - {item.meridiem}
+              Date requested: {formatDate(item.scheduled_date)} ({item.meridiem})
             </Text>
           </View>
         </View>
@@ -217,7 +236,6 @@ const AppointmentCard: React.FC<{
   );
 };
 
-// Enhanced Cancel Modal Component
 const CancelModal: React.FC<{
   visible: boolean;
   item: AppointmentItem | null;
@@ -280,7 +298,6 @@ const CancelModal: React.FC<{
   );
 };
 
-// Pagination Controls Component
 const PaginationControls: React.FC<{
   currentPage: number;
   totalPages: number;
@@ -330,19 +347,17 @@ const AppointmentTracker = () => {
   const rpId = user?.rp;
   const pageSize = 10;
 
-  // Debounce search to avoid too many API calls
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1); // Reset to first page when search changes
+      setCurrentPage(1);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset page when tab changes
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, debouncedSearch]);
@@ -377,7 +392,6 @@ const AppointmentTracker = () => {
       let errorMessage = 'Failed to cancel appointment. Please try again.';
       
       if (error.response) {
-        // Server responded with error status
         const status = error.response.status;
         const data = error.response.data;
         
@@ -404,20 +418,20 @@ const AppointmentTracker = () => {
     },
   });
 
-  // Get counts for each tab
   const { data: allAppointmentsData } = useUserAppointments(
     rpId || '',
-    undefined, // No status filter
-    undefined, // No search
-    1, // First page only for counts
-    1000 // Large page size to get all counts
+    undefined,
+    undefined,
+    1,
+    1000
   );
 
   const counts = {
     pending: allAppointmentsData?.results.filter(a => a.status === 'pending').length || 0,
     confirmed: allAppointmentsData?.results.filter(a => a.status === 'confirmed').length || 0,
     completed: allAppointmentsData?.results.filter(a => a.status === 'completed').length || 0,
-    cancelled: allAppointmentsData?.results.filter(a => ['cancelled', 'rejected'].includes(a.status)).length || 0,
+    rejected: allAppointmentsData?.results.filter(a => a.status === 'rejected').length || 0,
+    cancelled: allAppointmentsData?.results.filter(a => a.status === 'cancelled').length || 0,
     referred: allAppointmentsData?.results.filter(a => a.status === 'referred').length || 0,
   };
 
@@ -519,11 +533,11 @@ const AppointmentTracker = () => {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search..."
+              placeholder="Search appointments..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -531,28 +545,28 @@ const AppointmentTracker = () => {
           </View>
         </View>
 
-        {/* Tab Bar */}
+        {/* Improved Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
-        {/* Reminder */}
+        {/* Reminders */}
         {activeTab === 'pending' && (
-          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-3 rounded-lg">
             <Text className="text-blue-800 text-sm font-medium">
-              Note: Appointments cannot be cancelled within 2 days of the scheduled date.
+              📌 Note: Appointments cannot be cancelled within 2 days of the scheduled date.
             </Text>
           </View>
         )}
         {activeTab === 'confirmed' && (
-          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-3 rounded-lg">
             <Text className="text-blue-800 text-sm font-medium">
-              Reminder: Arrive on time at the Barangay Health Center.
+              ⏰ Reminder: Arrive on time at the Barangay Health Center.
             </Text>
           </View>
         )}
         {activeTab === 'referred' && (
-          <View className="bg-purple-50 border-l-4 border-purple-400 px-4 py-3 mx-4 my-2 rounded-xl">
+          <View className="bg-purple-50 border-l-4 border-purple-400 px-4 py-3 mx-4 my-3 rounded-lg">
             <Text className="text-purple-800 text-sm font-medium">
-              Note: Referred appointments require follow-up with the designated specialist or facility.
+              🏥 Note: Referred appointments require follow-up with the designated specialist or facility.
             </Text>
           </View>
         )}

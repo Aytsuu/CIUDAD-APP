@@ -27,8 +27,8 @@ from pagination import *
 from apps.healthProfiling.models import *
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
 from utils.create_notification import NotificationQueries
-
-
+from .utils import send_appointment_status_notifications
+from .models import *
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
@@ -1689,12 +1689,12 @@ class UserAppointmentsView(generics.ListAPIView):
         if status:
             if status == 'cancelled':
                 # For cancelled tab, include both cancelled and rejected statuses
-                queryset = queryset.filter(status__in=['cancelled', 'rejected'])
+                queryset = queryset.filter(status='cancelled')
             else:
                 queryset = queryset.filter(status=status)
         elif not include_archived:
             # Default behavior - exclude cancelled if not specifically requested
-            queryset = queryset.exclude(status__in=['cancelled', 'rejected'])
+            queryset = queryset.exclude(status='cancelled')
 
         # Search functionality
         if search:
@@ -1707,8 +1707,6 @@ class UserAppointmentsView(generics.ListAPIView):
 
         return queryset.order_by('-created_at')
     
-
-
 
 class CancelAppointmentView(APIView):
     def patch(self, request, appointment_id):
@@ -1730,6 +1728,7 @@ class CancelAppointmentView(APIView):
                 appointment.status = 'cancelled'
                 appointment.archive_reason = archive_reason
                 appointment.save()
+                
 
                 # Decrease slot booking count
                 date_slot = DateSlots.objects.get(date=appointment.scheduled_date)
@@ -1739,6 +1738,9 @@ class CancelAppointmentView(APIView):
                     date_slot.pm_current_bookings = max(0, date_slot.pm_current_bookings - 1)
                 date_slot.save()
 
+                send_appointment_status_notifications(appointment,'cancelled')
+                
+                
             return Response({'success': True, 'detail': 'Appointment cancelled successfully.'}, status=status.HTTP_200_OK)
 
         except DateSlots.DoesNotExist:
@@ -1749,8 +1751,6 @@ class CancelAppointmentView(APIView):
             return Response({'success': True, 'detail': 'Appointment cancelled, but slot update failed.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
         
 #================== WEBVIEW APPOINTMENT==============
 
@@ -1858,6 +1858,21 @@ class PendingMedicalUserAppointmentsView(generics.ListAPIView):
 class ActionAppointmentView(generics.RetrieveUpdateAPIView):
     serializer_class=MedConsultAppointmentSerializer
     queryset = MedConsultAppointment.objects.all()
+
+    def perform_update(self, serializer):
+        # Get the original status before update
+        instance = serializer.instance
+        original_status = instance.status
+
+        # Perform the update
+        super().perform_update(serializer)
+
+        # Get the new status after update
+        new_status = serializer.instance.status
+
+        # Send notification if status changed
+        if new_status != original_status and new_status in ['confirmed', 'referred', 'missed','rejected']:
+            send_appointment_status_notifications(serializer.instance, new_status)
 
         
 #================== WEBVIEW APPOINTMENT==============
@@ -2345,78 +2360,74 @@ class  MonthlyReportConsulted(APIView):
         
         return {}
     
-def send_missed_appointment_notifications(appointment):
-    """
-    Sends notifications when a MedConsultAppointment is marked as 'missed'
-    """
-    try:
-        notifier = NotificationQueries()
+# def send_missed_appointment_notifications(appointment):
+#     try:
+#         notifier = NotificationQueries()
 
-        # 1. Get Resident (Patient)
-        resident = appointment.rp
-        resident_name = "Resident"
-        resident_rp_id = None
+#         # 1. Get Resident (Patient)
+#         resident = appointment.rp
+#         resident_name = "Resident"
+#         resident_rp_id = None
 
-        if resident and resident.per:
-            resident_name = f"{resident.per.per_fname} {resident.per.per_lname}".strip()
-            resident_rp_id = str(resident.rp_id)
+#         if resident and resident.per:
+#             resident_name = f"{resident.per.per_fname} {resident.per.per_lname}".strip()
+#             resident_rp_id = str(resident.rp_id)
 
-        # 2. Prepare common data
-        scheduled = appointment.scheduled_date
-        meridiem = "AM" if appointment.meridiem == "AM" else "PM"
-        formatted_date = scheduled.strftime("%B %d, %Y")
-        complaint = appointment.chief_complaint or "Medical Consultation"
+#         # 2. Prepare common data
+#         scheduled = appointment.scheduled_date
+#         meridiem = "AM" if appointment.meridiem == "AM" else "PM"
+#         formatted_date = scheduled.strftime("%B %d, %Y")
+#         complaint = appointment.chief_complaint or "Medical Consultation"
 
-        # === NOTIFY RESIDENT ===
-        if resident_rp_id:
-            resident_success = notifier.create_notification(
-                title="Missed Appointment",
-                message=(
-                    f"You missed your scheduled appointment on {formatted_date} ({meridiem}).\n"
-                    f"Chief Complaint: {complaint}\n"
-                    "Please reschedule at your earliest convenience."
-                ),
-                # sender="00001250924",  # System
-                recipients=[resident_rp_id],
-                notif_type="APPOINTMENT_MISSED",
-                # target_obj=None,
-                web_route="/services/medical-consultation/my-appointments",
-                web_params={"appointment_id": str(appointment.id)},
-                mobile_route="/(health)/medical-consultation/my-appointments",
-                mobile_params={"appointment_id": str(appointment.id)},
-            )
-            print(f"{'Success' if resident_success else 'Failed'}: Resident missed appointment notification → {resident_name}")
+#         # === NOTIFY RESIDENT ===
+#         if resident_rp_id:
+#             resident_success = notifier.create_notification(
+#                 title="Missed Appointment",
+#                 message=(
+#                     f"You missed your scheduled appointment on {formatted_date} ({meridiem}).\n"
+#                     f"Chief Complaint: {complaint}\n"
+#                     "Please reschedule at your earliest convenience."
+#                 ),
+#                 # sender="00001250924",  # System
+#                 recipients=[resident_rp_id],
+#                 notif_type="APPOINTMENT_MISSED",
+#                 # target_obj=None,
+#                 web_route="",
+#                 web_params={},
+#                 mobile_route="/(health)/medical-consultation/my-appointments",
+#                 mobile_params={"appointment_id": str(appointment.id)},
+#             )
+#             print(f"{'Success' if resident_success else 'Failed'}: Resident missed appointment notification → {resident_name}")
 
-        # === NOTIFY ADMIN / STAFF ===
-        # Option: Notify all active staff with role 'admin', 'nurse', or 'doctor'
-        medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
+#         # === NOTIFY ADMIN / STAFF ===
+#         medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
 
-        admin_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
+#         admin_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
 
-        if admin_recipients:
-            admin_success = notifier.create_notification(
-                title="Patient Missed Appointment",
-                message=(
-                    f"Resident {resident_name} missed their appointment.\n"
-                    f"Date: {formatted_date} ({meridiem})\n"
-                    f"Complaint: {complaint}\n"
-                    f"Appointment ID: {appointment.id}"
-                ),
-                # sender="00001250924",
-                recipients=admin_recipients,
-                notif_type="APPOINTMENT_MISSED_ADMIN",
-                # target_obj=None,
-                web_route="/services/medical-consultation/records",
-                web_params={"status": "missed"},
-                mobile_route="/(admin)/appointments/missed",
-                mobile_params={},
-            )
-            print(f"{'Success' if admin_success else 'Failed'}: Admin missed appointment notification → {len(admin_recipients)} staff")
+#         if admin_recipients:
+#             admin_success = notifier.create_notification(
+#                 title="Patient Missed Appointment",
+#                 message=(
+#                     f"Resident {resident_name} missed their appointment.\n"
+#                     f"Date: {formatted_date} ({meridiem})\n"
+#                     f"Complaint: {complaint}\n"
+#                     f"Appointment ID: {appointment.id}"
+#                 ),
+#                 # sender="00001250924",
+#                 recipients=admin_recipients,
+#                 notif_type="APPOINTMENT_MISSED_ADMIN",
+#                 # target_obj=None,
+#                 web_route="/services/medical-consultation/appointments/missed",
+#                 web_params={},
+#                 mobile_route="/(admin)/appointments/missed",
+#                 mobile_params={},
+#             )
+#             print(f"{'Success' if admin_success else 'Failed'}: Admin missed appointment notification → {len(admin_recipients)} staff")
 
-        return True
+#         return True
 
-    except Exception as e:
-        print(f"Error sending missed appointment notifications: {str(e)}")
-        return False
+#     except Exception as e:
+#         print(f"Error sending missed appointment notifications: {str(e)}")
+#         return False
     
     
