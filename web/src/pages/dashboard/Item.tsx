@@ -19,11 +19,10 @@ import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/an
 // import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
 import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
 // import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
-
 // import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
-
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
+
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
@@ -182,7 +181,7 @@ export const getItemsConfig = (
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
-            title: "Medical History",
+            title: "Morbidity",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
          
@@ -200,10 +199,6 @@ export const getItemsConfig = (
         },
         
 
-          {
-            title: "Maternal",
-            element: <MaternalAgeDistributionChart initialMonth={currentMonth} />,
-          },
         ],
         sidebar: [
           {

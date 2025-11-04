@@ -145,6 +145,13 @@ export default function BhwMidwifeReports() {
       link: "/reports/fhis-monthly-records"
     },
    
+    {
+      title: "Monthly Morbidities Summary",
+      icon: <Heart className="w-6 h-6 text-pink-600" />,
+      bgColor: "bg-gradient-to-br from-pink-50 to-rose-50",
+      description: "View morbidity surveillance records grouped by month",
+      link: "/reports/monthly-morbidity-summary"
+    }
   ];
 
   const allReports = [...bhwReport, ...recipientLists, ...inventoryReports, ...optReports, ...masterlistReports, ...fhisReports];

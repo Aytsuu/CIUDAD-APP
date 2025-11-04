@@ -170,6 +170,31 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
               </div>
             ) : (
               <>
+
+              
+                {/* Summary stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                  <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-100">
+                    <div className="text-2xl font-bold text-blue-700">{totalIllnesses}</div>
+                    <div className="text-sm text-blue-600 font-medium">Total Illnesses</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg text-center border border-green-100">
+                    <div className="text-2xl font-bold text-green-700">{data.total_records}</div>
+                    <div className="text-sm text-green-600 font-medium">Total Cases</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-100">
+                    <div className="text-2xl font-bold text-purple-700">
+                      {allIllnesses.length > 0 ? allIllnesses[0].count : 0}
+                    </div>
+                    <div className="text-sm text-purple-600 font-medium">Highest Count</div>
+                  </div>
+                  <div className="bg-amber-50 p-4 rounded-lg text-center border border-amber-100">
+                    <div className="text-2xl font-bold text-amber-700">
+                      {allIllnesses.length > 0 ? (data.total_records / totalIllnesses).toFixed(1) : 0}
+                    </div>
+                    <div className="text-sm text-amber-600 font-medium">Avg per Illness</div>
+                  </div>
+                </div>
                 <div className="text-sm text-gray-500 text-center mb-4">
                   Showing top {Math.min(topN, allIllnesses.length)} illnesses
                   {otherIllnessesCount > 0 && <span> and {otherIllnessesCount} others combined</span>}
@@ -208,29 +233,6 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
                   </ResponsiveContainer>
                 </div>
 
-                {/* Summary stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-100">
-                    <div className="text-2xl font-bold text-blue-700">{totalIllnesses}</div>
-                    <div className="text-sm text-blue-600 font-medium">Total Illnesses</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg text-center border border-green-100">
-                    <div className="text-2xl font-bold text-green-700">{data.total_records}</div>
-                    <div className="text-sm text-green-600 font-medium">Total Cases</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-100">
-                    <div className="text-2xl font-bold text-purple-700">
-                      {allIllnesses.length > 0 ? allIllnesses[0].count : 0}
-                    </div>
-                    <div className="text-sm text-purple-600 font-medium">Highest Count</div>
-                  </div>
-                  <div className="bg-amber-50 p-4 rounded-lg text-center border border-amber-100">
-                    <div className="text-2xl font-bold text-amber-700">
-                      {allIllnesses.length > 0 ? (data.total_records / totalIllnesses).toFixed(1) : 0}
-                    </div>
-                    <div className="text-sm text-amber-600 font-medium">Avg per Illness</div>
-                  </div>
-                </div>
               </>
             )}
           </div>

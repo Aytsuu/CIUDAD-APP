@@ -4,10 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import {getIllnessChart,getVaccinationChart} from "../restful-api/get";
 
 
-
-
-
-
 export const useMedicalHistoryChart = (month: string) => {
     return useQuery({
       queryKey: ["medicalHistoryChart", month],

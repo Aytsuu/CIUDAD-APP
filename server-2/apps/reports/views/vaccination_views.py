@@ -3,7 +3,7 @@ from apps.vaccination.models import *
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 
 
@@ -61,3 +61,33 @@ class MonthlyVaccinationChart(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+class VaccineResidentCountView(APIView):
+    def get(self, request):
+        try:
+            # Group by vaccine stock and dose number, then get vaccine name through stock
+            vaccine_resident_counts = VaccinationHistory.objects.values(
+                'vacStck_id',  # vaccine stock ID
+                'vacStck_id__vac_id__vac_name',  # vaccine name through stock
+                'vachist_doseNo'
+            ).annotate(
+                total_residents=Count('vacrec__patrec_id', distinct=True)
+            ).order_by('vacStck_id__vac_id__vac_name', 'vachist_doseNo')
+
+            # Prepare response data
+            response_data = [
+                {
+                    "vaccine_stock_id": item['vacStck_id'],
+                    "vaccine_name": item['vacStck_id__vac_id__vac_name'],
+                    "dose_number": item['vachist_doseNo'],
+                    "total_residents": item['total_residents']
+                }
+                for item in vaccine_resident_counts
+            ]
+
+            return Response({"success": True, "data": response_data}, status=200)
+        except Exception as e:
+            return Response({"success": False, "error": str(e)}, status=500)

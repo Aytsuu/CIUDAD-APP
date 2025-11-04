@@ -920,11 +920,12 @@ class ForwardedVaccinationCountView(APIView):
 
 
 
-
 # ======SCHEDULES VACCINATION LAST STEP======
 
-import logging
+
+
 logger = logging.getLogger(__name__)
+
 class VaccinationCompletionAPIView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -947,7 +948,7 @@ class VaccinationCompletionAPIView(APIView):
             # Get the vaccination history record
             try:
                 vaccination = VaccinationHistory.objects.select_related(
-                    'followv', 'vacrec', 'vacrec__patrec_id'
+                    'followv', 'vacrec', 'vacrec__patrec_id', 'vacStck_id', 'vacStck_id__vac_id'
                 ).get(vachist_id=vaccination_id)
             except VaccinationHistory.DoesNotExist:
                 return Response(
@@ -959,6 +960,17 @@ class VaccinationCompletionAPIView(APIView):
             sid = transaction.savepoint()
             
             try:
+                # CHECK: If it's a routine vaccine and previous follow-up was missed
+                is_routine_missed = self.check_routine_followup_missed(vaccination)
+                
+                if is_routine_missed:
+                    return Response({
+                        "success": False,
+                        "error": "Cannot complete routine vaccination - previous follow-up was missed and scheduled date has passed the interval",
+                        "patientId": patient_id,
+                        "vaccinationId": vaccination_id
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 # 1. Handle previous vaccination's follow-up if exists
                 previous_vaccination = VaccinationHistory.objects.filter(
                     vacrec=vaccination.vacrec,
@@ -1006,7 +1018,7 @@ class VaccinationCompletionAPIView(APIView):
                         # If date parsing fails, just log it and continue without follow-up
                         logger.warning("Invalid date format in follow-up data, skipping follow-up processing")
                 
-                # 3. Update vaccination status to completed (this always happens)
+                # 3. Update vaccination status to completed (this always happens if not routine missed)
                 logger.info(f"Updating vaccination status to completed: {vaccination_id}")
                 vaccination.vachist_status = 'completed'
                 if follow_up_visit:
@@ -1039,6 +1051,86 @@ class VaccinationCompletionAPIView(APIView):
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def check_routine_followup_missed(self, vaccination):
+        """
+        Check if this is a routine vaccine where previous follow-up was missed
+        and the scheduled date has passed the set time interval
+        """
+        try:
+            # Get the vaccine information
+            vaccine = None
+            if vaccination.vacStck_id and vaccination.vacStck_id.vac_id:
+                vaccine = vaccination.vacStck_id.vac_id
+            elif vaccination.vac:
+                vaccine = vaccination.vac
+            
+            if not vaccine or vaccine.vac_type_choices != 'routine':
+                return False
+            
+            # Get routine frequency for this vaccine
+            try:
+                routine_freq = RoutineFrequency.objects.get(vac_id=vaccine.vac_id)
+            except RoutineFrequency.DoesNotExist:
+                # No frequency defined, can't check intervals
+                return False
+            
+            # Get the most recent completed vaccination for this patient and vaccine
+            previous_vaccination = VaccinationHistory.objects.filter(
+                vacrec=vaccination.vacrec,
+                vachist_status='completed'
+            ).filter(
+                Q(vacStck_id__vac_id=vaccine.vac_id) | 
+                Q(vac__vac_id=vaccine.vac_id)
+            ).exclude(vachist_id=vaccination.vachist_id).order_by('-date_administered').first()
+            
+            if not previous_vaccination:
+                # No previous vaccination, so no follow-up to miss
+                return False
+            
+            # Check if previous vaccination had a follow-up that was missed
+            if previous_vaccination.followv:
+                previous_followup = previous_vaccination.followv
+                today = timezone.now().date()
+                
+                # Calculate the expected completion date based on frequency
+                last_administered = previous_vaccination.date_administered
+                
+                if routine_freq.time_unit == 'days':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                elif routine_freq.time_unit == 'weeks':
+                    expected_completion_date = last_administered + timedelta(weeks=routine_freq.interval)
+                elif routine_freq.time_unit == 'months':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 30)
+                elif routine_freq.time_unit == 'years':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 365)
+                else:
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                
+                # Check conditions for missed follow-up:
+                # 1. Previous follow-up status is not 'completed'
+                # 2. Today is past the expected completion date
+                # 3. The scheduled follow-up date has passed
+                is_missed = (
+                    previous_followup.followv_status != 'completed' and
+                    today > expected_completion_date and
+                    previous_followup.followv_date and
+                    today > previous_followup.followv_date
+                )
+                
+                if is_missed:
+                    logger.warning(f"Routine vaccine follow-up missed: vaccine {vaccine.vac_name}, "
+                                 f"last administered {last_administered}, "
+                                 f"expected by {expected_completion_date}, "
+                                 f"scheduled for {previous_followup.followv_date}")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking routine follow-up status: {str(e)}")
+            # If there's an error in checking, allow the completion to proceed
+            return False
 
 
  
@@ -1239,28 +1331,23 @@ class VaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
-                                  vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id,assigned_to_instance):
-    
-        # Check if there's an existing vaccination record for this patient and vaccine
+                                vaccine_stock, status_val, follow_up_data, 
+                                vac_name, staff_id, assigned_to_instance):
+        
+        # Check if there's an existing vaccination record for this patient
         existing_vacrec = None
+        
         try:
             # First find patient records for this patient
             patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
             
-            # Look for a vaccination record that has history with the same vaccine
+            # Look for any existing vaccination record for this patient
             for patrec in patient_records:
                 try:
                     vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
-                    # Check if this vacrec has any history with the same vaccine
-                    if VaccinationHistory.objects.filter(
-                        vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id,
-                        
-                    ).exists():
-                        existing_vacrec = vacrec
-                        existing_patrec = patrec
-                        break
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
                 except VaccinationRecord.DoesNotExist:
                     continue
                     
@@ -1309,18 +1396,18 @@ class VaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination history - convert to integer
+        # Create vaccination history - always use dose 1 for routine vaccinations
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            vacStck_id=vaccine_stock,  # Removed assigned_to field
-            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
             followv=followv,
             signature=signature,
             date_administered=timezone.now().date(),
-            assigned_to= assigned_to_instance
+            assigned_to=assigned_to_instance
         )
         
         return {
@@ -1331,7 +1418,6 @@ class VaccinationSubmissionView(APIView):
             'followv_id': followv.followv_id if followv else None,
             'is_new_record': not existing_vacrec
         }
-
     def process_primary_vaccination(self, data, form_data, signature, pat_id, 
                                    vaccine_stock, status_val, follow_up_data, 
                                    vac_name, staff_id, vaccination_history,assigned_to_instance):
@@ -1948,28 +2034,23 @@ class MaternalVaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
-                                  vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id,assigned_to_instance):
+                              vaccine_stock, status_val, follow_up_data, 
+                              vac_name, staff_id, assigned_to_instance):
     
-        # Check if there's an existing vaccination record for this patient and vaccine
+        # Check if there's an existing vaccination record for this patient
         existing_vacrec = None
+        
         try:
             # First find patient records for this patient
             patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
             
-            # Look for a vaccination record that has history with the same vaccine
+            # Look for any existing vaccination record for this patient
             for patrec in patient_records:
                 try:
                     vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
-                    # Check if this vacrec has any history with the same vaccine
-                    if VaccinationHistory.objects.filter(
-                        vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id,
-                        
-                    ).exists():
-                        existing_vacrec = vacrec
-                        existing_patrec = patrec
-                        break
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
                 except VaccinationRecord.DoesNotExist:
                     continue
                     
@@ -1985,7 +2066,6 @@ class MaternalVaccinationSubmissionView(APIView):
             patient_record = PatientRecord.objects.create(
                 pat_id_id=pat_id,
                 patrec_type="Vaccination Record",
-                
             )
             
             # Create new vaccination record
@@ -2019,18 +2099,18 @@ class MaternalVaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination history - convert to integer
+        # Create vaccination history - always use dose 1 for routine vaccinations
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            vacStck_id=vaccine_stock,  # Removed assigned_to field
-            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
             followv=followv,
             signature=signature,
             date_administered=timezone.now().date(),
-            assigned_to= assigned_to_instance
+            assigned_to=assigned_to_instance
         )
         
         return {

@@ -306,11 +306,12 @@ export default function MonthlyFirstAidDetails() {
                     </div>
                   </div>
                   <div className="flex-1 text-center mx-4">
-                    <Label className="text-xs font-bold uppercase block text-gray-700">Republic of the Philippines</Label>
-                    <Label className="text-sm font-bold uppercase block">Cebu City Health Department</Label>
-                    <Label className="text-xs block text-gray-600">General Maxilom Extension, Carreta, Cebu City</Label>
-                    <Label className="text-xs block text-gray-600">(032) 232-6820; 232-6863</Label>
+                    <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
+                    <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label>
                   </div>
+                  <div className="w-24"></div>
                   <div className="w-24"></div>
                 </div>
 
@@ -348,7 +349,7 @@ export default function MonthlyFirstAidDetails() {
 
                 {/* Data Table */}
                 {isLoading ? (
-                  <div className="w-full h-32 flex items-center justify-center text-gray-500">
+                  <div className="w-full h-[250px] flex items-center justify-center text-gray-500">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                     <span className="ml-2 text-sm">Loading records...</span>
                   </div>
@@ -362,15 +363,12 @@ export default function MonthlyFirstAidDetails() {
                       headerCellClassName="font-bold  text-sm border border-black text-gray-900 text-center p-2"
                       defaultRowCount={30}
                     />
-                  </div>
-                )}
-              </div>
 
-              {/* Certification */}
+
+
               <div className="mt-6 mb-4">
                 <Label className="text-sm font-normal text-gray-700">Hereby certify that the names listed above are recipients of the first aid items as indicated</Label>
               </div>
-              {/* Signature Section */}
               <div className="signature-section mt-auto pt-8">
                 <div className="flex flex-col items-center gap-6">
                   {signatureBase64 && (
@@ -390,6 +388,13 @@ export default function MonthlyFirstAidDetails() {
                   </div>
                 </div>
               </div>
+                  </div>
+
+                )}
+              </div>
+
+
+
             </div>
           </div>
         </div>
