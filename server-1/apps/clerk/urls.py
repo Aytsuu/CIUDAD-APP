@@ -44,6 +44,8 @@ urlpatterns = [
 
     # resident case tracking
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
+    path('summon-payment-logs/<str:comp_id>/', SummonPaymentLogsView.as_view(), name='summon-payment-logs'),
+    path('file-action-payment-logs/<str:comp_id>/', FileActionPaymentLogsView.as_view(), name='file-action-payment-logs'),
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),
