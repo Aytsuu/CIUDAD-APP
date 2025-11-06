@@ -1,8 +1,4 @@
 from rest_framework import serializers
-from django.db import transaction 
-from datetime import date
-from django.utils import timezone
-from django.db.models import Max
 
 from apps.patientrecords.models import *
 from apps.maternal.models import *

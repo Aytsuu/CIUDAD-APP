@@ -104,7 +104,7 @@ export default function PrenatalForm() {
       ? {
           date_of_delivery: toNullIfEmpty(data.previousPregnancy.dateOfDelivery) ?? null,
           outcome: forceCapitalize(data.previousPregnancy.outcome) || null, 
-          type_of_delivery: forceCapitalize(data.previousPregnancy.typeOfDelivery) || null,
+          type_of_delivery: data.previousPregnancy.typeOfDelivery || null,
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           gender: forceCapitalize(data.previousPregnancy.gender) || null,
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
@@ -291,7 +291,14 @@ export default function PrenatalForm() {
       vital_o2: data.prenatalCare?.[0]?.notes?.o2 || null,
       
       // Selected medicines for micronutrient supplementation
-      selected_medicines: selectedMedicines.length > 0 ? selectedMedicines : undefined,
+      // Transform: ensure reason defaults to "Micronutrient supplementation" if not provided
+      selected_medicines: selectedMedicines.length > 0 
+        ? selectedMedicines.map(med => ({
+            minv_id: med.minv_id,
+            medrec_qty: med.medrec_qty,
+            reason: med.reason || "Micronutrient supplementation"
+          }))
+        : undefined,
       
       // Vaccination total dose for conditional vaccines
       vacrec_totaldose: data.prenatalVaccineInfo.vacrec_totaldose 

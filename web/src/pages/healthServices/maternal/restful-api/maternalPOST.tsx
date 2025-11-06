@@ -121,9 +121,9 @@ export interface PrenatalRecord {
   vital_pulse: string | null
   vital_o2: string | null
   selected_medicines?: Array<{
-    minv_id: string
-    medrec_qty: number
-    reason: string
+    minv_id: string              // Medicine inventory ID from MedicineInventory model
+    medrec_qty: number           // Quantity to dispense (positive integer)
+    reason?: string              // Reason for dispensing; defaults to "Micronutrient supplementation"
   }>
   vacrec_totaldose?: number | null
   assigned_to?: string

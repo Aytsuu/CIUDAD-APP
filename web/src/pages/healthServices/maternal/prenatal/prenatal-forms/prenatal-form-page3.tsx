@@ -24,6 +24,77 @@ import { ScrollText } from "lucide-react"
 import { ANCVisitsGuide } from "../../maternal-components/guide-for-8anc"
 import { useAuth } from "@/context/AuthContext"
 
+/**
+ * Medicine Selection Type
+ * Used for tracking selected medicines in prenatal form
+ */
+interface MedicineSelection {
+  minv_id: string              // Medicine inventory ID
+  medrec_qty: number           // Quantity to dispense
+  reason?: string              // Optional reason; defaults to "Micronutrient supplementation"
+}
+
+/**
+ * Constants for medicine handling
+ */
+const MEDICINE_CONSTANTS = {
+  REASON_DEFAULT: "Micronutrient supplementation",
+  UNIT_PCS: "pcs",
+  UNIT_BOXES: "boxes",
+} as const
+
+/**
+ * Helper function: Transform medicine selections for API submission
+ * Ensures reason field has default value
+ */
+const transformMedicineData = (medicines: any[]): MedicineSelection[] => {
+  return medicines.map(med => ({
+    minv_id: med.minv_id,
+    medrec_qty: med.medrec_qty,
+    reason: med.reason || MEDICINE_CONSTANTS.REASON_DEFAULT
+  }))
+}
+
+/**
+ * Helper function: Validate medicine stock availability
+ */
+const validateMedicineStock = (
+  selectedMeds: any[],
+  medicineOptions?: any[]
+): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = []
+
+  if (!medicineOptions) {
+    return { isValid: false, errors: ["Medicine options not loaded"] }
+  }
+
+  for (const med of selectedMeds) {
+    // Convert both to strings for comparison to handle type mismatches
+    const medicineItem = medicineOptions.find(
+      m => String(m.minv_id) === String(med.minv_id)
+    )
+    
+    if (!medicineItem) {
+      console.warn(`Medicine not found. Selected: ${med.minv_id}, Available IDs:`, medicineOptions.map(m => m.minv_id))
+      errors.push(`Medicine ID ${med.minv_id} not found in inventory`)
+      continue
+    }
+
+    const availableQty = Number(medicineItem.minv_qty_avail) || 0
+    const requestedQty = Number(med.medrec_qty) || 0
+
+    if (availableQty < requestedQty) {
+      const medicineName = medicineItem.med_id?.med_name || medicineItem.medicine_name || `Medicine ${med.minv_id}`
+      errors.push(
+        `Insufficient stock for ${medicineName}. ` +
+        `Available: ${availableQty}, Requested: ${requestedQty}`
+      )
+    }
+  }
+
+  return { isValid: errors.length === 0, errors }
+}
+
 // main  component
 export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedicines, setSelectedMedicines }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
@@ -50,8 +121,29 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
   }, [staff, staffId, form])
 
   const handleNext = async () => {
+    // Validate form fields first
     if (Object.keys(form.formState.errors).length === 0) {
-      console.log("Form is valid, proceeding to next page")
+      // Validate selected medicines stock if any are selected
+      if (selectedMedicines.length > 0) {
+        const stockValidation = validateMedicineStock(
+          selectedMedicines,
+          medicineStocksOptions?.medicines
+        )
+
+        if (!stockValidation.isValid) {
+          console.error("Medicine stock validation failed:", stockValidation.errors)
+          // Show error toast or alert to user
+          alert("Medicine Stock Issue:\n" + stockValidation.errors.join("\n"))
+          return
+        }
+        
+        console.log("Medicine stock validation passed")
+        // Transform medicine data before submission
+        const transformedMedicines = transformMedicineData(selectedMedicines)
+        console.log("Transformed medicines:", transformedMedicines)
+      }
+
+      console.log("Form is valid with valid medicine selections, proceeding to next page")
       onSubmit() 
     } else {
       console.log("Form validation failed for RHF fields.")
@@ -424,15 +516,19 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
                     <div className="p-4 flex justify-center items-center space-y-4">
                       <p className="text-center text-red-600">Loading medicines...</p>
                     </div>
-                  ) : (
+                  ) : medicineStocksOptions && medicineStocksOptions.medicines ? (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions?.medicines ?? []}
+                      medicines={medicineStocksOptions.medicines}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
+                  ) : (
+                    <div className="p-4 flex justify-center items-center">
+                      <p className="text-center text-red-600">No medicines available</p>
+                    </div>
                   )}
                   
                   <div className="flex px-3 mt-4">

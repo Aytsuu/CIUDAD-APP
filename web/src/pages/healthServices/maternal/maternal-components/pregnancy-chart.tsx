@@ -59,7 +59,7 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 	return (
 		<div className="bg-white rounded-sm shadow-sm border border-gray-200">
 			<div className="p-4 w-full">
-				<h2 className="flex items-center text-lg font-semibold mb-3 gap-1"> Overall Pregnancy Summary</h2>
+				<h2 className="flex items-center text-lg font-semibold mb-3 gap-1">Pregnancy Summary</h2>
 				<div className="grid grid-cols-2 gap-2 w-full">
 					{/* active */}
 					<div className="flex flex-col text-center rounded-md border p-4 gap-2">

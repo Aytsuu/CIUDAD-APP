@@ -6,6 +6,7 @@ from .views.postpartum_views import *
 from .views.prenatal_views import *
 from .views.pregnancy_views import *
 from .views.labresult_views import *
+from .views.follow_up_visits_views import *
 
 urlpatterns=[
     # Forwarded
@@ -15,6 +16,7 @@ urlpatterns=[
     path('maternal-patients/charts/<str:month>/', MaternalPatientsListView.as_view(), name='maternal-patients-charts'),
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
 	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
+    path('maternal-patients/latest-followupvisit/<str:pat_id>/', MaternalPatientFollowUpVisitsView.as_view(), name='maternal-patient-latest-followupvisit'),
    
     # Prenatal Appointment Request URLs
     path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
@@ -26,6 +28,7 @@ urlpatterns=[
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),
     path('prenatal/appointment/request/<int:par_id>/missed/', PrenatalAppointmentMissedView.as_view(), name='prenatal-appointment-missed'),
+
     # Pregnancy URLs
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),
