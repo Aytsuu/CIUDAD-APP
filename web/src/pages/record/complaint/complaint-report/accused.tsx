@@ -51,11 +51,11 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
+  const [_selectedResident, setSelectedResident] = useState<any>(null);
   const [selectedResidentValue, setSelectedResidentValue] =
     useState<string>("");
 
-  const { data: allResidents = [], isLoading: isResidentsLoading } =
+  const { data: allResidents = [], isLoading: _isResidentsLoading } =
     useAllResidents();
 
   const currentAccused = watch(`accused.${activeTab}`);

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { delWasteEvent, restoreWasteEvent } from "../api/wasteEventDelReq";
-import { WasteEvent } from "./wasteEventQueries";
+// import { WasteEvent } from "./wasteEventQueries";
 
 export const useDeleteWasteEvent = () => {
   const queryClient = useQueryClient();
@@ -10,7 +10,7 @@ export const useDeleteWasteEvent = () => {
     mutationFn: ({ we_num, permanent = false }: { we_num: number; permanent?: boolean }) => 
       delWasteEvent(we_num, permanent),
     onSuccess: (_data, variables) => {
-      const { we_num, permanent } = variables;
+      const {  permanent } = variables;
       if (permanent) {
         showSuccessToast("Waste event permanently deleted successfully");
       } else {

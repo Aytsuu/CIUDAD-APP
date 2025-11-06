@@ -1,7 +1,6 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
 import {
-  Plus,
   X,
   Search,
   Trash2,
@@ -49,11 +48,11 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
     name: "complainant",
   });
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
+  const [_selectedResident, setSelectedResident] = useState<any>(null);
   const [selectedResidentValue, setSelectedResidentValue] =
     useState<string>("");
 
-  const { data: allResidents = [], isLoading: isResidentsLoading } =
+  const { data: allResidents = [], isLoading: _isResidentsLoading } =
     useAllResidents();
 
   const currentComplainant = watch(`complainant.${activeTab}`);

@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { PlusCircle, Search, Archive, X, ListFilterIcon } from "lucide-react";
+import { PlusCircle, Search, X, ListFilterIcon } from "lucide-react";
 import { Link } from "react-router";
 import { FaRegQuestionCircle } from "react-icons/fa";
 
