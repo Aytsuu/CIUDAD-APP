@@ -753,7 +753,7 @@ export default function SummonDetails() {
     },
     {
       accessorKey: "hs_level",
-      header: "Mediation Level",
+      header: "Level",
       cell: ({ row }) => (
         <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
           {row.original.hs_level}

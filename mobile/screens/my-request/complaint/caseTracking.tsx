@@ -63,8 +63,8 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
   // Get case status display
   const getCaseStatusDisplay = () => {
     return (
-      tracking.summon_case?.sc_conciliation_status ??
-      tracking.summon_case?.sc_mediation_status ??
+      tracking.summon_case?.sc_conciliation_status ||
+      tracking.summon_case?.sc_mediation_status ||
       "None"
     );
   };
@@ -90,16 +90,12 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
   };
 
   const handleCaseCompletionPress = () => {
-    // Navigate to case completion details or show modal
-    // You can customize this based on your needs
-    // if (tracking.summon_case?.sc_id) {
-    //   router.push({
-    //     pathname: "/(my-request)/complaint-tracking/case-details",
-    //     params: {
-    //       sc_id: tracking?.summon_case?.sc_id || "",
-    //     },
-    //   });
-    // }
+    router.push({
+      pathname: "/(my-request)/complaint-tracking/file-action-payment-logs",
+      params: {
+        comp_id: comp_id,
+      },
+    });
   };
 
   const getSteps = () => {
