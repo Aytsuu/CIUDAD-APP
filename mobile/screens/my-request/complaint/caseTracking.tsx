@@ -79,6 +79,29 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
     });
   };
 
+  const handlePaymentPress = () => {
+    // Navigate to payment logs screen
+    router.push({
+      pathname: "/(my-request)/complaint-tracking/summon-payment-logs",
+      params: {
+        comp_id: comp_id,
+      },
+    });
+  };
+
+  const handleCaseCompletionPress = () => {
+    // Navigate to case completion details or show modal
+    // You can customize this based on your needs
+    // if (tracking.summon_case?.sc_id) {
+    //   router.push({
+    //     pathname: "/(my-request)/complaint-tracking/case-details",
+    //     params: {
+    //       sc_id: tracking?.summon_case?.sc_id || "",
+    //     },
+    //   });
+    // }
+  };
+
   const getSteps = () => {
     const steps: {
       id: number;
@@ -87,11 +110,13 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       status: string;
       display_status: string;
       details: React.ReactNode;
+      onPress: () => void;
+      isActionable: boolean;
     }[] = [];
 
     // 1 – Payment
-    const payStatus = tracking.payment_request?.pay_status?.toLowerCase() ?? "unpaid";
-    const amount = tracking.payment_request?.pay_amount;
+    const payStatus = tracking.payment_request_summon?.pay_status?.toLowerCase() ?? "unpaid";
+    const amount = tracking.payment_request_summon?.pay_amount;
 
     steps.push({
       id: 1,
@@ -111,7 +136,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         </View>
       ),
       status: payStatus,
-      display_status: tracking.payment_request?.pay_status || "Unpaid",
+      display_status: tracking.payment_request_summon?.pay_status || "Unpaid",
       details: (
         <View className="space-y-1">
           <View className="flex flex-row items-center justify-between w-full">
@@ -130,12 +155,14 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
               }`}
             >
               {payStatus === "unpaid"
-                ? formatDate(tracking?.payment_request?.pay_due_date || "", "long")
-                : formatTimestamp(tracking.payment_request?.pay_date_paid || "")}
+                ? formatDate(tracking?.payment_request_summon?.pay_due_date || "", "long")
+                : formatTimestamp(tracking.payment_request_summon?.pay_date_paid || "")}
             </Text>
           </View>
         </View>
       ),
+      onPress: handlePaymentPress,
+      isActionable: true
     });
 
     // Helper: Schedule Hearing Description
@@ -284,6 +311,8 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       status: getCaseStatusDisplay().toLowerCase(),
       display_status: getCaseStatusDisplay(),
       details: getScheduleHearingDetails(),
+      onPress: handleSchedulePress,
+      isActionable: true
     });
 
     // 3 – Case Completion
@@ -307,6 +336,8 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       ) : (
         <Text className="text-xs text-gray-700">Pending mediation outcome.</Text>
       ),
+      onPress: handleCaseCompletionPress,
+      isActionable: true
     });
 
     return steps;
@@ -463,16 +494,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
     }
   };
 
-  const isStepActionable = (id: number) => {
-    if (id === 2) {
-      const payment = steps.find((s) => s.id === 1);
-      return payment?.status === "paid";
-    }
-    return false;
-  };
-
   const isStepCompleted = (step: any, stepIndex: number) => {
-
     switch (step.id) {
       case 1:
         return step.status === "paid";
@@ -491,7 +513,6 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         <View className="px-5 py-6 space-y-6">
           {steps.map((step, idx) => {
             const isLast = idx === steps.length - 1;
-            const isActionable = isStepActionable(step.id);
             const isCompleted = isStepCompleted(step, idx);
             const isLocked = !isPreviousStepCompleted(idx);
 
@@ -541,9 +562,9 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                           </View>
                         </View>
                       </View>
-                    ) : isActionable ? (
+                    ) : (
                       <TouchableOpacity
-                        onPress={handleSchedulePress}
+                        onPress={step.onPress}
                         className={`bg-white rounded-xl p-5 shadow-md border-2 ${
                           isCompleted
                             ? "border-emerald-200 active:bg-emerald-50"
@@ -573,43 +594,15 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                           {step.description}
                           {step.details && (
                             <View className="mt-2">
-                              <View className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                              <View className={`p-3 rounded-lg border ${
+                                isCompleted ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
+                              }`}>
                                 {step.details}
                               </View>
                             </View>
                           )}
                         </View>
                       </TouchableOpacity>
-                    ) : (
-                      <View
-                        className={`bg-white rounded-xl p-5 shadow-md border-2 ${
-                          isCompleted ? "border-emerald-200" : "border-blue-200"
-                        }`}
-                      >
-                        <View className="flex-row justify-between items-start mb-3">
-                          <View className="flex-1">
-                            <View className="flex-row items-center mb-2">
-                              <Text className="text-2xl font-bold text-gray-300 mr-3">
-                                {step.id}
-                              </Text>
-                              <Text className="text-lg font-bold text-gray-900">
-                                {step.title}
-                              </Text>
-                            </View>
-                            {getStatusBadge(step.display_status || "")}
-                          </View>
-                        </View>
-                        <View className="space-y-2">
-                          {step.description}
-                          {step.details && (
-                            <View className="mt-2">
-                              <View className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {step.details}
-                              </View>
-                            </View>
-                          )}
-                        </View>
-                      </View>
                     )}
                   </View>
                 </View>
@@ -619,53 +612,55 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         </View>
 
         {/* Case Summary Card */}
-        {tracking.payment_request?.pay_status === "Paid" && (
+        {tracking.payment_request_summon?.pay_status === "Paid" && (
           <View className="px-5 pb-8">
-            <Card className="overflow-hidden shadow-lg border-0">
-              <View className="bg-primaryBlue px-6 py-4">
-                <View className="flex-row items-center space-x-2 gap-2">
-                  <ClipboardList size={20} color="white" />
-                  <Text className="text-white font-bold text-lg">Case Summary</Text>
-                </View>
-              </View>
-
-              <View className="p-6 space-y-5 bg-white">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-gray-500 text-sm font-medium">Case No.</Text>
-                  <Text className="text-blue-600 font-bold text-sm tracking-wider">
-                    {tracking.summon_case?.sc_code ?? "N/A"}
-                  </Text>
-                </View>
-
-                <View className="h-px bg-gray-200 my-2" />
-
-                <View className="flex-row justify-between items-center mb-2">
+            <TouchableOpacity>
+              <Card className="overflow-hidden shadow-lg border-0 active:bg-gray-50">
+                <View className="bg-primaryBlue px-6 py-4">
                   <View className="flex-row items-center space-x-2 gap-2">
-                    <CreditCard size={16} className="text-emerald-500" />
-                    <Text className="text-gray-600 text-sm">Payment Status</Text>
+                    <ClipboardList size={20} color="white" />
+                    <Text className="text-white font-bold text-lg">Case Summary</Text>
                   </View>
-                  {getStatusBadge("Paid")}
                 </View>
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row items-center space-x-2 gap-2">
-                    <CheckCircle2
-                      size={16}
-                      className={
-                        getCaseStatusDisplay() === "Resolved"
-                          ? "text-emerald-500"
-                          : getCaseStatusDisplay() === "Ongoing"
-                          ? "text-blue-500"
-                          : getCaseStatusDisplay() === "Waiting for Schedule"
-                          ? "text-amber-500"
-                          : "text-red-500"
-                      }
-                    />
-                    <Text className="text-gray-600 text-sm">Case Status</Text>
+
+                <View className="p-6 space-y-5 bg-white">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-gray-500 text-sm font-medium">Case No.</Text>
+                    <Text className="text-blue-600 font-bold text-sm tracking-wider">
+                      {tracking.summon_case?.sc_code ?? "N/A"}
+                    </Text>
                   </View>
-                  {getStatusBadge(getCaseStatusDisplay())}
+
+                  <View className="h-px bg-gray-200 my-2" />
+
+                  <View className="flex-row justify-between items-center mb-2">
+                    <View className="flex-row items-center space-x-2 gap-2">
+                      <CreditCard size={16} className="text-emerald-500" />
+                      <Text className="text-gray-600 text-sm">Payment Status</Text>
+                    </View>
+                    {getStatusBadge("Paid")}
+                  </View>
+                  <View className="flex-row justify-between items-center">
+                    <View className="flex-row items-center space-x-2 gap-2">
+                      <CheckCircle2
+                        size={16}
+                        className={
+                          getCaseStatusDisplay() === "Resolved"
+                            ? "text-emerald-500"
+                            : getCaseStatusDisplay() === "Ongoing"
+                            ? "text-blue-500"
+                            : getCaseStatusDisplay() === "Waiting for Schedule"
+                            ? "text-amber-500"
+                            : "text-red-500"
+                        }
+                      />
+                      <Text className="text-gray-600 text-sm">Case Status</Text>
+                    </View>
+                    {getStatusBadge(getCaseStatusDisplay())}
+                  </View>
                 </View>
-              </View>
-            </Card>
+              </Card>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>

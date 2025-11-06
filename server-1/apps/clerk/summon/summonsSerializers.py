@@ -387,21 +387,70 @@ class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
         return None
     
 # =================== CASE TRACKING SERIALIZER ============================
+# class CaseTrackingSerializer(serializers.Serializer):
+#     payment_request = serializers.SerializerMethodField()
+#     summon_case = serializers.SerializerMethodField()
+
+#     def get_payment_request(self, obj):
+#         try:
+#             payment_request = ServiceChargePaymentRequest.objects.filter(
+#                 comp_id=obj.comp_id
+#             ).select_related('pr_id').first() 
+            
+#             if payment_request:
+#                 return ServiceChargePaymentReqSerializer(payment_request).data
+#             return None
+#         except Exception as e:
+#             print(f"Error getting payment request: {e}")
+#             return None
+
+#     def get_summon_case(self, obj):
+#         try:
+#             summon_case = SummonCase.objects.filter(
+#                 comp_id=obj.comp_id
+#             ).first()
+            
+#             if summon_case:
+#                 return SummonCaseDetailSerializer(summon_case).data
+#             return None
+#         except Exception as e:
+#             print(f"Error getting summon case: {e}")
+#             return None
+
+
 class CaseTrackingSerializer(serializers.Serializer):
-    payment_request = serializers.SerializerMethodField()
+    payment_request_summon = serializers.SerializerMethodField()
+    payment_request_file_action = serializers.SerializerMethodField()
     summon_case = serializers.SerializerMethodField()
 
-    def get_payment_request(self, obj):
+    def get_payment_request_summon(self, obj):
+        """Get the most recent payment request with sr_type 'Summon'"""
         try:
             payment_request = ServiceChargePaymentRequest.objects.filter(
-                comp_id=obj.comp_id
-            ).select_related('pr_id').first() 
+                comp_id=obj.comp_id,
+                pay_sr_type="Summon"
+            ).select_related('pr_id').order_by('-pay_date_req').first()
             
             if payment_request:
                 return ServiceChargePaymentReqSerializer(payment_request).data
             return None
         except Exception as e:
-            print(f"Error getting payment request: {e}")
+            print(f"Error getting summon payment request: {e}")
+            return None
+
+    def get_payment_request_file_action(self, obj):
+        """Get the most recent payment request with sr_type 'File Action'"""
+        try:
+            payment_request = ServiceChargePaymentRequest.objects.filter(
+                comp_id=obj.comp_id,
+                pay_sr_type="File Action"
+            ).select_related('pr_id').order_by('-pay_date_req').first()
+            
+            if payment_request:
+                return ServiceChargePaymentReqSerializer(payment_request).data
+            return None
+        except Exception as e:
+            print(f"Error getting file action payment request: {e}")
             return None
 
     def get_summon_case(self, obj):

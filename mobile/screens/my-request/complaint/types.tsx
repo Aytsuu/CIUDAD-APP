@@ -140,9 +140,9 @@ export type PaymentRequest = {
 }
 
 export type CaseTrackingType = {
-    payment_request: PaymentRequest | null;
+    payment_request_summon: PaymentRequest | null;
+    payment_request_file_action: PaymentRequest | null;
     summon_case: SummonCaseDetails | null;
-    hearing_schedules: HearingSchedule[] | null;
 }
 
 export type ScheduleList = {
