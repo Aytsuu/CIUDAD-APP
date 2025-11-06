@@ -11,14 +11,15 @@ export const useVaccineRecords = (page: number, pageSize: number, search: string
 
 
 
-export const useVaccineReports = (month: string) => {
+export const useVaccineReports = (
+  month: string, 
+  page: number = 1, 
+  pageSize: number = 18, 
+  search: string = ""
+) => {
   return useQuery({
-    queryKey: ["vacreport", month],
- queryFn: () =>
-  getVaccineReports(month),
+    queryKey: ["vacreport", month, page, pageSize, search],
+    queryFn: () => getVaccineReports(month, page, pageSize, search),
+    enabled: !!month,
   });   
-
-
 };
-
-

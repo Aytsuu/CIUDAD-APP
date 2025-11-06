@@ -226,7 +226,7 @@ export default function MonthlyNewChildrenDetails() {
       <div className="bg-white rounded-b-lg overflow-x-auto   ">
         <div
           style={{
-            width: "16in",
+            width: "20in",
             overflowX: "auto",
             position: "relative",
             margin: "0 auto",

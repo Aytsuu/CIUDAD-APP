@@ -120,6 +120,7 @@ class MonthlyMorbiditySummaryAPIView(APIView):
 
 
 class MonthlyMorbidityView(APIView):
+    pagination_class = StandardResultsPagination
     def get(self, request, *args, **kwargs):
         try:
             month = kwargs.get('month')

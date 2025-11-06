@@ -11,7 +11,7 @@ import MonthlyVaccineRecords from "@/pages/healthServices/reports/vaccination-re
 import MonthlyVaccinationDetails from "@/pages/healthServices/reports/vaccination-report/records";
 
 // iINVENTORY REPORTS
-import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
+// import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
 import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports/inventory/medicine/records";
 import MonthlyCommodityDetails from "@/pages/healthServices/reports/inventory/commodity/records";
 import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inventory/firstaid/monthly";
@@ -35,9 +35,8 @@ import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/fir
 import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
 import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
 
-import MedicineInventoryReportsTabs from "@/pages/healthServices/reports/inventory/medicine/Main";
+import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
 import CommodityInventoryReportsTabs from "@/pages/healthServices/reports/inventory/commodity/Main";
-import FirstAidInventoryReportsTabs from "@/pages/healthServices/reports/inventory/firstaid/Main";
 import AntigenInventoryReportsTabs from "@/pages/healthServices/reports/inventory/antigen/Main";
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
@@ -169,7 +168,7 @@ export const healthreports_router = [
   },
   {
     path: "/medicine-inventory-reports",
-    element: <MedicineInventoryReportsTabs />
+    element: <InventoryMonthlyMedicineRecords />
   },
   {
     path: "/reports/inventory/monthly-commodity",
@@ -186,7 +185,7 @@ export const healthreports_router = [
 
   {
     path: "/firstaid-inventory-reports",
-    element: <FirstAidInventoryReportsTabs />
+    element: <MonthlyInventoryFirstAidRecords />
   },
   {
     path: "/antigen-inventory-reports",

@@ -69,13 +69,13 @@ export default function MonthlyMedicineDetails() {
       Dispensed: item.dispensed,
       Closing: item.closing,
       Unit: item.unit,
-      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
 
   // Export handlers
   const handleExportCSV = () => exportToCSV(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   const handleExportExcel = () => exportToExcel(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
-  const handleExportPDF = () => exportToPDF(`medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportPDF = () => exportToPDF('landscape');
 
   // Print handler prints full filtered table (printable area)
   const handlePrint = () => {
@@ -118,6 +118,21 @@ export default function MonthlyMedicineDetails() {
             <span>Print</span>
           </Button>
         </div>
+      </div>
+      <div className="flex justify-end  p-4 bg-white">
+        <Button
+          variant="destructive"
+          onClick={() =>
+            navigate("/medicine-expired-out-of-stock-summary/details", {
+              state: {
+                month,
+                monthName,
+              },
+            })
+          }
+        >
+          Need Restocks
+        </Button>
       </div>
 
       {/* Pagination controls */}
@@ -162,7 +177,7 @@ export default function MonthlyMedicineDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px"
+            fontSize: "12px",
           }}
         >
           <div className="text-center mb-6">
@@ -180,7 +195,14 @@ export default function MonthlyMedicineDetails() {
             ) : (
               <TableLayout
                 header={tableHeader}
-                rows={paginatedRecords.map((item) => [item.med_name, item.opening.toString(), item.closing.toString(), item.dispensed.toString(), item.unit, item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"])}
+                rows={paginatedRecords.map((item) => [
+                  item.med_name,
+                  item.opening.toString(),
+                  item.closing.toString(),
+                  item.dispensed.toString(),
+                  item.unit,
+                  item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
+                ])}
                 tableClassName="border rounded-lg w-full"
                 bodyCellClassName="border border-gray-600 text-center text-xs p-2"
                 headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"

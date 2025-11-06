@@ -4,8 +4,10 @@ import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sid
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+
+// HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
-import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+import { MedicineDistributionChart } from "@/components/analytics/health/medicine-chart";
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
@@ -22,6 +24,9 @@ import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analy
 // import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
+import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
+
+
 
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
@@ -46,6 +51,7 @@ export const getItemsConfig = (
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
+  const currentYear= format(new Date(), "yyyy");
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -197,6 +203,14 @@ export const getItemsConfig = (
           title: "Family Planning",
           element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
         },
+        {
+          title: "Vaccination",
+          element: <VaccineResidentChart initialYear={currentYear} />,
+        },
+          {
+            title: "Medicine",
+            element: <MedicineDistributionChart initialMonth={currentMonth} />,
+          },
         
 
         ],
@@ -224,10 +238,7 @@ export const getItemsConfig = (
           //   title: "Weekly Schedule",
           //   element: <SchedulerSidebar />,
           // },
-          {
-            title: "Medicine",
-            element: <MedicineDistributionSidebar />,
-          },
+        
           {
             title: "First Aid",
             element: <FirstAidDistributionSidebar />,

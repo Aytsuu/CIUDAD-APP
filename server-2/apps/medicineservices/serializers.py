@@ -99,6 +99,48 @@ class MedicineRecordMinimalSerialzer(serializers.ModelSerializer):
         model = MedicineRequestItem
         fields = '__all__'
 
+class MedicineRecordBaseSerialzer(serializers.ModelSerializer): 
+    med_details = MedicineListSerializers(source='med', read_only=True)
+    total_allocated_qty = serializers.SerializerMethodField()
+    pat_details = serializers.SerializerMethodField()
+    unit= serializers.SerializerMethodField()
+    
+    def get_total_allocated_qty(self, obj):
+        # obj is a MedicineRequestItem instance
+        total_qty = MedicineAllocation.objects.filter(
+            medreqitem=obj
+        ).aggregate(total=models.Sum('allocated_qty'))['total'] or 0
+        return total_qty
+
+    def get_unit(self, obj):
+        # Get unit from the first allocation's minv_id if exists, else fallback to obj.minv_id
+        allocation = MedicineAllocation.objects.filter(medreqitem=obj).first()
+        if allocation and allocation.minv and allocation.minv.minv_qty_unit:
+            return allocation.minv.minv_qty_unit
+        if obj.minv_id and obj.minv_id.minv_qty_unit:
+            return obj.minv_id.minv_qty_unit
+        return None
+
+    def get_pat_details(self, obj):
+        patrec = getattr(obj.medreq_id, 'patrec', None)
+        if patrec and hasattr(patrec, 'pat_id') and patrec.pat_id:
+            info = extract_personal_info(patrec.pat_id)
+            addr = extract_address(patrec.pat_id)
+            return {
+                'personal_info': info if info is not None else {},
+                'address': addr if addr is not None else {},
+                'pat_id': patrec.pat_id.pat_id if hasattr(patrec.pat_id, 'pat_id') else None
+            }
+        return {
+            'personal_info': {},
+            'address': {},
+            'pat_id': None
+        }
+
+    class Meta:
+        model = MedicineRequestItem
+        fields = '__all__'
+
 class MedicineRecordSerialzer(serializers.ModelSerializer):
     med_details = MedicineListSerializers(source='med', read_only=True)
     completed_by_details = StaffTableSerializer(source='completed_by', read_only=True)

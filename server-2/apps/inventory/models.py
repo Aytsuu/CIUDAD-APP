@@ -263,7 +263,7 @@ class FirstAidTransactions(models.Model):
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
 
-    class Meta:
+    class Meta: 
         db_table = 'firstaid_transaction'
         ordering = ['-created_at']
 

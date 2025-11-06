@@ -1776,54 +1776,134 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class MonthlyVaccinationRecordsDetailAPIView(APIView):
-    def get(self, request, month):
+
+
+
+
+
+
+class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        month = self.kwargs['month']
+        
+        # Validate month format (YYYY-MM)
         try:
-            # Validate month format (YYYY-MM)
-            try:
-                year, month_num = map(int, month.split('-'))
-                if month_num < 1 or month_num > 12:
-                    raise ValueError
-            except ValueError:
-                return Response({
-                    'success': False,
-                    'error': 'Invalid month format. Use YYYY-MM.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            year, month_num = map(int, month.split('-'))
+            if month_num < 1 or month_num > 12:
+                raise ValueError
+        except ValueError:
+            return VaccinationHistory.objects.none()
 
-            # Get records for the specified month
-            queryset = VaccinationHistory.objects.select_related(
-                'staff',
-                'vital',
-                'vacrec',
-                'vacrec__patrec_id',
-                'vacStck_id',
-                'vacStck_id__inv_id',
-                'vacStck_id__vac_id',
-                'vac',
-                'followv'
-            ).filter(
-                created_at__year=year,
-                created_at__month=month_num
-            ).order_by('-created_at')
+        # Base queryset
+        queryset = VaccinationHistory.objects.select_related(
+            'staff',
+            'vital',
+            'vacrec',
+            'vacrec__patrec_id',
+            'vacrec__patrec_id__pat_id',
+            'vacrec__patrec_id__pat_id__rp_id',
+            'vacrec__patrec_id__pat_id__rp_id__per',
+            'vacrec__patrec_id__pat_id__trans_id',
+            'vacrec__patrec_id__pat_id__trans_id__tradd_id',
+            'vacStck_id',
+            'vacStck_id__inv_id',
+            'vacStck_id__vac_id',
+            'vac',
+            'followv'
+        ).filter(
+            created_at__year=year,
+            created_at__month=month_num
+        ).order_by('-created_at')
 
-            serialized_records = [
-                VaccinationHistorySerializer(record).data for record in queryset
-            ]
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            # Search for resident personal info
+            resident_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_lname__icontains=search_query)
+            )
 
-            return Response({
+            # Search for transient personal info
+            transient_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_lname__icontains=search_query)
+            )
+
+            # Search for vaccine names
+            vaccine_query = Q(
+                Q(vac__vac_name__icontains=search_query) |
+                Q(vacStck_id__vac_id__vac_name__icontains=search_query)
+            )
+
+            # Search for dose number
+            dose_query = Q(vachist_doseNo__icontains=search_query)
+
+            # Search for status
+            status_query = Q(vachist_status__icontains=search_query)
+
+            # Search for resident addresses
+            resident_address_ids = PersonalAddress.objects.filter(
+                Q(add__add_city__icontains=search_query) |
+                Q(add__add_barangay__icontains=search_query) |
+                Q(add__add_street__icontains=search_query) |
+                Q(add__add_external_sitio__icontains=search_query) |
+                Q(add__add_province__icontains=search_query) |
+                Q(add__sitio__sitio_name__icontains=search_query)
+            ).values_list('per', flat=True)
+
+            resident_address_query = Q(vacrec__patrec_id__pat_id__rp_id__per__in=resident_address_ids)
+
+            # Search for transient addresses
+            transient_address_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_province__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_city__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_barangay__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_sitio__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_street__icontains=search_query)
+            )
+
+            # Combine all search queries
+            queryset = queryset.filter(
+                resident_name_query |
+                transient_name_query |
+                vaccine_query |
+                dose_query |
+                status_query |
+                resident_address_query |
+                transient_address_query
+            )
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        month = self.kwargs['month']
+        
+        # Get paginated data
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response({
                 'success': True,
-                'data': {
-                    'month': month,
-                    'record_count': len(serialized_records),
-                    'records': serialized_records
-                }
-            }, status=status.HTTP_200_OK)
+                'month': month,
+                'record_count': queryset.count(),
+                'records': serializer.data
+            })
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'month': month,
+            'record_count': queryset.count(),
+            'records': serializer.data
+        }, status=status.HTTP_200_OK)
 
 
 

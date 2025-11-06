@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
@@ -19,6 +19,7 @@ export default function MonthlyInventoryFirstAidDetails() {
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
   const { showLoading, hideLoading } = useLoading();
+  const navigate=useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -26,7 +27,10 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const { data: apiResponse, isLoading, error } = useMonthlyFirstAidRecords(month, currentPage, pageSize, searchTerm);
 
-  const records: FirstAidInventoryItem[] = apiResponse?.data?.inventory_summary || [];
+  const records: FirstAidInventoryItem[] = useMemo(
+    () => apiResponse?.data?.inventory_summary || [],
+    [apiResponse]
+  );
 
   useEffect(() => {
     if (isLoading) showLoading();
@@ -71,7 +75,7 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF( `firstaid_inventory_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF('landscape');
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -115,6 +119,21 @@ export default function MonthlyInventoryFirstAidDetails() {
             <span>Print</span>
           </Button>
         </div>
+      </div>
+      <div className="flex justify-end  p-4 bg-white">
+        <Button
+          variant="destructive"
+          onClick={() =>
+            navigate("/firstaid-expired-out-of-stock-summary/details", {
+              state: {
+                month,
+                monthName,
+              },
+            })
+          }
+        >
+          Need Restocks
+        </Button>
       </div>
 
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 rounded-t-lg">

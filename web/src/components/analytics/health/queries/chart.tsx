@@ -1,8 +1,7 @@
 
 // api/medicalHistoryApi.ts
 import { useQuery } from "@tanstack/react-query";
-import {getIllnessChart,getVaccinationChart} from "../restful-api/get";
-
+import {getIllnessChart,getVaccinationChart,getVaccineResidentChart} from "../restful-api/get";
 
 export const useMedicalHistoryChart = (month: string) => {
     return useQuery({
@@ -17,3 +16,15 @@ export const useMedicalHistoryChart = (month: string) => {
       queryFn: () => getVaccinationChart(month),
     });
   };
+
+
+    // queries/vaccineChart.ts
+  export const useVaccineResidentChart = (year: string) => {
+      return useQuery({
+          queryKey: ["vaccineResidentChart", year],
+          queryFn: () => getVaccineResidentChart(year),
+      });
+  };
+
+
+ 

@@ -11,6 +11,7 @@ import { useFirstAidMonths } from "./queries/fetch";
 import { MonthInfoCard } from "../../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyInventoryFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -45,18 +46,13 @@ export default function MonthlyInventoryFirstAidRecords() {
   }, [searchQuery, yearFilter]);
 
   return (
-    <div>
+    <LayoutWithBack title="First Aid Inventory Reports" description="View monthly reports of first aid inventory">
       <Card className="p-6">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-900">Inventory Stock Report</h2>
-            <p className="text-sm text-gray-500">View firstaid transactions grouped by month</p>
-          </div>
-
+        <div className="flex flex-col sm:flex-row gap-4 justify-end items-start sm:items-center mb-6">
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search Input */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-[350px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
               <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
@@ -87,8 +83,7 @@ export default function MonthlyInventoryFirstAidRecords() {
               </Select>
               <span className="text-sm text-gray-600">entries per page</span>
             </div>
-
-            {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
+            -<PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />
           </div>
 
           <div className="bg-white w-full">
@@ -104,7 +99,7 @@ export default function MonthlyInventoryFirstAidRecords() {
                     monthItem.month_name ||
                     new Date(monthItem.month + "-01").toLocaleString("default", {
                       month: "long",
-                      year: "numeric"
+                      year: "numeric",
                     });
 
                   return (
@@ -112,15 +107,15 @@ export default function MonthlyInventoryFirstAidRecords() {
                       key={monthItem.month}
                       monthItem={{
                         month: monthItem.month,
-                        total_items: monthItem.total_items,
-                        month_name: monthName
+                        // total_items: monthItem.total_items,
+                        month_name: monthName,
                       }}
                       navigateTo={{
                         path: "/inventory-monthly-firstaid-details",
                         state: {
                           month: monthItem.month,
-                          monthName: monthName
-                        }
+                          monthName: monthName,
+                        },
                       }}
                       className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 hover:scale-105 transition-transform duration-200"
                     />
@@ -142,12 +137,12 @@ export default function MonthlyInventoryFirstAidRecords() {
                   Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
                 </p>
 
-                {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </div>
             )}
           </div>
         </div>
       </Card>
-    </div>
+    </LayoutWithBack>
   );
 }

@@ -1,7 +1,7 @@
 // components/MedicalHistoryMonthlyChart.tsx
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, LineChart as LineChartIcon, Info, TrendingUp, Users, Activity, X } from "lucide-react";
+import { AlertCircle, Loader2, LineChart as LineChartIcon, Info, TrendingUp, Users, Activity, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
@@ -9,6 +9,8 @@ import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useMedicalHistoryChart } from "./queries/chart";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { Link } from "react-router";
 
 interface MedicalHistoryChartProps {
   initialMonth: string;
@@ -39,7 +41,7 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
     : [];
 
   // Take top 10 and group the rest for chart
-  const topN = 10;
+  const topN = 1;
   const topIllnesses = allIllnesses.slice(0, topN);
   const othersCount = allIllnesses.slice(topN).reduce((sum, item) => sum + item.count, 0);
 
@@ -51,26 +53,34 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
   const totalIllnesses = allIllnesses.length;
   const otherIllnessesCount = totalIllnesses - topN;
 
+  const getLinkState = (medicineName?: string, itemCount?: number) => ({
+    medicineName: medicineName || "",
+    itemCount: itemCount || data?.total_records,
+    monthlyrcplist_id: data?.monthly_report_id,
+    month: currentMonth,
+    monthName: format(currentDate, "MMMM yyyy"),
+  });
+
   // Calculate additional statistics
   const getIllnessStats = (illness: { name: string; count: number }, rank: number) => {
     const percentage = ((illness.count / data.total_records) * 100).toFixed(1);
-    const isHighFrequency = illness.count > (data.total_records * 0.05); // More than 5% of total
+    const isHighFrequency = illness.count > data.total_records * 0.05; // More than 5% of total
     const trend = rank <= 3 ? "High Priority" : rank <= 10 ? "Monitor" : "Low Priority";
-    
+
     return {
       ...illness,
       rank,
       percentage: parseFloat(percentage),
       isHighFrequency,
       trend,
-      severity: illness.count > 50 ? "High" : illness.count > 20 ? "Medium" : "Low"
+      severity: illness.count > 50 ? "High" : illness.count > 20 ? "Medium" : "Low",
     };
   };
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-300 z-50" style={{ pointerEvents: 'none' }}>
+        <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-300 z-50" style={{ pointerEvents: "none" }}>
           <p className="font-semibold text-gray-900">{payload[0].payload.name}</p>
           <p className="text-sm text-gray-600">
             Cases: <span className="font-medium text-gray-900">{payload[0].value}</span>
@@ -78,9 +88,7 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
           <p className="text-sm text-gray-600">
             Percentage: <span className="font-medium text-gray-900">{((payload[0].value / (data?.total_records ?? 1)) * 100 || 0).toFixed(1)}%</span>
           </p>
-          {payload[0].payload.name === "Other Illnesses" && otherIllnessesCount > 0 && (
-            <p className="text-sm mt-1 text-blue-600">(Combines {otherIllnessesCount} other illnesses)</p>
-          )}
+          {payload[0].payload.name === "Other Illnesses" && otherIllnessesCount > 0 && <p className="text-sm mt-1 text-blue-600">(Combines {otherIllnessesCount} other illnesses)</p>}
         </div>
       );
     }
@@ -90,7 +98,7 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
   if (error) {
     return (
       <CardLayout
-        title="Medical History Trends"
+        title="Morbidity Trends"
         description="Error loading data"
         content={
           <Alert variant="destructive" className="m-4">
@@ -109,27 +117,14 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
         title={
           <div className="flex items-center gap-2">
             <LineChartIcon className="h-5 w-5 text-gray-500" />
-            <CardTitle className="text-xl font-semibold text-gray-900">Medical History Trends</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900">Morbidity Trends</CardTitle>
           </div>
         }
-        description={`Illness cases recorded in ${format(currentDate, "MMMM yyyy")}`}
+        description={`Morbidity cases recorded in ${format(currentDate, "MMMM yyyy")}`}
         content={
           <div className="space-y-6 p-4">
             {/* Header with controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {totalIllnesses > topN && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                  >
-                    <Info className="h-4 w-4 text-blue-600" />
-                    Show More Details ({otherIllnessesCount} more)
-                  </Button>
-                )}
-              </div>
+            <div className="flex items-center justify-end">
               <div className="flex items-center space-x-3">
                 <Button
                   variant="outline"
@@ -141,9 +136,7 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
                   <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
                   <span>Previous</span>
                 </Button>
-                <div className="px-4 py-1.5 bg-blue-50 text-blue-800 rounded-md text-sm font-medium min-w-[120px] text-center">
-                  {format(currentDate, "MMMM yyyy")}
-                </div>
+                <div className="px-4 py-1.5 bg-blue-50 text-blue-800 rounded-md text-sm font-medium min-w-[120px] text-center">{format(currentDate, "MMMM yyyy")}</div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -170,69 +163,74 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
               </div>
             ) : (
               <>
-
-              
                 {/* Summary stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-100">
-                    <div className="text-2xl font-bold text-blue-700">{totalIllnesses}</div>
-                    <div className="text-sm text-blue-600 font-medium">Total Illnesses</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-4">
+                  <EnhancedCardLayout
+                    title="Total Morbidities"
+                    description="Unique illnesses recorded"
+                    value={totalIllnesses}
+                    icon={<Users className="h-6 w-6 text-blue-700" />}
+                    cardClassName="bg-blue-50 border-blue-100"
+                    headerClassName="pb-2"
+                  />
+                  <EnhancedCardLayout
+                    title="Total Cases"
+                    description="Total morbidity records"
+                    value={data.total_records}
+                    icon={<TrendingUp className="h-6 w-6 text-green-700" />}
+                    cardClassName="bg-green-50 border-green-100"
+                    headerClassName="pb-2"
+                  />
+                  <EnhancedCardLayout
+                    title="Highest Count"
+                    description={allIllnesses.length > 0 ? allIllnesses[0].name : ""}
+                    value={allIllnesses.length > 0 ? allIllnesses[0].count : 0}
+                    valueDescription={allIllnesses.length > 0 ? "Most frequent illness" : ""}
+                    icon={<Activity className="h-6 w-6 text-purple-700" />}
+                    cardClassName="bg-purple-50 border-purple-100"
+                    headerClassName="pb-2"
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-500 text-center ">
+                    Showing top {Math.min(topN, allIllnesses.length)} morbidities
+                    {otherIllnessesCount > 0 && <span> and {otherIllnessesCount} others combined</span>}
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg text-center border border-green-100">
-                    <div className="text-2xl font-bold text-green-700">{data.total_records}</div>
-                    <div className="text-sm text-green-600 font-medium">Total Cases</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-100">
-                    <div className="text-2xl font-bold text-purple-700">
-                      {allIllnesses.length > 0 ? allIllnesses[0].count : 0}
-                    </div>
-                    <div className="text-sm text-purple-600 font-medium">Highest Count</div>
-                  </div>
-                  <div className="bg-amber-50 p-4 rounded-lg text-center border border-amber-100">
-                    <div className="text-2xl font-bold text-amber-700">
-                      {allIllnesses.length > 0 ? (data.total_records / totalIllnesses).toFixed(1) : 0}
-                    </div>
-                    <div className="text-sm text-amber-600 font-medium">Avg per Illness</div>
+                  <div className="flex justify-end items-center gap-3">
+                    {totalIllnesses > topN && (
+                      <Button size="sm" onClick={() => setShowModal(true)} className="flex items-center gap-2 transition-colors hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800">
+                        Show More Details ({otherIllnessesCount} more)
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="text-sm text-gray-500 text-center mb-4">
-                  Showing top {Math.min(topN, allIllnesses.length)} illnesses
-                  {otherIllnessesCount > 0 && <span> and {otherIllnessesCount} others combined</span>}
-                  <span className="ml-2">• Total Records: {data.total_records}</span>
-                </div>
-
                 <div className="h-[450px] border border-gray-200 rounded-lg bg-white">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 30, right: 30, left: 20, bottom: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={70} 
-                        tick={{ fontSize: 12, fill: '#64748b' }} 
-                        interval={0} 
-                        axisLine={{ stroke: '#e2e8f0' }}
-                        tickLine={{ stroke: '#e2e8f0' }}
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
+                        tick={{ fontSize: 12, fill: "#64748b" }}
+                        interval={0}
+                        axisLine={{ stroke: "#e2e8f0" }}
+                        tickLine={{ stroke: "#e2e8f0" }}
                       />
-                      <YAxis 
-                        tick={{ fontSize: 12, fill: '#64748b' }}
-                        axisLine={{ stroke: '#e2e8f0' }}
-                        tickLine={{ stroke: '#e2e8f0' }}
-                      />
+                      <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={{ stroke: "#e2e8f0" }} tickLine={{ stroke: "#e2e8f0" }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="#3b82f6" 
-                        strokeWidth={3} 
-                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }} 
-                        activeDot={{ r: 6, fill: "#ef4444", stroke: "#ffffff", strokeWidth: 2 }} 
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, fill: "#ef4444", stroke: "#ffffff", strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-
               </>
             )}
           </div>
@@ -250,20 +248,13 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
               <div className="flex items-center gap-3">
                 <Activity className="h-6 w-6 text-blue-600" />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Comprehensive Illness Analysis
-                  </h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Comprehensive Morbidity Analysis</h2>
                   <p className="text-sm text-gray-600 mt-1">
                     Complete breakdown for {format(currentDate, "MMMM yyyy")} - {totalIllnesses} illnesses, {data?.total_records} total cases
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowModal(false)}
-                className="h-8 w-8 p-0 hover:bg-white/80"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowModal(false)} className="h-8 w-8 p-0 hover:bg-white/80">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -274,27 +265,21 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center shadow-sm">
                   <Users className="h-6 w-6 text-blue-600 mx-auto mb-2" />
                   <div className="text-2xl font-bold text-gray-900">{totalIllnesses}</div>
-                  <div className="text-xs text-gray-600 font-medium">Unique Illnesses</div>
+                  <div className="text-xs text-gray-600 font-medium">Morbidities</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center shadow-sm">
                   <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {allIllnesses.filter((_, i) => i < 5).reduce((sum, item) => sum + item.count, 0)}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{allIllnesses.filter((_, i) => i < 5).reduce((sum, item) => sum + item.count, 0)}</div>
                   <div className="text-xs text-gray-600 font-medium">Top 5 Cases</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center shadow-sm">
                   <Activity className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {data ? (data.total_records / totalIllnesses).toFixed(1) : '0'}
-                  </div>
-                  <div className="text-xs text-gray-600 font-medium">Avg Cases/Illness</div>
+                  <div className="text-2xl font-bold text-gray-900">{data ? (data.total_records / totalIllnesses).toFixed(1) : "0"}</div>
+                  <div className="text-xs text-gray-600 font-medium">Avg Cases/Morbidity</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center shadow-sm">
                   <AlertCircle className="h-6 w-6 text-amber-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {data ? allIllnesses.filter(illness => illness.count > (data.total_records * 0.05)).length : '0'}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{data ? allIllnesses.filter((illness) => illness.count > data.total_records * 0.05).length : "0"}</div>
                   <div className="text-xs text-gray-600 font-medium">High Priority</div>
                 </div>
               </div>
@@ -302,45 +287,38 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
 
             {/* Table Container - This is the scrollable area */}
             <div className="flex-1 overflow-hidden bg-white">
-              <div className="h-full overflow-y-auto pb-4" style={{ maxHeight: 'calc(95vh - 300px)' }}>
+              <div className="h-full overflow-y-auto pb-4" style={{ maxHeight: "calc(95vh - 300px)" }}>
+                <div className="flex justify-end p-2">
+                  <Link to="/reports/monthly-morbidity-summary/records" state={getLinkState()}>
+                    <Button variant="outline" className="flex items-center gap-2 text-sm font-medium italic text-blue-800">
+                      View Complete Details With Age Group Filter
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+
                 <table className="w-full">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Rank
-                      </th>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Illness Name
-                      </th>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Cases
-                      </th>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Percentage
-                      </th>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Priority
-                      </th>
-                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                        Impact Level
-                      </th>
+                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Rank</th>
+                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Morbidity Name</th>
+                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Cases</th>
+                      <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Percentage</th>
+                      {/* <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Priority</th> */}
+                      {/* <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Impact Level</th> */}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {allIllnesses.map((illness, index) => {
                       const stats = getIllnessStats(illness, index + 1);
                       const isTopTen = index < topN;
-                      
+
                       return (
                         <tr key={illness.name} className={`${isTopTen ? "bg-blue-50/30" : ""} hover:bg-gray-50 transition-colors`}>
                           <td className="px-4 py-4 whitespace-nowrap text-sm">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-gray-900">#{stats.rank}</span>
-                              {isTopTen && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  Top 10
-                                </span>
-                              )}
+                              {isTopTen && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-1">Top 10</span>}
                             </div>
                           </td>
                           <td className="px-4 py-4 text-sm text-gray-900 font-medium">
@@ -354,37 +332,35 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
                             <span className="text-lg font-bold text-gray-900">{illness.count}</span>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                               <span className="text-gray-900 font-semibold min-w-[45px]">{stats.percentage}%</span>
                               <div className="w-20 bg-gray-200 rounded-full h-2.5">
-                                <div 
-                                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                                    isTopTen ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gray-400'
-                                  }`}
+                                <div
+                                  className={`h-2.5 rounded-full transition-all duration-300 ${isTopTen ? "bg-gradient-to-r from-blue-400 to-blue-600" : "bg-gray-400"}`}
                                   style={{ width: `${Math.min(stats.percentage * 2, 100)}%` }}
                                 />
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                              stats.trend === 'High Priority' ? 'bg-red-100 text-red-800 ring-1 ring-red-200' :
-                              stats.trend === 'Monitor' ? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200' :
-                              'bg-green-100 text-green-800 ring-1 ring-green-200'
-                            }`}>
-                              {stats.trend}
-                            </span>
+                          {/* <td className="px-4 py-4 whitespace-nowrap text-sm">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                                stats.trend === "High Priority"
+                                  ? "bg-red-100 text-red-800 ring-1 ring-red-200"
+                                  : stats.trend === "Monitor"
+                                  ? "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200"
+                                  : "bg-green-100 text-green-800 ring-1 ring-green-200"
+                              }`}
+                            > */}
+                          {/* {stats.trend} */}
+                          {/* </span>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm">
                             <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${
-                                stats.severity === 'High' ? 'bg-red-500' :
-                                stats.severity === 'Medium' ? 'bg-yellow-500' :
-                                'bg-green-500'
-                              }`} />
+                              <div className={`w-3 h-3 rounded-full ${stats.severity === "High" ? "bg-red-500" : stats.severity === "Medium" ? "bg-yellow-500" : "bg-green-500"}`} />
                               <span className="text-gray-700 font-medium">{stats.severity}</span>
                             </div>
-                          </td>
+                          </td> */}
                         </tr>
                       );
                     })}
@@ -398,13 +374,8 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
             {/* Modal Footer */}
             <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Displaying all {totalIllnesses} illnesses with comprehensive analysis
-                </div>
-                <Button
-                  onClick={() => setShowModal(false)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                >
+                <div className="text-sm text-gray-600">Displaying all {totalIllnesses} morbidities with comprehensive analysis</div>
+                <Button onClick={() => setShowModal(false)} className="bg-blue-600 hover:bg-blue-700 text-white px-6">
                   Close Details
                 </Button>
               </div>

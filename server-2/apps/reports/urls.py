@@ -68,7 +68,7 @@ urlpatterns=[
         
         # Vaccination Reports
         path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
-        path('vaccination-resident-counts/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
+        path('vaccination-resident-counts/<str:year>/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
 
 
         # doctor assessed reports
