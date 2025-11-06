@@ -13,6 +13,25 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
+// import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+
+// import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+
+import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
+import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
+import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
+import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
+import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
+import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
+import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
+import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
+import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
+
 import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
@@ -26,23 +45,21 @@ export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
-  healthCards: ReturnType<typeof useHealthServicesSectionCards>
+  healthCards: ReturnType<typeof useHealthServicesSectionCards>,
+  wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
+  donationCards: ReturnType<typeof useDonationSectionCards>,
+  garbCards: ReturnType<typeof useGarbagePickupSectionCards>
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
-  const {
-    childHealth,
-    firstAid,
-    medicine,
-    vaccinations,
-    consultations,
-    animalBites,
-    familyPlanning,
-    maternal,
-  } = healthCards;
+
+  const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
+  const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  const { accepted, rejected, completed, pending } = garbCards;
+  const { cashDonations } = donationCards;
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
     return [
@@ -84,12 +101,48 @@ export const getItemsConfig = (
       },
       {
         dashboard: "GAD",
+        chart: [
+          {
+            title: "GAD Budget Overview",
+            element: <GADQuarterlyBudgetChart />,
+          },
+        ],
+        sidebar: [
+          {
+            title: "GAD Recent Expenses",
+            element: <GADExpenseSidebar />,
+          },
+          {
+            title: "Recent Project Proposal",
+            element: <ProjectProposalSidebar />,
+          },
+        ],
       },
       {
         dashboard: "COUNCIL",
       },
       {
         dashboard: "FINANCE",
+        chart: [
+          {
+            title: "Finance Expense Overview",
+            element: <IncomeExpenseQuarterlyChart />,
+          },
+          {
+            title: "Finance Income Overview",
+            element: <IncomeQuarterlyChart />,
+          },
+        ],
+        sidebar: [
+          {
+            title: "Recent Disbursement Voucher",
+            element: <DisbursementSidebar />,
+          },
+          {
+            title: "Current Budget Plan",
+            element: <BudgetPlanSidebar />,
+          },
+        ],
       },
       {
         dashboard: "CERTIFICATE & CLEARANCES",
@@ -99,14 +152,13 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
+        card: [cashDonations],
       },
       {
-        dashboard: "ANIMAL BITES ",
-        card: [
-          <AnimalBiteSectionCards key="animal-bite-cards" initialMonth={currentMonth} />,
-        ],
+        dashboard: "WASTE",
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
       },
-    ];
+    ]
   }
 
   if (user?.staff?.staff_type.toLowerCase() == "health staff") {
@@ -127,55 +179,39 @@ export const getItemsConfig = (
       },
       {
         dashboard: "SERVICES",
-        card: [
-          childHealth,
-          firstAid,
-          medicine,
-          vaccinations,
-          consultations,
-          animalBites,
-          familyPlanning,
-          maternal,
-        ],
+        card: [childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal],
 
         chart: [
           {
-            title: "OPT",
+            title: "0-72 mos Nutritional Status",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
             title: "Medical History",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
-         
-        {
-          title: "Maternal",
-          element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
-        },
-        {
-          title: "Animal Bites",
-          element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
-        },
+          {
+            title: "Animal Bites",
+            element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
+          },
+          {
+            title: "Family Planning",
+            element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
+          },
+          {
+            title: "Maternal",
+            element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
+          },
         ],
-        sidebar:[
-          {
-            title: "Pending Medical Appointments",
-            element: <PendingMedicalAppointmentsSidebar />,
-          },
-          {
-            title: "Pending Prenatal Appointments",
-            element: <PendingPrenatalAppSidebar />,
-          },
-          {
-            title: "Pending Medicine Requests",
-            element: <PendingMedicineRequestsSidebar />,
-          },
-        ]
       },
 
       {
         dashboard: "INVENTORY",
         sidebar: [
+          // {
+          //   title: "Weekly Schedule",
+          //   element: <SchedulerSidebar />,
+          // },
           {
             title: "Weekly Schedule",
             element: <SchedulerSidebar />,
@@ -189,14 +225,22 @@ export const getItemsConfig = (
             element: <FirstAidDistributionSidebar />,
           },
           {
-            title:"Administered Vaccination",
-            element:<VaccinationDistributionSidebar />
-          }
+            title: "Administered Vaccination",
+            element: <VaccinationDistributionSidebar />,
+          },
         ],
-        
       },
+      {
+        dashboard: "REFERRED PATIENTS",
+        card: [consultationsByDoctor, chilrenConsulted],
 
+        sidebar: [
+          {
+            title: "Referred Patients",
+            element: <ReferredPatientsSidebar />,
+          },
+        ],
+      },
     ];
-    
-  } else return []
+  } else return [];
 };

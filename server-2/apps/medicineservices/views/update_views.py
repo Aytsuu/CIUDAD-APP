@@ -64,10 +64,10 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
         success = notifier.create_notification(
             title=message_info['title'],
             message=message_info['message'],
-            sender="00001250924",  # System sender
+            # sender="00001250924",  # System sender
             recipients=recipient_rp_ids,
             notif_type=f"MEDICINE_{new_status.upper()}",
-            target_obj=None,
+            # target_obj=None,
             web_route="/services/medicine-request",
             web_params={"request_id": str(medicine_request.medreq_id), "status": new_status},
             mobile_route="/(health)/medicine-request/my-requests",
@@ -112,6 +112,7 @@ class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data)
         # For other updates, use default behavior
         return super().update(request, *args, **kwargs)
+
 
 class UpdateConfirmAllPendingItemsView(APIView):
     @transaction.atomic
@@ -278,10 +279,10 @@ class UpdateConfirmAllPendingItemsView(APIView):
                     "Please note that if you do not pick up your medicine within 2 days, "
                     "your request will be automatically cancelled."
                 ),
-                sender="00001250924",  # System sender
+                # sender="00001250924",  # System sender
                 recipients=recipient_rp_ids,
                 notif_type="MEDICINE_READY",
-                target_obj=None,
+                # target_obj=None,
                 web_route="",
                 web_params="",
                 mobile_route="/(health)/medicine-request/my-requests",

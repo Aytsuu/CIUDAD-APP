@@ -186,8 +186,9 @@ class PatientView(generics.ListCreateAPIView):
 
         # Filter by pat_type when a specific status is requested (and not 'all')
         if status and status.lower() not in ["all", ""]:
-            filters &= Q(pat_type=status)
-
+            # filters &= Q(pat_type=status)
+            filters &= Q(pat_type__iexact=status)
+            
         # If a search term is provided, build a set of ORed search conditions
         if search:
             search = search.strip()

@@ -8,7 +8,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/context/AuthContext";
@@ -16,22 +15,8 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import TableLoading from "../../table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { useChildImmunizationColumns } from "./columns/childimmunization-col";
+import { getChildHealthHistoryRecordRecords } from "../restful-api/fetch";
 
-export const getChildHealthHistoryRecordRecords = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {
-  try {
-    const params = new URLSearchParams({
-      search,
-      patient_type: patientType,
-      page: page.toString(),
-      page_size: pageSize.toString()
-    });
-    const response = await api2.get(`/child-health/child-immunization-status-table/${assigned_to}/?${params}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching records:", error);
-    throw error;
-  }
-};
 
 export default function ForwardedCHimmunizationTable() {
   const { user } = useAuth();

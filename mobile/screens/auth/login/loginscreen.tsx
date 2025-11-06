@@ -3,14 +3,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import PageLayout from "@/screens/_PageLayout";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { TouchableOpacity, View, Text, ScrollView, Alert } from "react-native";
 import PhoneOTP from "../signup/account/PhoneOTP";
 import EmailOTP from "../signup/account/EmailOTP";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
@@ -45,7 +38,6 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      setIsLoading(true);
       const values = getValues();
       const { accountFormSchema } = values;
       await login({
@@ -61,8 +53,6 @@ export default function Login() {
     } catch (error) {
       console.error("Login error:", error);
       Alert.alert("Error", "Incorrect password or login failed");
-    } finally {
-      setIsLoading(false);
     }
   };
 

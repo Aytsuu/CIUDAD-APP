@@ -1580,8 +1580,9 @@ class VaccinationSubmissionView(APIView):
 
 # ======================== Monthly Vaccination REPORTS ========================
 
-
 class MonthlyVaccinationSummariesAPIView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         try:
             queryset = VaccinationHistory.objects.select_related(
@@ -1596,6 +1597,7 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                 'followv'
             ).order_by('-date_administered')
 
+            search_query = request.GET.get('search', '').strip().lower()
             year_param = request.GET.get('year')  # '2025' or '2025-07'
 
             if year_param and year_param != 'all':
@@ -1630,6 +1632,22 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                     if vaccine and record.date_administered:
                         # Create month key in YYYY-MM format
                         month_key = record.date_administered.strftime('%Y-%m')
+                        month_name = record.date_administered.strftime('%B %Y')
+                        short_month_name = record.date_administered.strftime('%b %Y')
+                        year_only = record.date_administered.strftime('%Y')
+                        month_only = record.date_administered.strftime('%B')
+                        
+                        # Apply search filter if provided
+                        if search_query:
+                            matches_search = (
+                                search_query in month_name.lower() or
+                                search_query in short_month_name.lower() or
+                                search_query in year_only.lower() or
+                                search_query in month_only.lower() or
+                                search_query in month_key
+                            )
+                            if not matches_search:
+                                continue
                         
                         # Create unique key for patient-vaccine combination
                         # Using vacrec.patrec_id (patient record) + vaccine_id
@@ -1641,26 +1659,37 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                         # Add to set for this month (sets automatically handle uniqueness)
                         monthly_counts[month_key].add(unique_key)
 
-            # Format the data
+            # Format the data with additional information for search
             formatted_data = []
             for month_key in sorted(monthly_counts.keys(), reverse=True):
+                # Create month date object for additional info
+                month_date = datetime.strptime(month_key + '-01', '%Y-%m-%d')
+                month_name = month_date.strftime('%B %Y')
+                
                 formatted_data.append({
                     'month': month_key,
-                    'record_count': len(monthly_counts[month_key])
+                    'record_count': len(monthly_counts[month_key]),
+                    'month_name': month_name
                 })
 
-            return Response({
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data)
-            }, status=status.HTTP_200_OK)
+            }
+            
+            return paginator.get_paginated_response(response_data)
 
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 class MonthlyVaccinationRecordsDetailAPIView(APIView):
     def get(self, request, month):
         try:

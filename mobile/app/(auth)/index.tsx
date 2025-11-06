@@ -11,5 +11,5 @@ if (__DEV__) {
 
 export default () => {
     return <App/>
-    return <App/>
 }
+ 

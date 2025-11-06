@@ -145,7 +145,7 @@ export default function Records({
       count: medicalconCount,
       title: "Medical Consultation",
       icon: <Pill className="w-5 h-5 text-green-600" />,
-      link: "/services/medical-consultation/records",
+      link: "/services/medical-consultation/records/individual-records",
       borderColor: "border-green-300",
       bgColor: "bg-green-100",
       textColor: "text-green-600",

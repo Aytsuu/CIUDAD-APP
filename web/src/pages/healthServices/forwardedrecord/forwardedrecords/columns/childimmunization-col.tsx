@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
-
-
 export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
   const navigate = useNavigate();
 
@@ -29,7 +27,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
             </div>
           </div>
         );
-      }
+      },
     },
     {
       accessorKey: "mother",
@@ -47,12 +45,12 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
             </div>
           </div>
         );
-      }
+      },
     },
 
-     {
+    {
       accessorKey: "father",
-      header: 'Father',
+      header: "Father",
       cell: ({ row }) => {
         const fullName = `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
         return (
@@ -62,7 +60,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
             </div>
           </div>
         );
-      }
+      },
     },
     {
       accessorKey: "address",
@@ -75,7 +73,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         <div className="flex justify-start px-2">
           <div className="w-[250px] break-words">{toTitleCase(row.original.address)}</div>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "family_no",
@@ -84,7 +82,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.family_no || "N/A"}</div>
         </div>
-      )
+      ),
     },
     // {
     //   accessorKey: "delivery_type",
@@ -102,25 +100,31 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{toTitleCase(row.original.pat_type || "N/A")}</div>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-            <ViewButton
-              onClick={() => {
-                navigate("/child-immunization", {
-                  state: {
-                    ChildHealthRecord: row.original,
-                    mode: "immunization"
-                  }
-                });
-              }}
-            />
-          </div>
-      )
-    }
+          <ViewButton
+            onClick={() => {
+              // Clear localStorage before navigation
+              localStorage.removeItem("immunization_vaccines");
+              localStorage.removeItem("immunization_existing_vaccines");
+              localStorage.removeItem("immunization_vital_signs");
+              localStorage.removeItem("immunization_form_data");
+
+              navigate("/child-immunization", {
+                state: {
+                  ChildHealthRecord: row.original,
+                  mode: "immunization",
+                },
+              });
+            }}
+          />
+        </div>
+      ),
+    },
   ];
 };

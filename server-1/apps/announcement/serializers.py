@@ -169,7 +169,7 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
             create_notification(
                 title="New Announcement",
                 message=f"A new announcement has been posted: {created_recipients[0].ann.ann_title}",
-                sender=self.context['request'].user,
+                # sender=self.context['request'].user,
                 recipients=rec_list,
                 notif_type="announcement",
                 target_obj=created_recipients[0].ann
@@ -220,4 +220,4 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_id', 'ann', 'ar_type', 'ar_category']
+        fields = ['ar_id', 'ann', 'ar_type', 'ar_category'] 

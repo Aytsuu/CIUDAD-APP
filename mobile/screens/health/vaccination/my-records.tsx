@@ -21,7 +21,7 @@ export default function IndividualVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 2;
   const [activeTab, setActiveTab] = useState("status");
   const { pat_id } = useAuth();
   const [patId, setPatientId] = useState("");
@@ -104,7 +104,7 @@ export default function IndividualVaccinationRecords() {
       setIsSearching(true);
       const timer = setTimeout(() => {
         setIsSearching(false);
-      }, 300);
+      }, 1500);
       return () => clearTimeout(timer);
     } else {
       setIsSearching(false);

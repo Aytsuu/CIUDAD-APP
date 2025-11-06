@@ -40,7 +40,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
       fields: immunizationTrackingFields
     },
     {
-      title: "Supplements & Supplement Status",
+      title: "Medicine Given and Health Status (anemic/low birth weight)",
       icon: <Pill className="h-5 w-5 text-blue-600" />,
       fields: [...supplementsFields]
     }
@@ -83,7 +83,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
   };
 
   return (
-    <div className="w-full p-4  rounded-lg shadow-md">
+    <div className="w-full p-4  rounded-lg shadow-md overflow-x-auto ">
       {sections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="mb-6">
           {/* Section Header */}
@@ -93,7 +93,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
           </div>
 
           {/* Horizontal Scrollable Records */}
-          <div className="flex overflow-x-auto gap-4">
+          <div className="flex gap-4">
             {recordsToDisplay.map((record) => {
               const isCurrentRecord = record.chhist_id === chhistId;
               return (

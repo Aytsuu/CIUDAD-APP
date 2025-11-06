@@ -1,6 +1,6 @@
 // src/screens/FirstAidListScreen.tsx
 import React from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, ScrollView } from "react-native";
 
 import type { FirstAidRecords, ApiItemWithStaff } from "../types"; // Adjust path if needed
 import { useFirstAidTransactions } from "../restful-api/transaction/fetchqueries";
@@ -103,6 +103,7 @@ export default function FirstAidListScreen() {
   );
 
   return (
+    <ScrollView>
     <View className="flex-1 p-4 bg-gray-50">
       <View className="mb-4">
         {/* <SearchInput
@@ -185,5 +186,6 @@ export default function FirstAidListScreen() {
         </View>
       </View>
     </View>
+    </ScrollView>
   );
 }

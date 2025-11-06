@@ -95,7 +95,7 @@ class CommodityStockTableView(APIView):
     
     def get(self, request):
         try:
-            self.auto_archive_expired_commodities()
+            # self.auto_archive_expired_commodities()
             
             # Get parameters
             search_query = request.GET.get('search', '').strip()
@@ -261,51 +261,53 @@ class CommodityStockTableView(APIView):
                 'error': f'Error fetching commodity stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def auto_archive_expired_commodities(self):
-        """Auto-archive commodities that expired more than 10 days ago and log transactions"""
-        from datetime import timedelta
+    # def auto_archive_expired_commodities(self):
+    #     """Auto-archive commodities that expired more than 10 days ago and log transactions"""
+    #     from datetime import timedelta
         
-        today = timezone.now().date()
-        archive_date = today - timedelta(days=10)
+    #     today = timezone.now().date()
+    #     archive_date = today - timedelta(days=10)
         
-        print(f"Auto-archiving commodity items expired before: {archive_date}")
+    #     print(f"Auto-archiving commodity items expired before: {archive_date}")
         
-        # Archive expired commodity stocks
-        commodity_stocks = CommodityInventory.objects.select_related('inv_id').filter(
-            inv_id__expiry_date__lte=archive_date,
-            inv_id__is_Archived=False
-        )
+    #     # Archive expired commodity stocks
+    #     commodity_stocks = CommodityInventory.objects.select_related('inv_id').filter(
+    #         inv_id__expiry_date__lte=archive_date,
+    #         inv_id__is_Archived=False
+    #     )
         
-        archived_commodity_count = 0
-        for stock in commodity_stocks:
-            # Get the current available quantity before archiving
-            current_qty = stock.cinv_qty_avail or 0
+    #     archived_commodity_count = 0
+    #     for stock in commodity_stocks:
+    #         # Get the current available quantity before archiving
+    #         current_qty = stock.cinv_qty_avail or 0
             
-            # Determine the unit and format quantity with unit
-            if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
-                # For boxes, show quantity in pieces
-                qty_with_unit = f"{current_qty} pcs"
-            else:
-                # For other units, use the actual unit
-                unit = stock.cinv_qty_unit if stock.cinv_qty_unit else "pcs"
-                qty_with_unit = f"{current_qty} {unit}"
+    #         # Determine the unit and format quantity with unit
+    #         if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+    #             # For boxes, show quantity in pieces
+    #             qty_with_unit = f"{current_qty} pcs"
+    #         else:
+    #             # For other units, use the actual unit
+    #             unit = stock.cinv_qty_unit if stock.cinv_qty_unit else "pcs"
+    #             qty_with_unit = f"{current_qty} {unit}"
             
-            # Archive the inventory
-            stock.inv_id.is_Archived = True
-            stock.inv_id.save()
+    #         # Archive the inventory
+    #         stock.inv_id.is_Archived = True
+    #         stock.inv_id.save()
             
-            # Create transaction record for the archive action
-            CommodityTransaction.objects.create(
-                comt_qty=qty_with_unit,  # Record the quantity with unit that was archived
-                comt_action='Expired',  # Clear action indicating expiration-based archiving
-                cinv_id=stock,  # Reference to the commodity inventory
-                staff=None  # System action, so no staff member
-            )
+    #         # Create transaction record for the archive action
+    #         CommodityTransaction.objects.create(
+    #             comt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+    #             comt_action='Expired',  # Clear action indicating expiration-based archiving
+    #             cinv_id=stock,  # Reference to the commodity inventory
+    #             staff=None  # System action, so no staff member
+    #         )
             
-            archived_commodity_count += 1
-            print(f"Archived commodity stock: {stock.cinv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {current_qty}")
+    #         archived_commodity_count += 1
+    #         print(f"Archived commodity stock: {stock.cinv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {current_qty}")
         
-        print(f"Auto-archived {archived_commodity_count} commodity items with transaction records")
+    #     print(f"Auto-archived {archived_commodity_count} commodity items with transaction records")
+
+
 class CommodityStockCreate(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):

@@ -167,7 +167,7 @@ const AppointmentCard: React.FC<{
         <View className="flex-row items-center mb-3">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
-            Purpose: <Text className="font-medium text-gray-900">{appointment.purpose}</Text>
+            Reason: <Text className="font-medium text-gray-900">{appointment.purpose}</Text>
           </Text>
         </View>
       </View>
@@ -272,7 +272,7 @@ export default function MyAppointmentsScreen() {
           const record: ScheduleRecord = {
             id: prenatal.par_id || 0,
             scheduledDate: prenatal.requested_date || "",
-            purpose: prenatal.reason || "Prenatal Check-up",
+            purpose: prenatal.reason || "Prenatal Appointment",
             status: (prenatal.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
             sitio: "",
             type: "Resident",

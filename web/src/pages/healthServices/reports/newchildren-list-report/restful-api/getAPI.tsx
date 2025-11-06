@@ -1,13 +1,14 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
-import { MonthlyChildrenResponse, MonthlyChildrenDetailResponse } from "../types";
 
-export const getMonthlyChildrenCount = async (year?: string): Promise<MonthlyChildrenResponse> => {
+export const getMonthlyChildrenCount = async (page: number, pageSize: number, search?: string): Promise<any> => {
   try {
-    const url = year
-      ? `reports/new-monthly-children/?year=${year}`
-      : `reports/new-monthly-children/`;
-    const response = await api2.get<MonthlyChildrenResponse>(url);
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+
+    const response = await api2.get<any>(`reports/new-monthly-children/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching monthly children count:", error);
@@ -15,10 +16,16 @@ export const getMonthlyChildrenCount = async (year?: string): Promise<MonthlyChi
   }
 };
 
-export const getMonthlyChildrenDetails = async (month: string): Promise<MonthlyChildrenDetailResponse> => {
+export const getMonthlyChildrenDetails = async (month: string, page: number, pageSize: number, search?: string, sitio?: string): Promise<any> => {
   try {
-    const url = `reports/new-monthly-children-details/${month}/`;
-    const response = await api2.get<MonthlyChildrenDetailResponse>(url);
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+    if (sitio) params.append('sitio', sitio);
+
+    const url = `reports/new-monthly-children-details/${month}/?${params.toString()}`;
+    const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching monthly children details:", error);

@@ -53,7 +53,7 @@ const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string
     today.setHours(0, 0, 0, 0);
     followUp.setHours(0, 0, 0, 0);
 
-    if (followUp < today) {
+    if (followv_status.toLowerCase() === "missed") {
       return { 
         status: "Missed", 
         color: "#EF4444",
@@ -399,7 +399,7 @@ export default function MyFPDashboardScreen() {
                 
                 <FlatList
                   data={filteredRecords}
-                  renderItem={({ item }) => renderRecordItem(item, patIdFromParams)} // Use updated renderRecordItem
+                  renderItem={({ item }) => renderRecordItem(item, patIdFromParams)} 
                   keyExtractor={(item) => String(item.fprecord)}
                   contentContainerStyle={{ paddingBottom: 20 }}
                   showsVerticalScrollIndicator={false}

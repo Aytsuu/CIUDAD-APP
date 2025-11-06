@@ -47,6 +47,11 @@ import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/new
 
 import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
 import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
+
+
+// DOCTOR REPORTS
+import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
+import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
 import YearlyPopulationRecords from "@/pages/healthServices/reports/healthprofiling-report/yearly";
 import PopulationStructureRecords from "@/pages/healthServices/reports/healthprofiling-report/records";
 import HealthProfilingSummaryReport from "@/pages/healthServices/reports/healthprofiling-report/HealthProfilingSummaryReport";
@@ -219,5 +224,17 @@ export const healthreports_router = [
   {
     path: "/health-family-profiling/summary",
     element: <HealthProfilingSummaryReport />
-  }
+  },
+
+
+
+  // DOCTOR REPORTTS
+  {
+    path: "/reports/monthly-consulted-summaries",
+    element: <MonthlyConsultedSummaries />
+  },
+  {
+    path: "/reports/monthly-consulted-summaries/records",
+    element: <MonthlyConsultedDetails />
+  },
 ];

@@ -133,8 +133,7 @@ export default function AllFirstAidRecords() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // Adjust as needed
-
+  const [pageSize] = useState(10);
   const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 

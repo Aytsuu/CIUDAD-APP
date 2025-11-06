@@ -369,7 +369,7 @@ export function AppSidebar() {
     }] : []),
     ...(featureValidator("referred patients") ? [{
       title: "Referred Patients",
-      url: "/forwarded-records/medical-consultation",
+      url: "/referred-patients/pending-assessment",
     }] : []),
     {
       title: "Services",

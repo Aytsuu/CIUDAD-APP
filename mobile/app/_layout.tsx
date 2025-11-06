@@ -15,6 +15,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFCMToken } from '@/helpers/useFCMToken';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -77,6 +78,7 @@ export default function RootLayout() {
                       <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
                       <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
                       <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
+                      <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
                       <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
                     </Stack>
                   </ToastProvider>

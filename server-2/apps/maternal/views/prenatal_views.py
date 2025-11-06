@@ -12,10 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def send_prenatal_status_notification(appointment, new_status, reason=None):
-    """
-    Send notification for prenatal appointment status changes
-    """
+def send_prenatal_status_notification(appointment, new_status, reason=None, notify_staff=False):
     try:
         notifier = NotificationQueries()
         
@@ -33,8 +30,8 @@ def send_prenatal_status_notification(appointment, new_status, reason=None):
             logger.warning(f"No recipient found for prenatal appointment notification for appointment {appointment.par_id}")
             return False
         
-        # Different messages based on status
-        status_messages = {
+        # Different messages based on status for RESIDENT
+        status_messages_resident = {
             'approved': {
                 'title': 'Prenatal Appointment Approved',
                 'message': f'Your prenatal appointment request for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the requested date"} has been approved. Please proceed to the health center on the scheduled date.'
@@ -47,38 +44,89 @@ def send_prenatal_status_notification(appointment, new_status, reason=None):
                 'title': 'Missed Prenatal Appointment',
                 'message': 'You missed your scheduled prenatal appointment. Please book an appointment again to ensure continuous care for you and your baby.'
             }
+            # 'cancelled': {  # NEW: Add template for cancelled (for resident)
+            #     'title': 'Prenatal Appointment Cancelled',
+            #     'message': f'Your prenatal appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the requested date"} has been cancelled. Reason: {reason or "Please contact the health center for more information."}'
+            # },
+            # 'completed': {  # NEW: Add template for completed (for resident)
+            #     'title': 'Prenatal Appointment Completed',
+            #     'message': f'Your prenatal appointment on {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the requested date"} has been marked as completed. Thank you for attending!'
+            # }
         }
         
-        message_info = status_messages.get(new_status)
-        if not message_info:
-            logger.warning(f"No message template for status: {new_status}")
-            return False
-        
-        # Create notification
-        success = notifier.create_notification(
-            title=message_info['title'],
-            message=message_info['message'],
-            sender="00001250924",  # System sender
-            recipients=recipient_rp_ids,
-            notif_type=f"PRENATAL_{new_status.upper()}",
-            target_obj=None,
-            web_route="/services/maternal/prenatal",
-            web_params={"appointment_id": str(appointment.par_id), "status": new_status},
-            mobile_route="/(health)/maternal/prenatal/appointments",
-            mobile_params={"appointmentId": str(appointment.par_id)},
-        )
-        
-        if success:
-            logger.info(f"Prenatal {new_status} notification sent to {resident_name} for appointment {appointment.par_id}")
-        else:
-            logger.error(f"Failed to send prenatal {new_status} notification to {resident_name} for appointment {appointment.par_id}")
+        message_info_resident = status_messages_resident.get(new_status)
+        if message_info_resident:
+            # Create notification for RESIDENT
+            success_resident = notifier.create_notification(
+                title=message_info_resident['title'],
+                message=message_info_resident['message'],
+                # sender="00001250924",  # System sender
+                recipients=recipient_rp_ids,
+                notif_type=f"PRENATAL_{new_status.upper()}",
+                # target_obj=None,
+                web_route="/services/maternal/prenatal",
+                web_params={"appointment_id": str(appointment.par_id), "status": new_status},
+                mobile_route="/(health)/maternal/my-appointments",
+                mobile_params={},
+            )
             
-        return success
+            if success_resident:
+                logger.info(f"Prenatal {new_status} notification sent to resident {resident_name} for appointment {appointment.par_id}")
+            else:
+                logger.error(f"Failed to send prenatal {new_status} notification to resident {resident_name} for appointment {appointment.par_id}")
+        
+        # If notify_staff is True, send notification to staff/admins (similar to medical consultation example)
+        if notify_staff:
+            from apps.administration.models import Staff, Position  # Assuming you have Staff and Position models
+            prenatal_staff = Staff.objects.filter(
+                pos__pos_title__in=['ADMIN','MIDWIFE', 'BARANGAY HEALTH WORKER']
+            ).select_related('rp')
+
+            staff_recipients = [str(staff.rp.rp_id) for staff in prenatal_staff if staff.rp and staff.rp.rp_id]
+            print("STAFF RECIPIENTS: ",staff_recipients)
+            if staff_recipients:
+                
+                # Different messages based on status for STAFF
+                status_messages_staff = {
+                    'pending': { 
+                        'title': 'New Prenatal Appointment Request',
+                        'message': f'Resident {resident_name} has requested a new prenatal appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "an unspecified date"}. Please review and approve/reject.'
+                    },
+                    'missed': {
+                        'title': 'Resident Missed Prenatal Appointment',
+                        'message': f'Resident {resident_name} missed their prenatal appointment on {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the scheduled date"}. Reason: {reason or "No reason provided."}'
+                    },
+                    'cancelled': {
+                        'title': 'Prenatal Appointment Cancelled',
+                        'message': f'{resident_name} prenatal appointment on {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the scheduled date"} has been cancelled. Reason: {reason or "No reason provided."}'
+                    }
+                }
+                
+                message_info_staff = status_messages_staff.get(new_status)
+                if message_info_staff:
+                    success_staff = notifier.create_notification(
+                        title=message_info_staff['title'],
+                        message=message_info_staff['message'],
+                        # sender="00001250924",  # System sender
+                        recipients=staff_recipients,
+                        notif_type=f"PRENATAL_STAFF_{new_status.upper()}",
+                        # target_obj=None,
+                        web_route="/services/maternal",
+                        web_params={},
+                        mobile_route="/(admin)/maternal/prenatal/appointments",
+                        mobile_params={"appointmentId": str(appointment.par_id)},
+                    )
+                    
+                    if success_staff:
+                        logger.info(f"Prenatal {new_status} notification sent to staff for appointment {appointment.par_id}")
+                    else:
+                        logger.error(f"Failed to send prenatal {new_status} notification to staff for appointment {appointment.par_id}")
+            
+        return True
         
     except Exception as e:
         logger.error(f"Error sending prenatal {new_status} notification for appointment {appointment.par_id}: {str(e)}")
         return False
-    
     
 class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
@@ -224,6 +272,8 @@ class PrenatalAppointmentCancellationView(generics.UpdateAPIView):
             serializer = self.get_serializer(appointment)
             logger.info(f"Appointment with ID {par_id} cancelled successfully with reason: {appointment.reason}")
 
+            send_prenatal_status_notification(appointment=appointment,new_status='cancelled',reason=appointment.reason,notify_staff=True)
+            
             return Response({
                 'message': 'Prenatal appointment cancelled successfully',
                 'data': serializer.data

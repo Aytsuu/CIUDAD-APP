@@ -14,6 +14,8 @@ from .views.disability_views import *
 from .views.mobile_views import *
 from apps.administration.views.staff_views import *
 from.views.family_views import MyChildrenSimpleAPIView
+# from .views.monthly_morbidity_views import MonthlyMorbidityView
+
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
@@ -90,4 +92,5 @@ urlpatterns = [
     path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
     path('all-appointments/', AllAppointmentsView.as_view(), name='all-appointments'),
     # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
+
 ]

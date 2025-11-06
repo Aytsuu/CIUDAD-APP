@@ -19,6 +19,7 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
+
 export default function AllMedicalConsRecord() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);

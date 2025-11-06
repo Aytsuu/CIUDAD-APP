@@ -96,12 +96,12 @@ export default function CancelledMedicalAppointments() {
         {/* Table Content */}
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="w-full h-32 flex flex-col items-center justify-center">
+            <div className="w-full h-32 flex flex-col items-center justify-center py-40">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
               <span className="text-gray-600">Loading referred appointments...</span>
             </div>
           ) : appointments.length === 0 ? (
-            <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500">
+            <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500 py-40">
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
               <p className="text-lg font-medium mb-1">No referred appointments found</p>
               <p className="text-sm">{debouncedSearch ? "No referred appointments match your search criteria" : "No referred appointments at the moment"}</p>

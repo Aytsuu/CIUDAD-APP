@@ -22,9 +22,9 @@ from django.db.models import Q, Prefetch
 from utils import *  # Assuming you have this
 from apps.medicineservices.serializers import *
 
-
-
 class MonthlyMedicineSummariesAPIView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         try:
             queryset = MedicineRequestItem.objects.select_related(
@@ -36,26 +36,7 @@ class MonthlyMedicineSummariesAPIView(APIView):
                 status='completed'
             )
 
-            year_param = request.GET.get('year')  # '2025' or '2025-07'
-
-            if year_param and year_param != 'all':
-                try:
-                    if '-' in year_param:
-                        year, month = map(int, year_param.split('-'))
-                        queryset = queryset.filter(
-                            medreq_id__fulfilled_at__year=year,
-                            medreq_id__fulfilled_at__month=month
-                        )
-                    else:
-                        year = int(year_param)
-                        queryset = queryset.filter(
-                            medreq_id__fulfilled_at__year=year
-                        )  
-                except ValueError:
-                    return Response({
-                        'success': False,
-                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+            search_query = request.GET.get('search', '').strip().lower()
 
             # Annotate and count records by month
             monthly_data = queryset.annotate(
@@ -72,6 +53,22 @@ class MonthlyMedicineSummariesAPIView(APIView):
                     continue  # Skip records with invalid or missing month
 
                 month_str = month_value.strftime('%Y-%m')
+                month_name = month_value.strftime('%B %Y')
+                short_month_name = month_value.strftime('%b %Y')
+                year_only = month_value.strftime('%Y')
+                month_only = month_value.strftime('%B')
+
+                # Apply search filter if provided
+                if search_query:
+                    matches_search = (
+                        search_query in month_name.lower() or
+                        search_query in short_month_name.lower() or
+                        search_query in year_only.lower() or
+                        search_query in month_only.lower() or
+                        search_query in month_str
+                    )
+                    if not matches_search:
+                        continue
 
                 # Get or create report record for this month
                 report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
@@ -87,22 +84,28 @@ class MonthlyMedicineSummariesAPIView(APIView):
                 formatted_data.append({
                     'month': month_str,
                     'record_count': item['record_count'],
+                    'month_name': month_name,
                     'monthlyrcplist_id': report_obj.monthlyrcplist_id,
                     'report': report_data
                 })
 
-            return Response({
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data)
-            }, status=status.HTTP_200_OK)
+            }
+            
+            return paginator.get_paginated_response(response_data)
 
         except Exception as e:
             return Response({ 
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
     def get(self, request, month):

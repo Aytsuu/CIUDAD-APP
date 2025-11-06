@@ -41,7 +41,7 @@ export default function IndividualMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(2);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const params = useLocalSearchParams();

@@ -170,15 +170,31 @@ const SetSchedule = () => {
     try {
       const response = await api2.post('/medical-consultation/book-appointment/', appointmentData);
       if (response.status === 201 && response.data.success) {
-        Alert.alert('Success', `Appointment booked successfully!`);
-        setSelectedDate(new Date());
-        setSelectedMeridiem('');
-        setChiefComplaint('');
-        setAmAvailable(false);
-        setPmAvailable(false);
-        // Refresh slots after booking to update counts
-        fetchAvailableSlots(false);
-      }
+       Alert.alert(
+        'Success',
+        'Appointment booked successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reset form
+              setSelectedDate(new Date());
+              setSelectedMeridiem('');
+              setChiefComplaint('');
+              setAmAvailable(false);
+              setPmAvailable(false);
+              
+              // Refresh slots
+              fetchAvailableSlots(false);
+              
+              // Navigate to home AFTER user taps OK
+              router.replace('/home');
+            },
+          },
+        ],
+        { cancelable: false } // Prevents dismissing by tapping outside
+      );
+    }
     } catch (error: any) {
       let errorMessage = 'Failed to book appointment. Please check the date/time slot.';
       if (error.response?.data) {

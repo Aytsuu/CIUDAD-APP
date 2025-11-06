@@ -93,10 +93,10 @@ export default function CartScreen() {
     }
 
     console.log("🛒 Cart Items Debug:", cartItems.map(item => ({
-    name: item.name,
-    minv_id: item.minv_id,
-    type: typeof item.minv_id
-  })));
+      name: item.name,
+      minv_id: item.minv_id,
+      type: typeof item.minv_id
+    })));
   
     const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
     if (invalidItems.length > 0) {
@@ -117,12 +117,15 @@ export default function CartScreen() {
 
     try {
       const formData = new FormData();
+      
+      // Create medicine data with proper structure
       const medicineData = cartItems.map(item => ({
         minv_id: item.minv_id,
         quantity: 0,
         reason: item.reason,
         med_type: item.med_type,
       }));
+      
       formData.append("medicines", JSON.stringify(medicineData));
 
       const rpId = userId;
@@ -131,11 +134,11 @@ export default function CartScreen() {
         throw new Error("User must have either a patient ID or resident ID.");
       }
       
-      if (rpId) {
-        console.log("Submitting with rp_id:", rpId);
-        formData.append("rp_id", rpId);
-      }
+      // FIX: Use rp_id since we're getting it from the user context
+      console.log("Submitting with rp_id:", rpId);
+      formData.append("rp_id", rpId);
       
+      // Add files properly
       uploadedFiles.forEach(file => {
         formData.append("files", {
           uri: file.uri,
@@ -265,8 +268,7 @@ export default function CartScreen() {
                       type: file.type 
                     }))}
                     setSelectedImages={handleMediaSelected}
-                    multiple={true}
-                    maxImages={5}
+                    limit={5}
                   />
                 </View>
 

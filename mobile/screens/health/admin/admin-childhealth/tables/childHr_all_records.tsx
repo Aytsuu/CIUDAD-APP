@@ -144,7 +144,7 @@ const [currentPage, setCurrentPage] = useState<number>(1);
 const [searchQuery, setSearchQuery] = useState('');
 const [refreshing, setRefreshing] = useState(false);
 const [activeTab, setActiveTab] = useState<TabType>("all");
-const pageSize = 20;
+const pageSize = 1;
  const totalCount = childHealthRecords?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 

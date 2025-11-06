@@ -302,11 +302,11 @@ const CancelModal: React.FC<{
             multiline
             numberOfLines={3}
           />
-          <View className="flex-row justify-end space-x-3">
+          <View className="flex-row justify-end gap-2">
             <TouchableOpacity
               onPress={onClose}
               disabled={isPending}
-              className="px-4 py-2 rounded-lg bg-gray-100"
+              className="px-4 py-2  rounded-lg bg-gray-100"
             >
               <Text className="text-gray-700 font-medium">Close</Text>
             </TouchableOpacity>

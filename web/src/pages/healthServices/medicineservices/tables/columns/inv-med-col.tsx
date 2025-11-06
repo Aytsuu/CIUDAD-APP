@@ -209,10 +209,10 @@
       )
     },
     {
-      accessorKey: "requested_at",
-      header: "Date Requested",
+      accessorKey: "date_given",
+      header: "Date Given",
       cell: ({ row }) => {
-        const requestedAt = new Date(row.original.requested_at || Date.now());
+        const requestedAt = new Date(row.original.fulfilled_at || Date.now());
         return (
           <div className="min-w-[140px] px-3 py-2">
             <div className="text-sm font-medium">{requestedAt.toLocaleDateString()}</div>

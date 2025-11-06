@@ -299,14 +299,46 @@ class Illness(models.Model):
     class Meta:
         db_table = 'illness'
 
+class Laboratory(models.Model):
+    lab_id = models.BigAutoField(primary_key=True)
+    
+    # Laboratory test flags
+    is_cbc = models.BooleanField(default=False, verbose_name="Complete Blood Count")
+    is_urinalysis = models.BooleanField(default=False, verbose_name="Urinalysis")
+    is_fecalysis = models.BooleanField(default=False, verbose_name="Fecalysis")
+    is_sputum_microscopy = models.BooleanField(default=False, verbose_name="Sputum Microscopy")
+    is_creatine = models.BooleanField(default=False, verbose_name="Creatinine")
+    is_hba1c = models.BooleanField(default=False, verbose_name="HbA1c")
+    is_chestxray = models.BooleanField(default=False, verbose_name="Chest X-ray")
+    is_papsmear = models.BooleanField(default=False, verbose_name="Pap Smear")
+    is_fbs = models.BooleanField(default=False, verbose_name="Fasting Blood Sugar")
+    is_oralglucose = models.BooleanField(default=False, verbose_name="Oral Glucose Tolerance Test")
+    is_lipidprofile = models.BooleanField(default=False, verbose_name="Lipid Profile")
+    is_fecal_occult_blood = models.BooleanField(default=False, verbose_name="Fecal Occult Blood")
+    is_ecg = models.BooleanField(default=False)
+    # Other fields
+    others = models.TextField(null=True, blank=True, verbose_name="Other Laboratory Tests")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.others:
+            self.others = self.others.title()
+        super().save(*args, **kwargs)
+    class Meta:
+        db_table = 'laboratory'
+        verbose_name = "Laboratory"
+        ordering = ['-created_at']
+
 # FINDINGS
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
     assessment_summary =models.TextField(default="",blank=True,null=True)
     obj_summary = models.TextField(default="")
     subj_summary = models.TextField(default="")
-    plantreatment_summary=models.TextField(default="")
+    plantreatment_summary=models.TextField(default="",blank=True,null=True)
     created_at= models.DateTimeField(auto_now_add=True)
+    lab = models.ForeignKey(Laboratory, on_delete=models.CASCADE, related_name='findings', null=True, blank=True)
+    
     class Meta:
         db_table = 'finding'
 
@@ -321,9 +353,7 @@ class MedicalHistory(models.Model):
     remarks = models.TextField(default="", blank=True, null=True)
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
     is_from_famhistory=models.BooleanField(default=False)
-    remarks = models.TextField(default="", blank=True, null=True)
-    is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
-    is_from_famhistory=models.BooleanField(default=False)
+   
     class Meta:
         db_table = 'medical_history' 
         

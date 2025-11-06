@@ -10,7 +10,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
@@ -22,7 +21,7 @@ import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dro
 import { formatChildHealthData } from "./formattedData";
 import TableLoading from "../../table-loading";
 
-export default function AllChildHealthRecords() {
+export default function AllChildHealthRecordsTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -164,7 +163,6 @@ export default function AllChildHealthRecords() {
   };
 
   return (
-    <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
       <div className="w-full h-full flex flex-col">
         {/* Summary Cards */}
         <div className="w-full">
@@ -316,6 +314,5 @@ export default function AllChildHealthRecords() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
   );
 }
