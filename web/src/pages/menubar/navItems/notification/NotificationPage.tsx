@@ -61,7 +61,7 @@ export default function Notification() {
   const { mutate: bulkMarkAsRead } = useUpdateBulkNotification();
   const { mutate: MarkAsRead } = useUpdateNotification();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [_unreadCount, setUnreadCount] = useState(0);
   const [filterType, setFilterType] = useState<"all" | "unread">("all");
   const { data, isLoading, isError, refetch } = fetchNotification();
 
