@@ -8,21 +8,18 @@ import {
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
-import { ProgressBar } from "@/components/progress-bar";
+import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
 import {
-  ChevronLeft,
-  ChevronRight,
   FileText,
   AlertTriangle,
   User,
   Users,
   MapPin,
+  Info,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// import { useAuth } from "@/context/AuthContext";
-// import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -32,8 +29,6 @@ export const ComplaintForm = () => {
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const { user } = useAuth();
-  // const { send } = useNotifications();
   const navigate = useNavigate();
 
   const methods = useForm<ComplaintFormData>({
@@ -41,7 +36,6 @@ export const ComplaintForm = () => {
     defaultValues: {
       complainant: [
         {
-          // type: "manual",
           rp_id: null,
           cpnt_name: "",
           cpnt_gender: "",
@@ -96,7 +90,6 @@ export const ComplaintForm = () => {
     try {
       setIsSubmitting(true);
 
-      // Create the payload object directly
       const payload = {
         complainant: data.complainant,
         accused: data.accused,
@@ -106,30 +99,11 @@ export const ComplaintForm = () => {
         comp_datetime: data.incident.comp_datetime,
         files: data.files || [],
       };
-
       console.log("Payload to submit:", payload);
-
-      // If you need to log files specifically
-      if (payload.files.length > 0) {
-        console.log("Files to upload:", payload.files);
-        payload.files.forEach((fileItem: any, index: number) => {
-          if (fileItem && fileItem.file) {
-            console.log(
-              `File ${index}:`,
-              fileItem.file.name,
-              fileItem.file.type,
-              fileItem.file.size
-            );
-          } else {
-            console.warn(`File ${index} is not a File object:`, fileItem);
-          }
-        });
-      }
 
       const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
-        // await handleSendAlert();
         const successMessage = response.comp_id
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
@@ -150,23 +124,6 @@ export const ComplaintForm = () => {
       setIsSubmitting(false);
     }
   };
-
-  // const handleSendAlert = async () => {
-  //   try {
-  //     await send({
-  //       title: "Complaint Report Filed",
-  //       message: "Your complaint has been submitted and is now being processed",
-  //       recipient_ids: [user?.acc_id || ""],
-  //       metadata: {
-  //         action_url: `complaint/${user?.acc_id}/`,
-  //         sender_name: "Barangay System",
-  //         sender_avatar: `${user?.profile_image}` || "",
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error sending notification:", error);
-  //   }
-  // };
 
   const confirmSubmit = () => {
     const formData = methods.getValues();
@@ -210,67 +167,73 @@ export const ComplaintForm = () => {
       title={"Blotter Form"}
       description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
     >
-      <ProgressBar steps={steps} currentStep={step} showDescription={true} />
+      {/* Progress Indicator */}
+      <div className="px-4 sm:px-6 lg:px-8">
+        <ProgressWithIcon
+          progress={step}
+          steps={steps.map((s, i) => ({
+            id: s.number,
+            label: s.title,
+            minProgress: i + 1,
+            icon: s.icon,
+            onClick: (id) => setStep(id),
+          }))}
+        />
+      </div>
 
+      {/* Form Content */}
       <FormProvider {...methods}>
-        <div className="mb-8 mt-4 px-32">
-          {step === 1 && <ComplainantInfo />}
-          {step === 2 && <AccusedInfo />}
+        <div className="mb-8 mt-4 px-4 sm:px-6 md:px-12 lg:px-24 xl:px-48 2xl:px-64">
+          {step === 1 && (
+            <ComplainantInfo 
+              onNext={nextStep}
+              isSubmitting={isSubmitting}
+            />
+          )}
+          {step === 2 && (
+            <AccusedInfo 
+              onNext={nextStep}
+              onPrevious={prevStep}
+              isSubmitting={isSubmitting}
+            />
+          )}
           {step === 3 && (
             <IncidentInfo
               onSubmit={handleSubmitClick}
+              onPrevious={prevStep}
               isSubmitting={isSubmitting}
             />
           )}
         </div>
-
-        <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
-          <div className="w-full sm:w-auto">
-            {step > 1 && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={prevStep}
-                className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
-                disabled={isSubmitting}
-              >
-                <ChevronLeft className="w-4 h-4" /> Previous
-              </Button>
-            )}
-          </div>
-
-          <div className="w-full sm:w-auto">
-            {step < 3 ? (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={nextStep}
-                className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
-                disabled={isSubmitting}
-              >
-                Next <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
       </FormProvider>
 
+      {/* Footer Info */}
+      <div className="flex items-center justify-center pb-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-start justify-center gap-x-2 max-w-md text-center">
+          <Info size={16} className="text-gray-500 mt-0.5 shrink-0" />
+          <p className="text-gray-700 text-xs sm:text-sm text-left sm:text-center">
+            All details provided are securely stored and handled with confidentiality to ensure the privacy and protection of all parties involved.
+          </p>
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
       <DialogLayout
         isOpen={showConfirmModal}
         onOpenChange={setShowConfirmModal}
         title="File a Report"
         description={
-          <p className="text-left">
+          <p className="text-left text-sm sm:text-base">
             You are about to submit your complaint report. Please review all the
             information carefully before proceeding.
           </p>
         }
-        className="sm:max-w-md"
+        className="sm:max-w-md mx-4"
         mainContent={
           <>
-            <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-amber-800">
+            <div className="flex items-start gap-3 p-3 sm:p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="text-xs sm:text-sm text-amber-800">
                 <p className="font-medium mb-1">Important Notice:</p>
                 <p>
                   Once submitted, your complaint will be officially filed and
@@ -279,12 +242,13 @@ export const ComplaintForm = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-4 gap-2">
+            <div className="flex flex-col sm:flex-row justify-end mt-4 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto order-2 sm:order-1"
               >
                 Cancel
               </Button>
@@ -292,6 +256,7 @@ export const ComplaintForm = () => {
                 type="button"
                 onClick={confirmSubmit}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto order-1 sm:order-2"
               >
                 {isSubmitting ? (
                   <>

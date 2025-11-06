@@ -42,7 +42,7 @@ export default () => {
       title: "Ordinances",
       route: "/(council)/ordinance/ordinance-main",
       icon: "",
-      gradient: ['#8b5cf6', '#7c3aed'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Minutes of Meeting",

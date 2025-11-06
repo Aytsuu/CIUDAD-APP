@@ -17,8 +17,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext"; 
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatTableDate } from "@/helpers/dateHelper";
+import { useAuth } from "@/context/AuthContext"; 
 
 function DonationTracker() {
+  const { user } = useAuth(); 
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -49,7 +52,7 @@ function DonationTracker() {
   }, [isLoading, showLoading, hideLoading]);
 
   const categoryOptions = [
-    { id: "all", name: "All Categories" },
+    { id: "all", name: "All" },
     { id: "Monetary Donations", name: "Monetary Donations" },
     { id: "Essential Goods", name: "Essential Goods" },
     { id: "Medical Supplies", name: "Medical Supplies" },
@@ -62,7 +65,7 @@ function DonationTracker() {
   ];
 
   const statusOptions = [
-    { id: "all", name: "All Statuses" },
+    { id: "all", name: "All" },
     { id: "Stashed", name: "Stashed" },
     { id: "Allotted", name: "Allotted" },
   ];
@@ -222,14 +225,15 @@ function DonationTracker() {
               }}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
             <SelectLayout
-              className="bg-white w-full sm:w-48"
+              className="bg-white w-full sm:w-48 gap-1"
               label=""
               placeholder="Filter by Category"
               options={categoryOptions}
               value={categoryFilter}
               onChange={(value) => handleFilterChange('category', value)}
+              valueLabel="Category"
             />
             <SelectLayout
               className="bg-white w-full sm:w-48"
@@ -237,34 +241,38 @@ function DonationTracker() {
               options={statusOptions}
               value={statusFilter}
               onChange={(value) => handleFilterChange('status', value)}
+              valueLabel="Status"
             />
           </div>
         </div>
 
-        <div className="w-full sm:w-auto flex justify-end">
-          <DialogLayout
-            trigger={
-              <Button className="w-full sm:w-auto">
-                <Plus size={15} /> Create
-              </Button>
-            }
-            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-            title="Add Donation"
-            description="Fill out all necessary fields"
-            mainContent={
-              <div className="w-full h-full">
-                <ClerkDonateCreate
-                  onSuccess={() => {
-                    setIsDialogOpen(false);
-                    refetch();
-                  }}
-                />
-              </div>
-            }
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          />
-        </div>
+        {/* Only show Create button if user is secretary */}
+        {isSecretary && (
+          <div className="w-full sm:w-auto flex justify-end">
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <Plus size={15} /> Create
+                </Button>
+              }
+              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title="Add Donation"
+              description="Fill out all necessary fields"
+              mainContent={
+                <div className="w-full h-full">
+                  <ClerkDonateCreate
+                    onSuccess={() => {
+                      setIsDialogOpen(false);
+                      refetch();
+                    }}
+                  />
+                </div>
+              }
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+            />
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-md">

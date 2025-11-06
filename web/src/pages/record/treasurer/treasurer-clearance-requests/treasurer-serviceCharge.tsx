@@ -1,23 +1,25 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, Search, ReceiptText, Clock, CheckCircle, Ban } from 'lucide-react';
+import {Search, ReceiptText, Clock, CheckCircle, Ban } from 'lucide-react';
+import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import ReceiptForm from "./treasurer-create-receipt-form";
+import DeclineRequestForm from "./declineForm";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
 import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLoading } from "@/context/LoadingContext";
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 
 
-// Create columns function that accepts the handlePaymentSuccess callback
-const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharge>[] => [
+// Create columns function that accepts the handlePaymentSuccess and handleDeclineSuccess callbacks
+const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: () => void, activeTab: "unpaid" | "paid" | "declined"): ColumnDef<ServiceCharge>[] => [
     { accessorKey: "sr_code",
         header: ({ column }) => (
               <div
@@ -92,9 +94,11 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
             );
         }
     },
-    {accessorKey: "sr_req_status", 
+    
+    ...(activeTab === "unpaid" ? [{
+        accessorKey: "sr_req_status" as const, 
         header: "Request Status",
-        cell: ({ row }) => {
+        cell: ({ row }: { row: any }) => {
             const value = row.getValue("sr_req_status") as string;
             const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
             let bg = "bg-[#eaf4ff]";
@@ -128,10 +132,12 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                 </span>
             );
         }
-    },
-    { accessorKey: "action", 
+    }] : []),
+    // Conditionally show Action column only for unpaid tab
+    ...(activeTab === "unpaid" ? [{
+        accessorKey: "action" as const, 
         header: "Action",
-        cell: ({ row }) =>(
+        cell: ({ row }: { row: any }) =>(
           <div className="flex justify-center gap-1">
               <TooltipLayout
                 trigger={
@@ -172,17 +178,34 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                   />
               } content="Create Receipt"/>
               <TooltipLayout 
-               trigger={
-                  <DialogLayout
-                      trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <X size={16} /></div>}
-                      className="max-w-[50%] h-2/3 flex flex-col"
-                      title="Decline Summon"
-                      description="Are you sure you want to decline this summon request?"
-                      mainContent={<div className="p-4">Decline functionality will be implemented here.</div>} 
-                  />
-               }  content="Decline"/>
+                trigger={
+                    <DialogLayout
+                    trigger={
+                        <Button variant="destructive" size="sm">
+                        Decline
+                        </Button>
+                    }
+                    className="max-w-md"
+                    title="Decline Service Charge Request"
+                    description="Provide a reason for declining this service charge request."
+                    mainContent={
+                        <DeclineRequestForm
+                        // Use payment request spay_id (which is the pay_id string from backend)
+                        id={String(row.original.payment_request?.spay_id || row.original.sr_id)}
+                        isResident={false}
+                        isServiceCharge={true}
+                        onSuccess={async () => {
+                            // Refresh the data
+                            await handleDeclineSuccess();
+                        }}
+                        />
+                    }
+                    />
+                }
+                content="Decline Request"
+                />
           </div>
-        )},
+        )}] : [])
 ];
 
 function ServiceCharge(){
@@ -190,7 +213,7 @@ function ServiceCharge(){
     const queryClient = useQueryClient();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [activeTab, setActiveTab] = useState<"pending" | "declined" | "paid">("pending");
+    const [activeTab, setActiveTab] = useState<"unpaid" | "paid" | "declined">("unpaid");
     const [searchQuery, setSearchQuery] = useState("");
     
     const { data, isLoading, error, refetch } = useTreasurerServiceCharges(searchQuery, currentPage, pageSize);
@@ -227,31 +250,39 @@ function ServiceCharge(){
     // Function to refresh data after successful payment
     const handlePaymentSuccess = async () => {
         console.log("Payment successful, refreshing data...");
-        showSuccessToast("Payment processed successfully!");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
         console.log("Data refreshed successfully");
     };
 
-    const columns = useMemo(() => createColumns(handlePaymentSuccess), [handlePaymentSuccess]);
+    // Function to refresh data after declining a request
+    const handleDeclineSuccess = async () => {
+        console.log("Request declined, refreshing data...");
+        // Invalidate and refetch the service charges data
+        await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
+        await refetch();
+        console.log("Data refreshed successfully");
+    };
 
-    // Filter data based on active tab (client-side filtering)
+    const columns = useMemo(() => createColumns(handlePaymentSuccess, handleDeclineSuccess, activeTab), [handlePaymentSuccess, handleDeclineSuccess, activeTab]);
+
+    // Filter data based on active tab (client-side filtering by pay_status)
     const filteredData = useMemo(() => {
         if (activeTab === "declined") {
             // Filter for declined service charges using pay_req_status
             return serviceCharges.filter(charge => 
-                charge.sr_req_status === "Declined"
+                charge.payment_request?.spay_status === "Declined" || charge.sr_req_status === "Declined"
             );
         } else if (activeTab === "paid") {
-            // Filter for completed service charges using pay_req_status
+            // Filter for paid service charges using pay_status
             return serviceCharges.filter(charge => 
-                charge.sr_req_status === "Completed"
+                charge.payment_request?.spay_status === "Paid"
             );
         }
-        // For pending tab, show pending service charges using pay_req_status
+        // For unpaid tab, show unpaid service charges
         return serviceCharges.filter(charge => 
-            charge.sr_req_status === "Pending"
+            charge.payment_request?.spay_status === "Unpaid" || !charge.payment_request
         );
     }, [serviceCharges, activeTab]);
 
@@ -315,15 +346,15 @@ function ServiceCharge(){
                             {/* Tabs - moved beside Show Entries */}
                             <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
                                 <button
-                                    onClick={() => setActiveTab("pending")}
+                                    onClick={() => setActiveTab("unpaid")}
                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
-                                        activeTab === "pending"
-                                            ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                        activeTab === "unpaid"
+                                            ? "bg-[#fffbe6] text-[#b59f00] border-[#f7e7b6] shadow-sm"
                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                     }`}
                                 >
                                     <Clock size={14} />
-                                    Pending
+                                    Unpaid
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("paid")}
@@ -334,7 +365,7 @@ function ServiceCharge(){
                                     }`}
                                 >
                                     <CheckCircle size={14} />
-                                    Completed
+                                    Paid
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("declined")}
@@ -359,8 +390,8 @@ function ServiceCharge(){
                         <div className="text-center py-4 text-red-500">Error loading data</div>
                     ) : filteredData.length === 0 ? (
                         <div className="p-6 text-sm text-darkGray text-center">
-                            {activeTab === "pending" ? "No pending service charge records found." : 
-                             activeTab === "paid" ? "No completed service charge records found." : 
+                            {activeTab === "unpaid" ? "No unpaid service charge records found." : 
+                             activeTab === "paid" ? "No paid service charge records found." : 
                              "No declined service charge records found."}
                         </div>
                     ) : (

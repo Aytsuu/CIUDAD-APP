@@ -45,7 +45,7 @@ export default () => {
       gradient: ['#0ea5e9', '#0284c7'],
     },
     {
-      title: "Clearance Requests",
+      title: "Payment Request",
       route: "/(treasurer)/clearance-request/clearance-request",
       icon: "",
       gradient: ['#0284c7', '#0369a1'],

@@ -26,7 +26,6 @@ interface SummonPreviewProps {
 
 function SummonPreview({
   sr_code,
-  // incident_type,
   complainant,
   complainant_address,
   accused,
@@ -101,6 +100,17 @@ function SummonPreview({
       sr_code, complainant, complainant_address, accused, accused_address,
       hearingDate, hearingTime, mediation, issuance_date, withSeal]);
 
+  const addNewPageIfNeeded = (doc: jsPDF, currentY: number, requiredSpace: number = 100): number => {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginValue = 72;
+    
+    if (currentY + requiredSpace > pageHeight - marginValue) {
+      doc.addPage();
+      return marginValue;
+    }
+    return currentY;
+  };
+
   const generatePDF = () => {
     const pageFormat: [number, number] = [612, 792]; // Letter size
     const marginValue = 72;
@@ -127,92 +137,100 @@ function SummonPreview({
     setFont('normal');
     doc.setFontSize(12);
 
-    // WATERMARK
-    if (barangayLogoData && barangayLogoData !== "no-image-url-fetched") {
-      try {
-        if (doc.setGState) {
-          // @ts-ignore
-          const gState = doc.GState({ opacity: 0.15 });
-          // @ts-ignore
-          doc.setGState(gState);
+    // Function to add header to each page
+    const addHeader = (currentY: number) => {
+      let headerY = currentY;
+
+      // WATERMARK
+      if (barangayLogoData && barangayLogoData !== "no-image-url-fetched") {
+        try {
+          if (doc.setGState) {
+            // @ts-ignore
+            const gState = doc.GState({ opacity: 0.15 });
+            // @ts-ignore
+            doc.setGState(gState);
+          }
+
+          // Place background image in center
+          const bgWidth = 400;   
+          const bgHeight = 400;  
+          const bgX = (pageWidth - bgWidth) / 2;
+          const bgY = (pageHeight - bgHeight) / 2;
+
+          doc.addImage(barangayLogoData, "PNG", bgX, bgY, bgWidth, bgHeight);
+
+          // Reset opacity back to normal
+          if (doc.setGState) {
+            // @ts-ignore
+            const gStateReset = doc.GState({ opacity: 1 });
+            // @ts-ignore
+            doc.setGState(gStateReset);
+          }
+        } catch (e) {
+          console.error("Error adding faded background logo:", e);
         }
+      }
 
-        // Place background image in center
-        const bgWidth = 400;   
-        const bgHeight = 400;  
-        const bgX = (pageWidth - bgWidth) / 2;
-        const bgY = (pageHeight - bgHeight) / 2;
+      // Logo dimensions
+      const logoWidth = 90;
+      const logoHeight = 90;
 
-        doc.addImage(barangayLogoData, "PNG", bgX, bgY, bgWidth, bgHeight);
+      // Style 1: Original layout with logos on sides
+      const leftLogoX = marginValue;
+      const rightLogoX = pageWidth - marginValue - logoWidth;
 
-        // Reset opacity back to normal
-        if (doc.setGState) {
-          // @ts-ignore
-          const gStateReset = doc.GState({ opacity: 1 });
-          // @ts-ignore
-          doc.setGState(gStateReset);
+      if (barangayLogoData && barangayLogoData !== "no-image-url-fetched") {
+        try {
+          doc.addImage(barangayLogoData, "PNG", leftLogoX, headerY, logoWidth, logoHeight);
+        } catch (e) {
+          console.error("Error adding barangay logo:", e);
         }
-      } catch (e) {
-        console.error("Error adding faded background logo:", e);
       }
-    }
 
-    // Logo dimensions
-    const logoWidth = 90;
-    const logoHeight = 90;
-
-    // Style 1: Original layout with logos on sides
-    const leftLogoX = marginValue;
-    const rightLogoX = pageWidth - marginValue - logoWidth;
-
-    if (barangayLogoData && barangayLogoData !== "no-image-url-fetched") {
-      try {
-        doc.addImage(barangayLogoData, "PNG", leftLogoX, yPos, logoWidth, logoHeight);
-      } catch (e) {
-        console.error("Error adding barangay logo:", e);
+      if (cityLogoData && cityLogoData !== "no-image-url-fetched") {
+        try {
+          doc.addImage(cityLogoData, "PNG", rightLogoX, headerY, logoWidth, logoHeight);
+        } catch (e) {
+          console.error("Error adding city logo:", e);
+        }
       }
-    }
 
-    if (cityLogoData && cityLogoData !== "no-image-url-fetched") {
-      try {
-        doc.addImage(cityLogoData, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
-      } catch (e) {
-        console.error("Error adding city logo:", e);
-      }
-    }
+      // Header text configuration
+      const headerText = [
+        { text: "Republic of the Philippines", bold: true, size: 12 },
+        { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
+        { text: "____________________________________", bold: true, size: 14 },
+        { text: "Office of the Barangay Captain", bold: false, size: 13 },
+        { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
+        { text: `${email} | ${telnum}`, bold: false, size: 11 }
+      ];
 
-    // Header text configuration
-    const headerText = [
-      { text: "Republic of the Philippines", bold: true, size: 12 },
-      { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-      { text: "____________________________________", bold: true, size: 14 },
-      { text: "Office of the Barangay Captain", bold: false, size: 13 },
-      { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-      { text: `${email} | ${telnum}`, bold: false, size: 11 }
-    ];
+      const centerX = pageWidth / 2;
+      let textY = headerY + 15;
 
-    const centerX = pageWidth / 2;
-    let headerY = yPos + 15;
+      headerText.forEach((line) => {
+        if (line.text === "") {
+          textY += 10;
+          return;
+        }
+        
+        doc.setFont("times", line.bold ? 'bold' : 'normal');
+        doc.setFontSize(line.size);
+        
+        const textWidth = doc.getTextWidth(line.text);
+        doc.text(line.text, centerX - (textWidth / 2), textY);
+        textY += lineHeight;
+        
+        if (line.bold) {
+          textY += 5;
+        }
+      });
 
-    headerText.forEach((line) => {
-      if (line.text === "") {
-        headerY += 10;
-        return;
-      }
-      
-      doc.setFont("times", line.bold ? 'bold' : 'normal');
-      doc.setFontSize(line.size);
-      
-      const textWidth = doc.getTextWidth(line.text);
-      doc.text(line.text, centerX - (textWidth / 2), headerY);
-      headerY += lineHeight;
-      
-      if (line.bold) {
-        headerY += 5;
-      }
-    });
+      return textY + 40; // Return new Y position after header
+    };
 
-    yPos = headerY + 40;
+    // Add header to first page
+    yPos = addHeader(yPos);
 
     // Summon content
     setFont("bold");
@@ -223,7 +241,11 @@ function SummonPreview({
     yPos += lineHeight * 2;
 
     // Complainant section
+    yPos = addNewPageIfNeeded(doc, yPos, complainant.length * lineHeight * 2 + 50);
     complainant.forEach((name, i) => {
+      // Check if we need a new page before adding each complainant
+      yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 3);
+      
       setFont("bold");
       doc.text("NAME:", marginValue, yPos);
       doc.text(name, marginValue + 40, yPos);
@@ -234,7 +256,10 @@ function SummonPreview({
         doc.text(complainant_address[i], marginValue + 50, yPos);
         yPos += lineHeight;
       }
+      yPos += 2; // Small gap between complainants
     });
+    
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 2);
     doc.text("COMPLAINANT/S", marginValue, yPos);
     yPos += lineHeight * 1.5;
 
@@ -243,7 +268,11 @@ function SummonPreview({
     yPos += lineHeight * 1.5;
 
     // Accused section
+    yPos = addNewPageIfNeeded(doc, yPos, accused.length * lineHeight * 2 + 50);
     accused.forEach((name, i) => {
+      // Check if we need a new page before adding each accused
+      yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 3);
+      
       setFont("bold");
       doc.text("NAME:", marginValue, yPos);
       doc.text(name, marginValue + 40, yPos);
@@ -254,11 +283,15 @@ function SummonPreview({
         doc.text(accused_address[i], marginValue + 50, yPos);
         yPos += lineHeight;
       }
+      yPos += 2; // Small gap between accused
     });
+    
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 2);
     doc.text("RESPONDENT/S", marginValue, yPos);
     yPos += lineHeight * 2;
 
     // Title
+    yPos = addNewPageIfNeeded(doc, yPos, 100);
     doc.setFont("times", "bold");
     doc.setFontSize(16);
     const title = "S U M M O N";
@@ -268,32 +301,48 @@ function SummonPreview({
     // Mediation text
     doc.setFont("times", "normal");
     doc.setFontSize(9);
-    doc.text(mediation, pageWidth / 2, yPos, { align: "center" });
+    const mediationLines = doc.splitTextToSize(mediation, pageWidth - marginValue * 2);
+    yPos = addNewPageIfNeeded(doc, yPos, mediationLines.length * lineHeight);
+    mediationLines.forEach((line: string) => {
+      doc.text(line, pageWidth / 2, yPos, { align: "center" });
+      yPos += lineHeight;
+    });
     yPos += lineHeight * 2;
 
-    // Body content
+    // Body content - First paragraph
     setFont("normal");
     doc.setFontSize(10);
     const formattedDateTime = formatSummonDateTime(hearingDate, hearingTime);
     const body1 = `You are hereby informed to appear before me in person, together with your witnesses, on the ${formattedDateTime} at the Barangay Hall of San Roque (CIUDAD). Then and there to answer the complaint made before me, for mediation of your dispute with complainant.`;
-    doc.splitTextToSize(body1, pageWidth - marginValue * 2).forEach((line: string) => {
+    
+    const body1Lines = doc.splitTextToSize(body1, pageWidth - marginValue * 2);
+    yPos = addNewPageIfNeeded(doc, yPos, body1Lines.length * lineHeight);
+    body1Lines.forEach((line: string) => {
+      yPos = addNewPageIfNeeded(doc, yPos, lineHeight);
       doc.text(line, marginValue, yPos);
       yPos += lineHeight;
     });
     yPos += sectionGap;
 
+    // Body content - Second paragraph
     const body2 = "You are hereby warned that if you refuse or willfully fail to appear in obedience to this Summon, you may be barred from filing any counter claim arising from said complaint. Fail not or else face punishment for contempt of court.";
-    doc.splitTextToSize(body2, pageWidth - marginValue * 2).forEach((line: string) => {
+    
+    const body2Lines = doc.splitTextToSize(body2, pageWidth - marginValue * 2);
+    yPos = addNewPageIfNeeded(doc, yPos, body2Lines.length * lineHeight);
+    body2Lines.forEach((line: string) => {
+      yPos = addNewPageIfNeeded(doc, yPos, lineHeight);
       doc.text(line, marginValue, yPos);
       yPos += lineHeight;
     });
     yPos += sectionGap;
 
     // Issuance date
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 4);
     doc.text(`Issued this ${newIssuanceDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
     yPos += lineHeight * 3;
 
     // Signature section
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 8);
     setFont("bold");
     doc.text("HON. VIRGINIA N. ABENOJA", pageWidth - marginValue, yPos, {
       align: "right",
@@ -305,13 +354,17 @@ function SummonPreview({
     yPos += lineHeight * 4;
 
     // Signatures section
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 4);
     setFont("normal");
     doc.text("COMPLAINANT ____________________", marginValue, yPos);
     doc.text("RESPONDENT ____________________", marginValue + 250, yPos);
+    
+    yPos = addNewPageIfNeeded(doc, yPos, lineHeight * 3);
     doc.text("SERVER ____________________", marginValue + 250, yPos + lineHeight * 2);
 
-    // Seal
+    // Seal - Only on last page
     if (withSeal && sealData) {
+      yPos = addNewPageIfNeeded(doc, yPos, 150);
       const sealSize = 80;
       const sealX = pageWidth - marginValue - sealSize;
       const sealY = doc.internal.pageSize.getHeight() - marginValue - sealSize - 50;

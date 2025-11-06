@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
+import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Form } from '@/components/ui/form/form';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
@@ -235,7 +236,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -244,7 +245,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -295,7 +296,14 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                                 type="button"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Updating..." : "Update"}
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update"
+                                )}
                             </Button>
                         }
                         title="Confirm Update"

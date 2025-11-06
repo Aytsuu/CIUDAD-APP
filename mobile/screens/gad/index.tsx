@@ -37,7 +37,7 @@ export default () => {
       title: "Activity Calendar",
       route: "/(gad)/activity/gad-activity",
       icon: Calendar,
-      gradient: ['#8b5cf6', '#7c3aed'],
+      gradient: ['#93c5fd', '#60a5fa'],
     },
   ];
   

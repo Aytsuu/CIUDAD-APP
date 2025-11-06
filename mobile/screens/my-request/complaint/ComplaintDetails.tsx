@@ -1,37 +1,11 @@
 import type React from "react"
 import { useState } from "react"
 import { TouchableOpacity, View, Text, ScrollView } from "react-native"
-import {
-  Calendar,
-  MapPin,
-  User,
-  Users,
-  FileText,
-  Clock,
-  Hash,
-  Gavel,
-  AlertCircle,
-  Heart,
-  Phone,
-  Mail,
-  Home,
-} from "lucide-react-native"
+import { FileText, User,} from "lucide-react-native"
 import type { ComplaintData, PersonType, ComplaintFile } from "./types"
 
 interface ComplaintDetailsProps {
   data: ComplaintData
-}
-
-interface InfoRowProps {
-  icon: React.ComponentType<any>
-  label: string
-  value?: string | number
-  valueClass?: string
-}
-
-interface PersonCardProps {
-  person: PersonType
-  type?: string
 }
 
 interface TabButtonProps {
@@ -46,19 +20,14 @@ interface FileCardProps {
   index: number
 }
 
-type ComplaintStatus = "pending" | "filed" | "cancelled" | "resolved" | "rejected"
+type ComplaintStatus = "pending" | "raised" | "accepted" |"cancelled" | "resolved" | "rejected"
 
 const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
   const [activeComplainantTab, setActiveComplainantTab] = useState<number>(0)
   const [activeAccusedTab, setActiveAccusedTab] = useState<number>(0)
-  const [isRequestingSummon, setIsRequestingSummon] = useState<boolean>(false)
   const [isSummonRequested, setIsSummonRequested] = useState<boolean>(false)
 
-  console.log(JSON.stringify(data, null, 2))
-
-  const canRequestSummon = (status?: string) => {
-    return status?.toLowerCase() === "filed"
-  }
+  const canRequestSummon = (status?: string) => status?.toLowerCase() === "accepted"
 
   const handleRequestSummon = () => {
     if (!data?.comp_id || isSummonRequested) return
@@ -76,11 +45,12 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
 
   const getStatusColor = (status?: string): string => {
     if (!status) return "text-slate-600 bg-slate-50 border-slate-200"
-
     switch (status.toLowerCase() as ComplaintStatus) {
       case "pending":
         return "text-amber-600 bg-amber-50 border-amber-200"
-      case "filed":
+      case "raised":
+        return "text-blue-500 bg-blue-50 border-blue-200"
+      case "accepted":
         return "text-teal-600 bg-teal-50 border-teal-200"
       case "cancelled":
         return "text-rose-600 bg-rose-50 border-rose-200"
@@ -93,38 +63,11 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
     }
   }
 
-  const getStatusIcon = (status?: string): React.JSX.Element => {
-    if (!status) return <FileText size={16} className="text-slate-600" />
-
-    switch (status.toLowerCase() as ComplaintStatus) {
-      case "pending":
-        return <Clock size={16} className="text-amber-600" />
-      case "filed":
-        return <FileText size={16} className="text-teal-600" />
-      case "cancelled":
-        return <AlertCircle size={16} className="text-rose-600" />
-      case "resolved":
-        return <FileText size={16} className="text-emerald-600" />
-      default:
-        return <FileText size={16} className="text-slate-600" />
-    }
-  }
-
-  const InfoRow: React.FC<InfoRowProps> = ({ icon: Icon, label, value, valueClass = "text-slate-900" }) => (
-    <View className="mb-3">
-      <View className="flex-row items-center mb-1.5">
-        <Icon size={16} className="text-teal-600 mr-2" />
-        <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</Text>
-      </View>
-      <Text className={`text-sm ml-6 font-medium ${valueClass}`}>{value?.toString() || "Not specified"}</Text>
-    </View>
-  )
-
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress, count = 0 }) => (
     <TouchableOpacity
       onPress={onPress}
-      className={`px-4 py-2.5 rounded-lg mr-2 transition-all ${
-        isActive ? "bg-teal-600 shadow-md" : "bg-slate-100 border border-slate-200"
+      className={`px-4 py-2.5 rounded-lg mr-2 ${
+        isActive ? "bg-blue-500" : "bg-slate-100 border border-slate-200"
       }`}
     >
       <Text className={`font-semibold text-sm ${isActive ? "text-white" : "text-slate-700"}`}>
@@ -133,135 +76,124 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
     </TouchableOpacity>
   )
 
-  const PersonCard: React.FC<PersonCardProps> = ({ person, type = "person" }) => {
-    const displayName = person.res_profile?.full_name || person.cpnt_name || person.acsd_name || "Unknown"
-
-    const displayAddress = person.res_profile?.address || person.cpnt_address || person.acsd_address
-
-    const displayContact = person.res_profile?.contact_number || person.cpnt_contact || person.acsd_contact
-
-    return (
-      <View className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        {/* Header */}
-        <View className="flex-row items-center mb-5 pb-4 border-b border-slate-100">
-          <View className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-100 to-teal-50 items-center justify-center mr-3">
-            <User size={24} className="text-teal-600" />
-          </View>
-          <View className="flex-1">
-            <Text className="font-bold text-slate-900 text-base">{displayName}</Text>
-            {person.res_profile && (
-              <Text className="text-xs text-emerald-600 font-semibold mt-0.5">✓ Registered Resident</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Details */}
-        <View>
-          {person.res_profile?.first_name && (
-            <InfoRow icon={User} label="First Name" value={person.res_profile.first_name} />
-          )}
-          {person.res_profile?.middle_name && (
-            <InfoRow icon={User} label="Middle Name" value={person.res_profile.middle_name} />
-          )}
-          {person.res_profile?.last_name && (
-            <InfoRow icon={User} label="Last Name" value={person.res_profile.last_name} />
-          )}
-
-          {(person.cpnt_gender || person.acsd_gender) && (
-            <InfoRow icon={User} label="Gender" value={person.cpnt_gender || person.acsd_gender} />
-          )}
-
-          {person.acsd_age && <InfoRow icon={User} label="Age" value={person.acsd_age} />}
-
-          {displayAddress && <InfoRow icon={Home} label="Address" value={displayAddress} />}
-          {displayContact && <InfoRow icon={Phone} label="Contact" value={displayContact} />}
-          {person.res_profile?.email && <InfoRow icon={Mail} label="Email" value={person.res_profile.email} />}
-
-          {person.acsd_description && (
-            <InfoRow icon={FileText} label="Description" value={person.acsd_description} valueClass="text-slate-700" />
-          )}
-
-          {person.cpnt_relation_to_respondent && (
-            <InfoRow
-              icon={Heart}
-              label="Relationship"
-              value={person.cpnt_relation_to_respondent}
-              valueClass="text-teal-600 font-semibold"
-            />
-          )}
-
-          {person.cpnt_number && <InfoRow icon={Phone} label="Contact Number" value={person.cpnt_number} />}
-
-          {person.rp_id && <InfoRow icon={Hash} label="Resident Profile ID" value={person.rp_id} />}
-          {(person.cpnt_id || person.acsd_id) && (
-            <InfoRow icon={Hash} label={`${type} ID`} value={person.cpnt_id || person.acsd_id} />
-          )}
-        </View>
-      </View>
-    )
-  }
-
   const FileCard: React.FC<FileCardProps> = ({ file, index }) => (
-    <View className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 mb-3 border border-slate-200">
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-lg bg-teal-100 items-center justify-center mr-3">
-          <FileText size={20} className="text-teal-600" />
-        </View>
-        <Text className="font-bold text-slate-900">File {index + 1}</Text>
-      </View>
-
-      <View>
-        {file.file_name && <InfoRow icon={FileText} label="Name" value={file.file_name} />}
-        {file.file_type && <InfoRow icon={FileText} label="Type" value={file.file_type} />}
-        {file.file_url && (
-          <InfoRow icon={FileText} label="URL" value={file.file_url} valueClass="text-teal-600 font-semibold" />
-        )}
-        {file.uploaded_at && <InfoRow icon={Clock} label="Uploaded" value={formatDateTime(file.uploaded_at)} />}
-      </View>
+    <View className="bg-slate-50 rounded-xl p-4 mb-3 border border-slate-200">
+      <Text className="font-bold mb-2">File {index + 1}</Text>
+      {file.file_name && <Text>Name: {file.file_name}</Text>}
+      {file.file_type && <Text>Type: {file.file_type}</Text>}
+      {file.file_url && <Text className="text-teal-600 font-semibold">URL: {file.file_url}</Text>}
+      {file.uploaded_at && <Text>Uploaded: {formatDateTime(file.uploaded_at)}</Text>}
     </View>
   )
 
-  // Main Render
+const renderPerson = (person: PersonType) => {
+  const name = person.res_profile?.full_name || person.cpnt_name || person.acsd_name || "Unknown"
+  const address = person.res_profile?.address || person.cpnt_address || person.acsd_address
+  const contact = person.res_profile?.contact_number || person.cpnt_contact || person.acsd_contact
+  
   return (
-    <ScrollView className="flex-1 bg-slate-50" showsVerticalScrollIndicator={false}>
-      <View className="p-4 space-y-5">
-        {/* Header Section */}
-        <View className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <View className="mb-5">
-            <Text className="text-2xl font-bold text-slate-900 mb-3">{data.comp_incident_type || "Incident"}</Text>
-
-            <View className="flex-row items-center mb-4">
-              {getStatusIcon(data.comp_status)}
-              <View className={`ml-3 px-4 py-2 rounded-lg border ${getStatusColor(data.comp_status)}`}>
-                <Text className={`text-xs font-bold ${getStatusColor(data.comp_status).split(" ")[0]}`}>
-                  {data.comp_status?.toUpperCase() || "UNKNOWN"}
-                </Text>
-              </View>
+    <View className="mb-4 bg-white p-1 rounded-lg border border-gray-200">
+      <View className="flex-row items-start bg-blue-500 rounded-lg p-2 mb-3">
+        <View className="bg-white rounded-full p-3">
+          <User size={24} color="#3b82f6" />
+        </View>
+        <View className="flex-1 pl-4">
+          <Text className="font-semibold text-white text-base">{name}</Text>
+          {data.rp_id ? (
+            <View className="bg-green-100 px-2 py-1 rounded mt-1 self-start">
+              <Text className="text-xs text-green-700 font-medium">Resident</Text>
             </View>
-
-            {data.comp_id && (
-              <Text className="text-sm text-slate-500 font-medium">
-                Complaint ID: <Text className="text-slate-700 font-semibold">{data.comp_id}</Text>
+          ) : (
+            <View className="bg-purple-100 px-2 py-1 rounded mt-1 self-start">
+              <Text className="text-xs text-purple-700 font-medium">Non-resident</Text>
+            </View>
+          )}
+        </View>
+      </View>
+      
+      <View className="px-4">
+        {(person.acsd_age || person.cpnt_gender || person.acsd_gender) && (
+          <View className="flex-row mb-2">
+            {person.acsd_age && (
+              <Text className="text-sm text-gray-600 pr-8">
+                <Text className="font-medium">Age:</Text> {person.acsd_age}
+              </Text>
+            )}
+            {(person.cpnt_gender || person.acsd_gender) && (
+              <Text className="text-sm text-gray-600">
+                <Text className="font-medium">Gender:</Text> {person.cpnt_gender || person.acsd_gender}
               </Text>
             )}
           </View>
+        )}
+        {contact && (
+          <Text className="text-sm text-gray-600 mb-2">
+            <Text className="font-medium">Contact:</Text> {contact}
+          </Text>
+        )}
+        
+        {person.cpnt_number && (
+          <Text className="text-sm text-gray-600 mb-2">
+            <Text className="font-medium">Contact Number:</Text> {person.cpnt_number}
+          </Text>
+        )}
+        
+        {address && (
+          <Text className="text-sm text-gray-600 mb-2">
+            <Text className="font-medium">Address:</Text> {address}
+          </Text>
+        )}
+        
+        {person.cpnt_relation_to_respondent && (
+          <Text className="text-sm text-gray-600 mb-2">
+            <Text className="font-medium">Relationship:</Text> {person.cpnt_relation_to_respondent}
+          </Text>
+        )}
+        
+        {person.acsd_description && (
+          <Text className="text-sm text-gray-600 mb-2">
+            <Text className="font-medium">Description:</Text> {person.acsd_description}
+          </Text>
+        )}
+      </View>
+    </View>
+  )
+}
 
-          {/* Summon Button */}
+  return (
+    <ScrollView className="flex-1 bg-slate-50" showsVerticalScrollIndicator={false}>
+      <View className="p-4">
+        {/* Header */}
+        <View className="bg-blue-500 rounded-xl p-2 mb-5">
+          <View className="flex-col items-start">
+            <View className={`px-4 py-2 rounded-lg border w-full items-center ${getStatusColor(data.comp_status)} mb-2`}>
+              <Text className={`text-lg font-bold ${getStatusColor(data.comp_status).split(" ")[0]}`}>
+                {data.comp_status?.toUpperCase() || "UNKNOWN"}
+              </Text>
+            </View>
+            <View>
+              <Text className="text-white text-sm">Date Filed: {formatDateTime(data.comp_created_at)}</Text>
+              <Text className="text-white text-sm">Confirmed by: {data.staff}</Text>
+            </View>
+          </View>
+
           {canRequestSummon(data.comp_status) && (
             <TouchableOpacity
               onPress={handleRequestSummon}
-              className={`bg-teal-600 rounded-lg p-4 flex-row items-center justify-center mt-4 shadow-md ${isSummonRequested ? "opacity-60" : ""}`}
+              activeOpacity={0.7}
+              className="bg-teal-600 rounded-lg p-4 flex-row items-center justify-center mt-4"
             >
-              <Gavel size={20} className="text-white mr-2" />
-              <Text className="text-white font-bold">{isSummonRequested ? "Summon Requested" : "Request Summon"}</Text>
+              <FileText size={20} color="#ffffff" />
+              <Text className="text-white font-bold pl-2">
+                {isSummonRequested ? "Summon Requested" : "Request Summon"}
+              </Text>
             </TouchableOpacity>
           )}
 
-          {/* Status Messages */}
           {data.comp_status?.toLowerCase() === "pending" && (
             <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
               <Text className="text-amber-700 text-sm font-medium text-center">
-                Complaint is still pending review. Summon request will be available once filed.
+                Complaint is still pending for review. Summon request will be available once confirmed.
               </Text>
             </View>
           )}
@@ -275,111 +207,100 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
           )}
         </View>
 
-        {/* Complaint Details */}
-        <View className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <Text className="text-lg font-bold text-slate-900 mb-5">Details</Text>
+        <View className="bg-white">
+          {/* Complaint Details */}
+          <View className="bg-white rounded-xl p-4 w-full my-4">
+            <Text className="text-base font-semibold text-slate-900">Allegation</Text>
+            <Text className="text-sm font-normal text-slate-900 mb-5">Details about the incident or wrongdoing being reported</Text>
 
-          <View>
-            <InfoRow icon={MapPin} label="Location" value={data.comp_location} />
-            <InfoRow icon={Calendar} label="Incident Date" value={formatDateTime(data.comp_datetime)} />
-            <InfoRow icon={Clock} label="Filed Date" value={formatDateTime(data.comp_created_at)} />
+            <View className="w-full bg-blue-500 rounded-md py-2 mb-2 px-2">
+              <Text className="text-white text-sm">Type of Incident</Text>
+              <Text className="text-center font-semibold text-white">{data.comp_incident_type}</Text>
+            </View>
+            <View className="w-full bg-gray-100 rounded-md py-2 mb-2 px-2">
+              <Text className="text-gray-600 text-sm mb-2">Location of Incident</Text>
+              <Text className="text-center font-normal text-sm text-gray-500">{data.comp_location}</Text>
+            </View>
+            <View className="w-full bg-gray-100 rounded-md py-2 mb-2 px-2">
+              <Text className="text-gray-600 text-sm mb-2">Date of Incident</Text>
+              <Text className="text-center font-normal text-sm text-gray-500">{formatDateTime(data.comp_datetime)}</Text>
+            </View>
+
+            {data.comp_allegation && (
+              <View className="w-full bg-gray-100 rounded-md py-2 mb-2 px-2">
+                <Text className="text-gray-600 text-sm mb-2">Incident Details</Text>
+                <Text className="text-center font-normal text-sm text-gray-500">{data.comp_allegation}</Text>
+              </View>
+            )}
           </View>
 
-          {data.comp_allegation && (
-            <View className="mt-5 pt-5 border-t border-slate-100">
-              <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Allegation</Text>
-              <Text className="text-sm text-slate-700 leading-relaxed font-medium">{data.comp_allegation}</Text>
-            </View>
-          )}
-        </View>
+          {/* Complainants */}
+          <View className="bg-white rounded-xl p-4 w-full my-4">
+            <Text className="text-base font-semibold text-slate-900">Complainant</Text>
+            <Text className="text-sm font-normal text-slate-900 mb-5">Person who lodged or initiated the complaint</Text>
 
-        {/* Complainants Section */}
-        <View className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <View className="flex-row items-center mb-5">
-            <View className="w-10 h-10 rounded-lg bg-teal-100 items-center justify-center mr-3">
-              <Users size={20} className="text-teal-600" />
-            </View>
-            <Text className="text-lg font-bold text-slate-900">Complainants ({data.complainant?.length || 0})</Text>
+            {data.complainant?.length ? (
+              <>
+                {data.complainant.length > 1 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+                    <View className="flex-row">
+                      {data.complainant.map((_, index) => (
+                        <TabButton
+                          key={index}
+                          title={`Person ${index + 1}`}
+                          isActive={activeComplainantTab === index}
+                          onPress={() => setActiveComplainantTab(index)}
+                        />
+                      ))}
+                    </View>
+                  </ScrollView>
+                )}
+                {renderPerson(data.complainant[activeComplainantTab])}
+              </>
+            ) : (
+              <Text>No complainants listed</Text>
+            )}
           </View>
 
-          {data.complainant?.length ? (
-            <>
-              {data.complainant.length > 1 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-5">
-                  <View className="flex-row">
-                    {data.complainant.map((_, index) => (
-                      <TabButton
-                        key={index}
-                        title={`Person ${index + 1}`}
-                        isActive={activeComplainantTab === index}
-                        onPress={() => setActiveComplainantTab(index)}
-                      />
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-              <PersonCard person={data.complainant[activeComplainantTab]} type="Complainant" />
-            </>
-          ) : (
-            <View className="py-8 items-center">
-              <Users size={32} className="text-slate-300 mb-2" />
-              <Text className="text-slate-500 font-medium">No complainants listed</Text>
-            </View>
-          )}
-        </View>
+          {/* Accused */}
+          <View className="bg-white rounded-xl p-4 w-full my-4">
+            <Text className="text-base font-semibold text-slate-900">Respondent</Text>
+            <Text className="text-sm font-normal text-slate-900 mb-5">The person being reported or accused in the incident</Text>
 
-        {/* Accused Persons Section */}
-        <View className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <View className="flex-row items-center mb-5">
-            <View className="w-10 h-10 rounded-lg bg-rose-100 items-center justify-center mr-3">
-              <Users size={20} className="text-rose-600" />
-            </View>
-            <Text className="text-lg font-bold text-slate-900">Accused Persons ({data.accused?.length || 0})</Text>
+            {data.accused?.length ? (
+              <>
+                {data.accused.length > 1 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+                    <View className="flex-row">
+                      {data.accused.map((_, index) => (
+                        <TabButton
+                          key={index}
+                          title={`Person ${index + 1}`}
+                          isActive={activeAccusedTab === index}
+                          onPress={() => setActiveAccusedTab(index)}
+                        />
+                      ))}
+                    </View>
+                  </ScrollView>
+                )}
+                {renderPerson(data.accused[activeAccusedTab])}
+              </>
+            ) : (
+              <Text>No accused persons listed</Text>
+            )}
           </View>
 
-          {data.accused?.length ? (
-            <>
-              {data.accused.length > 1 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-5">
-                  <View className="flex-row">
-                    {data.accused.map((_, index) => (
-                      <TabButton
-                        key={index}
-                        title={`Person ${index + 1}`}
-                        isActive={activeAccusedTab === index}
-                        onPress={() => setActiveAccusedTab(index)}
-                      />
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-              <PersonCard person={data.accused[activeAccusedTab]} type="Accused" />
-            </>
-          ) : (
-            <View className="py-8 items-center">
-              <Users size={32} className="text-slate-300 mb-2" />
-              <Text className="text-slate-500 font-medium">No accused persons listed</Text>
-            </View>
-          )}
-        </View>
+          {/* Files */}
+          <View className="bg-white rounded-xl p-4 w-full my-4">
+            <Text className="text-base font-semibold text-slate-900">Attached Files</Text>
+            <Text className="text-sm font-normal text-slate-900 mb-5">Uploaded photos, files, or proof related to the incident.</Text>
 
-        {/* Files Section */}
-        <View className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm mb-6">
-          <View className="flex-row items-center mb-5">
-            <View className="w-10 h-10 rounded-lg bg-teal-100 items-center justify-center mr-3">
-              <FileText size={20} className="text-teal-600" />
-            </View>
-            <Text className="text-lg font-bold text-slate-900">Files ({data.complaint_files?.length || 0})</Text>
+            {data.complaint_files?.length ? (
+              data.complaint_files.map((file, index) => <FileCard key={index} file={file} index={index} />)
+            ) : (
+              <Text>No files attached</Text>
+            )}
           </View>
-
-          {data.complaint_files?.length ? (
-            data.complaint_files.map((file, index) => <FileCard key={index} file={file} index={index} />)
-          ) : (
-            <View className="py-8 items-center">
-              <FileText size={32} className="text-slate-300 mb-2" />
-              <Text className="text-slate-500 font-medium">No files attached</Text>
-            </View>
-          )}
         </View>
       </View>
     </ScrollView>

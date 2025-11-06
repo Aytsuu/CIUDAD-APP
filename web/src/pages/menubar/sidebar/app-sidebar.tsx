@@ -190,8 +190,12 @@ export function AppSidebar() {
     ...(featureValidator("complaint")
       ? [
           {
-            title: "Complaint",
-            url: "/complaint",
+            title: "Blotter",
+            url: "/",
+            items: [
+              {title: "Process", url: "/complaint"},
+              {title: "Record", url: "/record"}
+            ]
           },
         ]
       : []),
@@ -205,7 +209,7 @@ export function AppSidebar() {
             title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Summon Calendar", url: "/summon-calendar" },
+              { title: "Date & Time Availability", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
@@ -293,6 +297,32 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("waste")
+    ? [
+        {
+          title: "Waste",
+          url: "/", 
+          items: [
+            {
+              title: "Illegal Dumping Reports",
+              url: "/waste-illegaldumping-report",
+            },
+            {
+              title: "Garbage Pickup Request",
+              url: "/garbage-pickup-request",
+            },
+            {
+              title: "Waste Collection",
+              url: "/waste-collection",
+            },
+            {
+              title: "Waste Personnel & Collection Vehicle",
+              url: "/waste-personnel",
+            },
+          ]
+        }
+      ]
+    : []),
     ...(featureValidator("certificate & clearances")
       ? [
           {
@@ -324,26 +354,6 @@ export function AppSidebar() {
           {
             title: "Donation",
             url: "/donation-record",
-          },
-        ]
-      : []),
-    ...(featureValidator("waste")
-      ? [
-          {
-            title: "Illegal Dumping Reports",
-            url: "/waste-illegaldumping-report",
-          },
-          {
-            title: "Garbage Pickup Request",
-            url: "/garbage-pickup-request",
-          },
-          {
-            title: "Waste Collection",
-            url: "/waste-collection",
-          },
-          {
-            title: "Waste Personnel & Collection Vehicle",
-            url: "/waste-personnel",
           },
         ]
       : []),

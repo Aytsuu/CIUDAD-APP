@@ -81,7 +81,6 @@ INSTALLED_APPS = [
     'apps.clerk',
     'apps.landing',
     'apps.act_log',
-    
 ]
 
 MIDDLEWARE = [

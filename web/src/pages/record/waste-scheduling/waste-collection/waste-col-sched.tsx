@@ -1,7 +1,8 @@
-
+import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
+import { Loader2 } from "lucide-react";
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -43,9 +44,9 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors, isPending } = useAssignCollectors();
+    const { mutate: assignCollectors } = useAssignCollectors();
 
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     //FETCH QUERY MUTATIONS
     const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
@@ -98,6 +99,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     });
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+        setIsSubmitting(true);
+
         const [hour, minute] = values.time.split(":");
         const formattedTime = `${hour}:${minute}:00`;
 
@@ -193,7 +196,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -202,7 +205,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -247,8 +250,15 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending}>
-                        {isPending ? "Submitting..." : "Schedule"}
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Save"
+                        )}
                     </Button>
                 </div>
             </form>

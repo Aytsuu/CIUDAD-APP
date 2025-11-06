@@ -36,6 +36,8 @@ export async function getTreasurerServiceCharges(
   if (page) params.append('page', page.toString());
   if (pageSize) params.append('page_size', pageSize.toString());
   
+  // Don't filter by payment_status here - let the frontend tabs handle filtering
+  
   const { data } = await api.get<ServiceChargeResponse>(`/clerk/treasurer/service-charges/?${params.toString()}`);
   return data ?? { results: [], count: 0, next: null, previous: null };
 }

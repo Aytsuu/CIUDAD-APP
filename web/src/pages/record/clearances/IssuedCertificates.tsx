@@ -103,6 +103,25 @@ function IssuedCertificates() {
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
     {
+      accessorKey: "cr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
+        </div>
+      ),
+    },
+    {
       accessorKey: "requester",
       header: "Requester",
       cell: ({ row }) => <div className="capitalize">{row.getValue("requester")}</div>,
@@ -173,6 +192,25 @@ function IssuedCertificates() {
   ];
 
   const businessPermitColumns: ColumnDef<IssuedBusinessPermit>[] = [
+    {
+      accessorKey: "bpr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#fffbe6] text-[#b59f00] border border-[#f7e7b6]">
+            {row.getValue("bpr_id")}
+          </span>
+        </div>
+      ),
+    },
     {
       accessorKey: "business_name",
       header: "Business Name",
@@ -253,13 +291,15 @@ function IssuedCertificates() {
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          SR No.
+          Request No.
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="capitalize flex justify-center items-center gap-2">
-          {row.getValue("sr_code")}
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#e6f7e6] text-[#16a34a] border border-[#d1f2d1]">
+            {row.getValue("sr_code")}
+          </span>
         </div>
       ),
     },
@@ -337,7 +377,7 @@ function IssuedCertificates() {
 
   const { data: serviceChargesData, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery({
     queryKey: ["issuedServiceCharges", serviceChargeSearchQuery, currentPage, pageSize],
-    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize),
+    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize, 'completed'),
   });
 
   const serviceCharges = serviceChargesData?.results || [];
@@ -388,6 +428,9 @@ function IssuedCertificates() {
 
   useEffect(() => {
     setCurrentPage(1);
+    // Clear selected certificate/permit when switching tabs
+    setSelectedCertificate(null);
+    setSelectedBusinessPermit(null);
   }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
 
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
@@ -637,6 +680,10 @@ function IssuedCertificates() {
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          // Clear viewing certificate when dialog is closed
+          if (!open) {
+            setViewingCertificate(null);
+          }
         }}
         className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"

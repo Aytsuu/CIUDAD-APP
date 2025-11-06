@@ -85,13 +85,15 @@ function ServiceChargePage() {
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          SR No.
+          Request No.
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="capitalize flex justify-center items-center gap-2">
-          {row.getValue("sr_code")}
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#e6f7e6] text-[#16a34a] border border-[#d1f2d1]">
+            {row.getValue("sr_code")}
+          </span>
         </div>
       ),
     },

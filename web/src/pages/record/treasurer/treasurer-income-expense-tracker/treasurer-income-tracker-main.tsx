@@ -178,11 +178,14 @@ function IncomeTracking() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {new Date(row.getValue("inc_datetime")).toLocaleString("en-US", {
-                        timeZone: "UTC",
-                        dateStyle: "medium",
-                        timeStyle: "short"  
-                    })}
+                    {new Date(row.getValue("inc_datetime")).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                    })}                        
                 </div>
             )
         },        

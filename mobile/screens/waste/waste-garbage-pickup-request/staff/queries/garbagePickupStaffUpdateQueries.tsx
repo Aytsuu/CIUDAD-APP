@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { updateAssignmentCollectorsAndSchedule } from "../restful-API/garbagePickupStaffPutAPI";
+import { updateAssignmentCollectorsAndSchedule, updateGarbageRequestStatus } from "../restful-API/garbagePickupStaffPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 
@@ -33,6 +33,31 @@ export const useUpdateAssignmentCollectorsAndSchedule = (onSuccess?: () => void)
     onError: (err) => {
       console.error("Error updating assignment:", err);
       toast.error("Failed to update assignment")
+    }
+  });
+};
+
+export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
+  const {toast} = useToastContext();
+  const router = useRouter()
+
+  return useMutation({
+    mutationFn: (garb_id: string) => updateGarbageRequestStatus(garb_id),
+    onSuccess: () => {
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
+        queryClient.invalidateQueries({ queryKey: ['garbageCompletedRequest'] }),
+      ]);
+
+      toast.success('Request marked as completed')
+      
+      onSuccess?.();
+      router.back()
+    },
+    onError: (err) => {
+      console.error("Error updating request status:", err);
+      toast.error("Failed to update request status")
     }
   });
 };

@@ -9,14 +9,14 @@ export default () => {
                 <Stack.Screen name="garbage-pickup/garbage-cancel-req-form" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="garbage-pickup/view-accepted-details" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="garbage-pickup/view-completed-details" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="certification-tracking/cert-choices-tracking" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="certification-tracking/certTrackingPersonal" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="certification-tracking/certTrackingBusiness" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="certification-tracking/certificate-request-tracker" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="complaint-tracking/compMain" options={{ headerShown: false, animation: 'fade' }} />
-                {/* <Stack.Screen name="complaint-tracking/compViewReq" options={{ headerShown: false, animation: 'fade' }} /> */}
                 <Stack.Screen name="complaint-tracking/compMainView" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="complaint-tracking/schedule" options={{ headerShown: false, animation: 'fade' }} />
-
+                <Stack.Screen name="complaint-tracking/hearing-history" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="complaint-tracking/summon-payment-logs" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="complaint-tracking/file-action-payment-logs" options={{ headerShown: false, animation: 'fade' }} />
+                {/* <Stack.Screen name="complaint-tracking/case-tracking" options={{ headerShown: false, animation: 'fade' }} /> */}
             </Stack>
         </ToastProvider>
     )

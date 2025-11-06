@@ -1,4 +1,4 @@
-import { SafeAreaView, View, ActivityIndicator, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView, Linking, Alert } from "react-native";
+import { SafeAreaView, View, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { useGetBudgetPlanSuppDoc, type BudgetPlanSuppDoc } from "./queries/budgetPlanFetchQueries";
 import { ChevronLeft, ChevronRight, X, Paperclip, Plus, Trash2 } from "lucide-react-native";
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useDeleteBudgetPlanFile } from "./queries/budgetPlanDeleteQueries";
 import { LoadingState } from "@/components/ui/loading-state";
-import EmptyState from "@/components/ui/emptyState";
+import { ImageIcon } from "lucide-react-native";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
     const router = useRouter();
@@ -75,8 +75,16 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             {/* Scrollable content */}
             <View className="flex-1">
                 {imageDocs.length === 0 ? (
-                    <View className="flex-1 justify-center items-center">
-                        <EmptyState emptyMessage="No supporting images available yet."/>
+                    <View className="flex-1 justify-center items-center py-16 px-6">
+                        <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
+                            <ImageIcon size={48} className="text-gray-300 mb-4" />
+                            <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                                No Supporting Images
+                            </Text>
+                            <Text className="text-gray-400 text-center text-sm">
+                                No supporting images have been added to this budget plan yet.
+                            </Text>
+                        </View>
                     </View>
                 ) : (
                     <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>

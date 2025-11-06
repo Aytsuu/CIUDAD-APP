@@ -1,5 +1,5 @@
-import Complaint from "@/screens/complaint"
+import ComplaintLists from "@/screens/complaint"
 
 export default () => {
-  return <Complaint />
+  return <ComplaintLists />
 }

@@ -7,7 +7,7 @@ export interface Certificate {
   resident_details: {
     per_fname: string;
     per_lname: string;
-  };
+  } | null;
   req_pay_method: string;
   req_request_date: string;
   req_claim_date: string;
@@ -16,6 +16,13 @@ export interface Certificate {
   req_status: string;
   req_payment_status: string;
   req_transac_id: string;
+  is_nonresident?: boolean;
+  nrc_id?: string;
+  nrc_lname?: string;
+  nrc_fname?: string;
+  nrc_mname?: string;
+  nrc_address?: string;
+  nrc_birthdate?: string;
   invoice?: {
     inv_num: string;
     inv_serial_num: string;
@@ -54,6 +61,13 @@ export const getCertificates = async (
         req_status: item.req_status || 'Pending',
         req_payment_status: item.cr_req_payment_status,
         req_transac_id: item.req_transac_id || '',
+        is_nonresident: item.is_nonresident || false,
+        nrc_id: item.nrc_id,
+        nrc_lname: item.nrc_lname,
+        nrc_fname: item.nrc_fname,
+        nrc_mname: item.nrc_mname,
+        nrc_address: item.nrc_address,
+        nrc_birthdate: item.nrc_birthdate,
         invoice: item.invoice
           ? {
               inv_num: item.invoice.inv_num,

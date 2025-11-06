@@ -11,6 +11,10 @@ import { useDonationSectionCards } from "@/components/analytics/donation/donatio
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+
 import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
@@ -27,15 +31,19 @@ export default function Dashboard() {
   const garbCards = useGarbagePickupSectionCards();
   const donationCards = useDonationSectionCards();
   const certificateCards = useCertificateSectionCards();
+  const conciliationCards = useConciliationSectionCards();
+  const mediationCards = useMediationSectionCards();
+  const remarkCard = useNoRemarksSectionCard();
+
   const councilEvents = useCouncilUpcomingEvents();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, councilEvents),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, councilEvents]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents]
   );
 
   const validateFeature = (feature: string) => {
     // Always allow access to basic dashboard sections
-    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE"];
+    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
     if (basicSections.includes(feature)) {
       return true;
     }
@@ -140,7 +148,6 @@ export default function Dashboard() {
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
-                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
               </div>
             )}
             {cardsWithAccess.length > 0 && (

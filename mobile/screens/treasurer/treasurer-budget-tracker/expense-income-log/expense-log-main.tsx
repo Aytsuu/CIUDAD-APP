@@ -169,7 +169,7 @@ const ExpenseLogMain = () => {
         }
         headerTitle={
             <View>
-            <Text className="font-semibold text-lg text-[#2a3a61]">Expense Log</Text>
+            <Text className="text-[13px]">Expense Log</Text>
             </View>
         }
         rightAction={

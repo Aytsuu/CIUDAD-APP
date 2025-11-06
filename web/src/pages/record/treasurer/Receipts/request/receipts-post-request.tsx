@@ -62,9 +62,42 @@ export const addReceipt = async (data: Record<string, any>) => {
             console.log('Resident certificate status updated:', updateStatus.data);
         } else {
             console.warn('No valid ID provided for status update - skipping status update');
-        }   
-    }catch(err){
-        console.error(err)
+        }
+        
+        // Create invoice for all receipt types
+        const payload: any = {
+            inv_date: new Date().toISOString(),
+            inv_amount: parseFloat(data.inv_amount),
+            inv_nat_of_collection: data.inv_nat_of_collection,
+            inv_serial_num: data.inv_serial_num,
+        };
+        
+        // Only include ID fields if they have valid values
+        if (data.nrc_id && String(data.nrc_id).trim() !== "" && String(data.nrc_id).trim() !== "null") {
+            payload.nrc_id = String(data.nrc_id);
+        }
+        if (data.bpr_id && String(data.bpr_id).trim() !== "" && String(data.bpr_id).trim() !== "null") {
+            payload.bpr_id = String(data.bpr_id);
+        }
+        if (data.cr_id && String(data.cr_id).trim() !== "" && String(data.cr_id).trim() !== "null") {
+            payload.cr_id = String(data.cr_id);
+        }
+        if (data.pay_id && String(data.pay_id).trim() !== "" && String(data.pay_id).trim() !== "null") {
+            payload.pay_id = String(data.pay_id);
+        }
+        
+        console.log('API Payload:', payload);
+        console.log('Making API call to: treasurer/invoice/');
+        
+        const res = await api.post('treasurer/invoice/', payload);
+        console.log('API Response:', res.data);
+        return res.data;
+        
+    }catch(err: any){
+        console.error('API Error:', err);
+        console.error('Error Response:', err.response?.data);
+        console.error('Error Status:', err.response?.status);
+        throw err; // Re-throw the error so the mutation can handle it
     }   
 }
 

@@ -3,12 +3,13 @@ import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { X } from "lucide-react-native";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
 import { ActivityIndicator } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChevronLeft } from 'lucide-react-native';
 
 
 export default function WasteIllegalDumpingDetails() {
@@ -121,14 +122,12 @@ export default function WasteIllegalDumpingDetails() {
 
   return (
     <>
-      <_ScreenLayout
-        headerBetweenAction={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
-        showExitButton={true}
-        showBackButton={false}
-        customRightAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <X size={16} className="text-black" />
-          </TouchableOpacity>
+      <PageLayout
+        headerTitle={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>       
         }
         footer={
           <TouchableOpacity
@@ -147,7 +146,6 @@ export default function WasteIllegalDumpingDetails() {
             </Text>
           </TouchableOpacity>
         }
-        stickyFooter={true}
       >
         <ScrollView className="px-6 pb-8 pt-8">
           {/* Header */}
@@ -257,7 +255,7 @@ export default function WasteIllegalDumpingDetails() {
             </View>
           </View>
         </ScrollView>
-      </_ScreenLayout>
+      </PageLayout>
 
         <Modal
             visible={showResolutionModal}

@@ -349,4 +349,3 @@ class Purpose_And_Rates(models.Model):
 
     class Meta:
         db_table = 'purpose_and_rate'
-

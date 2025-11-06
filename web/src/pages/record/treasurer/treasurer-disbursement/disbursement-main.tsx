@@ -301,7 +301,7 @@ function TreasurerDisbursementVouchers() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[150px]">
             <SelectLayout
               className="bg-white"
               options={yearFilterOptions}

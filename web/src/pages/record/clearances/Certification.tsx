@@ -167,7 +167,14 @@ function CertificatePage() {
 
   const { data: certificatesData, isLoading, error } = useQuery({
     queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
-    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, filterPurpose === "all" ? undefined : filterPurpose),
+    queryFn: () => getCertificates(
+      searchTerm, 
+      currentPage, 
+      10, 
+      filterType === "all" ? undefined : filterType, 
+      filterPurpose === "all" ? undefined : filterPurpose, 
+      "Paid"
+    ),
   });
 
   // Handle loading state
@@ -182,6 +189,7 @@ function CertificatePage() {
   const certificates = certificatesData?.results || [];
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
+
 
 
   // Since we're now using backend filtering, we don't need frontend filtering
@@ -427,35 +435,39 @@ function CertificatePage() {
       ),
     },
     {
-      accessorKey: "resident_details.per_fname",
-      header: "First Name",
+      accessorKey: "requester",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Requester
+          <ArrowUpDown size={14} />
+        </div>
+      ),
       cell: ({ row }) => {
         if (row.original.is_nonresident) {
-          // For non-residents, split the nrc_requester name
-          const nameParts = row.original.nrc_requester?.split(' ') || [];
-          return <div>{nameParts[0] || 'N/A'}</div>;
+          // Use individual name fields: lname fname mname (all uppercase)
+          const nameParts = [
+            row.original.nrc_lname,
+            row.original.nrc_fname,
+            row.original.nrc_mname
+          ].filter(part => part && part.trim() !== '');
+          
+          return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
         }
-        return (
-          <div>
-            {row.original.resident_details?.per_fname || 'N/A'}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "resident_details.per_lname",
-      header: "Last Name",
-      cell: ({ row }) => {
-        if (row.original.is_nonresident) {
-          // For non-residents, join all parts except the first as last name
-          const nameParts = row.original.nrc_requester?.split(' ') || [];
-          return <div>{nameParts.slice(1).join(' ') || 'N/A'}</div>;
-        }
-        return (
-          <div>
-            {row.original.resident_details?.per_lname || 'N/A'}
-          </div>
-        );
+        
+        // For residents, format as "Last Name First Name Middle Name" (all uppercase)
+        const resident = row.original.resident_details;
+        if (!resident) return <div>N/A</div>;
+        
+        const nameParts = [
+          resident.per_lname,
+          resident.per_fname,
+          resident.per_mname
+        ].filter(part => part && part.trim() !== '');
+        
+        return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
       },
     },
     {
@@ -699,8 +711,9 @@ function CertificatePage() {
       {selectedCertificate && (
         <TemplateMainPage
           key={selectedCertificate.cr_id + Date.now()}
-          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
-          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
+          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_fname || ''}
+          mname={selectedCertificate.resident_details?.per_mname || selectedCertificate.nrc_mname || ''}
+          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
           birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
           address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}

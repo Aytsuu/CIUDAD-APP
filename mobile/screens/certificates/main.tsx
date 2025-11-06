@@ -17,6 +17,9 @@ const CertificatesMain = () => {
       case 'certificates':
         router.push('/(certificates)/issued-cert-list')
         break
+      case 'service_charge':
+        router.push('/(certificates)/service-charge-list')
+        break
       default:
         break
     }
@@ -28,21 +31,28 @@ const CertificatesMain = () => {
       title: 'Personal & Others',
       description: 'View personal requests',
       icon: FileText,
-      gradient: ['#3b82f6', '#1e40af'],
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       id: 'permit',
       title: 'Permit',
       description: 'View business permits',
       icon: Building2,
-      gradient: ['#059669', '#047857'],
+      gradient: ['#60a5fa', '#3b82f6'],
+    },
+    {
+      id: 'service_charge',
+      title: 'Service Charge',
+      description: 'View service charge requests',
+      icon: Award,
+      gradient: ['#2563eb', '#1e40af'],
     },
     {
       id: 'certificates',
       title: 'Issued Certificates',
       description: 'View issued certificates',
       icon: Award,
-      gradient: ['#7c3aed', '#5b21b6'],
+      gradient: ['#93c5fd', '#60a5fa'],
     }
   ]
 
@@ -94,9 +104,6 @@ const CertificatesMain = () => {
                   <View>
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
-                    </Text>
-                    <Text className="text-white/80 text-xs mt-1 leading-tight">
-                      {item.description}
                     </Text>
                   </View>
                 </View>

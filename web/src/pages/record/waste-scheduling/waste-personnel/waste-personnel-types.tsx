@@ -6,9 +6,6 @@ export type WasteTruck = {
   truck_status: string;
   truck_last_maint: string;
   truck_is_archive: boolean;
-  truck_track_device?: string | null;
-  truck_track_device_lat?: number | null;
-  truck_track_device_lng?: number | null;
 };
 
 export type PersonnelCategory = "DRIVER LOADER" | "LOADER" | "Trucks";
@@ -36,9 +33,6 @@ export interface TruckData {
   truck_status: TruckStatus;
   truck_last_maint: string;
   truck_is_archive?: boolean;
-  truck_track_device?: string | null;
-  truck_track_device_lat?: number | null;
-  truck_track_device_lng?: number | null;
   staff?: string;
 }
 
@@ -88,9 +82,6 @@ export interface Trucks {
   truck_status: string;
   truck_last_maint: string;
   truck_is_archive?: boolean;
-  truck_track_device?: string | null;
-  truck_track_device_lat?: number | null;
-  truck_track_device_lng?: number | null;
 }
 
 export interface TruckManagementProps {

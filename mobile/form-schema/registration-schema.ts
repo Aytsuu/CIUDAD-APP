@@ -5,7 +5,7 @@ export const accountFormSchema = z.object({
     .email({ message: "Invalid email (ex. juanlitoy243@gmail.com)" })
     .refine((val) => {
       const domain = val.split("@")[1] || "";
-      return domain.includes(".") && domain.split(".").pop()!.length <= 4; // common TLDs
+      return domain.includes(".") && domain.split(".").pop()!.length <= 4; 
     }, {
       message: "Invalid email domain",
     }),
@@ -19,37 +19,51 @@ export const accountFormSchema = z.object({
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
   password: z.string()
+    .optional() 
     .superRefine((val, ctx) => {
-      const errors = [];
-      
-      if (val.length < 6) {
-        errors.push("Password must be at least 6 characters long");
-      }
-      
-      if (!/[a-z]/.test(val)) {
-        errors.push("Password must contain at least one lowercase letter");
-      }
-      
-      if (!/[A-Z]/.test(val)) {
-        errors.push("Password must contain at least one uppercase letter");
-      }
-      
-      if (!/\d/.test(val)) {
-        errors.push("Password must contain at least one number");
-      }
-      
-      if (errors.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: errors.join("\n"), // Using newline instead of comma
-        });
+      // Only validate if password is provided (not empty or undefined)
+      if (val && val.length > 0) {
+        const errors = [];
+        
+        if (val.length < 6) {
+          errors.push("Password must be at least 6 characters long");
+        }
+        
+        if (!/[a-z]/.test(val)) {
+          errors.push("Password must contain at least one lowercase letter");
+        }
+        
+        if (!/[A-Z]/.test(val)) {
+          errors.push("Password must contain at least one uppercase letter");
+        }
+        
+        if (!/\d/.test(val)) {
+          errors.push("Password must contain at least one number");
+        }
+        
+        if (errors.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: errors.join("\n"), 
+          });
+        }
       }
     }),
-
   confirmPassword: z.string()
-    .min(1, "Confirm Password is required")
+    .optional(), 
+  otp: z.string() 
+    .min(6, "OTP must be 6 digits")
+    .max(6, "OTP must be 6 digits")
+    .regex(/^\d+$/, "OTP must contain only numbers")
+    .optional() 
 })
-.refine((data) => data.password === data.confirmPassword, {
+.refine((data) => {
+
+  if (data.password && data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
   message: "Password does not match",
   path: ["confirmPassword"]
 });

@@ -12,6 +12,30 @@ def create_activity_log(
     record_id=None,
     **kwargs
 ):
+    # Check if staff is None or doesn't have a staff_id - don't log if no staff
+    if staff is None:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: No staff provided. Activity: {act_type}")
+        return None
+    
+    # Additional check: verify staff has a valid staff_id attribute
+    # Staff must exist AND have a staff_id attribute AND staff_id must not be None/empty
+    if not hasattr(staff, 'staff_id'):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: Staff object has no staff_id attribute. Activity: {act_type}")
+        return None
+    
+    # Check if staff_id is None or empty string
+    if staff.staff_id is None or (isinstance(staff.staff_id, str) and staff.staff_id.strip() == ''):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: Staff has no valid staff_id value. Activity: {act_type}")
+        return None
+    
+    # If we get here, staff exists and has a valid staff_id - proceed with logging
+    
     frame = inspect.currentframe().f_back
     module_name = "unknown"
     
@@ -81,7 +105,28 @@ def create_activity_log(
         raise e
 
 def log_model_change(model_instance, action, staff, description=None, **kwargs):
-   
+    # Check if staff is None - don't log if no staff
+    if staff is None:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: No staff provided for {model_instance.__class__.__name__} {action}")
+        return None
+    
+    # Additional check: verify staff has a valid staff_id attribute
+    if not hasattr(staff, 'staff_id'):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: Staff object has no staff_id attribute for {model_instance.__class__.__name__} {action}")
+        return None
+    
+    # Check if staff_id is None or empty string
+    if staff.staff_id is None or (isinstance(staff.staff_id, str) and staff.staff_id.strip() == ''):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Skipping activity log creation: Staff has no valid staff_id value for {model_instance.__class__.__name__} {action}")
+        return None
+    
+    # If we get here, staff exists and has a valid staff_id - proceed with logging
 
     model_name = model_instance.__class__.__name__
     model_id = getattr(model_instance, 'pk', None)
@@ -113,7 +158,13 @@ class ActivityLogMixin:
         try:
             staff = getattr(self.request.user, 'staff', None)
             
-            log_model_change(instance, 'create', staff)
+            # Only log if staff exists and has a staff_id
+            if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
+                log_model_change(instance, 'create', staff)
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for {instance.__class__.__name__} create: No valid staff")
         except Exception:
            
             pass
@@ -188,24 +239,30 @@ class ActivityLogMixin:
         try:
             staff = getattr(self.request.user, 'staff', None)
             
-            # Debug logging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f"ActivityLogMixin perform_update: instance={instance.__class__.__name__}, staff={staff}, old_values={old_values}, new_values={serializer.validated_data}")
-            
-            # Determine action and build description
-            new_values = serializer.validated_data
-            action_label = self._detect_action_from_diff(old_values, new_values)
-            description = self._build_diff_description(instance, old_values, new_values)
+            # Only log if staff exists and has a staff_id
+            if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
+                # Debug logging
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"ActivityLogMixin perform_update: instance={instance.__class__.__name__}, staff={staff}, old_values={old_values}, new_values={serializer.validated_data}")
+                
+                # Determine action and build description
+                new_values = serializer.validated_data
+                action_label = self._detect_action_from_diff(old_values, new_values)
+                description = self._build_diff_description(instance, old_values, new_values)
 
-            # Create activity log with targeted action label
-            create_activity_log(
-                act_type=f"{instance.__class__.__name__} {action_label}",
-                act_description=description,
-                staff=staff,
-                record_id=str(getattr(instance, 'pk', None)) if getattr(instance, 'pk', None) else None,
-            )
-            logger.info(f"Activity log created: {instance.__class__.__name__} {action_label}")
+                # Create activity log with targeted action label
+                create_activity_log(
+                    act_type=f"{instance.__class__.__name__} {action_label}",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(getattr(instance, 'pk', None)) if getattr(instance, 'pk', None) else None,
+                )
+                logger.info(f"Activity log created: {instance.__class__.__name__} {action_label}")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for {instance.__class__.__name__} update: No valid staff")
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
@@ -217,8 +274,14 @@ class ActivityLogMixin:
         response = super().destroy(request, *args, **kwargs)
         try:
             staff = getattr(self.request.user, 'staff', None)
-            # instance might be deleted; log with id only if accessible
-            log_model_change(instance, 'delete', staff)
+            # Only log if staff exists and has a staff_id
+            if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
+                # instance might be deleted; log with id only if accessible
+                log_model_change(instance, 'delete', staff)
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for {instance.__class__.__name__} delete: No valid staff")
         except Exception:
             pass
         return response

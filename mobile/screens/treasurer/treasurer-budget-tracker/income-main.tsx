@@ -193,12 +193,15 @@ const IncomeTracking = () => {
   const renderItem = ({ item }: { item: any }) => (
     <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader className="flex-row justify-between items-center">
-        <CardTitle className="text-lg text-[#2a3a61]">
-          {new Date(item.inc_datetime).toLocaleString("en-US", {
-              timeZone: "UTC",
-              dateStyle: "medium",
-              timeStyle: "short"
-          })}        
+        <CardTitle className="text-lg text-[#2a3a61]">       
+          {new Date(item.inc_datetime).toLocaleString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+          })}            
         </CardTitle>
         {activeTab === 'active' ? (
           <View className="flex-row gap-1">
@@ -372,9 +375,7 @@ const IncomeTracking = () => {
             onPress={handleCreate}
             className="bg-primaryBlue mt-2 rounded-xl"
           >
-            <Text className="text-white text-[17px]">
-              <Plus size={16} color="white" className="mr-2" /> Create
-            </Text>
+            <Text className="text-white text-[17px]"> Create </Text>
           </Button>
         </View>
 

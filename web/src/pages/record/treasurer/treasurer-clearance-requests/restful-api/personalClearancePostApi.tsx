@@ -87,7 +87,9 @@ export const createNonResidentPersonalClearance = async(payload: any, staffId: s
       nrc_req_date: new Date().toISOString().split('T')[0],
       nrc_req_status: 'Pending',
       nrc_req_payment_status: 'Unpaid',  
-      nrc_requester: payload.requester,
+      nrc_lname: payload.last_name,
+      nrc_fname: payload.first_name,
+      nrc_mname: payload.middle_name || '', // Send empty string if middle_name is not provided
       nrc_address: payload.address,
       nrc_birthdate: payload.birthdate,
       pr_id: payload?.purpose,

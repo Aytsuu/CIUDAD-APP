@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import { Input } from '@/components/ui/input';
 import EmptyState from '@/components/ui/emptyState';
 
 export default function RatesPage1() {

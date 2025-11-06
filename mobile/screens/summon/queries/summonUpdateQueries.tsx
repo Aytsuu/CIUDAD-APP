@@ -7,7 +7,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
     const {toast} = useToastContext()
 
      return useMutation({
-        mutationFn: (data: { status_type: string; sc_id: string}) => resolveCase(data.status_type, data.sc_id),
+        mutationFn: (data: { status_type: string; sc_id: string, staff_id: string}) => resolveCase(data.status_type, data.sc_id, data.staff_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
@@ -55,7 +55,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
     const {toast} = useToastContext()
 
      return useMutation({
-        mutationFn: ( data: {sc_id: string, comp_id?: string}) =>escalateCase(data.sc_id, data.comp_id || ""),
+        mutationFn: ( data: {sc_id: string, comp_id?: string, staff_id: string}) =>escalateCase(data.sc_id, data.comp_id || "", data.staff_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
