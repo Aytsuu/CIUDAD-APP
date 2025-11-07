@@ -326,8 +326,9 @@ const SetSchedule = () => {
 
               <Text className='text-lg font-semibold text-gray-700 mb-3'>3. Chief Complaint</Text>
               <TextInput
-                className='bg-gray-100 rounded-xl p-4 text-gray-800 mb-4 h-24'
+                className='bg-gray-100 rounded-xl p-4 mb-4 h-24'
                 placeholder="Briefly describe your symptoms or reason for visit"
+                placeholderTextColor="gray"
                 value={chiefComplaint}
                 onChangeText={setChiefComplaint}
                 multiline

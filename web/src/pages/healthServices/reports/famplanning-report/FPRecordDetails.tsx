@@ -1,5 +1,4 @@
-// FPReportDetails.tsx (complete version with no placeholders)
-import React from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import { useLocation, useNavigate } from 'react-router-dom';

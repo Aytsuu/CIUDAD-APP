@@ -1105,8 +1105,7 @@ def get_complete_fp_record(request, fprecord_id):
             
             complete_data["fp_acknowledgement"] = acknowledgement_serialized_data
             complete_data["acknowledgement"] = {
-                "selectedMethod": acknowledgement_serialized_data.get("ack_client_method_choice")
-                    or (fp_type.fpt_method_used if fp_type else None),
+                "selectedMethod": acknowledgement_serialized_data.get("ack_client_method_choice") or (fp_type.fpt_method_used if fp_type else None),
                 "clientSignature": acknowledgement_serialized_data.get("ack_client_signature") or "",
                 "clientSignatureDate": acknowledgement_serialized_data.get("ack_client_signature_date") or "",
                 "clientName": acknowledgement_serialized_data.get("ack_client_name") or "",
@@ -2744,43 +2743,7 @@ def submit_full_family_planning_form(request):
             {"detail": f"Failed to submit Family Planning record: {str(e)}"},
             status=status.HTTP_400_BAD_REQUEST
         )
-        
 
-# @api_view(['GET'])
-# def get_monthly_fp_list(request):
-#     try:
-#         # Get distinct year-month combinations from FP_Record
-#         monthly_data = FP_Record.objects.annotate(
-#             year=ExtractYear('created_at'),
-#             month=ExtractMonth('created_at')
-#         ).values('year', 'month').distinct().order_by('-year', '-month')
-
-#         response_data = []
-#         for entry in monthly_data:
-#             year, month = entry['year'], entry['month']
-#             # Count records for the month
-#             month_start = date(year, month, 1)
-#             next_month = month_start + relativedelta(months=1)
-#             month_end = next_month - timedelta(days=1)
-#             record_count = FP_Record.objects.filter(
-#                 created_at__range=(month_start, month_end)
-#             ).count()
-
-#             response_data.append({
-#                 'month': f"{year}-{month:02d}",  # Format as YYYY-MM
-#                 'record_count': record_count,
-#                 'records': []  # Optionally include record IDs if needed
-#             })
-
-#         return Response({'data': response_data}, status=status.HTTP_200_OK)
-
-#     except Exception as e:
-#         traceback.print_exc()
-#         return Response(
-#             {"detail": f"Error fetching monthly list: {str(e)}"},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
-            
 @api_view(['POST'])
 def submit_follow_up_family_planning_form(request):
     data = request.data
