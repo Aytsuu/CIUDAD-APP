@@ -10,7 +10,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Users, User, FileText, Calendar, Paperclip, Eye, Check, CircleAlert, Plus, AlertTriangle, Info } from "lucide-react-native"
 import { useGetLuponCaseDetails } from "../queries/summonFetchQueries"
-import { useResolveCase, useEscalateCase } from "../queries/summonUpdateQueries"
+import { useResolveCase, useEscalateCase, useReEscalateCase } from "../queries/summonUpdateQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatDate } from "@/helpers/dateHelpers"
 import { formatTime } from "@/helpers/timeFormatter"
@@ -18,11 +18,15 @@ import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { LoadingModal } from "@/components/ui/loading-modal"
 import { useAuth } from "@/contexts/AuthContext"
+import { useGetFileActionPaymentLogs } from "../queries/summonFetchQueries"
+import { useToastContext } from "@/components/ui/toast"
+import { PaymentRequest } from "../summon-types"
 
 export default function LuponConciliationDetails() {
     const {user} = useAuth()
     const router = useRouter()
     const params = useLocalSearchParams()
+    const { toast } = useToastContext();
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false)
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([])
@@ -40,8 +44,10 @@ export default function LuponConciliationDetails() {
     } = params
 
     const { data: caseDetails, isLoading } = useGetLuponCaseDetails(String(sc_id))
+    const { data: paymentLogs = [], isLoading: isLogsLoading} = useGetFileActionPaymentLogs(caseDetails?.comp_id || "")
     const { mutate: resolve, isPending: isResolvePending } = useResolveCase()
     const { mutate: escalate, isPending: isEscalatePending } = useEscalateCase()
+    const { mutate: reescalate, isPending: isReescalatePending } = useReEscalateCase()
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -119,6 +125,19 @@ export default function LuponConciliationDetails() {
         }
     }
 
+    const handleReescalate = () => {        
+        const hasUnpaidPayment = paymentLogs?.some((log: PaymentRequest) => 
+            log.pay_status === 'Unpaid'
+        );
+        
+        if (hasUnpaidPayment) {
+            toast.error("Cannot re-escalate: There is a pending request for file action.");
+            return;
+        } else {
+            reescalate(String(comp_id))
+        }
+    }
+
     const handleViewImages = (files: any[], index = 0) => {
         const images = files.map(file => ({
             url: file.url || file.rsd_url ,
@@ -185,7 +204,7 @@ export default function LuponConciliationDetails() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || isLogsLoading) {
         return (
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
@@ -381,6 +400,28 @@ export default function LuponConciliationDetails() {
                                     onPress={handleEscalate}
                                 />
                             )}
+                    </View>
+                )}
+
+                {isCaseClosed && (
+                    <View className="flex flex-col gap-3">
+                       {caseDetails?.sc_conciliation_status?.toLowerCase() === 'escalated' && (
+                            <ConfirmationModal
+                                trigger={
+                                    <Button
+                                        className={`flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-orange-500'}`}
+                                        disabled={shouldDisableButtons}
+                                    >
+                                        <AlertTriangle size={20} color="white" />
+                                        <Text className="text-white font-semibold ml-2">Re-Escalate</Text>
+                                    </Button>
+                                }
+                                title="Confirm Re-escalation"
+                                description="Are you sure you want to re-escalate this case? This will create another request for file action."
+                                actionLabel="Confirm"
+                                onPress={handleReescalate}
+                            />
+                        )}
                     </View>
                 )}
             </View>
@@ -717,7 +758,7 @@ export default function LuponConciliationDetails() {
                         )}
                     </View>
                 </Modal>
-                <LoadingModal visible={isEscalatePending || isResolvePending}/>
+                <LoadingModal visible={isEscalatePending || isResolvePending || isReescalatePending}/>
             </PageLayout>
         </>
     )

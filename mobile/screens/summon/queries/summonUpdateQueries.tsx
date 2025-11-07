@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { resolveCase, escalateCase, forwardCase } from "../requestAPI/summonPutAPI";
+import { resolveCase, escalateCase, forwardCase, reEscalateCase } from "../requestAPI/summonPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 
 export const useResolveCase = (onSuccess?: () => void) => {
@@ -54,7 +54,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
     const {toast} = useToastContext()
 
-     return useMutation({
+    return useMutation({
         mutationFn: ( data: {sc_id: string, comp_id?: string, staff_id: string}) =>escalateCase(data.sc_id, data.comp_id || "", data.staff_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
@@ -70,6 +70,27 @@ export const useEscalateCase = (onSuccess?: () => void) => {
         onError: (err) => {
             console.error("Error in marking case:", err);
             toast.error("Failed to mark case.")
+        }
+    })
+}
+
+export const useReEscalateCase = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+    const {toast} = useToastContext()
+
+    return useMutation({
+        mutationFn: ( comp_id: string) => reEscalateCase(comp_id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            
+            toast.success('Case re-escalated successfully')
+            
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error in re-escalating case:", err);
+            toast.error("Failed to re-escalate case.")
         }
     })
 }

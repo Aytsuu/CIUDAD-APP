@@ -164,3 +164,16 @@ export interface ComplaintData {
   comp_status: string;
   staff: any;
 }
+
+export type PaymentRequest = {
+    pay_id: number;
+    pay_sr_type: string;
+    pay_status: string;
+    pay_date_req: string;
+    pay_due_date: string;
+    pay_req_status: string;
+    pay_date_paid: string | null;
+    comp_id: number;
+    pr_id: number | null;
+    pay_amount: number;
+}

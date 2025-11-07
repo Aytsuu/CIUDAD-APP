@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonCaseDetail, getSummonDates, 
-    getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail} from "../requestAPI/summonGetAPI";
-import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList, ComplaintData } from "../summon-types";
+    getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail, getFileActionPaymentLogs} from "../requestAPI/summonGetAPI";
+import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList, ComplaintData, PaymentRequest } from "../summon-types";
 
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
@@ -88,6 +88,15 @@ export const useGetComplaintDetails = (comp_id: string) => {
         queryFn: () => getComplaintDetails(comp_id),
         staleTime: 5000
     })
+}
+
+export const useGetFileActionPaymentLogs = (comp_id: string) => {
+    return useQuery<PaymentRequest[]>({
+        queryKey: ['fileActionPayLogs', comp_id],
+        queryFn: () => getFileActionPaymentLogs(comp_id),
+        enabled: !!comp_id, 
+        staleTime: 5000,
+    });
 }
 
   

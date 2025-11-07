@@ -71,3 +71,28 @@ export const escalateCase = async (sc_id: string, comp_id: string, staff_id: str
     }
 }
 
+export const reEscalateCase = async (comp_id: string) => {
+    try{
+        const currentDate = new Date();
+        const dueDate = new Date(currentDate);
+        dueDate.setDate(currentDate.getDate() + 7);
+
+        const response = await api.get('clerk/file-action-id/')
+
+        if(response){
+            await api.post('clerk/service-charge-payment-req/', {
+                comp_id: comp_id,
+                pay_sr_type: "File Action",
+                pay_status: "Unpaid",
+                pay_req_status: "Pending",
+                pay_date_req: new Date().toISOString(),
+                pay_due_date: dueDate.toISOString().split('T')[0],
+                pr_id: response.data.pr_id
+            })
+        }
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}
+
