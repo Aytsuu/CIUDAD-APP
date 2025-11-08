@@ -406,7 +406,7 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              { title: "All", url: "/profiling/all" },
+              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

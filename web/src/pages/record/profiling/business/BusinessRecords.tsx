@@ -1,38 +1,51 @@
-import React from "react"
-import { Search, Plus, Building2, FileDown  , ClockArrowUp, Paperclip } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button/button"
-import { Link, useNavigate } from "react-router"
-import { DataTable } from "@/components/ui/table/data-table"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { activeColumns } from "./BusinessColumns"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Card } from "@/components/ui/card"
-import { useDebounce } from "@/hooks/use-debounce"
-import { useLoading } from "@/context/LoadingContext"
-import { useActiveBusinesses, useModificationRequests } from "../queries/profilingFetchQueries"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
-import { Combobox } from "@/components/ui/combobox"
-import { formatModificationRequests } from "../ProfilingFormats"
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { Spinner } from "@/components/ui/spinner"
+import React from "react";
+import {
+  Search,
+  Plus,
+  Building2,
+  ClockArrowUp,
+  Paperclip,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button/button";
+import { Link, useNavigate } from "react-router";
+import { DataTable } from "@/components/ui/table/data-table";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { activeColumns } from "./BusinessColumns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
+import { Card } from "@/components/ui/card";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
+import {
+  useActiveBusinesses,
+  useModificationRequests,
+} from "../queries/profilingFetchQueries";
+import { Combobox } from "@/components/ui/combobox";
+import { formatModificationRequests } from "../ProfilingFormats";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { Spinner } from "@/components/ui/spinner";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function BusinessRecords() {
   // ----------------- STATE INITIALIZATION --------------------
   const navigate = useNavigate();
-  const {showLoading, hideLoading} = useLoading();
-  const [searchQuery, setSearchQuery] = React.useState<string>("")
-  const [pageSize, setPageSize] = React.useState<number>(10)
-  const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
-  const debouncedPageSize = useDebounce(pageSize, 100)
-  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
-  const { data: activeBusinesses, isLoading: isLoadingBusinesses} = useActiveBusinesses(
-    currentPage, 
-    debouncedPageSize,
-    debouncedSearchQuery,
-  )
-  
+  const { showLoading, hideLoading } = useLoading();
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [size, setSize] = React.useState<string>("all");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedPageSize = useDebounce(pageSize, 100);
+  const { data: modificationRequests, isLoading: isLoadingRequests } =
+    useModificationRequests();
+  const { data: activeBusinesses, isLoading: isLoadingBusinesses } =
+    useActiveBusinesses(currentPage, debouncedPageSize, debouncedSearchQuery, size);
 
   const businessList = activeBusinesses?.results || [];
   const totalCount = activeBusinesses?.count || 0;
@@ -44,24 +57,24 @@ export default function BusinessRecords() {
 
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
-    if(isLoadingBusinesses || isLoadingRequests) showLoading();
+    if (isLoadingBusinesses || isLoadingRequests) showLoading();
     else hideLoading();
-  }, [isLoadingBusinesses, isLoadingRequests])
+  }, [isLoadingBusinesses, isLoadingRequests]);
 
   // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        // exportToCSV(filteredBusinesses)
-        break
-      case "excel":
-        // exportToExcel(filteredBusinesses)
-        break
-      case "pdf":
-        // exportToPDF(filteredBusinesses)
-        break
-    }
-  }
+  // const handleExport = (type: "csv" | "excel" | "pdf") => {
+  //   switch (type) {
+  //     case "csv":
+  //       // exportToCSV(filteredBusinesses)
+  //       break;
+  //     case "excel":
+  //       // exportToExcel(filteredBusinesses)
+  //       break;
+  //     case "pdf":
+  //       // exportToPDF(filteredBusinesses)
+  //       break;
+  //   }
+  // };
 
   return (
     // ----------------- RENDER --------------------
@@ -74,7 +87,10 @@ export default function BusinessRecords() {
         <div className="bg-white rounded-xl p-6">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <Input
                 placeholder="Search by business name, respondent, sitio, street, sales..."
                 className="pl-11"
@@ -86,7 +102,25 @@ export default function BusinessRecords() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
-                <DropdownLayout
+                <SelectLayout
+                  withReset={false}
+                  value={size}
+                  valueLabel="Size"
+                  className="gap-4"
+                  onChange={(value) => {
+                    setSize(value)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "micro", name: "Micro" },
+                    { id: "small", name: "Small" },
+                    { id: "medium", name: "Medium" },
+                    { id: "large", name: "Large" },
+                  ]}
+                />
+                {/* <DropdownLayout
                   trigger={
                     <Button variant="outline" className="gap-2 border">
                       <FileDown className="h-4 w-4" />
@@ -99,8 +133,8 @@ export default function BusinessRecords() {
                     { id: "pdf", name: "Export as PDF" },
                   ]}
                   onSelect={(type: any) => handleExport(type)}
-                />
-              </div>  
+                /> */}
+              </div>
 
               <Link to="pending" className="flex-1 sm:flex-none">
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -110,24 +144,24 @@ export default function BusinessRecords() {
               </Link>
 
               <div>
-                <Combobox 
+                <Combobox
                   options={formattedRequest}
                   value={""}
                   customTrigger={
                     <Button variant="outline" className="w-full sm:w-auto">
-                      <Paperclip className="cursor-pointer"/>
+                      <Paperclip className="cursor-pointer" />
                       Edit Request
                     </Button>
                   }
                   onChange={(value) => {
-                    navigate('form', {
+                    navigate("form", {
                       state: {
                         params: {
                           type: "viewing",
-                          busId: value?.split(' ')[0],
-                        }
-                      }
-                    })
+                          busId: value?.split(" ")[0],
+                        },
+                      },
+                    });
                   }}
                   staticVal={true}
                   variant="modal"
@@ -158,7 +192,10 @@ export default function BusinessRecords() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700">Show</span>
-              <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => setPageSize(Number.parseInt(value))}
+              >
                 <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
@@ -172,9 +209,7 @@ export default function BusinessRecords() {
               </Select>
               <span className="text-sm text-gray-600">entries</span>
             </div>
-            <div>
-              
-            </div>
+            <div></div>
           </div>
         </div>
 
@@ -207,20 +242,30 @@ export default function BusinessRecords() {
         )}
 
         {/* Pagination */}
-          {!isLoadingBusinesses && businessList.length > 0 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
-              <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                Showing <span className="font-medium">{totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> -{" "}
-                <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
-                <span className="font-medium">{totalCount}</span> residents
-              </p>
+        {!isLoadingBusinesses && businessList.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+            <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+              Showing{" "}
+              <span className="font-medium">
+                {totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+              </span>{" "}
+              -{" "}
+              <span className="font-medium">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span>{" "}
+              of <span className="font-medium">{totalCount}</span> residents
+            </p>
 
-              {totalPages > 0 && (
-                <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-              )}
-            </div>
-          )}
+            {totalPages > 0 && (
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </div>
+        )}
       </Card>
     </MainLayoutComponent>
-  )
+  );
 }

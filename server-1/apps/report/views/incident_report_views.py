@@ -29,6 +29,7 @@ class IRTableView(generics.ListAPIView):
     rp_id = self.request.query_params.get("rp_id", None)
     is_get_tracker = self.request.query_params.get('get_tracker', 'false') == 'true'
     is_archive = self.request.query_params.get('is_archive', 'false') == 'true'
+    severity = self.request.query_params.get("severity", None)
 
     queryset = IncidentReport.objects.filter(
       ir_is_archive=is_archive,
@@ -42,6 +43,7 @@ class IRTableView(generics.ListAPIView):
       'ir_date',
       'ir_time',
       'ir_area',
+      'ir_severity',
       'ir_involved',
       'ir_is_tracker',
       'ir_track_rep_id',
@@ -59,6 +61,9 @@ class IRTableView(generics.ListAPIView):
 
     if rp_id:
       queryset = queryset.filter(rp=rp_id)
+    
+    if severity and severity != "all":
+      queryset = queryset.filter(ir_severity__iexact=severity)
 
     search = self.request.query_params.get('search', '').strip()
     if search:
@@ -67,10 +72,11 @@ class IRTableView(generics.ListAPIView):
         Q(ir_add_details__icontains=search) |
         Q(ir_date__icontains=search) |
         Q(ir_time__icontains=search) |
+        Q(ir_track_user_name__icontains=search) |
         Q(rt__rt_label__icontains=search) |
         Q(rp__per__per_lname__icontains=search) |
         Q(rp__per__per_fname__icontains=search) |
         Q(rp__per__per_mname__icontains=search) 
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-ir_created_at')

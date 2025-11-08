@@ -15,12 +15,14 @@ import { useGetIncidentReport } from "../queries/reportFetch"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useNavigate } from "react-router"
 import { Spinner } from "@/components/ui/spinner"
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 export default function IRRecords() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [severity, setSeverity] = React.useState<string>("all");
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
@@ -30,7 +32,9 @@ export default function IRRecords() {
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
-    false
+    false,
+    false,
+    severity
   );
 
   const IRList = IncidentReport?.results || [];
@@ -59,6 +63,24 @@ export default function IRRecords() {
               </div> 
 
               <div className="flex items-center gap-2">
+                <SelectLayout 
+                  value={severity}
+                  className="gap-4"
+                  onChange={(value) => {
+                    setCurrentPage(1)
+                    setSeverity(value)
+                  }}
+                  placeholder="Severity"
+                  options={[
+                    {id: "all", name: "All"},
+                    {id: "low", name: "Low"},
+                    {id: "medium", name: "Medium"},
+                    {id: "high", name: "High"}
+                  ]}
+                  withReset={false}
+                  valueLabel="Severity"
+                />
+
                 <DropdownLayout
                   trigger={
                     <Button variant="outline" className="gap-2">

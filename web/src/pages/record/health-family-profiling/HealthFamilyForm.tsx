@@ -10,7 +10,8 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { formatHouseholds, formatResidents } from "../../record/profiling/ProfilingFormats";
+import { formatHouseholds } from "../../record/profiling/ProfilingFormats";
+import { formatResidentsWithBadge } from "./family-profling/utils/formatResidentsOptimized";
 import { DependentRecord } from "../../record/profiling/ProfilingTypes";
 import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } from "react-icons/fa";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -144,7 +145,7 @@ export default function HealthFamilyForm() {
   // Optimize: Only format residents data when needed and memoize properly
   const formattedResidents = React.useMemo(() => {
     if (!residentsListHealth || currentStep >= 4) return [];
-    return formatResidents(residentsListHealth);
+    return formatResidentsWithBadge(residentsListHealth);
   }, [residentsListHealth, currentStep]);
   
   const formattedHouseholds = React.useMemo(() => {

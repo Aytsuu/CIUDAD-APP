@@ -34,7 +34,8 @@ export default function DependentsInfoLayout({
   setDependentsList,
   back,
   setFamId,
-  nextStep
+  nextStep,
+  existingFamId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -44,6 +45,7 @@ export default function DependentsInfoLayout({
   back: () => void;
   setFamId: React.Dispatch<React.SetStateAction<string>>;
   nextStep: () => void;
+  existingFamId?: string | null;
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
@@ -242,39 +244,71 @@ export default function DependentsInfoLayout({
     }
 
     try {
-      const demographicInfo = form.getValues().demographicInfo;
-      // Create family and retrieve new fam_id
-      const newFamily = await addFamily({
-        demographicInfo: demographicInfo, 
-        staffId: user?.staff?.staff_id || ""
-      });
-      // Store fam_id for subsequent queries
-      setFamId(newFamily.fam_id);
+      // Use existing family ID if provided, otherwise create new family
+      let familyId: string;
+      let existingMembers: any[] = [];
+      
+      if (existingFamId) {
+        // Using existing family - skip family creation
+        familyId = existingFamId;
+        setFamId(familyId);
+        
+        // Get existing family members to check for duplicates
+        console.log(`Fetching existing family compositions for family ${familyId}...`);
+        existingMembers = await getFamilyMembersHealth(familyId);
+        console.log('Existing members:', existingMembers);
+      } else {
+        // Create new family and retrieve fam_id
+        const demographicInfo = form.getValues().demographicInfo;
+        const newFamily = await addFamily({
+          demographicInfo: demographicInfo, 
+          staffId: user?.staff?.staff_id || ""
+        });
+        familyId = newFamily.fam_id;
+        setFamId(familyId);
+      }
 
       // Create family compositions for parents first
       const parentCompositions = selectedParents
         .filter(parentId => parentId) // Filter out empty parent IDs
         .map((parentId, index) => ({
-          fam: newFamily.fam_id,
+          fam: familyId,
           rp: parentId,
           fc_role: PARENT_ROLES[index], // "Mother", "Father", "Guardian"
         }));
 
       // Create family compositions for dependents
       const dependentCompositions = dependentsList.map(dep => ({
-        fam: newFamily.fam_id,
+        fam: familyId,
         rp: dep.id,
         fc_role: 'Dependent',
       }));
 
-  // Combine all compositions
-  const allCompositions = [...parentCompositions, ...dependentCompositions];
+      // Combine all compositions
+      const allCompositions = [...parentCompositions, ...dependentCompositions];
       
-  const createdComps = await addFamilyComposition(allCompositions);
+      // If updating existing family, only add compositions that don't already exist
+      let compositionsToAdd = allCompositions;
+      if (existingFamId && existingMembers.length > 0) {
+        const existingRpIds = new Set(existingMembers.map((m: any) => m.rp_id));
+        compositionsToAdd = allCompositions.filter(comp => !existingRpIds.has(comp.rp));
+        
+        if (compositionsToAdd.length === 0) {
+          console.log('No new family members to add - all members already exist');
+        } else {
+          console.log(`Adding ${compositionsToAdd.length} new family member(s)`);
+        }
+      }
+      
+      // Only add compositions if there are new members
+      let createdComps: any = [];
+      if (compositionsToAdd.length > 0) {
+        createdComps = await addFamilyComposition(compositionsToAdd);
+      }
 
       // Submit parent health data and respondents info
       const formData = form.getValues();
-      await submitParentHealthData(formData, newFamily.fam_id);
+      await submitParentHealthData(formData, familyId);
 
       // Map created family compositions by rp for easy lookup of fc_id
       const fcByRp: Record<string, any> = {};
@@ -287,7 +321,7 @@ export default function DependentsInfoLayout({
       // If no fc_id present, fetch from health API which returns fc_id in serializer
       const needFcIds = Object.values(fcByRp).some((c: any) => !c.fc_id);
       if (!Array.isArray(createdComps) || needFcIds) {
-        const healthMembers = await getFamilyMembersHealth(newFamily.fam_id);
+        const healthMembers = await getFamilyMembersHealth(familyId);
         healthMembers.forEach((m: any) => {
           if (m?.rp_id) fcByRp[m.rp_id] = m;
         });

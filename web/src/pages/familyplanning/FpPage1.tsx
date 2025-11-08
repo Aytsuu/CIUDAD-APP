@@ -59,7 +59,7 @@ export default function FamilyPlanningForm({
 
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
-  const patientId = formData?.pat_id
+  // const patientId = formData?.pat_id
   // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
   // useEffect(() => {

@@ -163,7 +163,10 @@ export const ARColumns = (
   },
   {
     accessorKey: "id",
-    header: "Report No.",
+    header: "Report ID",
+    cell: ({ row }) => (
+      `AR-${row.original.id}`
+    )
   },
   {
     accessorKey: "ar_title",

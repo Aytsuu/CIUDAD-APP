@@ -22,7 +22,8 @@ class CardAnalyticsView(APIView):
 
 class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
-    today = date.today()
-    three_days_ago = today-timedelta(days=3)
-    queryset = RequestRegistration.objects.all()    
-    return Response(RequestTableSerializer(queryset, many=True).data)
+    queryset = RequestRegistration.objects.all().order_by('req_created_at')    
+    return Response({
+      'count': queryset.count(),
+      'data': RequestTableSerializer(queryset[:3], many=True).data
+    })
