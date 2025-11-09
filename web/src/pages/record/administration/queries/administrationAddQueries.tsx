@@ -103,3 +103,25 @@ export const useAddPositionBulk = () => {
     }
   })
 }
+
+export const useAddSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post("profiling/sitio/create/", data);
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => [
+        ...old,
+        data
+      ]);
+      queryClient.invalidateQueries({queryKey: ["sitioList"]})
+    }
+  }) 
+}

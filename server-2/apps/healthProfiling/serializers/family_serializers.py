@@ -59,9 +59,10 @@ class FamilyTableSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 

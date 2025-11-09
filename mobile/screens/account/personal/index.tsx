@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { Pen } from "@/lib/icons/Pen";
 import PageLayout from "@/screens/_PageLayout";
 import { router } from "expo-router";
 import { TouchableOpacity, View, Text } from "react-native";
@@ -52,21 +53,20 @@ export default () => {
       headerTitle={
         <Text className="text-black text-[13px]">Personal Information</Text>
       }
-      rightAction={
-        <View className="" />
-        // <TouchableOpacity
-        //   className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
-        //   onPress={() => router.push({
-        //     pathname: "/(account)/settings/personal/update",
-        //     params: {
-        //       data: JSON.stringify(personalData)
-        //     }
-        //   })}
-        //   activeOpacity={0.90}
-        // >
-        //   <Pen className="text-white" size={16}/>
-        // </TouchableOpacity>
-      }
+      // rightAction={
+      //   <TouchableOpacity
+      //     className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
+      //     onPress={() => router.push({
+      //       pathname: "/(account)/personal/update",
+      //       params: {
+      //         data: JSON.stringify(personalData) 
+      //       }
+      //     })}
+      //     activeOpacity={0.90}
+      //   >
+      //     <Pen className="text-white" size={16}/>
+      //   </TouchableOpacity>
+      // }
       showScrollIndicator={false}
     >
       <View className="flex-1 px-6">

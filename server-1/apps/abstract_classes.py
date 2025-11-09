@@ -8,6 +8,7 @@ class AbstractModels(models.Model):
     for field in self._meta.fields:
       if(
         isinstance(field, (models.CharField, models.TextField)) 
+        and not isinstance(field, (models.URLField))
         and not field.primary_key
         and field.editable
       ) :

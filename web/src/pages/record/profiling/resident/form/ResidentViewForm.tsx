@@ -34,7 +34,6 @@ import { Spinner } from "@/components/ui/spinner"
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
   const currentPath = location.pathname.split("/").pop() as string
-  console.log("current path:", currentPath)
   const navigate = useNavigate();
   const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()
@@ -55,9 +54,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: personalHistory, isLoading: isLoadingPersonalHistory } = usePersonalHistory(personalInfo?.per_id)
-  // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification(
-  //   personalInfo?.per_id
-  // )
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []
@@ -134,6 +130,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
       }
     }] : []) as any
   ]
+
+  const isDeceased = form.watch("per_is_deceased") == "YES"
   
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -151,6 +149,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     // Set the form values when the component mounts
     if (formType == Type.Viewing) {
       setIsReadOnly(true)
+      form.reset()
       setAddresses(personalInfo?.per_addresses)
     }
     formType === Type.Editing && setIsReadOnly(false)
@@ -180,9 +179,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
       setIsSubmitting(true)
       const isAddressAdded = personalInfo?.per_addresses?.length < addresses.length
       const values = form.getValues()
-      const {per_age, per_id, registered_by, rp_date_registered, ...personalInfoRest } = personalInfo 
+      const {per_age, per_id, registered_by, rp_date_registered, fam_id, rp_id, ...personalInfoRest } = personalInfo 
       const {per_id: id, ...val} = values
-
+      
       if (
         checkDefaultValues(
           { ...val, per_addresses: addresses },
@@ -241,6 +240,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
           personalId: personalInfo?.per_id,
           values: {
             ...values,
+            per_is_deceased: values.per_is_deceased == "YES" ? true : false,
             per_addresses: [...new_addresses,...initialAddresses],
             staff_id: user?.staff?.staff_id,
           },
@@ -343,9 +343,16 @@ export default function ResidentViewForm({ params }: { params: any }) {
         <div className="grid w-full gap-8 max-h-[800px] overflow-y-auto">
           {currentPath == "personal" && <Card className="w-full p-10">
           <div className="pb-4 flex justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">Personal Information</h2>
-              <p className="text-xs text-black/50">Fill out all necessary fields</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-lg font-semibold">Personal Information</h2>
+                <p className="text-sm text-black/50">Fill out all necessary fields</p>
+              </div>
+              {formType == Type.Viewing && isDeceased && (
+                <Badge className="bg-red-100 border-red-300 rounded-full hover:bg-red-100">
+                  <Label className="text-red-500">Deceased</Label>
+                </Badge>
+              )}
             </div>
             <div>
               <SheetLayout

@@ -13,6 +13,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { formatDate } from "@/helpers/dateHelper";
+import { FormRadioGroup } from "@/components/ui/form/form-radio-group";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -156,6 +157,17 @@ const PersonalInfoForm = ({
           }
         />
       )}
+
+      {formType == Type.Editing && (
+        <div className="flex items-center gap-4 my-4">
+          <Label className="text-[15px] text-gray-700">Is this person deceased?</Label>
+          <FormRadioGroup control={control} name="per_is_deceased" orientation="horizontal" readOnly={isReadOnly} options={[
+            {value: "YES", label: "YES"},
+            {value: "NO", label: "NO"}
+          ]}/>
+        </div>
+      )}
+      
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
@@ -178,6 +190,7 @@ const PersonalInfoForm = ({
         <FormSelect control={control} name={`${prefix}per_religion`} label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
         <FormSelect control={control} name={`${prefix}per_disability`} label="Disability (if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
       </div>
+
       <div className="grid grid-cols-1 gap-4">
         {
           addresses?.map((address, idx) => (
