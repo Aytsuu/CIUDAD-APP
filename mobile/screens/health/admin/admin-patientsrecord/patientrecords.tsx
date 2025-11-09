@@ -10,6 +10,7 @@ import { usePatients } from "./queries/fetch"
 import { router } from "expo-router"
 import { useDebounce } from "@/hooks/use-debounce"
 import { TabType, TabBar } from "../components/tab-bar"
+import { StatusBadge } from "../components/status-badge"
 
 interface PatientRecord {
   pat_id: string
@@ -37,37 +38,37 @@ interface PatientRecord {
 
 // type TabType = "all" | "resident" | "transient"
 
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "resident":
-        return {
-          color: "text-green-700",
-          bgColor: "bg-green-100",
-          borderColor: "border-green-200",
-        }
-      case "transient":
-        return {
-          color: "text-amber-700",
-          bgColor: "bg-amber-100",
-          borderColor: "border-amber-200",
-        }
-      default:
-        return {
-          color: "text-gray-700",
-          bgColor: "bg-gray-100",
-          borderColor: "border-gray-200",
-        }
-    }
-  }
+// const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
+//   const getTypeConfig = (type: string) => {
+//     switch (type.toLowerCase()) {
+//       case "resident":
+//         return {
+//           color: "text-green-700",
+//           bgColor: "bg-green-100",
+//           borderColor: "border-green-200",
+//         }
+//       case "transient":
+//         return {
+//           color: "text-amber-700",
+//           bgColor: "bg-amber-100",
+//           borderColor: "border-amber-200",
+//         }
+//       default:
+//         return {
+//           color: "text-gray-700",
+//           bgColor: "bg-gray-100",
+//           borderColor: "border-gray-200",
+//         }
+//     }
+//   }
 
-  const typeConfig = getTypeConfig(type)
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
-    </View>
-  )
-}
+//   const typeConfig = getTypeConfig(type)
+//   return (
+//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+//       <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
+//     </View>
+//   )
+// }
 
 // const TabBar: React.FC<{
 //   activeTab: TabType

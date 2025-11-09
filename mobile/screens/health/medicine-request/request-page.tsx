@@ -36,7 +36,7 @@ export default function MedicineRequestScreen() {
   const [showCategories, setShowCategories] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
   const [loadingPending, setLoadingPending] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>("all");
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>("available");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const { cartItems } = useGlobalCartState();
   const [pageSize, setPageSize] = useState(10);

@@ -63,7 +63,9 @@ export const useUserAppointments = (
     queryKey: ['userAppointments', rpId, status, search, page, pageSize],
     queryFn: () => getUserAppointments(rpId, status, search, page, pageSize),
     enabled: !!rpId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchInterval: 1000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 

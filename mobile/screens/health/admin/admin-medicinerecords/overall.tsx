@@ -53,12 +53,12 @@ interface MedicineRecord {
   };
 }
 
-interface ApiResponse {
-  results?: MedicineRecord[];
-  count?: number;
-  next?: string;
-  previous?: string;
-}
+// interface ApiResponse {
+//   results?: MedicineRecord[];
+//   count?: number;
+//   next?: string;
+//   previous?: string;
+// }
 
 // type TabType = "all" | "resident" | "transient";
 

@@ -1,16 +1,28 @@
 // "use client"
 
-import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
-import { Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
-import { useRouter, useLocalSearchParams } from "expo-router"; // UPDATED: Added useLocalSearchParams
+import React, { useState, useMemo } from "react";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput } from "react-native";
+import {
+  Calendar,
+  User,
+  GitCompare,
+  AlertCircle,
+  Stethoscope,
+  ChevronRight,
+  ChevronLeft,
+  Heart,
+  Search,
+} from "lucide-react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
+import { UpcomingFollowUps } from "../admin/components/followup-cards";
 
-// Define FPRecord type
+// ... (Interface and InfoRow component remain the same) ...
 interface FPRecord {
   fprecord: number;
   patient_id: string;
@@ -20,6 +32,9 @@ interface FPRecord {
   sex: string;
   method_used: string;
   created_at: string;
+  client_type: string;
+  dateOfFollowUp?: string;
+  followv_status?: string;
 }
 
 const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: any; label: string; value: string; iconColor?: string }) => (
@@ -36,15 +51,16 @@ const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: an
 
 export default function MyFpRecordsScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params if in admin mode
+  const params = useLocalSearchParams<{ pat_id?: string }>();
   const patIdFromParams = params.pat_id;
   const { user } = useAuth();
-  // If 'resident' is not part of User type, add a type guard or update the type definition
   const rp_id = user?.rp;
+  
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
   const [isComparing, setIsComparing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch patient to get pat_id (only if no pat_id provided in params)
+  // ... (Data fetching logic remains the same) ...
   const {
     data: patientData,
     isLoading: isPatientLoading,
@@ -53,12 +69,11 @@ export default function MyFpRecordsScreen() {
     refetch: refetchPatient,
     isFetching: isPatientFetching
   } = usePatientByResidentId(rp_id || "", {
-    enabled: !patIdFromParams && !!rp_id, // Skip if pat_id provided (admin mode)
+    enabled: !patIdFromParams && !!rp_id,
   });
 
   const pat_id = patIdFromParams || patientData?.pat_id || null;
 
-  // Fetch FP records using pat_id
   const {
     data: fpPatientRecords = [],
     isLoading: isRecordsLoading,
@@ -68,17 +83,29 @@ export default function MyFpRecordsScreen() {
     isFetching: isRecordsFetching
   } = useFPRecordsByPatientId(pat_id);
 
+  const filteredRecords = useMemo(() => {
+    let filtered = Array.isArray(fpPatientRecords) ? fpPatientRecords : [];
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (record: FPRecord) =>
+          record.method_used.toLowerCase().includes(lowerQuery) ||
+          record.client_type.toLowerCase().includes(lowerQuery)
+      );
+    }
+    return filtered.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [fpPatientRecords, searchQuery]);
+  
   const isLoading = isPatientLoading || isRecordsLoading;
   const isError = isPatientError || isRecordsError;
   const error = patientError || recordsError;
   const isFetching = isPatientFetching || isRecordsFetching;
 
+  // ... (Event Handlers: handleCheckboxChange, handleCompareRecords, handleRefresh remain the same) ...
   const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
     setSelectedRecords((prevSelected) => {
       if (isChecked) {
-        if (prevSelected.length >= 2) {
-          return prevSelected;
-        }
+        if (prevSelected.length >= 2) return prevSelected;
         return [...prevSelected, record];
       } else {
         return prevSelected.filter((r) => r.fprecord !== record.fprecord);
@@ -91,13 +118,10 @@ export default function MyFpRecordsScreen() {
       alert("Please select exactly two records to compare.");
       return;
     }
-
     setIsComparing(true);
     try {
-      // Add your comparison logic here
-      // For now, just navigate to comparison screen with selected records
       router.push({
-        pathname: "/(health)/admin/familyplanning/comparison",
+        pathname: "/(health)/admin/familyplanning/comparison", 
         params: { 
           record1: JSON.stringify(selectedRecords[0]),
           record2: JSON.stringify(selectedRecords[1])
@@ -116,7 +140,8 @@ export default function MyFpRecordsScreen() {
     refetchRecords();
   };
 
-  const renderRecordItem = ({ item, index }: { item: FPRecord; index: number }) => {
+  // ... (renderRecordItem remains the same) ...
+  const renderRecordItem = ({ item }: { item: FPRecord }) => {
     const isSelected = selectedRecords.some(r => r.fprecord === item.fprecord);
     
     return (
@@ -125,8 +150,8 @@ export default function MyFpRecordsScreen() {
           <CardContent className="p-0">
             <TouchableOpacity 
               onPress={() => router.push({
-                pathname: "/(health)/family-planning/fp-details",
-                params: { fprecordId: item.fprecord, pat_id: pat_id } // UPDATED: Pass pat_id for consistency in downstream screens
+                pathname: "/(health)/family-planning/fp-details", 
+                params: { fprecordId: item.fprecord, pat_id: pat_id }
               })}
               className="p-4"
             >
@@ -138,6 +163,7 @@ export default function MyFpRecordsScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-lg font-bold text-slate-900">Record #{item.fprecord}</Text>
+                    <Text className="text-sm text-slate-600">{item.method_used}</Text>
                   </View>
                 </View>
                 
@@ -151,9 +177,7 @@ export default function MyFpRecordsScreen() {
                     isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
                   }`}
                 >
-                  {isSelected && (
-                    <Text className="text-white text-xs font-bold">✓</Text>
-                  )}
+                  {isSelected && <Text className="text-white text-xs font-bold">✓</Text>}
                 </TouchableOpacity>
 
                 <ChevronRight size={20} color="#64748b" />
@@ -167,34 +191,6 @@ export default function MyFpRecordsScreen() {
                   value={item.client_id || "N/A"} 
                   iconColor="#059669"
                 />
-                <View className="flex-row">
-                  <View className="flex-1 mr-2">
-                    <InfoRow 
-                      icon={Calendar} 
-                      label="Age" 
-                      value={`${item.patient_age || "N/A"} years`} 
-                      iconColor="#059669"
-                    />
-                  </View>
-                  <View className="flex-1 ml-2">
-                    <InfoRow 
-                      icon={User} 
-                      label="Sex" 
-                      value={item.sex || "N/A"} 
-                      iconColor="#059669"
-                    />
-                  </View>
-                </View>
-              </View>
-
-              {/* Method and Date */}
-              <View className="space-y-2">
-                <InfoRow 
-                  icon={Stethoscope} 
-                  label="Method Used" 
-                  value={item.method_used || "Not specified"} 
-                  iconColor="#7c3aed"
-                />
                 <InfoRow 
                   icon={Calendar} 
                   label="Created Date" 
@@ -202,7 +198,7 @@ export default function MyFpRecordsScreen() {
                   iconColor="#dc2626"
                 />
               </View>
-
+              
               {/* Action Indicator */}
               <View className="mt-3 pt-3 border-t border-slate-100">
                 <Text className="text-sm text-slate-500">Tap to view full record</Text>
@@ -214,71 +210,59 @@ export default function MyFpRecordsScreen() {
     );
   };
 
+  // --- MODIFIED: `renderHeader` no longer contains PageLayout ---
+  // It only contains the components that scroll WITH the list.
   const renderHeader = () => (
     <View>
-      <PageLayout
-        leftAction={<TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-slate-700" />
-        </TouchableOpacity>}
-        headerTitle={<Text className="text-slate-900 text-[13px]">{patIdFromParams ? 'Family Planning Records' : 'My Family Planning Records'}</Text>} // UPDATED: Dynamic title based on admin mode
-        rightAction={<View className="w-10 h-10" />} 
-        children={undefined}
-      />
-      
-      {/* Summary Card */}
-      <View className="px-4 -mt-2 mb-4">
-        <Card className="bg-white border border-slate-200">
-          <CardContent className="p-4">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-lg font-bold text-slate-900">Your Records</Text>
-                <Text className="text-sm text-slate-600">
-                  {(fpPatientRecords as FPRecord[]).length} record{(fpPatientRecords as FPRecord[]).length !== 1 ? 's' : ''} found
-                </Text>
-              </View>
-              <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center">
-                <Heart size={20} color="#3b82f6" />
-              </View>
-            </View>
-            
-            {selectedRecords.length > 0 && (
-              <View className="mt-3 pt-3 border-t border-slate-100">
-                <Text className="text-sm text-slate-600">
-                  {selectedRecords.length} record{selectedRecords.length !== 1 ? 's' : ''} selected for comparison
-                </Text>
-              </View>
-            )}
-          </CardContent>
-        </Card>
+      {/* Summary Cards */}
+      <View className="px-4 pt-4"> {/* Added pt-4 for spacing */}
+        <UpcomingFollowUps records={filteredRecords} />
+      </View>
+
+      {/* Search Bar */}
+      <View className="px-4 my-4">
+        <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex-row items-center">
+          <Search size={20} color="#9CA3AF" />
+          <TextInput
+            className="flex-1 text-gray-900 ml-3 text-base"
+            placeholder="Search records, methods..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            accessibilityLabel="Search your family planning records"
+          />
+        </View>
+      </View>
+
+      {/* Results Header */}
+      <View className="px-4 mb-3">
+        <Text className="text-lg font-semibold text-gray-900">
+          {patIdFromParams ? 'Records' : 'Your Records'} ({filteredRecords.length})
+        </Text>
       </View>
     </View>
   );
 
+  // ... (renderEmpty, isLoading, isError remain the same) ...
   const renderEmpty = () => (
     <View className="px-4">
       <Card className="bg-white border border-slate-200">
         <CardContent className="items-center justify-center py-12">
           <Heart size={48} color="#94a3b8" />
-          <Text className="text-lg text-slate-500 mt-4 text-center">No Records Found</Text>
+          <Text className="text-lg text-slate-500 mt-4 text-center">
+            {searchQuery ? "No Records Found" : "No Records Yet"}
+          </Text>
           <Text className="text-sm text-slate-400 mt-2 text-center">
-            You don't have any Family Planning records yet.
+            {searchQuery 
+              ? "Try adjusting your search terms." 
+              : "You don't have any Family Planning records yet."}
           </Text>
         </CardContent>
       </Card>
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 bg-slate-50 items-center justify-center p-6">
-        <Loader2 size={32} color="#3b82f6" />
-        <Text className="text-lg text-slate-600 mt-4">Loading your records...</Text>
-      </View>
-    );
-  }
+  if (isLoading) return <LoadingState/>;
 
   if (isError) {
     return (
@@ -293,13 +277,54 @@ export default function MyFpRecordsScreen() {
     );
   }
 
+  // --- MODIFIED: Main component return ---
+  // PageLayout is now the main wrapper
   return (
-    <View className="flex-1 bg-slate-50">
+    <PageLayout
+      leftAction={<TouchableOpacity
+        onPress={() => router.back()}
+        className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+      >
+        <ChevronLeft size={24} className="text-slate-700" />
+      </TouchableOpacity>}
+      headerTitle={<Text className="text-slate-900 text-[13px]">{patIdFromParams ? 'Family Planning Records' : 'My Family Planning'}</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+       <View className="px-4 pt-4 bg-slate-50">
+      <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex-row items-center">
+        <Search size={20} color="#9CA3AF" />
+        <TextInput
+          className="flex-1 text-gray-900 ml-3 text-base"
+          placeholder="Search records, methods..."
+          placeholderTextColor="#9CA3AF"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          accessibilityLabel="Search your family planning records"
+        />
+      </View>
+    </View>
+    
+      {/* The FlatList is now a child of PageLayout */}
+     <View className="flex-1 bg-slate-50">
       <FlatList
-        data={Array.isArray(fpPatientRecords) ? fpPatientRecords : []}
+        data={filteredRecords}
         renderItem={renderRecordItem}
-        keyExtractor={(item) => item.fprecord ? item.fprecord.toString() : "0"}
-        ListHeaderComponent={renderHeader}
+        keyExtractor={(item) => item.fprecord ? item.fprecord.toString() : Math.random().toString()}
+        ListHeaderComponent={() => (
+          <View>
+            {/* Summary Cards */}
+            <View className="px-4 pt-4">
+              <UpcomingFollowUps records={filteredRecords} />
+            </View>
+
+            {/* Results Header */}
+            <View className="px-4 mb-3">
+              <Text className="text-lg font-semibold text-gray-900">
+                {patIdFromParams ? 'Records' : 'Your Records'} ({filteredRecords.length})
+              </Text>
+            </View>
+          </View>
+        )}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
@@ -311,25 +336,27 @@ export default function MyFpRecordsScreen() {
             colors={["#3b82f6"]}
           />
         }
+        keyboardShouldPersistTaps="handled"
       />
 
-      {/* Compare Button */}
-      {(fpPatientRecords as FPRecord[]).length > 0 && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
-          <Button
-            onPress={handleCompareRecords}
-            disabled={selectedRecords.length !== 2 || isComparing}
-            className={`flex-row items-center justify-center ${
-              selectedRecords.length !== 2 || isComparing ? 'bg-slate-400' : 'bg-blue-600'
-            }`}
-          >
-            <GitCompare size={20} color="white" />
-            <Text className="text-white font-semibold ml-2">
-              {isComparing ? 'Comparing...' : `Compare Records (${selectedRecords.length}/2)`}
-            </Text>
-          </Button>
-        </View>
-      )}
-    </View>
+        {/* Compare Button */}
+        {filteredRecords.length > 0 && (
+          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
+            <Button
+              onPress={handleCompareRecords}
+              disabled={selectedRecords.length !== 2 || isComparing}
+              className={`flex-row items-center justify-center ${
+                selectedRecords.length !== 2 || isComparing ? 'bg-slate-400' : 'bg-blue-600'
+              }`}
+            >
+              <GitCompare size={20} color="white" />
+              <Text className="text-white font-semibold ml-2">
+                {isComparing ? 'Comparing...' : `Compare Records (${selectedRecords.length}/2)`}
+              </Text>
+            </Button>
+          </View>
+        )}
+      </View>
+    </PageLayout>
   );
 }

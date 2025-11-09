@@ -10,6 +10,8 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PaginationControls } from '../admin/components/pagination-layout';
+import { StatusBadge } from '../admin/components/status-badge';
+import { MedStatusBadge, MedTabBar, MedTabType, TabBar } from '../admin/components/tab-bar';
 
 // Types
 interface MedicineRequestItem {
@@ -27,8 +29,6 @@ interface MedicineRequestItem {
   requested_at: string;
   mode: 'app' | 'walk-in';
 }
-
-type TabType = "pending" | "cancelled" | "confirmed" | "completed";
 
 const getUserMedicineRequests = async (
   userId: string,
@@ -90,102 +90,10 @@ const cancelMedicineRequestItem = async (medreqitem_id: number, reason: string):
   }
 };
 
-const getStatusConfig = (status: string) => {
-  const lowerStatus = status.toLowerCase();
-  switch (lowerStatus) {
-    case 'pending':
-    case 'referred_to_doctor': // Group these together
-      return {
-        color: 'text-yellow-700',
-        bgColor: 'bg-yellow-100',
-        borderColor: 'border-yellow-200',
-        label: lowerStatus === 'referred_to_doctor' ? 'Referred to Doctor' : 'Pending'
-      };
-    case 'rejected':
-    case 'declined':
-    case 'cancelled':
-      return {
-        color: 'text-red-700',
-        bgColor: 'bg-red-100',
-        borderColor: 'border-red-200',
-        label: 'Cancelled'
-      };
-    case 'confirmed':
-      return {
-        color: 'text-orange-700',
-        bgColor: 'bg-orange-100',
-        borderColor: 'border-orange-200',
-        label: 'Ready for Pickup'
-      };
-    case 'completed':
-      return {
-        color: 'text-green-700',
-        bgColor: 'bg-green-100',
-        borderColor: 'border-green-200',
-        label: 'Completed'
-      };
-    default:
-      return {
-        color: 'text-gray-700',
-        bgColor: 'bg-gray-100',
-        borderColor: 'border-gray-200',
-        label: status
-      };
-  }
-};
 
 
 // Components
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const statusConfig = getStatusConfig(status);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${statusConfig.color}`}>
-        {statusConfig.label}
-      </Text>
-    </View>
-  );
-};
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-}> = ({ activeTab, setActiveTab }) => (  // Removed counts as per request
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('pending')}
-      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Pending
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('confirmed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'confirmed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'confirmed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        To Pick Up
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('completed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Completed
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('cancelled')}
-      className={`flex-1 items-center py-3 ${activeTab === 'cancelled' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Cancelled
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
 
 const MedicineRequestCard: React.FC<{
   item: MedicineRequestItem;
@@ -213,7 +121,7 @@ const MedicineRequestCard: React.FC<{
             </View>
           </View>
           <View className="items-end">
-            <StatusBadge status={item.status} />
+            <MedStatusBadge status={item.status} />
           </View>
         </View>
       </View>
@@ -329,7 +237,7 @@ const MedicineRequestTracker: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [activeTab, setActiveTab] = useState<MedTabType>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [currentPage, setCurrentPage] = useState(1);
@@ -343,7 +251,7 @@ const MedicineRequestTracker: React.FC = () => {
   const isResident = true;  // Adjust based on your logic; assuming resident for example
 
   // Define getStatusForTab (was missing in provided code)
-  const getStatusForTab = (tab: TabType) => tab;
+  const getStatusForTab = (tab: MedTabType) => tab;
 
   const { data, isLoading: dataLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['userMedicineRequests', user?.rp, isResident, { page: currentPage, page_size: pageSize, search: debouncedSearchQuery, status: getStatusForTab(activeTab) }],
@@ -480,7 +388,7 @@ const MedicineRequestTracker: React.FC = () => {
 
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />  {/* No counts */}
+        <MedTabBar activeTab={activeTab} setActiveTab={setActiveTab} />  {/* No counts */}
         <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
           <Text className="text-sm text-gray-600">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} requests

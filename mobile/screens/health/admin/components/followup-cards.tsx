@@ -1,8 +1,9 @@
 // components/followup-cards.tsx
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, TouchableOpacity, Modal, FlatList } from "react-native";
-import { Calendar, CheckCircle, Clock, AlertCircle, X, ChevronRight } from "lucide-react-native";
+import { Calendar, CheckCircle, Clock, AlertCircle, X, ChevronRight, Activity, AlertTriangle, Heart, TrendingUp } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
+import { FPRecord } from "../../familyplanning/fp-dashboard";
 
 interface FollowUps {
   followupVaccines?: any[];
@@ -22,25 +23,17 @@ export function FollowUpsCard({
   const [modalActiveTab, setModalActiveTab] = useState<"pending" | "completed" | "missed">("pending");
   const [modalActiveChildHealthTab, setModalActiveChildHealthTab] = useState<"pending" | "completed" | "missed">("pending");
 
-  // Helper function to determine if an item is missed
-  const isMissedItem = (item: any) => {
-    if (item.days_missed !== undefined && item.days_missed !== null && item.days_missed > 0) {
-      return true;
-    }
-    return item.missed_status === "missed" || item.followup_status === "missed";
-  };
-
   // Categorize follow-ups
   const categorizedFollowups = {
-    pending: followupVaccines.filter((v) => v.followup_status === "pending" && !isMissedItem(v)),
+    pending: followupVaccines.filter((v) => v.followup_status === "pending"),
     completed: followupVaccines.filter((v) => v.followup_status === "completed"),
-    missed: followupVaccines.filter((v) => isMissedItem(v)),
+    missed: followupVaccines.filter((v) => v.followup_status === "pending"),
   };
 
   const categorizedChildHealths = {
-    pending: childHealthFollowups.filter((v) => v.followup_status === "pending" && !isMissedItem(v)),
+    pending: childHealthFollowups.filter((v) => v.followup_status === "pending"),
     completed: childHealthFollowups.filter((v) => v.followup_status === "completed"),
-    missed: childHealthFollowups.filter((v) => isMissedItem(v)),
+    missed: childHealthFollowups.filter((v) => v.followup_status === "pending"),
   };
 
   const showFollowupSection = followupVaccines.length > 0;
@@ -419,3 +412,223 @@ export function FollowUpsCard({
     </View>
   );
 }
+
+
+
+
+
+
+
+
+export const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string) => {
+  if (!followv_status || !followUpDate) {
+    return { 
+      status: "No Follow-up", 
+      color: "#F59E0B",
+      bgColor: "#FEF3C7",
+      textColor: "#92400E"
+    };
+  }
+
+  if (followv_status.toLowerCase() === "completed") {
+    return { 
+      status: "Completed", 
+      color: "#10B981",
+      bgColor: "#D1FAE5",
+      textColor: "#065F46"
+    };
+  }
+
+  if (followv_status.toLowerCase() === "pending") {
+    const today = new Date();
+    const followUp = new Date(followUpDate);
+    
+    today.setHours(0, 0, 0, 0);
+    followUp.setHours(0, 0, 0, 0);
+
+    if (followv_status.toLowerCase() === "missed") {
+      return { 
+        status: "Missed", 
+        color: "#EF4444",
+        bgColor: "#FEE2E2",
+        textColor: "#991B1B"
+      };
+    } else if (followUp.getTime() === today.getTime()) {
+      return { 
+        status: "Due Today", 
+        color: "#F59E0B",
+        bgColor: "#FEF3C7",
+        textColor: "#92400E"
+      };
+    } else {
+      return { 
+        status: "Pending", 
+        color: "#3B82F6",
+        bgColor: "#DBEAFE",
+        textColor: "#1E40AF"
+      };
+    }
+  }
+
+  return { 
+    status: followv_status, 
+    color: "#F59E0B",
+    bgColor: "#FEF3C7",
+    textColor: "#92400E"
+  };
+};
+
+// Component for upcoming follow-ups
+export const UpcomingFollowUps = ({ records }: { records: FPRecord[] }) => {
+  const upcomingFollowUps = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return records
+      .filter(record => {
+        if (!record.dateOfFollowUp || !record.followv_status) return false;
+        if (record.followv_status.toLowerCase() === "completed") return false;
+        
+        const followUpDate = new Date(record.dateOfFollowUp);
+        followUpDate.setHours(0, 0, 0, 0);
+        
+        // Show upcoming (future) and due today
+        return followUpDate >= today;
+      })
+      .sort((a, b) => new Date(a.dateOfFollowUp!).getTime() - new Date(b.dateOfFollowUp!).getTime())
+      .slice(0, 3); // Show only next 3 upcoming
+  }, [records]);
+
+  const missedFollowUps = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return records.filter(record => {
+      if (!record.dateOfFollowUp || !record.followv_status) return false;
+      if (record.followv_status.toLowerCase() === "completed") return false;
+      
+      const followUpDate = new Date(record.dateOfFollowUp);
+      followUpDate.setHours(0, 0, 0, 0);
+      
+      return followUpDate < today;
+    }).length;
+  }, [records]);
+
+  return (
+    <View className="px-4 mb-6">
+      <View className="flex-row items-center justify-between mb-3 mt-2">
+        <Text className="text-lg font-semibold text-gray-900">Upcoming Follow-ups</Text>
+        {/* <View className="flex-row items-center">
+          {missedFollowUps > 0 && (
+            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full mr-2">
+              <AlertTriangle size={12} color="#EF4444" />
+              <Text className="text-xs text-red-600 ml-1">{missedFollowUps} missed</Text>
+            </View>
+          )}
+          <Clock size={16} color="#6B7280" />
+        </View> */}
+      </View>
+      
+      <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        {upcomingFollowUps.length === 0 ? (
+          <View className="items-center py-4">
+            <TrendingUp size={24} color="#D1D5DB" />
+            <Text className="text-sm text-gray-500 mt-2">No upcoming follow-ups</Text>
+          </View>
+        ) : (
+          upcomingFollowUps.map((followUp, index) => {
+            const { status, color, bgColor, textColor } = getFollowUpDisplayStatus(
+              followUp.followv_status,
+              followUp.dateOfFollowUp
+            );
+            
+            return (
+              <View
+                key={followUp.fprecord}
+                className={`flex-row items-center justify-between py-3 ${
+                  index < upcomingFollowUps.length - 1 ? "border-b border-gray-100" : ""
+                }`}
+              >
+                <View className="flex-1">
+                  <Text className="text-sm font-medium text-gray-900">{followUp.method_used}</Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    {new Date(followUp.dateOfFollowUp!).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                  </Text>
+                </View>
+                <View 
+                  className="px-3 py-1 rounded-full flex-row items-center"
+                  style={{ backgroundColor: bgColor }}
+                >
+                  <View 
+                    className="w-2 h-2 rounded-full mr-1.5"
+                    style={{ backgroundColor: color }}
+                  />
+                  <Text 
+                    className="text-xs font-medium"
+                    style={{ color: textColor }}
+                  >
+                    {status}
+                  </Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+      </View>
+    </View>
+  );
+};
+
+// Component for active methods
+export const ActiveMethods = ({ records }: { records: FPRecord[] }) => {
+  const activeMethods = useMemo(() => {
+    return records
+      .filter(record => !record.dateOfFollowUp || new Date(record.dateOfFollowUp) > new Date())
+      .slice(0, 3);
+  }, [records]);
+
+  return (
+    <View className="px-4 mb-6">
+      <View className="flex-row items-center justify-between mb-3">
+        <Text className="text-lg font-semibold text-gray-900">Active Methods</Text>
+        <Activity size={16} color="#6B7280" />
+      </View>
+      
+      <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        {activeMethods.length === 0 ? (
+          <View className="items-center py-4">
+            <Heart size={24} color="#D1D5DB" />
+            <Text className="text-sm text-gray-500 mt-2">No active methods</Text>
+          </View>
+        ) : (
+          activeMethods.map((method, index) => (
+            <View
+              key={method.fprecord}
+              className={`flex-row items-center justify-between py-3 ${
+                index < activeMethods.length - 1 ? "border-b border-gray-100" : ""
+              }`}
+            >
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-900">{method.method_used}</Text>
+                <Text className="text-xs text-gray-500 mt-1">
+                  Started: {new Date(method.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric"
+                  })}
+                </Text>
+              </View>
+              <View className="px-3 py-1 rounded-full bg-green-50">
+                <Text className="text-xs font-medium text-green-700">Active</Text>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+    </View>
+  );
+};

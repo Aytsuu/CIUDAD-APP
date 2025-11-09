@@ -137,7 +137,7 @@ export default function Records() {
       id: 3,
       name: 'Family Planning',
       description: 'View family planning records',
-      route: '/(health)/family-planning/fp-dashboard',
+      route: '/(health)/family-planning/fp-record',
       icon: Heart,
       image: require('@/assets/images/Health/Home/Famplanning.jpg'),
       color: '#059669'
