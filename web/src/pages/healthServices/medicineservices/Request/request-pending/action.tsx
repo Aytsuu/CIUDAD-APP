@@ -66,12 +66,13 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
   const IconComponent = config.icon;
   useEffect(() => {
     form.setValue("reason", config.archive_reason || "");
-  }, [isOpen]);
+  }, [isOpen, config.archive_reason, form]);
   const handleSubmit = async (formData: ReasonFormValues) => {
+    
     const updateData = {
       status: config.status,
       archive_reason: config.archive_reason || formData.reason,
-      is_archived: true
+      is_archived: true,
     };
 
     // Call the mutation

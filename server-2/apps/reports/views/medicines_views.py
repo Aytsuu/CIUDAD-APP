@@ -296,16 +296,20 @@ class MonthlyMedicineChart(APIView):
                 medreq_id__fulfilled_at__year=year,
                 medreq_id__fulfilled_at__month=month_num
             ).values(
-                'med__med_name'  # Assuming this is the path to medicine name
+                'med__med_name',
+                'med__med_dsg',
+                'med__med_dsg_unit',
+                'med__med_form'
             ).annotate(
                 count=Count('med')
             ).order_by('-count')
 
             # Convert to dictionary format {medicine_name: count}
-            medicine_counts = {
-                item['med__med_name']: item['count'] 
-                for item in queryset
-            }
+            # Combine medicine fields into a single label (e.g., "Biogens 10mg Tablet")
+            medicine_counts = {}
+            for item in queryset:
+                label = f"{item['med__med_name']} {item['med__med_dsg']}{item['med__med_dsg_unit']} {item['med__med_form']}".strip()
+                medicine_counts[label] = item['count']
 
             return Response({
                 'success': True,

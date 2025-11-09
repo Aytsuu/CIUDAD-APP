@@ -115,7 +115,12 @@ class MedicineListAvailableTable(APIView):
                 
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': medicine.med_name,
+                    'med_name': ' '.join(filter(None, [
+                        medicine.med_name,
+                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
+                        medicine.med_dsg_unit,
+                        medicine.med_form
+                    ])).strip(),
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -126,7 +131,12 @@ class MedicineListAvailableTable(APIView):
             else:
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': medicine.med_name,
+                    'med_name': ' '.join(filter(None, [
+                        medicine.med_name,
+                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
+                        medicine.med_dsg_unit,
+                        medicine.med_form
+                    ])).strip(),
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -212,8 +222,8 @@ class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
        med_id = self.kwargs.get('med_id')
        obj = get_object_or_404(Medicinelist, med_id = med_id)
        return obj
-       
-       
+     
+
 # ===========================MEDICINE STOCK TABLE==============================
 class MedicineStockTableView(APIView):
     """
@@ -277,23 +287,25 @@ class MedicineStockTableView(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                if stock.minv_qty_unit.lower() == "boxes":
-                    # For boxes, low stock threshold is 2 boxes
-                    is_low_stock = available_stock <= 2
-                else:
-                    # For pieces, low stock threshold is 20 pcs
-                    is_low_stock = available_stock <= 20
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    if stock.minv_qty_unit.lower() == "boxes":
+                        # For boxes, low stock threshold is 2 boxes
+                        is_low_stock = available_stock <= 2
+                    else:
+                        # For pieces, low stock threshold is 20 pcs
+                        is_low_stock = available_stock <= 20
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1
@@ -380,7 +392,6 @@ class MedicineStockTableView(APIView):
                 'success': False,
                 'error': f'Error fetching medicine stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     # def auto_archive_expired_medicines(self):
     #     """Auto-archive medicines that expired more than 10 days ago and log transactions"""
     #     from datetime import timedelta

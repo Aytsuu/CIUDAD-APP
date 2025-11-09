@@ -453,7 +453,6 @@ class CompleteChildHealthRecordAPIView(APIView):
             mode='walk-in',
             signature=None,
             requested_at=timezone.now(),
-            fulfilled_at=timezone.now(),
             patrec=patient_record,
             rp_id=rp_id,
             trans_id=trans_id,
@@ -488,6 +487,8 @@ class CompleteChildHealthRecordAPIView(APIView):
                 med=med_obj,
                 medreq_id=med_request,
                 status='completed',
+                 confirmed_at=timezone.now(),
+                 fulfilled_at=timezone.now(),
                 action_by=staff_instance,
                 completed_by=staff_instance,
             )

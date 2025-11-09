@@ -1,7 +1,7 @@
 // components/MedicineDistributionChart.tsx
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Pill, ArrowRight, TrendingUp, Users, BarChart3, Info, X } from "lucide-react";
+import { AlertCircle, Pill, ArrowRight, TrendingUp, Users, BarChart3, Info, X, Loader } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -191,15 +191,11 @@ export function MedicineDistributionChart({ initialMonth }: MedicineDistribution
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center h-[400px]">
-                <div className="animate-pulse space-y-4 w-full">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-gray-200 rounded flex-1"></div>
-                    </div>
-                  ))}
-                </div>
+             
+
+             <div>
+              <Loader className="h-10 w-10 animate-spin text-primary mx-auto my-20" />
+
               </div>
             ) : !data || allMedicines.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center h-[400px]">

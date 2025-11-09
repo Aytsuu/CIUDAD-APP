@@ -74,16 +74,16 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
       );
     }
   },
-  {
-    accessorKey: "total_quantity",
-    header: () => <div className="text-center">Total Items</div>,
-    size: 100,
-    cell: ({ row }) => (
-      <div className="text-center py-2">
-        <div className="font-semibold text-blue-600">{row.original.total_quantity || 0}</div>
-      </div>
-    )
-  },
+  // {
+  //   accessorKey: "total_quantity",
+  //   header: () => <div className="text-center">Total Items</div>,
+  //   size: 100,
+  //   cell: ({ row }) => (
+  //     <div className="text-center py-2">
+  //       <div className="font-semibold text-blue-600">{row.original.total_quantity || 0}</div>
+  //     </div>
+  //   )
+  // },
   {
     accessorKey: "requested_at",
     header: ({ column }) => (

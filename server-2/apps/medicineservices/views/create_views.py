@@ -73,7 +73,6 @@ class CreateMedicineRequestView(APIView):
                 mode='walk-in',
                 signature=signature,
                 requested_at=timezone.now(),
-                fulfilled_at=timezone.now(),
                 patrec=patient_record,
                 rp_id=rp_id,
                 trans_id=trans_id,
@@ -112,6 +111,8 @@ class CreateMedicineRequestView(APIView):
                     med=med_obj,
                     medreq_id=med_request,
                     status='completed',
+                    fulfilled_at=timezone.now(),
+                    confirmed_at=timezone.now(),
                     action_by=staff_instance,
                     completed_by=staff_instance,
                 )
@@ -163,152 +164,152 @@ class CreateMedicineRequestView(APIView):
 
 
 
-class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
-    """
-    API endpoint for bulk processing medicine requests
-    """
-    serializer_class = MedicineRecordCreateSerializer
+# class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
+#     """
+#     API endpoint for bulk processing medicine requests
+#     """
+#     serializer_class = MedicineRecordCreateSerializer
 
-    @transaction.atomic
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        staff_id = data.get('staff_id')
-        chhist_id = data.get('chhist_id')
-        pat_id = data.get('pat_id')
-        medicines = data.get('medicines', [])
+#     @transaction.atomic
+#     def create(self, request, *args, **kwargs):
+#         data = request.data
+#         staff_id = data.get('staff_id')
+#         chhist_id = data.get('chhist_id')
+#         pat_id = data.get('pat_id')
+#         medicines = data.get('medicines', [])
         
-        # Validate required fields
-        if not pat_id:
-            return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+#         # Validate required fields
+#         if not pat_id:
+#             return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
             
-        if not medicines:
-            return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
+#         if not medicines:
+#             return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
         
-        results = []
+#         results = []
         
-        for med in medicines:
-            print("Processing medicine:", med)
-            try:
-                # Process each medicine within transaction
-                result = self.process_single_medicine(
-                    pat_id, med, staff_id, chhist_id
-                )
-                results.append({
-                    'success': True,
-                    'medicineId': med['minv_id'],
-                    'data': result
-                })
+#         for med in medicines:
+#             print("Processing medicine:", med)
+#             try:
+#                 # Process each medicine within transaction
+#                 result = self.process_single_medicine(
+#                     pat_id, med, staff_id, chhist_id
+#                 )
+#                 results.append({
+#                     'success': True,
+#                     'medicineId': med['minv_id'],
+#                     'data': result
+#                 })
                 
-            except Exception as error:
-                results.append({
-                    'success': False,
-                    'medicineId': med['minv_id'],
-                    'error': str(error)
-                })
-                # Continue with other medicines even if one fails
+#             except Exception as error:
+#                 results.append({
+#                     'success': False,
+#                     'medicineId': med['minv_id'],
+#                     'error': str(error)
+#                 })
+#                 # Continue with other medicines even if one fails
         
-        # Check if all operations were successful
-        all_success = all(result['success'] for result in results)
+#         # Check if all operations were successful
+#         all_success = all(result['success'] for result in results)
         
-        return Response(
-            {'results': results}, 
-            status=status.HTTP_201_CREATED if all_success else status.HTTP_207_MULTI_STATUS
-        )
+#         return Response(
+#             {'results': results}, 
+#             status=status.HTTP_201_CREATED if all_success else status.HTTP_207_MULTI_STATUS
+#         )
 
-    def process_single_medicine(self, pat_id, medicine_data, staff_id, chhist_id):
-        try:
-            patient = Patient.objects.get(pat_id=pat_id)
-        except Patient.DoesNotExist:
-            raise Exception(f"Patient with ID {pat_id} not found")
+#     def process_single_medicine(self, pat_id, medicine_data, staff_id, chhist_id):
+#         try:
+#             patient = Patient.objects.get(pat_id=pat_id)
+#         except Patient.DoesNotExist:
+#             raise Exception(f"Patient with ID {pat_id} not found")
         
-        # Get staff instance if provided
-        staff_instance = None
-        if staff_id:
-            try:
-                staff_instance = Staff.objects.get(staff_id=staff_id)
-            except Staff.DoesNotExist:
-                print(f"Staff with ID {staff_id} not found, continuing without staff")
+#         # Get staff instance if provided
+#         staff_instance = None
+#         if staff_id:
+#             try:
+#                 staff_instance = Staff.objects.get(staff_id=staff_id)
+#             except Staff.DoesNotExist:
+#                 print(f"Staff with ID {staff_id} not found, continuing without staff")
             
-        # 1. Create patient record
-        patient_record = PatientRecord.objects.create(    
-            pat_id=patient,
-            patrec_type="Medicine Record",
-        )
+#         # 1. Create patient record
+#         patient_record = PatientRecord.objects.create(    
+#             pat_id=patient,
+#             patrec_type="Medicine Record",
+#         )
         
-        if not patient_record.patrec_id:
-            raise Exception("Failed to create patient record")
+#         if not patient_record.patrec_id:
+#             raise Exception("Failed to create patient record")
         
-        # 2. Prepare medicine record data
-        submission_data = {
-            'patrec_id': patient_record.patrec_id,
-            'minv_id': medicine_data['minv_id'],
-            'medrec_qty': medicine_data['medrec_qty'],
-            'reason': medicine_data.get('reason'),
-            'requested_at': timezone.now(),
-            'fulfilled_at': timezone.now(),
-            'staff': staff_id,
-        }
+#         # 2. Prepare medicine record data
+#         submission_data = {
+#             'patrec_id': patient_record.patrec_id,
+#             'minv_id': medicine_data['minv_id'],
+#             'medrec_qty': medicine_data['medrec_qty'],
+#             'reason': medicine_data.get('reason'),
+#             'requested_at': timezone.now(),
+#             'fulfilled_at': timezone.now(),
+#             'staff': staff_id,
+#         }
         
-        # 3. Create medicine record
-        medicine_record_serializer = MedicineRecordCreateSerializer(data=submission_data)
-        medicine_record_serializer.is_valid(raise_exception=True)
-        medrec = medicine_record_serializer.save()
+#         # 3. Create medicine record
+#         medicine_record_serializer = MedicineRecordCreateSerializer(data=submission_data)
+#         medicine_record_serializer.is_valid(raise_exception=True)
+#         medrec = medicine_record_serializer.save()
         
-        # 4. Update medicine inventory
-        self.update_medicine_inventory(medicine_data['minv_id'], medicine_data['medrec_qty'], staff_instance)
+#         # 4. Update medicine inventory
+#         self.update_medicine_inventory(medicine_data['minv_id'], medicine_data['medrec_qty'], staff_instance)
         
-        # 5. If it's for child health, create the relationship
-        if chhist_id:
-            self.create_child_health_relationship(chhist_id, medrec.medrec_id)
+#         # 5. If it's for child health, create the relationship
+#         if chhist_id:
+#             self.create_child_health_relationship(chhist_id, medrec.medrec_id)
         
-        return medicine_record_serializer.data
+#         return medicine_record_serializer.data
     
-    def update_medicine_inventory(self, minv_id, quantity, staff_instance):
-        try:
-            medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
-            if medicine_inv.minv_qty_avail < quantity:
-                raise Exception(f"Insufficient stock for medicine {minv_id}. Available: {medicine_inv.minv_qty_avail}, Requested: {quantity}")
+#     def update_medicine_inventory(self, minv_id, quantity, staff_instance):
+#         try:
+#             medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
+#             if medicine_inv.minv_qty_avail < quantity:
+#                 raise Exception(f"Insufficient stock for medicine {minv_id}. Available: {medicine_inv.minv_qty_avail}, Requested: {quantity}")
             
-            # Store original quantity for potential rollback
-            original_qty = medicine_inv.minv_qty_avail
+#             # Store original quantity for potential rollback
+#             original_qty = medicine_inv.minv_qty_avail
             
-            # Update inventory
-            medicine_inv.minv_qty_avail -= quantity
-            medicine_inv.save()
+#             # Update inventory
+#             medicine_inv.minv_qty_avail -= quantity
+#             medicine_inv.save()
             
-            # Create medicine transaction
-            if medicine_inv.minv_qty_unit and medicine_inv.minv_qty_unit.lower() == 'boxes':
-                mdt_qty = f"{quantity} pcs"  # Convert boxes to pieces
-            else:
-                # Use the original unit if not boxes
-                unit = medicine_inv.minv_qty_unit or 'pcs'
-                mdt_qty = f"{quantity} {unit}"
+#             # Create medicine transaction
+#             if medicine_inv.minv_qty_unit and medicine_inv.minv_qty_unit.lower() == 'boxes':
+#                 mdt_qty = f"{quantity} pcs"  # Convert boxes to pieces
+#             else:
+#                 # Use the original unit if not boxes
+#                 unit = medicine_inv.minv_qty_unit or 'pcs'
+#                 mdt_qty = f"{quantity} {unit}"
             
-            # Create medicine transaction
-            MedicineTransactions.objects.create(
-                mdt_qty=mdt_qty,
-                mdt_action="Deducted",
-                staff=staff_instance,
-                minv_id=medicine_inv
-            )
+#             # Create medicine transaction
+#             MedicineTransactions.objects.create(
+#                 mdt_qty=mdt_qty,
+#                 mdt_action="Deducted",
+#                 staff=staff_instance,
+#                 minv_id=medicine_inv
+#             )
             
-        except MedicineInventory.DoesNotExist:
-            raise Exception(f"Medicine inventory {minv_id} not found")
+#         except MedicineInventory.DoesNotExist:
+#             raise Exception(f"Medicine inventory {minv_id} not found")
     
-    def create_child_health_relationship(self, chhist_id, medrec_id):
-        try:
-            chhist = ChildHealth_History.objects.get(pk=chhist_id)
-            # Get the MedicineRecord instance
-            medrec = MedicineRecord.objects.get(medrec_id=medrec_id)
+#     def create_child_health_relationship(self, chhist_id, medrec_id):
+#         try:
+#             chhist = ChildHealth_History.objects.get(pk=chhist_id)
+#             # Get the MedicineRecord instance
+#             medrec = MedicineRecord.objects.get(medrec_id=medrec_id)
             
-            ChildHealthSupplements.objects.create(
-                chhist=chhist,
-                medrec=medrec  # Use the instance, not the ID
-            )
-        except ChildHealth_History.DoesNotExist:
-            raise Exception("Invalid child health history ID provided")
-        except MedicineRecord.DoesNotExist:
-            raise Exception(f"Medicine record with ID {medrec_id} not found")
+#             ChildHealthSupplements.objects.create(
+#                 chhist=chhist,
+#                 medrec=medrec  # Use the instance, not the ID
+#             )
+#         except ChildHealth_History.DoesNotExist:
+#             raise Exception("Invalid child health history ID provided")
+#         except MedicineRecord.DoesNotExist:
+#             raise Exception(f"Medicine record with ID {medrec_id} not found")
 
 
 
@@ -384,6 +385,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                             medreq_id=medicine_request
                         )
                         request_item.status = 'completed'
+                        request_item.fulfilled_at=timezone.now()
                         request_item.completed_by = staff_instance
                         request_item.save()
                     except MedicineRequestItem.DoesNotExist:
@@ -421,7 +423,6 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             # Update medicine request status
-            medicine_request.fulfilled_at = timezone.now()  # <-- Set to current time
             medicine_request.signature = signature
             medicine_request.save()
 

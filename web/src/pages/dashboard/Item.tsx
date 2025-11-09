@@ -11,10 +11,8 @@ import { MedicineDistributionChart } from "@/components/analytics/health/medicin
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
-import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
@@ -25,7 +23,10 @@ import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analy
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
 import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
-
+import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
+import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
+import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
+import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
 
 
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
@@ -234,19 +235,22 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          // {
-          //   title: "Weekly Schedule",
-          //   element: <SchedulerSidebar />,
-          // },
-        
+
           {
-            title: "First Aid",
-            element: <FirstAidDistributionSidebar />,
+            title: "Medicine Alerts",
+            element: <MedicineAlertsSidebar />,
           },
           {
-            title: "Administered Vaccination",
-            element: <VaccinationDistributionSidebar />,
+            title: "Antigen Alerts",
+            element: <AntigenAlertsSidebar />,
           },
+          { title: "First Aid Alerts",
+            element: <FirstAidAlertsSidebar />,
+          },
+          { title: "Commodity Alerts",
+            element: <CommodityAlertsSidebar />,
+          }
+       
         ],
       },
       {

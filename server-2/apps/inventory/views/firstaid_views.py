@@ -75,6 +75,8 @@ class FirstAidInventoryView(generics.ListAPIView):  # Fixed typo: VIew → View
         queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
 
+
+
 class FirstAidStockTableView(APIView):
     """
     API view for first aid stocks with pagination, search, and filtering
@@ -142,23 +144,25 @@ class FirstAidStockTableView(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
-                    # For boxes, low stock threshold is 2 boxes
-                    is_low_stock = available_stock <= 2
-                else:
-                    # For pieces, low stock threshold is 20 pcs
-                    is_low_stock = available_stock <= 20
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
+                        # For boxes, low stock threshold is 2 boxes
+                        is_low_stock = available_stock <= 2
+                    else:
+                        # For pieces, low stock threshold is 20 pcs
+                        is_low_stock = available_stock <= 20
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1

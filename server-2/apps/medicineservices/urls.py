@@ -24,13 +24,13 @@ urlpatterns=[
         path('create-medicine-record/', CreateMedicineRecordView.as_view(), name='create-medrecord'),
         path('findings-plan-treatment/', CreateFindingPlanTreatmentView.as_view(), name='findings_plan_treatment'),
         path('create-medicine-allocation/', CreateMedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
-        path('childmedicine/', CreateChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
+        # path('childmedicine/', CreateChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
         path('create-medicine/request/', CreateMedicineRequestView.as_view(), name='medicine-request-create'), 
         
         # UPDATE OR DELETE
         path('update-pending-medreq/',UpdateConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
         path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
-        path('update-medicine-request/<str:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
+        # path('update-medicine-request/<str:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
 
         
         # COUNT       

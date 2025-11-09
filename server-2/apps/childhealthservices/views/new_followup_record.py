@@ -632,7 +632,6 @@ class UpdateChildHealthRecordAPIView(APIView):
             mode='walk-in',
             signature=None,
             requested_at=timezone.now(),
-            fulfilled_at=timezone.now(),
             patrec=patient_record,
             rp_id=rp_id,
             trans_id=trans_id,
@@ -666,8 +665,10 @@ class UpdateChildHealthRecordAPIView(APIView):
                 med=med_obj,
                 medreq_id=med_request,
                 status='completed',
+                fulfilled_at=timezone.now(),
                 action_by=staff_instance,
                 completed_by=staff_instance,
+                 confirmed_at=timezone.now()
             )
             for alloc in allocations:
                 minv = alloc['minv']

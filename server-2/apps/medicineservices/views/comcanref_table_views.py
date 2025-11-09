@@ -20,7 +20,10 @@ from pagination import *
 from django.db.models import Q, Prefetch
 from utils import *
 
-# ...existing code...
+
+
+
+
 class MedicineRequestStatusTableView(generics.ListCreateAPIView):
     """
     MAIN TABLE FOR PROCESSED MEDICINE REQUESTS
@@ -76,7 +79,11 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
             rejected_count=Count(
                 Case(When(items__status='rejected', then=1)),
                 distinct=True
-            )
+            ),
+            # Add annotations for timestamp fields
+            latest_confirmed_at=Max('items__confirmed_at'),
+            latest_cancelled_at=Max('items__cancelled_rejected_reffered_at'),
+            latest_fulfilled_at=Max('items__fulfilled_at')
         ).order_by('-requested_at')
 
         if search_query:
@@ -151,9 +158,30 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                     medreqitem__medreq_id=medreq.medreq_id
                 ).aggregate(total_qty=Sum('allocated_qty'))['total_qty'] or 0
 
+                # Get the latest timestamps for each status
+                items = MedicineRequestItem.objects.filter(medreq_id=medreq.medreq_id)
+                
+                # Get confirmed timestamp (from any confirmed item)
+                confirmed_item = items.filter(status='completed', confirmed_at__isnull=False).first()
+                confirmed_at = confirmed_item.confirmed_at if confirmed_item else None
+                
+                # Get cancelled/rejected/referred timestamp
+                cancelled_item = items.filter(
+                    status__in=['cancelled', 'rejected', 'referred'], 
+                    cancelled_rejected_reffered_at__isnull=False
+                ).first()
+                cancelled_at = cancelled_item.cancelled_rejected_reffered_at if cancelled_item else None
+                
+                # Get fulfilled timestamp
+                fulfilled_item = items.filter(status='completed', fulfilled_at__isnull=False).first()
+                fulfilled_at = fulfilled_item.fulfilled_at if fulfilled_item else None
+
                 serialized_data = self.get_serializer(medreq).data
                 serialized_data['total_items_count'] = total_items_count
                 serialized_data['total_allocated_quantity'] = total_allocated_qty
+                serialized_data['confirmed_at'] = confirmed_at
+                serialized_data['cancelled_rejected_reffered_at'] = cancelled_at
+                serialized_data['fulfilled_at'] = fulfilled_at
                 enriched_data.append(serialized_data)
 
             if page is not None:
@@ -189,7 +217,7 @@ class MedicineRequestStatusTableView(generics.ListCreateAPIView):
                 'success': False,
                 'error': f'Error fetching processed medicine requests: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 
 class MedicineRequestStatusTableViewDetails(APIView):
     """
@@ -294,7 +322,9 @@ class MedicineRequestStatusTableViewDetails(APIView):
                         'patient_name': patient_name,
                         'medreq_id': item.medreq_id.medreq_id,
                         'requested_at': item.medreq_id.requested_at,
-                        'fulfilled_at': item.medreq_id.updated_at,
+                        'fulfilled_at': item.fulfilled_at,
+                        'cancelled_rejected_reffered_at':item.cancelled_rejected_reffered_at,
+                        'confirmed_at':item.confirmed_at,
                         'archive_reason': item.archive_reason,
                         'reason': item.reason,
                         'request_items': [],

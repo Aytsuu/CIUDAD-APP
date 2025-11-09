@@ -11,6 +11,7 @@ import { VaccineModal } from "../Modal/VaccineModal";
 import { VaccineColumns } from "./columns/VaccineCol";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+import { Link } from "react-router";
 
 export default function VaccineList() {
   // Pagination and search state
@@ -58,7 +59,7 @@ export default function VaccineList() {
           category: "vaccine",
           noOfDoses: item.no_of_doses || 0,
           schedule: item.schedule || "N/A",
-          doseDetails: []
+          doseDetails: [],
         };
 
         // Handle routine frequency
@@ -66,7 +67,7 @@ export default function VaccineList() {
           baseData.doseDetails.push({
             doseNumber: 1,
             interval: item.routine_frequency.interval,
-            unit: item.routine_frequency.time_unit
+            unit: item.routine_frequency.time_unit,
           });
         }
         // Handle primary series intervals
@@ -76,7 +77,7 @@ export default function VaccineList() {
             baseData.doseDetails.push({
               doseNumber: interval.dose_number,
               interval: interval.interval,
-              unit: interval.time_unit
+              unit: interval.time_unit,
             });
           });
         }
@@ -95,19 +96,14 @@ export default function VaccineList() {
       "Age Group": vaccine.ageGroup,
       "Number of Doses": vaccine.noOfDoses,
       "Dose Schedule":
-      vaccine.doseDetails.length === 0
-        ? "N/A"
-        : vaccine.vaccineType === "Routine"
-        ? `Every ${vaccine.doseDetails[0]?.interval} ${vaccine.doseDetails[0]?.unit}`
-        : [
-          `Dose 1: Starts at ${vaccine.ageGroup}`,
-          ...vaccine.doseDetails
-          .filter((dose: any) => dose.doseNumber > 1)
-          .map(
-            (dose: any) =>
-            `Dose ${dose.doseNumber}: After ${dose.interval} ${dose.unit}`
-          ),
-        ].join("; "),
+        vaccine.doseDetails.length === 0
+          ? "N/A"
+          : vaccine.vaccineType === "Routine"
+          ? `Every ${vaccine.doseDetails[0]?.interval} ${vaccine.doseDetails[0]?.unit}`
+          : [
+              `Dose 1: Starts at ${vaccine.ageGroup}`,
+              ...vaccine.doseDetails.filter((dose: any) => dose.doseNumber > 1).map((dose: any) => `Dose ${dose.doseNumber}: After ${dose.interval} ${dose.unit}`),
+            ].join("; "),
     }));
   };
 
@@ -132,13 +128,13 @@ export default function VaccineList() {
       return {
         totalCount: vaccineData.results.pagination.total_count,
         totalPages: vaccineData.results.pagination.total_pages,
-        currentPage: vaccineData.results.pagination.current_page
+        currentPage: vaccineData.results.pagination.current_page,
       };
     }
     return {
       totalCount: 0,
       totalPages: 0,
-      currentPage: 1
+      currentPage: 1,
     };
   }, [vaccineData]);
 
@@ -148,7 +144,7 @@ export default function VaccineList() {
     if (recordToDelete) {
       deleteVaccineMutation.mutate({
         vaccineId: vaccineToDelete,
-        category: "vaccine"
+        category: "vaccine",
       });
     }
     setIsDeleteConfirmationOpen(false);
@@ -200,9 +196,13 @@ export default function VaccineList() {
         </div>
         <div className="flex gap-2">
           <Button className="hover:bg-buttonBlue/90 group" onClick={handleAddVaccine}>
-            <Plus size={15} /> Add Vaccine
+            <Plus size={15} /> New
           </Button>
         </div>
+      </div>
+
+      <div className="flex justify-end text-blue-600  italic underline">
+        <Link to="/age-group">Manage Age Group</Link>
       </div>
 
       <div className="bg-white rounded-md">
@@ -222,7 +222,12 @@ export default function VaccineList() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+            <ExportDropdown
+              onExportCSV={handleExportCSV}
+              onExportExcel={handleExportExcel}
+              onExportPDF={handleExportPDF}
+              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+            />
           </div>
         </div>
         <div className="bg-white w-full overflow-x-auto">
@@ -251,7 +256,13 @@ export default function VaccineList() {
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmationDialog isOpen={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen} onConfirm={handleDelete} title="Delete Vaccine" description="Are you sure you want to delete this vaccine? This action cannot be undone." />
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={handleDelete}
+        title="Delete Vaccine"
+        description="Are you sure you want to delete this vaccine? This action cannot be undone."
+      />
 
       {/* Vaccine Modal */}
       {showVaccineModal && (

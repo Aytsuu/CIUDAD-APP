@@ -131,8 +131,8 @@ export function VaccineResidentChart({ initialYear }: VaccineResidentChartProps)
       content={
         <div className="space-y-6 p-4">
           {/* Header with controls */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">Hover over any month to see all vaccines in two columns</div>
+          <div className="flex items-center justify-end">
+            {/* <div className="text-sm text-gray-600">Hover over any month to see all vaccines in two columns</div> */}
             <div className="flex items-center space-x-3">
               <Button
                 variant="outline"

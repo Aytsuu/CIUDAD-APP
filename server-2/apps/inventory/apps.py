@@ -32,6 +32,19 @@ def auto_archive_expired_items_on_migrate(sender, **kwargs):
     except Exception as e:
         logger.error(f"Failed to auto-archive expired items: {e}")
 
+def run_inventory_alerts_on_migrate(sender, **kwargs):
+    """
+    Run inventory alerts (low stock, near expiry, out of stock) after migration
+    This will run ONCE after migrations and notify health staff about inventory issues
+    """
+    from .task import run_all_inventory_alerts
+    try:
+        logger.info("Running inventory alerts after migration...")
+        run_all_inventory_alerts()
+        logger.info("Completed inventory alerts after migration")
+    except Exception as e:
+        logger.error(f"Failed to run inventory alerts: {e}")
+
 class InventoryConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.inventory'
@@ -39,3 +52,4 @@ class InventoryConfig(AppConfig):
     def ready(self):
         post_migrate.connect(create_initial_categories, sender=self)
         post_migrate.connect(auto_archive_expired_items_on_migrate, sender=self)
+        post_migrate.connect(run_inventory_alerts_on_migrate, sender=self)

@@ -30,7 +30,7 @@ class PatientMedicineRecordsTableView(generics.ListAPIView):
         latest_medicine_subquery = MedicineRequestItem.objects.filter(
             medreq_id__patrec__pat_id=OuterRef('pat_id'),
             status='completed'
-        ).order_by('-medreq_id__fulfilled_at').values('medreq_id__fulfilled_at')[:1]
+        ).order_by('-fulfilled_at').values('fulfilled_at')[:1]
 
         # Annotate each Patient with medicine_count and latest_medicine_date
         queryset = Patient.objects.annotate(

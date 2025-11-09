@@ -1007,6 +1007,7 @@ class SoapFormSubmissionView(APIView):
                         'status': 'confirmed',
                         'created_at': timezone.now(),
                         'action_by': staff,
+                         'confirmed_at': timezone.now()
                     }
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
@@ -1266,6 +1267,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                                 medreq_id=med_request,
                                 status="confirmed",
                                 action_by=staff,
+                                confirmed_at=timezone.now()
                             )
                             total_medicine_items += 1
                             print(f"✅ DEBUG: Created MedicineRequestItem with ID: {medicine_item.medreqitem_id} for med_id: {med_id}")

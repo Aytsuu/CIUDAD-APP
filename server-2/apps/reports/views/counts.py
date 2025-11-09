@@ -10,6 +10,7 @@ from apps.maternal.models import *
 from apps.vaccination.models import *
 from apps.familyplanning.models import *
 from apps.animalbites.models import *
+from apps.inventory.models import *
 from django.db.models import Count
 
 class ReportsCount(APIView):
@@ -42,6 +43,14 @@ class ReportsCount(APIView):
             confirmed_appointments_count = MedConsultAppointment.objects.filter(status='confirmed').count()
             total_appointments_count = pending_appointments_count + confirmed_appointments_count
             total_medicine_requests =  medrequest_count + apprequest_count
+            medicinelist_count =  Medicinelist.objects.count()
+            commoditylist_count = CommodityList.objects.count()
+            firstaidlist_count = FirstAidList.objects.count(),
+            vaccinelist_count = VaccineList.objects.count(),
+            immunizationlist_count = ImmunizationSupplies.objects.count(),
+
+            antigenlist_count = vaccinelist_count + immunizationlist_count
+
             
         
             # Total count
@@ -85,7 +94,13 @@ class ReportsCount(APIView):
                     'total_appointments_count': total_appointments_count,
                     'completed_consultations_by_doctor': completed_consultations_by_doctor,
                     'completed_childconsultations_by_doctor': completed_childconsultations_by_doctor,
-                    'vaccnerecord_count': vaccnerecord_count
+                    'vaccnerecord_count': vaccnerecord_count,
+                    'medinelist_count': medicinelist_count,
+                    'commoditylist_count':commoditylist_count,
+                    'firstaidlist_count': firstaidlist_count,
+                    'antigenlist_count': antigenlist_count
+
+
                 }
             }, status=status.HTTP_200_OK)
             

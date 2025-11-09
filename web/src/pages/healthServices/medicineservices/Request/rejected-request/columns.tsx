@@ -89,24 +89,40 @@ export const medicineRequestRejectedColumns: ColumnDef<any>[] = [
   //     </div>
   //   )
   // },
-  {
-    accessorKey: "requested_at",
-    header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Requested On <ArrowUpDown size={15} />
-      </div>
-    ),
-    size: 140,
-    cell: ({ row }) => {
-      const { date, time } = formatDateTime(row.original.requested_at);
-      return (
-        <div className="text-center py-2">
-          <div className="font-medium text-gray-900 text-sm">{date}</div>
-          {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
-        </div>
-      );
-    }
-  },
+  // {
+  //   accessorKey: "requested_at",
+  //   header: ({ column }) => (
+  //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+  //       Requested On <ArrowUpDown size={15} />
+  //     </div>
+  //   ),
+  //   size: 140,
+  //   cell: ({ row }) => {
+  //     const { date, time } = formatDateTime(row.original.requested_at);
+  //     return (
+  //       <div className="text-center py-2">
+  //         <div className="font-medium text-gray-900 text-sm">{date}</div>
+  //         {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+  //       </div>
+  //     );
+  //   }
+  // },
+
+    {
+      accessorKey: "cancelled_rejected_reffered_at",
+      header:" Date Rejected",
+      size: 140,
+      cell: ({ row }) => {
+        const { date } = formatDateTime(row.original.cancelled_rejected_reffered_at);
+        return (
+          <div className="text-center py-2">
+            <div className="font-medium text-gray-900 text-sm">{date}</div>
+            {/* {time && <div className="text-xs text-gray-500 mt-1">{time}</div>} */}
+          </div>
+        );
+      }
+    },
+
   {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
@@ -256,24 +272,24 @@ export const rejectedDetailsIColumns: ColumnDef<any>[] = [
  
    
    
-    {
-        accessorKey: "fulfilled_at",
-        header: ({ column }) => (
-          <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Date Rejected <ArrowUpDown size={15} />
-          </div>
-        ),
-        size: 140,
-        cell: ({ row }) => {
-          const { date, time } = formatDateTime(row.original.fulfilled_at);
-          return (
-          <div className="text-center py-2">
-            <div className="font-medium text-gray-900 text-sm">{date}</div>
-            {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
-          </div>
-          );
-        }
-      }, 
+    // {
+    //     accessorKey: "fulfilled_at",
+    //     header: ({ column }) => (
+    //       <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+    //         Date Rejected <ArrowUpDown size={15} />
+    //       </div>
+    //     ),
+    //     size: 140,
+    //     cell: ({ row }) => {
+    //       const { date, time } = formatDateTime(row.original.fulfilled_at);
+    //       return (
+    //       <div className="text-center py-2">
+    //         <div className="font-medium text-gray-900 text-sm">{date}</div>
+    //         {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+    //       </div>
+    //       );
+    //     }
+    //   }, 
    
     
   ];

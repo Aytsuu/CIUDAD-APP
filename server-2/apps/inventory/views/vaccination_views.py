@@ -609,8 +609,6 @@ class CombinedVaccineDataView(APIView):
         })
 
 
-
-
 # ANTIGEN STOCK
 class CombinedStockTable(APIView):
     """
@@ -685,18 +683,20 @@ class CombinedStockTable(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                is_low_stock = available_stock <= low_stock_threshold
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    is_low_stock = available_stock <= low_stock_threshold
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1
@@ -803,18 +803,20 @@ class CombinedStockTable(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                is_low_stock = available_stock <= low_stock_threshold
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    is_low_stock = available_stock <= low_stock_threshold
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1
@@ -892,7 +894,6 @@ class CombinedStockTable(APIView):
                 'success': False,
                 'error': f'Error fetching combined stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     # def auto_archive_expired_items(self):
     #     """Auto-archive items that expired more than 10 days ago and log transactions"""
     #     from datetime import timedelta

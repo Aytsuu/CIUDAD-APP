@@ -1275,7 +1275,7 @@ class VaccinationSubmissionView(APIView):
             
             AntigenTransaction.objects.create(
                 antt_qty=antt_qty,
-                antt_action="Vaccination administered",
+                antt_action="Administered",
                 vacStck_id=vaccine_stock,
                 staff_id=staff_id
             )
@@ -2058,7 +2058,7 @@ class MaternalVaccinationSubmissionView(APIView):
             
             AntigenTransaction.objects.create(
                 antt_qty=antt_qty,
-                antt_action="Vaccination administered",
+                antt_action="Administered",
                 vacStck_id=vaccine_stock,
                 staff_id=staff_id
             )

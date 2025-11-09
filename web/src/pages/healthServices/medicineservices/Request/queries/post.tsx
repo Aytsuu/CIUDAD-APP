@@ -4,17 +4,17 @@ import { api2 } from "@/api/api";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router-dom";
 
-export interface UpdateMedicineRequestData {
-  status: string;
-  archive_reason: string;
-  is_archived: boolean;
-}
+// export interface UpdateMedicineRequestData {
+//   status: string;
+//   archive_reason: string;
+//   is_archived: boolean;
+// }
 
 export const useUpdateMedicineRequestItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ medreqitem_id, data }: { medreqitem_id: number; data: UpdateMedicineRequestData }) => api2.patch(`/medicine/update-medreq-item/${medreqitem_id}/`, data).then((res) => res.data),
+    mutationFn: ({ medreqitem_id, data }: { medreqitem_id: number; data: any }) => api2.patch(`/medicine/update-medreq-item/${medreqitem_id}/`, data).then((res) => res.data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["medicine-request-items"] });
