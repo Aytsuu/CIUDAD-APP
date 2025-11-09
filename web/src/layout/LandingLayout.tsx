@@ -32,7 +32,6 @@ import LandingEditForm from "@/pages/landing/LandingEditForm";
 import { Separator } from "@/components/ui/separator";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import supabase from "@/supabase/supabase";
-import { showErrorToast } from "@/components/ui/toast";
 
 export default function LandingLayout() {
   const { user } = useAuth();

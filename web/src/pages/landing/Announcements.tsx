@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { formatDate, formatTimeAgo } from "@/helpers/dateHelper";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "@/components/ui/media-gallery";
-import { capitalize } from "@/helpers/capitalize";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAnnouncementList } from "../announcement/queries/announcementFetchQueries";
 
