@@ -99,12 +99,6 @@ class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # secret_key = request.headers.get('Secret-Key')
-        # expected_key = config('NOTIFICATION_SECRET_KEY')
-
-        # if secret_key != expected_key:
-            # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
         try:
             recipient_ids = request.data.get('recipients', [])
             print(f"Recipient IDs for reminder: {recipient_ids}")

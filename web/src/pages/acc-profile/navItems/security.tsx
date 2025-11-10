@@ -23,7 +23,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { passwordFormSchema } from "@/form-schema/account-schema";
 import { useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
-import supabase from "@/supabase/supabase";
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
@@ -60,23 +59,23 @@ export default function Security() {
     mutationFn: async (data: PasswordFormData) => {
       try {
         // First verify current password by attempting to sign in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: user?.email!,
-          password: data.old_password,
-        });
+        // const { error: signInError } = await supabase.auth.signInWithPassword({
+        //   email: user?.email!,
+        //   password: data.old_password,
+        // });
 
-        if (signInError) {
-          throw new Error("Current password is incorrect");
-        }
+        // if (signInError) {
+        //   throw new Error("Current password is incorrect");
+        // }
 
         // Update the password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: data.new_password,
-        });
+        // const { error: updateError } = await supabase.auth.updateUser({
+        //   password: data.new_password,
+        // });
 
-        if (updateError) {
-          throw new Error(updateError.message);
-        }
+        // if (updateError) {
+        //   throw new Error(updateError.message);
+        // }
 
         return { success: true };
       } catch (error) {

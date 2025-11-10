@@ -1,9 +1,17 @@
+# Imports
+# rest_framework
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+# django
 from django.shortcuts import get_object_or_404
+
+# local
 from ..models import Complaint
 from ..serializers import ComplaintSerializer
+
+# python
 import logging
 
 logger = logging.getLogger(__name__)

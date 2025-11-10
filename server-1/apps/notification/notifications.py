@@ -60,7 +60,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
         print(f"❌ Invalid argument error: {e}")
         return None
 
-    except exceptions.UnregisteredError as e:
+    except firebase_admin.exceptions.FirebaseError as e:
         print(f"❌ Token unregistered or invalid: {e}")
         return None
 
