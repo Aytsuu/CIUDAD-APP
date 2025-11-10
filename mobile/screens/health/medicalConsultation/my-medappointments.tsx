@@ -274,7 +274,7 @@ const CancelModal: React.FC<{
             editable={!isPending}
           />
           
-          <View className="flex-row justify-end space-x-2">
+          <View className="flex-row justify-end gap-2">
             <TouchableOpacity 
               onPress={onClose} 
               disabled={isPending}
@@ -288,7 +288,7 @@ const CancelModal: React.FC<{
               className="bg-red-500 px-4 py-2 rounded-md disabled:opacity-50"
             >
               <Text className="text-white font-medium">
-                {isPending ? 'Cancelling...' : 'Confirm Cancellation'}
+                {isPending ? 'Cancelling...' : 'Confirm'}
               </Text>
             </TouchableOpacity>
           </View>

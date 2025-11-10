@@ -30,7 +30,6 @@ class CreateNotificationView(APIView):
     def post(self, request):
         try:
             recipient_ids = request.data.get("recipients", [])
-            print("RC ID:",recipient_ids)
             logger.info(f"📥 Received ResidentProfile IDs: {recipient_ids}")
 
             if not recipient_ids:
@@ -96,7 +95,6 @@ class CreateNotificationView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
 class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
 
@@ -109,10 +107,17 @@ class CreateReminderNotificationView(APIView):
 
         try:
             recipient_ids = request.data.get('recipients', [])
-            recipients = []
+            print(f"Recipient IDs for reminder: {recipient_ids}")
+            # recipients = []
 
-            accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
-
+            # accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
+            resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids).select_related("account")
+            recipients = [
+                rp.account for rp in resident_profiles 
+                if hasattr(rp, 'account') and rp.account
+            ]
+            
+            print(f"Accounts found for reminder: {accounts}")
             if accounts:
                 recipients = accounts
             else:
@@ -121,6 +126,8 @@ class CreateReminderNotificationView(APIView):
                     rp.account for rp in resident_profiles 
                     if hasattr(rp, 'account') and rp.account
                 ]
+                
+            print(f"Accounts found for reminder: {recipients}")
 
             if not recipients:
                 return Response(
@@ -128,10 +135,15 @@ class CreateReminderNotificationView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            send_at = datetime.fromisoformat(request.data.get('send_at'))
+            send_at_str = request.data.get('remind_at')
+            if not send_at_str:
+                 return Response({'error': 'Missing required \'remind_at\' field.'}, status=status.HTTP_400_BAD_REQUEST)
+             
+            send_at = datetime.fromisoformat(send_at_str)
+            
             if send_at.tzinfo is None:
                 send_at = pytz.utc.localize(send_at)
-
+                
             reminder_notification(
                 title=request.data.get('title'),
                 message=request.data.get('message'),
@@ -153,49 +165,6 @@ class CreateReminderNotificationView(APIView):
             logger.error(f"❌ Error creating reminder notification from Server-2: {str(e)}")
             return Response({'error': 'Failed to create reminder notification'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class CreateReminderNotificationView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        # secret_key = request.headers.get('Secret-Key')
-        # expected_key = config('NOTIFICATION_SECRET_KEY')
-
-        # if secret_key != expected_key:
-            # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            # sender = request.data.get('sender')
-            
-            # if sender:
-                # sender = str(sender)
-            
-            recipients = list(ResidentProfile.objects.filter(rp_id__in=request.data.get('recipients', [])))
-
-            send_at = datetime.fromisoformat(request.data.get('send_at'))
-            if send_at.tzinfo is None:
-                send_at = pytz.utc.localize(send_at)
-
-            reminder_notification(
-                title=request.data.get('title'),
-                message=request.data.get('message'),
-                notif_type=request.data.get('notif_type'),
-                send_at=send_at,
-                # sender=sender, 
-                recipients=recipients,
-                web_route=request.data.get('web_route'),
-                web_params=request.data.get('web_params'),
-                mobile_route=request.data.get('mobile_route'),
-                mobile_params=request.data.get('mobile_params'),
-            )
-
-            return Response(
-                {'message': '✅ Reminder notification scheduled successfully from Server-2'},
-                status=status.HTTP_201_CREATED
-            )
-
-        except Exception as e:
-            logger.error(f"❌ Error creating reminder notification from Server-2: {str(e)}")
-            return Response({'error': 'Failed to create reminder notification'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 """ 
     Register FCM token (for mobile push)

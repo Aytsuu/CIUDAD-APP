@@ -435,10 +435,10 @@ def get_detailed_monthly_fp_report(request, year, month):
                         output_field=DateField()
                     ),
                     dropout_date=Case(
-                        When(Q(followv__followv_status__iexact='Dropout') | Q(followv__followv_status__iexact='Missed'), 
+                        When(Q(followv__followv_status__iexact='Dropout') | Q(followv__followv_status__iexact='missed'), 
                             then=F('followv__followv_date')),
                         When(
-                            Q(followv__followv_status__iexact='Pending') & 
+                            Q(followv__followv_status__iexact='pending') & 
                             Q(followv__followv_date__lte=today - timedelta(days=3)),
                             then=F('followv__followv_date') + timedelta(days=3)
                         ),
@@ -448,9 +448,9 @@ def get_detailed_monthly_fp_report(request, year, month):
                 ).filter(
                     age_filter,
                     dropout_method_filter,
-                    Q(followv__followv_status__iexact='Dropout') |
-                    Q(followv__followv_status__iexact='Missed') | 
-                    Q(followv__followv_status__iexact='Pending', followv__followv_date__lte=today - timedelta(days=3)),
+                    Q(followv__followv_status__iexact='dropout') |
+                    Q(followv__followv_status__iexact='missed') | 
+                    Q(followv__followv_status__iexact='pending', followv__followv_date__lte=today - timedelta(days=3)),
                     dropout_date__range=(month_start, month_end)
                 ).values('fprecord__pat__pat_id').distinct()  # DISTINCT PATIENTS
                 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native";
 import { router } from "expo-router";
-import { Search, ShoppingBag, ChevronDown, Pill, X, Ban, ChevronLeft, Clock } from "lucide-react-native";
+import { Search, ShoppingBag, ChevronDown, Pill, X, Ban, ChevronLeft, Clock, Filter } from "lucide-react-native";
 import { useGlobalCartState } from "./cart-state";
 import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries";
 import PageLayout from "@/screens/_PageLayout";
@@ -27,6 +27,8 @@ export type MedicineDisplay = {
   }[];
 };
 
+type FilterOption = "all" | "available" | "pending" | "out_of_stock";
+
 export default function MedicineRequestScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -34,6 +36,8 @@ export default function MedicineRequestScreen() {
   const [showCategories, setShowCategories] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
   const [loadingPending, setLoadingPending] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>("all");
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const { cartItems } = useGlobalCartState();
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,9 +100,41 @@ export default function MedicineRequestScreen() {
     checkPendingRequests();
   }, [fetchedMedicines, userId]);
 
+  // Filter and sort medicines based on selected filter
   const medicines = useMemo(() => {
-    return fetchedMedicines?.medicines || [];
-  }, [fetchedMedicines]);
+    const meds = fetchedMedicines?.medicines || [];
+    
+    // Apply filter
+    let filtered = meds.filter((medicine: { total_qty_available: number; med_id: string; }) => {
+      const isOutOfStock = medicine.total_qty_available <= 0;
+      const hasPending = pendingRequests.has(medicine.med_id);
+      
+      switch (selectedFilter) {
+        case "available":
+          return !isOutOfStock && !hasPending;
+        case "pending":
+          return hasPending && !isOutOfStock;
+        case "out_of_stock":
+          return isOutOfStock;
+        case "all":
+        default:
+          return true;
+      }
+    });
+
+    // Sort: available first, then pending, then out of stock
+    return [...filtered].sort((a, b) => {
+      const aOutOfStock = a.total_qty_available <= 0;
+      const bOutOfStock = b.total_qty_available <= 0;
+      const aPending = pendingRequests.has(a.med_id);
+      const bPending = pendingRequests.has(b.med_id);
+
+      const aScore = aOutOfStock ? 2 : (aPending ? 1 : 0);
+      const bScore = bOutOfStock ? 2 : (bPending ? 1 : 0);
+
+      return aScore - bScore;
+    });
+  }, [fetchedMedicines, pendingRequests, selectedFilter]);
 
 const totalPages = Math.ceil((fetchedMedicines?.count || 0) / pageSize);
   
@@ -148,6 +184,15 @@ const categories = useMemo(() => {
     params: { medicineData: medicineString },
   });
 };
+
+  const filterOptions = [
+    { value: "all", label: "All", icon: Pill },
+    { value: "available", label: "In stock", icon: Pill },
+    { value: "pending", label: "Pending Requests", icon: Clock },
+    { value: "out_of_stock", label: "Out of Stock", icon: Ban },
+  ];
+
+  const currentFilterLabel = filterOptions.find(opt => opt.value === selectedFilter)?.label || "All Medicines";
 
   if (isLoading || loadingPending) {
     return <LoadingState />;
@@ -206,6 +251,60 @@ const categories = useMemo(() => {
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Filter Dropdown */}
+          <View className="mt-3 relative">
+            <TouchableOpacity
+              onPress={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex-row items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 active:bg-gray-50"
+            >
+              <View className="flex-row items-center gap-2">
+                <Filter size={18} color="#6B7280" />
+                <Text className="text-gray-900 font-medium">{currentFilterLabel}</Text>
+              </View>
+              <ChevronDown 
+                size={18} 
+                color="#6B7280"
+                style={{ transform: [{ rotate: showFilterDropdown ? "180deg" : "0deg" }] }}
+              />
+            </TouchableOpacity>
+
+            {/* Dropdown Menu */}
+            {showFilterDropdown && (
+              <View className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                {filterOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = selectedFilter === option.value;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      onPress={() => {
+                        setSelectedFilter(option.value as FilterOption);
+                        setShowFilterDropdown(false);
+                      }}
+                      className={`flex-row items-center px-4 py-3 active:bg-gray-50 ${
+                        isSelected ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      <Icon 
+                        size={18} 
+                        color={isSelected ? "#2563EB" : "#6B7280"} 
+                      />
+                      <Text className={`ml-3 font-medium ${
+                        isSelected ? "text-blue-600" : "text-gray-700"
+                      }`}>
+                        {option.label}
+                      </Text>
+                      {isSelected && (
+                        <View className="ml-auto w-2 h-2 rounded-full bg-blue-600" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Medicines List */}
@@ -256,12 +355,6 @@ const categories = useMemo(() => {
                           </View>
 
                           <View className="mt-2 gap-1">
-                            {/* <Text className={`text-sm ${
-                              isDisabled ? "text-gray-400" : "text-gray-600"
-                            }`}>
-                              {medicine.med_type || "Unknown Type"}
-                            </Text> */}
-
                             {medicine.inventory_items[0]?.dosage && (
                               <Text className={`text-xs ${
                                 isDisabled ? "text-gray-400" : "text-gray-500"
@@ -291,9 +384,12 @@ const categories = useMemo(() => {
                 <View className="bg-gray-100 w-16 h-16 rounded-full items-center justify-center mb-4">
                   <Search size={32} color="#D1D5DB" />
                 </View>
-                <Text className="text-lg font-semibold text-gray-900 mb-1">No medicines</Text>
+                <Text className="text-lg font-semibold text-gray-900 mb-1">No medicines found</Text>
                 <Text className="text-gray-500 text-center text-sm px-8">
-                  Adjust your search terms to find medicines
+                  {selectedFilter !== "all" 
+                    ? `No ${currentFilterLabel.toLowerCase()} at the moment`
+                    : "Adjust your search terms to find medicines"
+                  }
                 </Text>
               </View>
             )}

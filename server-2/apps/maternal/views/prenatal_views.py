@@ -160,6 +160,7 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
 
             pa_request = serializers.save()
             logger.info(f"Prenatal appointment request created successfully with ID: {pa_request.par_id} for date: {pa_request.requested_date}")
+            send_prenatal_status_notification(appointment=pa_request,new_status='pending', notify_staff=True)
             
             return Response({
                 'message': 'Prenatal appointment request created successfully',
