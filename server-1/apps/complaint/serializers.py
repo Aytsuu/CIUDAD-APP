@@ -1,8 +1,17 @@
-from utils.supabase_client import upload_to_storage
+# Imports
+
+# rest_framework
 from rest_framework import serializers
+
+# local
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
 from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, ComplaintRecipient)
+
+# utility
+from utils.supabase_client import upload_to_storage
+
+# python
 import json
 
 class AccusedSerializer(serializers.ModelSerializer):

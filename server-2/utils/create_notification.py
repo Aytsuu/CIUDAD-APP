@@ -5,7 +5,6 @@ from datetime import datetime
 class NotificationQueries:
     def __init__(self):
         self.client = config("CLIENT", default="http://localhost:8001")
-        self.secret_key = config("NOTIFICATION_SECRET_KEY")
 
     def create_notification(
         self,
@@ -28,7 +27,6 @@ class NotificationQueries:
             "mobile_route": mobile_route,
             "mobile_params": mobile_params or {},
         }
-        headers = {"Secret-Key": self.secret_key}
 
         try:
             response = requests.post(
@@ -70,7 +68,6 @@ class NotificationQueries:
             "mobile_route": mobile_route,
             "mobile_params": mobile_params or {},
         }
-        headers = {"Secret-Key": self.secret_key}
 
         try:
             response = requests.post(

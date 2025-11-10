@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Shield, Check } from "lucide-react";
+import { Shield, Check } from "lucide-react";
 import {
   Card,
   CardContent,

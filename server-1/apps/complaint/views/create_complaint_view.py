@@ -1,10 +1,11 @@
-# Rest Framework imports
+# Imports
+# Rest Framework
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-# Local imports
+# Local
 from apps.complaint.models import Complaint, Complainant, Accused, ComplaintComplainant, ComplaintAccused, Complaint_File
 from apps.complaint.serializers import ComplaintSerializer
 from apps.account.models import Account
@@ -13,23 +14,23 @@ from apps.administration.models import Staff
 from apps.notification.utils import create_notification, reminder_notification
 from ..serializers import ComplaintFileSerializer
 
-# Django imports
+# Django
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.utils import timezone
-from datetime import timedelta
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files.base import ContentFile
 
-# Utility imports
+# Utility
 from utils.supabase_client import upload_to_storage
 
-# Python imports
+# Python
 import json
 import logging
 import base64
 import io
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
