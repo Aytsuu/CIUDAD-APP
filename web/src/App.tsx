@@ -10,7 +10,6 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
 import { PersistGate } from "redux-persist/integration/react";
-import { MobileDetect } from "./pages/device/MobileDetect";
 
 const router = createBrowserRouter([
   ...landing_router,
@@ -24,12 +23,10 @@ function App() {
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
             <LoadingProvider>
-              <MobileDetect>
-                <LinearLoader />
-                <AnimatePresence mode="wait">
-                  <RouterProvider router={router} />
-                </AnimatePresence>
-              </MobileDetect>
+              <LinearLoader />
+              <AnimatePresence mode="wait">
+                <RouterProvider router={router} />
+              </AnimatePresence>
             </LoadingProvider>
         </QueryClientProvider>
       </PersistGate>

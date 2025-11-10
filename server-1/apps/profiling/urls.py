@@ -24,6 +24,7 @@ urlpatterns = [
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
     path("sitio/create/", SitioCreateView.as_view(), name="sitio-create"),
+    path("sitio/bulk-update/", SitioUpdateView.as_view(), name="sitio-update"),
     path("sitio/<str:sitio_id>/delete/", SitioDeleteView.as_view(), name="sitio-delete"),
 
     # Address Urls
@@ -35,7 +36,7 @@ urlpatterns = [
     path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
     path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
-    path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
+    # path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
 
     # Family Urls
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
