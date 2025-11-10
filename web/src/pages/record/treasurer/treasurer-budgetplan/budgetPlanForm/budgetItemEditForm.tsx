@@ -34,7 +34,7 @@ export default function BudgetItemEditForm({ planId, budgetItems, balanceUnappro
     refetchGAD()
   }, [refetchExpenseParticulars, refetchGAD]);
 
-  let gadTransferrableAmt = (gadData?.gbudy_budget ?? 0 ) - (gadData?.gbudy_expenses ?? 0)
+  const gadTransferrableAmt = (gadData?.gbudy_budget ?? 0 ) - (gadData?.gbudy_expenses ?? 0)
   
   // Helper function to get available amount from budget plan (original)
   // Helper function to get available amount from budget plan (original)
