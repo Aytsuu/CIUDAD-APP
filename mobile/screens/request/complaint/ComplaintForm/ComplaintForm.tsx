@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import ScreenLayout from "@/screens/_ScreenLayout";
+import PageLayout from "@/screens/_PageLayout";
 import { Incident } from "./IncidentDetails";
 import { Accused } from "./Accused";
 import { Complainant } from "./Complainant";
@@ -106,8 +106,8 @@ export default function ComplaintReportProcess () {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -115,10 +115,10 @@ export default function ComplaintReportProcess () {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Blotter Form</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-[13px]">Blotter Form</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="p-4 flex-1">{renderStepContent()}</View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };

@@ -6,7 +6,7 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import ScreenLayout from "@/screens/_ScreenLayout";
+import PageLayout from "@/screens/_PageLayout";
 import { getResidentComplaint } from "./queries/ComplaintGetQueries";
 import { router } from "expo-router";
 import { ChevronLeft, MoreVertical, AlertCircle, XCircle } from "lucide-react-native";
@@ -300,8 +300,8 @@ export default function ResidentComplaint() {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
@@ -309,12 +309,12 @@ export default function ResidentComplaint() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={
+      headerTitle={
         <Text className="text-lg font-PoppinsRegular text-gray-900">
           Blotter
         </Text>
       }
-      customRightAction={<View className="w-10 h-10" />}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 text-black">
         <SearchWithTabs
@@ -396,6 +396,6 @@ export default function ResidentComplaint() {
         isLoading={isRaising}
         showDetails={!!selectedComplaint}
       />
-    </ScreenLayout>
+    </PageLayout>
   );
 }
