@@ -26,6 +26,7 @@ type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
   proposedBud: number;
   particularId: number;
   files: FileData[]; 
+  staff_id: string;
 };
 
 
@@ -70,13 +71,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       });
 
       //5. Add new Expense log
-      if(values.returnAmount > 0){
-        await expense_log(iet_num, {
-          returnAmount: values.returnAmount,
-          el_proposed_budget: values.iet_amount,
-          el_actual_expense: values.iet_actual_amount
-        });
-      }      
+      await expense_log(iet_num, {
+        returnAmount: values.returnAmount,
+        el_proposed_budget: values.iet_amount,
+        el_actual_expense: values.iet_actual_amount
+      });
+ 
       
       return iet_num;
     },  
@@ -109,6 +109,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeFormSchema> & {
   totalIncome: number;
   year: number;
+  staff_id: string;
 };
 
 

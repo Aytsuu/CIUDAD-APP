@@ -1,69 +1,156 @@
-import { ImageIcon, Search } from "lucide-react"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Search, ArrowUpDown, ChevronRight } from "lucide-react"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { useGetGarbageRejectRequest } from "../queries/GarbageRequestFetchQueries"
+import { useGetGarbageRejectRequest, type GarbageRequestReject } from "../queries/GarbageRequestFetchQueries"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import React from "react"
+import { ColumnDef } from "@tanstack/react-table"
+import ViewGarbageRequestDetails from "./view-details"
+import { Button } from "@/components/ui/button/button"
+import { DataTable } from "@/components/ui/table/data-table"
+import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function RejectedTable() {
-  const { data: rejectedReqData = [], isLoading } = useGetGarbageRejectRequest()
+  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSitio, setSelectedSitio] = useState("0")
-  const [pageSize, setPageSize] = React.useState<number>(10)
+  const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
 
-  const filteredData = rejectedReqData.filter((request) => {
-    const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
-    const matchesSearch = searchQuery === "" || `
-      ${request.garb_id} 
-      ${request.garb_requester} 
-      ${request.garb_location} 
-      ${request.garb_waste_type} 
-      ${request.garb_created_at} 
-      ${request.dec_reason}
-      ${request.dec_date}
-      ${request.sitio_name}
-      ${request.staff_name}
-    `.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesSitio && matchesSearch
-  })
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const sitioOptions = [
-    { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(rejectedReqData.map(item => item.sitio_name)))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
-  ]
+  const { data: rejectedReqData = { results: [], count: 0 }, isLoading: isLoadingRejected } = useGetGarbageRejectRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
 
-  const totalItems = filteredData.length
+  const rejectedRequests = rejectedReqData.results || []
+  const totalItems = rejectedReqData.count || 0
   const totalPages = Math.ceil(totalItems / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = filteredData.slice(startIndex, endIndex)
+
+  // ----------------- LOADING MGMT --------------------
+  useEffect(() => {
+    if (isLoadingRejected) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  }, [isLoadingRejected, showLoading, hideLoading])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, selectedSitio])
+  }, [debouncedSearchQuery, selectedSitio, pageSize])
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full opacity-30" />
-          ))}
+  // Get sitio options from the fetched data
+  const sitioOptions = [
+    { id: "0", name: "All Sitios" },
+    ...Array.from(new Set(rejectedRequests.map((item: GarbageRequestReject) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
+  ]
+
+  const columns: ColumnDef<GarbageRequestReject>[] = [
+    {
+      accessorKey: "garb_id",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <ArrowUpDown size={14} />
         </div>
+      ),
+      cell: ({ row }) => (
+        <div>
+          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+              {row.original.garb_id}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "garb_created_at",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
+      )
+    },
+    {
+      accessorKey: "garb_requester",
+      header: "Requester",
+    },
+    {
+      accessorKey: "sitio_name",
+      header: "Sitio"
+    },
+    {
+      accessorKey: "garb_waste_type",
+      header: "Waste Type"
+    },
+    {
+      accessorKey: "",
+      header: "   ",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center justify-center">
+            <DialogLayout
+              className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
+              trigger={
+                <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+                  <span className="text-sm font-medium group-hover:text-primary">View</span>
+                  <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                    <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+                  </div>
+                </Button>
+              }
+              title={`Garbage Pickup Request No. ${row.original.garb_id}`}
+              description="Full details of the request filed."
+              mainContent={
+                <div className="flex flex-col h-full overflow-y-hidden">
+                  <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+                    <ViewGarbageRequestDetails
+                      garb_requester={row.original.garb_requester}
+                      garb_location={row.original.garb_location}
+                      garb_created_at={row.original.garb_created_at}
+                      garb_pref_date={row.original.garb_pref_date}
+                      garb_pref_time={row.original.garb_pref_time}
+                      garb_additional_notes={row.original.garb_additional_notes}
+                      file_url={row.original.file_url}
+                      sitio_name={row.original.sitio_name}
+                      garb_waste_type={row.original.garb_waste_type}
+                      rejection_reason={row.original.dec_reason}
+                      dec_date={row.original.dec_date || ''}
+                      staff_name={row.original.staff_name}
+                      isRejected = {true}
+                    />
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        );
+      },
+    }
+  ];
+
+  if (isLoadingRejected) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="md" />
+        <span className="ml-2 text-gray-600">Loading rejected requests...</span>
       </div>
     )
   }
@@ -140,111 +227,14 @@ export default function RejectedTable() {
         ) : (
           <>
             <div className="space-y-3">
-              {paginatedData.map((request) => (
-                <Card key={request.garb_id} className="hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-start gap-4 p-4">
-                    {/* Left Section - Main Info */}
-                    <div className="flex-shrink-0 min-w-0 w-56">
-                      <div className="space-y-2">
-
-                        <div>
-                          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
-                            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
-                              {request.garb_id}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
-                          <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                          <p className="text-xs font-medium text-gray-900 mt-0.5">{request.garb_location}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Waste Type</p>
-                          <p className="text-xs font-medium text-gray-900 mt-0.5">{request.garb_waste_type}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Middle Section - Dates and Rejection Info */}
-                    <div className="flex-shrink-0 min-w-0 w-40">
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Request Date</p>
-                          <p className="text-xs font-medium text-gray-900 mt-0.5">
-                            {formatTimestamp(request.garb_created_at)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Date Rejected</p>
-                          <p className="text-xs font-medium text-gray-900 mt-0.5">
-                            {formatTimestamp(request.dec_date || "")}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Rejected By</p>
-                          <p className="text-xs font-medium text-gray-900 mt-0.5">
-                            {request.staff_name}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Section - Rejection Reason */}
-                    <div className="flex-1 min-w-0">
-                      <div className="h-full">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Rejection Reason</p>
-                        <div className="bg-gray-50 rounded-lg p-2 h-full min-h-[60px]">
-                          <p className="text-xs text-red-600 leading-relaxed whitespace-pre-wrap font-bold">
-                            {request.dec_reason}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex-shrink-0">
-                        <div className="flex gap-1.5">
-                          {/* View Image */}
-                          <TooltipLayout
-                            trigger={
-                              <div>
-                                <DialogLayout
-                                  trigger={
-                                    <div className="bg-stone-200 hover:bg-stone-300 text-gray-500 p-2 rounded-lg cursor-pointer transition-colors">
-                                      <ImageIcon size={14} />
-                                    </div>
-                                  }
-                                  title="Request Image"
-                                  mainContent={
-                                    <div className="flex justify-center items-center w-full h-full p-6">
-                                      <img
-                                        src={request.file_url || "/placeholder.svg"}
-                                        alt="Request"
-                                        className="max-w-full max-h-[600px] object-contain rounded-lg shadow-lg"
-                                      />
-                                    </div>
-                                  }
-                                />
-                              </div>
-                            }
-                            content="View Image"
-                          />
-                        </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+              <DataTable columns={columns} data={rejectedRequests}/>
             </div>
 
             {/* Pagination Footer */}
             <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
               <p className="text-gray-600">
-                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} entries
+                Showing {totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
               </p>
               {totalItems > 0 && (
                 <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

@@ -1,23 +1,22 @@
 # council/views.py (unchanged)
 from rest_framework import generics
 from .serializers import *
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Count
-from datetime import datetime
 from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 import logging
 from apps.treasurer.models import Purpose_And_Rates
 # from apps.gad.models import ProjectProposalLog
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
 from rest_framework.exceptions import NotFound
 from rest_framework import generics, status
 from rest_framework.response import Response
+from apps.pagination import StandardResultsPagination
+from django.db.models import Q
+from django.db.models.functions import ExtractYear
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +47,73 @@ class CouncilSchedulingView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = CouncilScheduling.objects.all().order_by('-ce_date')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(ce_title__icontains=search) |
+                Q(ce_description__icontains=search) |
+                Q(ce_date__icontains=search)
+            )
+        
+        # Year filter
+        year = self.request.query_params.get('year', None)
+        if year and year != 'all':
+            queryset = queryset.filter(ce_date__year=year)
+        
+        # Archive filter
+        is_archive = self.request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            queryset = queryset.filter(ce_is_archive=is_archive.lower() == 'true')
+        
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in CouncilSchedulingView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Override to add logging for announcement creation"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            self.perform_create(serializer)
+            logger.info(
+                f"Council event created: {serializer.data.get('ce_title')} - "
+                f"Announcement sent to all barangay staff"
+            )
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data, 
+                status=status.HTTP_201_CREATED, 
+                headers=headers
+            )
+        except Exception as e:
+            logger.error(f"Error creating council event and announcement: {e}")
+            return Response(
+                {"error": "Failed to create council event and announcement"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class CouncilSchedulingDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
@@ -56,21 +122,18 @@ class CouncilSchedulingDetailView(ActivityLogMixin, generics.RetrieveUpdateDestr
     permission_classes = [AllowAny]
 
     def get_object(self):
-        # Use the lookup_field (ce_id) from URL kwargs
         queryset = self.get_queryset()
         lookup_value = self.kwargs[self.lookup_field]
         try:
             obj = queryset.get(pk=lookup_value)
         except CouncilScheduling.DoesNotExist:
-            raise status.HTTP_404_NOT_FOUND  # Let Django handle 404
+            raise status.HTTP_404_NOT_FOUND 
         return obj
 
     def get(self, request, *args, **kwargs):
-        # Already handled by RetrieveUpdateDestroyAPIView's default get
         return super().get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
-        # Already handled by RetrieveUpdateDestroyAPIView's default put
         return super().put(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -102,46 +165,62 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
         instance.ce_is_archive = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
-
-class AttendeesView(generics.ListCreateAPIView):
-    serializer_class = CouncilAttendeesSerializer
-    queryset = CouncilAttendees.objects.all()
+    
+class CouncilEventYearsView(APIView):
     permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            years = CouncilScheduling.objects.filter(
+                ce_date__isnull=False
+            ).annotate(
+                year=ExtractYear('ce_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            return Response(list(years))
+        except Exception as e:
+            logger.error(f"Error fetching council event years: {str(e)}")
+            return Response([], status=status.HTTP_200_OK)
 
-class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CouncilAttendeesSerializer
-    queryset = CouncilAttendees.objects.all()
-    lookup_field = 'atn_id'
-    permission_classes = [AllowAny]
+# class AttendeesView(generics.ListCreateAPIView):
+#     serializer_class = CouncilAttendeesSerializer
+#     queryset = CouncilAttendees.objects.all()
+#     permission_classes = [AllowAny]
 
-class AttendeesBulkView(generics.GenericAPIView):
-    serializer_class = CouncilAttendeesSerializer
-    queryset = CouncilAttendees.objects.all()
-    permission_classes = [AllowAny]
+# class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = CouncilAttendeesSerializer
+#     queryset = CouncilAttendees.objects.all()
+#     lookup_field = 'atn_id'
+#     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        ce_id = request.data.get('ce_id')
-        logger.debug(f"Received data: {request.data}")
-        if not ce_id:
-            return Response({"detail": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+# class AttendeesBulkView(generics.GenericAPIView):
+#     serializer_class = CouncilAttendeesSerializer
+#     queryset = CouncilAttendees.objects.all()
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         ce_id = request.data.get('ce_id')
+#         logger.debug(f"Received data: {request.data}")
+#         if not ce_id:
+#             return Response({"detail": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Fetch the CouncilScheduling instance
-        council_scheduling = get_object_or_404(CouncilScheduling, pk=ce_id)
+#         # Fetch the CouncilScheduling instance
+#         council_scheduling = get_object_or_404(CouncilScheduling, pk=ce_id)
         
-        # Delete existing attendees for this ce_id
-        CouncilAttendees.objects.filter(ce_id=council_scheduling).delete()
+#         # Delete existing attendees for this ce_id
+#         CouncilAttendees.objects.filter(ce_id=council_scheduling).delete()
         
-        # Create new attendees
-        attendees_data = request.data.get('attendees', [])
-        if not attendees_data:
-            return Response({"detail": "attendees array is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+#         # Create new attendees
+#         attendees_data = request.data.get('attendees', [])
+#         if not attendees_data:
+#             return Response({"detail": "attendees array is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
         
-        serializer = self.get_serializer(data=attendees_data, many=True)
-        if serializer.is_valid():
-            serializer.save(ce_id=council_scheduling)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        logger.error(f"Serializer errors: {serializer.errors}")
-        return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
+#         serializer = self.get_serializer(data=attendees_data, many=True)
+#         if serializer.is_valid():
+#             serializer.save(ce_id=council_scheduling)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         logger.error(f"Serializer errors: {serializer.errors}")
+#         return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
 
 class AttendanceSheetListView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
@@ -211,29 +290,29 @@ class RestoreAttendanceView(generics.UpdateAPIView):
         return Response({"message": "Attendance sheet restored"},
                       status=status.HTTP_200_OK)
 
-class StaffAttendanceRankingView(generics.ListAPIView):
-    serializer_class = StaffAttendanceRankingSerializer
-    permission_classes = [AllowAny]
+# class StaffAttendanceRankingView(generics.ListAPIView):
+#     serializer_class = StaffAttendanceRankingSerializer
+#     permission_classes = [AllowAny]
 
-    def get_queryset(self):
-        # Aggregate present attendees by atn_name for non-archived events
-        current_year = datetime.now().year
-        return (
-            CouncilAttendees.objects
-            .filter(
-                atn_present_or_absent='Present',
-                ce_id__ce_is_archive=False,
-                ce_id__ce_date__year=current_year,
-            )
-            .values('atn_name', 'atn_designation')
-            .annotate(attendance_count=Count('atn_id'))
-            .order_by('-attendance_count')
-        )
+#     def get_queryset(self):
+#         # Aggregate present attendees by atn_name for non-archived events
+#         current_year = datetime.now().year
+#         return (
+#             CouncilAttendees.objects
+#             .filter(
+#                 atn_present_or_absent='Present',
+#                 ce_id__ce_is_archive=False,
+#                 ce_id__ce_date__year=current_year,
+#             )
+#             .values('atn_name', 'atn_designation')
+#             .annotate(attendance_count=Count('atn_id'))
+#             .order_by('-attendance_count')
+#         )
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         serializer = self.get_serializer(queryset, many=True)
+#         return Response(serializer.data)
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
@@ -361,8 +440,53 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 #     queryset = Resolution.objects.all()
 
 class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer
-    queryset = Resolution.objects.all()
+    pagination_class = StandardResultsPagination  # Add pagination
+    
+    def get_queryset(self):
+        queryset = Resolution.objects.all().prefetch_related('resolution_files', 'resolution_supp')
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        area_filter = self.request.query_params.get('area', '')
+        year_filter = self.request.query_params.get('year', '')
+        is_archive = self.request.query_params.get('is_archive', None)
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(res_is_archive=is_archive_bool)
+        
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(res_num__icontains=search_query) |
+                Q(res_title__icontains=search_query) |
+                Q(res_area_of_focus__icontains=search_query) |
+                Q(staff__rp__per__per_lname__icontains=search_query) |
+                Q(staff__rp__per__per_fname__icontains=search_query) |
+                Q(staff__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply area of focus filter
+        if area_filter and area_filter != "all":
+            queryset = queryset.filter(res_area_of_focus__contains=[area_filter])
+        
+        # Apply year filter
+        if year_filter and year_filter != "all":
+            queryset = queryset.filter(res_date_approved__year=year_filter)
+        
+        return queryset.order_by('-res_date_approved')  # Add ordering
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number
@@ -375,21 +499,115 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         # Continue with the normal creation process
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = serializer.save()
+    
+        try:
+            from apps.act_log.utils import create_activity_log, log_model_change
+            from apps.administration.models import Staff
+            
+            # Try to get staff from request data first
+            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            
+            # If not in request data, try to get from request.user.staff
+            if not staff_id:
+                try:
+                    user_staff = getattr(request.user, 'staff', None)
+                    if user_staff:
+                        staff_id = getattr(user_staff, 'staff_id', None)
+                except:
+                    pass
+            
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Use log_model_change for consistency with ActivityLogMixin
+                    log_model_change(instance, 'create', staff)
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for Resolution create: No valid staff")
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution creation: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class DeleteResolutionView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer    
     queryset = Resolution.objects.all()
 
     def get_object(self):
         res_num = self.kwargs.get('res_num')
-        return get_object_or_404(Resolution, res_num=res_num) 
+        return get_object_or_404(Resolution, res_num=res_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Log the activity if staff exists with staff_id (before deletion)
+        try:
+            from apps.act_log.utils import log_model_change
+            from apps.administration.models import Staff
+            
+            # Try to get staff from request data first
+            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            
+            # If not in request data, try to get from request.user.staff
+            if not staff_id:
+                try:
+                    user_staff = getattr(request.user, 'staff', None)
+                    if user_staff:
+                        staff_id = getattr(user_staff, 'staff_id', None)
+                except:
+                    pass
+            
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Log before deletion
+                    log_model_change(instance, 'delete', staff)
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for Resolution delete: No valid staff")
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution deletion: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        # Proceed with deletion
+        return super().destroy(request, *args, **kwargs) 
 
 
 class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
     lookup_field = 'res_num'
@@ -409,6 +627,7 @@ class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
 
 class ResolutionFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionFileSerializer
     queryset = ResolutionFile.objects.all()
 
@@ -438,6 +657,7 @@ class ResolutionFileView(generics.ListCreateAPIView):
 
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionFile.objects.all()
     serializer_class = ResolutionFileSerializer
     lookup_field = 'rf_id' 
@@ -445,6 +665,7 @@ class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
 
  # Resolution Supp Docs
 class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSupDocsSerializer
     queryset = ResolutionSupDocs.objects.all()
 
@@ -473,23 +694,19 @@ class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
 
 
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionSupDocs.objects.all()
     serializer_class = ResolutionSupDocsSerializer
     lookup_field = 'rsd_id'     
 
 
-class ApprovedGADProposalsView(generics.ListAPIView):
+class GADProposalsView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = GADProposalSerializer
     
     def get_queryset(self):
-        # Get only approved proposals
-        approved_logs = ProjectProposalLog.objects.filter(
-            gprl_status='Approved'
-        ).select_related('gpr__dev')
-        
-        # Get unique approved proposals
-        approved_proposal_ids = approved_logs.values_list('gpr_id', flat=True).distinct()
-        return ProjectProposal.objects.filter(gpr_id__in=approved_proposal_ids)
+        # Get all project proposals with their related development plan
+        return ProjectProposal.objects.all().select_related('dev')
 
 
 class PurposeRatesListView(generics.ListCreateAPIView):
@@ -497,17 +714,98 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     serializer_class = PurposeRatesListViewSerializer
     
 # =================== MINUTES OF MEETING VIEWS ======================
-
-class MinutesOfMeetingView(generics.ListCreateAPIView):
+class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
-    queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
+    pagination_class = StandardResultsPagination
+    permission_classes = [AllowAny]  # Add appropriate permissions
+
+    def get_queryset(self):
+        # Filter out archived records and select related staff data
+        queryset = MinutesOfMeeting.objects.filter(
+            mom_is_archive=False
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'mom_id',
+            'mom_date',
+            'mom_title',
+            'mom_agenda',
+            'mom_area_of_focus',
+            'mom_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Get search query from request parameters
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query:
+            # Apply search filtering across multiple fields
+            queryset = queryset.filter(
+                Q(mom_id__icontains=search_query) |
+                Q(mom_title__icontains=search_query) |
+                Q(mom_agenda__icontains=search_query) |
+                Q(mom_area_of_focus__icontains=search_query) |
+                Q(mom_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        # Order by date descending (most recent first)
+        return queryset.order_by('-mom_date')
+    
+class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
+    serializer_class = MinutesOfMeetingSerializer
+    pagination_class = StandardResultsPagination
+    permission_classes = [AllowAny]  
+
+    def get_queryset(self):
+        # Filter out archived records and select related staff data
+        queryset = MinutesOfMeeting.objects.filter(
+            mom_is_archive=True
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'mom_id',
+            'mom_date',
+            'mom_title',
+            'mom_agenda',
+            'mom_area_of_focus',
+            'mom_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Get search query from request parameters
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query:
+            # Apply search filtering across multiple fields
+            queryset = queryset.filter(
+                Q(mom_id__icontains=search_query) |
+                Q(mom_title__icontains=search_query) |
+                Q(mom_agenda__icontains=search_query) |
+                Q(mom_area_of_focus__icontains=search_query) |
+                Q(mom_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        # Order by date descending (most recent first)
+        return queryset.order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MinutesOfMeeting.objects.all()
     serializer_class = MinutesOfMeetingSerializer
     lookup_field = 'mom_id'
 
 class MOMFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
 
@@ -519,6 +817,7 @@ class MOMFileView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
     lookup_field = 'mom_id'
@@ -532,6 +831,7 @@ class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer    
     queryset = MinutesOfMeeting.objects.all()
 
@@ -541,6 +841,7 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
     
 
 class DeleteMOMFileView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
 
@@ -548,18 +849,8 @@ class DeleteMOMFileView(generics.DestroyAPIView):
         mom_id = self.kwargs.get('mom_id')
         return get_object_or_404(MOMFile, mom_id=mom_id)
 
-
-class DeleteMOMAreaOfFocusView(APIView):
-    def delete(self, request, mom_id):
-        get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
-        deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
-
-        return Response(
-            {"detail": f"{deleted_count} area(s) of focus deleted."},
-            status=status.HTTP_204_NO_CONTENT
-        )
-
 class MeetingSuppDocsView(generics.ListAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
@@ -567,11 +858,13 @@ class MeetingSuppDocsView(generics.ListAPIView):
         return MOMSuppDoc.objects.filter(mom_id=mom_id)
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MOMSuppDoc.objects.all()
     serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
 class MOMSuppDocView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocCreateSerializer
     query_set = MOMSuppDoc.objects.all()
 
@@ -579,6 +872,7 @@ class MOMSuppDocView(generics.ListCreateAPIView):
 # ================================== ORDINANCE VIEWS (from secretary) =================================
 
 class OrdinanceListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
 
@@ -590,8 +884,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Extract of_id from request data
         of_id = request.data.get('of_id')
-        print(f"Received of_id: {of_id}")
-        print(f"Full request data: {request.data}")
+        staff_id = request.data.get('staff_id')
         
         # Remove of_id from data to avoid serializer issues
         ordinance_data = request.data.copy()
@@ -601,7 +894,6 @@ class OrdinanceListView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=ordinance_data)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
-        print(f"Created ordinance: {ordinance.ord_num}")
         
         # Link file if provided
         if of_id:
@@ -609,12 +901,8 @@ class OrdinanceListView(generics.ListCreateAPIView):
                 file_obj = OrdinanceFile.objects.get(of_id=of_id)
                 ordinance.of_id = file_obj
                 ordinance.save()
-                print(f"Linked file {of_id} to ordinance {ordinance.ord_num}")
             except OrdinanceFile.DoesNotExist:
-                print(f"File with of_id {of_id} does not exist")
                 pass  # File doesn't exist, continue without linking
-        else:
-            print("No of_id provided, ordinance created without file")
         
         # Log the activity
         try:
@@ -622,7 +910,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -631,8 +919,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
                     act_type="Ordinance Created",
                     act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {ordinance.ord_category}",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance creation: {ordinance.ord_num}")
             else:
@@ -645,6 +932,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
@@ -661,7 +949,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -670,8 +958,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                     act_type="Ordinance Updated",
                     act_description=f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated",
                     staff=staff,
-                    record_id=updated_ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=updated_ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance update: {updated_ordinance.ord_num}")
             else:
@@ -694,7 +981,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -703,8 +990,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                     act_type="Ordinance Deleted",
                     act_description=f"Ordinance {ordinance_num} '{ordinance_title}' deleted",
                     staff=staff,
-                    record_id=ordinance_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance_num
                 )
                 logger.info(f"Activity logged for ordinance deletion: {ordinance_num}")
             else:
@@ -717,6 +1003,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().destroy(request, *args, **kwargs)
 
 class OrdinanceArchiveView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
@@ -732,7 +1019,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -741,8 +1028,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
                     act_type="Ordinance Archived",
                     act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' archived",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance archiving: {ordinance.ord_num}")
             else:
@@ -760,28 +1046,27 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
 
 # Ordinance File Views
 class OrdinanceFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = OrdinanceFile.objects.all()
     serializer_class = OrdinanceFileSerializer
 
     def create(self, request, *args, **kwargs):
-        # Get file data from request
-        file_data = {
-            'of_name': request.data.get('of_name'),
-            'of_type': request.data.get('of_type'),
-            'of_path': request.data.get('of_path'),
-            'of_url': request.data.get('of_url')
-        }
+        # Handle file uploads like resolution does
+        files = request.data.get('files', [])
         
-        print(f"Creating ordinance file with data: {file_data}")
+        if not files:
+            return Response(
+                {"error": "No files provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        serializer = self.get_serializer(data=file_data)
-        if not serializer.is_valid():
-            print(f"Serializer errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Uploading {len(files)} ordinance files")
         
-        file_obj = serializer.save()
-        print(f"Created ordinance file with ID: {file_obj.of_id}")
+        # Call serializer's upload method and get created files
+        created_files = self.get_serializer()._upload_files(files)
         
+        # Return the created file data
+        serializer = self.get_serializer(created_files, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceFileDetailView(generics.RetrieveUpdateDestroyAPIView):

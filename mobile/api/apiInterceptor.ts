@@ -139,8 +139,6 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
                     return Promise.reject(refreshError);
                 }
             }
-
-            // For non-401 errors, just reject
             return Promise.reject(error);
         }
     );

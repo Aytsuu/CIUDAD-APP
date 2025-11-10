@@ -17,7 +17,7 @@ import { useResolution } from './queries/resolution-fetch-queries';
 import { useApprovedProposals } from './queries/resolution-fetch-queries';
 import { useCreateResolution } from './queries/resolution-add-queries.tsx';
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";    
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
@@ -33,8 +33,13 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
 
     // Fetch mutation
-    const { data: resolutionData = [] } = useResolution();    
+    const { data: resolutionData = { results: [], count: 0 } } = useResolution();    
     const { data: gadProposals = [], isLoading: isLoadingProposals } = useApprovedProposals();
+    
+    console.log("PROPOSALS: ", gadProposals)
+    
+    // Extract the actual data array from paginated response
+    const fetchedResolutions = resolutionData.results || [];
 
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(onSuccess);
@@ -61,11 +66,11 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
 
     // Extract resolution numbers from fetched data
     useEffect(() => {
-        if (resolutionData && resolutionData.length > 0) {
-            const numbers = resolutionData.map((resolution: any) => resolution.res_num);
+        if (fetchedResolutions && fetchedResolutions.length > 0) {
+            const numbers = fetchedResolutions.map((resolution: any) => resolution.res_num);
             setResolutionNumbers(numbers);
         }
-    }, [resolutionData]);    
+    }, [fetchedResolutions]);
 
     // Validator for the res_num format
     const validateResolutionNumberFormat = (resNum: string): boolean => {

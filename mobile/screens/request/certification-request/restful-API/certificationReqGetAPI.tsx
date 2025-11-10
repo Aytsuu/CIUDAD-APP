@@ -64,7 +64,8 @@ export const getPersonalClearances = async () => {
 export const getPurposeAndRates = async () => {
     try {
         const response = await api.get('/treasurer/purpose-and-rate/');
-        return response.data;
+        // Ensure we return an array even if API format changes
+        return response.data.results || response.data || [];
     } catch (error) {
         console.error("Failed to fetch purpose and rates:", error);
         throw new Error("Failed to fetch purpose and rates");
@@ -74,8 +75,9 @@ export const getPurposeAndRates = async () => {
 // Annual Gross Sales API
 export const getAnnualGrossSales = async () => {
     try {
-        const response = await api.get('/treasurer/annual-gross-sales/');
-        return response.data;
+        const response = await api.get('/treasurer/annual-gross-sales-active/');
+        // The API returns paginated data with results array
+        return response.data.results || response.data || [];
     } catch (error) {
         console.error("Failed to fetch annual gross sales:", error);
         throw new Error("Failed to fetch annual gross sales");
@@ -224,5 +226,49 @@ export const getBusinessByResidentId = async (rpId: string) => {
     } catch (error) {
         console.error("Failed to fetch business by resident ID:", error);
         throw new Error("Failed to fetch business details");
+    }
+};
+
+// Check if resident has voter ID
+export const checkResidentVoterId = async (rpId: string, userPersonalData?: any): Promise<boolean> => {
+    try {
+        // First, check if voter_id is available in user personal data
+        if (userPersonalData?.voter_id !== null && userPersonalData?.voter_id !== undefined) {
+            return true;
+        }
+        if (userPersonalData?.voter) {
+            return true;
+        }
+
+        if (!rpId) {
+            return false;
+        }
+
+        // Try profiling residents table endpoint first
+        try {
+            const res = await api.get(`profiling/resident/list/table/`, { params: { rp: rpId } });
+            const items = Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.results) ? res.data.results : [];
+            const match = items.find((r: any) => String(r?.rp_id) === String(rpId));
+            
+            if (match) {
+                const v = match?.voter_id ?? match?.voter ?? match?.voterId ?? null;
+                return v !== null && v !== undefined && v !== 0 && v !== false;
+            }
+        } catch (_) {
+            // Fallback: try profiling resident personal detail
+        }
+
+        // Fallback: try profiling resident personal detail endpoint
+        try {
+            const resDetail = await api.get(`profiling/resident/personal/${rpId}/`);
+            const data = resDetail?.data || {};
+            return Boolean(data?.voter_id ?? data?.voter);
+        } catch (_) {
+            // If both fail, return false
+            return false;
+        }
+    } catch (error) {
+        console.error("Error checking resident voter ID:", error);
+        return false;
     }
 };

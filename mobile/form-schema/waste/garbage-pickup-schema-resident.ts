@@ -9,3 +9,8 @@ export const garbagePickupRequestCreateSchema = z.object({
     garb_additional_notes: z.string().default(''),
     rp_id: z.string().default('')
 })
+
+export const CancelGarbagePickupSchema = z.object({
+  reason: z.string().min(1, { message: "Reason is required." }),
+  garb_id: z.string().default('')
+});

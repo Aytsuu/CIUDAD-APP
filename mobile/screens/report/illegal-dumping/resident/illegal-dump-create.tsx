@@ -1,14 +1,15 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FormInput } from "@/components/ui/form/form-input";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import IllegalDumpResSchema from '@/form-schema/waste/waste-illegal-dump-res';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import z from "zod";
+import { useToastContext } from "@/components/ui/toast";
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
@@ -16,9 +17,12 @@ import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export default function IllegalDumpCreateForm() {
+  const {user} = useAuth()  
+  const {toast} = useToastContext();
   const router = useRouter();
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
@@ -37,7 +41,7 @@ export default function IllegalDumpCreateForm() {
   ];  
 
   const sitioOptions = fetchedSitio.map(sitio => ({
-    value: sitio.sitio_id,  
+    value: String(sitio.sitio_id),  
     label: sitio.sitio_name 
   }));
 
@@ -57,6 +61,11 @@ export default function IllegalDumpCreateForm() {
 
   const onSubmit = (values: z.infer<typeof IllegalDumpResSchema>) => {
 
+    if (selectedImages.length === 0) {
+      toast.error("Please provide a photo for evidence.");
+      return; // Stop the function execution
+    }
+
     const files = selectedImages.map((img: any) => ({
       name: img.name,
       type: img.type,
@@ -64,8 +73,10 @@ export default function IllegalDumpCreateForm() {
     }))
 
     const allValues = {
-      ...values,
-      files      
+      ...values,  
+      files,
+      rp_id: user?.rp,
+      phone: user?.phone
     }
 
     addReport(allValues, {
@@ -77,33 +88,34 @@ export default function IllegalDumpCreateForm() {
 
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Report Illegal Dumping</Text>}
-      showExitButton={false}
-      loading={ isLoading || isCreating }
-      loadingMessage={
-        isCreating ? "Submitting report..." : 
-        "Loading..."
-      }
+      headerTitle={<Text className="text-[13px]">Report Illegal Dumping</Text>}
       footer={
         <View className="w-full">
             <TouchableOpacity
                 className="bg-primaryBlue py-4 rounded-md w-full items-center"
                 onPress={handleSubmit(onSubmit)}
+                disabled={isCreating}
             >
-                <Text className="text-white text-base font-semibold">Submit</Text>
+              <View className="flex-row justify-center items-center gap-2">
+                  {isCreating && (
+                      <ActivityIndicator size="small" color="white" className="ml-2" />
+                  )}                           
+                  <Text className="text-white text-base font-semibold">
+                      {isCreating ? "Submitting..." : "Submit"}
+                  </Text>                                   
+              </View> 
             </TouchableOpacity>
         </View>        
-      }
-      stickyFooter={true}      
+      }  
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8 p-5">
+        <View className="mb-8 p-6">
           <View className="space-y-4">
             <FormSelect
               control={control}
@@ -153,8 +165,7 @@ export default function IllegalDumpCreateForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={3}
+                limit={3}
               /> 
             </View>
 
@@ -167,6 +178,6 @@ export default function IllegalDumpCreateForm() {
           </View>
         </View>
       </ScrollView>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }

@@ -24,6 +24,7 @@ export const calculateQuarterlyExpenses = (data: IncomeExpense[]): QuarterlyData
     // Skip if not an expense item
     if (item.iet_entryType !== 'Expense') return;
 
+
     // Parse the date and determine quarter
     const date = new Date(item.iet_datetime);
     // Validate the date is valid
@@ -58,18 +59,23 @@ export const calculateQuarterlyExpenses = (data: IncomeExpense[]): QuarterlyData
 };
 
 export const useIncomeExpense = (year?: number) => {
-  return useQuery<IncomeExpense[], Error, { allData: IncomeExpense[]; quarterlyExpenses: QuarterlyData[] }>({
+  return useQuery<{ results: IncomeExpense[]; count: number }, Error, { allData: IncomeExpense[]; quarterlyExpenses: QuarterlyData[] }>({
     queryKey: ["incomeExpense", year],
-    queryFn: () => getIncomeExpense(year),
+    queryFn: () => getIncomeExpense(1, 10000, year), // Use large page size to get all data
     staleTime: 1000 * 60 * 30,
     select: (data) => {
+      // Extract the array from the paginated response and filter out archived items
+      const allData = (data.results || []).filter(item => 
+        item.iet_is_archive !== true
+      );
       return {
-        allData: data,
-        quarterlyExpenses: calculateQuarterlyExpenses(data)
+        allData: allData,
+        quarterlyExpenses: calculateQuarterlyExpenses(allData)
       };
     }
   });
 };
+
 
 
 
@@ -87,14 +93,13 @@ export const getQuarterlyIncomeByItem = (income: Income[]): IncomeQuarterData[] 
   const grouped: Record<string, IncomeQuarterData> = {};
 
   income.forEach(item => {
-    if (item.inc_entryType !== 'Income') return;
 
     const date = new Date(item.inc_datetime);
     if (isNaN(date.getTime())) return;
 
     const quarter = `Q${Math.floor((date.getMonth() + 3) / 3)}` as 'Q1' | 'Q2' | 'Q3' | 'Q4';
     const amount = Number(item.inc_amount || 0);
-    const key = item.incp_item;
+    const key = item.incp_item; // This will be "CERT-File Action", "CERT-Employment", etC
 
     if (!grouped[key]) {
       grouped[key] = { name: key };
@@ -105,3 +110,18 @@ export const getQuarterlyIncomeByItem = (income: Income[]): IncomeQuarterData[] 
 
   return Object.values(grouped);
 };
+
+
+// export const useAllIncomeData = (year?: number) => {
+//     return useQuery<{ results: Income[]; count: number }, Error, Income[]>({
+//         queryKey: ["income-all", year],
+//         queryFn: () => getIncomeData(1, 10000, year, undefined, undefined, false), // Fetch all non-archived data
+//         staleTime: 1000 * 60 * 30,
+//         select: (data) => {
+//             // Filter out archived items
+//             return (data.results || []).filter(item => 
+//                 item.inc_is_archive !== true
+//             );
+//         }
+//     });
+// };

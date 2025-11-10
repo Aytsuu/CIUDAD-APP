@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getItemsConfig } from "./Item";
@@ -7,6 +6,15 @@ import { useProfilingSectionCards } from "@/components/analytics/profiling/profi
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
+import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
+import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+
 import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
@@ -19,12 +27,27 @@ export default function Dashboard() {
   const adminCards = useAdminSectionCards();
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
+  const wasteCards = useWastePersonnelSectionCards();
+  const garbCards = useGarbagePickupSectionCards();
+  const donationCards = useDonationSectionCards();
+  const certificateCards = useCertificateSectionCards();
+  const conciliationCards = useConciliationSectionCards();
+  const mediationCards = useMediationSectionCards();
+  const remarkCard = useNoRemarksSectionCard();
+
+  const councilEvents = useCouncilUpcomingEvents();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards),
-    [profilingCards, adminCards, reportCards, healthCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents]
   );
 
   const validateFeature = (feature: string) => {
+    // Always allow access to basic dashboard sections
+    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
+    if (basicSections.includes(feature)) {
+      return true;
+    }
+    
     const hasAccess =
       user?.staff?.assignments?.includes(feature) ||
       user?.staff?.pos?.toLowerCase() == "admin";
@@ -44,12 +67,19 @@ export default function Dashboard() {
     const itemsWithCharts = (instance ?? []).filter(
       (item) => item.chart && validateFeature(item.dashboard)
     );
-    return itemsWithCharts.flatMap((item) =>
+    const charts = itemsWithCharts.flatMap((item) =>
       item?.chart?.map((chartItem: any) => ({
         dashboard: item.dashboard,
         ...chartItem,
       }))
     );
+    
+    // Debug logging
+    console.log('Dashboard - instance:', instance);
+    console.log('Dashboard - chartsWithAccess:', charts);
+    console.log('Dashboard - itemsWithCharts:', itemsWithCharts);
+    
+    return charts;
   }, [instance, user]);
 
   const sidebarsWithAccess = React.useMemo(() => {
@@ -113,10 +143,13 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-            <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
-              <Label className="text-white text-xl">Upcoming Events</Label>
-  
-            </div>
+            {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
+              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+                <div className="mb-4">
+                  <Label className="text-white text-xl font-bold">Upcoming Events</Label>
+                </div>
+              </div>
+            )}
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-2/3">
                 <div className="flex items-center justify-between mb-6">

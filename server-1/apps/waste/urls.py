@@ -4,6 +4,8 @@ from .views import *
 urlpatterns = [
     # Waste Event URLs
     path("waste-event/", WasteEventView.as_view(), name="waste-event-list"),
+    path("waste-event/<int:we_num>/", WasteEventDetailView.as_view(), name="waste-event-detail"),
+    path("waste-event/<int:we_num>/restore/", WasteEventRestoreView.as_view(), name="waste-event-restore"),
 
     # Waste Collection Staff URLs
     path("waste-collection-staff/", WasteCollectionStaffView.as_view(), name="waste-collection-staff-list"),
@@ -22,6 +24,9 @@ urlpatterns = [
 
     # Waste COLLECTION DELETE
     path('waste-collection-sched-delete/<int:wc_num>/', WasteCollectionSchedDeleteView.as_view(), name='waste-ass-schedule-delete'),
+
+    # Waste COLLECTION ANNOUNCMENT
+    path('create-collection-reminders/', CreateCollectionRemindersView.as_view(), name='create-collection-reminders'),
 
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
@@ -53,6 +58,7 @@ urlpatterns = [
 
     # Garbage Pickup Urls
     # Staff and Resident
+    path('all-trucks/', WasteAllTruckView.as_view(), name='all-truck'),
     path('garbage-pickup-request-analytics/', GarbagePickupRequestAnalyticsView.as_view(), name='agarbage-pickup-request-analytics'),
     path('garbage-pickup-file/', GarbagePickupFileView.as_view(), name='garbage-pickup-file'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests

@@ -90,13 +90,14 @@ export type GarbageRequestPending = {
     sitio_name: string;
 }  
 
-export const useGetGarbagePendingRequest = () => {
-    return useQuery<GarbageRequestPending[]>({
-        queryKey: ["garbageRequest"],
-        queryFn: getGarbagePendingRequest,
-        staleTime: 1000 * 60 * 30, 
+export const useGetGarbagePendingRequest = ( page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
+    return useQuery<{ results: GarbageRequestPending[], count: number }>({
+      queryKey: ["garbageRequest", page, pageSize, searchQuery, selectedSitio],
+      queryFn: () => getGarbagePendingRequest(page, pageSize, searchQuery, selectedSitio),
+      staleTime: 1000 * 60 * 30,
     });
-}
+  };
+  
 
 // Retrieve Garbage Pickup Reject Requests
 export type GarbageRequestReject = {
@@ -105,6 +106,9 @@ export type GarbageRequestReject = {
     garb_location: string;
     garb_waste_type: string;
     garb_created_at: string;
+    garb_pref_time: string;
+    garb_pref_date: string;
+    garb_additional_notes: string;
     dec_id?: string | null;  
     dec_date?: string | null;
     dec_reason: string;
@@ -114,10 +118,10 @@ export type GarbageRequestReject = {
 };
 
 
-export const useGetGarbageRejectRequest = () => {
-    return useQuery<GarbageRequestReject[]>({
-        queryKey: ["garbageRejectedRequest"], 
-        queryFn: getGarbageRejectedRequest,
+export const useGetGarbageRejectRequest = (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
+return useQuery<{results: GarbageRequestReject[], count: number}>({
+        queryKey: ["garbageRejectedRequest", page, pageSize, searchQuery, selectedSitio], 
+        queryFn:() => getGarbageRejectedRequest(page, pageSize, searchQuery, selectedSitio),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -128,6 +132,8 @@ export type GarbageRequestAccept = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
   garb_additional_notes: string; 
   dec_date: string;
   truck_id: string | null;
@@ -135,7 +141,7 @@ export type GarbageRequestAccept = {
   collector_ids?: string[];
   pickup_assignment_id?: string | null;
   assignment_collector_ids?: string[];
-  assignment_info?: {
+  assignment_info: {
     driver?: string;
     collectors?: string[];
     pick_time?: string;
@@ -148,10 +154,10 @@ export type GarbageRequestAccept = {
 };
 
 
-export const useGetGarbageAcceptRequest = () => {
-    return useQuery<GarbageRequestAccept[]>({
-        queryKey: ["garbageAcceptedRequest"], 
-        queryFn: getGarbageAcceptedRequest,
+export const useGetGarbageAcceptRequest = (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
+    return useQuery<{results:GarbageRequestAccept[], count: number}>({
+        queryKey: ["garbageAcceptedRequest", page, pageSize, searchQuery, selectedSitio], 
+        queryFn:() => getGarbageAcceptedRequest(page, pageSize, searchQuery, selectedSitio),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -162,10 +168,14 @@ export type GarbageRequestComplete = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
+  garb_additional_notes: string; 
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
   conf_staff_conf: boolean | null; 
+  dec_date: string;
   assignment_info?: {
     driver?: string;
     collectors?: string[];
@@ -178,10 +188,10 @@ export type GarbageRequestComplete = {
   staff_name: string;
 }
 
-export const useGetGarbageCompleteRequest = () => {
-    return useQuery<GarbageRequestComplete[]>({
-        queryKey: ["garbageCompletedRequest"], 
-        queryFn: getGarbageCompletedRequest,
+export const useGetGarbageCompleteRequest = (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
+    return useQuery<{results:GarbageRequestComplete[], count: number}>({
+        queryKey: ["garbageCompletedRequest", page, pageSize, searchQuery, selectedSitio], 
+        queryFn:() => getGarbageCompletedRequest(page, pageSize, searchQuery, selectedSitio),
         staleTime: 1000 * 60 * 30,
     });
 }

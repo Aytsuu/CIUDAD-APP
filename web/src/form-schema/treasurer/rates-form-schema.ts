@@ -23,4 +23,5 @@ export const PurposeAndRatesSchema = z.object({
     purpose: z.string().nonempty('This field is required').default(''),
     amount: DataRequirement,
     category: z.string().nonempty('This field is required').default(''),
+    staff_id: z.string().default('')
 })

@@ -71,11 +71,11 @@ export function SelectLayoutWithAdd({
   return (
     <View className={cn('relative', className)}>
       <TouchableOpacity
-        className="flex-row items-center justify-between p-2 border border-gray-300 rounded-md h-10"
+        className="flex-row items-center justify-between p-3 border border-gray-300 rounded-xl h-12"
         onPress={() => setIsOpen(!isOpen)}
         onLayout={measureDropdownPosition}
       >
-        <Text className="text-base">
+        <Text className="text-sm">
           {selectedOption?.name || placeholder}
         </Text>
         <ChevronDown size={16} color="#6b7280" />
@@ -94,7 +94,7 @@ export function SelectLayoutWithAdd({
         />
         
         <View
-          className="absolute bg-white rounded-md border border-gray-200 shadow-lg"
+          className="absolute bg-white rounded-xl border border-gray-200 shadow-lg"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
@@ -108,7 +108,7 @@ export function SelectLayoutWithAdd({
               placeholder="Search or add..."
               value={searchTerm}
               onChangeText={setSearchTerm}
-              className="p-2 border border-gray-300 rounded-md"
+              className="p-2 border border-gray-300 rounded-xl h-12"
               autoFocus
             />
           </View>

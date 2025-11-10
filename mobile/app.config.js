@@ -8,18 +8,18 @@
       scheme: "myapp",
       userInterfaceStyle: "automatic",
       newArchEnabled: true,
-      splash: {
-        image: "./assets/images/CIUDADLogo.svg",
-        resizeMode: "contain",
-        backgroundColor: "#ffffff"
-      },
+      // splash: {
+      //   image: "./assets/images/CIUDADLogo.svg",
+      //   resizeMode: "contain",
+      //   backgroundColor: "#ffffff"
+      // },
       ios: {
         supportsTablet: true
       },
       android: {
         package: "com.aytsuu.mobile",
         edgeToEdgeEnabled: true,
-        config: {
+        config: { 
           googleMaps: {
             apiKey: "AIzaSyBUMbZ3dQl6eGAUD8SQXuq7S6UeOebroTo"
           }

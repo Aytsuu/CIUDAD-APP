@@ -1,29 +1,30 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, Calendar, ChevronLeft, Archive, ArchiveRestore, CircleAlert   } from 'lucide-react';
+import { ArrowUpDown, Trash, Eye, Search, Plus, Calendar, ChevronLeft, Archive, ArchiveRestore, CircleAlert   } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeandExpenseCreateForm from "./treasurer-expense-tracker-create";
 import IncomeandExpenseEditForm from "./treasurer-expense-tracker-edit";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useIncomeExpense, type IncomeExpense } from "./queries/treasurerIncomeExpenseFetchQueries";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { useArchiveOrRestoreExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { NavLink } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext";
 
 
 
@@ -33,7 +34,11 @@ function IncomeandExpenseTracking() {
     const [activeTab, setActiveTab] = useState("active")
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [activeCurrentPage, setActiveCurrentPage] = useState(1);
+    const [archiveCurrentPage, setArchiveCurrentPage] = useState(1);        
+    const debouncedSearchQuery = useDebounce(searchQuery, 300)
+    const { showLoading, hideLoading } = useLoading();
+
 
     // Month filter options
     const monthOptions = [
@@ -59,52 +64,72 @@ function IncomeandExpenseTracking() {
     const totInc = location.state?.totalInc;
 
 
-    const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
+    const currentPage = activeTab === "active" ? activeCurrentPage : archiveCurrentPage;
+    const isArchive = activeTab === "all"; // Convert tab to boolean
+
+
+    // const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
+    const { 
+        data: expenseData = { results: [], count: 0 }, 
+        isLoading 
+    } = useIncomeExpense(
+        currentPage,
+        pageSize,
+        year ? parseInt(year) : new Date().getFullYear(),
+        debouncedSearchQuery,
+        selectedMonth,
+        isArchive 
+    );
+
+    useEffect(() => {
+        if (isLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);       
+
+
+    // Handle tab change - reset to page 1 when switching tabs
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        // Reset to first page when switching tabs
+        if (tab === "active") {
+            setActiveCurrentPage(1);
+        } else {
+            setArchiveCurrentPage(1);
+        }
+    };       
 
     const { data: budgetItems = [] } = useBudgetItems(year);
 
-    const {  data: fetchIncData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchIncData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-    console.log("AMBOT: ", fetchedData)
 
-    const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchIncData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;  
 
-    console.log("REMAIN BAL: ", totBud)
+    // Get data from paginated response
+    const fetchedData = expenseData.results || [];
+    const totalCount = expenseData.count || 0; 
+
+    // Calculate total pages for current tab
+    const activeTotalPages = activeTab === "active" ? Math.ceil(totalCount / pageSize) : 0;
+    const archiveTotalPages = activeTab === "all" ? Math.ceil(totalCount / pageSize) : 0;    
     
-    // Filter the data based on the selected month and search query
-    const filteredData = React.useMemo(() => {
-        let result = fetchedData.filter(row => 
-            activeTab === "active" ? row.iet_is_archive === false : row.iet_is_archive === true
-        );
-      
-        if (selectedMonth !== "All") {
-            result = result.filter(item => {
-                const month = item.iet_datetime?.slice(5, 7);
-                return month === selectedMonth;
-            });
-        }
-      
-        if (searchQuery) {
-            result = result.filter(item =>
-                Object.values(item)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            );
-        }
-        return result;
-    }, [fetchedData, activeTab, selectedMonth, searchQuery]);
 
-    // Calculate total pages for pagination
-    const totalPages = Math.ceil(filteredData.length / pageSize);
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setActiveCurrentPage(1);
+        setArchiveCurrentPage(1);
+    };
 
-    // Slice the data for the current page
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+    const handleMonthChange = (value: string) => {
+        setSelectedMonth(value);
+        setActiveCurrentPage(1);
+        setArchiveCurrentPage(1);
+    };
 
 
     const { mutate: deleteEntry } = useDeleteIncomeExpense();
@@ -223,11 +248,14 @@ function IncomeandExpenseTracking() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {new Date(row.getValue("iet_datetime")).toLocaleString("en-US", {
-                        timeZone: "UTC",
-                        dateStyle: "medium",
-                        timeStyle: "short"
-                    })}
+                    {new Date(row.getValue("iet_datetime")).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                    })}                    
                 </div>
             )
         },
@@ -271,23 +299,24 @@ function IncomeandExpenseTracking() {
                                     View ({files.length})
                                 </div>}
                                 className="max-w-md max-h-[60%] overflow-auto p-6 flex flex-col"
-                                title="Attached Files"
-                                description="Files associated with this entry."
+                                title="Supporting Documents"
+                                description="Images associated with this entry."
                                 mainContent={
                                     <div className="flex flex-col gap-4 p-5">
                                         {files.map((file) => (
-                                            <div key={file.ief_id} className="border p-3 rounded-md">
-                                                <a 
-                                                    href={file.ief_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-                                                >
-                                                    <FileInput size={16} />
-                                                    Image {file.ief_name}
-                                                </a>
+                                            <div key={file.ief_id} className="border p-2 rounded-md">
+                                            <a 
+                                                href={file.ief_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:text-blue-800 flex items-center gap-2"
+                                            >
+                                                <span className="truncate max-w-[500px] block" title={file.ief_name}>
+                                                {file.ief_name}
+                                                </span>
+                                            </a>
                                             </div>
-                                        ))}
+                                        ))}                                        
                                     </div>
                                 }
                             />
@@ -388,7 +417,7 @@ function IncomeandExpenseTracking() {
                                         trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
                                         title="Restore Archived Entry"
                                         description="Would you like to restore this schedule from the archive and make it active again?"
-                                        actionLabel="confirm"
+                                        actionLabel="Confirm"
                                         onClick={() => handleRestoreArchive(
                                             row.original.iet_num,
                                             row.original.iet_amount,
@@ -407,7 +436,7 @@ function IncomeandExpenseTracking() {
                                         trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
                                         title="Confirm Delete"
                                         description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
-                                        actionLabel="confirm"
+                                        actionLabel="Confirm"
                                         onClick={() => handleDelete(row.original.iet_num)}
                                     />
                                 </div>
@@ -423,14 +452,10 @@ function IncomeandExpenseTracking() {
 
 
     if (isLoading) {
-        return (
-            <div className="w-full h-full">
-              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-              <Skeleton className="h-10 w-full mb-4 opacity-30" />
-              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-            </div>
-          );
+        <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+            <span className="ml-2 text-gray-600">Loading expense entry...</span>
+        </div>
     }
 
     return (
@@ -495,22 +520,17 @@ function IncomeandExpenseTracking() {
                         placeholder="Search..." 
                         className="pl-10 w-full bg-white text-sm" 
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={handleSearchChange}
                         />
                     </div>
                     <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
                         <SelectLayout
-                        className="bg-white w-full" 
-                        placeholder="Month"
-                        value={selectedMonth} 
-                        options={monthOptions}
-                        onChange={(value) => {
-                            setSelectedMonth(value);
-                            setCurrentPage(1);
-                        }}
+                            className="bg-white w-full" 
+                            placeholder="Month"
+                            value={selectedMonth} 
+                            valueLabel={"Month"}
+                            options={monthOptions}
+                            onChange={handleMonthChange}
                         />
                     </div>                            
                 </div>                
@@ -543,39 +563,32 @@ function IncomeandExpenseTracking() {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
                     <div className="flex gap-x-2 items-center">
                         <p className="text-xs sm:text-sm">Show</p>
-                        <Input 
-                            type="number" 
-                            className="w-14 h-8" 
-                            value={pageSize}
-                            onChange={(e) => {
-                                const value = +e.target.value;
-                                if (value >= 1) {
-                                    setPageSize(value);
-                                    setCurrentPage(1);
-                                }
+                        <Select 
+                            value={pageSize.toString()} 
+                            onValueChange={(value) => {
+                                const newPageSize = Number.parseInt(value);
+                                setPageSize(newPageSize);
+                                // Reset both pagination states to page 1
+                                setActiveCurrentPage(1);
+                                setArchiveCurrentPage(1);
                             }}
-                        />
+                        >
+                            <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <p className="text-xs sm:text-sm">Entries</p>
-                    </div>
-
-                    <div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    <FileInput />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>                    
                     </div>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                     <div className="flex items-center justify-between px-5 pb-3">
                         <TabsList className="grid grid-cols-2 max-w-xs">
                             <TabsTrigger value="active">Active Entries</TabsTrigger>
@@ -599,36 +612,69 @@ function IncomeandExpenseTracking() {
 
                     <TabsContent value="active">
                         <div className="border overflow-auto max-h-[400px]">
-                            <DataTable 
-                                columns={activeColumns} 
-                                data={paginatedData.filter(row => row.iet_is_archive === false)} 
-                            />
-                        </div>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading expense entries...</span>
+                                </div>
+                            ) : (
+                                <DataTable 
+                                    columns={activeColumns} 
+                                    data={fetchedData} 
+                                />
+                            )}  
+                        </div>             
+
+                        {/* Active Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(activeCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(activeCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={activeCurrentPage}
+                                    totalPages={activeTotalPages}
+                                    onPageChange={setActiveCurrentPage}
+                                />
+                            )}
+                        </div>                              
                     </TabsContent>
 
                     <TabsContent value="all">
                         <div className="border overflow-auto max-h-[400px]">
-                            <HistoryTable columns={archiveColumns} data={paginatedData.filter(row => row.iet_is_archive == true)} />
-                        </div>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading archived entries...</span>
+                                </div>
+                            ) : (
+                                <HistoryTable 
+                                    columns={archiveColumns} 
+                                    data={fetchedData} 
+                                />
+                            )} 
+                        </div>        
+
+                        {/* Archive Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(archiveCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(archiveCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={archiveCurrentPage}
+                                    totalPages={archiveTotalPages}
+                                    onPageChange={setArchiveCurrentPage}
+                                />
+                            )}
+                        </div>                                      
                     </TabsContent>
                 </Tabs>
-
             </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing {(currentPage - 1) * pageSize + 1}-
-                    {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                    {filteredData.length} rows
-                </p>
-                {filteredData.length > 0 && (
-                    <PaginationLayout
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                    />
-                )}
-            </div>  
         </div>
     );
 }

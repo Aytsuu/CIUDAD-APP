@@ -2,23 +2,177 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { ReceiptText, Search, FileInput } from 'lucide-react';
-import { useState } from "react";
+import { ReceiptText, Search, Ban, Eye, Clock, CheckCircle } from 'lucide-react';
+import React, { useState,  useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
-import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
-import { useQuery } from "@tanstack/react-query";
-import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
+import { Spinner } from "@/components/ui/spinner";
+import { ImageModal } from "@/components/ui/image-modal";
+import { ZoomIn } from "lucide-react";
+import { getBusinessPermitFiles } from "./restful-api/permitClearanceGetAPI";
+import { useLoading } from "@/context/LoadingContext";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import DeclineRequestForm from "./declineForm";
 
 
-//table header
-const createColumns = ({}): ColumnDef<PermitClearance>[] => [
+const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; businessName: string }) => {
+  const [files, setFiles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getBusinessPermitFiles(bprId);
+        setFiles(response.files || []);
+      } catch (err: any) {
+        console.error("Error fetching files:", err);
+        setError(err.message || "Failed to load documents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFiles();
+  }, [bprId]);
+
+  const handleRetry = () => {
+    const fetchFiles = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getBusinessPermitFiles(bprId);
+        setFiles(response.files || []);
+      } catch (err: any) {
+        console.error("Error fetching files:", err);
+        setError(err.message || "Failed to load documents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchFiles();
+  };
+
+  const mediaFiles = React.useMemo(() => {
+    return files.map((file: any) => {
+      const url = file.bpf_url || '';
+      const fileType = file.bpf_type || '';
+      
+      // Determine file type category
+      const normalizedType = fileType.toLowerCase().trim();
+      const isAssessment = normalizedType.includes('assessment');
+      const isPermit = normalizedType.includes('permit');
+      
+      // All files are images - treat as image type
+      return {
+        id: file.bpf_id,
+        url: url,
+        type: 'image' as const,
+        name: fileType || `Image ${file.bpf_id}`,
+        fileType: isAssessment ? 'assessment' : isPermit ? 'permit' : 'other'
+      };
+    });
+  }, [files]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4 p-6">
+        <div className="text-center py-8 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
+          <p className="text-sm text-red-600 mb-4">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">{businessName}</h3>
+        <p className="text-sm text-gray-500">Business Permit ID: {bprId}</p>
+      </div>
+      {mediaFiles.length === 0 ? (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-500">No documents available</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-auto-fit gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', maxWidth: '100%' }}>
+          {mediaFiles.map((media: any, index: number) => (
+            <div key={media.id || index} className="group relative">
+              <div
+                className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                onClick={() => setSelectedImage(media)}
+              >
+                {/* Image preview */}
+                <img
+                  src={media.url}
+                  alt={media.name || `Image ${index + 1}`}
+                  className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                
+                {/* Type badge overlay */}
+                {media.fileType && media.fileType !== 'other' && (
+                  <div className="absolute top-2 left-2">
+                    <span
+                      className={`px-2 py-1 rounded-md text-xs font-semibold shadow-sm ${
+                        media.fileType === 'assessment'
+                          ? 'bg-blue-500 text-white'
+                          : media.fileType === 'permit'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-500 text-white'
+                      }`}
+                    >
+                      {media.fileType === 'assessment' ? 'Assessment' : 'Previous Permit'}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
+                  <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <ZoomIn size={40} className="text-white"/>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          ))}
+        </div>
+      )}
+      <ImageModal
+        src={selectedImage?.url || ""}
+        alt={selectedImage?.name || "Business Permit Document"}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
+    </div>
+  );
+};
+
+const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (
               <div
@@ -32,11 +186,58 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
             <div className="">{row.getValue("businessName")}</div>
         )},
   
-    { accessorKey: "grossSales", header: "Gross Sales"},
+    { 
+        accessorKey: "grossSales", 
+        header: "Gross Sales",
+        cell: ({ row }) => {
+            const agsId = row.original.ags_id;
+            const grossSalesData = row.original.grossSalesData;
+            const businessGrossSales = row.original.businessGrossSales;
+            const inputtedGrossSales = row.original.bus_clearance_gross_sales;
+            
+            // Priority 1: Show inputted gross sales (for new businesses with barangay clearance)
+            if (inputtedGrossSales && agsId) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(inputtedGrossSales.toString()).toLocaleString()}
+                    </div>
+                );
+            }
+            // Priority 2: Show business gross sales if available (for existing businesses)
+            else if (businessGrossSales) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(businessGrossSales.toString()).toLocaleString()}
+                    </div>
+                );
+            }
+            // Priority 3: Show annual gross sales range as fallback (for barangay clearance without inputted value)
+            else if (grossSalesData && agsId) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(grossSalesData.ags_minimum).toLocaleString()} - ₱{parseFloat(grossSalesData.ags_maximum).toLocaleString()}
+                    </div>
+                );
+            }
+            return <div className="text-center">Not Set</div>;
+        }
+    },
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ }) => "Business Permit" 
+        cell: ({ row }) => {
+            const prId = row.original.pr_id;
+            const purposeData = row.original.purposeData;
+            
+            if (purposeData && prId) {
+                return (
+                    <div className="text-center">
+                        {purposeData.pr_purpose}
+                    </div>
+                );
+            }
+            return <div className="text-center">Not Set</div>;
+        }
     },
     {
         accessorKey: "amount",
@@ -50,12 +251,28 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
             </div>
         ),
         cell: ({ row }) => {
-            // Use the req_amount field from the backend
-            const amount = row.original.req_amount || 0;
+            const grossSalesData = row.original.grossSalesData;
+            const purposeData = row.original.purposeData;
+            const agsId = row.original.ags_id;
+            
+            let amount = 0;
+            
+            // If ags_id exists, it's a barangay clearance - use ags_rate
+            if (agsId && grossSalesData) {
+                amount = parseFloat(grossSalesData.ags_rate);
+            } 
+            // If no ags_id but has purposeData, it's a permit - use pr_rate
+            else if (purposeData && !agsId) {
+                amount = parseFloat(purposeData.pr_rate);
+            }
+            // Fallback to req_amount from backend
+            else {
+                amount = row.original.req_amount || 0;
+            }
             
             return (
                 <div className="text-center font-medium text-green-700">
-                    ₱{amount.toLocaleString()}
+                    ₱{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
             );
         },
@@ -91,21 +308,27 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
       header: "Payment Status",
       cell: ({ row }) => {
         const value = row.getValue("paymentStat") as string;
-        let bg = "bg-[#ffeaea]";
-        let text = "text-[#b91c1c]";
-        let border = "border border-[#f3dada]";
-        let label = value;
-
-        if (value === "Paid") {
-          bg = "bg-[#eaffea]";
-          text = "text-[#15803d]";
-          border = "border border-[#b6e7c3]";
-          label = "Paid";
-        } else if (value === "Pending") {
-          bg = "bg-[#ffeaea]";
-          text = "text-[#b91c1c]";
-          border = "border border-[#f3dada]";
-          label = "Pending";
+        const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        let bg = "bg-[#eaf4ff]";
+        let text = "text-[#2563eb]";
+        let border = "border border-[#b6d6f7]";
+        
+        if (capitalizedValue === "Pending") {
+            bg = "bg-[#fffbe6]";
+            text = "text-[#b59f00]";
+            border = "border border-[#f7e7b6]";
+        } else if (capitalizedValue === "Paid") {
+            bg = "bg-[#e6f7e6]";
+            text = "text-[#16a34a]";
+            border = "border border-[#d1f2d1]";
+        } else if (capitalizedValue === "Declined") {
+            bg = "bg-[#ffeaea]";
+            text = "text-[#b91c1c]";
+            border = "border border-[#f3dada]";
+        } else {
+            bg = "bg-[#f3f2f2]";
+            text = "text-black";
+            border = "border border-[#e5e7eb]";
         }
 
         return (
@@ -113,18 +336,47 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
             className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
             style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
           >
-            {label}
+            {capitalizedValue}
           </span>
         );
       }
     },
-    { accessorKey: "action", 
-      header: "Action",
-      cell: ({row}) =>(
-        <div className="flex justify-center gap-0.5">
-            <TooltipLayout
-            trigger={
-                <DialogLayout
+    ...(activeTab === "unpaid" ? [
+        { accessorKey: "action", 
+          header: "Action",
+          cell: ({row}: {row: any}) =>(
+            <div className="flex justify-center gap-0.5">
+                {/* View Documents Icon - Always reserve space, show placeholder if no files */}
+                {row.original.has_files ? (
+                    <TooltipLayout
+                        trigger={
+                            <DialogLayout
+                                trigger={
+                                    <div className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 px-4 py-2 rounded cursor-pointer">
+                                        <Eye size={16}/>
+                                    </div>
+                                }
+                                className="max-w-6xl"
+                                title="Business Permit Documents"
+                                mainContent={
+                                    <BusinessPermitDocumentViewer 
+                                        bprId={row.original.bpr_id} 
+                                        businessName={row.original.businessName}
+                                    />
+                                } 
+                            />
+                        } 
+                        content="View Documents"
+                    />
+                ) : (
+                    <div className="bg-gray-100 border border-gray-200 text-gray-400 px-4 py-2 rounded cursor-not-allowed">
+                        <Eye size={16}/>
+                    </div>
+                )}
+                
+                <TooltipLayout
+                trigger={
+                    <DialogLayout
                     trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
                     className="flex flex-col"
                     title="Create Receipt"
@@ -132,40 +384,76 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
                     mainContent={
                         <ReceiptForm 
                             certificateRequest={{
-                                cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
+                                cr_id: row.original.bpr_id || "", // Keep for backward compatibility
+                                bpr_id: row.original.bpr_id || "", // Add bpr_id field
                                 req_type: "Permit Clearance",
-                                req_purpose: "Business Permit", // Set fixed purpose for business clearance
+                                req_purpose: row.original.purposeData ? row.original.purposeData.pr_purpose : "Business Permit", // Use actual purpose name
                                 resident_details: {
-                                    per_fname: row.original.requestor || "",
+                                    per_fname: row.original.requestor || "Unknown",
                                     per_lname: ""
                                 },
                                 req_payment_status: row.original.req_payment_status || "Pending",
                                 pr_id: row.original.pr_id,
-                                business_name: row.original.businessName || "",
-                                req_amount: row.original.req_amount || 0, // Pass the req_amount
-                                req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
+                                business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
+                                req_amount: (() => {
+                                    const grossSalesData = row.original.grossSalesData;
+                                    const purposeData = row.original.purposeData;
+                                    const agsId = row.original.ags_id;
+                                    
+                                    // If ags_id exists, it's a barangay clearance - use ags_rate
+                                    if (agsId && grossSalesData) {
+                                        return parseFloat(grossSalesData.ags_rate);
+                                    } 
+                                    // If no ags_id but has purposeData, it's a permit - use pr_rate
+                                    else if (purposeData && !agsId) {
+                                        return parseFloat(purposeData.pr_rate);
+                                    }
+                                    // Fallback to req_amount from backend
+                                    else {
+                                        return row.original.req_amount || 0;
+                                    }
+                                })(),
+                                // req_sales_proof field removed
                             }}
                             onSuccess={() => {}}
                         />
                     } 
+                  />
+              } content="Create Receipt"/>
+                <DialogLayout
+                    trigger={
+                        <Button variant="destructive" size="sm">
+                            Decline
+                        </Button>
+                    }
+                    title="Decline Request"
+                    description="Add a reason for declining."
+                    mainContent={
+                        <DeclineRequestForm
+                            id={row.original.bpr_id}
+                            isResident={false}
+                            isPermitClearance={true}
+                            onSuccess={() => {
+                                // Data will be refreshed automatically by the mutation
+                            }}
+                        />
+                    }
                 />
-            } content="Create Receipt"/>
-            <ConfirmationModal
-                trigger={
-                    <Button variant="destructive" size="sm">
-                        Decline
-                    </Button>
-                }
-                title="Decline Request"
-                description={`Are you sure you want to decline the request for ${row.original.businessName}?`}
-                actionLabel="Decline"
-                onClick={() => {
-                    //decline
-                    console.log("Declining request:", row.original.cr_id);
-                }}
-            />
-        </div>
-      )},
+            </div>
+          )}
+        ]
+    : []),
+    ...(activeTab === "declined" ? [
+        {
+            accessorKey: "bus_reason",
+            header: "Reason for Decline",
+            cell: ({ row }: { row: any }) => (
+                <div className="text-center">
+                    {row.original.bus_reason || "No reason provided"}
+                </div>
+            ),
+        }
+    ] : []),
 ];
 
 
@@ -178,15 +466,21 @@ type PermitClearance = {
     reqDate: string,
     claimDate: string,
     paymentStat: "Paid" | "Pending",
-    req_sales_proof?: string,
+    // req_sales_proof field removed
     req_purpose?: string,
     cr_id?: string,
     bpr_id?: string, // Add bpr_id field
+    has_files?: boolean, // Add has_files field to check if files exist
     req_payment_status?: string,
     pr_id?: number,
+    ags_id?: number,
     amount?: string, // Add amount field
     amount_to_pay?: number, // Add amount_to_pay field from backend
-    req_amount?: number // Add req_amount field from backend
+    req_amount?: number, // Add req_amount field from backend
+    grossSalesData?: any, // Add gross sales data
+    purposeData?: any, // Add purpose data
+    businessGrossSales?: number, // Add business gross sales for existing businesses
+    bus_clearance_gross_sales?: number // Add inputted gross sales for new businesses
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -205,21 +499,77 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 
 function PermitClearance(){
+    const { showLoading, hideLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<"paid" | "unpaid">("unpaid");
+    const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
     
-    // Fetch data from backend
-    const { data: permitClearances, isLoading, error } = useQuery<any[]>({
-        queryKey: ["permitClearances"],
-        queryFn: getPermitClearances
-    });
-
-    // Fetch purpose and rates data for amount calculation
-    const { data: purposes = [] } = useGetPurposeAndRate();
-
-    const filteredData = (permitClearances || []).filter((item: any) => 
-        activeTab === "paid" ? item.req_payment_status === "Paid" : item.req_payment_status !== "Paid"
+    // Fetch data from backend using custom hooks
+    const { data: permitClearances, isLoading, error } = useGetPermitClearances(
+        currentPage, 
+        pageSize, 
+        searchTerm, 
+        '', 
+        activeTab === "paid" ? "Paid" : activeTab === "unpaid" ? "Unpaid" : ""
     );
+    const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
+    const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
+
+    // Handle loading state
+    React.useEffect(() => {
+        if (isLoading || grossSalesLoading || purposesLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, grossSalesLoading, purposesLoading, showLoading, hideLoading]);
+
+    // Extract arrays from paginated responses (handle both paginated and direct array responses)
+    const annualGrossSales = Array.isArray(annualGrossSalesResponse) 
+        ? annualGrossSalesResponse 
+        : (annualGrossSalesResponse as any)?.results || [];
+    const purposes = Array.isArray(purposesResponse) 
+        ? purposesResponse 
+        : (purposesResponse as any)?.results || [];
+
+
+    // Handle paginated response
+    const permitClearancesData = Array.isArray(permitClearances) 
+        ? permitClearances 
+        : (permitClearances as any)?.results || [];
+    
+    
+    const totalCount = Array.isArray(permitClearances) 
+        ? permitClearances.length 
+        : (permitClearances as any)?.count || 0;
+    
+    const totalPages = Array.isArray(permitClearances) 
+        ? 1 
+        : Math.ceil(((permitClearances as any)?.count || 0) / pageSize);
+
+    // Reset to page 1 when tab changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const filteredData = permitClearancesData.filter((item: any) => {
+        if (activeTab === "declined") {
+            // Show only declined/cancelled requests
+            return item.req_status === "Declined" || item.req_status === "Cancelled";
+        } else {
+            // Filter out declined/cancelled requests for paid/unpaid tabs
+            if (item.req_status === "Declined" || item.req_status === "Cancelled") {
+                return false;
+            }
+            
+            // Then filter by payment status
+            return activeTab === "paid" 
+                ? item.req_payment_status === "Paid" 
+                : item.req_payment_status !== "Paid";
+        }
+    });
 
     // Map backend data to frontend columns
     const mappedData = (filteredData || []).map((item: any) => {
@@ -228,19 +578,32 @@ function PermitClearance(){
         const claimDate = new Date(requestDate);
         claimDate.setDate(requestDate.getDate() + 7);
         
+        // Find related data
+        const grossSalesData = annualGrossSales.find((ags: any) => ags.ags_id === item.ags_id);
+        const purposeData = purposes.find((purpose: any) => purpose.pr_id === item.pr_id);
+        
+        
         return {
-            businessName: item.business_name || "",
-            address: item.business_address || "",
-            grossSales: item.req_sales_proof || "", // Use req_sales_proof instead of business_gross_sales
+            businessName: item.business_name || item.bus_permit_name || "No Business Linked",
+            address: item.business_address || item.bus_permit_address || "No Address",
+            grossSales: item.business_gross_sales || "Not Set", 
             purposes: item.purposes || [],
-            requestor: item.requestor || "",
+            requestor: item.requestor || "Unknown",
             reqDate: item.req_request_date,
             claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
             paymentStat: item.req_payment_status,
-            req_sales_proof: item.req_sales_proof,
+            // req_sales_proof field removed
             amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
             req_amount: item.req_amount || 0, // Include req_amount field
             bpr_id: item.bpr_id || "", // Include bpr_id field
+            has_files: item.has_files || false, // Include has_files field from API
+            bus_reason: item.bus_reason || "", // Include declined reason
+            ags_id: item.ags_id, // Include ags_id
+            pr_id: item.pr_id, // Include pr_id
+            grossSalesData: grossSalesData, // Include gross sales data
+            purposeData: purposeData, // Include purpose data
+            businessGrossSales: item.business_gross_sales || item.gross_sales, // Include business gross sales for existing businesses
+            bus_clearance_gross_sales: item.bus_clearance_gross_sales, // Include inputted gross sales for new businesses
             ...item
         };
     });
@@ -265,7 +628,15 @@ function PermitClearance(){
                                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                            <Input 
+                                placeholder="Search..." 
+                                className="pl-10 w-full bg-white text-sm" 
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1); // Reset to first page when searching
+                                }}
+                            /> {/* Adjust padding and text size */}
                         </div>
                                                     
                     </div>
@@ -291,107 +662,81 @@ function PermitClearance(){
                              <div className="flex gap-x-4 items-center">
                                  <div className="flex gap-x-2 items-center">
                                      <p className="text-xs sm:text-sm">Show</p>
-                                     <Input type="number" className="w-14 h-8" defaultValue="10" />
+                                     <Input 
+                                         type="number" 
+                                         className="w-14 h-8" 
+                                         value={pageSize}
+                                         onChange={(e) => {
+                                             setPageSize(parseInt(e.target.value) || 10);
+                                             setCurrentPage(1); // Reset to first page when changing page size
+                                         }}
+                                     />
                                      <p className="text-xs sm:text-sm">Entries</p>
                                  </div>
                                  
                                  <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
                                      <button
                                          onClick={() => setActiveTab("unpaid")}
-                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                              activeTab === "unpaid"
-                                                 ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                                 ? "bg-[#fffbe6] text-[#b59f00] border-[#f7e7b6] shadow-sm"
                                                  : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                          }`}
                                      >
+                                         <Clock size={14} />
                                          Unpaid
                                      </button>
                                      <button
                                          onClick={() => setActiveTab("paid")}
-                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                              activeTab === "paid"
-                                                 ? "bg-[#eaffea] text-[#15803d] border-[#b6e7c3] shadow-sm"
+                                                 ? "bg-[#e6f7e6] text-[#16a34a] border-[#d1f2d1] shadow-sm"
                                                  : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                          }`}
                                      >
+                                         <CheckCircle size={14} />
                                          Paid
                                      </button>
+                                     <button
+                                     onClick={() => setActiveTab("declined")}
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
+                                         activeTab === "declined"
+                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                                     }`}
+                                 >
+                                     <Ban size={14} />
+                                     Declined
+                                 </button>
                                  </div>
-                             </div>
-
-                             <div>
-                                 <DropdownMenu>
-                                 <DropdownMenuTrigger asChild>
-                                     <Button variant="outline">
-                                     <FileInput />
-                                     Export
-                                     </Button>
-                                 </DropdownMenuTrigger>
-                                 <DropdownMenuContent>
-                                     <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                 </DropdownMenuContent>
-                                 </DropdownMenu>                    
                              </div>
                      </div>    
 
                     {isLoading ? (
-                        <div className="space-y-4">
-                            {/* Header skeleton */}
-                            <div className="flex flex-col gap-3 mb-3">
-                                <Skeleton className="h-8 w-1/4 opacity-30" />
-                                <Skeleton className="h-5 w-2/3 opacity-30" />
-                            </div>
-                            <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
-                            
-                            {/* Controls skeleton */}
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                                    <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
-                                    <div className="flex flex-row gap-2 justify-center items-center">
-                                        <Skeleton className="h-5 w-12 opacity-30" />
-                                        <Skeleton className="h-10 w-32 opacity-30" />
-                                    </div>
-                                </div>
-                                <Skeleton className="h-10 w-48 opacity-30" />
-                            </div>
-                            
-                            {/* Table skeleton */}
-                            <div className="bg-white rounded-lg shadow-sm">
-                                <div className="p-6">
-                                    <div className="space-y-4">
-                                        {[...Array(5)].map((_, index) => (
-                                            <div key={index} className="flex items-center space-x-4">
-                                                <Skeleton className="h-4 w-32 opacity-30" />
-                                                <Skeleton className="h-4 w-24 opacity-30" />
-                                                <Skeleton className="h-4 w-20 opacity-30" />
-                                                <Skeleton className="h-4 w-24 opacity-30" />
-                                                <Skeleton className="h-4 w-16 opacity-30" />
-                                                <div className="flex gap-2">
-                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
-                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="flex items-center justify-center py-12">
+                            <Spinner size="lg" />
                         </div>
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>
                     ) : (
-                        <DataTable columns={createColumns(purposes)} data={mappedData} header={true}></DataTable>
+                        <DataTable columns={createColumns(activeTab)} data={mappedData} header={true}></DataTable>
                     )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
                     <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 1-10 of 150 rows
+                        Showing {totalCount > 0 ? ((currentPage - 1) * pageSize) + 1 : 0}-
+                        {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        {/* <PaginationLayout className="" /> */}
+                        {totalCount > 0 && (
+                            <PaginationLayout 
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
                     </div>
                 </div>  
             </div>

@@ -1,12 +1,12 @@
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
+import { FileText, Building2, Award, ChevronLeft } from 'lucide-react-native'
+import PageLayout from '../_PageLayout'
+import { LinearGradient } from 'expo-linear-gradient'
 
 const CertificatesMain = () => {
   const handleNavigation = (route: string) => {
-    // Navigate to the appropriate route based on selection
     switch (route) {
       case 'personal':
         router.push('/(certificates)/cert-list')
@@ -17,6 +17,9 @@ const CertificatesMain = () => {
       case 'certificates':
         router.push('/(certificates)/issued-cert-list')
         break
+      case 'service_charge':
+        router.push('/(certificates)/service-charge-list')
+        break
       default:
         break
     }
@@ -26,88 +29,90 @@ const CertificatesMain = () => {
     {
       id: 'personal',
       title: 'Personal & Others',
-      description: 'Manage personal information and other requests',
-      icon: 'person-outline',
-      color: 'bg-blue-500',
-      iconColor: 'text-blue-600'
+      description: 'View personal requests',
+      icon: FileText,
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       id: 'permit',
       title: 'Permit',
-      description: 'Apply for and manage permits',
-      icon: 'document-text-outline',
-      color: 'bg-green-500',
-      iconColor: 'text-green-600'
+      description: 'View business permits',
+      icon: Building2,
+      gradient: ['#60a5fa', '#3b82f6'],
+    },
+    {
+      id: 'service_charge',
+      title: 'Service Charge',
+      description: 'View service charge requests',
+      icon: Award,
+      gradient: ['#2563eb', '#1e40af'],
     },
     {
       id: 'certificates',
       title: 'Issued Certificates',
-      description: 'View and download issued certificates',
-      icon: 'ribbon-outline',
-      color: 'bg-purple-500',
-      iconColor: 'text-purple-600'
+      description: 'View issued certificates',
+      icon: Award,
+      gradient: ['#93c5fd', '#60a5fa'],
     }
   ]
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="flex-1 px-6 pt-20">
-        {/* Header */}
-        <View className="mb-16 items-center">
-          <Text className="text-3xl font-bold text-gray-900 mb-3 text-center">
-            Certificates & Permits
-          </Text>
-          <Text className="text-gray-600 text-base text-center px-4">
-            Choose a service to get started
-          </Text>
-        </View>
-
-        {/* Menu Cards - Perfectly Centered */}
-        <View className="flex-1">
-          <View className="space-y-5 max-w-sm mx-auto w-full">
-            {menuItems.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => handleNavigation(item.id)}
-                className="active:opacity-80"
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Certification</Text>}
+      rightAction={<View className="w-10 h-10" />}
+      wrapScroll={false}
+    >
+      <View className="flex-1 px-5">
+        <View className="flex-row flex-wrap gap-3">
+          {menuItems.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              className="rounded-2xl overflow-hidden"
+              style={{ 
+                width: '48%', 
+                aspectRatio: 1,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+              activeOpacity={0.8}
+              onPress={() => item.id && handleNavigation(item.id)}
+            >
+              <LinearGradient
+                colors={item.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="flex-1 p-5"
               >
-                <Card className="border-0 shadow-xl bg-white rounded-2xl">
-                  <CardContent className="p-5">
-                    <View className="flex-row items-center">
-                      {/* Icon Container */}
-                      <View className={`w-12 h-12 rounded-xl ${item.color} items-center justify-center shadow-lg mr-4`}>
-                        <Ionicons 
-                          name={item.icon as any} 
-                          size={24} 
-                          color="white" 
-                        />
-                      </View>
-                      
-                      {/* Content */}
-                      <View className="flex-1">
-                        <Text className="text-lg font-semibold text-gray-900 mb-1">
-                          {item.title}
-                        </Text>
-                        <Text className="text-gray-600 text-sm leading-5">
-                          {item.description}
-                        </Text>
-                      </View>
-                      
-                      {/* Arrow Icon */}
-                      <Ionicons 
-                        name="chevron-forward" 
-                        size={20} 
-                        color="#9CA3AF" 
-                      />
+                <View className="flex-1 justify-between">
+                  <View className="items-start">
+                    <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center">
+                      <item.icon size={24} color="white" />
                     </View>
-                  </CardContent>
-                </Card>
-              </Pressable>
-            ))}
-          </View>
+                  </View>
+                  
+                  <View>
+                    <Text className="text-white font-bold text-base leading-tight">
+                      {item.title}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
-    </View>
+    </PageLayout>
   )
 }
 

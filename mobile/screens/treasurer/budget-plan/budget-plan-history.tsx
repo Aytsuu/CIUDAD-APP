@@ -1,53 +1,31 @@
-import { SafeAreaView, Text, ScrollView, View, TextInput, ActivityIndicator } from "react-native";
-import { Search } from 'lucide-react-native';
+import { SafeAreaView, Text, ScrollView, View } from "react-native";
 import { useGetBudgetPlanHistory, type BudgetPlanHistory } from "./queries/budgetPlanFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/loading-state";
+import { History } from "lucide-react-native";
 
 export default function BudgetPlanHistory({ planId }: { planId: string }) {
   const { data: fetchedData = [], isLoading } = useGetBudgetPlanHistory(planId);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filterData = (rows: BudgetPlanHistory[], search: string) => {
-    return rows.filter(row => {
-      const text = `${row.bph_source_item} ${row.bph_to_item} ${row.bph_transfer_amount} ${formatTimestamp(row.bph_date_updated)}`.toLowerCase();
-      return text.includes(search.toLowerCase());
-    });
-  };
-
-  const filteredData = filterData(fetchedData, searchTerm);
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#2a3a61" />
-      </SafeAreaView>
+      <View className="flex-1 justify-center items-center bg-gray-50 pt-10">
+        <LoadingState />
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 px-4">
-      {/* Fixed Search Bar (outside ScrollView) */}
-      <View className="pt-2 pb-2 bg-white">
-        <View className="relative">
-          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-          <TextInput
-            placeholder="Search..."
-            className="pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200"
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
-        </View>
-      </View>
-
+    <SafeAreaView className="flex-1 bg-gray-50 p-6">
       {/* Scrollable Content */}
       <ScrollView 
         className="flex-1" 
         contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
       >
-        {filteredData.length > 0 ? (
-          filteredData.map((item) => (
+        {fetchedData.length > 0 ? (
+          fetchedData.map((item) => (
             <Card key={item.bph_id} className="mb-4 border-2 border-gray-200 shadow-sm bg-white rounded-lg">
               <CardHeader className="pb-2">
                 <Text className="text-sm text-gray-500">
@@ -109,11 +87,20 @@ export default function BudgetPlanHistory({ planId }: { planId: string }) {
             </Card>
           ))
         ) : (
-          <View className="flex-1 justify-center items-center py-8">
-            <Text className="text-gray-500">No history found</Text>
+          <View className="flex-1 justify-center items-center py-16">
+            <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
+              <History size={48} className="text-gray-300 mb-4" />
+                <Text className="text-gray-500 text-center text-lg font-semibold mb-2">
+                  No Budget History
+                </Text>
+                <Text className="text-gray-400 text-center text-sm max-w-xs">
+                  No budget transfers have been made for this plan yet.
+                </Text>
+            </View>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
+

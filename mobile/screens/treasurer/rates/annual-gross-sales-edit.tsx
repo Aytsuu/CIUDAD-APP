@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { FormInput } from "@/components/ui/form/form-input";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { AnnualGrossSalesEditSchema } from '@/form-schema/rates-form-schema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import z from "zod";
 import { useToastContext } from '@/components/ui/toast';
 import { useEditAnnualGrossSales } from './queries/ratesUpdateQueries';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function AnnualGrossSalesEdit() {
   const router = useRouter()
@@ -45,55 +46,61 @@ export default function AnnualGrossSalesEdit() {
   };
 
   return (
-    <_ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+    <PageLayout
+      leftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Add New Range and Fee for Business Permit</Text>}
-      showExitButton={false}
-      loading={isPending}
-      loadingMessage='Updating Record...'
-    >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-        <View className="mb-8">
-          <View className="space-y-4 p-4">
-            <FormInput
-              control={control}
-              label="Minimum Annual Gross Sales"
-              name="minRange"
-              placeholder="Enter minimum amount"
-              keyboardType="numeric"
-              editable={false}
-            />
-            <FormInput
-              control={control}
-              label="Maximum Annual Gross Sales"
-              name="maxRange"
-              placeholder="Enter maximum amount"
-              keyboardType="numeric"
-              editable={false}
-            />
-            <FormInput
-              control={control}
-              label="Amount"
-              name="amount"
-              placeholder="Enter rate"
-              keyboardType="numeric"
-            />
-          </View>
+      headerTitle={<Text className="text-gray-900 text-[13px]">Edit Range and Fee</Text>}
+      wrapScroll={false}
+      footer={
+        <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+          >
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
+          </Button>
         </View>
-      </ScrollView>
+      }
+    >
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+          <View className="mb-8">
+            <View className="space-y-4 p-6">
+              <FormInput
+                control={control}
+                label="Minimum Annual Gross Sales"
+                name="minRange"
+                placeholder="Enter minimum amount"
+                keyboardType="numeric"
+                editable={false}
+              />
+              <FormInput
+                control={control}
+                label="Maximum Annual Gross Sales"
+                name="maxRange"
+                placeholder="Enter maximum amount"
+                keyboardType="numeric"
+                editable={false}
+              />
+              <FormInput
+                control={control}
+                label="Amount"
+                name="amount"
+                placeholder="Enter rate"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        </ScrollView>
 
-      <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
-        <Button
-          onPress={handleSubmit(onSubmit)}
-          className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-        >
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-        </Button>
+        <LoadingModal visible={isPending} />
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
