@@ -1,7 +1,7 @@
 // Main Immunization Component - WITH LOCALSTORAGE
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { HeartPulse, ChevronLeft, Loader2, Pencil, History } from "lucide-react";
+import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
@@ -16,36 +16,9 @@ import { useImmunizationMutations } from "./queries/submitStep2";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
-
+import { useLocalStorage } from "@/helpers/useLocalStorage";
 // Your existing useLocalStorage hook remains the same
-export const useLocalStorage = <T,>(key: string, initialValue: T): [T, (value: T) => void] => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const item = window.localStorage.getItem(key);
-        return item ? JSON.parse(item) : initialValue;
-      }
-      return initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
-    }
-  });
 
-  const setValue = (value: T) => {
-    try {
-      setStoredValue(value);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(key, JSON.stringify(value));
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  return [storedValue, setValue];
-};
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -53,6 +26,8 @@ const STORAGE_KEYS = {
   EXISTING_VACCINES: "immunization_existing_vaccines",
   VITAL_SIGNS: "immunization_vital_signs",
   FORM_DATA: "immunization_form_data",
+  NOTES: "immunization_notes",
+  FOLLOW_UP: "immunization_follow_up",
 };
 
 export default function Immunization({
@@ -78,6 +53,11 @@ export default function Immunization({
   // Use localStorage for persistent state
   const [vaccines, setVaccines] = useLocalStorage<VaccineRecord[]>(STORAGE_KEYS.VACCINES, propVaccines);
   const [existingVaccines, setExistingVaccines] = useLocalStorage<ExistingVaccineRecord[]>(STORAGE_KEYS.EXISTING_VACCINES, propExistingVaccines);
+  const [savedNotes, setSavedNotes] = useLocalStorage<string>(STORAGE_KEYS.NOTES, "");
+  const [savedFollowUpData, setSavedFollowUpData] = useLocalStorage<{ follov_description: string; followUpVisit: string; followv_status: string }>(
+    STORAGE_KEYS.FOLLOW_UP,
+    { follov_description: "", followUpVisit: "", followv_status: "pending" }
+  );
 
   const [latestVitalSigns, setLatestVitalSigns] = useState<VitalSignType | null>(null);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -100,8 +80,8 @@ export default function Immunization({
   const { mutate: saveImmunization, isPending: isSaving } = useImmunizationMutations();
 
   // NEW: State to track if vaccine already exists
-  const [vaccineAlreadyExists, setVaccineAlreadyExists] = useState<boolean>(false);
-  const [existingVaccineAlreadyExists, setExistingVaccineAlreadyExists] = useState<boolean>(false);
+  const [, setVaccineAlreadyExists] = useState<boolean>(false);
+  const [, setExistingVaccineAlreadyExists] = useState<boolean>(false);
 
   console.log("eadadd", ChildHealthRecord);
 
@@ -116,6 +96,8 @@ export default function Immunization({
       // Optional: Clear storage when component unmounts if needed
       // localStorage.removeItem(STORAGE_KEYS.VACCINES);
       // localStorage.removeItem(STORAGE_KEYS.EXISTING_VACCINES);
+      // localStorage.removeItem(STORAGE_KEYS.NOTES);
+      // localStorage.removeItem(STORAGE_KEYS.FOLLOW_UP);
     };
   }, []);
 
@@ -155,10 +137,10 @@ export default function Immunization({
       wt: "",
       ht: "",
       temp: "",
-      follov_description: "",
-      followUpVisit: "",
-      followv_status: "pending",
-      notes: "",
+      follov_description: savedFollowUpData.follov_description || "",
+      followUpVisit: savedFollowUpData.followUpVisit || "",
+      followv_status: savedFollowUpData.followv_status || "pending",
+      notes: savedNotes || "",
       existingVaccines: existingVaccines.map((v) => ({
         vac_id: v.vac_id,
         vac_name: v.vac_name,
@@ -194,6 +176,11 @@ export default function Immunization({
         setLatestVitalSigns(todaysRecord);
         form.reset({
           ...todaysRecord,
+          // Prioritize localStorage values over historical data
+          notes: savedNotes || todaysRecord.notes || "",
+          follov_description: savedFollowUpData.follov_description || todaysRecord.follov_description || "",
+          followUpVisit: savedFollowUpData.followUpVisit || todaysRecord.followUpVisit || "",
+          followv_status: savedFollowUpData.followv_status || todaysRecord.followv_status || "pending",
           existingVaccines: existingVaccines,
           vaccines: vaccines,
         });
@@ -212,10 +199,11 @@ export default function Immunization({
           wt: latestRecord?.wt || "",
           ht: latestRecord?.ht || "",
           temp: latestRecord?.temp || "",
-          notes: latestRecord?.notes || "",
-          follov_description: latestRecord?.follov_description || "",
-          followUpVisit: latestRecord?.followUpVisit || "",
-          followv_status: latestRecord?.followv_status || "pending",
+          // Prioritize localStorage values over historical data
+          notes: savedNotes || latestRecord?.notes || "",
+          follov_description: savedFollowUpData.follov_description || latestRecord?.follov_description || "",
+          followUpVisit: savedFollowUpData.followUpVisit || latestRecord?.followUpVisit || "",
+          followv_status: savedFollowUpData.followv_status || latestRecord?.followv_status || "pending",
           existingVaccines: existingVaccines,
           vaccines: vaccines,
         });
@@ -224,7 +212,9 @@ export default function Immunization({
 
     // Debugging log to verify the data being processed
     console.log("Processed historicalVitalSigns:", historicalVitalSigns);
-  }, [historicalVitalSigns, form, existingVaccines, vaccines]);
+    console.log("Preserved localStorage notes:", savedNotes);
+    console.log("Preserved localStorage follow-up:", savedFollowUpData);
+  }, [historicalVitalSigns, form, existingVaccines, vaccines, savedNotes, savedFollowUpData]);
 
   useEffect(() => {
     // Set today's date in DD-MM-YYYY format
@@ -645,6 +635,14 @@ export default function Immunization({
     form.setValue("followUpVisit", data.followUpVisit || "");
     form.setValue("followv_status", data.followv_status || "pending");
 
+    // Save to localStorage
+    setSavedNotes(data.notes || "");
+    setSavedFollowUpData({
+      follov_description: data.follov_description || "",
+      followUpVisit: data.followUpVisit || "",
+      followv_status: data.followv_status || "pending",
+    });
+
     if (editingRowIndex !== null) {
       // Create the updated vital sign data with the NEW notes from the form
       const updatedVitalSign = {
@@ -718,17 +716,21 @@ export default function Immunization({
     // Clear localStorage after successful submission
     localStorage.removeItem(STORAGE_KEYS.VACCINES);
     localStorage.removeItem(STORAGE_KEYS.EXISTING_VACCINES);
+    localStorage.removeItem(STORAGE_KEYS.NOTES);
+    localStorage.removeItem(STORAGE_KEYS.FOLLOW_UP);
 
     // Reset local state
     setVaccines([]);
     setExistingVaccines([]);
+    setSavedNotes("");
+    setSavedFollowUpData({ follov_description: "", followUpVisit: "", followv_status: "pending" });
     setVaccineAlreadyExists(false);
     setExistingVaccineAlreadyExists(false);
   };
 
   const chhistId = ChildHealthRecord.record?.chhist_id;
-  const chrecId = ChildHealthRecord.record?.chrec;
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // const chrecId = ChildHealthRecord.record?.chrec;
+  const [, setCurrentIndex] = useState(0);
 
   // Set initial index when fullHistoryData changes
   useEffect(() => {
@@ -740,42 +742,8 @@ export default function Immunization({
 
   return (
     <>
-      <div className="p-6">
-        <div className="space-y-6 p-6">
-          <div className="flex justify-end gap-4 mb-4">
-            <Link
-              to={`/services/childhealthrecords/records`}
-              state={{
-                ChildHealthRecord: ChildHealthRecord,
-              }}
-            >
-              <Button>
-                <History className="h-4 w-4" />
-                View History
-              </Button>
-            </Link>
+            <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 2 of 2</div>
 
-            <Link
-              to={`/services/childhealthrecords/form`}
-              state={{
-                params: {
-                  ChildHealthRecord: ChildHealthRecord,
-                  chrecId: chrecId,
-                  chhistId: chhistId,
-                  mode: "addnewchildhealthrecord",
-                  status: "immunization",
-                },
-              }}
-            >
-              <Button>
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
-          </div>
-        </div>
-        <div className="flex justify-end mt-6 sm:mt-8">{/* Removed the Next button */}</div>
-      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col lg:flex-row gap-6">
@@ -797,7 +765,13 @@ export default function Immunization({
               </>
             }
             cardClassName="mt-4"
-            content={<>{latestVitalSigns ? <DataTable columns={vitalSignsColumns} data={[latestVitalSigns]} /> : <div className="text-center py-4 text-gray-500">No vital signs recorded yet</div>}</>}
+            content={<>{latestVitalSigns ? <DataTable columns={vitalSignsColumns} data={[{
+              ...latestVitalSigns,
+              notes: form.getValues("notes") || latestVitalSigns.notes || "",
+              follov_description: form.getValues("follov_description") || latestVitalSigns.follov_description || "",
+              followUpVisit: form.getValues("followUpVisit") || latestVitalSigns.followUpVisit || "",
+              followv_status: form.getValues("followv_status") || latestVitalSigns.followv_status || "pending",
+            }]} /> : <div className="text-center py-4 text-gray-500">No vital signs recorded yet</div>}</>}
           />
 
           <VaccinationSection

@@ -110,11 +110,14 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
           <ViewButton
             onClick={() => {
               // Clear localStorage before navigation
-              localStorage.removeItem("immunization_vaccines");
-              localStorage.removeItem("immunization_existing_vaccines");
-              localStorage.removeItem("immunization_vital_signs");
-              localStorage.removeItem("immunization_form_data");
+                localStorage.removeItem("immunization_vaccines");
+                localStorage.removeItem("immunization_existing_vaccines");
+                localStorage.removeItem("immunization_vital_signs");
+                localStorage.removeItem("immunization_form_data");
+                localStorage.removeItem("immunization_notes");
+                localStorage.removeItem("immunization_follow_up");
 
+                
               navigate("/child-immunization", {
                 state: {
                   ChildHealthRecord: row.original,

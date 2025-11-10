@@ -786,7 +786,7 @@ class ArchivedMedicineTable(APIView):
                 medicine_inventories = medicine_inventories.filter(
                     Q(med_id__med_name__icontains=search_query) |
                     Q(inv_id__inv_id__icontains=search_query) |
-                    Q(minv_form__icontains=search_query)
+                    Q(med_id__med_form__icontains=search_query)  # Changed from minv_form to med_id__med_form
                 )
             
             # Calculate today's date for expiry comparisons
@@ -815,7 +815,7 @@ class ArchivedMedicineTable(APIView):
                 minv_qty_avail = inventory.minv_qty_avail or 0
                 wasted = inventory.wasted or 0
                 minv_pcs = inventory.minv_pcs or 0
-                minv_dsg = inventory.minv_dsg or 0
+                minv_dsg = inventory.med_id.med_dsg or 0
                 
                 # Calculate total pieces (for boxes)
                 total_pcs = minv_qty * minv_pcs if inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == "boxes" else minv_qty
@@ -847,8 +847,8 @@ class ArchivedMedicineTable(APIView):
                     'category': 'Medicine',
                     'item': {
                         'med_name': inventory.med_id.med_name if inventory.med_id else "Unknown Medicine",
-                        'form': inventory.minv_form or 'N/A',
-                        'dosage': f"{minv_dsg} {inventory.minv_dsg_unit or 'N/A'}",
+                        'form': inventory.med_id.med_form or 'N/A',  # FIXED: Changed from minv_form to med_id.med_form
+                        'dosage': f"{minv_dsg} {inventory.med_id.med_dsg_unit or 'N/A'}",  # Also fixed dosage unit
                         'unit': inventory.minv_qty_unit or 'units',
                     },
                     'qty': {
@@ -897,7 +897,6 @@ class ArchivedMedicineTable(APIView):
                 'success': False,
                 'error': f'Error fetching archived medicines: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
             
             
 class MedicineDeduct(APIView):

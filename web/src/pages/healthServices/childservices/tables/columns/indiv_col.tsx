@@ -216,11 +216,25 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({}) => (
-      <div className="w-full flex justify-center">
-        <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Completed</span>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const displayStatus = status === "recorded" ? "completed" : status;
+      const isCompleted = status === "recorded";
+      
+      return (
+        <div className="w-full flex justify-center">
+          <span 
+            className={`text-xs px-2 py-1 rounded capitalize ${
+              isCompleted 
+                ? "bg-green-100 text-green-800" 
+                : "bg-blue-100 text-blue-800"
+            }`}
+          >
+            {displayStatus || "N/A"}
+          </span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "action",

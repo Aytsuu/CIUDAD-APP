@@ -60,7 +60,8 @@ class TransientSerializer(serializers.ModelSerializer):
 class PatientMiniMalSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
-     
+    
+
     def get_personal_info(self, obj):
         return extract_personal_info(obj)
 
@@ -69,7 +70,29 @@ class PatientMiniMalSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Patient
-        fields = ['pat_id', 'pat_type', 'personal_info', 'address']
+        fields ='__all__'
+
+
+
+class PatientMiniMalSerializerWithAddtionalInfo(serializers.ModelSerializer):
+    personal_info = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    additional_info = serializers.SerializerMethodField()
+    
+     
+    def get_personal_info(self, obj):
+        return extract_personal_info(obj)
+
+    def get_address(self, obj):
+        return extract_address(obj)
+    
+    def get_additional_info(self, obj):
+        return get_additional_info(obj)
+    
+    class Meta:
+        model = Patient
+        fields ='__all__'
+
 
 class PatientMChildreniniMalSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()

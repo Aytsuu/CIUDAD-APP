@@ -102,7 +102,8 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
-                patrec__in=all_patrec_w_medhis 
+                patrec__in=all_patrec_w_medhis,
+                is_from_famhistory=False  # EXCLUDE family history records
             ).select_related('ill', 'patrec').order_by('-created_at')
             
             # Apply search filter if search query is provided

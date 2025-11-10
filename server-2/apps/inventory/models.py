@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
 
 
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)

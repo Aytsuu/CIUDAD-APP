@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import Step1 from "./Step1";
 import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -19,9 +20,10 @@ export default function ChildImmunization() {
   const { ChildHealthRecord } = location.state || {};
   const pat_id = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_id?.toString() || "";
   const pat_dob = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
+  const [currentStep, setCurrentStep] = useState(1);
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
-  const [ setFullHistoryData] = useState<any[]>([]);
+  const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
   const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
   const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>([]);
@@ -114,6 +116,14 @@ export default function ChildImmunization() {
     setHistoricalVitalSigns(updatedVitalSigns);
   }, []);
 
+  const handleNext = () => {
+    setCurrentStep(2);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+  };
+
   return (
     <LayoutWithBack title="Immunization" description="Manage immunization records for the child">
       {isLoading ? (
@@ -130,25 +140,36 @@ export default function ChildImmunization() {
           cardClassName="px-6"
           title=""
           content={
-            <Immunization
-              ChildHealthRecord={ChildHealthRecord}
-              historicalVitalSigns={historicalVitalSigns}
-              historicalNotes={historicalNotes}
-              onUpdateVitalSigns={handleUpdateVitalSigns}
-              vaccines={vaccines}
-              existingVaccines={existingVaccines}
-              setVaccines={setVaccines}
-              setExistingVaccines={setExistingVaccines}
-              showVaccineList={showVaccineList}
-              setShowVaccineList={setShowVaccineList}
-              vaccinesData={vaccinesData}
-              vaccinesListData={vaccinesListData}
-              isLoading={isLoading}
-              vaccineHistory={vaccineHistory}
-              unvaccinatedVaccines={unvaccinatedVaccines}
-              vaccinations={vaccinations}
-              followUps={followUps}
-            />
+            <>
+              {currentStep === 1 ? (
+                <Step1 
+                  ChildHealthRecord={ChildHealthRecord}
+                  onNext={handleNext}
+                  fullHistoryData={fullHistoryData}
+                />
+              ) : (
+                <Immunization
+                  ChildHealthRecord={ChildHealthRecord}
+                  historicalVitalSigns={historicalVitalSigns}
+                  historicalNotes={historicalNotes}
+                  onUpdateVitalSigns={handleUpdateVitalSigns}
+                  onBack={handleBack}
+                  vaccines={vaccines}
+                  existingVaccines={existingVaccines}
+                  setVaccines={setVaccines}
+                  setExistingVaccines={setExistingVaccines}
+                  showVaccineList={showVaccineList}
+                  setShowVaccineList={setShowVaccineList}
+                  vaccinesData={vaccinesData}
+                  vaccinesListData={vaccinesListData}
+                  isLoading={isLoading}
+                  vaccineHistory={vaccineHistory}
+                  unvaccinatedVaccines={unvaccinatedVaccines}
+                  vaccinations={vaccinations}
+                  followUps={followUps}
+                />
+              )}
+            </>
           }
         />
       )}
