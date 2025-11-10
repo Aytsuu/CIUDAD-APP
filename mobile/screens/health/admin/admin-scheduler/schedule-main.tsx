@@ -173,7 +173,7 @@ export default function SchedulerMain() {
               {services.length === 0 && (
                 <Text className="text-gray-500 text-sm mt-2">No services yet. Add some via the editor.</Text>
               )}
-              <View className="mt-4 flex-row justify-end"> {/* Moved dialog trigger to bottom-right for better flow */}
+              <View className="mt-4 flex-row justify-end">
                 <ScheduleDialog
                   weeklySchedule={weeklySchedule}
                   weekDays={weekDays}
