@@ -18,11 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { passwordFormSchema } from "@/form-schema/account-schema";
 import { useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
+import supabase from "@/supabase/supabase";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
@@ -59,51 +60,42 @@ export default function Security() {
     mutationFn: async (data: PasswordFormData) => {
       try {
         // First verify current password by attempting to sign in
-        // const { error: signInError } = await supabase.auth.signInWithPassword({
-        //   email: user?.email!,
-        //   password: data.old_password,
-        // });
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user?.email!,
+          password: data.old_password,
+        });
 
-        // if (signInError) {
-        //   throw new Error("Current password is incorrect");
-        // }
+        if (signInError) {
+          throw new Error("Current password is incorrect");
+        }
 
         // Update the password
-        // const { error: updateError } = await supabase.auth.updateUser({
-        //   password: data.new_password,
-        // });
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: data.new_password,
+        });
 
-        // if (updateError) {
-        //   throw new Error(updateError.message);
-        // }
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
 
         return { success: true };
       } catch (error) {
-        console.error("Password change error:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log("Password change successful, showing toast");
-      toast.success("Password updated successfully", {
-        description: "Your password has been changed.",
-      });
+      showSuccessToast("Your password has been changed.");
       reset();
       setIsChangingPassword(false);
     },
     onError: (error: any) => {
-      console.error("Password change failed:", error);
-      toast.error("Password change failed", {
-        description: error.message || "Failed to update password.",
-      });
+      showErrorToast(error.message || "Failed to update password.");
     },
   });
 
   const onSubmit = async (data: PasswordFormData) => {
     if (!user?.email) {
-      toast.error("Authentication required", {
-        description: "You must be logged in to change your password",
-      });
+      showErrorToast("You must be logged in to change your password");
       return;
     }
 
