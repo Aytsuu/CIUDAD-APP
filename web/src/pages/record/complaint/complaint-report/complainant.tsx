@@ -30,9 +30,8 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
   const { control, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name: "complainant",});
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
   const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
-  const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
+  const { data: allResidents = [] } = useAllResidents();
   const currentComplainant = watch(`complainant.${activeTab}`);
 
   const addComplainant = () => {
@@ -48,7 +47,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
       cpnt_address: "",
     });
     setActiveTab(newIndex);
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -60,7 +58,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
     } else if (activeTab > index) {
       setActiveTab(activeTab - 1);
     }
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -68,7 +65,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
     const resident = allResidents.find((r: Resident) => r.rp_id === residentId);
     if (!resident) return;
 
-    setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`complainant.${activeTab}.rp_id`, resident.rp_id);
     setValue(`complainant.${activeTab}.cpnt_name`, resident.name);
@@ -91,7 +87,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
   };
 
   const clearSelection = () => {
-    setSelectedResident(null);
     setSelectedResidentValue("");
     setValue(`complainant.${activeTab}.rp_id`, null);
     setValue(`complainant.${activeTab}.cpnt_name`, "");
@@ -118,13 +113,8 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubm
   useEffect(() => {
     const currentComplainantData = watch(`complainant.${activeTab}`);
     if (currentComplainantData?.rp_id) {
-      const resident = allResidents.find(
-        (r: Resident) => r.rp_id === currentComplainantData.rp_id
-      );
-      setSelectedResident(resident || null);
       setSelectedResidentValue(currentComplainantData.rp_id);
     } else {
-      setSelectedResident(null);
       setSelectedResidentValue("");
     }
   }, [activeTab, allResidents, watch]);
