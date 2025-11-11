@@ -78,10 +78,6 @@ export default function PostpartumFormFirstPg({
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
-  // Assessment data management:
-  // - postpartumCareData: Combined view for table display (existing + new)
-  // - existingAssessments: Assessments fetched from database (read-only)
-  // - newAssessments: New assessments added in this session (will be submitted)
   const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
   const [existingAssessments, setExistingAssessments] = useState<PostpartumTableType[]>([])
   const [newAssessments, setNewAssessments] = useState<PostpartumTableType[]>([])
@@ -127,6 +123,8 @@ export default function PostpartumFormFirstPg({
   useEffect(() => {
     const latestRecord = latestPostpartumRecord?.latest_postpartum_record
     const patientDetails = latestRecord?.patient_details
+
+    console.log(latestRecord)
     
     // Determine if patient is resident - check from selected patient or API response
     const isResident = patientDetails?.pat_type?.toLowerCase() === "resident" || 
@@ -144,7 +142,7 @@ export default function PostpartumFormFirstPg({
         setValue("mothersPersonalInfo.husbandFName", father?.per_fname)
         setValue("mothersPersonalInfo.husbandMName", father?.per_mname || "N/A")
         setValue("mothersPersonalInfo.husbandDob", father?.per_dob)
-      } else if (!isResident && spouseInfo) {
+      } else if (!isResident && !spouseInfo?.spouse) {
         // For non-resident patients, spouse info comes directly
         setValue("mothersPersonalInfo.husbandLName", spouseInfo?.spouse_lname)
         setValue("mothersPersonalInfo.husbandFName", spouseInfo?.spouse_fname)
@@ -157,9 +155,9 @@ export default function PostpartumFormFirstPg({
       setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
 
       if (latestRecord) {
-        const spouse = latestRecord.spouse_info
+        const spouse = latestRecord.spouse  // ✅ Direct spouse object, not spouse_info
         const delivery = latestRecord.delivery_records?.[0]
-        const visit = latestRecord.follow_up_visits
+        const visit = latestRecord.follow_up_visit  // ✅ Fixed: follow_up_visits → follow_up_visit
         
         
         const fatherFromFC = patientDetails?.family?.family_heads?.father?.personal_info
@@ -181,10 +179,11 @@ export default function PostpartumFormFirstPg({
           setValue("mothersPersonalInfo.husbandDob", fatherFromFC.per_dob)
 
         } else if (spouse) {
-          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
-          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
-          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
-          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+          // For transient patients with spouse record
+          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
         }
 
         if(delivery) {
@@ -639,17 +638,17 @@ export default function PostpartumFormFirstPg({
               <FormInput control={form.control} label="Middle Name" name="mothersPersonalInfo.motherMName" placeholder="Middle Name" />
               <FormInput control={form.control} label="Age" name="mothersPersonalInfo.motherAge" placeholder="Age" />
 
-              <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)" />
-              <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)" />
-              <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)" />
+              <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)" upper={true} />
+              <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)" upper={true} />
+              <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)" upper={true} />
               <FormDateTimeInput control={form.control} type="date" label="Husband's Date of Birth" name="mothersPersonalInfo.husbandDob" />
             </div>
             <div className="grid grid-cols-5 gap-4 mt-4">
-              <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street" />
-              <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio" />
-              <FormInput control={form.control} label="Barangay" name="mothersPersonalInfo.address.barangay" placeholder="Barangay" />
-              <FormInput control={form.control} label="City" name="mothersPersonalInfo.address.city" placeholder="City" />
-              <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province" />
+              <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street" upper={true} />
+              <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio" upper={true} />
+              <FormInput control={form.control} label="Barangay" name="mothersPersonalInfo.address.barangay" placeholder="Barangay" upper={true} />
+              <FormInput control={form.control} label="City" name="mothersPersonalInfo.address.city" placeholder="City" upper={true} />
+              <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province" upper={true} />
             </div>
 
             <div className="mt-10 mb-3">

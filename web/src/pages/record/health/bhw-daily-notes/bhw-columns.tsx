@@ -31,7 +31,7 @@ export const noteColumns: ColumnDef<Note>[] = [
       header: "Barangay Health Worker",
       cell: ({ row }) => (
          <div className="flex items-center justify-center">
-            <div className="w-60 border border-blue-400 bg-blue-300 rounded-md text-blue-800 p-2">{row.original.name}</div>
+            <div className="w-60 bg-blue-600 rounded-md text-white p-2">{row.original.name}</div>
          </div> 
       )
    },

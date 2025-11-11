@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
-import { noteColumns } from "./bhw-columns";
-
 import { ProtectedComponent } from "@/ProtectedComponent";
 
+import { noteColumns } from "./bhw-columns";
+
+import BHWStaffList from "./bdn-staff-list";
 
 interface NoteDiv {
       no: number;
@@ -80,7 +81,10 @@ export default function BHWAllNotes() {
          description="Manage and view all barangay health workers daily notes"
       >
          <div className="w-full">
-            <div className="bg-white p-4">
+            <div className="shadow-sm">
+               <BHWStaffList />
+            </div>
+            <div className="bg-white p-4 mt-4">
                <div className="flex flex-col md:flex-row gap-2 w-full justify-between">
                   {/*  */}
                   <div className="relative flex w-1/4">
