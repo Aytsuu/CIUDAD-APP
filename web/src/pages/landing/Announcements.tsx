@@ -107,8 +107,7 @@ function AnnouncementTracker() {
         >
           <p className="text-2xl sm:text-3xl font-bold">Public Announcements</p>
           <p className="text-md sm:text-base text-darkBlue2">
-            Stay informed with the latest updates, activities, and public
-            notices from Barangay San Roque.
+            Stay informed with the latest updates from Barangay San Roque.
           </p>
         </div>
 
@@ -236,7 +235,7 @@ function AnnouncementTracker() {
                     >
                       <Button
                         variant={"link"}
-                        className={`justify-start ${
+                        className={`justify-start p-0 ${
                           announcement.ann_id == selected?.ann_id
                             ? "text-primary cursor-default hover:no-underline"
                             : "text-gray-700 hover:text-primary"
@@ -269,7 +268,7 @@ function AnnouncementTracker() {
               >
                 {/* Display full info of selected announcement */}
                 {selected && (
-                  <div className="w-full p-8 pb-44">
+                  <div className="w-full p-4 lg:p-8 pb-44">
                     <div className="flex justify-between items-center mb-4">
                       <div className="bg-gray-100 shadow-sm border rounded-full p-1 lg:hidden"
                         onClick={() => setSelected(null)}
