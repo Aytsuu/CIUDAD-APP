@@ -316,9 +316,9 @@ export default function PrenatalFormSecPg({
             <h3 className="text-md font-semibold mt-2">
               {" "}
               TETANUS TOXOID GIVEN: (DATE GIVEN){" "}
-              <p className="flex items-center text-black/50 text-[14px] ml-2">
+              <p className="flex items-center text-black/60 text-[14px] ml-2">
                 <CircleAlert size={15} className="mr-1" />
-                Note: Do not forget to add a vaccination record if a <b className="pl-1">TT</b>/<b>TD</b>/<b className="pr-1">TDAP</b> is administered by midwife on the day of visit.
+                Note: This is strictly for Tetanus Toxoid or Tetanus Diptheria vaccination only. Other vaccines should be recorded in Vaccination Service.
               </p>
             </h3>
             <div className="grid gap-3 px-5">
@@ -326,12 +326,12 @@ export default function PrenatalFormSecPg({
                 <div className="grid mt-5 mb-5">
                   <div className="">
                     <div className="mb-2">
-                      <Label className="flex text-black/70 items-center">Vaccine Type (TT/TD/TDAP)</Label>
+                      <Label className="flex text-black/70 items-center">Vaccine Type</Label>
                     </div>
                     <Combobox
                       options={vaccineStocksData?.formatted || []}
                       value={form.watch("prenatalVaccineInfo.vaccineType") || ""}
-                      placeholder={isVaccineLoading ? "Loading vaccines..." : "Select a vaccine (TT/TD/TDAP)"}
+                      placeholder={isVaccineLoading ? "Loading vaccines..." : "Select a vaccine (TT/TD)"}
                       triggerClassName="font-normal w-full"
                       emptyMessage={
                         <div className="flex gap-2 justify-center items-center">

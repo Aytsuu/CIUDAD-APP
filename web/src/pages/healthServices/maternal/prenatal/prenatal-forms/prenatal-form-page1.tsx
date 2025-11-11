@@ -1208,18 +1208,21 @@ export default function PrenatalFormFirstPg({
                   name="motherPersonalInfo.husbandLName"
                   label="Husband's Last Name"
                   placeholder="Enter Last Name"
+                  upper={true}
                 />
                 <FormInput
                   control={control}
                   name="motherPersonalInfo.husbandFName"
                   label="Husband's First Name"
                   placeholder="Enter First Name"
+                  upper={true}
                 />
                 <FormInput
                   control={control}
                   name="motherPersonalInfo.husbandMName"
                   label="Husband's Middle Name"
                   placeholder="Enter Middle Name"
+                  upper={true}
                 />
                 <FormDateTimeInput
                   control={control}

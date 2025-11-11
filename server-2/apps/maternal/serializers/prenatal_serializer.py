@@ -14,7 +14,7 @@ from apps.administration.models import Staff
 from apps.healthProfiling.models import PersonalAddress, FamilyComposition
 from apps.vaccination.models import VaccinationRecord, VaccinationHistory
 from apps.inventory.models import VaccineStock, AntigenTransaction
-from apps.medicineservices.models import MedicineRecord
+from apps.medicineservices.models import MedicineRequest, MedicineRequestItem, MedicineAllocation, MedicineInventory, MedicineTransactions
 
 from ..utils import check_medical_records_for_spouse, handle_spouse_logic
 
@@ -866,46 +866,51 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     
     def get_medicine_records(self, obj):
         """
-        Get medicine records dispensed during or before this prenatal visit.
-        Returns records from medrec_id and also queries by patrec_id.
+        Get medicine requests dispensed during or before this prenatal visit.
+        Now uses MedicineRequest → MedicineRequestItem → MedicineAllocation flow.
         """
-        if not obj.patrec_id:
-            print("No patrec_id found")
+        if not obj.medreq_id:
+            print("No medreq_id found on prenatal form")
             return []
         
-        # Use cutoff_time to include records requested during this prenatal visit
-        # Add 3 seconds buffer to account for transaction timing and microsecond precision
-        cutoff_time = obj.created_at + timedelta(seconds=3)
-        prenatal_date = obj.created_at.date() if hasattr(obj.created_at, 'date') else obj.created_at
-        
         try:
-            print(f"Looking for medicine records for patrec_id: {obj.patrec_id.patrec_id}, prenatal created_at: {obj.created_at}, cutoff_time: {cutoff_time}, prenatal_date: {prenatal_date}")
+            print(f"Looking for medicine records for prenatal form: {obj.pf_id}, medreq_id: {obj.medreq_id.medreq_id}")
             
-            # Get all MedicineRecords for this patient record
-            # Filter by requested_at being within cutoff_time (to catch same-transaction records)
-            medicine_records = MedicineRecord.objects.filter(
-                patrec_id=obj.patrec_id,
-                requested_at__lte=cutoff_time
+            # Get the MedicineRequest linked to this prenatal form
+            medicine_request = obj.medreq_id
+            
+            # Get all MedicineRequestItems for this request
+            medicine_items = MedicineRequestItem.objects.filter(
+                medreq_id=medicine_request
             ).select_related(
-                'minv_id__med_id',
-                'staff'
-            ).order_by('-requested_at')
+                'med',
+                'action_by',
+                'completed_by'
+            ).prefetch_related(
+                'allocations__minv__med_id'
+            ).order_by('medreqitem_id')
             
-            print(f"Found {medicine_records.count()} medicine records")
+            print(f"Found {medicine_items.count()} medicine request items")
             
-            # Debug: print details of each medicine record
-            for medrec in medicine_records:
-                print(f"MedicineRecord {medrec.medrec_id}: requested_at={medrec.requested_at}, minv_id={medrec.minv_id}, medicine={medrec.minv_id.med_id.med_name if medrec.minv_id and medrec.minv_id.med_id else 'N/A'}")
-            
-            result = [{
-                'medrec_id': medrec.medrec_id,
-                'medicine_name': medrec.minv_id.med_id.med_name if medrec.minv_id and medrec.minv_id.med_id else None,
-                'quantity': medrec.medrec_qty,
-                'reason': medrec.reason,
-                'requested_at': medrec.requested_at,
-                'fulfilled_at': medrec.fulfilled_at,
-                'staff_id': medrec.staff.staff_id if medrec.staff else None,
-            } for medrec in medicine_records]
+            result = []
+            for item in medicine_items:
+                # Get all allocations for this item to calculate total quantity
+                allocations = item.allocations.all()
+                total_qty = sum(alloc.allocated_qty for alloc in allocations)
+                
+                result.append({
+                    'medreqitem_id': item.medreqitem_id,
+                    'medicine_name': item.med.med_name if item.med else None,
+                    'quantity': total_qty,
+                    'reason': item.reason,
+                    'status': item.status,
+                    'requested_at': medicine_request.requested_at,
+                    'fulfilled_at': medicine_request.fulfilled_at,
+                    'action_by': item.action_by.staff_id if item.action_by else None,
+                    'completed_by': item.completed_by.staff_id if item.completed_by else None,
+                })
+                
+                print(f"MedicineRequestItem {item.medreqitem_id}: medicine={item.med.med_name if item.med else 'N/A'}, qty={total_qty}, status={item.status}")
             
             print(f"Returning {len(result)} medicine records")
             return result
@@ -917,7 +922,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             return []
 
 
-# Main Prenatal Form Serializer for Complete Creation
+# Main Prenatal Form Serializer for Prenatal Creation
 class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # Fields from motherPersonalInfo
     pat_id = serializers.CharField(write_only=True, required=True)
@@ -1149,6 +1154,125 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Medicine with ID {minv_id} does not exist")
         
         return value
+
+    def _create_medicine_request_for_prenatal(self, patient_record, selected_medicines, staff_instance):
+        """
+        Create a MedicineRequest with related items and allocations for prenatal form.
+        
+        Args:
+            patient_record: PatientRecord instance
+            selected_medicines: List of medicine data with minv_id, medrec_qty, reason
+            staff_instance: Staff instance performing the action
+            
+        Returns:
+            MedicineRequest instance or None if no medicines selected
+        """
+        if not selected_medicines:
+            return None
+            
+        try:
+            from django.utils import timezone
+            from django.db import transaction as db_transaction
+            
+            with db_transaction.atomic():
+                # Get patient from patient_record
+                patient = patient_record.pat_id
+                
+                # Create MedicineRequest
+                med_request = MedicineRequest.objects.create(
+                    mode='app',  # app mode for prenatal form submission
+                    patrec=patient_record,
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    rp_id=patient.rp_id if patient.rp_id else None,
+                    trans_id=patient.trans_id if patient.trans_id else None,
+                )
+                
+                logger.info(f"Created MedicineRequest {med_request.medreq_id} for prenatal form")
+                
+                # Group medicines by med_id for creating MedicineRequestItems
+                medid_to_allocations = {}
+                for med in selected_medicines:
+                    minv_id = med.get('minv_id')
+                    if not minv_id:
+                        continue
+                    
+                    try:
+                        minv = MedicineInventory.objects.get(minv_id=minv_id)
+                        med_id = minv.med_id  # FK object, not string
+                    except MedicineInventory.DoesNotExist:
+                        logger.error(f"Medicine inventory with ID {minv_id} not found")
+                        continue
+                    
+                    if med_id not in medid_to_allocations:
+                        medid_to_allocations[med_id] = []
+                    
+                    medid_to_allocations[med_id].append({
+                        'minv': minv,
+                        'medrec_qty': med.get('medrec_qty', 0),
+                        'reason': med.get('reason', 'Prenatal medicine dispensing'),
+                    })
+                
+                # Create MedicineRequestItem and MedicineAllocation for each medicine
+                for med_obj, allocations in medid_to_allocations.items():
+                    reason = allocations[0].get('reason', 'Prenatal medicine dispensing')
+                    
+                    # Create MedicineRequestItem
+                    medicine_item = MedicineRequestItem.objects.create(
+                        reason=reason,
+                        med=med_obj,
+                        medreq_id=med_request,
+                        status='completed',
+                        action_by=staff_instance,
+                        completed_by=staff_instance,
+                    )
+                    
+                    logger.info(f"Created MedicineRequestItem {medicine_item.medreqitem_id} for medicine {med_obj.med_name}")
+                    
+                    # Create allocations and deduct inventory
+                    for alloc in allocations:
+                        minv = alloc['minv']
+                        medrec_qty = alloc['medrec_qty']
+                        
+                        if minv and medrec_qty > 0:
+                            # Check stock availability
+                            if minv.minv_qty_avail < medrec_qty:
+                                logger.error(f"Insufficient stock for medicine {minv.minv_id}. Available: {minv.minv_qty_avail}, Requested: {medrec_qty}")
+                                continue
+                            
+                            # Deduct from inventory
+                            minv.minv_qty_avail -= medrec_qty
+                            minv.temporary_deduction += medrec_qty
+                            minv.save()
+                            
+                            logger.info(f"Deducted {medrec_qty} units from inventory {minv.minv_id}")
+                            
+                            # Create MedicineTransaction for audit trail
+                            unit = minv.minv_qty_unit or 'pcs'
+                            mdt_qty = f"{medrec_qty} {unit}"
+                            MedicineTransactions.objects.create(
+                                mdt_qty=mdt_qty,
+                                mdt_action="Deducted",
+                                staff=staff_instance,
+                                minv_id=minv
+                            )
+                            
+                            logger.info(f"Created MedicineTransaction for inventory {minv.minv_id}")
+                            
+                            # Create MedicineAllocation
+                            MedicineAllocation.objects.create(
+                                medreqitem=medicine_item,
+                                minv=minv,
+                                allocated_qty=medrec_qty
+                            )
+                            
+                            logger.info(f"Created MedicineAllocation for medicine request item {medicine_item.medreqitem_id}")
+                
+                return med_request
+                
+        except Exception as e:
+            logger.error(f"Error creating medicine request for prenatal: {str(e)}", exc_info=True)
+            raise
 
     # creation of tt_status logic
     def create_tt_status_logic(self, prenatal_form, tt_statuses_data, patient):
@@ -2020,73 +2144,21 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 for pc_data in prenatal_care_data:
                     PrenatalCare.objects.create(pf_id=prenatal_form, **pc_data)
                 if prenatal_care_data:
-                    logger.info(f"Created {len(prenatal_care_data)} prenatal care entries.")                # Process selected medicines for micronutrient supplementation
-                medicine_record = None
+                    logger.info(f"Created {len(prenatal_care_data)} prenatal care entries.")
+                
+                # Process selected medicines using MedicineRequest flow
+                medicine_request = None
                 if selected_medicines:
-                    from apps.medicineservices.models import MedicineRecord, MedicineInventory, MedicineTransactions
+                    medicine_request = self._create_medicine_request_for_prenatal(
+                        patient_record=patient_record,
+                        selected_medicines=selected_medicines,
+                        staff_instance=staff_instance
+                    )
                     
-                    logger.info(f"Processing {len(selected_medicines)} selected medicines")
-                    
-                    # Use the staff_instance already retrieved earlier (no need to lookup again)
-                    # Create medicine records for each selected medicine
-                    for i, medicine_data in enumerate(selected_medicines):
-                        minv_id = medicine_data.get('minv_id')
-                        medrec_qty = medicine_data.get('medrec_qty')
-                        reason = medicine_data.get('reason', self.MEDICINE_REASON_DEFAULT)
-                        
-                        try:
-                            # Get medicine inventory
-                            medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                            
-                            # Check stock availability (already validated but double-check)
-                            if medicine_inv.minv_qty_avail < medrec_qty:
-                                raise Exception(f"Insufficient stock for {medicine_inv.med_id.med_name}")
-                            
-                            # Update inventory stock
-                            medicine_inv.minv_qty_avail -= medrec_qty
-                            medicine_inv.save()
-                            logger.debug(f"Updated medicine inventory: {medicine_inv.med_id.med_name}, new stock: {medicine_inv.minv_qty_avail}")
-                            
-                            # Create medicine record
-                            medicine_record = MedicineRecord.objects.create(
-                                medrec_qty=medrec_qty,
-                                reason=reason,
-                                requested_at=timezone.now(),
-                                fulfilled_at=timezone.now(),
-                                patrec_id=patient_record,
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            logger.info(f"Created medicine record {i+1}: {medicine_record.medrec_id}")
-                            
-                            # Create medicine transaction for audit trail
-                            unit = medicine_inv.minv_qty_unit or self.MEDICINE_UNIT_PCS
-                            if unit.lower() == self.MEDICINE_UNIT_BOXES:
-                                mdt_qty = f"{medrec_qty} {self.MEDICINE_UNIT_PCS}"  # Convert boxes to pieces
-                            else:
-                                mdt_qty = f"{medrec_qty} {unit}"
-                            
-                            MedicineTransactions.objects.create(
-                                mdt_qty=mdt_qty,
-                                mdt_action=self.MEDICINE_ACTION_DEDUCTED,
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            logger.info(f"Created medicine transaction for {medicine_inv.med_id.med_name}")
-                            
-                            # Link medicine record to prenatal form if needed
-                            # Update the first medicine record reference to prenatal form
-                            if i == 0:
-                                prenatal_form.medrec_id = medicine_record
-                                prenatal_form.save()
-                                logger.info(f"Linked first medicine record to prenatal form")
-                            
-                        except MedicineInventory.DoesNotExist:
-                            logger.warning(f"Medicine with ID {minv_id} not found")
-                            continue
-                        except Exception as e:
-                            logger.error(f"Error processing medicine {minv_id}: {str(e)}")
-                            continue
+                    if medicine_request:
+                        prenatal_form.medreq_id = medicine_request
+                        prenatal_form.save()
+                        logger.info(f"Created medicine request {medicine_request.medreq_id} and linked to prenatal form")
 
                 logger.info(f"Successfully created complete prenatal record: {prenatal_form.pf_id}")
                 return prenatal_form

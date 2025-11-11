@@ -51,7 +51,11 @@ interface maternalRecords {
 
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
-    pregnancy_count?: number;
+    additional_info?: {
+      latest_pregnancy?: {
+        pregnancy_status?: string
+      }
+    }
   }
 
 export default function MaternalAllRecords() {
@@ -158,6 +162,11 @@ export default function MaternalAllRecords() {
           add_sitio: address?.add_sitio || "Not Provided",
         },
         pat_type: record.pat_type || "N/A",
+        additional_info: {
+          latest_pregnancy: {
+            pregnancy_status: record.additional_info?.latest_pregnancy?.pregnancy_status || "N/A"
+          }
+        }
       };
     });
   }, [maternalRecordsData]);
@@ -255,6 +264,27 @@ export default function MaternalAllRecords() {
           <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
       ),
+    },
+    {
+      accessorKey: "pregnancy_status",
+      header: "Pregnancy Status",
+      cell: ({ row }) => {
+        const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
+        
+        return (
+          <div className="flex justify-center">
+            {status === "Active" ? (
+              <div className="bg-pink-500 rounded-xl w-24 text-white px-2 py-1">
+              {status}
+            </div>
+            ) : ( 
+              <div className="bg-green-500 rounded-xl w-24 text-white px-2 py-1">
+                {status}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "action",
@@ -414,14 +444,16 @@ export default function MaternalAllRecords() {
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
-              <SelectLayout
-                placeholder="Select filter"
-                label="All"
-                className="w-full md:w-[200px] bg-white text-black"
-                options={filter}
-                value={selectedFilter}
-                onChange={handleFilterChange}
-              />
+              <div className="">
+                  <SelectLayout
+                    placeholder="Select filter"
+                    className="w-full md:w-[200px] bg-white text-black"
+                    options={filter}
+                    value={selectedFilter}
+                    onChange={handleFilterChange}
+                  />
+              </div>
+              
             </div>
           </div>
 

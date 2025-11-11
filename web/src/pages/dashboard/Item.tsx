@@ -13,11 +13,7 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
-// import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
 import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
-// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
-
-// import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
@@ -35,9 +31,7 @@ import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-s
 import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
-import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
 import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
-
 import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
@@ -203,15 +197,27 @@ export const getItemsConfig = (
             element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
           },
         ],
+
+        sidebar: [
+          {
+            title: "Pending Medical Appointments",
+            element: <PendingMedicalAppointmentsSidebar />,
+          },
+          {
+            title: "Pending Prenatal Appointments",
+            element: <PendingPrenatalAppSidebar />,
+          },
+          {
+            title: "Pending Medicine Requests",
+            element: <PendingMedicineRequestsSidebar />,
+          },
+          { title: "To-Pickup Medicine Requests", element: <ToPickupMedicineRequestsSidebar /> },
+        ],
       },
 
       {
         dashboard: "INVENTORY",
         sidebar: [
-          // {
-          //   title: "Weekly Schedule",
-          //   element: <SchedulerSidebar />,
-          // },
           {
             title: "Weekly Schedule",
             element: <SchedulerSidebar />,

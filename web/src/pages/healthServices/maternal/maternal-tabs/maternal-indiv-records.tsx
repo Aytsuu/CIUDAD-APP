@@ -17,10 +17,12 @@ import PregnancyChart from "../maternal-components/pregnancy-chart";
 import PregnancyVisitTracker from "../maternal-components/8anc-visit-chart";
 import { formatDate } from "./appointments/columns";
 
-import { usePregnancyDetails } from "../queries/maternalFetchQueries";
-import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TableLoading from "../../table-loading";
+
+import { usePregnancyDetails } from "../queries/maternalFetchQueries";
+import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries";
+// import { useLatestFollowUpVisit } from "../queries/maternalFetchQueries";
 
 interface Patient {
   pat_id: string;
@@ -140,6 +142,9 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   // mutations
   const { mutate: completePregnancy } = useAddCompletePregnancy();
   const { mutate: addPregnancyLoss } = useAddPregnancyLoss();
+
+  // fetch hooks
+  // const { data: latestFollowUpData, isLoading: latestFollowUpLoading } = useLatestFollowUpVisit(selectedPatient?.pat_id || "");
 
   const totalPages = Math.ceil((pregnancyData?.count || 0) / pageSize);
 
@@ -532,93 +537,95 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
           </div>
         </div>
         
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
-          {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-2 w-full">
-            <div className="flex w-full gap-x-2">
-              {/* <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white" onChange={(e) => handleSearch(e.target.value)} />
-              </div> */}
-              <SelectLayout className="w-full md:w-[200px] bg-white" placeholder="Select Filter" options={filter} value={selectedFilter} onChange={handleFilterChange} />
-            </div>
-          </div>
-
-          <div className="w-full sm:w-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default">
-                  <Plus size={15} /> Add Record
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>
-                  <Link
-                    to="/services/maternal/prenatal/form"
-                    state={{
-                      params: {
-                        pregnancyData: selectedPatient,
-                        pregnancyId: pregnancyGroups.find((group) => group.status === "Active")?.pregnancyId || null,
-                      },
-                    }}
-                  >
-                    Prenatal
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link
-                    to="/services/maternal/postpartum/form"
-                    state={{
-                      params: {
-                        pregnancyData: selectedPatient,
-                        pregnancyId: pregnancyGroups.find((group) => group.status === "Completed" || group.status === "Active")?.pregnancyId || null,
-                      },
-                    }}
-                  >
-                    Postpartum
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Accordion Container */}
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-md">
-            <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-6" defaultValue={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
-              <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-          </div>
-
-          <div className="bg-white w-full">
-            {filteredGroups.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <p>No pregnancy records found</p>
+        <div className="bg-white rounded-md p-4">
+          <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
+            {/* Search Input and Filter Dropdown */}
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <div className="flex w-full gap-x-2">
+                {/* <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                  <Input placeholder="Search..." className="pl-10 w-full bg-white" onChange={(e) => handleSearch(e.target.value)} />
+                </div> */}
+                <SelectLayout className="w-full md:w-[200px] bg-white" placeholder="Select Filter" options={filter} value={selectedFilter} onChange={handleFilterChange} />
               </div>
-            ) : (
-              <PregnancyAccordion
-                pregnancyGroups={filteredGroups}
-                selectedPatient={selectedPatient}
-                getStatusBadge={getStatusBadge}
-                getRecordTypeBadge={getRecordTypeBadge}
-                onCompletePregnancy={handleCompletePregnancy}
-                onCompleteRecord={handleCompleteRecord}
-                onPregnancyLossRecord={handlePregnancyLossRecord}
-              />
-            )}
-          </div>
-        </div>
-        <div className="bg-white flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
-          {/* Showing Rows Info */}
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, pregnancyData?.count) || 0} of {pregnancyData?.count} rows
-          </p>
+            </div>
 
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">{totalPages > 0 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
+            <div className="w-full sm:w-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default">
+                    <Plus size={15} /> Add Record
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>
+                    <Link
+                      to="/services/maternal/prenatal/form"
+                      state={{
+                        params: {
+                          pregnancyData: selectedPatient,
+                          pregnancyId: pregnancyGroups.find((group) => group.status === "Active")?.pregnancyId || null,
+                        },
+                      }}
+                    >
+                      Prenatal
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      to="/services/maternal/postpartum/form"
+                      state={{
+                        params: {
+                          pregnancyData: selectedPatient,
+                          pregnancyId: pregnancyGroups.find((group) => group.status === "Completed" || group.status === "Active")?.pregnancyId || null,
+                        },
+                      }}
+                    >
+                      Postpartum
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Accordion Container */}
+          <div className="h-full w-full rounded-md">
+            <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-md">
+              <div className="flex gap-x-2 items-center">
+                <p className="text-xs sm:text-sm">Show</p>
+                <Input type="number" className="w-14 h-6" defaultValue={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
+                <p className="text-xs sm:text-sm">Entries</p>
+              </div>
+            </div>
+
+            <div className="bg-white w-full">
+              {filteredGroups.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <p>No pregnancy records found</p>
+                </div>
+              ) : (
+                <PregnancyAccordion
+                  pregnancyGroups={filteredGroups}
+                  selectedPatient={selectedPatient}
+                  getStatusBadge={getStatusBadge}
+                  getRecordTypeBadge={getRecordTypeBadge}
+                  onCompletePregnancy={handleCompletePregnancy}
+                  onCompleteRecord={handleCompleteRecord}
+                  onPregnancyLossRecord={handlePregnancyLossRecord}
+                />
+              )}
+            </div>
+          </div>
+          <div className="bg-white flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
+            {/* Showing Rows Info */}
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, pregnancyData?.count) || 0} of {pregnancyData?.count} rows
+            </p>
+
+            {/* Pagination */}
+            <div className="w-full sm:w-auto flex justify-center">{totalPages > 0 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
+          </div>
         </div>
       </div>
     </LayoutWithBack>

@@ -11,10 +11,7 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     mode = models.CharField(default='walk-in', max_length=20) #walk-in or app 
-    updated_at = models.DateTimeField(auto_now=True)
     trans_id =models.ForeignKey(Transient, on_delete=models.CASCADE, db_column='trans_id', related_name='medicine_requests',blank=True,null=True) 
-    requested_at = models.DateTimeField(auto_now_add=True)
-    fulfilled_at = models.DateTimeField(null=True, blank=True)
     signature = models.TextField(blank=True, null=True)  
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, blank=True,null=True, db_column='patrec_id', related_name='medicine_requests')
 

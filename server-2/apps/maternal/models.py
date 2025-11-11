@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit, BodyMeasurement, Obstetrical_History, MedicalHistory
-from apps.medicineservices.models import MedicineRecord
+from apps.medicineservices.models import MedicineRequest
 from apps.vaccination.models import VaccinationRecord
 import uuid
 from apps.administration.models import Staff
@@ -143,7 +143,7 @@ class Prenatal_Form(models.Model):
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
     bm_id  = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
-    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
+    medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medreq_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
     vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vacrec_id', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
@@ -364,7 +364,7 @@ class PostpartumRecord(models.Model):
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
-    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
+    medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medreq_id', null=True)
     staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
     tts_id = models.ForeignKey(TT_Status, on_delete=models.CASCADE, related_name='postpartum_record', db_column='tts_id', null=True, blank=True)
 

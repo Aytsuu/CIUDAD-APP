@@ -26,6 +26,7 @@ import { getPatients,
 			getMaternalStaff,
 			getPrenatalAppointmentsPending,
 			getPrenatalLabResult,
+			getLatestMaternalFollowUpVisit,
 } from "../restful-api/maternalGetAPI";
 
 import { api2 } from "@/api/api";
@@ -358,6 +359,18 @@ export const usePrenatalLabResult = (pregnancyId: string) => {
 		queryKey: ['prenatalLabResult', pregnancyId],
 		queryFn: () => getPrenatalLabResult(pregnancyId),
 		enabled: !!pregnancyId && pregnancyId !== "undefined" && pregnancyId !== "null",
+		staleTime: 30 * 1000,
+		retry: 2,
+		refetchInterval: 2000,
+	})
+}
+
+// for getLatestMaternalFollowUpVisit
+export const useLatestFollowUpVisit = (patientId: string) => {
+	return useQuery({
+		queryKey: ['maternalLatestFollowUpVisit', patientId],
+		queryFn: () => getLatestMaternalFollowUpVisit(patientId),
+		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
 		staleTime: 30 * 1000,
 		retry: 2,
 		refetchInterval: 2000,

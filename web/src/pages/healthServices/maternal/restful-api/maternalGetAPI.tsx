@@ -2,13 +2,23 @@
 
 import { api2 } from "@/api/api"
 
-// for get
+// for maternal 
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
       return res.data;
   } catch (error) {
       console.error("Error:", error);
+  }
+}
+
+export const getLatestMaternalFollowUpVisit = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/maternal-patients/latest-followupvisit/${patientId}/`)
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching latest maternal follow-up visit: ", error);
+    throw error;
   }
 }
 

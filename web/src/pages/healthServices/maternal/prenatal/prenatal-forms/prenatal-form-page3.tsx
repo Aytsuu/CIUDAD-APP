@@ -57,6 +57,7 @@ const transformMedicineData = (medicines: any[]): MedicineSelection[] => {
 
 /**
  * Helper function: Validate medicine stock availability
+ * Handles both transformed (id) and raw (minv_id) field names
  */
 const validateMedicineStock = (
   selectedMeds: any[],
@@ -70,21 +71,28 @@ const validateMedicineStock = (
 
   for (const med of selectedMeds) {
     // Convert both to strings for comparison to handle type mismatches
-    const medicineItem = medicineOptions.find(
-      m => String(m.minv_id) === String(med.minv_id)
+    // Try matching both 'id' (transformed) and 'minv_id' (raw) fields
+    const medicineItem = medicineOptions.find(m => 
+      String(m.minv_id) === String(med.minv_id) || 
+      String(m.id) === String(med.minv_id)
     )
     
     if (!medicineItem) {
-      console.warn(`Medicine not found. Selected: ${med.minv_id}, Available IDs:`, medicineOptions.map(m => m.minv_id))
+      console.warn(`Medicine not found. Selected: ${med.minv_id}`)
+      console.warn(`Available medicine fields:`, medicineOptions[0] ? Object.keys(medicineOptions[0]) : 'No medicines')
+      console.warn(`Available IDs (minv_id):`, medicineOptions.map(m => m.minv_id))
+      console.warn(`Available IDs (id):`, medicineOptions.map(m => m.id))
       errors.push(`Medicine ID ${med.minv_id} not found in inventory`)
       continue
     }
 
-    const availableQty = Number(medicineItem.minv_qty_avail) || 0
+    // Use 'avail' field if present (transformed), otherwise use 'minv_qty_avail' (raw)
+    const availableQty = Number(medicineItem.avail ?? medicineItem.minv_qty_avail) || 0
     const requestedQty = Number(med.medrec_qty) || 0
 
     if (availableQty < requestedQty) {
-      const medicineName = medicineItem.med_id?.med_name || medicineItem.medicine_name || `Medicine ${med.minv_id}`
+      // Try different name fields
+      const medicineName = medicineItem.name || medicineItem.med_id?.med_name || medicineItem.medicine_name || `Medicine ${med.minv_id}`
       errors.push(
         `Insufficient stock for ${medicineName}. ` +
         `Available: ${availableQty}, Requested: ${requestedQty}`

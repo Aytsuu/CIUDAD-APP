@@ -21,14 +21,14 @@ class MaternalPatientFollowUpVisitsView(APIView):
                     'count': 0
                 }, status=status.HTTP_200_OK)
             
-            # Get one latest follow-up visit per patrec_type
+            # Get the latest follow-up visit across all prenatal/postpartum records
             latest_followups = FollowUpVisit.objects.filter(
                 patrec__patrec_type__in=patrec_types,
                 patrec__pat_id=pat_id
             ).select_related(
                 'patrec',              # Get PatientRecord data
                 'patrec__pat_id'       # Get Patient data
-            ).order_by('patrec__patrec_type', '-followv_date').distinct('patrec__patrec_type')
+            ).order_by('-followv_date')[:1]
             
             # Transform data for API response
             follow_up_visits_data = []

@@ -3,13 +3,13 @@ import { formatDate } from "@/helpers/dateHelper";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 
-import { Trash2, SquarePen, Eye } from "lucide-react";
+import { Trash2, Eye } from "lucide-react";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 type Note = {
    no: number;
    date: string;
    name: string;
-   description: string;
 }
 
 const handleEdit = (no: number) => {
@@ -24,18 +24,16 @@ export const noteColumns: ColumnDef<Note>[] = [
    {
       accessorKey: "date",
       header: "Date",
-      // pass 'long' to formatDate to render a human-friendly string (e.g., October 1, 2023)
       cell: ({ row }) => <div>{formatDate(row.original.date, 'long')}</div>
    },
    {
       accessorKey: "name",
-      header: "BHW Name",
-      cell: ({ row }) => <div>{row.original.name}</div> 
-   },
-   {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => <div>{row.original.description}</div> 
+      header: "Barangay Health Worker",
+      cell: ({ row }) => (
+         <div className="flex items-center justify-center">
+            <div className="w-60 bg-green-500 rounded-md text-white p-2">{row.original.name}</div>
+         </div> 
+      )
    },
    {
       accessorKey: "actions",
@@ -47,16 +45,12 @@ export const noteColumns: ColumnDef<Note>[] = [
                   <Eye size={16}/>
                </Button>
             </Link>
-
-            <Link to={`/bhw/form/`}>
-               <Button variant="outline" onClick={() => handleEdit(row.original.no)}>
-                  <SquarePen size={16}/>
-               </Button>
-            </Link>
             
-            <Button className=" flex gap-1 bg-red-500 text-white hover:bg-red-600" onClick={() => handleDelete(row.original.no)}>
-               <Trash2 size={20}/>
-            </Button>
+            <ProtectedComponent exclude={['ADMIN']}>
+               <Button className=" flex gap-1 bg-red-500 text-white hover:bg-red-600" onClick={() => handleDelete(row.original.no)}>
+                  <Trash2 size={20}/>
+               </Button>
+            </ProtectedComponent>
          </div>
       )
    }

@@ -167,7 +167,7 @@ export function SchedulerSidebar() {
                   <div key={daySchedule.date} className="space-y-2 border border-gray-300 p-2 rounded-md">
                     {/* Day Header */}
                     <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${
-                      isToday ? "bg-blue-100" : "bg-gray-50"
+                      isToday ? "bg-blue-200" : "bg-gray-50"
                     }`}>
                       <Calendar className="h-4 w-4 text-gray-600" />
                       <div className="flex items-center gap-2 flex-1">

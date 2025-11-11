@@ -440,6 +440,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             pregnancy_data = {
                                 'pregnancy_id': latest_pregnancy.pregnancy_id,
                                 'pf_id': latest_prenatal.pf_id,
+                                'pregnancy_status': latest_pregnancy.status.title(),
                             }
                             
                             # Fetch ppr_id from PostpartumRecord if exists
@@ -556,7 +557,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 try:
                     latest_pregnancy = Pregnancy.objects.filter(
                         pat_id=obj,
-                        status='active'
+                        status__in=['active', 'completed']
                     ).order_by('-created_at').first()
                     
                     if latest_pregnancy:
@@ -568,6 +569,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             pregnancy_data = {
                                 'pregnancy_id': latest_pregnancy.pregnancy_id,
                                 'pf_id': latest_prenatal.pf_id,
+                                'pregnancy_status': latest_pregnancy.status.title(),
                             }
                             
                             # fetch ppr_id from PostpartumRecord if exists
