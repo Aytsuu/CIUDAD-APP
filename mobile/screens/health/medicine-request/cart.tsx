@@ -75,16 +75,13 @@ export default function CartScreen() {
     removeUploadedFile(fileId);
   };
 
-  const getFileIcon = (type: string) => {
-    return <Pill size={20} color="#4F46E5" />;
-  };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "";
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
-  };
+  // const formatFileSize = (bytes?: number) => {
+  //   if (!bytes) return "";
+  //   const sizes = ["Bytes", "KB", "MB", "GB"];
+  //   const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  //   return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+  // };
 
  const handleConfirm = async () => {
     if (cartItems.length === 0) {

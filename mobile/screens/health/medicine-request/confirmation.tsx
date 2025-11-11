@@ -9,7 +9,7 @@ import * as React from "react"
 export default function Confirmation() {
   const params = useLocalSearchParams()
   const orderItemsString = params.orderItems as string
-  const medreqId = params.medreqId as string
+  // const medreqId = params.medreqId as string
   const status = params.status as string || "submitted"
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current

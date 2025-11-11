@@ -9,41 +9,42 @@ import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { calculateAge } from '@/helpers/ageCalculator';
 import { TabBar, TabType } from '../../components/tab-bar';
+import { StatusBadge } from '../../components/status-badge';
 
 // Components (keep your existing StatusBadge, TabBar, ChildHealthCard components the same)
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
-      default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
-    }
-  };
+// const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
+//   const getTypeConfig = (type: string) => {
+//     switch (type.toLowerCase()) {
+//       case 'resident':
+//         return {
+//           color: 'text-green-700',
+//           bgColor: 'bg-green-100',
+//           borderColor: 'border-green-200',
+//         };
+//       case 'transient':
+//         return {
+//           color: 'text-amber-700',
+//           bgColor: 'bg-amber-100',
+//           borderColor: 'border-amber-200',
+//         };
+//       default:
+//         return {
+//           color: 'text-gray-700',
+//           bgColor: 'bg-gray-100',
+//           borderColor: 'border-gray-200',
+//         };
+//     }
+//   };
 
-  const typeConfig = getTypeConfig(type);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <UIText className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </UIText>
-    </View>
-  );
-};
+//   const typeConfig = getTypeConfig(type);
+//   return (
+//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+//       <UIText className={`text-xs font-semibold ${typeConfig.color}`}>
+//         {type}
+//       </UIText>
+//     </View>
+//   );
+// };
 
 const ChildHealthCard: React.FC<{
   child: ChildHealthRecord;

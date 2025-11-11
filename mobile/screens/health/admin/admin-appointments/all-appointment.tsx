@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { useAllAppointments } from "../../my-schedules/fetch";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
+import { StatBadge } from "../components/status-badge";
+import { PaginationControls } from "../components/pagination-layout";
 
 type ScheduleRecord = {
   id: number;
@@ -40,27 +42,9 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // StatusBadge Component
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const getStatusConfig = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return { color: 'text-yellow-700', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-200' };
-      case 'completed':
-        return { color: 'text-green-700', bgColor: 'bg-green-100', borderColor: 'border-green-200' };
-      case 'missed' :  case 'cancelled':
-        return { color: 'text-red-700', bgColor: 'bg-red-100', borderColor: 'border-red-200' };
-      default:
-        return { color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-200' };
-    }
-  };
 
-  const statusConfig = getStatusConfig(status);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${statusConfig.color}`}>{status}</Text>
-    </View>
-  );
-};
+
+  // export const statusConfig = getStatusConfig(status);
 
 // TabBar Component
 const TabBar: React.FC<{
@@ -97,7 +81,7 @@ const AppointmentCard: React.FC<{ appointment: ScheduleRecord; onPress: () => vo
         <Text className="text-base font-semibold text-gray-900">
           {appointment.patient.firstName} {appointment.patient.lastName}
         </Text>
-        <StatusBadge status={appointment.status} />
+        <StatBadge status={appointment.status} />
       </View>
       <View className="mt-2">
         <View className="flex-row items-center">
@@ -145,91 +129,91 @@ const ResultsInfo: React.FC<{
 };
 
 // Pagination Component
-const Pagination: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  isLoading: boolean;
-}> = ({ currentPage, totalPages, onPageChange, isLoading }) => {
-  if (totalPages <= 1) return null;
+// const Pagination: React.FC<{
+//   currentPage: number;
+//   totalPages: number;
+//   onPageChange: (page: number) => void;
+//   isLoading: boolean;
+// }> = ({ currentPage, totalPages, onPageChange, isLoading }) => {
+//   if (totalPages <= 1) return null;
 
-  const getVisiblePages = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
+//   const getVisiblePages = () => {
+//     const delta = 2;
+//     const range = [];
+//     const rangeWithDots = [];
 
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
-      range.push(i);
-    }
+//     for (
+//       let i = Math.max(2, currentPage - delta);
+//       i <= Math.min(totalPages - 1, currentPage + delta);
+//       i++
+//     ) {
+//       range.push(i);
+//     }
 
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
-    } else {
-      rangeWithDots.push(1);
-    }
+//     if (currentPage - delta > 2) {
+//       rangeWithDots.push(1, '...');
+//     } else {
+//       rangeWithDots.push(1);
+//     }
 
-    rangeWithDots.push(...range);
+//     rangeWithDots.push(...range);
 
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
-    } else {
-      rangeWithDots.push(totalPages);
-    }
+//     if (currentPage + delta < totalPages - 1) {
+//       rangeWithDots.push('...', totalPages);
+//     } else {
+//       rangeWithDots.push(totalPages);
+//     }
 
-    return rangeWithDots;
-  };
+//     return rangeWithDots;
+//   };
 
-  const visiblePages = getVisiblePages();
+//   const visiblePages = getVisiblePages();
 
-  return (
-    <View className="flex-row items-center justify-center py-4 px-2 bg-white border-t border-gray-200">
-      <TouchableOpacity
-        onPress={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1 || isLoading}
-        className={`flex-row items-center px-3 py-2 rounded-lg mr-2 ${currentPage === 1 || isLoading ? 'opacity-50' : 'bg-gray-100'
-          }`}
-      >
-        <ChevronLeftIcon size={16} color="#374151" />
-        <Text className="ml-1 text-sm font-medium text-gray-700">Prev</Text>
-      </TouchableOpacity>
+//   return (
+//     <View className="flex-row items-center justify-center py-4 px-2 bg-white border-t border-gray-200">
+//       <TouchableOpacity
+//         onPress={() => onPageChange(currentPage - 1)}
+//         disabled={currentPage === 1 || isLoading}
+//         className={`flex-row items-center px-3 py-2 rounded-lg mr-2 ${currentPage === 1 || isLoading ? 'opacity-50' : 'bg-gray-100'
+//           }`}
+//       >
+//         <ChevronLeftIcon size={16} color="#374151" />
+//         <Text className="ml-1 text-sm font-medium text-gray-700">Prev</Text>
+//       </TouchableOpacity>
 
-      <View className="flex-row items-center mx-2">
-        {visiblePages.map((page, index) => (
-          <React.Fragment key={index}>
-            {page === '...' ? (
-              <Text className="px-3 py-2 text-gray-500">...</Text>
-            ) : (
-              <TouchableOpacity
-                onPress={() => onPageChange(page as number)}
-                disabled={isLoading}
-                className={`px-3 py-2 rounded-lg mx-1 min-w-10 items-center ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
-              >
-                <Text className={`text-sm font-medium ${currentPage === page ? 'text-white' : 'text-gray-700'}`}>
-                  {page}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </React.Fragment>
-        ))}
-      </View>
+//       <View className="flex-row items-center mx-2">
+//         {visiblePages.map((page, index) => (
+//           <React.Fragment key={index}>
+//             {page === '...' ? (
+//               <Text className="px-3 py-2 text-gray-500">...</Text>
+//             ) : (
+//               <TouchableOpacity
+//                 onPress={() => onPageChange(page as number)}
+//                 disabled={isLoading}
+//                 className={`px-3 py-2 rounded-lg mx-1 min-w-10 items-center ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+//                   }`}
+//               >
+//                 <Text className={`text-sm font-medium ${currentPage === page ? 'text-white' : 'text-gray-700'}`}>
+//                   {page}
+//                 </Text>
+//               </TouchableOpacity>
+//             )}
+//           </React.Fragment>
+//         ))}
+//       </View>
 
-      <TouchableOpacity
-        onPress={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages || isLoading}
-        className={`flex-row items-center px-3 py-2 rounded-lg ml-2 ${currentPage === totalPages || isLoading ? 'opacity-50' : 'bg-gray-100'
-          }`}
-      >
-        <Text className="mr-1 text-sm font-medium text-gray-700">Next</Text>
-        <ChevronRight size={16} color="#374151" />
-      </TouchableOpacity>
-    </View>
-  );
-};
+//       <TouchableOpacity
+//         onPress={() => onPageChange(currentPage + 1)}
+//         disabled={currentPage === totalPages || isLoading}
+//         className={`flex-row items-center px-3 py-2 rounded-lg ml-2 ${currentPage === totalPages || isLoading ? 'opacity-50' : 'bg-gray-100'
+//           }`}
+//       >
+//         <Text className="mr-1 text-sm font-medium text-gray-700">Next</Text>
+//         <ChevronRight size={16} color="#374151" />
+//       </TouchableOpacity>
+//     </View>
+//   );
+// };
 
 export default function AllAppointments() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -414,7 +398,7 @@ export default function AllAppointments() {
               />
             )}
           />
-          <Pagination
+          <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}

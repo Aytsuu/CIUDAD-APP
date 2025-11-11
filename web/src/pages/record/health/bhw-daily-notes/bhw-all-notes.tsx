@@ -10,6 +10,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 import { noteColumns } from "./bhw-columns";
 
@@ -25,8 +26,20 @@ interface NoteDiv {
 export default function BHWAllNotes() {
 
    const [searchTerm, setSearchTerm] = useState("");
+   const [page, setPage] = useState(1);
+   const [pageSize, setPageSize] = useState(10);
+
 
    const bhwNames = ['Miranda, Saachi', 'Nakpil, Jordyn', 'Fallarco, Soleil', 'Castro, Morgan', 'Gonzaga, Merope'];
+
+   const handlePageChange = (newPage: number) => {
+      setPage(newPage);
+   }
+
+   const handlePageSizeChange = (newSize: number) => {
+      setPageSize(newSize);
+      setPage(1);
+   }
    
    const mockData: NoteDiv[] = [
       {
@@ -55,6 +68,8 @@ export default function BHWAllNotes() {
          name: bhwNames[4],
       }
    ]
+
+   const totalPages = 0
 
    // sort notes by date descending (newest first)
    const sortedNotes = [...mockData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -89,8 +104,39 @@ export default function BHWAllNotes() {
                   </ProtectedComponent>
                </div>
 
-               <div className="border rounded-md mt-4">
-                  <DataTable columns={noteColumns} data={sortedNotes} />
+               <div className="border rounded-md mt-5">
+                  <div className="flex gap-x-2 items-center p-4">
+                     <p className="text-xs sm:text-sm">Show</p>
+                     <Input
+                        type="number"
+                        className="w-14 h-6"
+                        defaultValue={pageSize}
+                        onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                     />
+                     <p className="text-xs sm:text-sm">Entries</p>
+                  </div>
+
+                  <div className="mt-2">
+                     <DataTable columns={noteColumns} data={sortedNotes} />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
+                     {/* Showing Rows Info */}
+                     <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                        Showing 0 of 0 rows
+                     </p>
+         
+                     {/* Pagination */}
+                     <div className="w-full sm:w-auto flex justify-center">
+                        {totalPages >= 0 && (
+                           <PaginationLayout
+                           currentPage={page}
+                           totalPages={totalPages}
+                           onPageChange={handlePageChange}
+                           />
+                        )}
+                     </div>
+                  </div>
                </div>
             </div>
          </div>

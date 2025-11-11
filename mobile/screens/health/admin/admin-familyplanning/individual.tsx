@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRoute } from "@react-navigation/native";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // Define FPRecord type
 interface FPRecord {
@@ -18,6 +19,7 @@ interface FPRecord {
   sex: string;
   method_used: string;
   created_at: string;
+  client_type: string;
 }
 
 const RECORDS_PER_PAGE = 10;
@@ -194,9 +196,15 @@ export default function IndividualFpRecordsScreen() {
                 <InfoRow 
                   icon={Stethoscope} 
                   label="Method Used" 
-                  value={item.method_used || "Not specified"} 
+                  value={item.method_used || "Not specified"}  
                   iconColor="#7e22ce"
                 />
+                <InfoRow 
+                  icon={Stethoscope} 
+                  label="CLIENT TYPE" 
+                  value={item.client_type || "Not specified"} 
+                  iconColor="#7e22ce"
+                />1
                 <InfoRow 
                   icon={Calendar} 
                   label="Created Date" 
@@ -291,12 +299,7 @@ export default function IndividualFpRecordsScreen() {
   );
 
   if (isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
-        <Loader2 size={32} color="#1e40af" />
-        <Text className="text-lg text-gray-600 mt-4">Loading patient records...</Text>
-      </View>
-    );
+    return <LoadingState/>
   }
 
   if (isError) {

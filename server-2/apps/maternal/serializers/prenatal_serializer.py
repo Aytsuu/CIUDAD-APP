@@ -905,7 +905,6 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                     'reason': item.reason,
                     'status': item.status,
                     'requested_at': medicine_request.requested_at,
-                    'fulfilled_at': medicine_request.fulfilled_at,
                     'action_by': item.action_by.staff_id if item.action_by else None,
                     'completed_by': item.completed_by.staff_id if item.completed_by else None,
                 })
