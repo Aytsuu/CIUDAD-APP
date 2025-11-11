@@ -34,14 +34,14 @@
         "expo-splash-screen"
       ]
     }
-  },  
+  },
   "overrides": {
     "nativewind": {
       "react-native-css-interop": "0.1.22"
     }
   },
   "dependencies": {
-    "@expo/cli": "^0.22.18",
+    "@expo/config-plugins": "~10.1.1",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.2.6",
     "@hookform/resolvers": "^4.1.3",
