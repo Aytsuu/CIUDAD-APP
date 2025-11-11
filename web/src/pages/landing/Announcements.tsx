@@ -95,18 +95,18 @@ function AnnouncementTracker() {
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-white py-16 overflow-hidden">
-      <div className="container mx-auto px-8">
+    <div className="relative w-full h-full bg-white lg:py-16 overflow-hidden">
+      <div className="container mx-auto px-4 lg:px-8">
         <div
           ref={headerRef}
-          className={`w-full lg:w-4/5 mx-auto text-darkBlue1 mb-8 gap-3 transition-all duration-700 ${
+          className={`w-full lg:w-4/5 mx-auto text-darkBlue1 mb-5 lg:mb-8 gap-3 transition-all duration-700 ${
             isHeaderVisible
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-10"
           }`}
         >
-          <p className="text-3xl font-bold">Public Announcements</p>
-          <p className="text-base text-darkBlue2">
+          <p className="text-2xl sm:text-3xl font-bold">Public Announcements</p>
+          <p className="text-md sm:text-base text-darkBlue2">
             Stay informed with the latest updates, activities, and public
             notices from Barangay San Roque.
           </p>
@@ -271,17 +271,17 @@ function AnnouncementTracker() {
                 {selected && (
                   <div className="w-full p-8 pb-44">
                     <div className="flex justify-between items-center mb-4">
-                      <div className="bg-gray-100 shadow-sm border rounded-full p-2 lg:hidden"
+                      <div className="bg-gray-100 shadow-sm border rounded-full p-1 lg:hidden"
                         onClick={() => setSelected(null)}
                       >
-                        <ArrowLeft size={22} className="text-gray-700"/>
+                        <ArrowLeft className="text-gray-700 w-5 h-5"/>
                       </div>
                       <p className="text-sm text-gray-400">
                         {handleFormatDate(selected.ann_start_at)}
                       </p>
                     </div>
-                    <Label className="text-md mb-4">{selected.ann_title}</Label>
-                    <p className="mb-6">{selected.ann_details}</p>
+                    <Label className="text-sm sm:text-md mb-4">{selected.ann_title}</Label>
+                    <p className="text-sm sm:text-md mb-6">{selected.ann_details}</p>
                     <MediaGallery
                       mediaFiles={selected.files}
                       emptyState={<div></div>}

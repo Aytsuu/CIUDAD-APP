@@ -42,7 +42,7 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#17294A] via-[#17294A]/70 to-transparent" />
 
       {/* Content */}
-      <div className="absolute inset-0 flex items-center justify-center px-8">
+      <div className="absolute inset-0 flex items-center justify-center px-4 lg:px-8">
         <div className="w-full max-w-[90rem] flex flex-col lg:flex-row justify-between items-center gap-12">
           <div className="lg:hidden flex-shrink-0 mb-10">
             <img
@@ -82,10 +82,10 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
               }}
             />
 
-            <h1 className="text-7xl font-poppins font-bold text-white mb-6 leading-[70px]">
+            <h1 className="text-3xl lg:text-7xl font-poppins font-bold text-white mb-2 lg:mb-6 lg:leading-[70px]">
               Welcome to Our Barangay
             </h1>
-            <p className="text-lg text-white/90 leading-relaxed max-w-2xl">
+            <p className="text-base lg:text-lg text-white/90 leading-relaxed max-w-2xl">
               A community where neighbors help neighbors, families grow
               together, and everyone works to make our barangay a better place
               to live. Welcome to San Roque (Ciudad).

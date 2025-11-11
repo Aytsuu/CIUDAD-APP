@@ -142,7 +142,7 @@ export default function LandingLayout() {
             <div className="flex items-center gap-1 whitespace-nowrap border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
               <BadgeCheck size={14} className="fill-green-600 flex-shrink-0" />
               <span className="truncate">
-                Official Website of Brgy. San Roque (Ciudad)
+                Official Website
               </span>
             </div>
             <div className="flex gap-2 sm:gap-3 flex-shrink-0">
@@ -180,13 +180,13 @@ export default function LandingLayout() {
                 <img
                   src={SanRoqueLogo}
                   alt="San Roque Logo"
-                  className="w-[50px] h-[50px]"
+                  className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px]"
                 />
                 <div className="grid text-white">
-                  <Label className="text-[15px]">
+                  <Label className="text-xs sm:text-[15px]">
                     BARANGAY SAN ROQUE (CIUDAD)
                   </Label>
-                  <Label className="font-poppins">Cebu City</Label>
+                  <Label className="text-xs font-normal sm:text-[15px]">Cebu City</Label>
                 </div>
               </div>
             </div>
@@ -213,8 +213,8 @@ export default function LandingLayout() {
             </nav>
             <SheetLayout
               trigger={
-                <div className="lg:hidden flex px-10">
-                  <Menu className="text-black" />
+                <div className="lg:hidden flex px-5 sm:px-10">
+                  <Menu className="text-black w-5 h-5" />
                 </div>
               }
               content={

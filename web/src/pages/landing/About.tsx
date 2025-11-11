@@ -76,9 +76,9 @@ export default function About({data} : {
       />
 
       {/* Content Container */}
-      <div className="relative h-full container mx-auto px-8 lg:py-16">
+      <div className="relative h-full container mx-auto px-4 lg:px-8 lg:py-16">
         {/* Hero Section */}
-        <div className="text-center flex flex-col items-center mb-16">
+        <div className="text-center flex flex-col items-center lg:mb-16">
           <div
             ref={headerRef}
             className={`transition-all duration-500 ${
@@ -111,7 +111,7 @@ export default function About({data} : {
               <p className="text-lg text-gray-700">Barangay Captain</p>
             </div>
 
-            <p className="text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-gray-700 mb-16 lg:mt-16">
+            <p className="text-lg md:text-2xl max-w-2xl mx-auto leading-relaxed text-gray-700 mb-16 lg:mt-16">
               {data?.quote}
             </p>
             <div className="mb-4 hidden lg:block">
@@ -126,7 +126,7 @@ export default function About({data} : {
           </div>
         </div>
 
-        <div className="w-full flex flex-col items-center mt-8 gap-16">
+        <div className="w-full flex flex-col items-center gap-8 lg:gap-16">
           <div
             ref={mapRef}
             className={`w-full lg:w-4/5 transition-all duration-500 delay-300 ${
