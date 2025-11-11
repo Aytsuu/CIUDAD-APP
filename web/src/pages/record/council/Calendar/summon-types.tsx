@@ -45,7 +45,7 @@ export type HearingSchedule = {
     hearing_minutes: HearingMinutes[];
 }
 
-export type CouncilMediationCalendarCase = {
+export type SummonCalendarCase = {
     sc_id: string;
     sc_code: string;
     sc_mediation_status: string;
@@ -54,10 +54,10 @@ export type CouncilMediationCalendarCase = {
     complainant_names: string[];
     accused_names: string[];
     incident_type: string;
-    hearing_schedules: CouncilMediationHearingSchedule[];
+    hearing_schedules: SummonHearingSchedule[];
 }
 
-export type CouncilMediationHearingSchedule = {
+export type SummonHearingSchedule = {
     hs_id: string;
     hs_level: string;
     hs_is_closed: boolean;
@@ -71,7 +71,7 @@ export type CouncilMediationHearingSchedule = {
     };
 }
 
-export type CouncilMediationEvent = {
+export type SummonEvent = {
   id: string; 
   title: string; 
   start: string; 

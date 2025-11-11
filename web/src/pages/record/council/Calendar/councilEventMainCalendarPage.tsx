@@ -585,7 +585,7 @@ import EditEventForm from "./councilEventEdit.tsx";
 import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/councilEventdelqueries.tsx";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { councilEventColumns, councilMediationColumns } from "./event-cols.tsx";
+import { councilEventColumns, summonColumns } from "./event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
@@ -598,7 +598,7 @@ import { useGetWasteEvents, WasteEvent } from "../../waste-scheduling/waste-even
 import { useDeleteWasteEvent, useRestoreWasteEvent } from "../../waste-scheduling/waste-event/queries/wasteEventDelQueries";
 import WasteEventView from "../../waste-scheduling/waste-event/waste-event-view";
 import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans, useDeleteAnnualDevPlans } from "../../gad/annual_development_plan/queries/annualDevPlanFetchQueries";
-import { useGetMediationSchedules } from "./queries/summonFetchQueries.tsx";
+import { useGetMediationSchedules, useGetConciliationSchedules } from "./queries/summonFetchQueries.tsx";
 import { transformToEvents } from "./event-transform.tsx";
 
 function CalendarPage() {
@@ -610,13 +610,16 @@ function CalendarPage() {
   const [_actionInProgress, setActionInProgress] = useState(false);
   const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";
   const isWaste = user?.staff?.pos?.toLowerCase() === "waste";
-  const isPeaceOfficer = user?.staff?.pos?.toLowerCase() === "peace officer";
+  const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase() === "lupon tagapamayapa";
   const isClerk = user?.staff?.pos?.toLowerCase() === "clerk";
   const showMediation = isSecretary || isClerk;
   
   // Fetch mediation schedules (only if Secretary or Clerk)
   const { data: mediationSchedules = [], isLoading: isMediationLoading, isRefetching: isMediationRefetching } = useGetMediationSchedules();
   const mediationEvents = transformToEvents(mediationSchedules || []);
+
+  const { data: conciliationSchedules = [], isLoading: isConciliationLoading, isRefetching: isConciliationRefetching } = useGetConciliationSchedules();
+  const conciliationEvents = transformToEvents(conciliationSchedules || []);
 
   // Fetch NON-archived events for calendar tab
   const { data: activeEventsData, isLoading: isActiveEventsLoading } = useGetCouncilEvents( 1,  1000,  undefined,  "all",  false  );
@@ -660,12 +663,24 @@ function CalendarPage() {
         viewEditComponent: EditEventForm,
       }
     ];
+
+    if (isLuponTagapamayapa) {
+      sources.push({
+        name: "Conciliation Proceedings", 
+        data: conciliationEvents,
+        columns: summonColumns,
+        titleAccessor: "sc_code",
+        dateAccessor: "hearing_date",
+        timeAccessor: "hearing_time",
+        defaultColor: "#ef4444", 
+      });
+    }
     
     if (showMediation) {
       sources.push({
         name: "Mediation", 
         data: mediationEvents,
-        columns: councilMediationColumns,
+        columns: summonColumns,
         titleAccessor: "sc_code",
         dateAccessor: "hearing_date",
         timeAccessor: "hearing_time",
@@ -682,7 +697,7 @@ function CalendarPage() {
     }
     
     return sources;
-  }, [calendarEvents, mediationEvents, gadCalendarSource, wasteCalendarSource, showMediation]);
+  }, [calendarEvents, mediationEvents, conciliationEvents, gadCalendarSource, wasteCalendarSource, showMediation, isLuponTagapamayapa]);
   
   const legendItems = useMemo(() => {
     const items: any[] = [];
@@ -691,9 +706,12 @@ function CalendarPage() {
       if (showMediation) {
         items.push({ label: "Mediation", color: "#f97316" });
       }
+      if (isLuponTagapamayapa) {
+        items.push({ label: "Conciliation Proceedings", color: "#ef4444" });
+      }
       items.push(wasteLegendItem);
     return items;
-  }, [showMediation]);
+  }, [showMediation, isLuponTagapamayapa]);
 
   const filteredEvents = councilEvents.filter((event: CouncilEvent) => {
     if (activeTab === "archive") {
@@ -763,7 +781,7 @@ function CalendarPage() {
   };
 
   const isLoading = activeTab === "calendar" 
-    ? (isActiveEventsLoading || (showMediation && isMediationLoading) || isMediationRefetching)
+    ? (isActiveEventsLoading || (showMediation && isMediationLoading) || isMediationRefetching || isConciliationLoading || isConciliationRefetching)
     : (isArchivedEventsLoading || isArchivedWasteEventsLoading || isArchivedGADLoading);
   
   useEffect(() => {

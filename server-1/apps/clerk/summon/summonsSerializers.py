@@ -438,7 +438,7 @@ class CaseTrackingSerializer(serializers.Serializer):
 
 
 # ========================= CALENDAR SERIALIZER ==========================
-class CouncilMediationCalendarSerializer(serializers.ModelSerializer):
+class ForCalendarSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()

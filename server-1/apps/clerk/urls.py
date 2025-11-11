@@ -44,6 +44,7 @@ urlpatterns = [
 
     # calendar
     path('mediation-calendar/', CouncilMediationCalendarView.as_view(), name='mediation-calendar'),
+    path('conciliation-calendar/', ConciliationProceedingsCalendarView.as_view(), name='conciliation-calendar'),
 
     # resident case tracking
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),

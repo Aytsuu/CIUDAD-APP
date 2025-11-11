@@ -1,7 +1,7 @@
-import { CouncilMediationCalendarCase, CouncilMediationEvent } from "./summon-types";
+import { SummonCalendarCase, SummonEvent } from "./summon-types";
 
-export const transformToEvents = (cases: CouncilMediationCalendarCase[]): CouncilMediationEvent[] => {
-  const events: CouncilMediationEvent[] = [];
+export const transformToEvents = (cases: SummonCalendarCase[]): SummonEvent[] => {
+  const events: SummonEvent[] = [];
 
   cases.forEach(summonCase => {  
     if (summonCase.hearing_schedules && summonCase.hearing_schedules.length > 0) {

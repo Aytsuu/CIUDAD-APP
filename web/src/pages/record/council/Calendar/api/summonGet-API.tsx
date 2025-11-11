@@ -9,3 +9,13 @@ export const getMediationSchedules = async () => {
         throw err
     }
 }
+
+export const getConciliationSchedules = async () => {
+    try{
+        const res = await api.get('/clerk/conciliation-calendar/')
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}
