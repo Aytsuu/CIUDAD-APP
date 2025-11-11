@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import { Printer, Search, Loader2, AlertTriangle } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -11,7 +11,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyFirstAidRecords } from "./queries/fetch";
-import { FirstAidInventoryItem } from "./types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyInventoryFirstAidDetails() {
@@ -19,7 +18,7 @@ export default function MonthlyInventoryFirstAidDetails() {
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
   const { showLoading, hideLoading } = useLoading();
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -27,10 +26,7 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const { data: apiResponse, isLoading, error } = useMonthlyFirstAidRecords(month, currentPage, pageSize, searchTerm);
 
-  const records: FirstAidInventoryItem[] = useMemo(
-    () => apiResponse?.data?.inventory_summary || [],
-    [apiResponse]
-  );
+  const records: any[] = useMemo(() => apiResponse?.data?.inventory_summary || [], [apiResponse]);
 
   useEffect(() => {
     if (isLoading) showLoading();
@@ -62,20 +58,21 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
+      "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "First Aid Item": item.fa_name,
       "Opening Stock": item.opening,
       "Received Items": item.received,
       "Dispensed Items": item.dispensed,
       "Closing Stock": item.closing,
       Unit: item.unit,
-      "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+      "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF('landscape');
+  const handleExportPDF = () => exportToPDF("landscape");
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -88,6 +85,7 @@ export default function MonthlyInventoryFirstAidDetails() {
   };
 
   const tableHeader = [
+    "Date Received",
     "First Aid Item",
     <div className="text-center flex flex-col items-center">
       {" "}
@@ -101,7 +99,7 @@ export default function MonthlyInventoryFirstAidDetails() {
       <span>(Present Month),</span>
     </div>,
     "Unit",
-    "Expiry Date"
+    "Expiry Date",
   ];
 
   return (
@@ -120,9 +118,9 @@ export default function MonthlyInventoryFirstAidDetails() {
           </Button>
         </div>
       </div>
-      <div className="flex justify-end  p-4 bg-white">
+      <div className="flex justify-end pt-4 bg-white">
         <Button
-          variant="destructive"
+          variant="ghost"
           onClick={() =>
             navigate("/firstaid-expired-out-of-stock-summary/details", {
               state: {
@@ -131,8 +129,10 @@ export default function MonthlyInventoryFirstAidDetails() {
               },
             })
           }
+          className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
         >
-          Need Restocks
+          View First Aid Items that Need Restocks
+          <AlertTriangle className="h-4 w-4" />
         </Button>
       </div>
 
@@ -175,7 +175,7 @@ export default function MonthlyInventoryFirstAidDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px"
+            fontSize: "12px",
           }}
         >
           <div className="text-center mb-6 print-only">
@@ -191,10 +191,18 @@ export default function MonthlyInventoryFirstAidDetails() {
           ) : (
             <TableLayout
               header={tableHeader}
-              rows={paginatedRecords.map((item) => [item.fa_name, item.opening.toString(), item.dispensed.toString(), item.closing.toString(), item.unit, item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"])}
-              tableClassName="w-full border"
-              headerCellClassName="font-medium text-sm p-2 border text-center"
-              bodyCellClassName="p-2 border text-sm text-center"
+              rows={paginatedRecords.map((item) => [
+                item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+                item.fa_name,
+                item.opening.toString(),
+                item.dispensed.toString(),
+                item.closing.toString(),
+                item.unit,
+                item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
+              ])}
+              tableClassName="w-full border border-black"
+              headerCellClassName="font-medium text-sm p-2 border  border-black text-center text-black"
+              bodyCellClassName="p-2 border border-black text-sm text-center"
             />
           )}
         </div>

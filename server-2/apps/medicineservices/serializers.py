@@ -32,16 +32,18 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
 
     def get_latest_medicine_date(self, obj):
         """
-        Get the most recent medicine record date for this patient based on fulfilled_at.
+        Get the most recent fulfilled_at date for this patient's medicine request items.
+        Returns only the date part if fulfilled_at exists.
         """
-        latest_medicine = MedicineRequest.objects.filter(
-            patrec_id__pat_id=obj.pat_id
+        latest_item = MedicineRequestItem.objects.filter(
+            medreq_id__patrec__pat_id=obj.pat_id,
+            fulfilled_at__isnull=False
         ).order_by('-fulfilled_at').first()
-
-        if latest_medicine and latest_medicine.fulfilled_at:
-            return latest_medicine.fulfilled_at
+        if latest_item and latest_item.fulfilled_at:
+            return latest_item.fulfilled_at.date()
         return None
-    
+
+        return latest_item.fulfilled_at if latest_item else None
 
 class MedicineAllocationSerializer(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv', read_only=True)

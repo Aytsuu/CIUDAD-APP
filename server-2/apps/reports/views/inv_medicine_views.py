@@ -172,8 +172,9 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
                 mdt_action__icontains="added"
             )
             opening_out = transactions.filter(
-                created_at__date__lt=start_date,
-                mdt_action__icontains="deduct"
+                created_at__date__lt=start_date
+            ).filter(
+                Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
             )
             opening_qty = (sum(self._parse_qty(t) for t in opening_in) -
                            sum(self._parse_qty(t) for t in opening_out))
@@ -195,8 +196,9 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             dispensed_qty = sum(
                 self._parse_qty(t) for t in transactions.filter(
                     created_at__date__gte=start_date,
-                    created_at__date__lte=end_date,
-                    mdt_action__icontains="deduct"
+                    created_at__date__lte=end_date
+                ).filter(
+                Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
                 )
             )
 
@@ -214,7 +216,11 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             
             # Skip if there's no stock and it's not expiring this month
             # Also include items that expired this month even if closing_qty <= 0
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+            if (closing_qty <= 0 and 
+                (not expiry_date or expiry_date < start_date) and 
+                not expired_this_month and
+                not monthly_transactions.exists() and
+                not transactions.filter(created_at__date__gte=start_date, created_at__date__lte=end_date).exists()):
                 continue
 
             inventory_summary.append({
@@ -382,6 +388,7 @@ class MedicineExpiredOutOfStockSummaryAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
 class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -462,7 +469,11 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
 
             # Calculate stock levels - multiply boxes for added quantities
             opening_in = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="added")
-            opening_out = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="deduct")
+            opening_out = transactions.filter(
+                created_at__date__lt=start_date
+            ).filter(
+                Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
+            )
             opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
 
             monthly_transactions = transactions.filter(
@@ -472,7 +483,12 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
             # Multiply boxes for received items
             received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(mdt_action__icontains="added"))
             # Don't multiply boxes for dispensed items (they're already in pieces)
-            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(mdt_action__icontains="deduct"))
+            dispensed_qty = sum(
+                self._parse_qty(t, multiply_boxes=False)
+                for t in monthly_transactions.filter(
+                    Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
+                )
+            )
 
             closing_qty = opening_qty + received_qty - dispensed_qty
 
@@ -490,6 +506,7 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
                 'received': received_qty,
                 'dispensed': dispensed_qty,
                 'closing_stock': closing_qty,
+                'date_received': minv.created_at,
                 'unit': 'pcs',
                 'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
             }
@@ -680,8 +697,8 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
                 mdt_action__icontains="added"
             )
             opening_out = transactions.filter(
+                Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted"),
                 created_at__date__lt=start_date,
-                mdt_action__icontains="deduct"
             )
             opening_qty = (sum(self._parse_qty(t) for t in opening_in) -
                            sum(self._parse_qty(t) for t in opening_out))
@@ -702,9 +719,10 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             # Dispensed during the month
             dispensed_qty = sum(
                 self._parse_qty(t) for t in transactions.filter(
+                    Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
+                ).filter(
                     created_at__date__gte=start_date,
                     created_at__date__lte=end_date,
-                    mdt_action__icontains="deduct"
                 )
             )
 
@@ -722,13 +740,18 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             
             # Skip if there's no stock and it's not expiring this month
             # Also include items that expired this month even if closing_qty <= 0
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+            if (closing_qty <= 0 and 
+                (not expiry_date or expiry_date < start_date) and 
+                not expired_this_month and
+                not monthly_transactions.exists() and
+                not transactions.filter(created_at__date__gte=start_date, created_at__date__lte=end_date).exists()):
                 continue
 
             # CORRECTED: Get medicine details from Medicinelist model
             medicine = first_tx.minv_id.med_id
             inventory_summary.append({
                 'med_name': f"{medicine.med_name} {medicine.med_dsg}{medicine.med_dsg_unit} {medicine.med_form}",
+                'date_received': first_tx.created_at.date(),
                 'opening': display_opening,
                 'received': received_qty,
                 'dispensed': dispensed_qty,

@@ -185,7 +185,7 @@
       accessorKey: "medicine",
       header: "Medicine Details",
       cell: ({ row }) => (
-        <div className="min-w-[250px] px-3 py-2">
+        <div className="text-center px-3 py-2">
           <div className="font-semibold text-gray-900">{row.original.med_details?.med_name || "Unknown"}</div>
           <div className="text-sm text-gray-600 mt-1">
             {row.original.med_details?.med_dsg} {row.original.med_details?.med_form}

@@ -23,7 +23,7 @@ from ..utils import *
 
 
 class ChildHealthSupplementsMasterReport(generics.ListAPIView):
-    pagination_class = ExportPagination
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         self.vitamin_a_category = Category.objects.filter(cat_name__icontains='vitamin a').first()
@@ -41,9 +41,9 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
             'patrec__pat_id__trans_id__tradd_id'
         ).prefetch_related(
             Prefetch(
-                'child_health_histories__child_health_supplements__medreqitem',
+                'child_health_histories__child_health_supplements__medreq__items',
                 queryset=MedicineRequestItem.objects.select_related(
-                    'med', 'med__cat', 'medreq_id'
+                    'med', 'med__cat'
                 )
             ),
             Prefetch(
@@ -172,61 +172,68 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
 
             for history in child.child_health_histories.all():
                 for supplement in history.child_health_supplements.all():
-                    med_rec = supplement.medrec
-                    if not med_rec or not hasattr(med_rec, 'minv_id') or not med_rec.minv_id.med_id:
+                    med_request = supplement.medreq
+                    if not med_request:
                         continue
                     
-                    cat = med_rec.minv_id.med_id.cat
-                    supplement_date = med_rec.requested_at.date()
-                    age_months = (supplement_date.year - dob.year) * 12 + (supplement_date.month - dob.month)
-                    supplement_records.append({
-                        'date': supplement_date,
-                        'age_months': age_months,
-                        'medicine': med_rec.minv_id.med_id.med_name,
-                        'category': cat.cat_name if cat else 'Unknown'
-                    })
-                    if cat == self.vitamin_a_category:
-                        if 6 <= age_months <= 11:
-                            if not vitamin_a['6-11'] or supplement_date > vitamin_a['6-11']:
-                                vitamin_a['6-11'] = supplement_date
-                        elif 12 <= age_months <= 23:
-                            if not vitamin_a['12-23']['1st_dose']:
-                                vitamin_a['12-23']['1st_dose'] = supplement_date
-                            elif not vitamin_a['12-23']['2nd_dose'] and supplement_date != vitamin_a['12-23']['1st_dose']:
-                                vitamin_a['12-23']['2nd_dose'] = supplement_date
-                        elif 24 <= age_months <= 35:
-                            if not vitamin_a['24-35']['1st_dose']:
-                                vitamin_a['24-35']['1st_dose'] = supplement_date
-                            elif not vitamin_a['24-35']['2nd_dose'] and supplement_date != vitamin_a['24-35']['1st_dose']:
-                                vitamin_a['24-35']['2nd_dose'] = supplement_date
-                        elif 36 <= age_months <= 47:
-                            if not vitamin_a['36-47']['1st_dose']:
-                                vitamin_a['36-47']['1st_dose'] = supplement_date
-                            elif not vitamin_a['36-47']['2nd_dose'] and supplement_date != vitamin_a['36-47']['1st_dose']:
-                                vitamin_a['36-47']['2nd_dose'] = supplement_date
-                        elif 48 <= age_months <= 59:
-                            if not vitamin_a['48-59']['1st_dose']:
-                                vitamin_a['48-59']['1st_dose'] = supplement_date
-                            elif not vitamin_a['48-59']['2nd_dose'] and supplement_date != vitamin_a['48-59']['1st_dose']:
-                                vitamin_a['48-59']['2nd_dose'] = supplement_date
-                    
-                    elif cat == self.deworming_category:
-                        if 12 <= age_months <= 23:
-                            if not deworming['12-23']['1st_dose']:
-                                deworming['12-23']['1st_dose'] = supplement_date
-                            elif not deworming['12-23']['2nd_dose'] and supplement_date != deworming['12-23']['1st_dose']:
-                                deworming['12-23']['2nd_dose'] = supplement_date
-                        elif 24 <= age_months <= 59:
-                            if not deworming['24-59']['1st_dose']:
-                                deworming['24-59']['1st_dose'] = supplement_date
-                            elif not deworming['24-59']['2nd_dose'] and supplement_date != deworming['24-59']['1st_dose']:
-                                deworming['24-59']['2nd_dose'] = supplement_date
-                    
-                    elif cat == self.mnp_category:
-                        if 6 <= age_months <= 11:
-                            mnp['6-11'].append(supplement_date)
-                        elif 12 <= age_months <= 23:
-                            mnp['12-23'].append(supplement_date)
+                    # Process all medicine request items for this supplement
+                    for med_req_item in med_request.items.all():
+                        if not med_req_item.med or not hasattr(med_req_item.med, 'cat'):
+                            continue
+                        
+                        cat = med_req_item.med.cat
+                        supplement_date = med_request.requested_at
+                        age_months = (supplement_date.year - dob.year) * 12 + (supplement_date.month - dob.month)
+                        
+                        supplement_records.append({
+                            'date': supplement_date,
+                            'age_months': age_months,
+                            'medicine': med_req_item.med.med_name,
+                            'category': cat.cat_name if cat else 'Unknown'
+                        })
+                        
+                        if cat == self.vitamin_a_category:
+                            if 6 <= age_months <= 11:
+                                if not vitamin_a['6-11'] or supplement_date > vitamin_a['6-11']:
+                                    vitamin_a['6-11'] = supplement_date
+                            elif 12 <= age_months <= 23:
+                                if not vitamin_a['12-23']['1st_dose']:
+                                    vitamin_a['12-23']['1st_dose'] = supplement_date
+                                elif not vitamin_a['12-23']['2nd_dose'] and supplement_date != vitamin_a['12-23']['1st_dose']:
+                                    vitamin_a['12-23']['2nd_dose'] = supplement_date
+                            elif 24 <= age_months <= 35:
+                                if not vitamin_a['24-35']['1st_dose']:
+                                    vitamin_a['24-35']['1st_dose'] = supplement_date
+                                elif not vitamin_a['24-35']['2nd_dose'] and supplement_date != vitamin_a['24-35']['1st_dose']:
+                                    vitamin_a['24-35']['2nd_dose'] = supplement_date
+                            elif 36 <= age_months <= 47:
+                                if not vitamin_a['36-47']['1st_dose']:
+                                    vitamin_a['36-47']['1st_dose'] = supplement_date
+                                elif not vitamin_a['36-47']['2nd_dose'] and supplement_date != vitamin_a['36-47']['1st_dose']:
+                                    vitamin_a['36-47']['2nd_dose'] = supplement_date
+                            elif 48 <= age_months <= 59:
+                                if not vitamin_a['48-59']['1st_dose']:
+                                    vitamin_a['48-59']['1st_dose'] = supplement_date
+                                elif not vitamin_a['48-59']['2nd_dose'] and supplement_date != vitamin_a['48-59']['1st_dose']:
+                                    vitamin_a['48-59']['2nd_dose'] = supplement_date
+                        
+                        elif cat == self.deworming_category:
+                            if 12 <= age_months <= 23:
+                                if not deworming['12-23']['1st_dose']:
+                                    deworming['12-23']['1st_dose'] = supplement_date
+                                elif not deworming['12-23']['2nd_dose'] and supplement_date != deworming['12-23']['1st_dose']:
+                                    deworming['12-23']['2nd_dose'] = supplement_date
+                            elif 24 <= age_months <= 59:
+                                if not deworming['24-59']['1st_dose']:
+                                    deworming['24-59']['1st_dose'] = supplement_date
+                                elif not deworming['24-59']['2nd_dose'] and supplement_date != deworming['24-59']['1st_dose']:
+                                    deworming['24-59']['2nd_dose'] = supplement_date
+                        
+                        elif cat == self.mnp_category:
+                            if 6 <= age_months <= 11:
+                                mnp['6-11'].append(supplement_date)
+                            elif 12 <= age_months <= 23:
+                                mnp['12-23'].append(supplement_date)
 
             mnp['6-11'].sort()
             mnp['12-23'].sort()

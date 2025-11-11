@@ -191,10 +191,10 @@ class CommodityStockTableView(APIView):
                 # Calculate dispensed quantity
                 if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
                     dispensed_qty = total_pcs - available_stock
-                    dispensed_display = f"{dispensed_qty} pcs"
+                    dispensed_display = f"{dispensed_qty - stock.wasted} pcs"
                 else:
                     dispensed_qty = cinv_qty - available_stock
-                    dispensed_display = f"{dispensed_qty} {stock.cinv_qty_unit}"
+                    dispensed_display = f"{dispensed_qty - stock.wasted} {stock.cinv_qty_unit}"
                 
                 # Get category - since CommodityList doesn't have cat field, we'll use a default or check if it exists
                 category = "N/A"
@@ -215,8 +215,8 @@ class CommodityStockTableView(APIView):
                     },
                     'cinv_qty_unit': stock.cinv_qty_unit,
                     'recevFrom': stock.cinv_recevFrom or "OTHERS",
-                    'administered': dispensed_display,
-                    'wastedDose': "0",  # Add if you have wasted commodity tracking
+                    'qty_used': dispensed_display,
+                    'wasted': f"{stock.wasted} {'pcs' if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == 'boxes' else stock.cinv_qty_unit}",  # Adjusted for boxes
                     'availableStock': available_stock,
                     'expiryDate': expiry_date.isoformat() if expiry_date else None,
                     'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
@@ -474,14 +474,13 @@ class CommodityArchiveInventoryView(APIView):
     
     def patch(self, request, inv_id):
         """
-        Archive commodity inventory item and create expired transaction only if expired AND has available stock
+        Archive commodity inventory item (no expired transaction creation)
         """
         try:
             # Get inventory item
             inventory = get_object_or_404(Inventory, inv_id=inv_id)
             
             # Check if this is actually a commodity inventory
-            # Use the correct reverse relationship name
             if not hasattr(inventory, 'commodityinventory'):
                 return Response(
                     {"error": "This inventory item is not a commodity item"}, 
@@ -493,35 +492,10 @@ class CommodityArchiveInventoryView(APIView):
             inventory.updated_at = timezone.now()
             inventory.save()
             
-            # Check if item is expired and has available stock to create transaction
-            is_expired = request.data.get('is_expired', False)
-            has_available_stock = request.data.get('has_available_stock', False)
-            
-            # Convert string 'true'/'false' to boolean if needed
-            if isinstance(is_expired, str):
-                is_expired = is_expired.lower() == 'true'
-            if isinstance(has_available_stock, str):
-                has_available_stock = has_available_stock.lower() == 'true'
-            
-            transaction_created = False
-            if is_expired and has_available_stock:
-                try:
-                    self._create_expired_transaction(inventory)
-                    transaction_created = True
-                except Exception as e:
-                    # Roll back the archive operation if transaction creation fails
-                    inventory.is_Archived = False
-                    inventory.save()
-                    return Response(
-                        {"error": f"Failed to create transaction for expired commodity: {str(e)}"}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
             return Response(
                 {
                     "message": "Commodity inventory archived successfully", 
-                    "inv_id": inv_id,
-                    "transaction_created": transaction_created
+                    "inv_id": inv_id
                 },
                 status=status.HTTP_200_OK
             )
@@ -531,28 +505,6 @@ class CommodityArchiveInventoryView(APIView):
                 {"error": f"Error archiving commodity inventory: {str(e)}"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-    
-    def _create_expired_transaction(self, inventory):
-        """
-        Create expired transaction for commodity items with available stock
-        """
-        # Access the commodity inventory through the reverse relationship
-        commodity_inventory = inventory.commodityinventory
-        current_qty = commodity_inventory.cinv_qty_avail or 0
-        unit = commodity_inventory.cinv_qty_unit or "pcs"
-        
-        if unit.lower() == "boxes":
-            qty_with_unit = f"{current_qty} pcs"
-        else:
-            qty_with_unit = f"{current_qty} {unit}"
-        
-        # Create the commodity transaction
-        CommodityTransaction.objects.create(
-            comt_qty=qty_with_unit,
-            comt_action="Expired",
-            cinv_id=commodity_inventory,  # This should be the CommodityInventory instance
-            staff=None  # None for system action
-        )
 
 
 # ===========================TRANSACTION ==========================================
@@ -782,7 +734,7 @@ class CommodityDeduct(APIView):
             record = request.data.get('record', {})
             cinv_id = record.get('id')
             deduct_qty = int(data.get('wastedAmount', 0))
-            action = "Deducted"
+            action = "Wasted"
             staff_id = data.get('staff_id')
             print("Deducting quantity:", deduct_qty)     
             print("From inventory ID:", cinv_id)
@@ -802,6 +754,7 @@ class CommodityDeduct(APIView):
             
             # Deduct the quantity
             commodity_inventory.cinv_qty_avail -= deduct_qty
+            commodity_inventory.wasted += deduct_qty
             commodity_inventory.updated_at = timezone.now()
             commodity_inventory.save()
             
@@ -1014,8 +967,9 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                 comt_action__icontains="added"
             )
             opening_out = transactions.filter(
-                created_at__date__lt=start_of_month,
-                comt_action__icontains="deduct"
+                created_at__date__lt=start_of_month
+            ).filter(
+                Q(comt_action__icontains="deduct") | Q(comt_action__icontains="wasted")
             )
             # For opening stock, multiply boxes for added quantities but not for deducted
             opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
@@ -1028,11 +982,15 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
             ))
 
             # Dispensed during the month (DON'T multiply boxes for dispensed items)
-            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in transactions.filter(
-                created_at__date__gte=start_of_month,
-                created_at__date__lte=end_of_month,
-                comt_action__icontains="deduct"
-            ))
+            dispensed_qty = sum(
+                self._parse_qty(t, multiply_boxes=False)
+                for t in transactions.filter(
+                    created_at__date__gte=start_of_month,
+                    created_at__date__lte=end_of_month
+                ).filter(
+                    Q(comt_action__icontains="deduct") | Q(comt_action__icontains="wasted")
+                )
+            )
 
             # Opening displayed includes received during the month
             display_opening = opening_qty + received_qty
@@ -1043,8 +1001,10 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                                 start_of_month <= expiry_date <= end_of_month)
             
             # Skip if there's no stock and it's not expiring this month
-            # Also include items that expired this month even if closing_qty <= 0
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_of_month) and not expired_this_month:
+            if (closing_qty <= 0 and 
+                (not expiry_date or expiry_date < start_of_month) and 
+                not expired_this_month and
+                not transactions.filter(created_at__date__gte=start_of_month, created_at__date__lte=end_of_month).exists()):
                 continue
 
             # Display unit as is (frontend will handle conversion)
@@ -1057,6 +1017,7 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                 'receivedfrom': first_tx.cinv_id.cinv_recevFrom,
                 'dispensed': dispensed_qty,
                 'closing': closing_qty,
+                'date_received': first_tx.created_at.date() if first_tx.created_at else None,
                 'unit': display_unit,
                 'expiry': expiry_date,
                 'received_from': first_tx.cinv_id.cinv_recevFrom,
@@ -1337,6 +1298,7 @@ class MonthlyCommodityExpiredOutOfStockDetailAPIView(APIView):
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
                 'opening_stock': opening_qty,
                 'received': received_qty,
+                'date_received': cinv.created_at.date() if cinv.created_at else None,
                 'dispensed': dispensed_qty,
                 'closing_stock': closing_qty,
                 'unit': 'pcs',

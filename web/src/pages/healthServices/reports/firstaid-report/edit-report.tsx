@@ -22,25 +22,38 @@ export default function EditMonthlyRecipientList() {
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  // New state variables for additional header fields
+  const [department, setDepartment] = useState("");
+  const [locationText, setLocationText] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
   const [selectedStaffDisplay, setSelectedStaffDisplay] = useState(""); // For display in combobox
 
   // Safe access with optional chaining and fallbacks
   const passedStaffId = reports?.staff_details?.staff_id || "";
+  console.log("Passed Staff ID:", passedStaffId);
   const signatureBase64 = reports?.signature || null;
 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
+      console.log("Searching for staff with ID:", passedStaffId);
+      console.log("Available staff options:", staffOptions.formatted);
+      
       // Find the staff member in the options
       const staffMember = staffOptions.formatted.find((staff) => {
-        // Extract ID from value (value is "ID-NAME-POSITION")
-        const staffIdFromValue = staff.id;
-        return staffIdFromValue === passedStaffId;
+        // Extract ID from the concatenated id string (format: "staff_id-firstname-lastname-position")
+        const staffIdFromValue = staff.id.split("-")[0];
+        console.log("Comparing:", staffIdFromValue, "with", passedStaffId);
+        return staffIdFromValue === passedStaffId.toString();
       });
+
+      console.log("Found staff member:", staffMember);
 
       if (staffMember) {
         // Set both the display value and the actual ID
-        setSelectedStaffDisplay(`${staffMember.id}-${staffMember.rawName}-${staffMember.position}`);
+        setSelectedStaffDisplay(staffMember.id);
         setSelectedStaffId(passedStaffId);
       }
     }
@@ -48,6 +61,9 @@ export default function EditMonthlyRecipientList() {
     if (reports) {
       setOffice(reports.office || "");
       setcontrol_no(reports.control_no || "");
+      setDepartment(reports.department || "CEBU CITY HEALTH DEPARTMENT");
+      setLocationText(reports.location || "General Maxilom Extension, Carreta, Cebu City");
+      setContactNumber(reports.contact_number || "(032) 232-6820; 232-6863");
       // Set initial logo preview if logo exists
       if (reports.logo) {
         setLogoPreview(reports.logo);
@@ -126,7 +142,10 @@ export default function EditMonthlyRecipientList() {
       signature: currentSignature,
       office: office.toUpperCase(),
       control_no: control_no,
-      total_records: recordCount
+      total_records: recordCount,
+      department: department,
+      location: locationText,
+      contact_number: contactNumber
     };
 
     // Add logo as base64 if selected
@@ -169,7 +188,19 @@ export default function EditMonthlyRecipientList() {
       <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="flex justify-center">
-        <div className="w-[816px] min-h-[1320px] bg-white shadow-lg p-8">
+        <div className=" bg-white shadow-lg p-8"
+        
+         style={{
+              width: "13in",
+              position: "relative",
+              margin: "0 auto",
+              padding: "0.5in",
+              backgroundColor: "white",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            >
+          
           <div className="space-y-6">
             {/* Header Section */}
             <div className="flex items-center justify-between">
@@ -204,12 +235,48 @@ export default function EditMonthlyRecipientList() {
                 <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={isSubmitting} />
               </div>
 
-              {/* Header Text */}
-              <div className="flex-1 text-center px-4">
-                <h1 className="text-sm font-bold uppercase mb-1">Republic of the Philippines</h1>
-                <h2 className="text-lg font-bold uppercase mb-1">CEBU CITY HEALTH DEPARTMENT</h2>
-                <p className="text-xs mb-1">General Maxilom Extension, Carreta, Cebu City</p>
-                <p className="text-xs">(032) 232-6820; 232-6863</p>
+              {/* Header Text - Now Editable */}
+              <div className="flex-1 text-center px-4 space-y-1">
+                <div className="border-b border-gray-300 relative">
+                  <input 
+                    className="w-full bg-transparent focus:outline-none py-1 text-center text-sm font-bold uppercase" 
+                    value="Republic of the Philippines"
+                    disabled
+                  />
+                </div>
+                
+                <div className="border-b border-gray-300 relative">
+                  <input 
+                    className="w-full bg-transparent focus:outline-none py-1 text-center text-lg font-bold uppercase" 
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="CEBU CITY HEALTH DEPARTMENT"
+                  />
+                  <Edit className="absolute right-2 bottom-2 h-3 w-3 text-gray-500" />
+                </div>
+                
+                <div className="border-b border-gray-300 relative">
+                  <input 
+                    className="w-full bg-transparent focus:outline-none py-1 text-center text-sm" 
+                    value={locationText}
+                    onChange={(e) => setLocationText(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="General Maxilom Extension, Carreta, Cebu City"
+                  />
+                  <Edit className="absolute right-2 bottom-2 h-3 w-3 text-gray-500" />
+                </div>
+                
+                <div className="border-b border-gray-300 relative">
+                  <input 
+                    className="w-full bg-transparent focus:outline-none py-1 text-center text-sm" 
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="(032) 232-6820; 232-6863"
+                  />
+                  <Edit className="absolute right-2 bottom-2 h-3 w-3 text-gray-500" />
+                </div>
               </div>
 
               {/* Empty space for balance */}
@@ -217,7 +284,7 @@ export default function EditMonthlyRecipientList() {
             </div>
 
             {/* Title Section */}
-            <div className="text-center py-4 border-b border-t border-gray-300 my-4">
+            <div className="text-center py-4 my-4">
               <h3 className="text-xl font-bold uppercase tracking-widest">RECIPIENTS LEDGER / LIST</h3>
             </div>
 

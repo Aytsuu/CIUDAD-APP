@@ -307,9 +307,9 @@ export default function MonthlyFirstAidDetails() {
                   </div>
                   <div className="flex-1 text-center mx-4">
                     <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
-                    <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
+                   <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
                     <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
-                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label> 
                   </div>
                   <div className="w-24"></div>
                   <div className="w-24"></div>

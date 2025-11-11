@@ -399,6 +399,7 @@ class ImmunizationStock(models.Model):
     imzStck_avail = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    wasted=models.PositiveIntegerField(default=0)
 
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock',db_column='inv_id')
     imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.PROTECT ,related_name='immunization_stock',db_column='imz_id')

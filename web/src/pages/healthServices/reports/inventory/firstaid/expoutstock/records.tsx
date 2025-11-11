@@ -12,7 +12,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyFirstAidExpiredOutOfStockDetail } from "./queries/fetch";
-import api from "@/api/api";
 
 export default function FirstAidProblemDetails() {
   const location = useLocation();
@@ -61,6 +60,7 @@ export default function FirstAidProblemDetails() {
   // Prepare data for export
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
+      "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "First Aid Name": item.fa_name,
       "Expiry Date": item.expiry_date,
       Received: item.received,
@@ -85,9 +85,9 @@ export default function FirstAidProblemDetails() {
     window.location.reload();
   };
 
-  const tableHeader = ["First Aid Name", "Expiry Date", "Received", "Stocks Available", "Qty Used", "Status"];
+  const tableHeader = ["Date Received", "First Aid Name", "Expiry Date", "Received", "Stocks Available", "Qty Used", "Status"];
 
-  const summary = apiResponse?.data?.summary || { total_problems: 0 };
+  // const summary = apiResponse?.data?.summary || { total_problems: 0 };
 
   return (
     <div>
@@ -97,8 +97,8 @@ export default function FirstAidProblemDetails() {
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">First Aid Need Restocking Details - {monthName}</h1>
-          <p className="text-xs sm:text-sm text-darkGray">Track first aid items needing restocking - expired, out of stock, and near expiry - ({summary.total_problems} found)</p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">First Aid Restocking Details - {monthName}</h1>
+          <p className="text-xs sm:text-sm text-darkGray">Track first aid items that need restocking</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -126,6 +126,9 @@ export default function FirstAidProblemDetails() {
               </Button>
             </div>
           </div>
+
+
+          
           {/* Pagination controls */}
           <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
             <div className="flex items-center gap-2">
@@ -156,7 +159,6 @@ export default function FirstAidProblemDetails() {
                 Showing {startIndex} - {endIndex} of {totalItems} items
               </span>
               <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
-              
             </div>
           </div>
           {/* Table */}
@@ -169,7 +171,15 @@ export default function FirstAidProblemDetails() {
             ) : filteredRecords.length > 0 ? (
               <TableLayout
                 header={tableHeader}
-                rows={paginatedRecords.map((item) => [item.fa_name, item.expiry_date, item.received.toString(), item.closing_stock.toString(), item.dispensed.toString(), item.status])}
+                rows={paginatedRecords.map((item) => [
+                  item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+                  item.fa_name,
+                  item.expiry_date,
+                  item.received.toString(),
+                  item.closing_stock.toString(),
+                  item.dispensed.toString(),
+                  item.status,
+                ])}
                 tableClassName="w-full border rounded-lg"
                 bodyCellClassName="border border-gray-600 text-center text-xs p-2"
                 headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"

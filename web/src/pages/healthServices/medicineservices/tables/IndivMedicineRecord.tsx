@@ -68,13 +68,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
     }
   }, [medicineRecords]);
 
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-red-500">Error loading medicine records</div>
-      </div>
-    );
-  }
+
   if (!pat_id) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -140,11 +134,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
                 <AlertCircle className="h-5 w-5 mr-2" />
                 <span>Error loading medicine records. Please try again.</span>
               </div>
-            ) : medicineRecords.length === 0 ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <span className="ml-2">{debouncedSearch ? "No records found for your search" : "No medicine records found"}</span>
-              </div>
-            ) : (
+            ): (
               <DataTable columns={medicineRecordColumns} data={medicineRecords} />
             )}
           </div>
@@ -167,12 +157,8 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
     <LayoutWithBack title="Medicine Records" description="View individual patient's medicine records">
 
       
-      
-        {derivedPatientData === null ? (
-            <div className="w-full h-[60vh] flex items-center justify-center">
-            <div className="text-gray-500 text-lg ">No Medicine Record</div>
-            </div>
-        ) : (
+     
+     
           <>
             {/* Use derivedPatientData instead of selectedPatientData */}
             <div className="mb-4">
@@ -277,7 +263,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
               </div>
             </div>
           </>
-        )}
+    
       </LayoutWithBack>
     </>
   );

@@ -72,12 +72,13 @@ export default function MedicineProblemDetails() {
   // Prepare data for export - UPDATED for medicine data structure
   const prepareExportData = () =>
     filteredRecords.map((item: any) => ({
+      "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "Medicine Name": item.med_name || "N/A",
       "Expiry Date": item.expiry_date || "N/A",
       "Opening Stock": item.opening_stock || 0,
-      Received: item.received || 0,
-      Dispensed: item.dispensed || 0,
-      "Closing Stock": item.closing_stock || 0,
+      Qty: item.received || 0,
+      "Qty Used": item.dispensed || 0,
+      "Qty Avaiable": item.closing_stock || 0,
       Unit: item.unit || "pcs",
       Status: item.status || "N/A",
     }));
@@ -99,7 +100,7 @@ export default function MedicineProblemDetails() {
   };
 
   // UPDATED table header for medicine data
-  const tableHeader = ["Medicine Name", "Expiry Date", "Opening", "Received", "Dispensed", "Closing", "Unit", "Status"];
+  const tableHeader = ["Date Received", "Medicine Name", "Expiry Date", "Qty", "Qty Used", "Qty Available", "Unit", "Status"];
 
   // Show loading state while API response is being processed
   // if (isLoading) {
@@ -112,16 +113,6 @@ export default function MedicineProblemDetails() {
   // }
 
   // Show error state if API call failed
-  if (error || !apiResponse?.success) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">Failed to load medicine problem details</p>
-          <Button onClick={() => navigate(-1)}>Go Back</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -131,20 +122,20 @@ export default function MedicineProblemDetails() {
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medicine Problems Details - {monthName}</h1>
-          <p className="text-xs sm:text-sm text-darkGray">Track medicine items needing attention - expired, out of stock, and near expiry - ({summary.total_problems || 0} found)</p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medicine Restocking Details - {monthName}</h1>
+          <p className="text-xs sm:text-sm text-darkGray">Track medicines that need restocking</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
-      (! ? (
-      <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500">
-        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <span>Loading medicine problem records...</span>
-      </div>
+      {isLoading ? (
+        <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <span>Loading medicine problem records...</span>
+        </div>
       ) : (
-      <>
-        {/* Summary Stats */}
-        {summary && (
+        <>
+          {/* Summary Stats */}
+          {/* {summary && (
           <div className="bg-gray-50 p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">{summary.expired_count || 0}</div>
@@ -163,132 +154,133 @@ export default function MedicineProblemDetails() {
               <div className="text-sm text-gray-600">Near Expiry</div>
             </div>
           </div>
-        )}
+        )} */}
 
-        {/* Action Bar */}
-        <div className="bg-white p-4 border flex flex-col sm:flex-row justify-between gap-4 ">
-          <div className="flex-1 max-w-md relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search medicine name or status..."
-              className="pl-10 w-full"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <div className="flex gap-2 items-center">
-            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-            <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-              <Printer className="h-4 w-4" />
-              <span>Print</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Pagination controls */}
-        <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Show</span>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={(value) => {
-                setPageSize(Number(value));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-20 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 25, 50, 100].map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-gray-700">entries</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">
-              Showing {startIndex} - {endIndex} of {totalItems} items
-            </span>
-            {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white p-4 border">
-          {filteredRecords.length > 0 ? (
-            <TableLayout
-              header={tableHeader}
-              rows={paginatedRecords.map((item: any) => [
-                item.med_name || "N/A",
-                item.expiry_date || "N/A",
-                item.opening_stock?.toString() || "0",
-                item.received?.toString() || "0",
-                item.dispensed?.toString() || "0",
-                item.closing_stock?.toString() || "0",
-                item.unit || "pcs",
-                item.status || "N/A",
-              ])}
-              tableClassName="w-full border rounded-lg"
-              bodyCellClassName="border border-gray-600 text-center text-xs p-2"
-              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
-            />
-          ) : (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <p>No medicine problems found for {monthName}</p>
+          {/* Action Bar */}
+          <div className="bg-white p-4 border flex flex-col sm:flex-row justify-between gap-4 ">
+            <div className="flex-1 max-w-md relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search medicine name or status..."
+                className="pl-10 w-full"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
-          )}
-        </div>
 
-        {/* Printable area */}
-        <div id="printable-area" className="hidden">
-          <div className="text-center mb-6">
-            <h2 className="font-bold uppercase tracking-wide text-lg">Medicine Problems Summary - {monthName}</h2>
-            {summary && (
-              <div className="flex justify-center gap-8 my-4">
-                <div>Expired: {summary.expired_count || 0}</div>
-                <div>Out of Stock: {summary.out_of_stock_count || 0}</div>
-                <div>Expired & Out: {summary.expired_out_of_stock_count || 0}</div>
-                <div>Near Expiry: {summary.near_expiry_count || 0}</div>
+            <div className="flex gap-2 items-center">
+              <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
+              <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
+                <Printer className="h-4 w-4" />
+                <span>Print</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Pagination controls */}
+          <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700">Show</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-700">entries</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-700">
+                Showing {startIndex} - {endIndex} of {totalItems} items
+              </span>
+              {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white p-4 border">
+            {filteredRecords.length > 0 ? (
+              <TableLayout
+                header={tableHeader}
+                rows={paginatedRecords.map((item: any) => [
+                  item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+
+                  item.med_name || "N/A",
+                  item.expiry_date || "N/A",
+                  item.received?.toString() || "0",
+                  item.dispensed?.toString() || "0",
+                  item.closing_stock?.toString() || "0",
+                  item.unit || "pcs",
+                  item.status || "N/A",
+                ])}
+                tableClassName="w-full border rounded-lg"
+                bodyCellClassName="border border-gray-600 text-center text-xs p-2"
+                headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+              />
+            ) : (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <p>No medicine problems found for {monthName}</p>
               </div>
             )}
           </div>
-          <table className="w-full border-collapse border border-gray-400">
-            <thead>
-              <tr>
-                {tableHeader.map((header) => (
-                  <th key={header} className="border border-gray-400 p-2 bg-gray-100 font-bold">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRecords.map((item: any, index: number) => (
-                <tr key={index}>
-                  <td className="border border-gray-400 p-2">{item.med_name || "N/A"}</td>
-                  <td className="border border-gray-400 p-2">{item.expiry_date || "N/A"}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.opening_stock || 0}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.received || 0}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.dispensed || 0}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.closing_stock || 0}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.unit || "pcs"}</td>
-                  <td className="border border-gray-400 p-2 text-center">{item.status || "N/A"}</td>
+
+          {/* Printable area */}
+          <div id="printable-area" className="hidden">
+            <div className="text-center mb-6">
+              <h2 className="font-bold uppercase tracking-wide text-lg">Medicine Problems Summary - {monthName}</h2>
+              {summary && (
+                <div className="flex justify-center gap-8 my-4">
+                  <div>Expired: {summary.expired_count || 0}</div>
+                  <div>Out of Stock: {summary.out_of_stock_count || 0}</div>
+                  <div>Expired & Out: {summary.expired_out_of_stock_count || 0}</div>
+                  <div>Near Expiry: {summary.near_expiry_count || 0}</div>
+                </div>
+              )}
+            </div>
+            <table className="w-full border-collapse border border-gray-400">
+              <thead>
+                <tr>
+                  {tableHeader.map((header) => (
+                    <th key={header} className="border border-gray-400 p-2 bg-gray-100 font-bold">
+                      {header}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </>
-      ) )
+              </thead>
+              <tbody>
+                {filteredRecords.map((item: any, index: number) => (
+                  <tr key={index}>
+                    <td className="border border-gray-400 p-2">{item.med_name || "N/A"}</td>
+                    <td className="border border-gray-400 p-2">{item.expiry_date || "N/A"}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.opening_stock || 0}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.received || 0}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.dispensed || 0}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.closing_stock || 0}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.unit || "pcs"}</td>
+                    <td className="border border-gray-400 p-2 text-center">{item.status || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

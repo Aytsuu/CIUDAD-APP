@@ -7,8 +7,8 @@ from .views.chopt_formplus_views import MonthlyOPTChildHealthSummariesAPIView, M
 from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIView,SemiAnnualOPTChildHealthReportAPIView
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
-from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsRCPDetailAPIView, MonthlyMedicineChart
-from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
+from .views.medicines_views import *
+from .views.inv_medicine_views import *
 from .views.counts import ReportsCount
 from .views.monthly_illnesschart import *
 from .views.recipeint_report_views import *
@@ -51,6 +51,7 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsRCPDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
+        path('deworming-list/',DewormingRecipientListAPIView.as_view(),name="deworming-list"),
         
         
         # INVENTORY MEDICINE REPORTS

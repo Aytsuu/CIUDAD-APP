@@ -105,7 +105,7 @@ export default function MonthlyMedicineRecords() {
                       key={record.month}
                       monthItem={{
                         month: record.month,
-                        // total_items: record.record_count,
+                        total_items: record.record_count,
                         month_name: record.month_name // Use from backend
                       }}
                       navigateTo={{

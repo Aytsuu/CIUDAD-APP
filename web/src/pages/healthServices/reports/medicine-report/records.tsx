@@ -278,7 +278,7 @@ export default function MonthlyMedicineDetails() {
               backgroundColor: "white",
               display: "flex",
               flexDirection: "column",
-              height: "19in",
+              height: "20in",
             }}
           >
             <div className="p-4 print-area" id="printable-area">
@@ -301,10 +301,10 @@ export default function MonthlyMedicineDetails() {
                   </div>
                 </div>
                 <div className="flex-1 text-center mx-4">
-                  <Label className="text-xs font-bold uppercase block text-gray-700">Republic of the Philippines</Label>
-                  <Label className="text-sm font-bold uppercase block">Cebu City Health Department</Label>
-                  <Label className="text-xs block text-gray-600">General Maxilom Extension, Carreta, Cebu City</Label>
-                  <Label className="text-xs block text-gray-600">(032) 232-6820; 232-6863</Label>
+                     <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
+                   <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label> 
                 </div>
                 <div className="w-24"></div>
               </div>
