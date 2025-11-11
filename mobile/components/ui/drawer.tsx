@@ -12,8 +12,7 @@ export const DrawerTrigger = ({
   bottomSheetRef,
   children,
 }: {
-  header?: React.ReactNode;
-  description?: React.ReactNode;
+  bottomSheetRef: RefObject<BottomSheet | null>;
   children: React.ReactNode;
 }) => {
   const handleOpen = useCallback(() => {
@@ -21,12 +20,10 @@ export const DrawerTrigger = ({
   }, [bottomSheetRef]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={handleOpen}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       {children}
     </TouchableOpacity>

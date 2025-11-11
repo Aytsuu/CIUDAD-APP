@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   TouchableOpacity,
   View,
@@ -6,12 +6,12 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Image,
   Alert,
 } from "react-native";
-import { Bell, MoreVertical, Check, CheckCheck, ChevronLeft, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react-native";
+import { Bell, MoreVertical, Check, CheckCheck, ChevronLeft, FileText, Info, Clock  } from "lucide-react-native";
 import GetNotification from "./queries/getNotification";
-import { Drawer } from "@/components/ui/drawer";
+import { DrawerView } from "@/components/ui/drawer";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { useMarkAsRead, useMarkAllAsRead } from "./queries/updateNotification";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -59,15 +59,17 @@ export default function NotificationScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const [notifDrawerVisible, setNotifDrawerVisible] = useState(false);
-  const [headerDrawerVisible, setHeaderDrawerVisible] = useState(false);
+  
+  // Refs for bottom sheets
+  const notifDrawerRef = useRef<BottomSheet>(null);
+  const headerDrawerRef = useRef<BottomSheet>(null);
 
   const {data: notifications, isLoading, isError, error, refetch, isFetching} = GetNotification();
   
   const { mutate: markAsRead, isPending: isMarkingAsRead } = useMarkAsRead();
   const { mutate: markAllAsRead, isPending: isMarkingAllAsRead } = useMarkAllAsRead();
 
-  // ✨ Refresh notifications when screen comes into focus
+  // Refresh notifications when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       console.log('🔄 NotificationScreen focused, invalidating query...');
@@ -181,7 +183,7 @@ export default function NotificationScreen() {
   const handleMorePress = (item: any) => {
     console.log('⚙️ [NotificationScreen] More options pressed for:', item.notif_id);
     setSelectedNotification(item);
-    setNotifDrawerVisible(true);
+    notifDrawerRef.current?.expand();
   };
 
   const handleNotifAction = (action: string) => {
@@ -192,11 +194,11 @@ export default function NotificationScreen() {
     switch (action) {
       case "mark_read":
         markAsRead(selectedNotification.notif_id);
-        setNotifDrawerVisible(false);
+        notifDrawerRef.current?.close();
         break;
       case "view":
         handleNotificationPress(selectedNotification);
-        setNotifDrawerVisible(false);
+        notifDrawerRef.current?.close();
         break;
     }
   };
@@ -214,7 +216,7 @@ export default function NotificationScreen() {
       }
     }
     
-    setHeaderDrawerVisible(false);
+    headerDrawerRef.current?.close();
   };
 
   const unreadCount = notifications?.filter((n: any) => !n.is_read).length || 0;
@@ -236,7 +238,7 @@ export default function NotificationScreen() {
         </View>
         
         <TouchableOpacity
-          onPress={() => setHeaderDrawerVisible(true)}
+          onPress={() => headerDrawerRef.current?.expand()}
           className="p-1"
           disabled={isMarkingAllAsRead}
         >
@@ -388,11 +390,13 @@ export default function NotificationScreen() {
       />
 
       {/* Notification Options Drawer */}
-      <Drawer
-        visible={notifDrawerVisible}
-        onClose={() => setNotifDrawerVisible(false)}
+      <DrawerView
+        bottomSheetRef={notifDrawerRef}
+        snapPoints={["30%"]}
+        title="Notification Options"
+        description="Manage this notification"
       >
-        <View className="px-6 pb-6">
+        <View className="pb-6">
           {!selectedNotification?.is_read && (
             <TouchableOpacity
               onPress={() => handleNotifAction("mark_read")}
@@ -424,16 +428,16 @@ export default function NotificationScreen() {
             </View>
           )}
         </View>
-      </Drawer>
+      </DrawerView>
 
       {/* Header Options Drawer */}
-      <Drawer
-        visible={headerDrawerVisible}
-        onClose={() => setHeaderDrawerVisible(false)}
-        header="Notification Settings"
+      <DrawerView
+        bottomSheetRef={headerDrawerRef}
+        snapPoints={["30%"]}
+        title="Notification Settings"
         description="Manage your notifications"
       >
-        <View className="px-6 pb-6">
+        <View className="pb-6">
           <TouchableOpacity
             onPress={() => handleHeaderAction("mark_all_read")}
             className="flex-row items-center p-4 bg-gray-50 rounded-xl mb-3"
@@ -459,7 +463,7 @@ export default function NotificationScreen() {
             </View>
           </TouchableOpacity>
         </View>
-      </Drawer>
+      </DrawerView>
     </SafeAreaView>
   );
 }
