@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Loader2, CheckCircle, Eye } from 'lucide-react';
+import { Search, CheckCircle , Eye, Plus, SquarePen } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,26 +13,48 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
-import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
+import TemplateCreateForm from "../council/templates/template-create";
+import TemplateUpdateForm from "../council/templates/template-update";
+import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
-import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
+import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
-
+import { useResidentsList, useDeceasedResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
   SpecificPurpose?: string;
+  custodyChildren?: string[];
+  // BURIAL props
+  deceasedName?: string;
+  deceasedBirthdate?: string;
+  deceasedAddress?: string;
+  // FIRE VICTIM props
+  dateOfConflagration?: string;
+  // DWUP props
+  dateDemolished?: string;
+  // COHABITATION/MARRIAGE props
+  partnerName?: string;
+  liveInYears?: number;
+  // Indigency (for minors) props
+  childName?: string;
+  childAge?: string;
+  childBirtdate?: string;
 }
 
 function CertificatePage() {
   // const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [filterType, setFilterType] = useState("all");
@@ -42,12 +64,41 @@ function CertificatePage() {
   const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
+  const { data: residentsList = [] } = useResidentsList();
+  const { data: deceasedResidentsList = [] } = useDeceasedResidentsList();
+
+  //template details fetch
+  const { data: templates = [] } = useGetTemplateRecord();
+  const [isTempDialogOpen, setIsTempDialogOpen] = useState(false); 
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState(""); 
+  const [custody, setCustody] = useState<string[]>([]);
   const [purposeInput, setPurposeInput] = useState("");
+  
+  // BURIAL fields
+  const [deceasedName, setDeceasedName] = useState("");
+  const [deceasedBirthdate, setDeceasedBirthdate] = useState("");
+  const [deceasedAddress, setDeceasedAddress] = useState("");
+  const [selectedDeceasedId, setSelectedDeceasedId] = useState("");
+  const [isManualDeceasedInput, setIsManualDeceasedInput] = useState(false);
+  
+  // FIRE VICTIM fields
+  const [dateOfConflagration, setDateOfConflagration] = useState("");
+  
+  // COHABITATION/MARRIAGE fields
+  const [partnerName, setPartnerName] = useState("");
+  const [liveInYears, setLiveInYears] = useState("");
+  
+  // DWUP fields
+  const [dateDemolished, setDateDemolished] = useState("");
+  
+  // Indigency (for minors) fields
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [childBirthdate, setChildBirthdate] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -56,38 +107,93 @@ function CertificatePage() {
     }));
   }, [staffList]);
 
-  console.log("STAFF OPTIONS: ", staffOptions)
 
-  const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
-    queryKey: ["certificates"],
-    queryFn: getCertificates,
+
+
+  const residentOptions = useMemo(() => {
+    if (!residentsList || residentsList.length === 0) return [];
+    
+    
+    const filteredResidents = residentsList.filter((resident: any) => {
+      if (!resident.personal_info?.per_dob) return false;
+      
+      const birthdate = new Date(resident.personal_info.per_dob);
+      const today = new Date();
+      const age = today.getFullYear() - birthdate.getFullYear();
+      const monthDiff = today.getMonth() - birthdate.getMonth();
+      
+      
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate()) 
+        ? age - 1 
+        : age;
+      
+      return actualAge < 18;
+    });
+    
+    
+    return filteredResidents.map((resident: any) => ({
+      id: `${resident.rp_id} ${resident.name}`,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      displayName: resident.name, // Add plain text name for extraction
+      per_id: resident.personal_info.per_id
+    }));
+  }, [residentsList]);
+
+  const deceasedResidentsOptions = useMemo(() => {
+    if (!deceasedResidentsList || deceasedResidentsList.length === 0) return [];
+    
+    return deceasedResidentsList.map((resident: any) => ({
+      id: resident.rp_id,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-red-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      displayName: resident.name,
+      per_id: resident.personal_info?.per_id,
+      personal_info: resident.personal_info
+    }));
+  }, [deceasedResidentsList]);
+
+  const { data: certificatesData, isLoading, error } = useQuery({
+    queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
+    queryFn: () => getCertificates(
+      searchTerm, 
+      currentPage, 
+      10, 
+      filterType === "all" ? undefined : filterType, 
+      filterPurpose === "all" ? undefined : filterPurpose, 
+      "Paid"
+    ),
   });
 
-  // Filter and search logic
-  const filteredCertificates = useMemo(() => {
-    if (!certificates) return [];
-    
-    return certificates.filter(certificate => {
-      // Filter by type (resident/non-resident)
-      const typeMatch = filterType === "all" || 
-        (filterType === "resident" && !certificate.is_nonresident) ||
-        (filterType === "nonresident" && certificate.is_nonresident);
-      
-      // Filter by purpose
-      const purposeMatch = filterPurpose === "all" || 
-        (filterPurpose === "employment" && certificate.req_purpose?.toLowerCase() === "employment") ||
-        (filterPurpose === "bir" && certificate.req_purpose?.toLowerCase() === "bir");
-      
-      // Search filter
-      const searchMatch = searchTerm === "" || 
-        certificate.cr_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        certificate.resident_details?.per_fname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        certificate.resident_details?.per_lname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (certificate.is_nonresident && certificate.nrc_requester?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      return typeMatch && purposeMatch && searchMatch;
-    });
-  }, [certificates, filterType, filterPurpose, searchTerm]);
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  const certificates = certificatesData?.results || [];
+  const totalCount = certificatesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / 10);
+
+
+
+  // Since we're now using backend filtering, we don't need frontend filtering
+  const filteredCertificates = certificates;
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
@@ -95,7 +201,7 @@ function CertificatePage() {
       const certificateType = variables.is_nonresident ? 'Non-resident certificate' : 'Certificate';
       const certificateId = variables.is_nonresident ? variables.nrc_id : variables.cr_id;
       
-      toast.success(`${certificateType} ${certificateId} marked as printed successfully!`);
+      showSuccessToast(`${certificateType} ${certificateId} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
       
       try {
@@ -109,11 +215,11 @@ function CertificatePage() {
 
         setSelectedCertificate(null);
       } catch (error) {
-        toast.error("First mutation succeeded but second failed");
+        showErrorToast("First mutation succeeded but second failed");
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to mark certificate as printed");
+      showErrorToast(error.response?.data?.error || "Failed to mark certificate as printed");
     },
   });
 
@@ -129,13 +235,6 @@ function CertificatePage() {
       markData.nrc_id = certificate.nrc_id;
     }
 
-    console.log("Mark as Printed payload:", {
-      staffId,
-      is_nonresident: markData.is_nonresident,
-      cr_id: markData.cr_id,
-      nrc_id: markData.nrc_id,
-    });
-
     markAsIssuedMutation.mutate(markData);
   };
 
@@ -143,30 +242,150 @@ function CertificatePage() {
     setSelectedCertificate(null); // previous selection
     setViewingCertificate(certificate);
     setSelectedStaffId(""); // Reset selected staff every time
-    setPurposeInput("")
+    setPurposeInput("");
+    
+    // Reset all certificate-specific fields
+    setDeceasedName("");
+    setDeceasedBirthdate("");
+    setDeceasedAddress("");
+    setSelectedDeceasedId("");
+    setIsManualDeceasedInput(false);
+    setDateOfConflagration("");
+    setPartnerName("");
+    setLiveInYears("");
+    setDateDemolished("");
+    setChildName("");
+    setChildAge("");
+    setChildBirthdate("");
+    setCustody([]);
+    
+    // Auto-populate burial fields if the person is deceased and purpose is burial
+    if (certificate.req_purpose?.toLowerCase() === "burial" && 
+        certificate.resident_details?.per_is_deceased && 
+        !certificate.is_nonresident) {
+      const resident = certificate.resident_details;
+      if (resident) {
+        setDeceasedName(`${resident.per_fname} ${resident.per_lname}`);
+        
+        // Handle address - per_addresses is an array of address objects
+        let addressString = "";
+        if (resident.per_addresses && resident.per_addresses.length > 0) {
+          const address = resident.per_addresses[0];
+          const addressParts = [
+            address.add_street,
+            address.add_external_sitio,
+            address.add_barangay,
+            address.add_city,
+            address.add_province
+          ].filter(part => part && part.trim() !== "");
+          addressString = addressParts.join(", ");
+        }
+        setDeceasedAddress(addressString);
+        
+        setDeceasedBirthdate(resident.per_dob || "");
+      }
+    }
+    
     setIsDialogOpen(true);
   }
+
+  const handleDeceasedSelection = (deceasedId: string) => {
+    setSelectedDeceasedId(deceasedId);
+    
+    // Find the selected deceased resident
+    const selectedDeceased = deceasedResidentsOptions.find((option: any) => option.id === deceasedId);
+    if (selectedDeceased && selectedDeceased.personal_info) {
+      const personalInfo = selectedDeceased.personal_info;
+      
+      // Auto-populate fields with deceased person's information
+      setDeceasedName(`${personalInfo.per_fname} ${personalInfo.per_lname}`);
+      
+      // Handle address - per_addresses is an array of address objects
+      let addressString = "";
+      if (personalInfo.per_addresses && personalInfo.per_addresses.length > 0) {
+        const address = personalInfo.per_addresses[0];
+        const addressParts = [
+          address.add_street,
+          address.add_external_sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ].filter(part => part && part.trim() !== "");
+        addressString = addressParts.join(", ");
+      }
+      setDeceasedAddress(addressString);
+      
+      setDeceasedBirthdate(personalInfo.per_dob || "");
+    }
+  };
+
+  const handleToggleManualDeceasedInput = () => {
+    setIsManualDeceasedInput(!isManualDeceasedInput);
+    if (!isManualDeceasedInput) {
+      // Switching to manual input - clear dropdown selection
+      setSelectedDeceasedId("");
+    } else {
+      // Switching back to dropdown - clear manual inputs
+      setDeceasedName("");
+      setDeceasedBirthdate("");
+      setDeceasedAddress("");
+    }
+  };
 
   const handleViewFile2 = () => {
     setIsDialogOpen(false); 
 
     if (viewingCertificate && selectedStaffId) {
-      // Find the selected staff details
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      const custodies = custody
+        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
+        .filter(Boolean) as string[];
       
-      //with both certificate and staff data
+      // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
         AsignatoryStaff: selectedStaff?.name,
-        SpecificPurpose: purposeInput
+        SpecificPurpose: purposeInput,
+        custodyChildren: custodies,
+        // BURIAL fields
+        deceasedName: deceasedName || undefined,
+        deceasedBirthdate: deceasedBirthdate || undefined,
+        deceasedAddress: deceasedAddress || undefined,
+        // FIRE VICTIM fields
+        dateOfConflagration: dateOfConflagration || undefined,
+        // COHABITATION/MARRIAGE fields
+        partnerName: partnerName || undefined,
+        liveInYears: liveInYears ? Number(liveInYears) : undefined,
+        // DWUP fields
+        dateDemolished: dateDemolished || undefined,
+        // Indigency (for minors) fields
+        childName: childName || undefined,
+        childAge: childAge || undefined,
+        childBirtdate: childBirthdate || undefined,
       };
       
-      setSelectedCertificate(certDetails);// Close the dialog
+      setSelectedCertificate(certDetails);
+      
+      // Reset for next use
+      setCustody([]);
+      setDeceasedName("");
+      setDeceasedBirthdate("");
+      setDeceasedAddress("");
+      setIsManualDeceasedInput(false);
+      setDateOfConflagration("");
+      setPartnerName("");
+      setLiveInYears("");
+      setDateDemolished("");
+      setChildName("");
+      setChildAge("");
+      setChildBirthdate("");
     }
   }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Clear any selected certificate when changing pages to prevent template from showing
+    setSelectedCertificate(null);
   };
 
   // const handleRowClick = (row: Certificate) => {
@@ -209,24 +428,52 @@ function CertificatePage() {
               content="Non-resident" 
             />
           )}
-          {row.getValue("cr_id")}
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
         </div>
       ),
     },
     {
-      accessorKey: "resident_details.per_fname",
-      header: "First Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_fname || row.original.nrc_requester || 'N/A'}</div>,
-    },
-    {
-      accessorKey: "resident_details.per_lname",
-      header: "Last Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_lname || 'N/A'}</div>,
+      accessorKey: "requester",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Requester
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // Use individual name fields: lname fname mname (all uppercase)
+          const nameParts = [
+            row.original.nrc_lname,
+            row.original.nrc_fname,
+            row.original.nrc_mname
+          ].filter(part => part && part.trim() !== '');
+          
+          return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+        }
+        
+        // For residents, format as "Last Name First Name Middle Name" (all uppercase)
+        const resident = row.original.resident_details;
+        if (!resident) return <div>N/A</div>;
+        
+        const nameParts = [
+          resident.per_lname,
+          resident.per_fname,
+          resident.per_mname
+        ].filter(part => part && part.trim() !== '');
+        
+        return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("req_request_date"))}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     {
       accessorKey: "req_purpose",
@@ -244,6 +491,10 @@ function CertificatePage() {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
+        } else if (capitalizedValue === "Burial") {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
         } else {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
@@ -343,6 +594,51 @@ function CertificatePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {(templates.length > 0 ? (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <SquarePen size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="Edit the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateUpdateForm 
+                    temp_id={templates[0].temp_id}
+                    temp_contact_num={templates[0].temp_contact_num}
+                    temp_email={templates[0].temp_email}
+                    template_files={templates[0].template_files}
+                    onSuccess={() => setIsTempDialogOpen(false)} 
+                  />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ) : (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <Plus size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="please provide the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateCreateForm onSuccess={() => setIsTempDialogOpen(false)} />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ))}      
+
           <SelectLayout
             placeholder="Filter by type"
             label=""
@@ -363,6 +659,7 @@ function CertificatePage() {
               { id: "all", name: "All Purposes" },
               { id: "employment", name: "Employment" },
               { id: "bir", name: "BIR" },
+              { id: "burial", name: "Burial" },
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}
@@ -382,7 +679,7 @@ function CertificatePage() {
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+              <Spinner size="lg" />
             </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
@@ -398,12 +695,12 @@ function CertificatePage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-{Math.min(10, filteredCertificates.length)} of {filteredCertificates.length} rows
+          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            totalPages={Math.ceil((filteredCertificates.length || 1) / 10)}
+            totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
@@ -414,17 +711,29 @@ function CertificatePage() {
       {selectedCertificate && (
         <TemplateMainPage
           key={selectedCertificate.cr_id + Date.now()}
-          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
-          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
-          age={calculateAge(selectedCertificate.nrc_birthdate || "2003-09-04")}
-          birthdate={selectedCertificate.nrc_birthdate || "2003-09-04"}
-          address={selectedCertificate.nrc_address || "Sitio Palma"}
+          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_fname || ''}
+          mname={selectedCertificate.resident_details?.per_mname || selectedCertificate.nrc_mname || ''}
+          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
+          age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
+          birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
+          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
+          Custodies={selectedCertificate.custodyChildren}
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
-          showAddDetails={false}
+          deceasedName={selectedCertificate.deceasedName}
+          deceasedBirthdate={selectedCertificate.deceasedBirthdate}
+          deceasedAddress={selectedCertificate.deceasedAddress}
+          dateOfConflagration={selectedCertificate.dateOfConflagration}
+          dateDemolished={selectedCertificate.dateDemolished}
+          partnerName={selectedCertificate.partnerName}
+          liveInYears={selectedCertificate.liveInYears}
+          childName={selectedCertificate.childName}
+          childAge={selectedCertificate.childAge}
+          childBirtdate={selectedCertificate.childBirtdate}
+          showAddDetails={false} 
         />
       )}
 
@@ -433,8 +742,23 @@ function CertificatePage() {
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          if (!open) {
+            setCustody([]);
+            setDeceasedName("");
+            setDeceasedBirthdate("");
+            setDeceasedAddress("");
+            setSelectedDeceasedId("");
+            setIsManualDeceasedInput(false);
+            setDateOfConflagration("");
+            setPartnerName("");
+            setLiveInYears("");
+            setDateDemolished("");
+            setChildName("");
+            setChildAge("");
+            setChildBirthdate("");
+          }
         }}
-        className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
+        className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -463,10 +787,180 @@ function CertificatePage() {
                   />
                 </div>
 
+               
+                {/* BURIAL FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "burial" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label className="pb-1">Deceased Person</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleToggleManualDeceasedInput}
+                        className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        {isManualDeceasedInput ? "Select from List" : "Manual Input"}
+                      </Button>
+                    </div>
+                    
+                    {!isManualDeceasedInput ? (
+                      <div className="w-full pb-3">
+                        <Combobox
+                          options={deceasedResidentsOptions}
+                          value={selectedDeceasedId}
+                          onChange={(value) => handleDeceasedSelection(value || "")}
+                          placeholder="Select deceased person"
+                          emptyMessage="No deceased residents found"
+                          triggerClassName="w-full"
+                          contentClassName="w-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pb-3">
+                        <div>
+                          <Label className="pb-1">Deceased Name</Label>
+                          <Input 
+                            placeholder="Enter deceased person's name"
+                            value={deceasedName}
+                            onChange={(e) => setDeceasedName(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="pb-1">Deceased Birthdate</Label>
+                          <Input 
+                            type="date"
+                            placeholder="Enter birthdate"
+                            value={deceasedBirthdate}
+                            onChange={(e) => setDeceasedBirthdate(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="pb-1">Deceased Address</Label>
+                          <Input 
+                            placeholder="Enter address"
+                            value={deceasedAddress}
+                            onChange={(e) => setDeceasedAddress(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* FIRE VICTIM FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "fire victim" && (
+                  <>
+                    <Label className="pb-1">Date of Conflagration</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date of conflagration"
+                        value={dateOfConflagration}
+                        onChange={(e) => setDateOfConflagration(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* COHABITATION/MARRIAGE FIELDS */}
+                {(viewingCertificate?.req_purpose?.toLowerCase() === "cohabitation" || 
+                  viewingCertificate?.req_purpose?.toLowerCase().includes("marriage")) && (
+                  <>
+                    <Label className="pb-1">Partner Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter partner name"
+                        value={partnerName}
+                        onChange={(e) => setPartnerName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Live in Years</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="number"
+                        placeholder="Enter years living together"
+                        value={liveInYears}
+                        onChange={(e) => setLiveInYears(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* DWUP FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "dwup" && (
+                  <>
+                    <Label className="pb-1">Date Demolished</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date demolished"
+                        value={dateDemolished}
+                        onChange={(e) => setDateDemolished(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* INDIGENCY (FOR MINORS) FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase().includes("indigency for minors") && (
+                  <>
+                    <Label className="pb-1">Child Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child name"
+                        value={childName}
+                        onChange={(e) => setChildName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Age</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child age"
+                        value={childAge}
+                        onChange={(e) => setChildAge(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Birthdate</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter child birthdate"
+                        value={childBirthdate}
+                        onChange={(e) => setChildBirthdate(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* PROOF OF CUSTODY FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
+                  <div className="w-full pb-3">
+                    <ComboCheckboxStandalone
+                      value={custody}
+                      onChange={setCustody}
+                      label="Custodies"
+                      options={residentOptions}
+                      placeholder="Select child/children"
+                      showBadges={true}
+                      maxDisplayValues={2}
+                    />
+                  </div>
+                )}                  
+
                 <div className="flex justify-end">
-                    <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId || !purposeInput} >
-                        Proceed
-                    </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleViewFile2} 
+                    disabled={!selectedStaffId || !purposeInput} 
+                  >
+                    Proceed
+                  </Button>
                 </div>                       
               </div>
             ) : (

@@ -33,6 +33,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
             mom_agenda: momInfo.meetingAgenda,
             mom_area_of_focus: momInfo.meetingAreaOfFocus,  
             mom_is_archive: false,
+            staff_id: momInfo.staff_id
         })
 
         const momResponse = await api.post('council/minutes-of-meeting/', {
@@ -41,6 +42,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
             mom_agenda: momInfo.meetingAgenda,
             mom_area_of_focus: momInfo.meetingAreaOfFocus,  
             mom_is_archive: false,
+            staff_id: momInfo.staff_id
         });
 
         return momResponse.data.mom_id;

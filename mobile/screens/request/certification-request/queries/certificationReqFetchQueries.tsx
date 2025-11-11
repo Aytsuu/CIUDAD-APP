@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId } from "../restful-API/certificationReqGetAPI";
+import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId, checkResidentVoterId } from "../restful-API/certificationReqGetAPI";
 
 export interface PurposeAndRate {
     pr_id: number;
@@ -71,6 +71,7 @@ export interface Business {
     bus_name: string;
     bus_gross_sales: number;
     bus_street: string;
+    bus_location: string;
     sitio: string;
     bus_date_verified: string | null;
     bus_status: string;
@@ -90,5 +91,15 @@ export const useBusinessByResidentId = (rpId: string) => {
         queryKey: ["business-by-resident", rpId],
         queryFn: () => getBusinessByResidentId(rpId),
         enabled: !!rpId, 
+    });
+};
+
+// Check if resident has voter ID
+export const useResidentVoterId = (rpId: string | undefined, userPersonalData?: any) => {
+    return useQuery<boolean>({
+        queryKey: ["resident-voter-id", rpId],
+        queryFn: () => checkResidentVoterId(rpId || "", userPersonalData),
+        enabled: !!rpId,
+        retry: false,
     });
 };

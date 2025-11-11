@@ -26,7 +26,8 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_details(self, obj):
-        return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
+        return Budget_Plan_DetailSerializer(obj.budget_detail.all().order_by('dtl_id'),  many=True).data
+
 
     def get_staff_name(self, obj):
         if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
@@ -193,6 +194,16 @@ class Disbursement_VoucherSerializer(serializers.ModelSerializer):
         model = Disbursement_Voucher
         fields = '__all__'
         read_only_fields = ['dis_is_archive']
+        extra_kwargs = {
+            'dis_tin': {'required': False}, 
+            'dis_date': {'required': False}, 
+            'dis_fund': {'required': False},
+            'dis_checknum': {'required': False},
+            'dis_bank': {'required': False},
+            'dis_or_num': {'required': False},
+            'dis_paydate': {'required': False},
+            'dis_payacc': {'required': False},
+        }
 
 # =========================== INCOME & EXPENSE ==========================
 
@@ -421,12 +432,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
                  'inv_nat_of_collection', 'nrc_id', 'bpr_id', 'cr_id', 
-                  'spay_id','inv_payor', 'inv_change', 'inv_discount_reason']
+                  'pay_id','inv_payor', 'inv_change', 'inv_discount_reason']
         extra_kwargs = {
             'nrc_id': {'allow_null': True, 'required': False},
             'bpr_id': {'allow_null': True, 'required': False},
             'cr_id': {'allow_null': True, 'required': False},
-            'spay_id': {'allow_null': True, 'required': False},
+            'pay_id': {'allow_null': True, 'required': False},
         }
     
     def get_inv_payor(self, obj):
@@ -450,9 +461,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
 
         # If the invoice is linked to a complaint
-        if obj.spay_id is not None:
+        if obj.pay_id is not None:
             try:
-                complaint = obj.spay_id.sr_id.comp_id
+                complaint = obj.pay_id.comp_id
                 complainants = complaint.complainant.all()
                 
                 if complainants.exists():
@@ -478,22 +489,27 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Coerce empty strings from the client into None so DRF doesn't try bad lookups
-        for key in ['bpr_id', 'nrc_id', 'cr_id', 'spay_id']:
+        for key in ['bpr_id', 'nrc_id', 'cr_id']:
             if key in attrs and (attrs[key] == '' or attrs[key] == 0):
                 attrs[key] = None
+        
+        # Don't convert pay_id to None when it's 0, as 0 is a valid ID
+        if 'pay_id' in attrs and attrs['pay_id'] == '':
+            attrs['pay_id'] = None
 
         link_keys = [
             attrs.get('bpr_id'),
             attrs.get('nrc_id'),
             attrs.get('cr_id'),
-            attrs.get('spay_id'),
+            attrs.get('pay_id'),
         ]
         
-        provided = sum(1 for v in link_keys if v)
+        # Count non-None values (including 0 as valid)
+        provided = sum(1 for v in link_keys if v is not None)
         if provided == 0:
-            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or pay_id")
         if provided > 1:
-            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or pay_id")
         return attrs
 
     def create(self, validated_data):
@@ -508,6 +524,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.bpr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.bpr_id.pr_id.pr_purpose
+                
                 invoice.save()
                 
                 # Update payment status
@@ -523,7 +544,10 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    staff_id = getattr(business_permit.staff_id, 'staff_id', None) if business_permit.staff_id else None
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
@@ -531,8 +555,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                             act_type="Receipt Created",
                             act_description=f"Receipt {invoice.inv_serial_num} created for business permit {business_permit.bpr_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")
@@ -544,6 +567,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.cr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.cr_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
 
@@ -561,6 +589,10 @@ class InvoiceSerializers(serializers.ModelSerializer):
             # Check if it's a non-resident certificate request
             elif invoice.nrc_id:
                 # Add similar logic for non-resident certificates if needed
+                # Update inv_nat_of_collection with the actual purpose name if available
+                if hasattr(invoice.nrc_id, 'pr_id') and invoice.nrc_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.nrc_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
                 
@@ -576,20 +608,29 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 non_resident_cert.save()
             
             # Check if it's a service charge payment request
-            elif invoice.spay_id:
-                print(f"[InvoiceSerializer] Processing service charge payment for spay_id: {invoice.spay_id}")
+            elif invoice.pay_id:
+                print(f"[InvoiceSerializer] Processing service charge payment for pay_id: {invoice.pay_id}")
+                
+                # Update inv_nat_of_collection with service charge purpose if available
+                if hasattr(invoice.pay_id, 'pr_id') and invoice.pay_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.pay_id.pr_id.pr_purpose
+                elif hasattr(invoice.pay_id, 'comp_id'):
+                    # For service charges, use a default purpose name
+                    invoice.inv_nat_of_collection = "Service Charge"
                 
                 # Update invoice status to Paid
                 invoice.inv_status = "Paid"
                 invoice.save()
                 
                 # Update service charge payment request status
-                service_charge_payment = invoice.spay_id
-                service_charge_payment.spay_status = "Paid"
-                service_charge_payment.spay_date_paid = invoice.inv_date
+                service_charge_payment = invoice.pay_id
+                service_charge_payment.pay_status = "Paid"
+                # DO NOT set pay_req_status to "Completed" here
+                # pay_req_status should remain "Pending" until the service charge is issued/printed
+                service_charge_payment.pay_date_paid = invoice.inv_date
                 service_charge_payment.save()
                 
-                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for spay_id: {service_charge_payment.spay_id}")
+                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for pay_id: {service_charge_payment.pay_id}")
                 
                 # Do not change sr_req_status here; leave case status management to clerk/council flows
                 
@@ -598,17 +639,19 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    # Use a default staff ID if none is available
-                    staff_id = '00003250722'  # Default staff ID
+                    # Get staff ID from the service charge payment if available
+                    staff_id = getattr(service_charge_payment, 'staff_id', None)
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
                         create_activity_log(
                             act_type="Receipt Created",
-                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.spay_id}. Payment status updated to Paid.",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.pay_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")
@@ -636,6 +679,9 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
             'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
     def get_resident_details(self, obj):
         return {
@@ -692,6 +738,9 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
             'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
     def get_resident_details(self, obj):
         try:
@@ -759,6 +808,7 @@ class ResidentNameSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     per_dob = serializers.DateField(source='per.per_dob', allow_null=True)
     per_disability = serializers.CharField(source='per.per_disability', allow_null=True)
+    rp_id = serializers.CharField()  
 
     class Meta:
         model = ResidentProfile
@@ -776,4 +826,12 @@ class ResidentNameSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if not instance.rp_id: 
             return None
+        
+        # Ensure rp_id is properly formatted as string and not truncated
+        if 'rp_id' in data:
+            data['rp_id'] = str(data['rp_id'])
+            # Pad with leading zeros if less than 11 digits to match expected format
+            if len(data['rp_id']) < 11:
+                data['rp_id'] = data['rp_id'].zfill(11)
+        
         return data

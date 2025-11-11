@@ -1,6 +1,6 @@
 import { FormInput } from "@/components/ui/form/form-input";
 import { minutesOfMeetingFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
-import _ScreenLayout from '@/screens/_ScreenLayout'
+import PageLayout from '@/screens/_PageLayout'
 import { View, TouchableOpacity, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ChevronLeft } from 'lucide-react-native';
@@ -14,9 +14,11 @@ import { useState } from "react";
 import { useInsertMinutesOfMeeting } from "./queries/MOMInsertQueries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
-
+import { useAuth } from "@/contexts/AuthContext";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function MOMCreate(){
+    const {user} = useAuth()
     const router = useRouter();
     const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting()
     const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
@@ -37,6 +39,7 @@ export default function MOMCreate(){
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
+            staff_id: user?.staff?.staff_id
          }
     })
 
@@ -70,27 +73,22 @@ export default function MOMCreate(){
 
 
     return(
-        <_ScreenLayout
-            customLeftAction={
-                <TouchableOpacity onPress={() => router.back()}>
-                <ChevronLeft size={30} className="text-black" />
+        <PageLayout
+            leftAction={
+                <TouchableOpacity 
+                    onPress={() => router.back()} 
+                    className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+                >
+                    <ChevronLeft size={24} className="text-gray-700" />
                 </TouchableOpacity>
             }
-            headerBetweenAction={<Text className="text-[13px]">Add New Minutes of Meeting</Text>}
-            showExitButton={false}
-            loading={isPending}
-            loadingMessage='Submitting...'
-            stickyFooter={true}
-            footer={
-                  <Button onPress={handleSubmit(onSubmit)}className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-                        <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-                    </Button>
-            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">Add New Minutes of Meeting</Text>}
+            wrapScroll={false}
         >
-            <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
-                <View className="mb-8">
-                    <View className="space-y-4">
-
+            <View className="flex-1 bg-gray-50">
+                <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+                    <View className="mb-8">
+                        <View>
                             <FormInput
                                 control={control}
                                 label="Meeting Title"
@@ -141,13 +139,26 @@ export default function MOMCreate(){
                                 <MediaPicker
                                     selectedImages={selectedImages}
                                     setSelectedImages={setSelectedImages}
-                                    multiple={true}
+                                    limit={10}
+                                    editable={true}
                                 />
                             </View>
-                    </View>
-                </View>
-            </ScrollView>
+                            
+                        </View>
 
-        </_ScreenLayout>
+                        <View className="py-7 bg-white border-t border-gray-200">
+                            <Button 
+                                onPress={handleSubmit(onSubmit)}
+                                className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+                            >
+                                <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
+                            </Button>
+                        </View>
+                    </View>
+                </ScrollView>
+
+                <LoadingModal visible={isPending} />
+            </View>
+        </PageLayout>
     )
 }

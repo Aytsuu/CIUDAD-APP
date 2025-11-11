@@ -1,14 +1,14 @@
 from rest_framework import serializers
-from .models import SummonDateAvailability, SummonTimeAvailability
 from .models import *
 from .models import NonResidentCertificateRequest
 from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complainant, Accused
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition, Address
 from apps.administration.models import Staff
-from apps.treasurer.models import Invoice
+from apps.treasurer.models import Invoice, Purpose_And_Rates
 from datetime import datetime
 import logging
+import traceback
 from apps.profiling.serializers.business_serializers import FileInputSerializer
 from utils.supabase_client import upload_to_storage
 from django.db import transaction
@@ -70,13 +70,32 @@ class BusinessSerializer(serializers.ModelSerializer):
 class IssuedCertificateSerializer(serializers.ModelSerializer):
     requester = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
+    cr_id = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ic_date_of_issuance', format="%Y-%m-%d")
 
     def get_requester(self, obj):
         try:
+            # Handle resident certificates
             if obj.certificate and obj.certificate.rp_id and getattr(obj.certificate.rp_id, "per", None):
                 person = obj.certificate.rp_id.per
-                return f"{person.per_fname} {person.per_lname}"
+                # Format as "Last Name First Name Middle Name"
+                name_parts = [
+                    person.per_lname,
+                    person.per_fname,
+                    person.per_mname
+                ]
+                return " ".join(filter(None, name_parts)) or "Unknown"
+            
+            # Handle non-resident certificates
+            elif obj.nonresidentcert:
+                # Use individual name fields: lname fname mname
+                name_parts = [
+                    obj.nonresidentcert.nrc_lname,
+                    obj.nonresidentcert.nrc_fname,
+                    obj.nonresidentcert.nrc_mname
+                ]
+                return " ".join(filter(None, name_parts)) or "Unknown"
+            
             return "Unknown"
         except Exception as e:
             logger.error(f"Error getting requester: {str(e)}")
@@ -84,16 +103,34 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 
     def get_purpose(self, obj):
         try:
+            # Handle resident certificates
             if obj.certificate and obj.certificate.pr_id:
                 return obj.certificate.pr_id.pr_purpose
+            
+            # Handle non-resident certificates
+            elif obj.nonresidentcert and obj.nonresidentcert.pr_id:
+                return obj.nonresidentcert.pr_id.pr_purpose
+            
             return "Not specified"
         except Exception as e:
             logger.error(f"Error getting purpose: {str(e)}")
             return "Not specified"
+    
+    def get_cr_id(self, obj):
+        try:
+            # Get cr_id from resident certificate or nrc_id from non-resident certificate
+            if obj.certificate:
+                return obj.certificate.cr_id
+            elif obj.nonresidentcert:
+                return obj.nonresidentcert.nrc_id
+            return ""
+        except Exception as e:
+            logger.error(f"Error getting cr_id: {str(e)}")
+            return ""
 
     class Meta:
         model = IssuedCertificate
-        fields = ['ic_id', 'dateIssued', 'requester', 'purpose']
+        fields = ['ic_id', 'cr_id', 'dateIssued', 'requester', 'purpose']
 
 
 class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
@@ -111,6 +148,9 @@ class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
 class NonResidentCertReqSerializer(serializers.ModelSerializer):
     purpose = serializers.SerializerMethodField()
     amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
+    nrc_id = serializers.SerializerMethodField()  # Override nrc_id to return formatted version
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    nrc_mname = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = NonResidentCertificateRequest
@@ -120,22 +160,83 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
             "nrc_req_status",
             "nrc_req_payment_status",
             "nrc_pay_date",
-            "nrc_requester",
+            "nrc_lname",
+            "nrc_fname",
+            "nrc_mname",
             "nrc_address",
             "nrc_birthdate",
             "pr_id",    
             "purpose",   
             "amount",
-            "nrc_discount_reason",   
+            "nrc_discount_reason",
+            "staff_id",   
         ]
+        extra_kwargs = {
+            'nrc_id': {'read_only': True}
+        }
 
     def get_purpose(self, obj):
         if obj.pr_id:
             return {
                 "pr_purpose": obj.pr_id.pr_purpose,
-                "pr_rate": str(obj.pr_id.pr_rate)  #
+                "pr_rate": str(obj.pr_id.pr_rate)
             }
         return None
+    
+    def get_nrc_id(self, obj):
+        """Generate formatted ID like NRC001-25 from the actual nrc_id"""
+        if obj.nrc_id:
+            from django.utils import timezone
+            year_suffix = timezone.now().year % 100
+            # Assuming obj.nrc_id is the numeric ID from the DB before it's overridden
+            # If the DB column is already VARCHAR, this will be the formatted ID
+            # This method is called for existing instances. For new instances, the create method handles it.
+            if isinstance(obj.nrc_id, int): # Check if it's still the auto-incremented number
+                return f"NRC{obj.nrc_id:03d}-{year_suffix:02d}"
+            return obj.nrc_id # If it's already a string, return as is
+        return None
+
+    def validate_staff_id(self, value):
+        """Validate and format staff_id properly"""
+        if not value:
+            return None
+        
+        # Convert to string and strip whitespace
+        staff_id_str = str(value).strip()
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(staff_id_str) < 11:
+            staff_id_str = staff_id_str.zfill(11)
+        
+        # Verify the staff exists
+        from apps.administration.models import Staff
+        try:
+            staff = Staff.objects.get(staff_id=staff_id_str)
+            return staff
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError(f"Staff with ID {staff_id_str} does not exist")
+        except Staff.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            staff = Staff.objects.filter(staff_id=staff_id_str).first()
+            return staff
+
+    def create(self, validated_data):
+        """Create non-resident certificate request with formatted ID like NRC001-25"""
+        from django.utils import timezone
+        
+        # Set empty string or None for middle name if not provided
+        if 'nrc_mname' not in validated_data or not validated_data.get('nrc_mname'):
+            validated_data['nrc_mname'] = ''
+        
+        if 'nrc_id' not in validated_data or not validated_data['nrc_id']:
+            year_suffix = timezone.now().year % 100
+            try:
+                existing_count = NonResidentCertificateRequest.objects.filter(nrc_id__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                existing_count = NonResidentCertificateRequest.objects.count()
+            seq = existing_count + 1
+            validated_data['nrc_id'] = f"NRC{seq:03d}-{year_suffix:02d}"
+        return super().create(validated_data)
     
 class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -144,18 +245,86 @@ class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
 
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
+
+    pr_id = serializers.PrimaryKeyRelatedField(
+        queryset=Purpose_And_Rates.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(
+        queryset=ResidentProfile.objects.all()
+    )
+    
+    # Add field mapping for frontend compatibility
+    payment_status = serializers.CharField(source='cr_req_payment_status', required=False, allow_null=True)
+
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(),  required=False, allow_null=True)
-
+    
     def get_resident_details(self, obj):
         try:
             if obj.rp_id and getattr(obj.rp_id, "per", None):
+                # Get the primary address for this person
+                address_str = None
+                try:
+                    personal_address = obj.rp_id.per.personal_addresses.first()
+                    if personal_address and personal_address.add:
+                        addr = personal_address.add
+                        address_parts = [
+                            addr.add_street,
+                            addr.add_external_sitio,
+                            addr.add_barangay,
+                            addr.add_city,
+                            addr.add_province
+                        ]
+                        address_str = ", ".join(filter(None, address_parts))
+                except Exception as addr_e:
+                    logger.error(f"Error getting address: {str(addr_e)}")
+                
+                # Format DOB properly if it exists
+                dob_value = obj.rp_id.per.per_dob
+                if dob_value:
+                    # Convert to string if it's a date object
+                    if hasattr(dob_value, 'strftime'):
+                        dob_value = dob_value.strftime('%Y-%m-%d')
+                    else:
+                        dob_value = str(dob_value)
+                
+                # Calculate eligibility for free service
+                # Check voter status
+                is_voter = obj.rp_id.voter is not None
+                
+                # Check PWD status
+                pwd_value = getattr(obj.rp_id.per, 'per_disability', None)
+                is_pwd = pwd_value and str(pwd_value).strip() != ''
+                
+                # Check senior status (age 60+)
+                is_senior = False
+                if dob_value:
+                    try:
+                        from datetime import date
+                        dob = obj.rp_id.per.per_dob
+                        today = date.today()
+                        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                        is_senior = age >= 60
+                    except Exception:
+                        pass
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
+                    'per_mname': getattr(obj.rp_id.per, 'per_mname', None),
                     'per_lname': obj.rp_id.per.per_lname,
-                    'voter_id': getattr(obj.rp_id, 'voter_id', None)
+                    'per_dob': dob_value,
+                    'per_address': address_str,
+                    'per_is_deceased': getattr(obj.rp_id.per, 'per_is_deceased', False),
+                    'voter_id': getattr(obj.rp_id, 'voter_id', None),
+                    # Eligibility fields for instant frontend rendering
+                    'is_voter': is_voter,
+                    'is_pwd': is_pwd,
+                    'is_senior': is_senior,
+                    'is_free_eligible': is_voter or is_pwd or is_senior
                 }
             return None
         except Exception as e:
@@ -180,14 +349,106 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     "pr_purpose": obj.pr_id.pr_purpose,
                     "pr_rate": obj.pr_id.pr_rate
                 }
-            return None
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
         except Exception as e:
             logger.error(f"Error getting purpose and rate: {str(e)}")
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
+
+    def validate_staff_id(self, value):
+        """Validate and format staff_id properly"""
+        if not value:
             return None
+        
+        # Convert to string and strip whitespace
+        staff_id_str = str(value).strip()
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(staff_id_str) < 11:
+            staff_id_str = staff_id_str.zfill(11)
+        
+        # Verify the staff exists
+        from apps.administration.models import Staff
+        try:
+            staff = Staff.objects.get(staff_id=staff_id_str)
+            return staff
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError(f"Staff with ID {staff_id_str} does not exist")
+        except Staff.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            staff = Staff.objects.filter(staff_id=staff_id_str).first()
+            return staff
+
+    def validate_pr_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Purpose request ID (pr_id) is required")
+
+        # Debug logging
+        logger.info(f"validate_pr_id received value: {value} (type: {type(value)})")
+
+        # Handle case where a Purpose_And_Rates object is passed instead of ID
+        if hasattr(value, 'pr_id'):
+            logger.info(f"Object already provided, returning as-is: {value}")
+            return value  # Return the object as-is
+
+        # If we have an ID, get the object
+        from apps.treasurer.models import Purpose_And_Rates
+        try:
+            purpose_obj = Purpose_And_Rates.objects.get(pk=value)
+            logger.info(f"Found Purpose_And_Rates object: {purpose_obj}")
+            return purpose_obj
+        except Purpose_And_Rates.DoesNotExist:
+            raise serializers.ValidationError(f"Purpose request with ID {value} does not exist")
+
+    def validate_rp_id(self, value):
+        """Validate and format rp_id properly"""
+        if not value:
+            raise serializers.ValidationError("Resident profile ID (rp_id) is required")
+        
+        rp_id_str = str(value).strip()
+        
+        if "(ID:" in rp_id_str and ")" in rp_id_str:
+            try:
+                
+                start_idx = rp_id_str.find("(ID:") + 4
+                end_idx = rp_id_str.find(")", start_idx)
+                if start_idx > 3 and end_idx > start_idx:
+                    rp_id_str = rp_id_str[start_idx:end_idx].strip()
+                    print(f"Extracted rp_id from display string: {rp_id_str}")
+            except Exception as e:
+                print(f"Error extracting ID from display string: {e}")
+                raise serializers.ValidationError("Invalid resident profile format")
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(rp_id_str) < 11:
+            rp_id_str = rp_id_str.zfill(11)
+        
+        # Verify the resident profile exists
+        from apps.profiling.models import ResidentProfile
+        try:
+            resident = ResidentProfile.objects.select_related('per').get(rp_id=rp_id_str)
+            
+            # Check if the resident is deceased
+            if hasattr(resident, 'per') and resident.per and getattr(resident.per, 'per_is_deceased', False):
+                raise serializers.ValidationError("Deceased residents cannot request certificates")
+            
+            return resident
+        except ResidentProfile.DoesNotExist:
+            raise serializers.ValidationError(f"Resident profile with ID {rp_id_str} does not exist")
+        except ResidentProfile.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            resident = ResidentProfile.objects.select_related('per').filter(rp_id=rp_id_str).first()
+            if resident and hasattr(resident, 'per') and resident.per and getattr(resident.per, 'per_is_deceased', False):
+                raise serializers.ValidationError("Deceased residents cannot request certificates")
+            return resident
 
     def create(self, validated_data):
         if 'cr_id' not in validated_data or not validated_data['cr_id']:
-            from django.utils import timezone
             from .models import ClerkCertificate
             year_suffix = timezone.now().year % 100
             try:
@@ -210,11 +471,15 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'cr_date_rejected',
             'cr_reason',
             'cr_req_payment_status',
+            'payment_status',  # Add frontend-compatible field
             'pr_id',
             'cr_req_status',
             'invoice',
-            'staff_id'
+            'staff_id',
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
 
 # Business Permit Serializers
@@ -231,8 +496,8 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
         fields = [
             'bpr_id',
             'req_request_date',
-            'req_sales_proof',
             'req_status',
+            'req_date_completed',
             'req_payment_status',
             'ags_id',
             'bus_id',
@@ -242,18 +507,20 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'business_name',
             'business_address',
             'business_gross_sales',
+            'bus_clearance_gross_sales',
             'requestor',
             'purpose',
             'amount_to_pay',
-            'req_amount',  # Add req_amount field
+            'req_amount',
+            'bus_reason',
         ]
 
     def get_business_name(self, obj):
         try:
-            # First try to get from the new bus_permit_name field
+            
             if obj.bus_permit_name:
                 return obj.bus_permit_name
-            # Fallback to bus_id if available
+            
             return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
         except Exception:
             return ""
@@ -289,19 +556,13 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_amount_to_pay(self, obj):
         try:
-            # First check if req_amount is already set (this is the stored amount)
+    
             if hasattr(obj, 'req_amount') and obj.req_amount:
                 return float(obj.req_amount)
             
-            # If req_amount is not set, fetch from ags_id
             if obj.ags_id:
-                # Import Annual_Gross_Sales model to fetch the actual object
-                from apps.treasurer.models import Annual_Gross_Sales
-                try:
-                    ags_obj = Annual_Gross_Sales.objects.get(ags_id=obj.ags_id)
-                    return float(ags_obj.ags_rate) if ags_obj.ags_rate else 0.0
-                except Annual_Gross_Sales.DoesNotExist:
-                    return 0.0
+               
+                return float(obj.ags_id.ags_rate) if obj.ags_id.ags_rate else 0.0
             return 0.0
         except Exception as e:
             print(f"Error getting amount_to_pay: {str(e)}")
@@ -314,7 +575,6 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         fields = [
             'bpr_id',
             'req_request_date',
-            'req_sales_proof',
             'req_status',
             'req_payment_status',
             'ags_id',
@@ -325,9 +585,10 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'req_amount',  
             'bus_permit_name',  
             'bus_permit_address',  
+            'bus_clearance_gross_sales',
         ]
         extra_kwargs = {
-            'bpr_id': {'required': False},
+            'bpr_id': {'required': False, 'read_only': True},
             'req_status': {'required': False, 'default': 'Pending'},
             'req_payment_status': {'required': False, 'default': 'Unpaid'},
             'ags_id': {'required': False, 'allow_null': True},
@@ -336,55 +597,33 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'bus_id': {'required': False, 'allow_null': True},
             'rp_id': {'required': False, 'allow_null': True},
             'req_amount': {'required': False},  # Make req_amount optional
+            'bus_clearance_gross_sales': {'required': False, 'allow_null': True},
         }
 
     def create(self, validated_data):
-        # Generate bpr_id if not provided
+        # Generate bpr_id if not provided (format: BPR001-25)
         if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
-            import time
-            # Generate a numeric ID using timestamp
-            validated_data['bpr_id'] = int(time.time() * 1000) % 100000000  # 8-digit number
-        
-        # Fetch ags_id from annual gross sales table based on gross_sales
-        if 'req_sales_proof' in validated_data and validated_data['req_sales_proof']:
+            year_suffix = timezone.now().year % 100
             try:
-                from apps.treasurer.models import Annual_Gross_Sales
-                gross_sales_range = validated_data['req_sales_proof']
-                print(f"Processing gross_sales_range: {gross_sales_range}")
-                
-                # Parse the range (e.g., "1000.00 - 2000.00")
-                if ' - ' in gross_sales_range:
-                    min_val, max_val = gross_sales_range.split(' - ')
-                    min_val = float(min_val.replace('₱', '').replace(',', ''))
-                    max_val = float(max_val.replace('₱', '').replace(',', ''))
-                    print(f"Parsed values - min: {min_val}, max: {max_val}")
-                    
-                    # Find matching annual gross sales record
-                    ags_record = Annual_Gross_Sales.objects.filter(
-                        ags_minimum=min_val,
-                        ags_maximum=max_val,
-                        ags_is_archive=False
-                    ).first()
-                    
-                    print(f"Query result: {ags_record}")
-                    
-                    if ags_record:
-                        validated_data['ags_id'] = ags_record  # Assign the instance, not the ID
-                        # Store the amount to be paid in req_amount field
-                        validated_data['req_amount'] = float(ags_record.ags_rate) if ags_record.ags_rate else 0.0
-                        print(f"Found ags_id: {ags_record.ags_id} for range {gross_sales_range}, amount: {validated_data['req_amount']}")
-                    else:
-                        print(f"No ags_id found for range {gross_sales_range}")
-                        # Let's also check what records exist in the table
-                        all_records = Annual_Gross_Sales.objects.filter(ags_is_archive=False)[:5]
-                        print(f"Sample records in table: {[(r.ags_minimum, r.ags_maximum, r.ags_id) for r in all_records]}")
-                else:
-                    print(f"Invalid gross sales format: {gross_sales_range}")
-            except Exception as e:
-                print(f"Error fetching ags_id: {str(e)}")
-                import traceback
-                print(f"Traceback: {traceback.format_exc()}")
-                # Continue without ags_id if there's an error
+                # Count existing business permits with the current year suffix
+                existing_count = BusinessPermitRequest.objects.filter(bpr_id__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                # Fallback to total count if filtering fails
+                existing_count = BusinessPermitRequest.objects.count()
+            seq = existing_count + 1
+            validated_data['bpr_id'] = f"BPR{seq:03d}-{year_suffix:02d}"
+        
+        # Handle business name and address logic
+        bus_id = validated_data.get('bus_id')
+        
+        if bus_id:
+            # Existing business - set to null, data will be fetched via bus_id in datatable
+            validated_data['bus_permit_name'] = None
+            validated_data['bus_permit_address'] = None
+        else:
+            # New business - use the provided bus_permit_name and bus_permit_address
+            # These should already be in validated_data from the request
+            pass
         
         # Create the BusinessPermitRequest
         permit_request = BusinessPermitRequest.objects.create(**validated_data)
@@ -393,446 +632,103 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
 
 class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
     business_name = serializers.SerializerMethodField()
+    bpr_id = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ibp_date_of_issuance', format="%Y-%m-%d")
+    purpose = serializers.SerializerMethodField()
+    original_permit = serializers.SerializerMethodField()
 
     def get_business_name(self, obj):
         try:
-            if obj.permit_request and obj.permit_request.business:
-                return obj.permit_request.business.bus_name
+            # Prefer explicit permit name if provided on the request (new businesses)
+            if obj.bpr_id and getattr(obj.bpr_id, 'bus_permit_name', None):
+                return obj.bpr_id.bus_permit_name
+            # Fallback to linked Business record name (existing businesses)
+            if obj.bpr_id and getattr(obj.bpr_id, 'bus_id', None) and getattr(obj.bpr_id.bus_id, 'bus_name', None):
+                return obj.bpr_id.bus_id.bus_name
             return "Unknown"
         except Exception as e:
             logger.error(f"Error getting business name: {str(e)}")
             return "Unknown"
+    
+    def get_bpr_id(self, obj):
+        try:
+            if obj.bpr_id:
+                return obj.bpr_id.bpr_id
+            return ""
+        except Exception as e:
+            logger.error(f"Error getting bpr_id: {str(e)}")
+            return ""
+
+    def get_purpose(self, obj):
+        try:
+            if obj.bpr_id and getattr(obj.bpr_id, 'pr_id', None):
+                return obj.bpr_id.pr_id.pr_purpose
+            return None
+        except Exception as e:
+            logger.error(f"Error getting business permit purpose: {str(e)}")
+            return None
+
+    def get_original_permit(self, obj):
+        try:
+            pr = obj.bpr_id
+            if not pr:
+                return None
+            return {
+                'bpr_id': getattr(pr, 'bpr_id', None),
+                'req_request_date': getattr(pr, 'req_request_date', None),
+                'req_pay_method': getattr(pr, 'req_pay_method', None),
+                'business_name': getattr(pr, 'bus_permit_name', None) or (getattr(getattr(pr, 'bus_id', None), 'bus_name', None)),
+                'business_address': getattr(pr, 'bus_permit_address', None) or (getattr(getattr(pr, 'bus_id', None), 'bus_location', None)),
+                'purpose': getattr(getattr(pr, 'pr_id', None), 'pr_purpose', None),
+            }
+        except Exception as e:
+            logger.error(f"Error building original_permit: {str(e)}")
+            return None
 
     class Meta:
         model = IssuedBusinessPermit
-        fields = ['ibp_id', 'dateIssued', 'business_name']
+        fields = ['ibp_id', 'bpr_id', 'dateIssued', 'business_name', 'purpose', 'original_permit']
 
 # ================== SERVICE CHARGE SERIALIZERS =========================
-class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonDateAvailability
-        fields = '__all__'
-
-class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonTimeAvailability
-        fields = '__all__'
-
-class AccusedDetailsSerializer(serializers.ModelSerializer):
-    # address = AddressDetailsSerializer(source='add')
     
-    class Meta:
-        model = Accused
-        fields = [
-            'acsd_id', 
-            'acsd_name',
-            'acsd_age',
-            'acsd_gender',
-            'acsd_description',
-            # 'address'
-        ]
-
-class SummonRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequest
-        fields = '__all__'
-
-class ServiceChargeRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequest
-        fields = '__all__'
-
-class SummonRequestPendingListSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    incident_type = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
-            'comp_id', 
-            'staff_id', 
-            'complainant_names', 
-            'incident_type', 
-            'accused_names'
-        ]
-    
-    def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
-                complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
-                return [cc.cpnt.cpnt_name for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainants: {e}")
-                return []
-        return []
-    
-    def get_incident_type(self, obj):
-        if obj.comp_id:
-            return getattr(obj.comp_id, 'comp_incident_type', None)
-        return None
-    
-    def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
-                accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
-                return [ca.acsd.acsd_name for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused: {e}")
-                return []
-        return []
-    
-
-class SummonRequestRejectedListSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    incident_type = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    rejection_reason = serializers.SerializerMethodField()
-    decision_date = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
-            'comp_id', 
-            'staff_id', 
-            'complainant_names', 
-            'incident_type', 
-            'accused_names',
-            'rejection_reason',
-            'decision_date'
-        ]
-    
-    def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                complainants = obj.comp_id.complaintcomplainant_set.all()
-                return [cc.cpnt.cpnt_name for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainants: {e}")
-                return []
-        return []
-    
-    def get_incident_type(self, obj):
-        if obj.comp_id:
-            return getattr(obj.comp_id, 'comp_incident_type', None)
-        return None
-    
-    def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                accused_list = obj.comp_id.complaintaccused_set.all()
-                return [ca.acsd.acsd_name for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused: {e}")
-                return []
-        return []
-    
-    def get_rejection_reason(self, obj):
-        try:
-            # Use the correct reverse relationship name for OneToOneField
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_reason
-            return None
-        except Exception as e:
-            print(f"Error getting rejection reason: {e}")
-            return None
-    
-    def get_decision_date(self, obj):
-        try:
-            # Use the correct reverse relationship name for OneToOneField
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_decision_date
-            return None
-        except Exception as e:
-            print(f"Error getting decision date: {e}")
-            return None
-
-class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    incident_type = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    decision_date = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
-            'comp_id', 
-            'staff_id', 
-            'complainant_names', 
-            'incident_type', 
-            'accused_names',
-            'decision_date'
-        ]
-    
-    def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                complainants = obj.comp_id.complaintcomplainant_set.all()
-                return [cc.cpnt.cpnt_name for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainants: {e}")
-                return []
-        return []
-    
-    def get_incident_type(self, obj):
-        if obj.comp_id:
-            return getattr(obj.comp_id, 'comp_incident_type', None)
-        return None
-    
-    def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                accused_list = obj.comp_id.complaintaccused_set.all()
-                return [ca.acsd.acsd_name for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused: {e}")
-                return []
-        return []
-    
-    def get_decision_date(self, obj):
-        try:
-            # Use the correct reverse relationship name for OneToOneField
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_decision_date
-            return None
-        except Exception as e:
-            print(f"Error getting decision date: {e}")
-            return None
-        
-
-class SummonCaseListSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    complainant_addresses = serializers.SerializerMethodField()
-    incident_type = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    accused_addresses = serializers.SerializerMethodField()
-    decision_date = serializers.SerializerMethodField()
-    payment_status = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_code',
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
-            'comp_id', 
-            'staff_id', 
-            'complainant_names', 
-            'complainant_addresses',
-            'incident_type', 
-            'accused_names',
-            'accused_addresses',
-            'decision_date',
-            'payment_status'
-        ]
-    
-    def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
-                complainants = obj.comp_id.complaintcomplainant_set.all()
-                return [cc.cpnt.cpnt_name for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainants: {e}")
-                return []
-        return []
-    
-    def get_complainant_addresses(self, obj):
-        if obj.comp_id:
-            try:
-                complainants = obj.comp_id.complaintcomplainant_set.all()
-                return [cc.cpnt.cpnt_address or "N/A" for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainant addresses: {e}")
-                return []
-        return []
-    
-    def get_incident_type(self, obj):
-        if obj.comp_id:
-            return getattr(obj.comp_id, 'comp_incident_type', None)
-        return None
-    
-    def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
-                accused_list = obj.comp_id.complaintaccused_set.all()
-                return [ca.acsd.acsd_name for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused: {e}")
-                return []
-        return []
-    
-    def get_accused_addresses(self, obj):
-        if obj.comp_id:
-            try:
-                accused_list = obj.comp_id.complaintaccused_set.all()
-                return [ca.acsd.acsd_address or "N/A" for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused addresses: {e}")
-                return []
-        return []
-    
-    def get_decision_date(self, obj):
-        try:
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_decision_date
-            return None
-        except Exception as e:
-            print(f"Error getting decision date: {e}")
-            return None
-            
-    def get_payment_status(self, obj):
-        try:
-            if hasattr(obj, 'servicechargepaymentrequest'):
-                return obj.servicechargepaymentrequest.spay_status
-            return None
-        except Exception as e:
-            print(f"Error getting payment status: {e}")
-            return None
-        
-class SummonSuppDocCreateSerializer(serializers.ModelSerializer):
-    files = FileInputSerializer(write_only=True, required=False, many=True)
-
-    class Meta:
-        model = SummonSuppDoc
-        fields = '__all__'
-        extra_kwargs={
-            'ssd_name': {'required': False},
-            'ssd_path': {'required': False},
-            'ssd_type': {'required': False},
-            'ssd_upload_date': {'read_only': True},
-            'ssd_url': {'read_only': True}
-        }
-
-    @transaction.atomic
-    def create(self, validated_data):   
-        files_data = validated_data.pop('files', [])
-        if not files_data:
-            raise serializers.ValidationError({"files": "At least one file must be provided"})
-            
-        # Remove ss_id from validated_data so it doesn't interfere with model creation
-        ss_id = validated_data.pop('ss_id')
-        created_files = self._upload_files(files_data, ss_id)
-
-        if not created_files:
-            raise serializers.ValidationError("Failed to upload files")
-
-        return created_files[0]
-
-    def _upload_files(self, files_data, ss_id):
-        ssd_files = []
-        for file_data in files_data:
-            ssd_file = SummonSuppDoc(
-                ssd_name=file_data['name'],
-                ssd_type=file_data['type'],
-                ssd_path=file_data['name'],
-                ssd_upload_date=timezone.now(),
-                ss_id=ss_id
-            )
-
-            # Pass the entire file_data to upload_to_storage
-            url = upload_to_storage(file_data, 'summon-bucket', '')
-            ssd_file.ssd_url = url
-            ssd_files.append(ssd_file)
-
-        if ssd_files:
-            return SummonSuppDoc.objects.bulk_create(ssd_files)
-        return []
-    
-
-class SummonSuppDocViewSieralizer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonSuppDoc
-        fields = '__all__'
-    
-class ServiceChargeDecisionSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = ServiceChargeDecision
-        fields = '__all__'
-
 class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
+    # Make pay_id not required so it can be auto-generated
+    pay_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    pay_reason = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     class Meta:
         model = ServiceChargePaymentRequest
         fields = '__all__'
-
-class SummonScheduleDetailSerializer(serializers.ModelSerializer):
-    hearing_date = serializers.DateField(source='sd_id.sd_date', read_only=True)
-    hearing_time = serializers.TimeField(source='st_id.st_start_time', read_only=True)
     
-    class Meta:
-        model = SummonSchedule
-        fields = [
-            'ss_id', 
-            'ss_mediation_level', 
-            'ss_is_rescheduled', 
-            'ss_reason',
-            'hearing_date',
-            'hearing_time'
-        ]
-
-class SummonScheduleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonSchedule
-        fields = '__all__'
-
-
-class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-    complaint = serializers.SerializerMethodField()
-    schedules = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_req_date',
-            'sr_req_status',
-            'sr_case_status',
-            'sr_date_marked',
-            'comp_id',
-            'complaint',       
-            'schedules',      
-        ]
-
-    def get_complaint(self, obj):
-        if not obj.comp_id:
-            return None
-        return ComplaintSerializer(obj.comp_id, context=self.context).data
-
-    def get_schedules(self, obj):
-        schedules = SummonSchedule.objects.filter(sr_id=obj)
-        result = []
-        for schedule in schedules:
-            schedule_data = SummonScheduleDetailSerializer(schedule).data
-            supp_docs = SummonSuppDoc.objects.filter(ss_id=schedule)
-            schedule_data['supporting_docs'] = SummonSuppDocViewSieralizer(
-                supp_docs, many=True
-            ).data
-            result.append(schedule_data)
-        return result
+    def create(self, validated_data):
+        # Auto-generate pay_id without SR- prefix
+        if 'pay_id' not in validated_data or not validated_data.get('pay_id'):
+            from django.utils import timezone
+            from .models import ServiceChargePaymentRequest
+            
+            year_suffix = timezone.now().year % 100
+            
+            # Get the last ServiceChargePaymentRequest to determine next sequential number
+            last_record = ServiceChargePaymentRequest.objects.filter(
+                pay_id__endswith=f"-{year_suffix:02d}"
+            ).order_by('-pay_id').first()
+            
+            if last_record:
+                # Extract the number from the last pay_id (e.g., "SP001-25" -> 1)
+                try:
+                    # Handle both old format with SR- and new format
+                    pay_id_str = last_record.pay_id.replace('SR-', '')
+                    last_num = int(pay_id_str.split('-')[0].replace('SP', ''))
+                    seq = last_num + 1
+                except (ValueError, IndexError):
+                    seq = 1
+            else:
+                seq = 1
+            
+            # Generate the new pay_id without SR- prefix (e.g., "SP001-25")
+            validated_data['pay_id'] = f"SP{seq:03d}-{year_suffix:02d}"
+        
+        return super().create(validated_data)
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
@@ -842,17 +738,35 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     complainant_addresses = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
     accused_addresses = serializers.SerializerMethodField()
+    sr_id = serializers.SerializerMethodField()
+    sr_code = serializers.SerializerMethodField()
+    sr_type = serializers.SerializerMethodField()
+    sr_req_date = serializers.SerializerMethodField()
+    sr_req_status = serializers.SerializerMethodField()
+    sr_case_status = serializers.SerializerMethodField()
+    staff_id = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()
     
     class Meta:
-        model = ServiceChargeRequest
+        from .models import ServiceChargePaymentRequest
+        model = ServiceChargePaymentRequest
         fields = [
+            'pay_id',
+            'pay_sr_type',
+            'pay_status',
+            'pay_date_req',
+            'pay_due_date',
+            'pay_date_paid',
+            'pay_reason',
+            'comp_id',
+            'pr_id',
+            'purpose',
             'sr_id',
-            'sr_code', 
+            'sr_code',  # This will now read from database
             'sr_type',
             'sr_req_date',
             'sr_req_status',
             'sr_case_status',
-            'comp_id',
             'staff_id',
             'complainant_name',
             'complainant_names',
@@ -863,505 +777,390 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         ]
     
     def get_complainant_name(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
+                # Try to get complainant through the complaint relationship
                 complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
-                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
-            except Exception:
-                return None
-        return None
+                if complainant and complainant.cpnt:
+                    return complainant.cpnt.cpnt_name
+                else:
+                    
+                    return "N/A"
+            else:
+                return "N/A"
+        except Exception as e:
+            return "Error Loading Complainant"
 
     def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
-                return [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
-            except Exception:
-                return []
-        return []
+                names = [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
+                if not names:
+                    # If no complainants found, return N/A
+                    return ["N/A"]
+                return names
+        except Exception:
+            pass
+        return ["No Complainant Data"]
 
     def get_complainant_addresses(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
-                return [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
-            except Exception:
-                return []
-        return []
+                addresses = [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
+                if not addresses:
+                    # If no complainants found, return a default address
+                    return ["N/A"]
+                return addresses
+        except Exception:
+            pass
+        return ["N/A"]
 
     def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
                 return [ca.acsd.acsd_name for ca in accused_list if getattr(ca, 'acsd', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
 
     def get_accused_addresses(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
                 return [getattr(ca.acsd, 'acsd_address', None) or "N/A" for ca in accused_list if getattr(ca, 'acsd', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
     
-    def get_payment_request(self, obj):
-        try:
-            payment_request = obj.servicechargepaymentrequest
-            return {
-                'spay_id': payment_request.spay_id,
-                'spay_status': payment_request.spay_status,
-                'spay_due_date': payment_request.spay_due_date,
-                'spay_date_paid': payment_request.spay_date_paid,
-                'pr_id': payment_request.pr_id.pr_id if payment_request.pr_id else None
-            }
-        except Exception:
-            return None
-        
-
-class CaseTrackingSerializer(serializers.ModelSerializer):
-    decision = serializers.SerializerMethodField()
-    payment = serializers.SerializerMethodField()
-    schedule = serializers.SerializerMethodField()
-    current_step = serializers.SerializerMethodField()
-    progress_percentage = serializers.SerializerMethodField()
+    def get_sr_id(self, obj):
+        # Generate a service request ID based on payment ID
+        return f"SR-{obj.pay_id}"
     
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 'sr_code', 'sr_type', 'sr_req_date', 
-            'sr_req_status', 'sr_case_status', 'sr_date_marked',
-            'decision', 'payment', 'schedule', 'current_step', 'progress_percentage'
-        ]
+    def get_sr_code(self, obj):
+        # pay_id is already stored as SR code in the database (e.g., "SR051-25")
+        return obj.pay_id
     
-    def get_decision(self, obj):
-        try:
-            decision = ServiceChargeDecision.objects.get(sr_id=obj)
-            return {
-                'scd_decision_date': decision.scd_decision_date,
-                'scd_reason': decision.scd_reason
-            }
-        except ServiceChargeDecision.DoesNotExist:
-            return None
+    def get_sr_type(self, obj):
+        # Use the payment request type
+        return obj.pay_sr_type
     
-    def get_payment(self, obj):
-        try:
-            payment = ServiceChargePaymentRequest.objects.get(sr_id=obj)
-            payment_data = {
-                'spay_id': payment.spay_id,
-                'spay_status': payment.spay_status,
-                'spay_due_date': payment.spay_due_date,
-                'spay_date_paid': payment.spay_date_paid,
-            }
-            
-            # Add amount and purpose from the related pr_id
-            if payment.pr_id:
-                payment_data['amount'] = payment.pr_id.pr_rate
-                payment_data['purpose'] = payment.pr_id.pr_purpose
-            
-            return payment_data
-        except ServiceChargePaymentRequest.DoesNotExist:
-            return None
+    def get_sr_req_date(self, obj):
+        # Use payment request date
+        return obj.pay_date_req
     
-    def get_schedule(self, obj):
-        try:
-            schedule = SummonSchedule.objects.get(sr_id=obj)
-            schedule_data = {
-                'ss_id': schedule.ss_id,
-                'ss_mediation_level': schedule.ss_mediation_level,
-                'ss_is_rescheduled': schedule.ss_is_rescheduled,
-                'ss_reason': schedule.ss_reason,
-            }
-            
-            # Add date and time from related objects
-            if schedule.sd_id:
-                schedule_data['date'] = schedule.sd_id.sd_date
-            if schedule.st_id:
-                schedule_data['time'] = schedule.st_id.st_start_time
-            
-            return schedule_data
-        except SummonSchedule.DoesNotExist:
-            return None
+    def get_sr_req_status(self, obj):
+        # Use pay_req_status for request status
+        return obj.pay_req_status
     
-    def get_current_step(self, obj):
-        """Determine the current step based on the case status"""
-        steps = [
-            {
-                'id': 1,
-                'title': 'Summon Request',
-                'description': self._get_step1_description(obj),
-                'status': self._get_step1_status(obj),
-                'details': self._get_step1_details(obj),
-                'display_status': self._get_step1_display_status(obj),
-            },
-            {
-                'id': 2,
-                'title': 'Payment',
-                'description': 'Process payment for mediation services',
-                'status': self._get_step2_status(obj),
-                'details': self._get_step2_details(obj),
-                'display_status': self._get_step2_display_status(obj),
-            },
-            {
-                'id': 3,
-                'title': 'Schedule Mediation',
-                'description': 'Book your mediation session with available mediators',
-                'status': self._get_step3_status(obj),
-                'details': self._get_step3_details(obj),
-                'display_status': self._get_step3_display_status(obj),
-            },
-            {
-                'id': 4,
-                'title': 'Case Completion',
-                'description': 'Receive final documentation and case resolution',
-                'status': self._get_step4_status(obj),
-                'details': 'Final documents will be available after mediation completion.',
-                'display_status': self._get_step4_display_status(obj),
-            }
-        ]
-        return steps
+    def get_sr_case_status(self, obj):
+        # Default case status
+        return "Pending"
     
-    def get_progress_percentage(self, obj):
-        """Calculate progress percentage based on completed steps"""
-        steps = self.get_current_step(obj)
-        completed_steps = sum(1 for step in steps if step['status'] == 'accepted')
-        return (completed_steps / len(steps)) * 100 if steps else 0
-    
-    # Step 1: Summon Request
-    def _get_step1_status(self, obj):
-        if not obj.sr_req_status:
-            return 'pending'
-        status_lower = obj.sr_req_status.lower()
-        if status_lower == 'accepted':
-            return 'accepted'
-        elif status_lower == 'rejected':
-            return 'rejected'
-        return 'pending'
-    
-    def _get_step1_display_status(self, obj):
-        status = self._get_step1_status(obj)
-        return status.capitalize()  # Pending, Accepted, Rejected
-    
-    def _get_step1_description(self, obj):
-        status = self._get_step1_status(obj)
-        if status == 'pending':
-            return 'Waiting for approval.'
-        elif status == 'accepted':
-            return 'Your summon request has been approved.'
-        else:
-            return 'Your summon request has been rejected.'
-    
-    def _get_step1_details(self, obj):
-        decision = self.get_decision(obj)
-        status = self._get_step1_status(obj)
-        
-        details = f"Requested on {obj.sr_req_date.strftime('%B %d, %Y') if obj.sr_req_date else 'N/A'}."
-        
-        if status == 'accepted' and decision and decision.get('scd_decision_date'):
-            details += f" Accepted on {decision['scd_decision_date'].strftime('%B %d, %Y')}."
-        elif status == 'rejected' and decision:
-            decision_date = decision.get('scd_decision_date')
-            reason = decision.get('scd_reason', 'No reason provided')
-            if decision_date:
-                details += f" Rejected on {decision_date.strftime('%B %d, %Y')}. Reason: {reason}."
-            else:
-                details += f" Rejected. Reason: {reason}."
-        
-        return details
-    
-    # Step 2: Payment
-    def _get_step2_status(self, obj):
-        payment = self.get_payment(obj)
-        if not payment:
-            return 'pending'
-        
-        status = payment.get('spay_status', '').lower()
-        
-        if status == 'paid':
-            return 'accepted'
-        elif status == 'unpaid':
-            spay_due_date = payment.get('spay_due_date')
-            if spay_due_date and timezone.now().date() > spay_due_date:
-                return 'rejected'  # Overdue unpaid payment
-            return 'pending'  # Not yet due
-        return 'pending'
-    
-    def _get_step2_display_status(self, obj):
-        payment = self.get_payment(obj)
-        if not payment:
-            return 'Unpaid'
-        
-        status = payment.get('spay_status', '').lower()
-        if status == 'paid':
-            return 'Paid'
-        elif status == 'unpaid':
-            return 'Unpaid'
-        return 'Unpaid'
-    
-    def _get_step2_details(self, obj):
-        payment = self.get_payment(obj)
-        status = self._get_step2_status(obj)
-        
-        if status == 'pending' and payment:
-            amount = payment.get('amount', 'N/A')
-            purpose = payment.get('purpose', 'mediation services')
-            spay_due_date = payment.get('spay_due_date')
-            
-            if spay_due_date:
-                return f"Payment of {amount} for {purpose} is due on {spay_due_date.strftime('%B %d, %Y')}."
-            else:
-                return f"Payment of {amount} for {purpose} will be enabled once your summon request is approved."
-        
-        elif status == 'accepted' and payment:
-            amount = payment.get('amount', 'N/A')
-            spay_date_paid = payment.get('spay_date_paid')
-            if spay_date_paid:
-                return f"Payment of {amount} paid on {spay_date_paid.strftime('%B %d, %Y')}."
-            else:
-                return f"Payment of {amount} completed."
-        
-        elif status == 'rejected' and payment:
-            spay_due_date = payment.get('spay_due_date')
-            if spay_due_date:
-                return f"Payment overdue. Due date was {spay_due_date.strftime('%B %d, %Y')}."
-            else:
-                return "Payment overdue."
-        
-        return "Payment details not available."
-    
-    # Step 3: Schedule Mediation
-    def _get_step3_status(self, obj):
-        schedule = self.get_schedule(obj)
-        if not schedule:
-            return 'pending'
-        
-        if schedule.get('ss_is_rescheduled'):
-            return 'rejected'
-        return 'accepted'
-    
-    def _get_step3_display_status(self, obj):
-        schedule = self.get_schedule(obj)
-        if not schedule:
-            return 'Not Scheduled'
-        
-        if schedule.get('ss_is_rescheduled'):
-            return 'Rescheduled'
-        return 'Scheduled'
-    
-    def _get_step3_details(self, obj):
-        schedule = self.get_schedule(obj)
-        status = self._get_step3_status(obj)
-        
-        if status == 'pending':
-            return "Schedule mediation after payment is completed."
-        elif status == 'accepted' and schedule and schedule.get('date') and schedule.get('time'):
-            return f"Scheduled for {schedule['date']} at {schedule['time']}."
-        elif status == 'rejected' and schedule:
-            reason = schedule.get('ss_reason', 'No reason provided')
-            return f"Previous slot rejected. Reason: {reason}. Please select a new time."
-        return ""
-    
-    # Step 4: Case Completion
-    def _get_step4_status(self, obj):
-        if not obj.sr_case_status:
-            return 'pending'
-        
-        status_lower = obj.sr_case_status.lower()
-        if status_lower == 'resolved':
-            return 'accepted'
-        elif status_lower == 'escalated':
-            return 'rejected'
-        return 'pending'
-    
-    def _get_step4_display_status(self, obj):
-        if not obj.sr_case_status:
-            return 'In Progress'
-        
-        status_lower = obj.sr_case_status.lower()
-        if status_lower == 'resolved':
-            return 'Resolved'
-        elif status_lower == 'escalated':
-            return 'Escalated'
-        return 'In Progress'
-
-# New: Flat serializer exposing top-level payment fields for easy Paid-list consumption
-class ServiceChargePaidListSerializer(serializers.ModelSerializer):
-    complainant_name = serializers.SerializerMethodField()
-    spay_status = serializers.SerializerMethodField()
-    spay_date_paid = serializers.SerializerMethodField()
-    pr_id = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_req_date',
-            'sr_req_status',
-            'sr_case_status',
-            'comp_id',
-            'staff_id',
-            'complainant_name',
-            'spay_status',
-            'spay_date_paid',
-            'pr_id',
-        ]
-
-    def get_complainant_name(self, obj):
-        if obj.comp_id:
-            try:
-                complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
-                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
-            except Exception:
-                return None
+    def get_staff_id(self, obj):
+        # Return None for now
         return None
 
-    def get_spay_status(self, obj):
+    def get_purpose(self, obj):
+        # Get purpose from pr_id relationship
         try:
-            return getattr(obj.servicechargepaymentrequest, 'spay_status', None)
+            if obj.pr_id:
+                return obj.pr_id.pr_purpose
+            return None
         except Exception:
             return None
 
-    def get_spay_date_paid(self, obj):
+    def get_payment_request(self, obj):
         try:
-            return getattr(obj.servicechargepaymentrequest, 'spay_date_paid', None)
+            # Calculate due date (7 days from request date)
+            from datetime import timedelta
+            due_date = obj.pay_date_req + timedelta(days=7) if obj.pay_date_req else None
+            
+            # Check if overdue
+            from django.utils import timezone
+            is_overdue = False
+            if due_date and obj.pay_status == 'Unpaid':
+                is_overdue = timezone.now() > due_date
+            
+            # Return payment request data directly
+            return {
+                'spay_id': obj.pay_id,
+                'spay_status': obj.pay_status,
+                'spay_due_date': obj.pay_due_date,
+                'spay_date_paid': obj.pay_date_paid,
+                'calculated_due_date': due_date,
+                'is_overdue': is_overdue
+            }
         except Exception:
             return None
+        
 
-    def get_pr_id(self, obj):
-        try:
-            pr = getattr(obj.servicechargepaymentrequest, 'pr_id', None)
-            return pr.pr_id if pr else None
-        except Exception:
-            return None
-# ============================ MIGHT DELETE THESE LATER ==============================
-
-# Complaint-related Serializers
-# class CaseSuppDocSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = CaseSuppDoc
-#         fields = '__all__'
-
-# class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ServiceChargeRequestFile
-#         fields = '__all__'
-
-# class CaseActivitySerializer(serializers.ModelSerializer):
-#     srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
-#     supporting_documents = CaseSuppDocSerializer(
-#         source='supporting_docs',
-#         many=True,
-#         read_only=True
-#     )
-#     formatted_hearing_datetime = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = CaseActivity
-#         fields = [
-#             'ca_id',
-#             'ca_reason',
-#             'ca_hearing_date',
-#             'ca_hearing_time',
-#             'formatted_hearing_datetime',
-#             'ca_mediation',
-#             'ca_date_of_issuance',
-#             'srf_detail',
-#             'supporting_documents'
-#         ]
+# # SUMMON CASE SERIALIZER FOR COMPLAINANT TRACKING MOBILE
+# class CaseTrackingSerializer(serializers.ModelSerializer):
+#     decision = serializers.SerializerMethodField()
+#     payment = serializers.SerializerMethodField()
+#     schedule = serializers.SerializerMethodField()
+#     current_step = serializers.SerializerMethodField()
+#     progress_percentage = serializers.SerializerMethodField()
     
-#     def get_formatted_hearing_datetime(self, obj):
-#         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-
-# Service Charge Request Serializers
-# class ServiceChargeRequestSerializer(serializers.ModelSerializer):
-#     complainant_names = serializers.SerializerMethodField()
-#     accused_names = serializers.SerializerMethodField()
-#     incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
-#     allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-#     formatted_decision_date = serializers.SerializerMethodField()
-#     formatted_request_date = serializers.SerializerMethodField()
-
 #     class Meta:
 #         model = ServiceChargeRequest
 #         fields = [
-#             'sr_id', 
-#             'sr_code',
-#             'complainant_names', 
-#             'accused_names', 
-#             'incident_type', 
-#             'allegation',
-#             'sr_status',
-#             'sr_payment_status',
-#             'sr_type',
-#             'formatted_decision_date',
-#             'formatted_request_date'
-#         ]
-
-#     def get_complainant_names(self, obj):
-#         if not obj.comp:
-#             return []
-#         return [c.cpnt_name for c in obj.comp.complainant.all()]
-    
-#     def get_accused_names(self, obj):
-#         if not obj.comp:
-#             return []
-#         return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
-    
-#     def get_formatted_decision_date(self, obj):
-#         if obj.sr_decision_date:
-#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-#         return None
-    
-#     def get_formatted_request_date(self, obj):
-#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-
-# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-#     complaint = ComplaintSerializer(source='comp', read_only=True)
-#     case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-#     file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-#     parent_summon = ServiceChargeRequestSerializer(read_only=True)
-#     formatted_request_date = serializers.SerializerMethodField()
-#     formatted_decision_date = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_status',
-#             'sr_payment_status',
-#             'sr_type',
-#             'formatted_request_date',
-#             'formatted_decision_date',
-#             'sr_decision_date',
-#             'complaint',
-#             'case_activities',
-#             'file_action_file',
-#             'parent_summon'
+#             'sr_id', 'sr_code', 'sr_type', 'sr_req_date', 
+#             'sr_req_status', 'sr_case_status', 'sr_date_marked',
+#             'decision', 'payment', 'schedule', 'current_step', 'progress_percentage'
 #         ]
     
-#     def get_formatted_request_date(self, obj):
-#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+#     def get_decision(self, obj):
+#         try:
+#             decision = ServiceChargeDecision.objects.get(sr_id=obj)
+#             return {
+#                 'scd_decision_date': decision.scd_decision_date,
+#                 'scd_reason': decision.scd_reason
+#             }
+#         except ServiceChargeDecision.DoesNotExist:
+#             return None
     
-#     def get_formatted_decision_date(self, obj):
-#         if obj.sr_decision_date:
-#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-#         return None
-
-# class FileActionRequestSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_type',
-#             'sr_payment_status',
-#             'parent_summon',
-#             'file_action_file',
-#             'comp'
+#     def get_payment(self, obj):
+#         try:
+#             payment = ServiceChargePaymentRequest.objects.get(sr_id=obj)
+#             payment_data = {
+#                 'spay_id': payment.spay_id,
+#                 'spay_status': payment.spay_status,
+#                 'spay_due_date': payment.spay_due_date,
+#                 'spay_date_paid': payment.spay_date_paid,
+#             }
+            
+#             # Add amount and purpose from the related pr_id
+#             if payment.pr_id:
+#                 payment_data['amount'] = payment.pr_id.pr_rate
+#                 payment_data['purpose'] = payment.pr_id.pr_purpose
+            
+#             return payment_data
+#         except ServiceChargePaymentRequest.DoesNotExist:
+#             return None
+    
+#     def get_schedule(self, obj):
+#         try:
+#             schedule = SummonSchedule.objects.get(sr_id=obj)
+#             schedule_data = {
+#                 'ss_id': schedule.ss_id,
+#                 'ss_mediation_level': schedule.ss_mediation_level,
+#                 'ss_is_rescheduled': schedule.ss_is_rescheduled,
+#                 'ss_reason': schedule.ss_reason,
+#             }
+            
+#             # Add date and time from related objects
+#             if schedule.sd_id:
+#                 schedule_data['date'] = schedule.sd_id.sd_date
+#             if schedule.st_id:
+#                 schedule_data['time'] = schedule.st_id.st_start_time
+            
+#             return schedule_data
+#         except SummonSchedule.DoesNotExist:
+#             return None
+    
+#     def get_current_step(self, obj):
+#         """Determine the current step based on the case status"""
+#         steps = [
+#             {
+#                 'id': 1,
+#                 'title': 'Summon Request',
+#                 'description': self._get_step1_description(obj),
+#                 'status': self._get_step1_status(obj),
+#                 'details': self._get_step1_details(obj),
+#                 'display_status': self._get_step1_display_status(obj),
+#             },
+#             {
+#                 'id': 2,
+#                 'title': 'Payment',
+#                 'description': 'Process payment for mediation services',
+#                 'status': self._get_step2_status(obj),
+#                 'details': self._get_step2_details(obj),
+#                 'display_status': self._get_step2_display_status(obj),
+#             },
+#             {
+#                 'id': 3,
+#                 'title': 'Schedule Mediation',
+#                 'description': 'Book your mediation session with available mediators',
+#                 'status': self._get_step3_status(obj),
+#                 'details': self._get_step3_details(obj),
+#                 'display_status': self._get_step3_display_status(obj),
+#             },
+#             {
+#                 'id': 4,
+#                 'title': 'Case Completion',
+#                 'description': 'Receive final documentation and case resolution',
+#                 'status': self._get_step4_status(obj),
+#                 'details': 'Final documents will be available after mediation completion.',
+#                 'display_status': self._get_step4_display_status(obj),
+#             }
 #         ]
+#         return steps
+    
+#     def get_progress_percentage(self, obj):
+#         """Calculate progress percentage based on completed steps"""
+#         steps = self.get_current_step(obj)
+#         completed_steps = sum(1 for step in steps if step['status'] == 'accepted')
+#         return (completed_steps / len(steps)) * 100 if steps else 0
+    
+#     # Step 1: Summon Request
+#     def _get_step1_status(self, obj):
+#         if not obj.sr_req_status:
+#             return 'pending'
+#         status_lower = obj.sr_req_status.lower()
+#         if status_lower == 'accepted':
+#             return 'accepted'
+#         elif status_lower == 'rejected':
+#             return 'rejected'
+#         return 'pending'
+    
+#     def _get_step1_display_status(self, obj):
+#         status = self._get_step1_status(obj)
+#         return status.capitalize()  # Pending, Accepted, Rejected
+    
+#     def _get_step1_description(self, obj):
+#         status = self._get_step1_status(obj)
+#         if status == 'pending':
+#             return 'Waiting for approval.'
+#         elif status == 'accepted':
+#             return 'Your summon request has been approved.'
+#         else:
+#             return 'Your summon request has been rejected.'
+    
+#     def _get_step1_details(self, obj):
+#         decision = self.get_decision(obj)
+#         status = self._get_step1_status(obj)
+        
+#         details = f"Requested on {obj.sr_req_date.strftime('%B %d, %Y') if obj.sr_req_date else 'N/A'}."
+        
+#         if status == 'accepted' and decision and decision.get('scd_decision_date'):
+#             details += f" Accepted on {decision['scd_decision_date'].strftime('%B %d, %Y')}."
+#         elif status == 'rejected' and decision:
+#             decision_date = decision.get('scd_decision_date')
+#             reason = decision.get('scd_reason', 'No reason provided')
+#             if decision_date:
+#                 details += f" Rejected on {decision_date.strftime('%B %d, %Y')}. Reason: {reason}."
+#             else:
+#                 details += f" Rejected. Reason: {reason}."
+        
+#         return details
+    
+#     # Step 2: Payment
+#     def _get_step2_status(self, obj):
+#         payment = self.get_payment(obj)
+#         if not payment:
+#             return 'pending'
+        
+#         status = payment.get('spay_status', '').lower()
+        
+#         if status == 'paid':
+#             return 'accepted'
+#         elif status == 'unpaid':
+#             spay_due_date = payment.get('spay_due_date')
+#             if spay_due_date and timezone.now().date() > spay_due_date:
+#                 return 'rejected'  # Overdue unpaid payment
+#             return 'pending'  # Not yet due
+#         return 'pending'
+    
+#     def _get_step2_display_status(self, obj):
+#         payment = self.get_payment(obj)
+#         if not payment:
+#             return 'Unpaid'
+        
+#         status = payment.get('spay_status', '').lower()
+#         if status == 'paid':
+#             return 'Paid'
+#         elif status == 'unpaid':
+#             return 'Unpaid'
+#         return 'Unpaid'
+    
+#     def _get_step2_details(self, obj):
+#         payment = self.get_payment(obj)
+#         status = self._get_step2_status(obj)
+        
+#         if status == 'pending' and payment:
+#             amount = payment.get('amount', 'N/A')
+#             purpose = payment.get('purpose', 'mediation services')
+#             spay_due_date = payment.get('spay_due_date')
+            
+#             if spay_due_date:
+#                 return f"Payment of {amount} for {purpose} is due on {spay_due_date.strftime('%B %d, %Y')}."
+#             else:
+#                 return f"Payment of {amount} for {purpose} will be enabled once your summon request is approved."
+        
+#         elif status == 'accepted' and payment:
+#             amount = payment.get('amount', 'N/A')
+#             spay_date_paid = payment.get('spay_date_paid')
+#             if spay_date_paid:
+#                 return f"Payment of {amount} paid on {spay_date_paid.strftime('%B %d, %Y')}."
+#             else:
+#                 return f"Payment of {amount} completed."
+        
+#         elif status == 'rejected' and payment:
+#             spay_due_date = payment.get('spay_due_date')
+#             if spay_due_date:
+#                 return f"Payment overdue. Due date was {spay_due_date.strftime('%B %d, %Y')}."
+#             else:
+#                 return "Payment overdue."
+        
+#         return "Payment details not available."
+    
+#     # Step 3: Schedule Mediation
+#     def _get_step3_status(self, obj):
+#         schedule = self.get_schedule(obj)
+#         if not schedule:
+#             return 'pending'
+        
+#         if schedule.get('ss_is_rescheduled'):
+#             return 'rejected'
+#         return 'accepted'
+    
+#     def _get_step3_display_status(self, obj):
+#         schedule = self.get_schedule(obj)
+#         if not schedule:
+#             return 'Not Scheduled'
+        
+#         if schedule.get('ss_is_rescheduled'):
+#             return 'Rescheduled'
+#         return 'Scheduled'
+    
+#     def _get_step3_details(self, obj):
+#         schedule = self.get_schedule(obj)
+#         status = self._get_step3_status(obj)
+        
+#         if status == 'pending':
+#             return "Schedule mediation after payment is completed."
+#         elif status == 'accepted' and schedule and schedule.get('date') and schedule.get('time'):
+#             return f"Scheduled for {schedule['date']} at {schedule['time']}."
+#         elif status == 'rejected' and schedule:
+#             reason = schedule.get('ss_reason', 'No reason provided')
+#             return f"Previous slot rejected. Reason: {reason}. Please select a new time."
+#         return ""
+    
+#     # Step 4: Case Completion
+#     def _get_step4_status(self, obj):
+#         if not obj.sr_case_status:
+#             return 'pending'
+        
+#         status_lower = obj.sr_case_status.lower()
+#         if status_lower == 'resolved':
+#             return 'accepted'
+#         elif status_lower == 'escalated':
+#             return 'rejected'
+#         return 'pending'
+    
+#     def _get_step4_display_status(self, obj):
+#         if not obj.sr_case_status:
+#             return 'In Progress'
+        
+#         status_lower = obj.sr_case_status.lower()
+#         if status_lower == 'resolved':
+#             return 'Resolved'
+#         elif status_lower == 'escalated':
+#             return 'Escalated'
+#         return 'In Progress'
 
+#

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   View,
@@ -22,16 +22,22 @@ export default function MediaPicker({
   selectedImages = [],
   setSelectedImages,
   limit = 1,
+  editable = true,
+  allowCrop,
 }: {
   selectedImages?: MediaItem[];
   setSelectedImages?: React.Dispatch<React.SetStateAction<MediaItem[]>>;
   limit?: number;
+  editable?: boolean;
+  allowCrop?: boolean;
 }) {
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+    if (!editable) return;
+    
+    let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      allowsEditing: limit == 1,
-      aspect: [4, 3],
+      allowsEditing: allowCrop ?? (limit == 1),
+      aspect: allowCrop ? [4, 3] : undefined,
       quality: 1,
       selectionLimit: limit,
       allowsMultipleSelection: limit > 1,
@@ -54,10 +60,12 @@ export default function MediaPicker({
   };
 
   const handleClear = () => {
+    if (!editable) return;
     setSelectedImages && setSelectedImages([])
   }
 
   const handleRemoveSelection = (name: string) => {
+    if (!editable) return;
     setSelectedImages && setSelectedImages(selectedImages.filter((image: any) => image.name !== name))
   }
 
@@ -89,34 +97,40 @@ export default function MediaPicker({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity
-              className="w-8 h-8 bg-red-50 rounded-full justify-center items-center ml-2"
-              onPress={() => handleRemoveSelection(item.name)}
-            >
-              <Ionicons name="trash-outline" size={16} color="#ef4444" />
-            </TouchableOpacity>
+            
+            {/* Remove Button - Only show if editable */}
+            {editable && (
+              <TouchableOpacity
+                className="w-8 h-8 bg-red-50 rounded-full justify-center items-center ml-2"
+                onPress={() => handleRemoveSelection(item.name)}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       );
     },
-    [selectedImages]
+    [selectedImages, editable]
   );
 
   return (
     <View className="flex-1">
       {selectedImages?.length > 0 ? (
         <View className="flex-1">
-          {/* Header with count and clear button */}
-          <View className="flex-row justify-between items-center mb-3">
-            <TouchableOpacity
-              className="bg-red-50 px-3 py-1.5 rounded-full"
-              onPress={handleClear}
-            >
-              <Text className="text-red-600 text-sm font-medium">
-                Clear
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Header with count and clear button - Only show if editable */}
+          {editable && (
+            <View className="flex-row justify-between items-center mb-3">
+              <TouchableOpacity
+                className="bg-red-50 px-3 py-1.5 rounded-full"
+                onPress={handleClear}
+              >
+                <Text className="text-red-600 text-sm font-medium">
+                  Clear
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Optimized List View */}
           <FlatList
@@ -135,6 +149,7 @@ export default function MediaPicker({
         <TouchableOpacity
           className="w-full bg-white justify-center rounded-3xl items-center overflow-hidden border-2 border-primaryBlue shadow-lg shadow-blue-500"
           onPress={pickImage}
+          disabled={!editable}
         >
           <View className="items-center p-5">
             <View className="bg-blue-50 p-3 rounded-full">
@@ -152,4 +167,3 @@ export default function MediaPicker({
     </View>
   );
 }
-

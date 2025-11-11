@@ -123,7 +123,7 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         model = GAD_Budget_Tracker
         fields = [
             'gbud_num', 'gbud_datetime', 'gbud_add_notes', 'gbud_exp_particulars', 'gbud_actual_expense',
-            'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive', 'gbud_project_index',
+            'gbud_remaining_bal', 'gbud_is_archive', 'gbud_project_index', 'gbud_reference_num',
             'gbudy', 'staff', "gbud_proposed_budget", 'files', 'dev'
         ]
         extra_kwargs = {
@@ -314,7 +314,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             return {
                 'dev_id': dev_data.dev_id if hasattr(dev_data, 'dev_id') else dev_data.get('dev_id'),
                 'dev_project': dev_project,
-                'dev_gad_items': dev_data.dev_gad_items if hasattr(dev_data, 'dev_gad_items') else dev_data.get('dev_gad_items', []),
+                'dev_budget_items': dev_data.dev_budget_items if hasattr(dev_data, 'dev_budget_items') else dev_data.get('dev_budget_items', []),
                 'dev_res_person': dev_data.dev_res_person if hasattr(dev_data, 'dev_res_person') else dev_data.get('dev_res_person', []),
                 'dev_indicator': parsed_indicators,
                 'dev_client': dev_data.dev_client if hasattr(dev_data, 'dev_client') else dev_data.get('dev_client'),
@@ -398,10 +398,10 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             dev_data = obj['dev']
         
         if dev_data:
-            if hasattr(dev_data, 'dev_gad_items'):
-                return dev_data.dev_gad_items
+            if hasattr(dev_data, 'dev_budget_items'):
+                return dev_data.dev_budget_items
             elif isinstance(dev_data, dict):
-                return dev_data.get('dev_gad_items', [])
+                return dev_data.get('dev_budget_items', [])
         return []
     
     def get_project_date(self, obj):
@@ -443,7 +443,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 if participants is not None:
                     dev_plan.dev_indicator = participants
                 if budget_items is not None:
-                    dev_plan.dev_gad_items = budget_items
+                    dev_plan.dev_budget_items = budget_items
                 if date_data is not None:
                     dev_plan.dev_date = date_data
                 try:
@@ -495,7 +495,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 if participants is not None:
                     dev_plan.dev_indicator = participants
                 if budget_items is not None:
-                    dev_plan.dev_gad_items = budget_items
+                    dev_plan.dev_budget_items = budget_items
                 if date_data is not None:
                     dev_plan.dev_date = date_data
                 dev_plan.save()
@@ -650,22 +650,28 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
 
     total = serializers.SerializerMethodField()
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, required=False)
-    dev_budget_items = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    dev_budget_items = serializers.SerializerMethodField()
 
     class Meta:
         model = DevelopmentPlan
         fields = '__all__'
         extra_kwargs = {
-            'dev_gad_items': { 'required': False }
+            'dev_budget_items': { 'required': False }
         }
 
     def get_total(self, obj):
         try:
-            items = [self._normalize_budget_item(i) for i in (obj.dev_gad_items or [])]
+            items = [self._normalize_budget_item(i) for i in (obj.dev_budget_items or [])]
             total = sum(Decimal(str(i.get('price', 0))) for i in items)
             return str(total)
         except Exception:
             return "0"
+
+    def get_dev_budget_items(self, obj):
+      
+        if hasattr(obj, 'dev_budget_items') and obj.dev_budget_items:
+            return obj.dev_budget_items
+        return []
 
     def validate(self, attrs):
        
@@ -684,7 +690,7 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
 
         
         if attrs.get('budgets') is not None:
-            attrs['dev_gad_items'] = [self._normalize_budget_item(b) for b in attrs['budgets']]
+            attrs['dev_budget_items'] = [self._normalize_budget_item(b) for b in attrs['budgets']]
 
         
         # Handle dev_project as text (not JSON array)
@@ -715,30 +721,61 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('dev_budget_items', None)
-        budgets_data = validated_data.pop('budgets', None)
+        # Handle both old and new field names
+        budgets_data = validated_data.pop('dev_budget_items', None) or validated_data.pop('budgets', None)
+        validated_data.pop('budgets', None)
+
         if budgets_data is not None:
-            validated_data['dev_gad_items'] = [self._normalize_budget_item(b) for b in budgets_data]
+            # Parse JSON string if it's a string
+            if isinstance(budgets_data, str):
+                try:
+                    import json
+                    budgets_data = json.loads(budgets_data)
+                except json.JSONDecodeError:
+                    budgets_data = []
+            
+            # Filter out empty items and normalize
+            filtered_items = [
+                self._normalize_budget_item(b) for b in budgets_data 
+                if b and isinstance(b, dict) and b.get('name', '').strip()
+            ]
+            validated_data['dev_budget_items'] = filtered_items
+            
         plan = DevelopmentPlan.objects.create(**validated_data)
         return plan
 
     def update(self, instance, validated_data):
-        validated_data.pop('dev_budget_items', None)
-        budgets_data = validated_data.pop('budgets', None)
+        # Handle both old and new field names
+        budgets_data = validated_data.pop('dev_budget_items', None) or validated_data.pop('budgets', None)
+        
+        validated_data.pop('budgets', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         if budgets_data is not None:
-            instance.dev_gad_items = [self._normalize_budget_item(b) for b in budgets_data]
+            # Parse JSON string if it's a string
+            if isinstance(budgets_data, str):
+                try:
+                    import json
+                    budgets_data = json.loads(budgets_data)
+                except json.JSONDecodeError:
+                    budgets_data = []
+            
+            # Filter out empty items and normalize
+            filtered_items = [
+                self._normalize_budget_item(b) for b in budgets_data 
+                if b and isinstance(b, dict) and b.get('name', '').strip()
+            ]
+            instance.dev_budget_items = filtered_items
         instance.save()
         return instance
 
     def _normalize_budget_item(self, item):
         if not isinstance(item, dict):
-            return { 'name': '', 'pax': 0, 'price': 0 }
+            return { 'name': '', 'quantity': 0, 'price': 0 }
         return {
             'name': item.get('name', item.get('gdb_name', '')),
-            'pax': item.get('pax', item.get('gdb_pax', 0)),
-            'price': item.get('price', item.get('gdb_price', 0)),
+            'quantity': item.get('quantity', item.get('pax', item.get('gdb_pax', 0))),
+            'price': item.get('price', item.get('gdb_price', item.get('gdb_amount', 0))),
         }
 
     def _ensure_array(self, value):
@@ -761,14 +798,14 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Ensure budgets are not included; use dev_gad_items instead
+        # Ensure budgets are not included; use dev_budget_items instead
         data.pop('budgets', None)
         # Add computed total
         data['total'] = self.get_total(instance)
-        # Normalize dev_gad_items entries
+        # Normalize dev_budget_items entries
         try:
-            items = getattr(instance, 'dev_gad_items', []) or []
-            data['dev_gad_items'] = [self._normalize_budget_item(i) for i in items]
+            items = getattr(instance, 'dev_budget_items', []) or []
+            data['dev_budget_items'] = [self._normalize_budget_item(i) for i in items]
         except Exception:
             pass
         # Present dev_project as text (already handled)

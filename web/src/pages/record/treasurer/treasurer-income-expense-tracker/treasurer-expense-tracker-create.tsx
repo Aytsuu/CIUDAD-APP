@@ -12,7 +12,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueries";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -62,9 +62,9 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
 
 
     const { mutate: createExpense, isPending } = useCreateIncomeExpense(onSuccess);
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;
 

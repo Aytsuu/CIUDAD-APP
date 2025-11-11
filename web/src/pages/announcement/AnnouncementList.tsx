@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useDeleteAnnouncement } from "./queries/announcementDeleteQueries";
 import { useGetAnnouncementList } from "./queries/announcementFetchQueries";
 import { Button } from "@/components/ui/button/button";
-
-
 import { useAuth } from "@/context/AuthContext";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -20,8 +18,6 @@ import { capitalize } from "@/helpers/capitalize";
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
-
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 function AnnouncementTracker() {

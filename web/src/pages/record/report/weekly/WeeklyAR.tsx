@@ -322,11 +322,11 @@ export default function WeeklyAR() {
                                                     <div className="flex items-center gap-2">
                                                       <div className="w-2 h-2 bg-primary rounded-full" />
                                                       <span className="font-mono text-sm">
-                                                        Report AR-{comp.ar.id}:
+                                                        Report No. {comp.ar.id}
                                                       </span>
                                                       {comp.ar.ar_title && (
                                                         <span className="text-sm text-muted-foreground">
-                                                           {comp.ar.ar_title}
+                                                          - {comp.ar.ar_title}
                                                         </span>
                                                       )}
                                                     </div>

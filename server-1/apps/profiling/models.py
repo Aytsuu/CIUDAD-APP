@@ -64,15 +64,9 @@ class Personal(AbstractModels):
         cascade_delete_history=True,
     )
 
-    history = HistoricalRecords(
-        table_name='personal_history',
-        user_model='administration.Staff',
-        user_db_constraint=False,
-        cascade_delete_history=True,
-    )
-
     class Meta:
         db_table = 'personal'
+        managed = False
         indexes = [
             models.Index(fields=['per_lname', 'per_fname']),
             models.Index(fields=['per_contact']),

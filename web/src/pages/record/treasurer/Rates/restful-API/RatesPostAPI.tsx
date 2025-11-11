@@ -13,7 +13,7 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
             staff_id: grossSales.staff_id
         })
 
-        const res = await api.post('treasurer/annual-gross-sales/', {
+        const res = await api.post('treasurer/annual-gross-sales-active/', {
             ags_minimum: parseFloatSafe(grossSales.minRange),
             ags_maximum: parseFloatSafe(grossSales.maxRange),
             ags_rate: parseFloatSafe(grossSales.amount),

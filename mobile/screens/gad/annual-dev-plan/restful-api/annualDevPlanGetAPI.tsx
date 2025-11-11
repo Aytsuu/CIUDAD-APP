@@ -1,9 +1,11 @@
 import { api } from "@/api/api";
 
-// Get all years with data
+// Get all years with data (only non-archived plans)
 export const getAnnualDevPlanYears = async () => {
   try {
-    const res = await api.get('/gad/gad-annual-development-plan/years/');
+    const params = new URLSearchParams();
+    params.append('dev_archived', 'false'); // Only get years with non-archived plans
+    const res = await api.get(`/gad/gad-annual-development-plan/years/?${params.toString()}`);
     return res.data;
   } catch (error) {
     console.error('Error fetching annual dev plan years:', error);
@@ -11,10 +13,13 @@ export const getAnnualDevPlanYears = async () => {
   }
 };
 
-// Get all plans for a specific year
+// Get all plans for a specific year (only non-archived plans)
 export const getAnnualDevPlansByYear = async (year: string | number) => {
   try {
-    const res = await api.get(`/gad/gad-annual-development-plan/?year=${year}`);
+    const params = new URLSearchParams();
+    params.append('year', year.toString());
+    params.append('dev_archived', 'false'); // Only get non-archived plans
+    const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
     return res.data;
   } catch (error) {
     console.error('Error fetching annual dev plans by year:', error);
@@ -29,6 +34,59 @@ export const getAnnualDevPlanById = async (planId: string | number) => {
     return res.data;
   } catch (error) {
     console.error('Error fetching annual dev plan by ID:', error);
+    throw error;
+  }
+};
+
+// Get archived plans with search and pagination support
+export const getArchivedAnnualDevPlans = async (search?: string, page?: number, pageSize?: number, ordering?: string) => {
+  try {
+    const params = new URLSearchParams();
+    params.append('dev_archived', 'true');
+    if (search) {
+      params.append('search', search);
+    }
+    if (page) {
+      params.append('page', page.toString());
+    }
+    if (pageSize) {
+      params.append('page_size', pageSize.toString());
+    }
+    if (ordering) {
+      params.append('ordering', ordering);
+    }
+    const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching archived annual dev plans:', error);
+    throw error;
+  }
+};
+
+// Archive plans (bulk operation)
+export const archiveAnnualDevPlans = async (devIds: number[]) => {
+  try {
+    const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
+      dev_ids: devIds,
+      dev_archived: true
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error archiving annual dev plans:', error);
+    throw error;
+  }
+};
+
+// Restore archived plans (bulk operation)
+export const restoreAnnualDevPlans = async (devIds: number[]) => {
+  try {
+    const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
+      dev_ids: devIds,
+      dev_archived: false
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error restoring annual dev plans:', error);
     throw error;
   }
 }; 

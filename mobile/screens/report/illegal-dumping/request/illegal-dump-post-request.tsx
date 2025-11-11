@@ -11,28 +11,26 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
         console.log("WASTE REPORT DATA: ", {
             rep_date: reportInfo.rep_date,
             rep_location: reportInfo.rep_location,
-            rep_contact: "09346573869",
+            rep_contact: reportInfo.phone,
             rep_matter: reportInfo.rep_matter,
             rep_violator: reportInfo.rep_violator,
             rep_add_details: reportInfo.rep_add_details,
             rep_anonymous: reportInfo.rep_anonymous || "None",
             sitio_id: reportInfo.sitio_id,    
-            rp_id: "00003250910",
-            staff_id: "00004250910"
+            rp_id: reportInfo.rp_id,
         });        
 
         // First API call to create the report
         const wasteReportResponse = await api.post('waste/waste-report/', {
             rep_date: reportInfo.rep_date,
             rep_location: reportInfo.rep_location,
-            rep_contact: "09346573869",
+            rep_contact: reportInfo.phone,
             rep_matter: reportInfo.rep_matter,
             rep_violator: reportInfo.rep_violator,
             rep_add_details: reportInfo.rep_add_details || "None",
             rep_anonymous: reportInfo.rep_anonymous,
-            sitio_id: reportInfo.sitio_id,    
-            rp_id: "00003250910",
-            staff_id: "00004250910"
+            sitio_id: Number(reportInfo.sitio_id),    
+            rp_id: reportInfo.rp_id,
         });
 
         if (wasteReportResponse.data && wasteReportResponse.data.rep_id) {
@@ -48,15 +46,13 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
         const uploadPromises = reportInfo.files.map(async (fileData: any) => { 
 
             const payload = {
-                rep_id: Number(RepNum),
+                rep_id: RepNum,
                 files: [{
                     name: fileData.name,
                     type: fileData.type,
                     file: fileData.file // The actual file object
                 }]
             };
-
-            console.log("RESUBMIT REPORT PICTURESSS", payload)
 
             return api.post('waste/waste-rep-file/', payload);
         });

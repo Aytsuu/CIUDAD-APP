@@ -23,7 +23,7 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
 
         console.log("Creating new record:", newRecord);
 
-        const res = await api.post('treasurer/annual-gross-sales/', newRecord);
+        const res = await api.post('treasurer/annual-gross-sales-active/', newRecord);
 
         return res.data.ags_id;
   } catch (error) {

@@ -106,6 +106,11 @@ const EventInfoModal = <T extends Record<string, any>>({
         <div className="border border-gray-300 p-4 mb-6">
             <div className="grid grid-cols-[150px_1fr] gap-3">
               {columns.map((column) => {
+                //ayaw ni i remove please
+                if (String(column.accessorKey) === "budget_items" && column.header === "Budget Breakdown") {
+                  return null;
+                }
+                
                 const value = dataSource[column.accessorKey];
                 const displayValue = column.cell
                   ? column.cell({ row: { original: dataSource } })
@@ -121,6 +126,20 @@ const EventInfoModal = <T extends Record<string, any>>({
                 );
               })}
             </div>
+            
+            {/* Budget Breakdown Table - Rendered below */}
+            {columns.find(col => String(col.accessorKey) === "budget_items" && col.header === "Budget Breakdown") && (
+              <div className="mt-4 pt-4 border-t border-gray-300">
+                <p className="font-semibold text-black mb-3">Budget Breakdown:</p>
+                {(() => {
+                  const budgetColumn = columns.find(col => String(col.accessorKey) === "budget_items" && col.header === "Budget Breakdown");
+                  if (budgetColumn && budgetColumn.cell) {
+                    return budgetColumn.cell({ row: { original: dataSource } });
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
           </div>
       </Box>
     </Modal>

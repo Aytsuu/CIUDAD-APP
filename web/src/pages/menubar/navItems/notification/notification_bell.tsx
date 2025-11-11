@@ -1,291 +1,518 @@
-import React, { useState, useEffect } from 'react'
-import { useNotifications } from '@/context/NotificationContext'
-import { Badge } from '@/components/ui/badge'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Bell, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Notification } from '@/context/auth-types'
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { fetchNotification } from "../../queries/fetchNotificationQueries";
+import { listenForMessages } from "@/firebase";
+import { showNotificationToast } from "@/components/ui/toast";
+import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
+import { MdNotificationAdd } from "react-icons/md";
+import { Button } from "@/components/ui/button/button";
+import ciudadLogo from "@/assets/images/ciudad_logo.svg";
 
-const formatTimeAgo = (dateString: string | number | Date) => {
-  const now = new Date()
-  const date = new Date(dateString)
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-  
-  if (diffInSeconds < 60) return 'just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-  return `${Math.floor(diffInSeconds / 86400)}d ago`
+interface Notification {
+  notif_id: string;
+  notif_title: string;
+  notif_message: string;
+  notif_type: string;
+  is_read: boolean;
+  notif_created_at: string;
+  redirect_url?: {
+    path: string;
+    params: Record<string, any>;
+  };
+  resident?: {
+    acc_id: string;
+    name?: string;
+  };
 }
 
+interface NotificationTypeIconProps {
+  notif_type?: string;
+  className?: string;
+}
+
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
+  switch (notif_type) {
+    case "REQUEST":
+      return (
+        <div className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-5 h-5 text-blue-600" />
+        </div>
+      );
+    case "REMINDER":
+      return (
+        <div className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-5 h-5 text-amber-600" />
+        </div>
+      );
+    case "INFO":
+      return (
+        <div className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-5 h-5 text-indigo-600" />
+        </div>
+      );
+    default:
+      return (
+        <div className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </div>
+      );
+  }
+};
+
 export const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, markAsRead } = useNotifications()
-  const [open, setOpen] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [filter, setFilter] = useState('all')
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-
+  const navigate = useNavigate(); 
+  const {mutate: bulkMarkAsRead} = useUpdateBulkNotification();
+  const {mutate: MarkAsRead} = useUpdateNotification();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [displayCount, setDisplayCount] = useState(10);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [filterType, setFilterType] = useState<"all" | "read" | "unread">("all");
+  const [open, setOpen] = useState(false);
+  const { data, isLoading, isError, refetch } = fetchNotification();
+  
+  // Auto-refetch notifications every 30 seconds as fallback
   useEffect(() => {
-    console.log('Notifications updated:', notifications)
-    console.log('Unread count:', unreadCount)
-  }, [notifications, unreadCount])
-
-  // Close menu when clicking outside
+    const interval = setInterval(() => {
+      refetch();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+  
+  // Request notification permission on mount
   useEffect(() => {
-    const handleClickOutside = () => {
-      setOpenMenuId(null)
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (data) {
+      setNotifications(data);
+      setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
+    }
+  }, [data]);
+
+  const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
+    if (!redirectUrl || !redirectUrl.path) return null;
+    
+    const { path, params } = redirectUrl;
+    if (!params || Object.keys(params).length === 0) {
+      return path;
     }
     
-    if (openMenuId) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [openMenuId])
-
-  const filteredNotifications = notifications
-    .filter(notification => {
-      if (filter === 'unread') return !notification.is_read
-      if (filter === 'read') return notification.is_read
-      return true
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
-
-  const handleNotificationClick = (notification: Notification) => {
-    // Don't mark as read if clicking on menu
-    if (openMenuId === notification.id) return
+    const searchParams = new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString();
     
-    console.log('Marking notification as read:', notification.id)
-    markAsRead(notification.id)
-    setOpen(false)
-  }
+    return `${path}?${searchParams}`;
+  };
 
-  const toggleMenu = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, notificationId: string | null) => {
-    e.stopPropagation()
-    setOpenMenuId(openMenuId === notificationId ? null : notificationId)
-  }
+  // Listen for live FCM push notifications in foreground
+  useEffect(() => {
+    console.log('Setting up FCM listener...');
+    
+    const unsubscribe = listenForMessages((payload) => {
+      console.log('📩 FCM message received:', JSON.stringify(payload, null, 2));
+      
+      try {
+        let redirectUrl = undefined;
+        
+        // Check if data exists and has web_route
+        if (payload.data?.web_route) {
+          try {
+            // Parse web_params if it's a JSON string
+            let params = {};
+            if (payload.data.web_params) {
+              params = typeof payload.data.web_params === 'string' 
+                ? JSON.parse(payload.data.web_params)
+                : payload.data.web_params;
+            }
+            
+            redirectUrl = {
+              path: payload.data.web_route,
+              params: params
+            };
+            
+            console.log('📍 Parsed redirect URL:', redirectUrl);
+          } catch (e) {
+            console.error("Failed to parse web params:", e);
+          }
+        }
+        const notifTitle = payload.notification?.title || "No title";
+        const notifMessage = payload.notification?.body || "No message";
 
-  const handleMenuAction = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, action: string, notificationId: string) => {
-    e.stopPropagation()
-    if (action === 'read') {
-      markAsRead(notificationId)
-    }
-    // Add delete functionality if available in your context
-    setOpenMenuId(null)
-  }
+        // const newNotif: Notification = {
+        //   notif_id: payload.data?.notification_id || Date.now().toString(),
+        //   notif_title: payload.notification?.title || "No title",
+        //   notif_message: payload.notification?.body || "No message",
+        //   notif_type: payload.data?.notif_type || "",
+        //   is_read: false,
+        //   notif_created_at: new Date().toISOString(),
+        //   redirect_url: redirectUrl,
+        // };
+
+        // // Update state first
+        // setNotifications((prev) => {
+        //   console.log('📝 Adding notification to state. Current count:', prev.length);
+        //   return [newNotif, ...prev];
+        // });
+        // setUnreadCount((prev) => prev + 1);
+
+        // Show toast notification
+        showNotificationToast({
+          title: notifTitle,
+          description: notifMessage,
+          avatarSrc: ciudadLogo,
+          timestamp: "just now",
+          onClick: redirectUrl ? () => {
+            const url = buildRedirectUrl(redirectUrl);
+            if (url) navigate(url);
+          } : undefined,
+        });
+        
+        // Also refetch to ensure we're in sync with backend
+        console.log('🔄 Refetching notifications from backend...');
+        setTimeout(() => refetch(), 1000);
+        
+      } catch (error) {
+        console.error('❌ Error processing notification:', error);
+      }
+    });
+
+    return () => {
+      console.log('Cleaning up FCM listener');
+      unsubscribe();
+    };
+  }, [navigate, refetch]);
+
+  const markAsRead = (notif_id: string) => {
+    MarkAsRead(notif_id, {
+      onSuccess: () => {
+        setNotifications((prev) => 
+          prev.map((n) => n.notif_id === notif_id ? {...n, is_read: true} : n)
+        );
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      }
+    });
+  };
 
   const markAllAsRead = () => {
-    notifications.forEach(notification => {
-      if (!notification.is_read) {
-        markAsRead(notification.id)
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n)=> n.notif_id);
+
+    if (unreadIds.length === 0) return;
+
+    bulkMarkAsRead(unreadIds, {
+      onSuccess: () => {
+        setNotifications((prev) => prev.map((n) => ({...n, is_read: true})));
+        setUnreadCount(0);
       }
-    })
-  }
+    });
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if unread
+    if (!notification.is_read) {
+      markAsRead(notification.notif_id);
+    }
+    
+    // Navigate using the redirect_url
+    if (notification.redirect_url) {
+      const url = buildRedirectUrl(notification.redirect_url);
+      if (url) {
+        navigate(url);
+      }
+    }
+    
+    setOpen(false);
+  };
+
+  const handleNotificationMenuAction = (
+    action: string,
+    notif_id: string
+  ) => {
+    const notification = notifications.find((n) => n.notif_id === notif_id);
+    
+    switch (action) {
+      case "view":
+        if (notification?.redirect_url) {
+          const url = buildRedirectUrl(notification.redirect_url);
+          if (url) {
+            navigate(url);
+          }
+        }
+        setOpen(false);
+        break;
+      case "mark_read":
+        markAsRead(notif_id);
+        break;
+    }
+  };
+
+  const handleHeaderMenuAction = (action: string) => {
+    if (action === "mark_all_read") {
+      markAllAsRead();
+    }
+    if(action === "view_notification") {
+      navigate("/notification");
+    }
+  };
+
+  const headerMenuOptions = [
+    {
+      id: "mark_all_read",
+      name: "Mark All as Read",
+      icon: <CheckCheck className="h-4 w-4" />,
+    },
+    {
+      id: "view_notification",
+      name: "Open Notification",
+      icon: <MdNotificationAdd className="h-4 w-4" />,
+    },
+    {
+      id: "notification_settings",
+      name: "Notification Settings",
+      icon: <Settings className="h-4 w-4" />,
+    }
+  ];
+
+  const getNotificationMenuOptions = (notification: Notification) => {
+    const options = [];
+    if (notification.redirect_url) {
+      options.push({
+        id: "view",
+        name: "View Notification",
+        icon: <ExternalLink className="h-4 w-4" />,
+      });
+    }
+
+    if (!notification.is_read) {
+      options.push({
+        id: "mark_read",
+        name: "Mark as Read",
+        icon: <Eye className="h-4 w-4 " />,
+      });
+    }
+
+    return options;
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
+  const loadMoreNotifications = () => {
+    setDisplayCount((prev) => prev + 10);
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (filterType === "unread") return !n.is_read;
+    return true;
+  });
+
+  const displayedNotifications = filteredNotifications.slice(0, displayCount);
+  const hasMore = displayCount < filteredNotifications.length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative cursor-pointer p-3 hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-300">
-          <Bell className={`h-6 w-6 transition-all duration-300 ${unreadCount > 0 ? 'text-blue-600' : 'text-gray-600'}`} />
+        <div className="relative cursor-pointer p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+          <Bell
+            className={`h-6 w-6 transition-colors duration-200 ${
+              unreadCount > 0 ? "text-gray-700" : "text-gray-600"
+            }`}
+          />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs shadow-lg">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
+           <Badge className="absolute -top-0.5 -right-1 h-5 w-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-xs flex items-center justify-center">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden" align="end" side="bottom" sideOffset={8} alignOffset={-50}>
+      <PopoverContent
+        className="w-96 p-0 shadow-lg border border-gray-200 bg-white rounded-lg overflow-hidden"
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        alignOffset={-50}
+      >
         <div className="w-full">
-          {/* Header */}
-          <div className="p-4 border-b bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <Bell className="h-5 w-5 text-blue-600" />
+          <div className="px-4 py-3 border-b border-gray-100 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-lg text-darkBlue2">Notifications</h1>
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Notifications</h4>
-                {unreadCount > 0 && (
-                  <p className="text-xs text-gray-600">{unreadCount} unread</p>
-                )}
+              <div className="flex items-center gap-1">
+                <DropdownLayout
+                  trigger={
+                    <button
+                      className="p-1.5 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                      title="Options"
+                    >
+                      <MoreHorizontal className="h-5 w-5 text-gray-600" />
+                    </button>
+                  }
+                  options={headerMenuOptions}
+                  onSelect={handleHeaderMenuAction}
+                  contentClassName="w-48"
+                />
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setShowSettings(!showSettings)}
-                className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
-                title="Settings"
+            
+            <div className="flex-1 justify-start">
+              <Button
+                onClick={() => {
+                  setFilterType("all");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 mr-2 ${
+                  filterType === "all" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
               >
-                <MoreHorizontal className="h-4 w-4 text-gray-600" />
-              </button>
+                All
+              </Button>
+              <Button
+                onClick={() => {
+                  setFilterType("unread");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 ${
+                  filterType === "unread" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
+              >
+                Unread
+              </Button>
             </div>
           </div>
 
-          {/* Settings Panel */}
-          {showSettings && (
-            <div className="px-4 py-2 border-b bg-gradient-to-r from-gray-50 to-blue-50">
-              <div className="flex items-center justify-between mb-3">
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                </button>
-              </div>
-              <div className="flex gap-2 mb-3">
-                {['all', 'unread', 'read'].map((filterType) => (
-                  <button
-                    key={filterType}
-                    onClick={() => setFilter(filterType)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                      filter === filterType 
-                        ? 'bg-blue-500 text-white shadow-md' 
-                        : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
-                    }`}
-                  >
-                    {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                  </button>
-                ))}
-              </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="w-full px-3 py-2 bg-blue-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 text-sm font-medium shadow-md"
-                >
-                  Mark all as read
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
-            {filteredNotifications.length === 0 ? (
+            {isLoading ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bell className="h-8 w-8 text-gray-400" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 font-medium">No notifications yet</p>
-                <p className="text-gray-400 text-sm mt-1">We'll let you know when something happens</p>
+                <p className="text-gray-500 text-sm">
+                  Loading notifications...
+                </p>
+              </div>
+            ) : isError ? (
+              <div className="p-8 text-center">
+                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-red-400" />
+                </div>
+                <p className="text-red-500 text-sm font-medium">
+                  Failed to load notifications
+                </p>
+                <button
+                  onClick={() => refetch()}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : filteredNotifications.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-gray-400 text-xs mt-1">
+                  {filterType === "all" && "We'll let you know when something happens"}
+                </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
-                {filteredNotifications.slice(0, 10).map((item) => (
+              <div>
+                {displayedNotifications.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.notif_id}
                     onClick={() => handleNotificationClick(item)}
-                    className={`group cursor-pointer px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${
-                      !item.is_read ? 'bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-l-4 border-blue-400' : ''
+                    className={`cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0 ${
+                      !item.is_read ? "bg-blue-50" : "bg-white"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="relative">
-                        <Avatar className="h-11 w-11 ring-2 ring-white shadow-lg">
-                          <AvatarImage 
-                            src={item.metadata?.sender_avatar} 
-                            alt={item.metadata?.sender_name || 'System'}
-                          />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
-                            {item.metadata?.sender_name?.charAt(0) || 'S'}
-                          </AvatarFallback>
-                        </Avatar>
-                        {/* <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg ring-2 ring-white">
-                          {getNotificationIcon(item.type)}
-                        </div> */}
+                      <div className="relative flex-shrink-0">
+                        <NotificationTypeIcon notif_type={item.notif_type} />
+                        {!item.is_read && (
+                          <div className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                        )}
                       </div>
-                      
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className={`font-semibold text-sm ${!item.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
-                                {item.title}
-                              </p>
-                              {!item.is_read && (
-                                <div className="h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-sm"></div>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
-                              {item.message}
+                            <p className="text-sm text-gray-900 mb-0.5">
+                              <span className="font-semibold">{item.notif_title}</span>
                             </p>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500 font-medium">
-                                {formatTimeAgo(item.created_at)}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {item.metadata?.sender_name || 'System'}
-                              </span>
-                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-1">
+                              {item.notif_message || "No message content"}
+                            </p>
+                            <span className="text-xs text-gray-400 w-full">
+                              {formatTimeAgo(item.notif_created_at)}
+                            </span>
                           </div>
-                          
-                          <div className="flex items-center gap-1">
-                            <div className="relative">
-                              <button
-                                onClick={(e) => toggleMenu(e, item.id)}
-                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                                title="More options"
-                              >
-                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
-                              </button>
-                              
-                              {openMenuId === item.id && (
-                                <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border py-1 z-10 min-w-[140px]">
-                                  <button
-                                    onClick={(e) => handleMenuAction(e, 'read', item.id)}
-                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                                  >
-                                    {item.is_read ? (
-                                      <>
-                                        <EyeOff className="h-4 w-4 text-gray-500" />
-                                        Mark as unread
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Eye className="h-4 w-4 text-blue-500" />
-                                        Mark as read
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                          <div
+                            className="flex items-start"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DropdownLayout
+                              trigger={
+                                <button
+                                  className="p-1 hover:bg-gray-200 rounded-md transition-colors duration-200"
+                                  title="More options"
+                                >
+                                  <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                </button>
+                              }
+                              options={getNotificationMenuOptions(item)}
+                              onSelect={(action) =>
+                                handleNotificationMenuAction(action, item.notif_id)
+                              }
+                              contentClassName="w-48"
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
+
+                {hasMore && (
+                  <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
+                    <Button
+                      onClick={loadMoreNotifications}
+                      variant="ghost"
+                      className="w-full text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      See Previous Notifications
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          {filteredNotifications.length > 10 && (
-            <div className="p-3 text-center text-sm text-gray-500 border-t bg-gradient-to-r from-gray-50 to-blue-50">
-              <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 hover:underline">
-                View all {filteredNotifications.length} notifications
-              </button>
-            </div>
-          )}
-          
-          {/* Quick Stats */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-t">
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    {notifications.filter(n => !n.is_read).length} unread
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    {notifications.filter(n => n.is_read).length} read
-                  </span>
-                </div>
-                <span className="text-gray-500">
-                  Total: {notifications.length}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </PopoverContent>
     </Popover>
-  )
-}
+  );
+};

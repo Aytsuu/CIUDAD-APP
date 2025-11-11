@@ -289,12 +289,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                 </Button>
               </div>
             </div>
-            {/* Help Text */}
-            <div className="text-center pt-4 border-t mt-8">
-              <p className="text-xs text-gray-500">
-                Need help? Contact your administrator or skip this step and register the household later.
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

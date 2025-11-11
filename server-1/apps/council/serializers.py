@@ -4,26 +4,166 @@ from .models import *
 from django.apps import apps
 from apps.treasurer.models import Purpose_And_Rates
 from apps.gad.models import ProjectProposal
-from utils.supabase_client import upload_to_storage
+from utils.supabase_client import upload_to_storage, supabase
+import base64
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
+from datetime import datetime, timedelta
+from apps.announcement.models import Announcement, AnnouncementRecipient
+import logging
+from django.utils import timezone
+from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
+    staff_id = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
     class Meta:
         model = CouncilScheduling
         fields = '__all__'
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        staff_id = self.initial_data.get('staff_id')
+        
+        # Convert staff_id string to Staff object
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                staff = Staff.objects.get(staff_id=staff_id)
+                validated_data['staff'] = staff 
+            except Staff.DoesNotExist:
+                logger.error(f"Staff with id {staff_id} does not exist")
+            except Exception as e:
+                logger.error(f"Error getting staff: {str(e)}")
+                
+        council_event = CouncilScheduling.objects.create(**validated_data)
+        
+        # Always create announcement on creation
+        self._create_staff_announcement(council_event, staff_id)
+        
+        return council_event
 
-class CouncilAttendeesSerializer(serializers.ModelSerializer):
-    atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Remove staff_id from validated_data if it exists
+        validated_data.pop('staff_id', None)
+        
+        # Fields that should trigger announcement creation
+        announcement_trigger_fields = ['ce_title', 'ce_date', 'ce_time', 'ce_place', 'ce_description']
+        
+        # Check if any announcement-relevant fields were changed
+        should_create_announcement = False
+        for field in announcement_trigger_fields:
+            if field in validated_data:
+                old_value = getattr(instance, field)
+                new_value = validated_data[field]
+                if old_value != new_value:
+                    should_create_announcement = True
+                    break
+        
+        # Update the council event fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Create announcement if relevant fields changed
+        if should_create_announcement:
+            try:
+                # Use the existing staff from the instance
+                staff_id = instance.staff.staff_id if instance.staff else None
+                if staff_id:
+                    self._create_staff_announcement(instance, staff_id, is_update=True)
+            except Exception as e:
+                logger.error(f"Failed to create update announcement: {str(e)}")
+        
+        return instance
+    
+    def _create_staff_announcement(self, council_event, staff_id=None, is_update=False):
+        staff = None
+        
+        # Try to get staff from staff_id parameter
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                staff = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                logger.error(f"Staff with id {staff_id} does not exist")
+            except Exception as e:
+                logger.error(f"Error getting staff: {str(e)}")
+        
+        # Try to get from council_event if it has staff_id field
+        if not staff and hasattr(council_event, 'staff_id') and council_event.staff_id:
+            staff = council_event.staff_id
+        
+        # Try to get from request context
+        if not staff and self.context.get('request'):
+            request = self.context.get('request')
+            if hasattr(request.user, 'staff'):
+                staff = request.user.staff
+        
+        # If still no staff, raise error since it's required
+        if not staff:
+            error_msg = f"staff_id is required to create an announcement. Provided staff_id: {staff_id}"
+            logger.error(error_msg)
+            raise serializers.ValidationError(error_msg)
+        
+        # Create the announcement title based on whether it's an update
+        announcement_title = f"Council {'Meeting (Update)' if is_update else 'Meeting'}: {council_event.ce_title}"
+        
+        # Combine event date and time, make it timezone-aware
+        naive_event_datetime = datetime.combine(council_event.ce_date, council_event.ce_time)
+        event_datetime = timezone.make_aware(naive_event_datetime, timezone.get_current_timezone())
+        
+        # Set announcement to start now and end 24 hours after the event time
+        now = timezone.now()
+        end_time = event_datetime + timedelta(hours=24)
+        
+        # Format the announcement details with event information
+        announcement_details = (
+            f"{council_event.ce_description}\n\n"
+            f"Location: {council_event.ce_place}\n"
+            f"Date: {council_event.ce_date.strftime('%B %d, %Y')}\n"
+            f"Time: {council_event.ce_time.strftime('%I:%M %p')}"
+        )
+        
+        if is_update:
+            announcement_details += "This event has been updated. Please take note of the changes."
+        
+        # Create the announcement
+        announcement = Announcement.objects.create(
+            ann_title=announcement_title,
+            ann_details=announcement_details,
+            ann_type="GENERAL",
+            ann_event_start=None, 
+            ann_event_end=None,
+            ann_start_at=now, 
+            ann_end_at=end_time, 
+            ann_to_sms=True,
+            ann_to_email=True,
+            ann_status="ACTIVE",
+            staff=staff,
+        )
+        
+        # Create recipient record for all staff
+        AnnouncementRecipient.objects.create(
+            ann=announcement,
+            ar_category="staff",
+            ar_type=None  # None means all staff positions
+        )
+        
+        return announcement
 
-    class Meta:
-        model = CouncilAttendees
-        fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
+# class CouncilAttendeesSerializer(serializers.ModelSerializer):
+#     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
+
+#     class Meta:
+#         model = CouncilAttendees
+#         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
-    
+    ce_id = serializers.IntegerField(source='ce.ce_id', read_only=True)
     class Meta:
         model = CouncilAttendance
         fields = '__all__'
@@ -65,7 +205,7 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
                     att_file_type=file_data['type'],
                     att_file_path=f"attendance/{file_data['name']}",
                     att_file_url=file_url,
-                    ce_id=event
+                    ce=event
                 )
                 attendance_sheets.append(attendance_sheet)
                 
@@ -121,11 +261,9 @@ class TemplateSerializer(serializers.ModelSerializer):
 
 
 Staff = apps.get_model('administration', 'Staff')
-
-
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
-    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
+    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)
 
     class Meta:
         model = Staff
@@ -220,17 +358,12 @@ class ResolutionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GADProposalSerializer(serializers.ModelSerializer):
-    project_title = serializers.CharField(read_only=True)
-    gprl_id = serializers.SerializerMethodField()
-
+    dev_project = serializers.CharField(source='dev.dev_project', read_only=True)
+    dev_id = serializers.IntegerField(source='dev.dev_id', read_only=True)
+    
     class Meta:
         model = ProjectProposal
-        fields = ['gpr_id', 'project_title', 'gprl_id']
-
-    def get_gprl_id(self, obj):
-        # Get the latest approved log ID for this proposal
-        latest_approved_log = obj.logs.filter(gprl_status='Approved').order_by('-gprl_date_approved_rejected').first()
-        return latest_approved_log.gprl_id if latest_approved_log else None
+        fields = ['gpr_id', 'dev_project', 'dev_id']
 
 
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):
@@ -385,16 +518,68 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrdinanceFile
         fields = ['of_id', 'of_name', 'of_type', 'of_path', 'of_url']
+    
+    def _upload_files(self, files):
+        import time, base64
+        BUCKET = "ordinance-bucket"
+        created_files = []
+        for file_data in files:
+            print(f"Processing file: {file_data['name']}, type: {file_data['type']}")
+            unique_name = f"{int(time.time())}-{file_data['name'].replace(' ', '_')}"
+            file_path = f"ordinances/{unique_name}"
+            of_file = OrdinanceFile(
+                of_name=file_data['name'],
+                of_type=file_data['type'],
+                of_path=file_path,
+            )
+            print(f"Uploading to Supabase: {unique_name}")
+            try:
+                b64_string = file_data['file']
+                if b64_string.startswith('data:'):
+                    b64_string = b64_string.split(',')[1]
+                missing_padding = len(b64_string) % 4
+                if missing_padding:
+                    b64_string += '=' * (4 - missing_padding)
+                file_bytes = base64.b64decode(b64_string)
+                upload_result = supabase.storage.from_(BUCKET).upload(
+                    file_path,
+                    file_bytes,
+                    {
+                        'content-type': file_data['type'],
+                        'cacheControl': '3600',
+                        'upsert': False,
+                    }
+                )
+                if hasattr(upload_result, 'error') and upload_result.error:
+                    print(f"❌ Upload error: {upload_result.error}")
+                    raise Exception(upload_result.error)
+                url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{file_path}"
+                print(f"✅ Upload successful, URL: {url}")
+            except Exception as e:
+                print(f"❌ Upload failed: {e}")
+                url = None
+            if not url:
+                raise Exception("Failed to upload file to Supabase. No URL associated.")
+            of_file.of_url = url
+            of_file.save()
+            print(f"Saved to database with ID: {of_file.of_id}")
+            created_files.append(of_file)
+        return created_files
 
 class OrdinanceSerializer(serializers.ModelSerializer):
     staff = serializers.PrimaryKeyRelatedField(read_only=True)
+    staff_id = serializers.CharField(write_only=True, required=False, source='staff')
     of_id = serializers.PrimaryKeyRelatedField(read_only=True)
     file = serializers.SerializerMethodField()
+    ord_category = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=True
+    )
 
     class Meta:
         model = Ordinance
         fields = ['ord_num', 'ord_title', 'ord_date_created', 'ord_category',
-                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'of_id', 'file',
+                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'staff_id', 'of_id', 'file',
                   'ord_parent', 'ord_is_ammend', 'ord_ammend_ver']
         extra_kwargs = {
             'ord_num': {'required': False, 'allow_blank': True},
@@ -424,7 +609,31 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         if value and value.strip() and Ordinance.objects.filter(ord_num=value).exists():
             raise serializers.ValidationError("An ordinance with this number already exists.")
         return value
+    
+    def create(self, validated_data):
+        """
+        Create ordinance with proper staff_id handling
+        """
+        # Get staff_id from initial_data (raw request data)
+        staff_id = self.initial_data.get('staff_id')
+        
+        # Convert staff_id string to Staff object
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                # Convert to string if it's a number
+                staff_id_str = str(staff_id)
+                staff = Staff.objects.get(staff_id=staff_id_str)
+                validated_data['staff'] = staff
+            except Staff.DoesNotExist:
+                logger.error(f"Staff with id {staff_id_str} does not exist")
+            except Exception as e:
+                logger.error(f"Error getting staff: {str(e)}")
+        
+        # Create the ordinance
+        ordinance = Ordinance.objects.create(**validated_data)
+        
+        return ordinance
         
    
-
 

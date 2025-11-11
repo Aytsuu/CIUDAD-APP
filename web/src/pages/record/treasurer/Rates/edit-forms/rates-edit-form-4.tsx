@@ -20,7 +20,7 @@ function RatesEditFormPage4({pr_id, pr_purpose, pr_rate, onSuccess}: {
         defaultValues: {
             purpose: pr_purpose,
             amount: pr_rate.toString(),
-            category: "Business Permit",
+            category: "Barangay Permit",
             staff_id: user?.staff?.staff_id
         }
     })

@@ -1,18 +1,49 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
 
-// Fetch certificates
-export const getCertificates = async () => {
+// Fetch certificates with search and pagination
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string) => {
     try {
-        console.log('Making request to /clerk/certificate/');
-        const res = await api.get('/clerk/certificate/');
-        console.log('API Response:', res.data);  // Log the response data
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (purpose) {
+            params.append('purpose', purpose);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        
+        const queryString = params.toString();
+        const url = `/clerk/certificate-combined/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
+        console.log('API Response:', res.data);
+        
+        // Debug: Check if per_mname is in the response
+        if (res.data.results && res.data.results.length > 0) {
+            const firstCert = res.data.results[0];
+            console.log('First certificate resident_details:', firstCert.resident_details);
+            console.log('per_mname in API response:', firstCert.resident_details?.per_mname);
+        }
+        
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching certificates:', error);
         console.error('Error details:', error.response?.data || 'No error details available');
-        throw error;  // Re-throw the error so React Query can handle it
+        throw error;
     }
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,22 +9,36 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
-import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
+import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useCreateWasteSchedule } from './queries/waste-col-add-queries';
 import { useAssignCollectors } from './queries/waste-col-add-queries';
+import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
+
+const dayOptions = [
+  { label: "Monday", value: "Monday" },
+  { label: "Tuesday", value: "Tuesday" },
+  { label: "Wednesday", value: "Wednesday" },
+  { label: "Thursday", value: "Thursday" },
+  { label: "Friday", value: "Friday" },
+  { label: "Saturday", value: "Saturday" },
+  { label: "Sunday", value: "Sunday" }
+];
 
 
 
 function WasteColCreate() {
   const router = useRouter();
+  const { user } = useAuth(); 
 
   //ADD QUERY MUTATIONS
-  const { mutate: createSchedule, } = useCreateWasteSchedule();
+  const { mutate: createSchedule, isPending: isPendingSchedule} = useCreateWasteSchedule();
   const { mutate: assignCollectors, isPending } = useAssignCollectors();
   
 
@@ -33,39 +47,46 @@ function WasteColCreate() {
   const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
   const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
   const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio(); 
+  const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
   const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
 
-    //Options
-    const collectorOptions = collectors.map(collector => ({
-        id: collector.id,  
-        name: `${collector.firstname} ${collector.lastname}`  
-    }));
+  // Extract the actual data array
+  const wasteSchedules = wasteCollectionData.results || [];
+  
+  //Options
+  const collectorOptions = collectors.map(collector => ({
+      id: collector.id,  
+      name: `${collector.firstname} ${collector.lastname}`  
+  }));
 
 
-    const driverOptions = drivers.map(driver => ({
-        label: `${driver.firstname} ${driver.lastname}`,  
-        value: driver.id  
-    }));
+  const driverOptions = drivers.map(driver => ({
+      label: `${driver.firstname} ${driver.lastname}`,  
+      value: driver.id  
+  }));
 
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
-        value: String(truck.truck_id)
-    }));
+  const truckOptions = (trucks as Trucks[])
+      .filter(truck => truck.truck_status === "Operational")
+      .map(truck => ({
+          label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+          value: String(truck.truck_id)
+  }));
 
 
-    const sitioOptions = sitios.map(sitio => ({
-        label: sitio.sitio_name,  
-        value: String(sitio.sitio_id)  
-    }));
+
+  const sitioOptions = sitios.map(sitio => ({
+      label: sitio.sitio_name,  
+      value: String(sitio.sitio_id)  
+  }));
 
 
   const form = useForm<z.infer<typeof WasteColSchedSchema>>({
     resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: '',
+            day: '',
             time: '',
             additionalInstructions: '',
             selectedSitios: '',
@@ -78,6 +99,52 @@ function WasteColCreate() {
 
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+        const [hour, minute] = values.time.split(":");
+        const formattedTime = `${hour}:${minute}:00`;
+
+        //checks for sitio with the same day
+        const selectedSitioName = sitioOptions.find(sitio => sitio.value === values.selectedSitios)?.label; 
+        
+
+        const hasSameSitioSameDay = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day &&
+            schedule.sitio_name === selectedSitioName
+        );
+
+        //checks for overlapping day and time
+        const hasDuplicateSchedule = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day && 
+            schedule.wc_time === formattedTime
+        );  
+        
+        //return if there is overlapping schedule
+        if (hasDuplicateSchedule) {
+            form.setError("day", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });          
+            
+            form.setError("time", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });  
+
+            return; 
+        }      
+
+        //return if the sitio has already a schedule for that day
+        if (hasSameSitioSameDay) {
+            form.setError("day", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+
+            form.setError("selectedSitios", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+            return;
+        }        
 
         if(!values.additionalInstructions){
           values.additionalInstructions = "None"
@@ -86,6 +153,7 @@ function WasteColCreate() {
         createSchedule(
             {
             ...values,
+            staff: user?.staff?.staff_id
             },
             {
                 onSuccess: (wc_num) => {
@@ -106,49 +174,42 @@ function WasteColCreate() {
     };
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Schedule Waste Collection</Text>}
-      headerAlign="left"
-
-      showBackButton={true}
-      showExitButton={false}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text className="text-[13px]">Schedule Waste Collection</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
             <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-
-      // State Management
-      loading={isPending}
-      loadingMessage="Creating schedule..."
-
       footer={
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
+              disabled={isPending || isPendingSchedule}
             >
-              <Text className="text-white text-base font-semibold">Schedule</Text>
+                <View className="flex-row justify-center items-center gap-2">
+                    {(isPending || isPendingSchedule) && (
+                    <ActivityIndicator size="small" color="white" />
+                    )}
+                    <Text className="text-white text-base font-semibold">
+                    {isPending || isPendingSchedule ? "Scheduling..." : "Schedule"}
+                    </Text>
+                </View>  
             </TouchableOpacity>
       }
-      stickyFooter={true}
     >
-        <View className="w-full px-4">
+        <View className="w-full px-6">
 
-            <FormDateTimeInput
-              control={form.control}
-              label="Date"
-              name="date"
-              type="date"
-              minimumDate={new Date(Date.now() + 86400000)}
+            <FormSelect
+                control={form.control}
+                name="day"
+                label="Collection Day"
+                options={dayOptions}
             />
 
             <FormDateTimeInput
               control={form.control}
-              label="Time"
+              label="Collection Time"
               name="time"
               type="time"
             />
@@ -164,7 +225,7 @@ function WasteColCreate() {
               <FormComboCheckbox
                   control={form.control}
                   name="selectedCollectors"
-                  label="Collectors"
+                  label="Loader(s)"
                   options={collectorOptions}
               />
             </View>
@@ -172,7 +233,7 @@ function WasteColCreate() {
             <FormSelect
                 control={form.control}
                 name="driver"
-                label="Driver"
+                label="Driver Loader"
                 options={driverOptions}
             />
 
@@ -191,7 +252,7 @@ function WasteColCreate() {
             />
 
         </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

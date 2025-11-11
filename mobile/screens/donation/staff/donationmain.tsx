@@ -1,28 +1,56 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState} from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   RefreshControl,
-  SafeAreaView,
-  StatusBar,
-  ActivityIndicator,
+  FlatList,
 } from "react-native";
-import { Plus, ChevronLeft } from "lucide-react-native";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetDonations} from "./donation-queries";
+import { ChevronLeft } from "lucide-react-native";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useGetDonations } from "./donation-queries";
 import { Donation } from "../donation-types";
 import { useRouter } from "expo-router";
-import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
+import { useDebounce } from "@/hooks/use-debounce";
+import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
+import EmptyState from "@/components/ui/emptyState";
+import { Button } from "@/components/ui/button"; 
+import { LoadingState } from "@/components/ui/loading-state";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DonationTracker = () => {
+  const { user } = useAuth(); 
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";  
   const router = useRouter();
-  const { data: donations = [], isLoading, refetch } = useGetDonations();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const debouncedSearchTerm = useDebounce(searchQuery, 500);
+
+  // Use backend search and filtering
+  const { 
+    data: donationsData = { results: [], count: 0 }, 
+    isLoading, 
+    refetch 
+  } = useGetDonations(
+    currentPage,
+    10, // pageSize
+    debouncedSearchTerm,
+    categoryFilter,
+    statusFilter
+  );
+
+  // Extract the donations array from the data structure
+  const donations = donationsData.results || [];
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -30,143 +58,236 @@ const DonationTracker = () => {
     setRefreshing(false);
   };
 
-  // Use useMemo to prevent re-rendering issues with search
-  const filteredData = useMemo(() => {
-    return donations.filter((donation: Donation) => {
-      const searchableText = [
-        donation.don_num,
-        donation.don_donor,
-        donation.don_item_name,
-        donation.don_category,
-        donation.don_qty,
-        donation.don_date,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return searchableText.includes(searchTerm.toLowerCase());
-    });
-  }, [donations, searchTerm]);
-
   const handleAddDonation = () => {
-    router.push("/donation/staffDonationAdd");
+    router.push("/(donation)/staffDonationAdd");
   };
 
   const handleViewDonation = (donationNum: string) => {
     router.push({
-      pathname: "/donation/staffDonationView",
+      pathname: "/(donation)/staffDonationView",
       params: { don_num: donationNum.toString() },
     });
   };
 
-  if (isLoading) {
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  };
+
+  // Category options matching web
+  const categoryOptions: DropdownOption[] = [
+    { label: "All Categories", value: "all" },
+    { label: "Monetary Donations", value: "Monetary Donations" },
+    { label: "Essential Goods", value: "Essential Goods" },
+    { label: "Medical Supplies", value: "Medical Supplies" },
+    { label: "Household Items", value: "Household Items" },
+    { label: "Educational Supplies", value: "Educational Supplies" },
+    { label: "Baby & Childcare Items", value: "Baby & Childcare Items" },
+    { label: "Animal Welfare Items", value: "Animal Welfare Items" },
+    { label: "Shelter & Homeless Aid", value: "Shelter & Homeless Aid" },
+    { label: "Disaster Relief Supplies", value: "Disaster Relief Supplies" },
+  ];
+
+  const statusOptions: DropdownOption[] = [
+    { label: "All Statuses", value: "all" },
+    { label: "Stashed", value: "Stashed" },
+    { label: "Allotted", value: "Allotted" },
+  ];
+
+  const handleCategorySelect = (option: DropdownOption) => {
+    setCategoryFilter(option.value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusSelect = (option: DropdownOption) => {
+    setStatusFilter(option.value);
+    setCurrentPage(1);
+  };
+
+  // Render Donation Card Component (styled like Budget Plan)
+  const RenderDonationCard = ({ item }: { item: Donation }) => (
+    <TouchableOpacity 
+      onPress={() => handleViewDonation(item.don_num)}
+      activeOpacity={0.8}
+      className="mb-3"
+    >
+      <Card className="border-2 border-gray-200 shadow-sm bg-white">
+        <CardHeader className="pb-3">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+                {item.don_item_name}
+              </Text>
+              <View className="bg-blue-50 border border-blue-600 px-3 py-1 rounded-full self-start">
+              <Text className="text-sm tracking-wide">
+                Reference No: {item.don_num}
+              </Text>
+              </View>    
+            </View>
+            <View className="flex-row items-center">
+              <Text
+                className={`px-2 py-1 rounded-md text-xs font-medium ${
+                  item.don_status === "Stashed"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-green-100 text-green-800"
+                }`}
+              >
+                {item.don_status}
+              </Text>
+            </View>
+          </View>
+        </CardHeader>
+
+        <CardContent className="pt-3 border-t border-gray-200">
+          <View className="space-y-3">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600">Donor:</Text>
+              <Text className="text-sm font-medium text-black">
+                {item.don_donor}
+              </Text>
+            </View>
+            
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600">Category:</Text>
+              <Text className="text-sm font-medium text-black">
+                {item.don_category}
+              </Text>
+            </View>
+
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600">Quantity:</Text>
+              <Text className="text-sm font-medium text-black">
+                {item.don_qty}
+              </Text>
+            </View>
+
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600">Date:</Text>
+              <Text className="text-sm font-medium text-black">
+                {item.don_date}
+              </Text>
+            </View>
+          </View>
+        </CardContent>
+      </Card>
+    </TouchableOpacity>
+  );
+
+  // Empty state component
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery || categoryFilter !== "all" || statusFilter !== "all"
+      ? 'No donation records found. Try adjusting your search terms.'
+      : 'No donation records available yet.';
+    
     return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600">Loading donations...</Text>
-        </View>
-      </SafeAreaView>
+      <View className="flex-1 justify-center items-center py-8">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
     );
-  }
+  };
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
 
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Donation Records</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Donation Records</Text>}
       rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View className="mb-4" onStartShouldSetResponder={() => true}>
-          <View className="mb-4 flex-row items-center justify-between">
-            <View className="flex-1">
-              <SearchInput
-                value={searchTerm}
-                onChange={setSearchTerm}
-                onSubmit={() => {
-                  // Optional: Add any submit logic if needed
-                }}
+      <View className="flex-1 bg-white">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
+
+        <View className="flex-1 px-6">
+          {/* Filter Dropdowns */}
+          {/* <View className="flex-row gap-3 py-3"> */}
+            <View className="flex mb-2">
+              <SelectLayout
+                options={categoryOptions}
+                selectedValue={categoryFilter}
+                onSelect={handleCategorySelect}
+                placeholder="Select category"
+                maxHeight={300}
+                isInModal={false}
               />
             </View>
-            <TouchableOpacity
-              className="bg-primaryBlue rounded-full p-3 flex mr-5"
-              onPress={handleAddDonation}
+            <View className="flex mb-2">
+              <SelectLayout
+                options={statusOptions}
+                selectedValue={statusFilter}
+                onSelect={handleStatusSelect}
+                placeholder="Select status"
+                maxHeight={200}
+                isInModal={false}
+              />
+            </View>
+          {/* </View> */}
+
+          {/* Add Button - Only show if user is secretary */}
+          {isSecretary && (
+            <Button 
+              onPress={handleAddDonation} 
+              className="bg-primaryBlue rounded-xl"
             >
-              <Plus size={20} color="white" />
-            </TouchableOpacity>
+              <Text className="text-white text-[13px] font-bold">Add Donation</Text>
+            </Button>
+          )}
+
+          {/* Content Area */}
+          <View className="flex-1 mt-4">
+            {isLoading ? (
+              renderLoadingState()
+            ) : (
+              <View className="flex-1">
+                {donations.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={donations}
+                    renderItem={({ item }) => <RenderDonationCard item={item} />}
+                    keyExtractor={(item) => item.don_num}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )}
+              </View>
+            )}
           </View>
         </View>
-
-        {filteredData.map((donation: Donation, index: number) => (
-          <TouchableOpacity
-            key={donation.don_num}
-            onPress={() => handleViewDonation(donation.don_num)}
-            accessibilityLabel={`View details for ${donation.don_item_name}`}
-            accessibilityRole="button"
-            activeOpacity={0.7}
-          >
-            <Card
-              className={`bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100 ${
-                index === filteredData.length - 1 ? "mb-0" : "mb-4"
-              }`}
-            >
-              <CardHeader className="pb-3">
-                <View className="flex-row items-start justify-between">
-                  <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
-                    {donation.don_item_name}
-                  </CardTitle>
-                  <TouchableOpacity
-                    className="p-2 -m-2"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    onPress={() => handleViewDonation(donation.don_num)}
-                  ></TouchableOpacity>
-                </View>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                <Text className="text-sm text-black leading-5 mb-4">
-                  Donor: {donation.don_donor}
-                </Text>
-                <View className="border-t border-gray-200 pt-3">
-                  <Text className="text-sm font-medium text-black">
-                    Category: {donation.don_category}
-                  </Text>
-                  <Text className="text-sm font-medium text-black">
-                    Quantity: {donation.don_qty}
-                  </Text>
-                  <Text className="text-sm font-medium text-black">
-                    Date: {donation.don_date}
-                  </Text>
-                  <Text className="text-sm font-medium text-blac">
-                    Reference No: {donation.don_num}
-                  </Text>
-                </View>
-              </CardContent>
-            </Card>
-          </TouchableOpacity>
-        ))}
-
-        {/* Empty state */}
-        {filteredData.length === 0 && (
-          <View className="flex-1 justify-center items-center py-12">
-            <Text className="text-gray-500 text-center">
-              No donation records found
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      </View>
     </PageLayout>
   );
 };

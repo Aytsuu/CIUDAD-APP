@@ -15,6 +15,7 @@ type FileData = {
 type ExtendedResolution= z.infer<typeof resolutionFormSchema> & {
   resFiles: FileData[]; 
   resSuppDocs: FileData[]; 
+  staff_id: string;
 };
 
 

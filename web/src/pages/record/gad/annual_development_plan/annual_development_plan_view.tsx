@@ -1,17 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X, Archive } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
-import { toast } from "sonner";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
+import { useArchiveAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ViewProjectProposal from "@/pages/record/gad/project-proposal/view-projprop";
 import ViewResolution from "./view-resolution-GAD";
 
@@ -38,6 +50,7 @@ interface DevelopmentPlan {
   dev_res_person: string;
   staff: string;
   dev_gad_items?: BudgetItem[];
+  dev_budget_items?: string;
   total?: string;
   dev_mandated?: boolean;
 }
@@ -48,14 +61,17 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const [isLoading, setIsLoading] = useState(true);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [_isPdfLoading, setIsPdfLoading] = useState(true);
   const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState<any>(null);
-  const [_isResolutionLoading, setIsResolutionLoading] = useState(true);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveDialogPlanId, setArchiveDialogPlanId] = useState<number | null>(null);
+  const [showArchiveButtons, setShowArchiveButtons] = useState(false);
 
   // Fetch GAD Project Proposals and Resolutions to determine links per mandate
   const { data: proposals = [] } = useGetProjectProposals();
   const { data: resolutions = [] } = useResolution();
+  const archivePlansMutation = useArchiveAnnualDevPlans();
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -68,7 +84,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   // Build quick lookup maps
   const proposalByDevId = useMemo(() => {
     const map = new Map<number, any>();
-    (proposals || []).forEach((p: any) => {
+    const proposalsList = Array.isArray(proposals) ? proposals : proposals?.results || [];
+    proposalsList.forEach((p: any) => {
       if (p && typeof p.devId === 'number') {
         map.set(p.devId, p);
       }
@@ -79,7 +96,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   // Only allow resolutions that belong to an existing proposal
   const validGprIds = useMemo(() => {
     const set = new Set<number>();
-    (proposals || []).forEach((p: any) => {
+    const proposalsList = Array.isArray(proposals) ? proposals : proposals?.results || [];
+    proposalsList.forEach((p: any) => {
       if (p && typeof p.gprId === 'number') {
         set.add(p.gprId);
       }
@@ -89,7 +107,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const resolutionByGprId = useMemo(() => {
     const map = new Map<number, any>();
-    (resolutions || []).forEach((r: any) => {
+    const resolutionsList = Array.isArray(resolutions) ? resolutions : resolutions?.results || [];
+    resolutionsList.forEach((r: any) => {
       if (r && typeof r.gpr_id === 'number' && validGprIds.has(r.gpr_id)) {
         map.set(r.gpr_id, r);
       }
@@ -103,11 +122,13 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const fetchPlans = async () => {
     try {
-      const data = await getAnnualDevPlansByYear(year);
-      setPlans(data);
+      const data = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for view
+      // Handle both array and paginated response formats
+      const plansData = Array.isArray(data) ? data : data?.results || [];
+      setPlans(plansData);
     } catch (error) {
       console.error("Error fetching plans:", error);
-      toast.error("Failed to fetch annual development plans");
+      showErrorToast("Failed to fetch annual development plans");
     } finally {
       setIsLoading(false);
     }
@@ -151,6 +172,101 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     setSelectedResolution(null);
   };
 
+  // Helper function to check if a dev plan has a resolution
+  const hasResolution = (devId: number): boolean => {
+    const proposal = proposalByDevId.get(devId);
+    if (!proposal || !proposal.gprId) return false;
+    return resolutionByGprId.has(proposal.gprId as number);
+  };
+
+  // Check if all plans have resolutions
+  const allPlansHaveResolutions = useMemo(() => {
+    if (!plans || plans.length === 0) return false;
+    return plans.every(plan => {
+      const proposal = proposalByDevId.get(plan.dev_id);
+      if (!proposal || !proposal.gprId) return false;
+      return resolutionByGprId.has(proposal.gprId as number);
+    });
+  }, [plans, proposalByDevId, resolutionByGprId]);
+
+  const handleArchiveClick = () => {
+    if (allPlansHaveResolutions) {
+      showErrorToast("Cannot archive");
+      return;
+    }
+    setShowArchiveButtons(true);
+  };
+
+  const handleConfirmArchive = async () => {
+    setIsArchiving(true);
+    try {
+      const planIdsWithoutResolutions = plans
+        .filter(plan => !hasResolution(plan.dev_id))
+        .map(plan => plan.dev_id);
+      
+      if (planIdsWithoutResolutions.length === 0) {
+        showErrorToast("Cannot archive: All plans have linked resolutions.");
+        setShowArchiveDialog(false);
+        return;
+      }
+      
+      if (planIdsWithoutResolutions.length < plans.length) {
+        const skippedCount = plans.length - planIdsWithoutResolutions.length;
+        showErrorToast(`Cannot archive ${skippedCount} plan(s) with linked resolutions. Archiving remaining plans.`);
+      }
+      
+      await archivePlansMutation.mutateAsync(planIdsWithoutResolutions);
+      showSuccessToast(`Successfully archived ${planIdsWithoutResolutions.length} development plan(s)`);
+      setShowArchiveDialog(false);
+      setShowArchiveButtons(false);
+      onBack(); // Go back to main view after archiving
+    } catch (error) {
+      console.error("Failed to archive plans:", error);
+      showErrorToast("Failed to archive development plans");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleSingleArchiveClick = (planId: number) => {
+   
+    if (hasResolution(planId)) {
+      showErrorToast("Cannot archive this development plan");
+      return;
+    }
+    setArchiveDialogPlanId(planId);
+    setShowArchiveDialog(true);
+  };
+
+  // Archive a single plan
+  const handleConfirmSingleArchive = async () => {
+    if (!archiveDialogPlanId) return;
+    
+    // Safety check: ensure plan doesn't have a resolution
+    if (hasResolution(archiveDialogPlanId)) {
+      showErrorToast("Cannot archive this development plan");
+      setShowArchiveDialog(false);
+      setArchiveDialogPlanId(null);
+      return;
+    }
+    
+    setIsArchiving(true);
+    try {
+      await archivePlansMutation.mutateAsync([archiveDialogPlanId]);
+      showSuccessToast("Successfully archived development plan");
+      setShowArchiveDialog(false);
+      const archivedId = archiveDialogPlanId;
+      setArchiveDialogPlanId(null);
+      // Remove the archived plan from the view
+      setPlans(prev => prev.filter(plan => plan.dev_id !== archivedId));
+    } catch (error) {
+      console.error("Failed to archive plan:", error);
+      showErrorToast("Failed to archive development plan");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
 
   return (
     <div className="bg-snow w-full min-h-screen p-6">
@@ -167,9 +283,9 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
-          <p>Loading data...</p>
+          <Spinner size="lg" />
         </div>
-      ) : plans.length === 0 ? (
+      ) : !Array.isArray(plans) || plans.length === 0 ? (
         <div className="flex items-center justify-center h-64">
           <p>No development plans found for this year.</p>
         </div>
@@ -198,17 +314,33 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
                 <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
-                <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">pax</th>
+                <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">pax/quantity</th>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">amount (PHP)</th>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">total</th>
               </tr>
             </thead>
             <tbody>
-              {plans.map((plan) => (
+              {Array.isArray(plans) && plans.map((plan) => (
                 <tr key={plan.dev_id}>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      <div className="font-semibold text-blue-900">{plan.dev_client}</div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-semibold text-blue-900">{plan.dev_client}</div>
+                        {showArchiveButtons && !hasResolution(plan.dev_id) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSingleArchiveClick(plan.dev_id);
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 p-0 h-auto w-auto"
+                            title="Archive this plan"
+                          >
+                            <X size={16} />
+                          </Button>
+                        )}
+                      </div>
                       <div className="text-xs mt-2 text-gray-700 mb-5">{plan.dev_issue}</div>
                       {(() => {
                         const proposal = proposalByDevId.get(plan.dev_id);
@@ -218,7 +350,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                           <div className="mt-2 space-y-1">
                             {proposal && (
                               <div 
-                                className="text-xs text-yellow-600 font-medium cursor-pointer hover:text-yellow-800 hover:underline"
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 underline"
                                 onClick={() => handleViewProject(proposal)}
                               >
                                 View Project Proposal
@@ -226,7 +358,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                             )}
                             {resolution && (
                               <div 
-                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 underline"
                                 onClick={() => handleViewResolution(resolution)}
                               >
                                 Resolution #{resolution.res_num}
@@ -333,51 +465,83 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                     </div>
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      plan.dev_gad_items.map((item, idx) => (
-                        <div key={idx}>{item.name}</div>
-                      ))
-                    ) : (
-                      <span>-</span>
-                    )}
+                    {(() => {
+                      try {
+                        // dev_budget_items is already an array, no need to parse
+                        const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : [];
+                        return budgetItems.length > 0 ? (
+                          budgetItems.map((item: any, idx: number) => (
+                            <div key={idx}>{item.name}</div>
+                          ))
+                        ) : (
+                          <span>-</span>
+                        );
+                      } catch (error) {
+                        return <span>-</span>;
+                      }
+                    })()}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      plan.dev_gad_items.map((item, idx) => (
-                        <div key={idx}>{item.pax}</div>
-                      ))
-                    ) : (
-                      <span>-</span>
-                    )}
+                    {(() => {
+                      try {
+                        // dev_budget_items is already an array, no need to parse
+                        const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : [];
+                        return budgetItems.length > 0 ? (
+                          budgetItems.map((item: any, idx: number) => (
+                            <div key={idx}>{item.quantity}</div>
+                          ))
+                        ) : (
+                          <span>-</span>
+                        );
+                      } catch {
+                        return <span>-</span>;
+                      }
+                    })()}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      plan.dev_gad_items.map((item, idx) => {
-                        const amount = Number((item.amount ?? item.price) || 0);
-                        return <div key={idx}>₱{isFinite(amount) ? amount.toFixed(2) : '0.00'}</div>;
-                      })
-                    ) : (
-                      <span>₱{plan.total || '0'}</span>
-                    )}
+                    {(() => {
+                      try {
+                        // dev_budget_items is already an array, no need to parse
+                        const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : [];
+                        return budgetItems.length > 0 ? (
+                          budgetItems.map((item: any, idx: number) => {
+                            const price = Number(item.price || 0);
+                            return <div key={idx}>₱{isFinite(price) ? price.toFixed(2) : '0.00'}</div>;
+                          })
+                        ) : (
+                          <span>₱{plan.total || '0'}</span>
+                        );
+                      } catch {
+                        return <span>₱{plan.total || '0'}</span>;
+                      }
+                    })()}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      <div>
-                        ₱{
-                          plan.dev_gad_items
-                            .reduce((sum, item) => {
-                              const pax = Number(item.pax || 0);
-                              const amount = Number((item.amount ?? item.price) || 0);
-                              const total = (isFinite(pax) ? pax : 0) * (isFinite(amount) ? amount : 0);
-                              return sum + total;
-                            }, 0)
-                            .toFixed(2)
-                        }
-                      </div>
-                    ) : (
-                      <span>₱{plan.total || '0'}</span>
-                    )}
-              </td>
+                    {(() => {
+                      try {
+                        // dev_budget_items is already an array, no need to parse
+                        const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : [];
+                        return budgetItems.length > 0 ? (
+                          <div>
+                            ₱{
+                              budgetItems
+                                .reduce((sum: number, item: any) => {
+                                  const quantity = Number(item.quantity || 0);
+                                  const price = Number(item.price || 0);
+                                  const total = (isFinite(quantity) ? quantity : 0) * (isFinite(price) ? price : 0);
+                                  return sum + total;
+                                }, 0)
+                                .toFixed(2)
+                            }
+                          </div>
+                        ) : (
+                          <span>₱{plan.total || '0'}</span>
+                        );
+                      } catch {
+                        return <span>₱{plan.total || '0'}</span>;
+                      }
+                    })()}
+                  </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <ul className="list-disc list-inside">
                       {plan.dev_res_person.split(',').map((person, idx) => (
@@ -429,7 +593,20 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <tr className="bg-gray-50 font-semibold">
                 <td className="px-3 py-2 text-right border border-gray-200" colSpan={6}>Total</td>
                 <td className="px-3 py-2 border border-gray-200">
-                  ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
+                  ₱{Array.isArray(plans) ? plans.reduce((sum, plan) => {
+                    try {
+                      // dev_budget_items is already an array, no need to parse
+                      const budgetItems = Array.isArray(plan.dev_budget_items) ? plan.dev_budget_items : [];
+                      const planTotal = budgetItems.reduce((itemSum: number, item: any) => {
+                        const quantity = Number(item.quantity || 0);
+                        const price = Number(item.price || 0);
+                        return itemSum + (quantity * price);
+                      }, 0);
+                      return sum + planTotal;
+                    } catch {
+                      return sum + parseFloat(plan.total || '0');
+                    }
+                  }, 0).toFixed(2) : '0.00'}
                 </td>
                 <td className="px-3 py-2 border border-gray-200"></td>
                 <td className="px-3 py-2 border border-gray-200"></td>
@@ -439,13 +616,32 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         </div>
       )}
       <div className="flex justify-end gap-4 mt-6">
-        <Button 
-          onClick={() => handleEdit(plans[0]?.dev_id)}
-          className="text-white hover:bg-ligh-blue-1000 w-28"
-        >
-          Edit
-        </Button>
-        <Button className="bg-red-600 text-white hover:bg-red-700 w-28">Delete</Button>
+        {!showArchiveButtons && (
+          <>
+            <Button 
+              onClick={() => handleEdit(plans[0]?.dev_id)}
+              className="text-white hover:bg-ligh-blue-1000 w-28"
+            >
+              Edit
+            </Button>
+            <Button 
+              onClick={handleArchiveClick}
+              className="bg-red-600 text-white hover:bg-red-700 w-28"
+              disabled={isArchiving || allPlansHaveResolutions}
+              title={allPlansHaveResolutions ? "Cannot archive: All plans have linked resolutions" : ""}
+            >
+              Archive
+            </Button>
+          </>
+        )}
+        {showArchiveButtons && (
+          <Button 
+            onClick={() => setShowArchiveButtons(false)}
+            className="bg-gray-600 text-white hover:bg-gray-700 w-32"
+          >
+            Cancel Archive
+          </Button>
+        )}
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
@@ -469,8 +665,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             {selectedProject && (
               <ViewProjectProposal
                 project={detailedProject || selectedProject}
-                onLoad={() => setIsPdfLoading(false)}
-                onError={() => setIsPdfLoading(false)}
               />
             )}
           </div>
@@ -498,13 +692,44 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             {selectedResolution && (
               <ViewResolution
                 resolution={selectedResolution}
-                onLoad={() => setIsResolutionLoading(false)}
-                onError={() => setIsResolutionLoading(false)}
               />
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Archive Confirmation Dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5 text-red-600" />
+              {archiveDialogPlanId ? "Archive Development Plan?" : "Archive All Development Plans?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                {archiveDialogPlanId 
+                  ? "Are you sure you want to archive this development plan?"
+                  : `Are you sure you want to archive all development plans for year ${year}?`
+                }
+              </p>
+              <p className="text-sm text-gray-600">
+                Archived plans will be moved to the archive section and won't appear in the main development plans list.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isArchiving} onClick={() => setArchiveDialogPlanId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={archiveDialogPlanId ? handleConfirmSingleArchive : handleConfirmArchive}
+              disabled={isArchiving}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isArchiving ? "Archiving..." : "Archive"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );

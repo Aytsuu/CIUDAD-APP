@@ -11,6 +11,19 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
+export const getDeceasedResidentsList = async () => {
+  try {
+    const res = await api.get("profiling/resident/", {
+      params: {
+        deceased_only: true
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const getResidentsList = async (
   is_staff: boolean = false, 
   exclude_independent: boolean = false,

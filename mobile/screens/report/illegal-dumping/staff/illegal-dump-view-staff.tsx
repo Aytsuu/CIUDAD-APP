@@ -3,17 +3,21 @@ import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { X } from "lucide-react-native";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
 import { ActivityIndicator } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { ChevronLeft } from 'lucide-react-native';
 
 
 export default function WasteIllegalDumpingDetails() {
   // Get all params from the route
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth(); 
+
   
   // Parse all params
   const {
@@ -81,7 +85,7 @@ export default function WasteIllegalDumpingDetails() {
   
   //UPDATE MUTATION
 //   const { mutate: updateRep } = useUpdateWasteReport(Number(rep_id));
-  const { mutate: updateRep, isPending } = useUpdateWasteReport(Number(rep_id), () => {
+  const { mutate: updateRep, isPending } = useUpdateWasteReport(String(rep_id), () => {
       setTimeout(() => {
           router.back();
       }, 600);
@@ -105,6 +109,7 @@ export default function WasteIllegalDumpingDetails() {
       const updateData = {
           rep_status: "resolved",
           files: files,
+          staff_id: user?.staff?.staff_id
       };
       
       updateRep(updateData, {
@@ -117,14 +122,12 @@ export default function WasteIllegalDumpingDetails() {
 
   return (
     <>
-      <_ScreenLayout
-        headerBetweenAction={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
-        showExitButton={true}
-        showBackButton={false}
-        customRightAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <X size={16} className="text-black" />
-          </TouchableOpacity>
+      <PageLayout
+        headerTitle={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>       
         }
         footer={
           <TouchableOpacity
@@ -143,9 +146,8 @@ export default function WasteIllegalDumpingDetails() {
             </Text>
           </TouchableOpacity>
         }
-        stickyFooter={true}
       >
-        <ScrollView className="p-4 pb-8">
+        <ScrollView className="px-6 pb-8 pt-8">
           {/* Header */}
           <View className="items-center pb-10">
             <View className="bg-gray-100 px-3 py-2 rounded-md">
@@ -253,7 +255,7 @@ export default function WasteIllegalDumpingDetails() {
             </View>
           </View>
         </ScrollView>
-      </_ScreenLayout>
+      </PageLayout>
 
         <Modal
             visible={showResolutionModal}
@@ -280,8 +282,7 @@ export default function WasteIllegalDumpingDetails() {
                         <MediaPicker
                           selectedImages={selectedImages}
                           setSelectedImages={setSelectedImages}
-                          multiple={true}
-                          maxImages={5}
+                          limit={3}
                         />  
 
                         {/* Submit Button */}

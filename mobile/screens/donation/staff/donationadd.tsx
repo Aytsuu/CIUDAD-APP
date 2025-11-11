@@ -9,15 +9,18 @@ import { useRouter } from 'expo-router';
 import { useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {  ChevronLeft } from 'lucide-react-native';
-import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
+import {ClerkDonateCreateSchema} from '@/form-schema/donate-create-form-schema';
 import { useAddDonation, useGetPersonalList } from './donation-queries';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 const DonationAdd = () => {
+  const { user } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,6 +34,8 @@ const DonationAdd = () => {
       don_description: undefined,
       don_category: '',
       don_date: new Date().toISOString().split('T')[0],
+      don_status: "Stashed",
+      staff: user?.staff?.staff_id || null,
     },
   });
 
@@ -55,8 +60,14 @@ const DonationAdd = () => {
     setIsSubmitting(true);
     try {
       const payload = {
-        ...formData,
+        don_donor: formData.don_donor,
+        don_item_name: formData.don_item_name,
         don_qty: formData.don_qty.toString(),
+        don_description: formData.don_description,
+        don_category: formData.don_category,
+        don_date: formData.don_date,
+        don_status: formData.don_status,
+        staff: formData.staff,
       };
 
       await addDonationMutation.mutateAsync(payload);
@@ -75,14 +86,47 @@ const DonationAdd = () => {
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Add Donation</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Add Donation</Text>}
       rightAction={
         <TouchableOpacity>
           <ChevronLeft size={30} color="black" className="text-white" />
         </TouchableOpacity>
       }
+      footer={<View>
+          <ConfirmationModal
+            trigger={
+              <TouchableOpacity
+                className="bg-primaryBlue py-3 rounded-lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                  <LoadingModal visible={isSubmitting} />
+                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
+                  </>
+                ) : (
+                  <Text className="text-white text-base font-semibold text-center">Save</Text>
+                )}
+              </TouchableOpacity>
+            }
+            title="Confirm Donation"
+            description="Are you sure you want to save this donation?"
+            actionLabel="Save Donation"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            loadingMessage="Saving donation..."
+          />
+        </View>}
     >
-      <View className="space-y-4 p-4 flex-1">
+      <View className="space-y-4 p-4 flex-1 px-6">
+
+        {/* Date */}
+        <FormDateInput
+          control={control}
+          name="don_date"
+          label="Donation Date"
+        />   
+
         <View className="mb-4">
           <DonorSelect
             placeholder="Select donor or enter name"
@@ -150,39 +194,6 @@ const DonationAdd = () => {
           label="Description"
           placeholder="Enter description"
         />
-
-        {/* Date */}
-        <FormDateInput
-          control={control}
-          name="don_date"
-          label="Donation Date"
-        />
-
-        {/* Submit Button with Confirmation Modal */}
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          <ConfirmationModal
-            trigger={
-              <TouchableOpacity
-                className="bg-primaryBlue py-3 rounded-lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
-                  </>
-                ) : (
-                  <Text className="text-white text-base font-semibold text-center">Save</Text>
-                )}
-              </TouchableOpacity>
-            }
-            title="Confirm Donation"
-            description="Are you sure you want to save this donation?"
-            actionLabel="Save Donation"
-            onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
-            loadingMessage="Saving donation..."
-          />
-        </View>
       </View>
     </PageLayout>
   );

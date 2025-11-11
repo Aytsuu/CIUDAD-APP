@@ -1,6 +1,6 @@
 import _ScreenLayout from "@/screens/_ScreenLayout"
-import { View, TouchableOpacity, Text, ScrollView, Image } from "react-native"
-import { ChevronLeft, MapPin, Trash, Calendar, User, Users, Truck, Camera, CheckCircle, Info} from "lucide-react-native"
+import { View, TouchableOpacity, Text, ScrollView, Image, Modal, Pressable } from "react-native"
+import { ChevronLeft, MapPin, Trash, Calendar, User, Users, Truck, Camera, CheckCircle, Info, X, ChevronRight } from "lucide-react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
@@ -8,19 +8,40 @@ import { useGetAcceptedDetailsResident } from "./queries/garbagePickupFetchQueri
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { Button } from "@/components/ui/button"
 import { useUpdateGarbReqStatusResident } from "./queries/garbagePickupUpdateQueries"
+import { LoadingState } from "@/components/ui/loading-state"
+import { useState } from "react"
 
 export default function ResidentAcceptedDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
-  const { data: requestDetails, isPending } = useGetAcceptedDetailsResident(garb_id)
+  const { data: requestDetails, isLoading } = useGetAcceptedDetailsResident(garb_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, true)
   
-  console.log("Request Details:", requestDetails)
+  // State for image modal
+  const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{url: string, name: string} | null>(null);
 
   const handleConfirmCompletion = (garb_id: any) => {
     confirm(garb_id)
   }
+
+  // Function to handle viewing the image
+  const handleViewImage = (imageUrl: string, imageName: string = "Attached Image") => {
+    setSelectedImage({
+      url: imageUrl,
+      name: imageName
+    })
+    setViewImageModalVisible(true)
+  }
+
+   if (isLoading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
+        );
+    }
 
   // Check if we should show the confirmation button
   const showConfirmationButton = 
@@ -37,10 +58,8 @@ export default function ResidentAcceptedDetails() {
       headerBetweenAction={<Text className="text-[13px]">Request Details</Text>}
       showBackButton={false}
       showExitButton={false}
-      loading={isPending}
-      loadingMessage="Loading..."
     >
-      <ScrollView className="flex-1 p-4" >
+      <ScrollView className="flex-1 p-6" >
         {/* Request Info Card */}
         <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
           <View className="flex-row items-center mb-4 gap-2">
@@ -88,6 +107,18 @@ export default function ResidentAcceptedDetails() {
             </Text>
           </View>
 
+          {requestDetails?.staff_name && (
+            <View className="py-3">
+              <View className="flex-row items-center mb-2 gap-2">
+                  <User size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Accepted by:</Text>
+              </View>
+              <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
+                {requestDetails?.staff_name}
+              </Text>
+            </View>
+          )}
+
           {requestDetails?.dec_date && (
             <View className="py-3">
               <View className="flex-row items-center mb-2">
@@ -125,7 +156,7 @@ export default function ResidentAcceptedDetails() {
               <View className="py-3 border-b border-gray-100">
                 <View className="flex-row items-center mb-2 gap-2">
                   <User size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Driver:</Text>
+                  <Text className="text-gray-600 font-PoppinsMedium">Driver Loader:</Text>
                 </View>
                 <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails.assignment_info.driver}</Text>
               </View>
@@ -136,7 +167,7 @@ export default function ResidentAcceptedDetails() {
               <View className="py-3 border-b border-gray-100">
                 <View className="flex-row items-center mb-2 gap-2">
                   <Users size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Collectors:</Text>
+                  <Text className="text-gray-600 font-PoppinsMedium">Loader(s):</Text>
                 </View>
                 <View className="ml-6">
                   <View className="flex-row flex-wrap gap-2">
@@ -192,14 +223,19 @@ export default function ResidentAcceptedDetails() {
           </View>
         )}
 
-        {/* Attached Image Section */}
+        {/* Attached Image Section - Updated with modal functionality */}
         {requestDetails?.file_url && (
           <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
             <View className="flex-row items-center mb-4">
               <Camera size={20} color="#9333ea" className="mr-2" />
               <Text className="font-PoppinsBold text-lg text-gray-800">Attached Image</Text>
             </View>
-            <View className="bg-gray-50 rounded-lg p-2">
+            
+            {/* Make the image clickable */}
+            <TouchableOpacity 
+              onPress={() => handleViewImage(requestDetails.file_url, "Garbage Pickup Image")}
+              className="bg-gray-50 rounded-lg p-2"
+            >
               <Image
                 source={{ uri: requestDetails.file_url }}
                 style={{
@@ -210,7 +246,8 @@ export default function ResidentAcceptedDetails() {
                   resizeMode: "cover",
                 }}
               />
-            </View>
+                            
+            </TouchableOpacity>
           </View>
         )}
 
@@ -232,6 +269,38 @@ export default function ResidentAcceptedDetails() {
           </View>
         )}
       </ScrollView>
+
+      {/* Image Viewer Modal - Simplified for single image */}
+      <Modal
+        visible={viewImageModalVisible}
+        transparent={true}
+        onRequestClose={() => setViewImageModalVisible(false)}
+        animationType="fade"
+      >
+        <View className="flex-1 bg-black/90">
+          {/* Header with close button and file name */}
+          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
+            <Text className="text-white text-lg font-medium w-[90%]" numberOfLines={1}>
+              {selectedImage?.name || 'Garbage Pickup Image'}
+            </Text>
+            <TouchableOpacity 
+              onPress={() => setViewImageModalVisible(false)}
+              className="bg-black/50 rounded-full p-1"
+            >
+              <X size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Main Image */}
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage.url }}
+              className="w-full h-full"
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </_ScreenLayout>
   )
 }

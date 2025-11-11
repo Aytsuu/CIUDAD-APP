@@ -6,8 +6,8 @@ import { expense_log } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 import IncomeExpenseFormSchema from "@/form-schema/treasurer/expense-tracker-schema";
 import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { z } from "zod";
@@ -75,13 +75,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       });
 
       //5. Add new expense log
-      if(values.returnAmount > 0){
-        await expense_log(iet_num, {
-          returnAmount: values.returnAmount,
-          el_proposed_budget: values.iet_amount,
-          el_actual_expense: values.iet_actual_amount
-        });
-      }
+      await expense_log(iet_num, {
+        returnAmount: values.returnAmount,
+        el_proposed_budget: values.iet_amount,
+        el_actual_expense: values.iet_actual_amount
+      });
+
       
       return iet_num;
     },  
@@ -91,23 +90,16 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
       queryClient.invalidateQueries({ queryKey: ['expense_log'] });
-
-      toast.loading("Creating entry...", { id: "createExpense" });
       
       // Show success toast
-      toast.success('Expense Entry created successfully', {
-        id: "createExpense",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Expense entry created successfully')
 
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
       console.error("Error submitting expense or income:", err);
-      toast.error(
-        "Failed to submit income or expense. Please check the input data and try again.",
-        { duration: 2000 }
+      showErrorToast(
+        "Failed to submit income or expense. Please check the input data and try again."
       );
     }
   });
@@ -143,23 +135,16 @@ export const useCreateIncome = (onSuccess?: () => void) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['income'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] }); // Assuming this contains your totals
-
-      toast.loading("Creating entry...", { id: "createIncome" });
       
       // Show success toast
-      toast.success('Income Entry created successfully', {
-        id: "createIncome",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Income entry created successfully')
 
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
       console.error("Error submitting income:", err);
-      toast.error(
-        "Failed to submit income. Please check the input data and try again.",
-        { duration: 2000 }
+      showErrorToast(
+        "Failed to submit income. Please check the input data and try again."
       );
     }
   });

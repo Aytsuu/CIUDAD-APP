@@ -1,4 +1,3 @@
-
 import AnnouncementListPage from "@/screens/announcement";
 
 export default () => {

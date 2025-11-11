@@ -1,18 +1,50 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
 
 function ReceiptPage() {
-  const { data: fetchedData = [], isLoading } = useInvoiceQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedFilterId, setSelectedFilterId] = useState("all");
+
+  // Use debounce for search to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { showLoading, hideLoading } = useLoading();
+
+  // Fetch data with backend filtering and pagination
+  const { data: receiptData = { results: [], count: 0 }, isLoading } = useInvoiceQuery(
+    currentPage,
+    pageSize,
+    debouncedSearchQuery, 
+    selectedFilterId
+  );
+
+  console.log("RECEIPTT DATA", receiptData)
+
+  // Extract data from paginated response
+  const fetchedData = receiptData.results || [];
+  const totalCount = receiptData.count || 0;
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const columns: ColumnDef<Receipt>[] = [
     {
@@ -63,6 +95,87 @@ function ReceiptPage() {
     {
       accessorKey: "inv_nat_of_collection",
       header: "Nature of Collection",
+      cell: ({ row }) => {
+        const nature = row.getValue("inv_nat_of_collection") as string;
+        
+        // Define distinct color schemes for each nature type
+        const getColorScheme = (nature: string) => {
+          const normalized = nature?.toLowerCase().trim() || '';
+          
+          const colorMap: Record<string, string> = {
+            // Employment & Job Related - Blue variants
+            'first time jobseeker': 'bg-blue-100 text-blue-800 border-blue-300',
+            'employment': 'bg-sky-100 text-sky-800 border-sky-300',
+            'identification': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+            
+            // Financial & Loans - Purple variants
+            'loan': 'bg-purple-100 text-purple-800 border-purple-300',
+            'sss': 'bg-violet-100 text-violet-800 border-violet-300',
+            'bir': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+            'bank requirement': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+            
+            // Utilities & Services - Teal/Green variants
+            'electrical connection': 'bg-teal-100 text-teal-800 border-teal-300',
+            'mcwd requirements': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            
+            // Education & Training - Indigo variants
+            'scholarship': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+            'tesda': 'bg-blue-100 text-blue-800 border-blue-300',
+            'board examination': 'bg-sky-100 text-sky-800 border-sky-300',
+            
+            // IDs & Certifications - Cyan variants
+            'postal id': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+            'nbi': 'bg-sky-100 text-sky-800 border-sky-300',
+            'pwd identification': 'bg-teal-100 text-teal-800 border-teal-300',
+            'señior citizen identification': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            'police clearance': 'bg-blue-100 text-blue-800 border-blue-300',
+            
+            // Financial Assistance - Green variants
+            'pwd financial assistance': 'bg-green-100 text-green-800 border-green-300',
+            'señior citizen financial assistance': 'bg-lime-100 text-lime-800 border-lime-300',
+            'fire victim': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            
+            // Legal & Government - Orange/Amber variants
+            'bail bond': 'bg-orange-100 text-orange-800 border-orange-300',
+            'probation': 'bg-amber-100 text-amber-800 border-amber-300',
+            'file action': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+            'proof of custody': 'bg-amber-100 text-amber-800 border-amber-300',
+            'summon': 'bg-orange-200 text-orange-900 border-orange-400',
+            
+            // Permits & Clearances - Red variants
+            'building permit': 'bg-red-100 text-red-800 border-red-300',
+            'barangay clearance': 'bg-rose-100 text-rose-800 border-rose-300',
+            'business clearance': 'bg-pink-100 text-pink-800 border-pink-300',
+            'barangay sinulog permit': 'bg-red-100 text-red-800 border-red-300',
+            'barangay fiesta permit': 'bg-rose-100 text-rose-800 border-rose-300',
+            'dwup': 'bg-pink-100 text-pink-800 border-pink-300',
+            
+            // Personal & Miscellaneous - Pink/Rose variants            
+            'burial': 'bg-rose-200 text-rose-900 border-rose-300',
+            'cohabitation': 'bg-pink-100 text-pink-800 border-pink-300',
+            'marriage certification': 'bg-rose-100 text-rose-800 border-rose-300',
+            'good moral': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+            'indigency': 'bg-purple-100 text-purple-800 border-purple-300',
+            'indigency (for minors)': 'bg-violet-100 text-violet-800 border-violet-300',    
+          };
+          
+          // Exact match first
+          if (colorMap[normalized]) {
+            return colorMap[normalized];
+          }
+          
+          // Default for any unknown values
+          return 'bg-gray-100 text-gray-800 border-gray-300';
+        };
+        
+        return (
+          <div className="flex justify-center">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getColorScheme(nature)}`}>
+              {nature}
+            </span>
+          </div>
+        );
+      }
     },
     {
       accessorKey: "inv_amount",
@@ -75,7 +188,7 @@ function ReceiptPage() {
     {
       accessorKey: "inv_change",
       header: "Change",
-      cell: ({ row }) => `₱${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
+      cell: ({ row }) => `₱ ${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
     },
     {
       accessorKey: "inv_discount_reason",
@@ -99,38 +212,15 @@ function ReceiptPage() {
     ];
   }, [fetchedData]);
 
-  const [selectedFilterId, setSelectedFilterId] = useState("all");
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on search
+  };
 
-  // Filter data based on selected filter and search query
-  const filteredData = fetchedData.filter(item => {
-    const matchesFilter = selectedFilterId === "all" || 
-      item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
-    
-    const matchesSearch = !searchQuery || 
-      Object.values(item).some(val => 
-        String(val).toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    
-    return matchesFilter && matchesSearch;
-  });
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
+  const handleFilterChange = (id: string) => {
+    setSelectedFilterId(id);
+    setCurrentPage(1); // Reset to page 1 on filter change
+  };
 
   return (
     <div className="w-full h-full p-4">
@@ -155,10 +245,7 @@ function ReceiptPage() {
               placeholder="Search..." 
               className="pl-10 w-full bg-white" 
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1); // Reset to first page when searching
-              }}
+              onChange={handleSearchChange}
             />
           </div>
           <SelectLayout
@@ -166,10 +253,8 @@ function ReceiptPage() {
             placeholder="Filter"
             options={filterOptions}
             value={selectedFilterId}
-            onChange={(id) => {
-              setSelectedFilterId(id);
-              setCurrentPage(1); // Reset to first page when changing filter
-            }}
+            valueLabel={"Type"}
+            onChange={handleFilterChange}
           />
         </div>
       </div>
@@ -178,31 +263,46 @@ function ReceiptPage() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <div className="flex items-center gap-x-2">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input 
-              type="number" 
-              className="w-14 h-8" 
-              min="1"
-              value={pageSize}
-              onChange={(e) => {
-                const value = Math.max(1, Number(e.target.value));
-                setPageSize(value);
-                setCurrentPage(1);
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(value) => {
+                const newPageSize = Number.parseInt(value);
+                setPageSize(newPageSize);
+                setCurrentPage(1); // Reset to page 1 when changing page size
               }}
-            />
+            >
+              <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
         </div>
 
-        <DataTable columns={columns} data={paginatedData} header={true} />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+            <span className="ml-2 text-gray-600">Loading receipts record...</span>
+          </div>
+        ) : (
+          <DataTable columns={columns} data={fetchedData} header={true} />
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
           Showing {(currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-          {filteredData.length} rows
+          {Math.min(currentPage * pageSize, totalCount)} of{" "}
+          {totalCount} rows
         </p>
-        {filteredData.length > 0 && (
+        {totalCount > 0 && (
           <PaginationLayout
             currentPage={currentPage}
             totalPages={totalPages}

@@ -1,233 +1,258 @@
-import { View, Text, ScrollView, Pressable, TextInput } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Ionicons } from '@expo/vector-icons'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useMemo } from 'react'
+import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
-import { getIssuedCertificates, IssuedCertificate } from '../queries/issuedCertificateQueries'
+import { 
+  getIssuedCertificates, 
+  getIssuedBusinessPermits, 
+  getIssuedServiceCharges,
+  IssuedCertificate,
+  IssuedBusinessPermit,
+  IssuedServiceCharge 
+} from '../queries/issuedCertificateQueries'
+import PageLayout from '../../_PageLayout'
+import { ChevronLeft } from 'lucide-react-native'
+import { LoadingState } from '@/components/ui/loading-state'
+import { Search } from '@/lib/icons/Search'
+import { SearchInput } from '@/components/ui/search-input'
 
 const IssuedCertList = () => {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [activeMainTab, setActiveMainTab] = useState<'certificates' | 'businessPermits' | 'serviceCharges'>('certificates')
+  
   const [certificates, setCertificates] = useState<IssuedCertificate[]>([])
+  const [businessPermits, setBusinessPermits] = useState<IssuedBusinessPermit[]>([])
+  const [serviceCharges, setServiceCharges] = useState<IssuedServiceCharge[]>([])
+  
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const [searchInputVal, setSearchInputVal] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [showSearch, setShowSearch] = useState<boolean>(false)
 
-  // Fetch issued certificates from API
+  // Fetch data based on active tab
   useEffect(() => {
-    const fetchIssuedCertificates = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const data = await getIssuedCertificates()
-        setCertificates(data)
+        
+        if (activeMainTab === 'certificates') {
+          const data = await getIssuedCertificates(searchQuery, 1, 10)
+          setCertificates(data.results)
+        } else if (activeMainTab === 'businessPermits') {
+          const data = await getIssuedBusinessPermits(searchQuery, 1, 10)
+          setBusinessPermits(data.results)
+        } else if (activeMainTab === 'serviceCharges') {
+          const data = await getIssuedServiceCharges(searchQuery, 1, 10)
+          setServiceCharges(data.results)
+        }
+        
         setError(null)
       } catch (err) {
-        console.error('Error fetching issued certificates:', err)
-        setError('Failed to load issued certificates')
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchIssuedCertificates()
-  }, [])
+    fetchData()
+  }, [searchQuery, activeMainTab])
 
-  const handleCertificatePress = (certificate: IssuedCertificate) => {
-    // Navigate to certificate details or open PDF for viewing only
-    console.log('View certificate:', certificate.requester)
-    // router.push(`/certificate-details/${certificate.ic_id}`)
+  const getStatusBadge = () => {
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Issued</Text>
   }
 
-  const filteredCertificates = certificates.filter(cert => {
-    const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         cert.purpose.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesSearch
-  })
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (d?: string) => {
+    if (!d) return '—';
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric'
-      })
-    } catch (e) {
-      return dateString
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return d;
+      return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    } catch {
+      return d;
     }
   }
 
-  return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="p-4">
-          {/* Header */}
-          <View className="mb-6">
-            <View className="flex-row items-center mb-2">
-              <Pressable 
-                onPress={() => router.back()}
-                className="mr-3 p-2"
-              >
-                <Ionicons name="arrow-back" size={24} color="#374151" />
-              </Pressable>
-              <Text className="text-2xl font-bold text-gray-900">
-                Issued Certifications
-              </Text>
+  const wrapPurpose = (text?: string, maxFirstLine: number = 24) => {
+    if (!text) return '—';
+    if (text.length <= maxFirstLine) return text;
+    const breakIdx = text.lastIndexOf(' ', maxFirstLine);
+    const idx = breakIdx > 0 ? breakIdx : maxFirstLine;
+    return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
+  }
+
+  const handleSearch = React.useCallback(() => {
+    setSearchQuery(searchInputVal);
+  }, [searchInputVal]);
+
+  const renderCertificates = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {certificates.length ? (
+        certificates.map((certificate, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.purpose || "Certificate")}</Text>
+              {getStatusBadge()}
             </View>
-            <Text className="text-gray-600 text-sm ml-11">
-              Collection of issued certifications
-            </Text>
+            <Text className="text-gray-500 text-xs mt-1">ID: {certificate.ic_id}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Requester: {certificate.requester}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(certificate.dateIssued)}</Text>
           </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No certificates found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
 
-          {/* Quick Stats */}
-          <View className="mb-6">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-4">
-                <View className="flex-row justify-between items-center">
-                  <View>
-                    <Text className="text-gray-500 text-sm">Total Issued</Text>
-                    <Text className="text-2xl font-bold text-gray-900">
-                      {certificates.length}
-                    </Text>
-                  </View>
-                  <View className="flex-row space-x-4">
-                    <View className="items-center">
-                      <Text className="text-gray-500 text-xs">This Month</Text>
-                      <Text className="text-lg font-semibold text-green-600">
-                        {certificates.filter(cert => {
-                          const certDate = new Date(cert.dateIssued)
-                          const now = new Date()
-                          return certDate.getMonth() === now.getMonth() && 
-                                 certDate.getFullYear() === now.getFullYear()
-                        }).length}
-                      </Text>
-                    </View>
-                    <View className="items-center">
-                      <Text className="text-gray-500 text-xs">This Week</Text>
-                      <Text className="text-lg font-semibold text-blue-600">
-                        {certificates.filter(cert => {
-                          const certDate = new Date(cert.dateIssued)
-                          const now = new Date()
-                          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                          return certDate >= weekAgo
-                        }).length}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-
-          {/* Search */}
-          <View className="mb-6">
-            <View className="relative">
-              <View className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
-              </View>
-              <TextInput
-                placeholder="Search issued certificates..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                className="bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-gray-900"
-                placeholderTextColor="#9CA3AF"
-              />
+  const renderBusinessPermits = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {businessPermits.length ? (
+        businessPermits.map((permit, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{wrapPurpose(permit.business_name || "Business Permit")}</Text>
+              {getStatusBadge()}
             </View>
+            <Text className="text-gray-500 text-xs mt-1">ID: {permit.ibp_id}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Purpose: {permit.purpose}</Text>
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(permit.dateIssued)}</Text>
           </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No business permits found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
 
-          {/* Certificate List */}
-          <View className="space-y-4">
-            {loading ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="refresh-outline" size={48} color="#9CA3AF" />
-                  <Text className="text-gray-500 text-center mt-2">
-                    Loading issued certificates...
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : error ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-                  <Text className="text-red-500 text-center mt-2">
-                    {error}
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : filteredCertificates.length === 0 ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="ribbon-outline" size={48} color="#9CA3AF" />
-                  <Text className="text-gray-500 text-center mt-2">
-                    No issued certificates found
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredCertificates.map((certificate, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => handleCertificatePress(certificate)}
-                  className="active:opacity-80"
-                >
-                  <Card className="border-0 shadow-lg bg-white rounded-xl">
-                    <CardContent className="p-5">
-                      <View className="flex-row justify-between items-start mb-4">
-                        <View className="flex-1">
-                          <Text className="text-lg font-semibold text-gray-900 mb-1">
-                            {certificate.requester}
-                          </Text>
-                          <Text className="text-gray-600 text-sm">
-                            {certificate.purpose}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center space-x-2">
-                          <View className="bg-green-100 px-2 py-1 rounded-full">
-                            <Text className="text-green-800 text-xs font-medium">
-                              Issued
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <View className="space-y-3">
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Purpose:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.purpose}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Date Issued:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {formatDate(certificate.dateIssued)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Certificate ID:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.ic_id}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View className="flex-row justify-end mt-4 pt-4 border-t border-gray-100">
-                        <View className="flex-row items-center bg-blue-50 px-3 py-2 rounded-lg">
-                          <Ionicons name="eye-outline" size={16} color="#2563EB" />
-                          <Text className="text-blue-600 text-sm font-medium ml-1">
-                            View Details
-                          </Text>
-                        </View>
-                      </View>
-                    </CardContent>
-                  </Card>
-                </Pressable>
-              ))
+  const renderServiceCharges = () => (
+    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+      {serviceCharges.length ? (
+        serviceCharges.map((serviceCharge, idx) => (
+          <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-900 font-medium">{serviceCharge.sr_code || "Service Charge"}</Text>
+              {getStatusBadge()}
+            </View>
+            <Text className="text-gray-500 text-xs mt-1">ID: {serviceCharge.sr_id}</Text>
+            {serviceCharge.complainant_names && serviceCharge.complainant_names.length > 0 && (
+              <Text className="text-gray-500 text-xs mt-1">Complainant: {serviceCharge.complainant_names.join(', ')}</Text>
             )}
+            <Text className="text-gray-500 text-xs mt-1">Date Issued: {formatDate(serviceCharge.sr_req_date)}</Text>
+          </View>
+        ))
+      ) : (
+        <View className="flex-1 items-center justify-center py-12">
+          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">No service charges found</Text>
+        </View>
+      )}
+    </ScrollView>
+  )
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Issued Certificates</Text>}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      wrapScroll={false}
+    >
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
+
+        {/* Main Tabs */}
+        <View className="bg-white border-b border-gray-200">
+          <View className="flex-row">
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeMainTab === 'certificates' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveMainTab('certificates')}
+            >
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'certificates' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Certificates
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeMainTab === 'businessPermits' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveMainTab('businessPermits')}
+            >
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'businessPermits' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Business Permits
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeMainTab === 'serviceCharges' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveMainTab('serviceCharges')}
+            >
+              <Text className={`text-sm font-medium ${
+                activeMainTab === 'serviceCharges' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Service Charges
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    </View>
+
+        {/* Content Area */}
+        <View className="flex-1">
+          {error ? (
+            <View className="flex-1 justify-center items-center p-6">
+              <View className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <Text className="text-red-800 text-sm text-center">Failed to load data.</Text>
+              </View>
+            </View>
+          ) : (
+            <>
+              {activeMainTab === 'certificates' && renderCertificates()}
+              {activeMainTab === 'businessPermits' && renderBusinessPermits()}
+              {activeMainTab === 'serviceCharges' && renderServiceCharges()}
+            </>
+          )}
+        </View>
+      </View>
+    </PageLayout>
   )
 }
 

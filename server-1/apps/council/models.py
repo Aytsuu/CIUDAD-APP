@@ -5,7 +5,6 @@ from django.utils import timezone
 from django.db.models import Max
 from datetime import date
 
-
 class CouncilScheduling(models.Model):
     ce_id = models.BigAutoField(primary_key=True)
     ce_title = models.CharField(max_length=100)
@@ -13,6 +12,7 @@ class CouncilScheduling(models.Model):
     ce_date = models.DateField(default=date.today)
     ce_time = models.TimeField()
     ce_description = models.CharField(max_length=500)
+    ce_rows = models.IntegerField(null=True)
     ce_is_archive = models.BooleanField(default=False)
     
     staff = models.ForeignKey(
@@ -26,27 +26,32 @@ class CouncilScheduling(models.Model):
     class Meta:
         db_table = 'council_event'
 
-class CouncilAttendees(models.Model):
-    atn_id = models.BigAutoField(primary_key=True)
-    atn_name = models.CharField(max_length=200, default='')
-    atn_designation = models.CharField(max_length=200, default='')
-    atn_present_or_absent = models.CharField(max_length=100)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+# class CouncilAttendees(models.Model):
+#     atn_id = models.BigAutoField(primary_key=True)
+#     atn_name = models.CharField(max_length=200, default='')
+#     atn_designation = models.CharField(max_length=200, default='')
+#     atn_present_or_absent = models.CharField(max_length=100)
+#     ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
     
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
+#     staff = models.ForeignKey(
+#         'administration.Staff',
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
 
-    class Meta:
-        db_table = 'attendees'
+#     class Meta:
+#         db_table = 'attendees'
 
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+    ce = models.ForeignKey(
+        'CouncilScheduling', 
+        on_delete=models.CASCADE,
+        db_column='ce_id',
+        related_name='attendance_sheets'
+    )
     att_is_archive = models.BooleanField(default=False)
     att_file_name = models.CharField(max_length=255, null=True)
     att_file_path = models.CharField(max_length=512, null=True)
@@ -63,7 +68,6 @@ class CouncilAttendance(models.Model):
 
     class Meta:
         db_table = 'attendance_sheet'
-
 
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
@@ -281,7 +285,11 @@ class Ordinance(models.Model):
     ord_num = models.CharField(max_length=50, unique=True, primary_key=True)
     ord_title = models.CharField(max_length=255)
     ord_date_created = models.DateField()
-    ord_category = models.CharField(max_length=100)
+    ord_category = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True
+    )
     ord_details = models.TextField()
     ord_year = models.IntegerField()
     ord_is_archive = models.BooleanField(default=False)
@@ -329,28 +337,65 @@ class Ordinance(models.Model):
                 pass
 
     def save(self, *args, **kwargs):
-        # Run validations before saving
+        # Generate ord_num if not provided BEFORE validation
+        if not self.ord_num:  # If no ordinance number provided
+            from django.utils import timezone
+            import re
+            
+            # Use the ordinance's year, or current year if not set
+            year = getattr(self, 'ord_year', timezone.now().year)
+            year_suffix = year % 100
+            
+            # Find the maximum sequence number for this year by extracting numbers from existing ord_nums
+            try:
+                existing_ordinances = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}")
+                max_seq = 0
+                
+                # Extract sequence numbers from existing ord_num values
+                for ord in existing_ordinances.values_list('ord_num', flat=True):
+                    # Match pattern like "ORD###-YY" and extract the number
+                    match = re.match(r'ORD(\d+)-', str(ord))
+                    if match:
+                        seq_num = int(match.group(1))
+                        max_seq = max(max_seq, seq_num)
+                
+                # Start from max_seq + 1, but ensure we find a unique number
+                seq = max_seq + 1
+                max_attempts = 100  # Prevent infinite loop
+                attempt = 0
+                
+                while attempt < max_attempts:
+                    candidate_ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                    if not Ordinance.objects.filter(ord_num=candidate_ord_num).exists():
+                        self.ord_num = candidate_ord_num
+                        break
+                    seq += 1
+                    attempt += 1
+                else:
+                    # Fallback if we somehow can't find a unique number
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                    
+            except Exception as e:
+                # Fallback: use simple count + 1 if extraction fails
+                try:
+                    existing_count = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}").count()
+                    seq = existing_count + 1
+                    # Ensure uniqueness by checking
+                    while Ordinance.objects.filter(ord_num=f"ORD{seq:03d}-{year_suffix:02d}").exists():
+                        seq += 1
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+                except Exception:
+                    # Last resort: use total count
+                    existing_count = Ordinance.objects.count()
+                    seq = existing_count + 1
+                    self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+        
+        # Run validations after generating ord_num
         try:
             self.full_clean()
         except Exception:
             # Re-raise to preserve default behavior upstream
             raise
-        if not self.ord_num:  # If no ordinance number provided
-            # Generate ordinance number: ORD-YYYY-XXXX
-            year = getattr(self, 'ord_year', 2024)
-            import random
-            import string
-            
-            # Generate a unique number
-            while True:
-                # Generate 4 random digits
-                random_digits = ''.join(random.choices(string.digits, k=4))
-                ord_num = f"ORD-{year}-{random_digits}"
-                
-                # Check if it's unique
-                if not Ordinance.objects.filter(ord_num=ord_num).exists():
-                    self.ord_num = ord_num
-                    break
         
         super().save(*args, **kwargs)
     

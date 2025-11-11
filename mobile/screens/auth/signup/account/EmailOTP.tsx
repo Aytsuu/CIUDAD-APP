@@ -5,8 +5,9 @@ import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/button/submit-button";
+import axios from "axios";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
@@ -24,40 +25,15 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
     "",
   ]);
   const { toast } = useToastContext();
-  const { sendEmailOTP, verifyEmailOTP } = useAuth();
+  const { sendEmailOTP } = useAuth();
 
   // ====================== SIDE EFFECTS ======================
-  React.useEffect(() => {
-    if (otpInput.every((val) => val == "")) return;
-
-    if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify();
-    else setInvalidOTP(false);
-  }, [otpInput]);
 
   React.useEffect(() => {
     if(!modalVisible) setInvalidOTP(false);
   }, [modalVisible])
 
   // ====================== HANDLERS ======================
-  const verify = async () => {
-    const otp = otpInput.join("");
-    try {
-      const email = getValues("accountFormSchema.email");
-      const response = await verifyEmailOTP(email, otp);
-      console.log("response:", response);
-      if (response) {
-        toast.success("Email verified successfully!");
-        setModalVisible(false);
-        params.next();
-      } else {
-        setOtpInput(["", "", "", "", "", ""]);
-        setInvalidOTP(true);
-      }
-    } catch (err) {
-      toast.error("Something went wrong while verifying OTP");
-    }
-  };
-
   const send = async () => {
     if (!(await trigger("accountFormSchema.email"))) {
       return;

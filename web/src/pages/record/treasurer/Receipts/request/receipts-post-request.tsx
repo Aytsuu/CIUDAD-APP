@@ -46,7 +46,7 @@ export const addReceipt = async (data: Record<string, any>) => {
             }
         } else if (data.nrc_id && String(data.nrc_id).trim() !== "") {
             // Update non-resident request status
-            const updateStatus = await api.put(`/clerk/update-personal-req-status/${Number(data.nrc_id)}/`, {
+            const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.nrc_id}/`, {
                 nrc_req_status: "In Progress",
                 nrc_req_payment_status: "Paid",
                 nrc_pay_date: new Date().toISOString()
@@ -62,9 +62,42 @@ export const addReceipt = async (data: Record<string, any>) => {
             console.log('Resident certificate status updated:', updateStatus.data);
         } else {
             console.warn('No valid ID provided for status update - skipping status update');
-        }   
-    }catch(err){
-        console.error(err)
+        }
+        
+        // Create invoice for all receipt types
+        const payload: any = {
+            inv_date: new Date().toISOString(),
+            inv_amount: parseFloat(data.inv_amount),
+            inv_nat_of_collection: data.inv_nat_of_collection,
+            inv_serial_num: data.inv_serial_num,
+        };
+        
+        // Only include ID fields if they have valid values
+        if (data.nrc_id && String(data.nrc_id).trim() !== "" && String(data.nrc_id).trim() !== "null") {
+            payload.nrc_id = String(data.nrc_id);
+        }
+        if (data.bpr_id && String(data.bpr_id).trim() !== "" && String(data.bpr_id).trim() !== "null") {
+            payload.bpr_id = String(data.bpr_id);
+        }
+        if (data.cr_id && String(data.cr_id).trim() !== "" && String(data.cr_id).trim() !== "null") {
+            payload.cr_id = String(data.cr_id);
+        }
+        if (data.pay_id && String(data.pay_id).trim() !== "" && String(data.pay_id).trim() !== "null") {
+            payload.pay_id = String(data.pay_id);
+        }
+        
+        console.log('API Payload:', payload);
+        console.log('Making API call to: treasurer/invoice/');
+        
+        const res = await api.post('treasurer/invoice/', payload);
+        console.log('API Response:', res.data);
+        return res.data;
+        
+    }catch(err: any){
+        console.error('API Error:', err);
+        console.error('Error Response:', err.response?.data);
+        console.error('Error Status:', err.response?.status);
+        throw err; // Re-throw the error so the mutation can handle it
     }   
 }
 
@@ -77,15 +110,15 @@ export const addPersonalReceipt = async (data: Record<string, any>) => {
         //     nrc_pay_date: new Date().toISOString()
         // })
 
-        const payload: any = {
+                const payload: any = {
                     inv_date: new Date().toISOString(),
                     inv_amount: parseFloat(data.inv_amount),
                     inv_nat_of_collection: data.inv_nat_of_collection,
                     inv_serial_num: data.inv_serial_num,
-                    nrc_id: data.nrc_id ? Number(data.nrc_id) : null,
+                    nrc_id: data.nrc_id ? String(data.nrc_id) : null, // nrc_id is now a string like "NRC001-25"
                     bpr_id: data.bpr_id ? Number(data.bpr_id) : null,
                     cr_id: data.cr_id ? String(data.cr_id) : null,
-                    spay_id: data.spay_id ? Number(data.spay_id) : null,
+                    pay_id: data.pay_id ? Number(data.pay_id) : null,
                 };
                 
                 console.log('API Payload:', payload);

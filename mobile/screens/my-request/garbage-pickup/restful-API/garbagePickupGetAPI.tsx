@@ -39,7 +39,8 @@ export const getGarbageRejectedResident = async (rp_id: string) => {
             dec_date: item.dec_date || null,
             dec_reason: item.dec_reason || '',
             file_url: item.file_url || '',
-            sitio_name: item.sitio_name || ''
+            sitio_name: item.sitio_name || '',
+            staff_name: item.staff_name || ''
         }));
     }catch(err){
         console.error('API Error:', err)
@@ -73,7 +74,7 @@ export const getGarbageAcceptedResident = async (rp_id: string) => {
                 conf_resident_conf_date: item.confirmation_info.conf_resident_conf_date || null,
             } : null,
             file_url: item.file_url || '',
-            sitio_name: item.sitio_name || ''
+            sitio_name: item.sitio_name || '',
         }));
     } catch(err) {
         console.error('API Error:', err);
@@ -163,7 +164,8 @@ export const getAcceptedDetailsResident = async (garb_id: string) => {
                 conf_staff_conf_date: data.confirmation_info.conf_staff_conf_date || null, // Added
             } : null,
             file_url: data.file_url || '',
-            sitio_name: data.sitio_name || ''
+            sitio_name: data.sitio_name || '',
+            staff_name: data.staff_name || ''
         };
     } catch (err) {
         console.error('Failed to fetch garbage request details:', err);
@@ -193,7 +195,8 @@ export const getCompletedDetailsResident = async (garb_id: string) => {
                 truck: data.assignment_info.truck || '',
             } : null,
             file_url: data.file_url || '',
-            sitio_name: data.sitio_name || ''
+            sitio_name: data.sitio_name || '',
+            staff_name: data.staff_name || ''
         }
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);

@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
+import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/serviceChargeFetchQueries";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
+import { ArrowUpDown } from "lucide-react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useAuth } from "@/context/AuthContext";
 import React from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -17,6 +21,8 @@ import { Combobox } from "@/components/ui/combobox";
 import TemplateMainPage from "../council/templates/template-main";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { calculateAge } from "@/helpers/ageCalculator";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
 
 interface ExtendedIssuedCertificate extends IssuedCertificate {
   AsignatoryStaff?: string;
@@ -24,25 +30,28 @@ interface ExtendedIssuedCertificate extends IssuedCertificate {
 }
 
 function IssuedCertificates() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValue, setFilterValue] = useState("All");
-  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
+  const [filterValue, setFilterValue] = useState("");
+  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
   
-  // Business permit states
+  
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
-  const [businessFilterValue, setBusinessFilterValue] = useState("All");
+  const [businessFilterValue, setBusinessFilterValue] = useState("");
+  
+  const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Template/dialog states for issued certificates (match Certification UX)
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
+  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
-  // Fetch staff for signatory selection
+  
   const { data: staffList = [] } = useGetStaffList();
   const staffOptions = useMemo(() => {
     return staffList.map((staff: any) => ({
@@ -55,12 +64,24 @@ function IssuedCertificates() {
     console.log("IssuedCertificates: resolved staffId from useAuth:", staffId);
   }, [staffId]);
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleViewFile = (certificate: IssuedCertificate) => {
     setSelectedCertificate(null);
     setViewingCertificate(certificate);
     setSelectedStaffId("");
     setPurposeInput("");
     setIsDialogOpen(true);
+  };
+
+  const handleViewServiceChargeFile = (serviceCharge: ServiceCharge) => {
+    
+    const extended: ExtendedIssuedCertificate = {
+      ...serviceCharge as any,
+      AsignatoryStaff: "Default Signatory", 
+      SpecificPurpose: "File Action", 
+    };
+    setSelectedCertificate(extended);
   };
 
   const handleProceedToTemplate = () => {
@@ -77,23 +98,29 @@ function IssuedCertificates() {
   };
 
   const handleViewBusinessFile = (permit: IssuedBusinessPermit) => {
-    // Navigate to ViewDocument with the business permit data
-    navigate(`/record/clearances/ViewDocument/${permit.ibp_id}`, {
-      state: {
-        name: permit.business_name,
-        purpose: permit.purpose,
-        date: permit.dateIssued,
-        requestId: permit.original_permit?.bpr_id || permit.ibp_id,
-        requestDate: permit.original_permit?.req_request_date || permit.dateIssued,
-        paymentMethod: permit.original_permit?.req_pay_method || "Walk-in",
-        isIssued: true, 
-        originalPermit: permit.original_permit,
-        isBusinessPermit: true, 
-      },
-    });
+    setSelectedBusinessPermit(permit);
   };
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
+    {
+      accessorKey: "cr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
+        </div>
+      ),
+    },
     {
       accessorKey: "requester",
       header: "Requester",
@@ -166,6 +193,25 @@ function IssuedCertificates() {
 
   const businessPermitColumns: ColumnDef<IssuedBusinessPermit>[] = [
     {
+      accessorKey: "bpr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#fffbe6] text-[#b59f00] border border-[#f7e7b6]">
+            {row.getValue("bpr_id")}
+          </span>
+        </div>
+      ),
+    },
+    {
       accessorKey: "business_name",
       header: "Business Name",
       cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
@@ -237,15 +283,104 @@ function IssuedCertificates() {
     },
   ];
 
-  const { data: certificates, isLoading, error } = useQuery<IssuedCertificate[]>({
-    queryKey: ["issuedCertificates"],
-    queryFn: getIssuedCertificates,
+  const serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
+    {
+      accessorKey: "sr_code",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#e6f7e6] text-[#16a34a] border border-[#d1f2d1]">
+            {row.getValue("sr_code")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "complainant_names",
+      header: "Complainant",
+      cell: ({ row }) => {
+        const names = row.original.complainant_names || (row.original.complainant_name ? [row.original.complainant_name] : []);
+        if (!names.length) return <div>—</div>;
+        return <div className="text-sm">{names.join(', ')}</div>;
+      },
+    },
+    {
+      id: "complainant_addresses",
+      header: "Complainant Address",
+      cell: ({ row }) => {
+        const addrs = row.original.complainant_addresses || [];
+        if (!addrs.length) return <div>—</div>;
+        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+      },
+    },
+    {
+      accessorKey: "accused_names",
+      header: "Respondent",
+      cell: ({ row }) => {
+        const names = row.original.accused_names || [];
+        if (!names.length) return <div>—</div>;
+        return <div className="text-sm">{names.join(', ')}</div>;
+      },
+    },
+    {
+      id: "accused_addresses",
+      header: "Respondent Address",
+      cell: ({ row }) => {
+        const addrs = row.original.accused_addresses || [];
+        if (!addrs.length) return <div>—</div>;
+        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+      },
+    },
+    {
+      accessorKey: "sr_req_date",
+      header: "Date Requested",
+      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+    },
+    {
+      id: "actions",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Actions
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => row.original && handleViewServiceChargeFile(row.original)}
+            className="text-darkBlue2 hover:text-white hover:bg-darkBlue2"
+          >
+            View File
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const { data: certificatesPage, isLoading, error } = useQuery({
+    queryKey: ["issuedCertificates", searchQuery, currentPage, pageSize, filterValue],
+    queryFn: () => getIssuedCertificates(searchQuery, currentPage, pageSize, filterValue),
   });
 
-  const { data: businessPermits, isLoading: businessPermitsLoading, error: businessPermitsError } = useQuery<IssuedBusinessPermit[]>({
-    queryKey: ["issuedBusinessPermits"],
-    queryFn: getIssuedBusinessPermits,
+  const { data: businessPermitsPage, isLoading: businessPermitsLoading, error: businessPermitsError } = useQuery({
+    queryKey: ["issuedBusinessPermits", businessSearchQuery, currentPage, pageSize, businessFilterValue],
+    queryFn: () => getIssuedBusinessPermits(businessSearchQuery, currentPage, pageSize, businessFilterValue),
   });
+
+  const { data: serviceChargesData, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery({
+    queryKey: ["issuedServiceCharges", serviceChargeSearchQuery, currentPage, pageSize],
+    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize, 'completed'),
+  });
+
+  const serviceCharges = serviceChargesData?.results || [];
 
   const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
@@ -262,18 +397,60 @@ function IssuedCertificates() {
     purpose.pr_category === "Permit Clearance" && !purpose.pr_is_archive
   ) || [];
 
+  const certificates = certificatesPage?.results || [];
+  const certCount = certificatesPage?.count || 0;
+  const totalPagesCert = Math.ceil(certCount / pageSize) || 1;
+
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = filterValue === "All" || cert.purpose === filterValue;
+    const matchesFilter = !filterValue || filterValue === "All" || cert.purpose === filterValue;
     return matchesSearch && matchesFilter;
   });
 
+  const sortedCertificates = (filteredCertificates || []).slice().sort((a, b) => {
+    const aT = a?.dateIssued ? Date.parse(a.dateIssued as any) : 0;
+    const bT = b?.dateIssued ? Date.parse(b.dateIssued as any) : 0;
+    return bT - aT;
+  });
+
+  const businessPermits = businessPermitsPage?.results || [];
+  const bpCount = businessPermitsPage?.count || 0;
+  const totalPagesBP = Math.ceil(bpCount / pageSize) || 1;
+
+  useEffect(() => {
+    if (isLoading || businessPermitsLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, businessPermitsLoading, showLoading, hideLoading]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    // Clear selected certificate/permit when switching tabs
+    setSelectedCertificate(null);
+    setSelectedBusinessPermit(null);
+  }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
+
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
     const matchesSearch = permit.business_name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
-                         (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
-    const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
+      (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
+    const matchesFilter = !businessFilterValue || businessFilterValue === "All" || permit.purpose === businessFilterValue;
     return matchesSearch && matchesFilter;
+  });
+
+  const sortedBusinessPermits = (filteredBusinessPermits || []).slice().sort((a, b) => {
+    const aT = a?.dateIssued ? Date.parse(a.dateIssued as any) : 0;
+    const bT = b?.dateIssued ? Date.parse(b.dateIssued as any) : 0;
+    return bT - aT;
+  });
+
+  const filteredServiceCharges = serviceCharges?.filter((sc: ServiceCharge) => {
+    const matchesSearch = sc.sr_id?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
+                         sc.sr_code?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
+                         sc.complainant_name?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   return (
@@ -300,15 +477,12 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
-          </div>
         </div>
+      </div>
       )}
 
       {activeTab === "businessPermits" && (
@@ -327,13 +501,26 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={businessFilterValue}
               onChange={(value) => setBusinessFilterValue(value)}
             />
+          </div>
+        </div>
+      )}
+
+      {activeTab === "serviceCharges" && (
+        <div className="relative w-full flex justify-between items-center mb-4">
+          <div className="flex gap-x-2">
+            <div className="relative flex-1 bg-white">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input 
+                placeholder="Search..." 
+                className="pl-10 w-72" 
+                value={serviceChargeSearchQuery}
+                onChange={(e) => setServiceChargeSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -343,7 +530,7 @@ function IssuedCertificates() {
           <div className="flex gap-x-4 items-center">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => setPageSize(parseInt(e.target.value) || 10)} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             
@@ -369,6 +556,16 @@ function IssuedCertificates() {
               >
                 Business Permits
               </button>
+              <button
+                onClick={() => setActiveTab("serviceCharges")}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors border ${
+                  activeTab === "serviceCharges"
+                    ? "bg-[#eaf4ff] text-[#2563eb] border-[#b6d6f7] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                }`}
+              >
+                Service Charges
+              </button>
             </div>
           </div>
         </div>
@@ -377,14 +574,14 @@ function IssuedCertificates() {
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                <Spinner size="lg" />
               </div>
             ) : error ? (
               <div className="text-center py-5 text-red-500">Error loading data</div>
             ) : (
               <DataTable 
                 columns={certificateColumns} 
-                data={filteredCertificates || []} 
+                data={sortedCertificates} 
                 header={true} 
               />
             )}
@@ -395,14 +592,32 @@ function IssuedCertificates() {
           <div className="bg-white w-full overflow-x-auto">
             {businessPermitsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                <Spinner size="lg" />
               </div>
             ) : businessPermitsError ? (
               <div className="text-center py-5 text-red-500">Error loading data</div>
             ) : (
               <DataTable 
                 columns={businessPermitColumns} 
-                data={filteredBusinessPermits || []} 
+                data={sortedBusinessPermits} 
+                header={true} 
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === "serviceCharges" && (
+          <div className="bg-white w-full overflow-x-auto">
+            {serviceChargesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Spinner size="lg" />
+              </div>
+            ) : serviceChargesError ? (
+              <div className="text-center py-5 text-red-500">Error loading data</div>
+            ) : (
+              <DataTable 
+                columns={serviceChargeColumns} 
+                data={filteredServiceCharges || []} 
                 header={true} 
               />
             )}
@@ -410,9 +625,25 @@ function IssuedCertificates() {
         )}
       </div>
 
+      <div className="w-full sm:w-auto flex justify-end">
+        <PaginationLayout 
+          totalPages={activeTab === 'certificates' ? totalPagesCert : activeTab === 'businessPermits' ? totalPagesBP : 1}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {activeTab === "certificates" ? (filteredCertificates?.length || 0) : (filteredBusinessPermits?.length || 0)} rows
+          {activeTab === "certificates" && (
+            <>Showing {(certCount === 0 ? 0 : (currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, certCount)} of {certCount} rows</>
+          )}
+          {activeTab === "businessPermits" && (
+            <>Showing {(bpCount === 0 ? 0 : (currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, bpCount)} of {bpCount} rows</>
+          )}
+          {activeTab === "serviceCharges" && (
+            <>Showing 1-{filteredServiceCharges?.length || 0} of {filteredServiceCharges?.length || 0} rows</>
+          )}
         </p>
       </div>
 
@@ -434,10 +665,25 @@ function IssuedCertificates() {
         />
       )}
 
+      {selectedBusinessPermit && (
+        <TemplateMainPage
+          key={selectedBusinessPermit.ibp_id + Date.now()}
+          businessName={selectedBusinessPermit.business_name || ""}
+          address={(selectedBusinessPermit as any)?.original_permit?.business_address || ""}
+          purpose={selectedBusinessPermit.purpose as any}
+          issuedDate={selectedBusinessPermit.dateIssued || new Date().toISOString()}
+          showAddDetails={false}
+        />
+      )}
+
       <DialogLayout
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          // Clear viewing certificate when dialog is closed
+          if (!open) {
+            setViewingCertificate(null);
+          }
         }}
         className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"

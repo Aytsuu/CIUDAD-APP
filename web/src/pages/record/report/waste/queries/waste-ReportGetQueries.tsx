@@ -5,7 +5,6 @@ import { getWasteReport } from "../request/waste-ReportGetRequest";
 
 export type WasteReport = {
     rep_id: number;
-    // rep_image: string;
     rep_matter: string;
     rep_location: string;
     rep_add_details: string;
@@ -32,10 +31,16 @@ export type WasteReport = {
 };
   
 // Retrieving income/expense data
-export const useWasteReport = () => {
-    return useQuery<WasteReport[]>({
-        queryKey: ["wastereport"],
-        queryFn: getWasteReport,
-        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+export const useWasteReport = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string,
+    reportMatter?: string,
+    status?: string
+) => {
+    return useQuery<{ results: WasteReport[]; count: number }>({
+        queryKey: ["wastereport", page, pageSize, searchQuery, reportMatter, status],
+        queryFn: () => getWasteReport(page, pageSize, searchQuery, reportMatter, status),
+        staleTime: 1000 * 60 * 30,
     });
 };

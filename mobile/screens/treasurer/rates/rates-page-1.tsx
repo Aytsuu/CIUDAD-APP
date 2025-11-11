@@ -1,40 +1,69 @@
 import React from 'react';
-import { View, Text, TouchableOpacity ,ActivityIndicator, FlatList, ScrollView,} from 'react-native';
-import { Plus, Edit3, Trash2, History, CheckCircle, XCircle} from 'lucide-react-native';
-import { useGetAnnualGrossSales, type AnnualGrossSales } from './queries/ratesFetchQueries';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
+import { Plus, Edit3, Trash2, History, CheckCircle, XCircle, Search } from 'lucide-react-native';
+import { useGetAnnualGrossSalesActive, useGetAllAnnualGrossSales, type AnnualGrossSales } from './queries/ratesFetchQueries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeleteAnnualGrossSales } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LoadingState } from '@/components/ui/loading-state';
+import { LoadingModal } from '@/components/ui/loading-modal';
+import { Input } from '@/components/ui/input';
+import EmptyState from '@/components/ui/emptyState';
 
 export default function RatesPage1() {
   const router = useRouter();
+  
+  // State management
   const [activeTab, setActiveTab] = React.useState<'active' | 'archive'>('active');
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const { data: fetchedData = [], isLoading } = useGetAnnualGrossSales();
-  const { mutate: deleteGrossSales, isPending} = useDeleteAnnualGrossSales();
+  const [searchInputVal, setSearchInputVal] = React.useState<string>('');
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [pageSize, _setPageSize] = React.useState<number>(10);
+  const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
 
-  const filteredData = fetchedData.filter(item => {
-    const query = searchQuery.trim().toLowerCase();
+  // Query hooks with pagination and search
+  const { 
+    data: activeData, 
+    isLoading: isActiveLoading, 
+    refetch: refetchActive 
+  } = useGetAnnualGrossSalesActive(currentPage, pageSize, searchQuery);
+  
+  const { 
+    data: allData, 
+    isLoading: isAllLoading, 
+    refetch: refetchAll 
+  } = useGetAllAnnualGrossSales(currentPage, pageSize, searchQuery);
 
-    const matchesSearch =
-      item.ags_minimum.toString().includes(query) ||
-      item.ags_maximum.toString().includes(query) ||
-      item.ags_rate.toString().includes(query);
+  const { mutate: deleteGrossSales, isPending: isDeletePending } = useDeleteAnnualGrossSales();
 
+  // Data based on active tab
+  const currentData = activeTab === 'active' ? activeData : allData;
+  const rates = currentData?.results || [];
+  const totalCount = currentData?.count || 0;
+  const isLoading = activeTab === 'active' ? isActiveLoading : isAllLoading;
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     if (activeTab === 'active') {
-      return item.ags_is_archive !== true && matchesSearch;
+      await refetchActive();
+    } else {
+      await refetchAll();
     }
+    setIsRefreshing(false);
+  };
 
-    return item && matchesSearch;
-  });
+  const handleSearch = React.useCallback(() => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  }, [searchInputVal]);
 
   const handleCreate = () => {
-    const sortedData = [...fetchedData]
-      .filter(item => !item.ags_is_archive) // Only active records
+    const sortedData = [...rates]
+      .filter(item => !item.ags_is_archive)
       .sort((a, b) => new Date(b.ags_date).getTime() - new Date(a.ags_date).getTime());
 
     const lastMaxRange = sortedData.length > 0 ? sortedData[0].ags_maximum : 0;
@@ -48,32 +77,42 @@ export default function RatesPage1() {
   };
 
   const handleDelete = (agsId: string) => {
-    deleteGrossSales(Number(agsId))
-  }
+    deleteGrossSales(Number(agsId), {
+      onSuccess: () => {
+        refetchActive();
+        refetchAll();
+      }
+    });
+  };
 
-   const handleEdit = (item: AnnualGrossSales) => {
-      router.push({
-        pathname: '/(treasurer)/rates/annual-gross-sales-edit',
-        params: {
-          ags_id: item.ags_id.toString(),
-          ags_minimum: item.ags_minimum,
-          ags_maximum: item.ags_maximum.toString(),
-          ags_rate: item.ags_rate
-        },
-      });
-    };
+  const handleEdit = (item: AnnualGrossSales) => {
+    router.push({
+      pathname: '/(treasurer)/rates/annual-gross-sales-edit',
+      params: {
+        ags_id: item.ags_id.toString(),
+        ags_minimum: item.ags_minimum.toString(),
+        ags_maximum: item.ags_maximum.toString(),
+        ags_rate: item.ags_rate.toString()
+      },
+    });
+  };
 
-  const renderRateCard = (
-    item: AnnualGrossSales,
-    showStatus: boolean = false,
-    showActions: boolean = false
-  ) => (
+  // Rate Card Component
+  const RenderRateCard = React.memo(({ 
+    item, 
+    showStatus = false, 
+    showActions = false 
+  }: { 
+    item: AnnualGrossSales; 
+    showStatus?: boolean; 
+    showActions?: boolean; 
+  }) => (
     <Card key={item.ags_id} className="mb-3 border-2 border-gray-200 shadow-sm bg-white">
       <CardHeader className="pb-3">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
             <Text className="font-semibold text-lg text-[#1a2332] mb-1">
-              ₱{item.ags_minimum} - ₱{item.ags_maximum}
+              ₱{item.ags_minimum.toLocaleString()} - ₱{item.ags_maximum.toLocaleString()}
             </Text>
 
             {showStatus && (
@@ -94,8 +133,8 @@ export default function RatesPage1() {
           </View>
 
           {showActions && (
-            <View className="flex-row space-x-4 gap-2">
-              <TouchableOpacity  className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(item)}>
+            <View className="flex-row space-x-2">
+              <TouchableOpacity className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(item)}>
                 <Edit3 size={16} color="#3b82f6" />
               </TouchableOpacity>
 
@@ -108,7 +147,7 @@ export default function RatesPage1() {
                 title="Confirm Delete"
                 description="Are you sure you want to delete this record? This action will set the record to inactive state and cannot be undone."
                 actionLabel='Confirm'
-                onPress={() => handleDelete(item.ags_id)}
+                onPress={() => handleDelete(item.ags_id.toString())}
               />
             </View>
           )}
@@ -118,86 +157,143 @@ export default function RatesPage1() {
       <CardContent className="pt-3 border-t border-gray-200">
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-bold text-[#2a3a61]">₱{item.ags_rate}</Text>
+            <Text className="text-2xl font-bold text-[#2a3a61]">₱{item.ags_rate.toLocaleString()}</Text>
             <Text className="text-xs text-gray-500 mt-1">
-              Date Added/ Updated: {new Date(item.ags_date).toLocaleString()}
+              Date Added/Updated: {new Date(item.ags_date).toLocaleDateString()}
             </Text>
           </View>
         </View>
       </CardContent>
     </Card>
+  ));
+
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery
+    ? 'No records found. Try adjusting your search terms.'
+    : 'No records available yet.';
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50 py-10">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
+    );
+  };
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
   );
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#2a3a61" />
-      </SafeAreaView>
-    );
-  }
+  // Handle tab change
+  const handleTabChange = (tab: 'active' | 'archive') => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setSearchQuery('');
+    setSearchInputVal('');
+  };
 
   return (
-    <View className="flex-1 bg-white p-4">
-      {/* Search and Add */}
-      <View className="mb-4">
-        {/* <View className="relative mb-3">
-          <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10"/>
-        </View> */}
-        
-        <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
+    <>
+      <View className="flex-1 p-6">
+        <View className="mb-4">
+          {/* Search Input */}
+           <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
+            <Search size={18} color="#6b7280" />
+            <Input
+              className="flex-1 ml-2 bg-white text-black"
+              placeholder="Search..."
+              value={searchInputVal}
+              onChangeText={setSearchInputVal}
+              onSubmitEditing={handleSearch}
+              style={{ borderWidth: 0, shadowOpacity: 0 }}
+            />
+          </View>
+
+          {/* Add Button — added top margin */}
+          <Button 
+            onPress={handleCreate} 
+            className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md mt-3"
+          >
             <Plus size={20} color="white" />
             <Text className="text-white ml-2 font-semibold">Add</Text>
-        </Button>
+          </Button>
+        </View>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')} className="flex-1">
+          <TabsList className="bg-blue-50 flex-row justify-between mb-4">
+            <TabsTrigger value="active" className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
+              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
+              <View className="flex-row items-center justify-center">
+                <History size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
+                <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
+                  History
+                </Text>
+              </View>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Active Tab Content */}
+          <TabsContent value="active" className="flex-1">
+            {isLoading && !isRefreshing ? (
+              renderLoadingState()
+            ) : totalCount === 0 ? (
+              renderEmptyState()
+            ) : (
+              <View className="flex-1">
+                <FlatList
+                  data={rates}
+                  renderItem={({ item }) => <RenderRateCard item={item} showActions={true} />}
+                  keyExtractor={item => item.ags_id.toString()}
+                  showsVerticalScrollIndicator={false}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                    />
+                  }
+                  style={{ flex: 1 }}
+                />
+              </View>
+            )}
+          </TabsContent>
+
+          {/* History Tab Content */}
+          <TabsContent value="archive" className="flex-1">
+            {isLoading && !isRefreshing ? (
+              renderLoadingState()
+            ) : totalCount === 0 ? (
+              renderEmptyState()
+            ) : (
+              <View className="flex-1">
+                <FlatList
+                  data={rates}
+                  renderItem={({ item }) => <RenderRateCard item={item} showStatus={true} />}
+                  keyExtractor={item => item.ags_id.toString()}
+                  showsVerticalScrollIndicator={false}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                    />
+                  }
+                  style={{ flex: 1 }}
+                />
+              </View>
+            )}
+          </TabsContent>
+        </Tabs>
       </View>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'active' | 'archive')} className="flex-1">
-        <TabsList className="bg-blue-50 mb-5 flex-row justify-between">
-          <TabsTrigger value="active" className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
-            <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-              Active
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
-            <View className="flex-row items-center justify-center">
-              <History size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
-              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
-                History
-              </Text>
-            </View>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Active Tab */}
-        <TabsContent value="active" className="flex-1">
-          <ScrollView  className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}showsVerticalScrollIndicator={false} >
-            <FlatList
-              data={filteredData}
-              renderItem={({ item }) => renderRateCard(item, false, true)}
-              keyExtractor={item => item.ags_id.toString()}
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">No rates found</Text>
-              }
-            />
-          </ScrollView>
-        </TabsContent>
-
-        {/* History Tab */}
-        <TabsContent value="archive" className="flex-1">
-          <ScrollView  className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} >
-            <FlatList
-              data={filteredData}
-              renderItem={({ item }) => renderRateCard(item, true, false)}
-              keyExtractor={item => item.ags_id.toString()}
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">No rates found</Text>
-              }
-            />
-          </ScrollView>
-        </TabsContent>
-      </Tabs>
-    </View>
+      {/* Loading Modal for Delete Operation */}
+      <LoadingModal visible={isDeletePending} />
+    </>
   );
 }

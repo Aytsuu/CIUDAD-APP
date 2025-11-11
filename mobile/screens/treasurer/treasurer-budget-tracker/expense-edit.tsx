@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,18 +9,19 @@ import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
-import { ChevronLeft, Loader2  } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
 function ExpenseEdit() {
-
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   
@@ -28,6 +29,7 @@ function ExpenseEdit() {
   const {
     iet_num,
     iet_serial_num,
+    iet_check_num,
     iet_datetime,
     iet_entryType,
     iet_particular_id,
@@ -61,11 +63,11 @@ function ExpenseEdit() {
   console.log("PARTICULARRRR ID:", iet_particular_id)
   console.log("PARTICULARRRR NAME:", iet_particulars_name)   
 
-  const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
   const { data: budgetItems = [] } = useBudgetItems(years);
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+  const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
@@ -87,6 +89,7 @@ function ExpenseEdit() {
     resolver: zodResolver(IncomeExpenseFormSchema),
     defaultValues: {
       iet_serial_num: String(iet_serial_num),
+      iet_check_num: String(iet_check_num),
       iet_datetime: String(iet_datetime),
       iet_entryType: String(iet_entryType),
       iet_particulars: `${iet_particular_id} ${iet_particulars_name}`,
@@ -181,6 +184,49 @@ function ExpenseEdit() {
       return;
     }
 
+    const particularAccBudget = selectedParticular.proposedBudget;
+
+    //trap if the entered amount/actual expense is greater than the budget
+    if(Number(values.iet_actual_amount) > 0){
+
+      if(prevActualAmount == 0){ // if bag o pa mag add og actual expense
+          let budget = prevAmount + particularAccBudget;
+          let subtractedActualAMT = budget - Number(values.iet_actual_amount);
+
+          if (subtractedActualAMT < 0) {
+              form.setError("iet_actual_amount", {
+                  type: "manual",
+                  message: `Insufficient Balance`,
+              });
+              return
+          }  
+      }            
+      else{ // if mo update/edit ra sa actual expense
+          let budget = prevActualAmount + particularAccBudget;                
+          let subtractedActualAMT = budget - Number(values.iet_actual_amount);            
+          
+          if (subtractedActualAMT < 0) {
+              form.setError("iet_actual_amount", {
+                  type: "manual",
+                  message: `Insufficient Balance`,
+              });
+              return
+          }              
+      }
+    }
+    else{
+        let budget = prevAmount + particularAccBudget;
+        let subtractAMT = budget - parseFloat(values.iet_amount);
+
+        if (subtractAMT < 0) {
+            form.setError("iet_amount", {
+                type: "manual",
+                message: `Insufficient Balance`,
+            });
+            return
+        }
+    }
+
     // Calculate budget changes
     if (amount) {
       if (actualAmount) {
@@ -252,7 +298,8 @@ function ExpenseEdit() {
       totalExpense,
       proposedBud,
       returnAmount,
-      particularId
+      particularId,
+      staff_id: user?.staff?.staff_id    
     });
   };
 
@@ -260,26 +307,18 @@ function ExpenseEdit() {
 
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text>Edit Expense Entry</Text>}
-      headerAlign="left"
-      showBackButton={false}
-      showExitButton={false}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text>Edit Expense Entry</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Updating expense entry..."
       footer={
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -287,11 +326,12 @@ function ExpenseEdit() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-xl items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
                 }}
+                disabled={isPending}
               >
                 <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -299,13 +339,13 @@ function ExpenseEdit() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-xl items-center flex-row justify-center"
                     disabled={isPending}
                   >
                     {isPending ? (
                       <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                        <Text className="text-white text-base font-semibold">Saving...</Text>
+                        <ActivityIndicator size="small" color="white" className="mr-2" />
+                        <Text className="text-white text-base font-semibold ">Saving...</Text>
                       </>
                     ) : (
                       <Text className="text-white text-base font-semibold">Save</Text>
@@ -321,9 +361,8 @@ function ExpenseEdit() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
-      <View className="px-4">
+      <View className="px-6">
         {selectedParticular && (
             <View className="bg-primaryBlue p-3 rounded-md mb-6 mt-5 items-center">
                 <Text className="text-white text-base font-semibold">
@@ -348,6 +387,23 @@ function ExpenseEdit() {
                 />
             )}
         </View>
+
+        <View className="relative">
+            <FormInput
+                control={form.control}
+                name="iet_check_num"
+                label="Check No."
+                placeholder="Enter check number"
+            />
+            {!isEditing && (
+                <TouchableOpacity
+                    className="absolute top-0 left-0 right-0 bottom-0"
+                    activeOpacity={1}
+                    onPress={() => {}}
+                    style={{ backgroundColor: 'transparent', zIndex: 10 }}
+                />
+            )}
+        </View>        
 
         <View className="relative">
             <FormDateAndTimeInput
@@ -441,22 +497,14 @@ function ExpenseEdit() {
             <MediaPicker
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
-              multiple={true}
-              maxImages={5}
+              limit={5}
+              editable={isEditing}
             />    
-            {!isEditing && (
-                <TouchableOpacity
-                className="absolute top-[20px] left-0 right-0 bottom-0"
-                activeOpacity={1}
-                onPress={() => {}}
-                style={{ backgroundColor: 'transparent', zIndex: 10 }}
-                />
-            )}
         </View>        
 
       </View>
 
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 
