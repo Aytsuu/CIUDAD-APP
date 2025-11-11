@@ -5,6 +5,7 @@ import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { Bell } from "@/lib/icons/Bell";
 import { useRouter } from "expo-router";
 import GetNotification from "../notification/queries/getNotification";
+import PageLayout from "../_PageLayout";
 
 export default () => {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default () => {
           className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
           activeOpacity={0.7}
           onPress={() => router.push("/(notification)")}
-        >
+        > 
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
               <View className="w-10 h-10 bg-green-50 rounded-full items-center justify-center mr-3">

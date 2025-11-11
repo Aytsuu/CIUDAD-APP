@@ -17,6 +17,7 @@ import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 const DonationAdd = () => {
   const { user } = useAuth();
@@ -59,8 +60,14 @@ const DonationAdd = () => {
     setIsSubmitting(true);
     try {
       const payload = {
-        ...formData,
+        don_donor: formData.don_donor,
+        don_item_name: formData.don_item_name,
         don_qty: formData.don_qty.toString(),
+        don_description: formData.don_description,
+        don_category: formData.don_category,
+        don_date: formData.don_date,
+        don_status: formData.don_status,
+        staff: formData.staff,
       };
 
       await addDonationMutation.mutateAsync(payload);
@@ -94,6 +101,7 @@ const DonationAdd = () => {
               >
                 {isSubmitting ? (
                   <>
+                  <LoadingModal visible={isSubmitting} />
                     <Text className="text-white text-base font-semibold text-center">Saving...</Text>
                   </>
                 ) : (

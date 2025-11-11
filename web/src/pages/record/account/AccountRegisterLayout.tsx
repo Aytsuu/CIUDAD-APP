@@ -6,7 +6,7 @@ import type { z } from "zod";
 import { accountFormSchema } from "@/form-schema/account-schema";
 import AccountRegistrationForm from "./AccountRegistrationForm";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Mail, Lock, User, CircleUserRound } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import {
   useAddAccount,
   useVerifyAccountReg,
@@ -273,32 +273,6 @@ export default function AccountRegistrationLayout({
               actionLabel="Yes, Create Account"
               onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
             /> */}
-          </div>
-
-          {/* Help Section */}
-          <div className="text-center pt-4 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-2">
-              All account information is encrypted and stored securely. The
-              resident will receive their login credentials via secure channels.
-            </p>
-            <p className="text-xs text-gray-500 mb-2">
-              Need help with account creation? Contact your system administrator
-              for assistance.
-            </p>
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                Profile Setup
-              </span>
-              <span className="flex items-center gap-1">
-                <Mail className="w-3 h-3" />
-                Email Verification
-              </span>
-              <span className="flex items-center gap-1">
-                <Lock className="w-3 h-3" />
-                Secure Access
-              </span>
-            </div>
           </div>
         </CardContent>
       </Card>

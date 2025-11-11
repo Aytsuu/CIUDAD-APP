@@ -140,16 +140,15 @@ export type PaymentRequest = {
 }
 
 export type CaseTrackingType = {
-    payment_request: PaymentRequest | null;
+    payment_request_summon: PaymentRequest | null;
+    payment_request_file_action: PaymentRequest | null;
     summon_case: SummonCaseDetails | null;
-    hearing_schedules: HearingSchedule[] | null;
 }
 
 export type ScheduleList = {
-    ss_id: string;
-    ss_mediation_level: string;
-    ss_is_rescheduled: boolean;
-    ss_reason: string;
+    hs_id: string;
+    hs_level: string;
+    hs_is_closed: boolean;
     hearing_date: string;
     hearing_time: string;
 }

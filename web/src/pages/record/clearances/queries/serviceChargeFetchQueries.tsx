@@ -23,7 +23,8 @@ export type ServiceCharge = {
 export const getPaidServiceCharges = async (
   searchTerm: string = "",
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  reqStatus: 'pending' | 'completed' | 'declined' = 'pending'
 ): Promise<{ results: ServiceCharge[]; count: number }> => {
   try {
     // Build query parameters
@@ -36,8 +37,8 @@ export const getPaidServiceCharges = async (
       params.append('search', searchTerm);
     }
 
-    //fetch only pending and paid 
-    params.append('status', 'pending');
+    //fetch service charges with specified request status and paid
+    params.append('status', reqStatus);
     params.append('payment_status', 'Paid');
     params.append('sr_type', 'File Action');
 

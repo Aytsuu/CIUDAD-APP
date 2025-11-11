@@ -7,7 +7,18 @@ export const GADAnnualDevPlanBudgetItemSchema = z.object({
 });
 
 export const GADAnnualDevPlanCreateSchema = z.object({
-    dev_date: z.string().min(1, "Date is required"),
+    dev_date: z.string()
+        .min(1, "Date is required")
+        .refine((date) => {
+            if (!date) return false;
+            const selectedDate = new Date(date);
+            const currentYear = new Date().getFullYear();
+            const selectedYear = selectedDate.getFullYear();
+            return selectedYear >= currentYear;
+        }, {
+            message: "Cannot create development plan for past years. Please select current year or future year.",
+            path: ["dev_date"]
+        }),
     dev_client: z.string().min(1, "Client is required"),
     dev_issue: z.string().min(1, "Gender issue or GAD mandate is required"),
     dev_mandated: z.boolean().default(false),
@@ -18,6 +29,8 @@ export const GADAnnualDevPlanCreateSchema = z.object({
     dev_budget_items: z.string().default("0"),
     dev_gad_budget: z.string().optional(),
     staff: z.string().optional().nullable(),
+    selectedAnnouncements: z.array(z.string()).optional(),
+    eventSubject: z.string().optional(),
 });
 
 export type GADAnnualDevPlanCreateInput = z.infer<typeof GADAnnualDevPlanCreateSchema>;

@@ -1,18 +1,21 @@
 import {
-  Facebook,
-  Twitter,
-  Instagram,
   MapPin,
   Phone,
   Mail,
 } from "lucide-react";
+import { RefObject } from "react";
 
-export const Footer = ({data} : {
+export const Footer = ({data, homeRef, aboutRef, mobileAppRef, announcementRef, scrollTo} : {
   data: Record<string, any>
+  homeRef: RefObject<HTMLDivElement>
+  aboutRef: RefObject<HTMLDivElement>
+  mobileAppRef: RefObject<HTMLDivElement>
+  announcementRef: RefObject<HTMLDivElement>
+  scrollTo: (value: RefObject<HTMLDivElement>) => void
 }) => {
   return (
     <footer className="bg-[#0F1F3A] text-white py-16 px-4 sm:px-6 lg:px-8">
-      <div className="w-3/4 mx-auto flex justify-between gap-28">
+      <div className="w-3/4 mx-auto flex flex-col md:flex-row justify-between gap-28">
         {/* About Section */}
         <div className="w-full space-y-4">
           <h3 className="text-xl font-bold">Barangay San Roque (Ciudad)</h3>
@@ -20,17 +23,6 @@ export const Footer = ({data} : {
             Connecting communities through digital innovation and transparent
             governance
           </p>
-          <div className="flex space-x-4">
-            <a href="#" className="text-gray-300 hover:text-white">
-              <Facebook className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-gray-300 hover:text-white">
-              <Twitter className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-gray-300 hover:text-white">
-              <Instagram className="h-5 w-5" />
-            </a>
-          </div>
         </div>
 
         {/* Quick Links */}
@@ -38,24 +30,24 @@ export const Footer = ({data} : {
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <ul className="space-y-2">
             <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
+              <span onClick={() => scrollTo(homeRef)} className="text-gray-300 hover:text-white transition">
                 Home
-              </a>
+              </span>
             </li>
             <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
+              <span onClick={() => scrollTo(aboutRef)} className="text-gray-300 hover:text-white transition">
                 Our Barangay
-              </a>
+              </span>
             </li>
             <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
+              <span onClick={() => scrollTo(announcementRef)} className="text-gray-300 hover:text-white transition">
                 Announcement
-              </a>
+              </span>
             </li>
             <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
+              <span onClick={() => scrollTo(mobileAppRef)} className="text-gray-300 hover:text-white transition">
                 Mobile App
-              </a>
+              </span>
             </li>
           </ul>
         </div>

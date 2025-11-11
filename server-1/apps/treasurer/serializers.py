@@ -625,7 +625,8 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 # Update service charge payment request status
                 service_charge_payment = invoice.pay_id
                 service_charge_payment.pay_status = "Paid"
-                service_charge_payment.pay_req_status = "Completed"
+                # DO NOT set pay_req_status to "Completed" here
+                # pay_req_status should remain "Pending" until the service charge is issued/printed
                 service_charge_payment.pay_date_paid = invoice.inv_date
                 service_charge_payment.save()
                 

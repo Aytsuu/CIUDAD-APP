@@ -65,6 +65,7 @@ export const personalInfoSchema = z.object({
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
   per_disability: z.string(),
+  per_is_deceased: z.string(),
 });
 
 export const perAddDetails = z.object({

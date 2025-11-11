@@ -70,6 +70,7 @@ class BusinessSerializer(serializers.ModelSerializer):
 class IssuedCertificateSerializer(serializers.ModelSerializer):
     requester = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
+    cr_id = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ic_date_of_issuance', format="%Y-%m-%d")
 
     def get_requester(self, obj):
@@ -114,10 +115,22 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"Error getting purpose: {str(e)}")
             return "Not specified"
+    
+    def get_cr_id(self, obj):
+        try:
+            # Get cr_id from resident certificate or nrc_id from non-resident certificate
+            if obj.certificate:
+                return obj.certificate.cr_id
+            elif obj.nonresidentcert:
+                return obj.nonresidentcert.nrc_id
+            return ""
+        except Exception as e:
+            logger.error(f"Error getting cr_id: {str(e)}")
+            return ""
 
     class Meta:
         model = IssuedCertificate
-        fields = ['ic_id', 'dateIssued', 'requester', 'purpose']
+        fields = ['ic_id', 'cr_id', 'dateIssued', 'requester', 'purpose']
 
 
 class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
@@ -137,6 +150,7 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
     amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
     nrc_id = serializers.SerializerMethodField()  # Override nrc_id to return formatted version
     staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    nrc_mname = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = NonResidentCertificateRequest
@@ -210,6 +224,10 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
         """Create non-resident certificate request with formatted ID like NRC001-25"""
         from django.utils import timezone
         
+        # Set empty string or None for middle name if not provided
+        if 'nrc_mname' not in validated_data or not validated_data.get('nrc_mname'):
+            validated_data['nrc_mname'] = ''
+        
         if 'nrc_id' not in validated_data or not validated_data['nrc_id']:
             year_suffix = timezone.now().year % 100
             try:
@@ -274,6 +292,26 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     else:
                         dob_value = str(dob_value)
                 
+                # Calculate eligibility for free service
+                # Check voter status
+                is_voter = obj.rp_id.voter is not None
+                
+                # Check PWD status
+                pwd_value = getattr(obj.rp_id.per, 'per_disability', None)
+                is_pwd = pwd_value and str(pwd_value).strip() != ''
+                
+                # Check senior status (age 60+)
+                is_senior = False
+                if dob_value:
+                    try:
+                        from datetime import date
+                        dob = obj.rp_id.per.per_dob
+                        today = date.today()
+                        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                        is_senior = age >= 60
+                    except Exception:
+                        pass
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
                     'per_mname': getattr(obj.rp_id.per, 'per_mname', None),
@@ -281,7 +319,12 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     'per_dob': dob_value,
                     'per_address': address_str,
                     'per_is_deceased': getattr(obj.rp_id.per, 'per_is_deceased', False),
-                    'voter_id': getattr(obj.rp_id, 'voter_id', None)
+                    'voter_id': getattr(obj.rp_id, 'voter_id', None),
+                    # Eligibility fields for instant frontend rendering
+                    'is_voter': is_voter,
+                    'is_pwd': is_pwd,
+                    'is_senior': is_senior,
+                    'is_free_eligible': is_voter or is_pwd or is_senior
                 }
             return None
         except Exception as e:
@@ -454,6 +497,7 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'bpr_id',
             'req_request_date',
             'req_status',
+            'req_date_completed',
             'req_payment_status',
             'ags_id',
             'bus_id',
@@ -467,7 +511,8 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'requestor',
             'purpose',
             'amount_to_pay',
-            'req_amount',  
+            'req_amount',
+            'bus_reason',
         ]
 
     def get_business_name(self, obj):
@@ -587,6 +632,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
 
 class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
     business_name = serializers.SerializerMethodField()
+    bpr_id = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ibp_date_of_issuance', format="%Y-%m-%d")
     purpose = serializers.SerializerMethodField()
     original_permit = serializers.SerializerMethodField()
@@ -603,6 +649,15 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"Error getting business name: {str(e)}")
             return "Unknown"
+    
+    def get_bpr_id(self, obj):
+        try:
+            if obj.bpr_id:
+                return obj.bpr_id.bpr_id
+            return ""
+        except Exception as e:
+            logger.error(f"Error getting bpr_id: {str(e)}")
+            return ""
 
     def get_purpose(self, obj):
         try:
@@ -632,20 +687,21 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssuedBusinessPermit
-        fields = ['ibp_id', 'dateIssued', 'business_name', 'purpose', 'original_permit']
+        fields = ['ibp_id', 'bpr_id', 'dateIssued', 'business_name', 'purpose', 'original_permit']
 
 # ================== SERVICE CHARGE SERIALIZERS =========================
     
 class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
     # Make pay_id not required so it can be auto-generated
     pay_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    pay_reason = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = ServiceChargePaymentRequest
         fields = '__all__'
     
     def create(self, validated_data):
-        # Auto-generate pay_id as SR code if not provided
+        # Auto-generate pay_id without SR- prefix
         if 'pay_id' not in validated_data or not validated_data.get('pay_id'):
             from django.utils import timezone
             from .models import ServiceChargePaymentRequest
@@ -654,21 +710,23 @@ class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
             
             # Get the last ServiceChargePaymentRequest to determine next sequential number
             last_record = ServiceChargePaymentRequest.objects.filter(
-                pay_id__startswith='SR'
+                pay_id__endswith=f"-{year_suffix:02d}"
             ).order_by('-pay_id').first()
             
-            if last_record and last_record.pay_id.endswith(f"-{year_suffix:02d}"):
-                # Extract the number from the last pay_id (e.g., "SR051-25" -> 51)
+            if last_record:
+                # Extract the number from the last pay_id (e.g., "SP001-25" -> 1)
                 try:
-                    last_num = int(last_record.pay_id.split('-')[0].replace('SR', ''))
+                    # Handle both old format with SR- and new format
+                    pay_id_str = last_record.pay_id.replace('SR-', '')
+                    last_num = int(pay_id_str.split('-')[0].replace('SP', ''))
                     seq = last_num + 1
                 except (ValueError, IndexError):
                     seq = 1
             else:
                 seq = 1
             
-            # Generate the new pay_id
-            validated_data['pay_id'] = f"SR{seq:03d}-{year_suffix:02d}"
+            # Generate the new pay_id without SR- prefix (e.g., "SP001-25")
+            validated_data['pay_id'] = f"SP{seq:03d}-{year_suffix:02d}"
         
         return super().create(validated_data)
 
@@ -687,6 +745,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     sr_req_status = serializers.SerializerMethodField()
     sr_case_status = serializers.SerializerMethodField()
     staff_id = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()
     
     class Meta:
         from .models import ServiceChargePaymentRequest
@@ -698,8 +757,10 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             'pay_date_req',
             'pay_due_date',
             'pay_date_paid',
+            'pay_reason',
             'comp_id',
             'pr_id',
+            'purpose',
             'sr_id',
             'sr_code',  # This will now read from database
             'sr_type',
@@ -802,6 +863,15 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         # Return None for now
         return None
 
+    def get_purpose(self, obj):
+        # Get purpose from pr_id relationship
+        try:
+            if obj.pr_id:
+                return obj.pr_id.pr_purpose
+            return None
+        except Exception:
+            return None
+
     def get_payment_request(self, obj):
         try:
             # Calculate due date (7 days from request date)
@@ -820,7 +890,6 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
                 'spay_status': obj.pay_status,
                 'spay_due_date': obj.pay_due_date,
                 'spay_date_paid': obj.pay_date_paid,
-                'pr_id': obj.pr_id.pr_id if obj.pr_id else None,
                 'calculated_due_date': due_date,
                 'is_overdue': is_overdue
             }

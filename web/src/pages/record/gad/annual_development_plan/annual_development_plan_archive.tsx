@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Archive, Search, RotateCcw, Trash } from "lucide-react";
+import { Archive, Search, RotateCcw, Trash, ChevronLeft } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans, useDeleteAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +28,7 @@ interface AnnualDevelopmentPlanArchiveProps {
 
 export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopmentPlanArchiveProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlans, setSelectedPlans] = useState<number[]>([]);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -32,11 +37,13 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
   const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedPageSize = useDebounce(pageSize, 100);
 
   const { data: archivedPlansData, isLoading } = useGetArchivedAnnualDevPlans(
     currentPage,
-    pageSize,
-    debouncedSearchQuery
+    debouncedPageSize,
+    debouncedSearchQuery,
+    '-dev_id' // Order by latest archived (descending ID)
   );
 
   const restorePlansMutation = useRestoreAnnualDevPlans();
@@ -48,7 +55,7 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchQuery, pageSize]);
+  }, [debouncedSearchQuery]);
 
   const handleSelectPlan = (devId: number) => {
     setSelectedPlans(prev => 
@@ -108,204 +115,259 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
     }
   };
 
-  const clearSearch = () => setSearchQuery("");
+  const handleRestore = (devId: number) => {
+    setSelectedPlans([devId]);
+    setShowRestoreDialog(true);
+  };
+
+  const handleDelete = (devId: number) => {
+    setSelectedPlans([devId]);
+    setShowDeleteDialog(true);
+  };
 
   return (
-    <div className="bg-snow w-full h-full">
-      <div className="flex flex-col gap-2 mb-4">
-        <div className="flex flex-row items-center gap-2">
+    <div className="w-full h-full">
+      {/* Header */}
+      <div className="flex gap-2 justify-between pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <Button variant="ghost" size="icon" className="rounded-full" onClick={onBack}>
             <ChevronLeft />
           </Button>
-          <h1 className="font-semibold text-2xl text-darkBlue2">Archived Annual Development Plans</h1>
-        </div>
-        <p className="text-xs sm:text-sm text-darkGray ml-12">
-          Manage and restore archived development plans ({totalCount} archived)
-        </p>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-4" />
-
-      {/* Search and Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-        <div className="relative flex-1 max-w-[20rem]">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-            size={17}
-          />
-          <Input 
-            placeholder="Search archived plans..." 
-            className="pl-10 w-full bg-white text-sm" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          {selectedPlans.length > 0 && (
-            <>
-              <Button
-                variant="outline"
-                className="border-2 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
-                onClick={handleRestoreClick}
-                disabled={isRestoring}
-              >
-                <RotateCcw size={16} />
-                {isRestoring 
-                  ? "Restoring..." 
-                  : selectedPlans.length === 1
-                  ? `Restore ${selectedPlans.length} plan`
-                  : `Restore ${selectedPlans.length} plans`
-                }
-              </Button>
-              <Button
-                variant="outline"
-                className="border-2 border-red-200 text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-800"
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-              >
-                <Trash size={16} />
-                {isDeleting 
-                  ? "Deleting..." 
-                  : selectedPlans.length === 1
-                  ? `Delete ${selectedPlans.length} plan`
-                  : `Delete ${selectedPlans.length} plans`
-                }
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="bg-white border border-gray-300 rounded-[5px] p-5 min-h-[20rem]">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Spinner size="lg" />
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Archive Annual Development Plans
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              View and manage all archived annual development plans
+            </p>
           </div>
-        ) : archivedPlans.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-6">
-            <div className="mb-10 mt-10">
-              <div className="relative">
-                <div className="w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <Archive className="w-12 h-12 text-gray-400" />
+        </div>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      <div className="flex w-full gap-4 flex-col">
+        <Card className="w-full shadow-lg border border-gray-200">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search archived plans..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="text-sm font-medium text-gray-700">Show</span>
+                  <Select value={pageSize.toString()} onValueChange={(value) => {
+                    setPageSize(Number.parseInt(value));
+                    setCurrentPage(1);
+                  }}>
+                    <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-gray-600">entries</span>
                 </div>
               </div>
+              {selectedPlans.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-2 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                    onClick={handleRestoreClick}
+                    disabled={isRestoring}
+                  >
+                    <RotateCcw size={16} />
+                    {isRestoring 
+                      ? "Restoring..." 
+                      : `Restore ${selectedPlans.length}`
+                    }
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-2 border-red-200 text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-800"
+                    onClick={handleDeleteClick}
+                    disabled={isDeleting}
+                  >
+                    <Trash size={16} />
+                    {isDeleting 
+                      ? "Deleting..." 
+                      : `Delete ${selectedPlans.length}`
+                    }
+                  </Button>
+                </div>
+              )}
             </div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              {searchQuery ? "No Archived Plans Found" : "No Archived Plans Yet"}
-            </h3>
-            <p className="text-gray-600 mt-2">
-              {searchQuery
-                ? `No archived plans match "${searchQuery}". Try adjusting your search.`
-                : "Archived development plans will appear here once you archive them."}
-            </p>
-            {searchQuery && (
-              <Button onClick={clearSearch} className="mt-4">
-                Clear Search
-              </Button>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {/* Content starts directly */}
+
+            {/* Empty State */}
+            {!isLoading && archivedPlans.length === 0 && (
+              <div className="text-center py-12">
+                <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchQuery ? "No archived plans found" : "No archived plans yet"}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {searchQuery
+                    ? `No archived plans match "${searchQuery}". Try adjusting your search.`
+                    : "Archived development plans will appear here once you archive them."}
+                </p>
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="w-full">
-            {/* Table Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedPlans.length === archivedPlans.length && archivedPlans.length > 0}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Select All ({selectedPlans.length} selected)
-                </span>
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Spinner size="lg" />
+                <span className="ml-2 text-gray-600">Loading archived plans...</span>
               </div>
-              <div className="text-sm text-gray-600">
-                Showing {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, totalCount)} of {totalCount} archived plans
-              </div>
-            </div>
+            )}
 
             {/* Plans List */}
-            <div className="space-y-3">
-              {archivedPlans.map((plan: any) => (
-                <div 
-                  key={plan.dev_id} 
-                  className={`border border-gray-200 rounded-lg p-4 transition-colors cursor-pointer ${
-                    selectedPlans.includes(plan.dev_id) 
-                      ? 'bg-blue-50 border-blue-300' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => handleSelectPlan(plan.dev_id)}
-                >
-                  <div className="flex items-start gap-3">
+            {!isLoading && archivedPlans.length > 0 && (
+              <div className="px-4 py-4">
+                <div className="flex items-center justify-between mb-4 py-2 pb-4 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={selectedPlans.includes(plan.dev_id)}
-                      onChange={() => handleSelectPlan(plan.dev_id)}
-                      className="mt-1 rounded border-gray-300"
-                      onClick={(e) => e.stopPropagation()}
+                      checked={selectedPlans.length === archivedPlans.length && archivedPlans.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300"
                     />
-                    <div className="flex-1">
-                      <div className="space-y-2">
-                        {/* Main Info */}
-                        <div>
-                          <h4 className="font-semibold text-blue-900">
-                            {plan.dev_client}
-                          </h4>
-                          {plan.dev_issue && (
-                            <p className="text-sm text-gray-700">
-                              {plan.dev_issue}
-                            </p>
-                          )}
-                          <p className="text-sm text-gray-700 font-medium">
-                            {(() => {
-                              try {
-                                if (typeof plan.dev_project === 'string' && plan.dev_project.startsWith('[')) {
-                                  const parsed = JSON.parse(plan.dev_project);
-                                  return Array.isArray(parsed) ? parsed[0] : plan.dev_project;
-                                }
-                                return plan.dev_project;
-                              } catch {
-                                return plan.dev_project;
-                              }
-                            })()}
-                          </p>
-                        </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Select All ({selectedPlans.length} selected)
+                    </span>
+                  </div>
+                </div>
 
-                        {/* Details */}
-                        <div className="space-y-0.5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {archivedPlans.map((plan: any) => (
+                    <Card 
+                      key={plan.dev_id}
+                      className={`transition-all duration-200 shadow-md hover:shadow-lg border ${
+                        selectedPlans.includes(plan.dev_id) 
+                          ? 'ring-2 ring-blue-400 border-blue-300 bg-blue-50/20' 
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <CardHeader className="pb-4 border-b border-gray-200">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-start gap-3 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedPlans.includes(plan.dev_id)}
+                              onChange={() => handleSelectPlan(plan.dev_id)}
+                              className="mt-1 rounded border-gray-300"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold text-gray-900 leading-tight mb-2">
+                                {plan.dev_client}
+                              </h4>
+                              {plan.dev_issue && (
+                                <p className="text-sm text-gray-600 mb-2">
+                                  {plan.dev_issue}
+                                </p>
+                              )}
+                              <p className="text-sm text-gray-700 font-medium">
+                                {(() => {
+                                  try {
+                                    if (typeof plan.dev_project === 'string' && plan.dev_project.startsWith('[')) {
+                                      const parsed = JSON.parse(plan.dev_project);
+                                      return Array.isArray(parsed) ? parsed[0] : plan.dev_project;
+                                    }
+                                    return plan.dev_project;
+                                  } catch {
+                                    return plan.dev_project;
+                                  }
+                                })()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <TooltipProvider>
+                              <TooltipLayout
+                                trigger={
+                                  <div 
+                                    className="bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 p-2.5 rounded-lg cursor-pointer transition-colors"
+                                    onClick={() => handleRestore(plan.dev_id)}
+                                  >
+                                    <RotateCcw size={18} />
+                                  </div>
+                                }
+                                content="Restore"
+                              />
+                              <TooltipLayout
+                                trigger={
+                                  <div 
+                                    className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 p-2.5 rounded-lg cursor-pointer transition-colors"
+                                    onClick={() => handleDelete(plan.dev_id)}
+                                  >
+                                    <Trash size={18} />
+                                  </div>
+                                }
+                                content="Delete Permanently"
+                              />
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-4">
+                        <div className="space-y-2">
                           {plan.dev_activity && (() => {
                             try {
                               const activities = typeof plan.dev_activity === 'string' ? JSON.parse(plan.dev_activity) : plan.dev_activity;
                               if (Array.isArray(activities) && activities.length > 0) {
                                 return (
-                                  <div className="text-xs text-gray-600">
-                                    <span className="font-medium text-gray-700">Activities:</span> {activities.map((a: any) => a.activity || a).join(', ')}
+                                  <div className="text-sm">
+                                    <span className="font-medium text-gray-700">Activities: </span>
+                                    <span className="text-gray-600">{activities.map((a: any) => a.activity || a).join(', ')}</span>
                                   </div>
                                 );
                               }
                             } catch {}
                             return null;
                           })()}
-                          {plan.dev_res_person && (
-                            <div className="text-xs text-gray-600">
-                              <span className="font-medium text-gray-700">Responsible Person:</span> {plan.dev_res_person}
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-500">
-                            <span className="font-medium text-gray-700">Date:</span> {new Date(plan.dev_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {plan.dev_res_person && (() => {
+                            try {
+                              const persons = typeof plan.dev_res_person === 'string' ? JSON.parse(plan.dev_res_person) : plan.dev_res_person;
+                              const personList = Array.isArray(persons) ? persons.join(', ') : persons;
+                              return (
+                                <div className="text-sm">
+                                  <span className="font-medium text-gray-700">Responsible: </span>
+                                  <span className="text-gray-600">{personList}</span>
+                                </div>
+                              );
+                            } catch {
+                              return (
+                                <div className="text-sm">
+                                  <span className="font-medium text-gray-700">Responsible: </span>
+                                  <span className="text-gray-600">{plan.dev_res_person}</span>
+                                </div>
+                              );
+                            }
+                          })()}
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-700">Date: </span>
+                            {new Date(plan.dev_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                           </div>
                         </div>
-                        
+
                         {/* Budget Items */}
                         {(() => {
                           try {
@@ -321,28 +383,33 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
                             }, 0);
                             
                             return (
-                              <div className="pt-2 border-t border-gray-200">
-                                <div className="text-xs font-semibold text-gray-700 mb-1.5">GAD BUDGET ITEMS</div>
-                                <div className="space-y-1.5">
+                              <div className="pt-4 border-t border-gray-200">
+                                <div className="text-sm font-semibold text-gray-700 mb-3">
+                                  GAD Budget Items
+                                </div>
+                                <div className="space-y-2">
                                   {budgetItems.map((item: any, idx: number) => {
                                     const quantity = Number(item.quantity || 0);
                                     const price = Number(item.price || 0);
                                     const itemTotal = quantity * price;
                                     return (
-                                      <div key={idx} className="flex flex-col text-xs bg-gray-50 p-2 rounded">
-                                        <span className="font-medium text-gray-900">{item.name}</span>
-                                        <div className="flex items-center gap-x-6 text-gray-600 mt-0.5">
-                                          <span>Quantity: {quantity}</span>
-                                          <span>Price: ₱{price.toFixed(2)}</span>
-                                          <span className="font-semibold text-blue-600">Total ₱{itemTotal.toFixed(2)}</span>
+                                      <div key={idx} className="flex flex-col text-xs bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                                        <span className="font-medium text-gray-900 mb-1">{item.name}</span>
+                                        <div className="flex items-center justify-between text-gray-600">
+                                          <div className="flex gap-4">
+                                            <span>Qty: {quantity}</span>
+                                            <span>₱{price.toFixed(2)}</span>
+                                          </div>
+                                          <span className="font-semibold text-blue-600">₱{itemTotal.toFixed(2)}</span>
                                         </div>
                                       </div>
                                     );
                                   })}
                                 </div>
-                                <div className="mt-1.5 pt-1.5 border-t border-gray-300">
-                                  <div className="flex justify-end text-sm font-bold text-blue-700">
-                                    Total: ₱{total.toFixed(2)}
+                                <div className="mt-3 pt-3 border-t border-gray-300">
+                                  <div className="flex justify-between items-center text-sm font-bold">
+                                    <span className="text-gray-700">Total Budget:</span>
+                                    <span className="text-blue-700">₱{total.toFixed(2)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -350,58 +417,35 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
                           } catch {
                             return null;
                           }
-                          })()}
-                      </div>
-                    </div>
-                  </div>
+                        })()}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex justify-center items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                
-                <div className="flex space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                    if (pageNum > totalPages) return null;
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
               </div>
             )}
-          </div>
-        )}
+          </CardContent>
+        </Card>
+
       </div>
+
+      {/* Pagination Controls */}
+      {!isLoading && archivedPlans.length > 0 && totalCount > 0 && (
+        <div className="mt-8 w-full">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Showing <span className="font-medium">{((currentPage - 1) * pageSize) + 1}</span>-<span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> rows
+            </div>
+            {totalPages > 1 && (
+              <PaginationLayout
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Restore Confirmation Dialog */}
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>

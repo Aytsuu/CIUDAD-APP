@@ -1,13 +1,11 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
 import React from "react";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { FileDown, Search, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { voterColumns } from "./VoterColumns";
 import { useVoterTable } from "../queries/profilingFetchQueries";
@@ -54,28 +52,12 @@ export default function VoterRecords() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search residents by name, ID, or sitio..."
+                    placeholder="Search by voter name..."
                     className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
               </div>
             </div>
           </CardHeader>

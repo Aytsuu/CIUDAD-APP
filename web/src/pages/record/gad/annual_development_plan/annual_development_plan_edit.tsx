@@ -117,7 +117,7 @@ export default function AnnualDevelopmentPlanEdit() {
   const fetchPlansForYear = async (year: string) => {
     try {
       setPlansLoading(true);
-      const list = await getAnnualDevPlansByYear(year);
+      const list = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
       const normalized = (Array.isArray(list) ? list : []).map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
       setPlansForYear(normalized);
     } catch (e) {

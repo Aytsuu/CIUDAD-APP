@@ -19,7 +19,7 @@ const CertChoices = () => {
       title: "Business Permit and Business Clearance",
       route: "/(request)/certification-request/cert-business-request",
       icon: "document-text-outline",
-      gradient: ['#2563eb', '#1e40af'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
   ];
 

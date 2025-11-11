@@ -66,7 +66,6 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Loading state
   const isDataLoading = isLoading || (!complaintData && shouldFetch);
 
-
   // Tab Button Component
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity

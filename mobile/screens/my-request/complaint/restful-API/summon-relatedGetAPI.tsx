@@ -38,3 +38,23 @@ export const getSummonScheduleList = async (sc_id: string) => {
         console.error(err)
     }
 }
+
+export const getSummonPaymentLogs = async (comp_id: string) => {
+    try{
+        const res = await api.get(`clerk/summon-payment-logs/${comp_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}
+
+export const getFileActionPaymentLogs = async (comp_id: string) => {
+    try{
+        const res = await api.get(`clerk/file-action-payment-logs/${comp_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}

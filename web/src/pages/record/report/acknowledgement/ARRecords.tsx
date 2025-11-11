@@ -33,7 +33,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function ARRecords() {
-  // ----------------- STATE INITIALIZATION --------------------
+  // =================== STATE INITIALIZATION ===================
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ export default function ARRecords() {
     [weeklyAR]
   );
 
-  // ----------------- SIDE EFFECTS --------------------
+  // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
     if (isLoadingArReports) showLoading();
     else hideLoading();
@@ -106,6 +106,7 @@ export default function ARRecords() {
     }
   }, [warThisMonth]);
 
+  // =================== HANDLERS ===================
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows);
   }, []);
@@ -151,6 +152,7 @@ export default function ARRecords() {
     }
   };
 
+  // =================== RENDER ===================
   return (
     <MainLayoutComponent
       title="Acknowledgement Report"

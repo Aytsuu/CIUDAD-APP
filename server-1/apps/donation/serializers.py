@@ -42,15 +42,15 @@ class DonationSerializer(serializers.ModelSerializer):
     def get_dist_staff_name(self, obj):
         return obj.don_dist_head
 
-    def create(self, validated_data):
-        if validated_data.get('don_donor') == "Anonymous":
-            validated_data['per_id'] = None
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     if validated_data.get('don_donor') == "Anonymous":
+    #         validated_data['per_id'] = None
+    #     return super().create(validated_data)
 
-    def update(self, instance, validated_data):
-        if validated_data.get('don_donor') == "Anonymous":
-            validated_data['per_id'] = None
-        return super().update(instance, validated_data)
+    # def update(self, instance, validated_data):
+    #     if validated_data.get('don_donor') == "Anonymous":
+    #         validated_data['per_id'] = None
+    #     return super().update(instance, validated_data)
     
 Staff = apps.get_model('administration', 'Staff')
 class StaffSerializer(serializers.ModelSerializer):

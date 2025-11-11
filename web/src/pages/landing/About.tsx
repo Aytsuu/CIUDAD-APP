@@ -67,7 +67,7 @@ export default function About({data} : {
   }, []);
 
   return (
-    <section className="relative w-full h-full bg-white py-16 overflow-hidden">
+    <div className="relative w-full h-full bg-white py-16 overflow-hidden">
       {/* Background Map */}
       <img
         src={BackgroundPHMap}
@@ -76,7 +76,7 @@ export default function About({data} : {
       />
 
       {/* Content Container */}
-      <div className="relative h-full container mx-auto px-8 py-16">
+      <div className="relative h-full container mx-auto px-8 lg:py-16">
         {/* Hero Section */}
         <div className="text-center flex flex-col items-center mb-16">
           <div
@@ -95,16 +95,26 @@ export default function About({data} : {
 
           <div
             ref={quoteRef}
-            className={`flex gap-16 transition-all duration-500 delay-200 ${
+            className={`flex flex-col gap-8 lg:flex-row lg:gap-16 transition-all duration-500 delay-200 ${
               isQuoteVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
             }`}
           >
-            <p className="text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-gray-700 mt-16">
+            <div className="mb-4 mt-8 lg:hidden">
+              <img
+                src={data?.cpt_photo}
+                alt="Barangay Captain"
+                className="w-[200px] h-[200px] bg-gray-200 rounded-lg mx-auto"
+              />
+              <p className="text-lg font-medium mt-4 underline">{data?.cpt_name || "SCHNEIDER MALAKIHIN"}</p>
+              <p className="text-lg text-gray-700">Barangay Captain</p>
+            </div>
+
+            <p className="text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-gray-700 mb-16 lg:mt-16">
               {data?.quote}
             </p>
-            <div className="mb-4">
+            <div className="mb-4 hidden lg:block">
               <img
                 src={data?.cpt_photo}
                 alt="Barangay Captain"
@@ -119,7 +129,7 @@ export default function About({data} : {
         <div className="w-full flex flex-col items-center mt-8 gap-16">
           <div
             ref={mapRef}
-            className={`w-4/5 transition-all duration-500 delay-300 ${
+            className={`w-full lg:w-4/5 transition-all duration-500 delay-300 ${
               isMapVisible
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-95"
@@ -130,7 +140,7 @@ export default function About({data} : {
 
           <div
             ref={cardsRef}
-            className={`w-4/5 grid md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500 delay-500 ${
+            className={`w-full lg:w-4/5 grid md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500 delay-500 ${
               isCardsVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
@@ -171,6 +181,6 @@ export default function About({data} : {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

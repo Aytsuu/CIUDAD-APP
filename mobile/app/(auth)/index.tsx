@@ -1,5 +1,5 @@
 import App from "@/screens/auth/login";
-import ComplaintMainView from "@/screens/my-request/complaint/ComplaintMainView";
+
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
 
@@ -9,6 +9,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <ComplaintMainView/>
+    return <App/>
 }
  

@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useGetMediationAnalytics } from "./mediation-analytics-queries";
+import { useEffect } from "react";
 
 // Memoized card component with hover effects and navigation
 const MediationCards = React.memo(({ 
@@ -74,14 +75,18 @@ const conciliationCards = [
 // Hook version (similar to your waste personnel example)
 export const useMediationSectionCards = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetMediationAnalytics();
+  const { data, isLoading, refetch: refetchMediation, isFetching } = useGetMediationAnalytics();
+
+  useEffect(() => {
+    refetchMediation();
+  }, [refetchMediation]);
 
   const cards = conciliationCards.map(card => (
     <MediationCards 
       key={card.title}
       title={card.title}
       value={data?.[card.dataKey] ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       onClick={() => {
         navigate("/summon-cases")
       }}

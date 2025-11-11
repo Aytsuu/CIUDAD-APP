@@ -64,13 +64,6 @@ class Personal(AbstractModels):
         cascade_delete_history=True,
     )
 
-    history = HistoricalRecords(
-        table_name='personal_history',
-        user_model='administration.Staff',
-        user_db_constraint=False,
-        cascade_delete_history=True,
-    )
-
     class Meta:
         db_table = 'personal'
         managed = False

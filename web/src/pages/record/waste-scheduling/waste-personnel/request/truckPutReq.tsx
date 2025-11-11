@@ -10,7 +10,6 @@ export const putWasteTruck = async (truck_id: number, truckInfo: Record<string, 
       truck_capacity: truckInfo.truck_capacity,
       truck_status: truckInfo.truck_status || "operational",
       truck_last_maint: formatDate(truckInfo.truck_last_maint || new Date()),
-      truck_track_device: truckInfo.truck_track_device || null,
     };
 
     const res = await api.put(`waste/waste-trucks/${truck_id}/`, payload);

@@ -42,8 +42,17 @@ class ARTableSerializer(serializers.ModelSerializer):
     return None
 
   def get_ar_files(self, obj):
-    files = ARFile.objects.filter(ar=obj)
-    return ARFileBaseSerializer(files, many=True).data
+    files = [
+      {
+        'id': file.arf_id,
+        'name': file.arf_name,
+        'type': file.arf_type,
+        'url': file.arf_url,
+        'is_supp': file.arf_is_supp
+      } 
+      for file in ARFile.objects.filter(ar=obj)
+    ]
+    return files
 
 class ARCreateSerializer(serializers.ModelSerializer):
   ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
@@ -71,27 +80,25 @@ class ARCreateSerializer(serializers.ModelSerializer):
     return instance
   
   def _upload_files(self, ar_instance, files):
-      ar_files = []
-      for file_data in files:
-        folder = "images" if file_data['type'].split("/")[0] == 'image' else "documents"
+    ar_files = []
+    for file_data in files:
+      arf_file = ARFile(
+        ar=ar_instance,
+        arf_name=file_data['name'],
+        arf_type=file_data['type'],
+        arf_path=f"ar/{file_data['name']}",
+      )
 
-        arf_file = ARFile(
-          ar=ar_instance,
-          arf_name=file_data['name'],
-          arf_type=file_data['type'],
-          arf_path=f"ar/{folder}/{file_data['name']}",
-        )
+      url = upload_to_storage(file_data, 'report-bucket', 'ar')
+      arf_file.arf_url = url
+      ar_files.append(arf_file)
 
-        url = upload_to_storage(file_data, 'report-bucket', f'ar/{folder}')
-        arf_file.arf_url = url
-        ar_files.append(arf_file)
-
-      if ar_files:
-          ARFile.objects.bulk_create(ar_files)
+    if ar_files:
+        ARFile.objects.bulk_create(ar_files)
 
 class ARFileCreateSerializer(serializers.ModelSerializer):
   files = FileInputSerializer(write_only=True, many=True)
 
   class Meta:
     model = ARFile
-    fields = ['ar', 'files']
+    fields = ['ar', 'arf_is_supp', 'files']

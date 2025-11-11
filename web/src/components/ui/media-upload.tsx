@@ -196,7 +196,7 @@ export const MediaUpload = ({
                   </p>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span className="capitalize">{media.type.split("/").pop()}</span>
+                  <span>{media.type.split("/").pop()}</span>
                 </div>
               </div>
 

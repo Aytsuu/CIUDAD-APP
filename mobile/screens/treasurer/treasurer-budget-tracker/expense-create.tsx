@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -238,8 +238,16 @@ function ExpenseCreateForm() {
             <TouchableOpacity
               className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
+              disabled={isPending}
             >
-              <Text className="text-white text-base font-semibold">Save Entry</Text>
+              <View className="flex-row justify-center items-center gap-2">
+                  {isPending && (
+                      <ActivityIndicator size="small" color="white" className="ml-2" />
+                  )}                           
+                  <Text className="text-white text-base font-semibold">
+                      {isPending ? "Saving..." : "Save Entry"}
+                  </Text>                                   
+              </View>   
             </TouchableOpacity>
 
           )}

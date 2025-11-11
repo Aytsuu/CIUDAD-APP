@@ -1,80 +1,57 @@
 import { api } from '@/api/api';
 import { MediaUploadType } from '@/components/ui/media-upload';
-import supabase from '@/supabase/supabase';
 
-// Upload file directly to ordinance bucket
-export const uploadFileToOrdinanceBucket = async (mediaFile: MediaUploadType[0]) => {
+export const createOrdinanceFile = async (mediaFile: MediaUploadType[0]) => {
     try {
-        
         // Get the file object
         const file = (mediaFile as any).file;
         if (!file) {
             throw new Error('No file object found in mediaFile');
         }
-        
 
-        // Try different ways to get the filename
+        // Get the actual filename
         const actualFileName = file.name || 
                               (mediaFile as any).name || 
                               (mediaFile as any).fileName || 
                               'file';
         
+        // Get the file type
+        const fileType = (mediaFile as any).type || file.type || 'application/octet-stream';
 
-        // Convert base64 data URL to proper File object if needed
-        let fileToUpload = file;
-        if (typeof file === 'string' && file.startsWith('data:')) {
-            const response = await fetch(file);
-            const blob = await response.blob();
-            fileToUpload = new File([blob], actualFileName, { type: blob.type });
-        }
-
-        // Upload directly to ordinance bucket
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${actualFileName}`;
-        const filePath = `ordinances/${fileName}`;
+        // Convert file to base64 string
+        let base64String = '';
         
-
-        const { error: uploadError } = await supabase.storage
-            .from('ordinance-bucket')
-            .upload(filePath, fileToUpload, {
-                cacheControl: "3600",
-                upsert: false,
+        if (typeof file === 'string') {
+            // Already a base64 string
+            base64String = file;
+        } else if (file instanceof File) {
+            // Convert File to base64
+            base64String = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = reader.result as string;
+                    resolve(result);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
-
-        if (uploadError) {
-            console.error('Upload error:', uploadError);
-            throw uploadError;
+        } else {
+            throw new Error('Unsupported file type');
         }
-        
 
-        // Get public URL from ordinance bucket
-        const { data: { publicUrl } } = supabase.storage
-            .from('ordinance-bucket')
-            .getPublicUrl(filePath);
-            
-
-        return { publicUrl, storagePath: filePath, fileName: actualFileName };
-    } catch (error) {
-        console.error('Error uploading file to ordinance bucket:', error);
-        throw error;
-    }
-};
-
-export const createOrdinanceFile = async (mediaFile: MediaUploadType[0]) => {
-    try {
-        
-        // Upload file directly to ordinance bucket
-        const uploadResult = await uploadFileToOrdinanceBucket(mediaFile);
-        
-        const fileData = {
-            of_url: uploadResult.publicUrl,
-            of_name: uploadResult.fileName,
-            of_type: ((mediaFile as any).type || 'unknown').substring(0, 50), // Limit to 50 characters
-            of_path: uploadResult.storagePath, // Use the storage path
+        // Send file data to backend in the expected format
+        const payload = {
+            files: [{
+                name: actualFileName,
+                type: fileType,
+                file: base64String
+            }]
         };
         
-        const fileResponse = await api.post('council/ordinance-file/', fileData);
+        console.log('Uploading ordinance file to backend...');
+        const fileResponse = await api.post('council/ordinance-file/', payload);
         
-        return fileResponse.data;
+        return fileResponse.data[0]; // Return the first file from the array
     } catch (error) {
         console.error('Error creating ordinance file:', error);
         throw error;
@@ -112,7 +89,11 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
         const ordinanceData: any = {
             ord_title: ordinanceInfo.ordinanceTitle,
             ord_date_created: ordinanceInfo.ordinanceDate,
-            ord_category: ordinanceInfo.ordinanceCategory,
+            ord_category: Array.isArray(ordinanceInfo.ordinanceCategory)
+                ? ordinanceInfo.ordinanceCategory
+                : ordinanceInfo.ordinanceCategory
+                    ? [ordinanceInfo.ordinanceCategory]
+                    : [],
             ord_details: ordinanceInfo.ordinanceDetails,
             ord_year: year,
             ord_is_archive: false,
