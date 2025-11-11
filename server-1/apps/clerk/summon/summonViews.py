@@ -539,3 +539,30 @@ class ComplaintDetailView(APIView):
 
         serializer = ComplaintSerializer(complaint)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+# ============================= FOR CALENDAR ====================================
+
+class CouncilMediationCalendarView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = CouncilMediationCalendarSerializer
+
+    def get_queryset(self):
+        return SummonCase.objects.filter(
+            ~Q(sc_mediation_status__in=['resolved', 'escalated']),
+            (Q(sc_conciliation_status__isnull=True) | Q(sc_conciliation_status__exact='')),
+            hearing_schedules__hs_is_closed=False,
+            hearing_schedules__remark__isnull=False  
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            Prefetch(
+                'hearing_schedules',
+                queryset=HearingSchedule.objects.filter(
+                    hs_is_closed=False,
+                    remark__isnull=False 
+                ).select_related('sd_id', 'st_id')  
+            )
+        ).distinct()
+

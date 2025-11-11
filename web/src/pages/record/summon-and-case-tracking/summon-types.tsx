@@ -103,3 +103,4 @@ export type PaymentRequest = {
     pr_id: number | null;
     pay_amount: number;
 }
+

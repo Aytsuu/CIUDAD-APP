@@ -42,6 +42,9 @@ urlpatterns = [
     path('mediation-analytics/', MediationAnalyticsView.as_view(), name='mediation-analytics'),
     path('remarks-analytics/', SummonRemarksAnalyticsView.as_view(), name='remarks-analytics'),
 
+    # calendar
+    path('mediation-calendar/', CouncilMediationCalendarView.as_view(), name='mediation-calendar'),
+
     # resident case tracking
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
     path('summon-payment-logs/<str:comp_id>/', SummonPaymentLogsView.as_view(), name='summon-payment-logs'),

@@ -387,37 +387,6 @@ class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
         return None
     
 # =================== CASE TRACKING SERIALIZER ============================
-# class CaseTrackingSerializer(serializers.Serializer):
-#     payment_request = serializers.SerializerMethodField()
-#     summon_case = serializers.SerializerMethodField()
-
-#     def get_payment_request(self, obj):
-#         try:
-#             payment_request = ServiceChargePaymentRequest.objects.filter(
-#                 comp_id=obj.comp_id
-#             ).select_related('pr_id').first() 
-            
-#             if payment_request:
-#                 return ServiceChargePaymentReqSerializer(payment_request).data
-#             return None
-#         except Exception as e:
-#             print(f"Error getting payment request: {e}")
-#             return None
-
-#     def get_summon_case(self, obj):
-#         try:
-#             summon_case = SummonCase.objects.filter(
-#                 comp_id=obj.comp_id
-#             ).first()
-            
-#             if summon_case:
-#                 return SummonCaseDetailSerializer(summon_case).data
-#             return None
-#         except Exception as e:
-#             print(f"Error getting summon case: {e}")
-#             return None
-
-
 class CaseTrackingSerializer(serializers.Serializer):
     payment_request_summon = serializers.SerializerMethodField()
     payment_request_file_action = serializers.SerializerMethodField()
@@ -465,3 +434,94 @@ class CaseTrackingSerializer(serializers.Serializer):
         except Exception as e:
             print(f"Error getting summon case: {e}")
             return None
+
+
+
+# ========================= CALENDAR SERIALIZER ==========================
+class CouncilMediationCalendarSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
+    hearing_schedules = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SummonCase
+        fields = [
+            'sc_id', 
+            'sc_code',
+            'sc_mediation_status',
+            'sc_conciliation_status',
+            'sc_date_marked',
+            'complainant_names',
+            'accused_names',
+            'incident_type',
+            'hearing_schedules'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_name for cc in complainants if cc.cpnt.cpnt_name]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_name for ca in accused_list if ca.acsd.acsd_name]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', 'No incident type')
+        return 'No incident type'
+    
+    def get_hearing_schedules(self, obj):
+        try:
+            hearing_schedules = obj.hearing_schedules.filter(
+                hs_is_closed=False
+            )
+            return HearingScheduleCalendarSerializer(
+                hearing_schedules, 
+                many=True
+            ).data
+        except Exception as e:
+            print(f"Error getting hearing schedules: {e}")
+            return []
+
+class HearingScheduleCalendarSerializer(serializers.ModelSerializer):
+    summon_date = serializers.SerializerMethodField()
+    summon_time = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = HearingSchedule
+        fields = [
+            'hs_id',
+            'hs_level',
+            'hs_is_closed',
+            'summon_date',
+            'summon_time'
+        ]
+    
+    def get_summon_date(self, obj):
+        if obj.sd_id:
+            return {
+                'sd_id': obj.sd_id.sd_id,
+                'sd_date': obj.sd_id.sd_date
+            }
+        return None
+    
+    def get_summon_time(self, obj):
+        if obj.st_id:
+            return {
+                'st_id': obj.st_id.st_id,
+                'st_start_time': obj.st_id.st_start_time
+            }
+        return None
