@@ -75,7 +75,7 @@ export const Footer = ({data, homeRef, aboutRef, mobileAppRef, announcementRef, 
       </div>
 
       {/* Copyright */}
-      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-700 text-center text-gray-400">
+      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-700 text-sm sm:text-base text-center text-gray-400">
         <p>
           &copy; {new Date().getFullYear()} Barangay San Roque (Ciudad). All rights reserved.
         </p>
