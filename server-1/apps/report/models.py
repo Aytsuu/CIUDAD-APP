@@ -11,7 +11,7 @@ class ReportType(AbstractModels):
     class Meta:
       db_table = 'report_type'
 
-class IncidentReport(models.Model):
+class IncidentReport(AbstractModels):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
   ir_time = models.TimeField(null=True)
@@ -35,7 +35,7 @@ class IncidentReport(models.Model):
   class Meta:
     db_table = 'incident_report'
 
-class AcknowledgementReport(models.Model):
+class AcknowledgementReport(AbstractModels):
   ar_id = models.BigAutoField(primary_key=True)
   ar_title = models.CharField(max_length=500)
   ar_date_started = models.DateField()
@@ -66,7 +66,7 @@ class ARFile(models.Model):
   class Meta:
     db_table = 'ar_file'
 
-class WeeklyAccomplishmentReport(models.Model):
+class WeeklyAccomplishmentReport(AbstractModels):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
   war_created_for = models.DateField(default=date.today)
@@ -102,15 +102,16 @@ class IncidentReportFile(models.Model):
   irf_type = models.CharField(max_length=50)
   irf_path = models.CharField(max_length=100)
   irf_url = models.URLField()
-  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, related_name='report_files')
 
   class Meta:
     db_table = 'incident_report_file'
 
-class ReportTemplate(models.Model):
+class ReportTemplate(AbstractModels):
   rte_id = models.BigAutoField(primary_key=True)
   rte_logoLeft = models.URLField(null=True)
   rte_logoRight = models.URLField(null=True)
+  rte_logoTop = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
   rte_prepared_by = models.CharField(max_length=100, null=True)
