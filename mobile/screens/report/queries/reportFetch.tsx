@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api, mapApi } from "@/api/api";
+import { api } from "@/api/api";
 
 export const useGetReportType = () => {
   return useQuery({
@@ -17,32 +17,9 @@ export const useGetReportType = () => {
   })
 }
 
-export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
+export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean) => {
   return useQuery({
-    queryKey: ["convertCoordinates", lat, lng],
-    queryFn: async () => {
-      try {
-        const res = await mapApi.get(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-          {
-            headers: {
-              "User-Agent": "ciudad-app/1.0",
-            },
-          }
-        );
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    staleTime: 5000,
-    retry: false
-  });
-};
-
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean, severity?: string) => {
-  return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive, severity],
+    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive],
     queryFn: async () => {
       try {
         const res = await api.get('report/ir/list/table/', {
@@ -50,9 +27,7 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
             page,
             page_size: pageSize,
             search: searchQuery,
-            is_archive: isArchive,
-            get_tracker,
-            severity
+            is_archive: isArchive
           }
         });
         return res.data;
@@ -66,7 +41,7 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
 
 export const useGetIRHistory = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, rp_id: string) => {
   return useQuery({
-    queryKey: ['myIRs', page, pageSize, searchQuery, rp_id, isArchive],
+    queryKey: ['myIRs', page, pageSize, searchQuery, isArchive],
     queryFn: async () => {
       try {
         const res = await api.get('report/ir/list/table/', {

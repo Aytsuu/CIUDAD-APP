@@ -2,6 +2,7 @@ import Preferences from "@/pages/acc-profile/navItems/account-preference"
 import Profile from "@/pages/acc-profile/navItems/profile"
 import Security from "@/pages/acc-profile/navItems/security"
 import YourActivity from "@/pages/acc-profile/navItems/your-activity"
+import About from "@/pages/acc-profile/navItems/about"
 
 export const viewprofile_router = [
     {
@@ -19,5 +20,9 @@ export const viewprofile_router = [
     {
         path: 'manage/youractivity',
         element: <YourActivity /> 
+    },
+    {
+        path: 'account/about',
+        element: <About/>,
     }
 ]

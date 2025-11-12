@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   TouchableOpacity,
   View,
@@ -6,48 +6,70 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Image,
   Alert,
 } from "react-native";
-import { ChevronLeft, Bell, MoreVertical, Check, BookCopy, CheckCheck } from "lucide-react-native";
+import { Bell, MoreVertical, Check, CheckCheck, ChevronLeft, FileText, Info, Clock  } from "lucide-react-native";
 import GetNotification from "./queries/getNotification";
-import { Drawer } from "@/components/ui/drawer";
+import { DrawerView } from "@/components/ui/drawer";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { useMarkAsRead, useMarkAllAsRead } from "./queries/updateNotification";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface notificationIcon {
-  notif_type: string;
+interface NotificationTypeIconProps {
+  notif_type?: string;
+  className?: string;
 }
 
-const NotificationType: React.FC<notificationIcon> = ({notif_type}) => {
-  switch(notif_type) {
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
+  switch (notif_type) {
     case "REQUEST":
       return (
-       <View className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white shadow-md p-1">
-          <BookCopy size={16} color="#fff" />
+        <View className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-5 h-5 text-blue-600" />
         </View>
-      )
-    default: 
-     return null;
+      );
+    case "REMINDER":
+      return (
+        <View className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-5 h-5 text-amber-600" />
+        </View>
+      );
+    case "INFO":
+      return (
+        <View className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-5 h-5 text-indigo-600" />
+        </View>
+      );
+    default:
+      return (
+        <View className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </View>
+      );
   }
-}
+};
 
 export default function NotificationScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const [notifDrawerVisible, setNotifDrawerVisible] = useState(false);
-  const [headerDrawerVisible, setHeaderDrawerVisible] = useState(false);
+  
+  // Refs for bottom sheets
+  const notifDrawerRef = useRef<BottomSheet>(null);
+  const headerDrawerRef = useRef<BottomSheet>(null);
 
   const {data: notifications, isLoading, isError, error, refetch, isFetching} = GetNotification();
   
   const { mutate: markAsRead, isPending: isMarkingAsRead } = useMarkAsRead();
   const { mutate: markAllAsRead, isPending: isMarkingAllAsRead } = useMarkAllAsRead();
 
-  // ✨ Refresh notifications when screen comes into focus
+  // Refresh notifications when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       console.log('🔄 NotificationScreen focused, invalidating query...');
@@ -161,7 +183,7 @@ export default function NotificationScreen() {
   const handleMorePress = (item: any) => {
     console.log('⚙️ [NotificationScreen] More options pressed for:', item.notif_id);
     setSelectedNotification(item);
-    setNotifDrawerVisible(true);
+    notifDrawerRef.current?.expand();
   };
 
   const handleNotifAction = (action: string) => {
@@ -172,11 +194,11 @@ export default function NotificationScreen() {
     switch (action) {
       case "mark_read":
         markAsRead(selectedNotification.notif_id);
-        setNotifDrawerVisible(false);
+        notifDrawerRef.current?.close();
         break;
       case "view":
         handleNotificationPress(selectedNotification);
-        setNotifDrawerVisible(false);
+        notifDrawerRef.current?.close();
         break;
     }
   };
@@ -194,7 +216,7 @@ export default function NotificationScreen() {
       }
     }
     
-    setHeaderDrawerVisible(false);
+    headerDrawerRef.current?.close();
   };
 
   const unreadCount = notifications?.filter((n: any) => !n.is_read).length || 0;
@@ -216,7 +238,7 @@ export default function NotificationScreen() {
         </View>
         
         <TouchableOpacity
-          onPress={() => setHeaderDrawerVisible(true)}
+          onPress={() => headerDrawerRef.current?.expand()}
           className="p-1"
           disabled={isMarkingAllAsRead}
         >
@@ -326,20 +348,12 @@ export default function NotificationScreen() {
               >
                 <View className="flex-row items-start">
                   {/* Avatar/Icon */}
-                  <View className="relative">
-                    <Image
-                      source={
-                        item.sender_profile
-                          ? { uri: item.sender_profile }
-                          : require("@/assets/images/Logo.png")
-                      }
-                      className="w-16 h-16 rounded-full mr-4"
-                      style={{ backgroundColor: '#f3f4f6' }}
-                    />
+                  <View className="relative pr-4">
+                    <NotificationTypeIcon notif_type={item.notif_type} />
 
-                    <View className="absolute -bottom-2 right-2">
-                      <NotificationType notif_type={item.notif_type}/>
-                    </View>
+                    {!item.is_read && (
+                      <View className="absolute top-0.5 right-4 w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                    )}
                   </View>
                   
                   {/* Content */}
@@ -367,11 +381,6 @@ export default function NotificationScreen() {
                   >
                     <MoreVertical size={20} color="#6B7280" />
                   </TouchableOpacity>
-
-                  {/* Unread Indicator */}
-                  {!item.is_read && (
-                    <View className="absolute left-0 top-1/2 w-2 h-2 bg-blue-500 rounded-full -translate-y-1" />
-                  )}
                 </View>
               </TouchableOpacity>
             ))}
@@ -381,11 +390,13 @@ export default function NotificationScreen() {
       />
 
       {/* Notification Options Drawer */}
-      <Drawer
-        visible={notifDrawerVisible}
-        onClose={() => setNotifDrawerVisible(false)}
+      <DrawerView
+        bottomSheetRef={notifDrawerRef}
+        snapPoints={["30%"]}
+        title="Notification Options"
+        description="Manage this notification"
       >
-        <View className="px-6 pb-6">
+        <View className="pb-6">
           {!selectedNotification?.is_read && (
             <TouchableOpacity
               onPress={() => handleNotifAction("mark_read")}
@@ -417,16 +428,16 @@ export default function NotificationScreen() {
             </View>
           )}
         </View>
-      </Drawer>
+      </DrawerView>
 
       {/* Header Options Drawer */}
-      <Drawer
-        visible={headerDrawerVisible}
-        onClose={() => setHeaderDrawerVisible(false)}
-        header="Notification Settings"
+      <DrawerView
+        bottomSheetRef={headerDrawerRef}
+        snapPoints={["30%"]}
+        title="Notification Settings"
         description="Manage your notifications"
       >
-        <View className="px-6 pb-6">
+        <View className="pb-6">
           <TouchableOpacity
             onPress={() => handleHeaderAction("mark_all_read")}
             className="flex-row items-center p-4 bg-gray-50 rounded-xl mb-3"
@@ -452,7 +463,7 @@ export default function NotificationScreen() {
             </View>
           </TouchableOpacity>
         </View>
-      </Drawer>
+      </DrawerView>
     </SafeAreaView>
   );
 }

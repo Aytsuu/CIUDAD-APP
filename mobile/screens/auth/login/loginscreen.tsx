@@ -18,7 +18,6 @@ import LoginOTP from "./loginOTP";
 
 export default function Login() {
   const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
-  const [showSignupOptions, setShowSignupOptions] = React.useState<boolean>(false);
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToastContext();
   const bottomSheetRef = React.useRef<BottomSheet>(null)
@@ -30,7 +29,6 @@ export default function Login() {
     }
   }, [user, isAuthenticated, toast]);
 
-  const handleCloseSignupOptions = () => setShowSignupOptions(false);
   const handleSwitchMethod = () => {
     setLoginMethod(loginMethod === "phone" ? "email" : "phone");
   };

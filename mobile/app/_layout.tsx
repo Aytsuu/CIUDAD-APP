@@ -9,7 +9,8 @@ import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/toast';
-import { Provider } from "react-redux"
+import * as NavigationBar from 'expo-navigation-bar';
+import {Provider} from "react-redux"
 import { store, persistor } from '@/redux/store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { useFCMToken } from '@/helpers/useFCMToken';
@@ -38,6 +39,11 @@ export default function RootLayout() {
     PoppinsMedium: require('../assets/fonts/Poppins-Medium.ttf'),
     PoppinsSemiBold: require('../assets/fonts/Poppins-SemiBold.ttf'),
   });
+
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync('#ffffff');
+    NavigationBar.setButtonStyleAsync('dark');
+  }, []);
 
   useEffect(() => {
     if (loaded) {

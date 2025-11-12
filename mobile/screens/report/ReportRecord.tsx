@@ -2,7 +2,6 @@ import { TouchableOpacity, View, Text } from "react-native";
 import { User } from "../_Enums";
 import { router } from "expo-router";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 const recordMenuItem = [
   {
@@ -39,19 +38,11 @@ const recordMenuItem = [
 
 export default function ReportRecord() {
   return (
-    <BottomSheetScrollView
-      contentContainerStyle={{
-        paddingHorizontal: 4,
-        paddingBottom: 20,
-      }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View className="px-6">
       {recordMenuItem.map((item: any, index: number) => (
         <TouchableOpacity
           key={index}
-          className={`bg-blue-100 rounded-xl p-4 mb-3 ${
-            index == recordMenuItem.length - 1 && "mb-8"
-          }`}
+          className={`bg-blue-100 rounded-xl p-4 mb-3 ${index == recordMenuItem.length - 1 && "mb-8"}`}
           activeOpacity={0.7}
           onPress={() => item.route && router.push(item.route)}
           disabled={!item.route}
@@ -68,6 +59,6 @@ export default function ReportRecord() {
           </View>
         </TouchableOpacity>
       ))}
-    </BottomSheetScrollView>
-  );
+    </View>
+  )
 }

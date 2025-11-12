@@ -1,26 +1,27 @@
-# Rest Framework Imports
+# Imports
+# Rest Framework
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-# Django Imports
+# Django
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Max
 
-# Model Imports
+# Model
 from apps.complaint.models import Complaint
 from apps.clerk.models import ServiceChargePaymentRequest
 from apps.treasurer.models import Purpose_And_Rates
 from apps.notification.utils import create_notification
 from apps.administration.models import Staff
 
-# Python Imports
+# Python
 import logging
 import re
 
 logger = logging.getLogger(__name__)
-
+ 
 
 class ServiceChargeRequestCreateView(APIView):
     @transaction.atomic

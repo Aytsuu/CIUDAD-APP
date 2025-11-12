@@ -1,4 +1,5 @@
 import { Text, TouchableOpacity, View } from "react-native";
+import ScreenLayout from "../_ScreenLayout";
 import { Megaphone } from "@/lib/icons/Megaphone";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { Bell } from "@/lib/icons/Bell";
@@ -14,8 +15,10 @@ export default () => {
   const hasUnreadNotifications = notifications?.some((n: { is_read: any; }) => !n.is_read);
 
   return (
-    <PageLayout
-      headerTitle={<Text className="text-gray-900 text-[13px]">Inbox</Text>}
+    <ScreenLayout
+      showBackButton={false}
+      showExitButton={false}
+      headerBetweenAction={<Text className="text-[13px]">Inbox</Text>}
     >
       <View className="flex-1 px-6">
         {/* Announcement Card */}
@@ -79,6 +82,6 @@ export default () => {
           </View>
         </TouchableOpacity>
       </View>
-    </PageLayout>
+    </ScreenLayout>
   );
 };

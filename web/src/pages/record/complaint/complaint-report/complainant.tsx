@@ -1,21 +1,9 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
-import {
-  X,
-  Search,
-  Trash2,
-  ChevronRight,
-  PlusCircle,
-} from "lucide-react";
+import { X, Search, Trash2, ChevronRight, PlusCircle} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
@@ -38,23 +26,12 @@ interface ComplainantInfoProps {
   isSubmitting: boolean;
 }
 
-export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
-  onNext,
-  isSubmitting,
-}) => {
+export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({ onNext, isSubmitting}) => {
   const { control, watch, setValue } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "complainant",
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: "complainant",});
   const [activeTab, setActiveTab] = useState(0);
-  const [_selectedResident, setSelectedResident] = useState<any>(null);
-  const [selectedResidentValue, setSelectedResidentValue] =
-    useState<string>("");
-
-  const { data: allResidents = [], isLoading: _isResidentsLoading } =
-    useAllResidents();
-
+  const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
+  const { data: allResidents = [] } = useAllResidents();
   const currentComplainant = watch(`complainant.${activeTab}`);
 
   const addComplainant = () => {
@@ -70,7 +47,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
       cpnt_address: "",
     });
     setActiveTab(newIndex);
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -82,7 +58,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
     } else if (activeTab > index) {
       setActiveTab(activeTab - 1);
     }
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -90,13 +65,11 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
     const resident = allResidents.find((r: Resident) => r.rp_id === residentId);
     if (!resident) return;
 
-    setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`complainant.${activeTab}.rp_id`, resident.rp_id);
     setValue(`complainant.${activeTab}.cpnt_name`, resident.name);
 
-    // Fix gender mapping - ensure it matches the option values
-    const residentGender = resident.cpnt_gender;
+    const residentGender = resident.gender;
     let formattedGender = "";
     if (residentGender) {
       formattedGender =
@@ -104,7 +77,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
         residentGender.slice(1).toLowerCase();
     }
     setValue(`complainant.${activeTab}.cpnt_gender`, formattedGender);
-
     setValue(`complainant.${activeTab}.cpnt_age`, resident.age);
     setValue(`complainant.${activeTab}.cpnt_number`, resident.number || "");
     setValue(
@@ -115,7 +87,6 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
   };
 
   const clearSelection = () => {
-    setSelectedResident(null);
     setSelectedResidentValue("");
     setValue(`complainant.${activeTab}.rp_id`, null);
     setValue(`complainant.${activeTab}.cpnt_name`, "");
@@ -142,13 +113,8 @@ export const ComplainantInfo: React.FC<ComplainantInfoProps> = ({
   useEffect(() => {
     const currentComplainantData = watch(`complainant.${activeTab}`);
     if (currentComplainantData?.rp_id) {
-      const resident = allResidents.find(
-        (r: Resident) => r.rp_id === currentComplainantData.rp_id
-      );
-      setSelectedResident(resident || null);
       setSelectedResidentValue(currentComplainantData.rp_id);
     } else {
-      setSelectedResident(null);
       setSelectedResidentValue("");
     }
   }, [activeTab, allResidents, watch]);
