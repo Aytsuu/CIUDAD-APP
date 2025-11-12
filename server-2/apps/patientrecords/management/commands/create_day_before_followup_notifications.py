@@ -167,7 +167,7 @@ class Command(BaseCommand):
         from django.utils import timezone
         
         today = timezone.now().date().isoformat()
-        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}"
+        cache_key = f"followup_notified_v2_{followup.followv_id}_{followup_type}_{today}"
         
         return cache.get(cache_key, False)
     

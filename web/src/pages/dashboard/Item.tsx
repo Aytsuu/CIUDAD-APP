@@ -198,12 +198,6 @@ export const getItemsConfig = (
           title: "Family Planning",
           element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
         },
-        
-
-          {
-            title: "Maternal",
-            element: <MaternalAgeDistributionChart initialMonth={currentMonth} />,
-          },
         ],
         sidebar: [
           {

@@ -1,3 +1,4 @@
+# notification_scheduler.py
 import time
 import logging
 from django.core.management.base import BaseCommand
@@ -10,78 +11,66 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Starts the APScheduler to automatically create daily follow-up notifications'
-    
-    def handle(self, *args, **options):
-        self.stdout.write(
-            self.style.SUCCESS('🚀 Starting automatic notification scheduler...')
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--test',
+            action='store_true',
+            help='Run in test mode: execute jobs immediately and exit',
         )
-        
+
+    def handle(self, *args, **options):
+        test_mode = options['test']
+
+        if test_mode:
+            self.stdout.write(self.style.WARNING('TEST MODE: Running all jobs immediately...'))
+            self.run_all_jobs_once()
+            self.stdout.write(self.style.SUCCESS('TEST MODE: All jobs executed.'))
+            return
+
+        # === NORMAL MODE ===
+        self.stdout.write(self.style.SUCCESS('Starting automatic notification scheduler...'))
+
         scheduler = BackgroundScheduler()
-        
-        # JOB 1: Today's follow-ups and missed follow-ups (Morning check)
+
+        # JOB 1: Today + Missed (8:30 AM)
         scheduler.add_job(
-            lambda: self.run_notification_command('create_todays_followup_notifications'),
+            lambda: self.run_cmd('create_todays_followup_notifications'),
             trigger=CronTrigger(hour=8, minute=30),
             id='daily_followup_notifications_morning',
-            name='Create today\'s and missed follow-up visit notifications',
             replace_existing=True
         )
-        
-        # JOB 2: Tomorrow's follow-ups reminder (Evening check)
+
+        # JOB 2: Tomorrow Reminder (5:00 PM)
         scheduler.add_job(
-            lambda: self.run_notification_command('create_day_before_followup_notifications'),
-            trigger=CronTrigger(hour=17, minute=0),  # Daily at 5:00 PM
+            lambda: self.run_cmd('create_day_before_followup_notifications'),
+            trigger=CronTrigger(hour=17, minute=0),
             id='daily_followup_notifications_evening',
-            name='Create tomorrow\'s follow-up visit reminders',
             replace_existing=True
         )
-        
-        # JOB 3: Missed follow-ups only (Mid-day check)
-        scheduler.add_job(
-            lambda: self.run_notification_command('create_todays_followup_notifications', '--missed-days', '1'),
-            trigger=CronTrigger(hour=12, minute=0),  # Daily at 12:00 PM
-            id='missed_followup_notifications',
-            name='Check for missed follow-up visits',
-            replace_existing=True
-        )
-        
-        # Start the scheduler
+
         scheduler.start()
-        self.stdout.write(
-            self.style.SUCCESS('✅ Scheduler started! Automatic notifications are enabled.')
-        )
-        # self.stdout.write('📅 Today\'s & missed notifications: Daily at 7:00 AM')
-        # self.stdout.write('📅 Tomorrow\'s reminders: Daily at 5:00 PM')
-        # self.stdout.write('📅 Missed follow-ups check: Daily at 12:00 PM')
-        
-        # if settings.DEBUG:
-        #     # Optional: Test job for debugging
-        #     scheduler.add_job(
-        #         lambda: self.run_notification_command('create_todays_followup_notifications', '--test'),
-        #         trigger=CronTrigger(minute='*/5'),  # Every 5 minutes in debug
-        #         id='test_notifications',
-        #         name='Test notifications (debug mode only)',
-        #         replace_existing=True
-        #     )
-        #     self.stdout.write('🔧 Debug mode: Test job runs every 5 minutes')
-        
-        # Keep the process running
+        self.stdout.write(self.style.SUCCESS('Scheduler started!'))
+
         try:
             while True:
                 time.sleep(60)
         except KeyboardInterrupt:
-            self.stdout.write('\n🛑 Stopping scheduler...')
             scheduler.shutdown()
-            self.stdout.write(self.style.SUCCESS('✅ Scheduler stopped gracefully.'))
-    
-    def run_notification_command(self, command_name, *args):
-        """Execute a specific follow-up notifications command"""
+            self.stdout.write(self.style.SUCCESS('Scheduler stopped.'))
+
+    def run_cmd(self, cmd, *args):
         try:
-            self.stdout.write(f'🔔 Running automatic command: {command_name} {" ".join(args)}...')
-            call_command(command_name, *args)
-            logger.info(f"Successfully executed automatic command: {command_name}")
+            self.stdout.write(f'Running: {cmd} {" ".join(args)}')
+            call_command(cmd, *args)
         except Exception as e:
-            logger.error(f"Failed to run {command_name}: {e}")
-            self.stdout.write(
-                self.style.ERROR(f'❌ Error running {command_name}: {e}')
-            )
+            logger.error(f"Job failed: {cmd} - {e}")
+            self.stdout.write(self.style.ERROR(f'Job failed: {e}'))
+
+    def run_all_jobs_once(self):
+        """Run all scheduled jobs immediately for testing"""
+        self.stdout.write("1. Running TODAY + MISSED follow-ups...")
+        self.run_cmd('create_todays_followup_notifications', '--test')
+
+        self.stdout.write("\n2. Running TOMORROW reminders...")
+        self.run_cmd('create_day_before_followup_notifications', '--test')
