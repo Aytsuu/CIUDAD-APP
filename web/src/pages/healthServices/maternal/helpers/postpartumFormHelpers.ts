@@ -7,6 +7,7 @@ export const transformPostpartumFormData = (
   postpartumCareData: any[],
   selectedMedicines?: { minv_id: string; medrec_qty: number; reason: string }[],
   staffId?: string,
+  ttsId?: number | null, 
 ) => {
   // Transform the form data to match the API structure
   const transformedData = {
@@ -15,9 +16,7 @@ export const transformPostpartumFormData = (
 
     // Basic postpartum record data
     ppr_lochial_discharges: getLochialDischargeName(formData.postpartumInfo?.lochialDischarges) || "Lochia Rubra",
-    // ppr_vit_a_date_given: formData.postpartumInfo?.vitASupplement || "",
     ppr_num_of_pads: formData.postpartumInfo?.noOfPadPerDay || 0,
-    // ppr_mebendazole_date_given: formData.postpartumInfo?.mebendazole || "",
     ppr_date_of_bf: formData.postpartumInfo?.dateBfInitiated || "",
     ppr_time_of_bf: formData.postpartumInfo?.timeBfInitiated || "",
 
@@ -59,6 +58,10 @@ export const transformPostpartumFormData = (
       postpartumCareData.length > 0
         ? postpartumCareData[0].bp.split(" / ")[1]
         : formData.postpartumTable?.bp?.diastolic || "",
+    vital_temp: formData.postpartumTable?.temp || "N/A",
+    vital_RR: formData.postpartumTable?.rr || "N/A",
+    vital_o2: formData.postpartumTable?.o2 || "N/A",
+    vital_pulse: formData.postpartumTable?.pulse || "N/A",
 
     // Follow-up visit data
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],
@@ -67,8 +70,14 @@ export const transformPostpartumFormData = (
     // Selected medicines for micronutrient supplementation
     selected_medicines: selectedMedicines || [],
     
+    // TT Status FK relationship
+    tts_id: ttsId || null,  // ✅ Include the tts_id FK
+    
     // Staff ID for tracking who performed the transaction
     staff_id: staffId || "",
+    assigned_to: formData.assigned_to || "",
+    status: formData.status || "",
+    forwarded_status: formData.forwarded_status || ""
   }
 
   return transformedData
@@ -132,11 +141,6 @@ export const validatePostpartumFormData = (
   if (postpartumCareData.length === 0) {
     errors.push("At least one postpartum assessment is required")
   }
-
-  // Validate next visit date
-  // if (!formData.postpartumInfo?.nextVisitDate) {
-  //   errors.push("Next visit date is required")
-  // }
 
   if (!formData.postpartumInfo?.dateBfInitiated) {
     errors.push("Date breastfeeding initiated is required")

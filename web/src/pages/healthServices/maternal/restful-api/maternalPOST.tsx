@@ -199,8 +199,23 @@ export interface PostpartumCompleteData {
   }
   vital_bp_systolic: string
   vital_bp_diastolic: string
+  vital_temp: string
+  vital_RR: string
+  vital_o2: string
+  vital_pulse: string
+  // selected_medicines?: Array<{
+  //   minv_id: string              // Medicine inventory ID from MedicineInventory model
+  //   medrec_qty: number           // Quantity to dispense (positive integer)
+  //   reason?: string              // Reason for dispensing; defaults to "Micronutrient supplementation"
+  // }>
+  tts_id?: number | null  // ✅ Add TT Status FK
+  staff_id?: string
   followup_date: string
   followup_description: string
+
+  assigned_to?: string
+  status?: string
+  forwarded_status?: string | null
 }
 
 // Response interface for what the API returns

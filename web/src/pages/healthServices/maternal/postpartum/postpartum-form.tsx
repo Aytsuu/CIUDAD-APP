@@ -38,7 +38,10 @@ import { usePostpartumAssessements } from "../queries/maternalFetchQueries";
 import { Patient } from "@/pages/record/health/patientsRecord/patient-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import MedicineDisplay from "@/components/ui/medicine-display"
+
+import { useMaternalStaff } from "../queries/maternalFetchQueries";
 import { useAuth } from "@/context/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
 
 type PostpartumTableType = {
   date: string;
@@ -84,16 +87,18 @@ export default function PostpartumFormFirstPg({
   const [formErrors, setFormErrors] = useState<string[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("")
 
   const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
+  const [latestTtsId, setLatestTtsId] = useState<number | null>(null)
 
   const navigate = useNavigate()
 
   // auth hook for staff information
   const { user } = useAuth()
-  const staffId = user?.staff?.staff_id || ""
+  const staffId = user?.staff?.staff_id || "" 
 
   // add hooks
   const addPostpartumMutation = useAddPostpartumRecord()
@@ -104,6 +109,32 @@ export default function PostpartumFormFirstPg({
   const { data: postpartumAssessments, isLoading: postpartumAssessmentsLoading } = usePostpartumAssessements(selectedPatientId);
 
   const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+
+  const { data: staffsData, isLoading: isLoadingStaff } = useMaternalStaff()
+
+  const staffOptions = 
+    staffsData && Array.isArray(staffsData.staff)
+      ? staffsData.staff
+        .filter((staff: any) => String(staff.staff_id || "") !== String(staffId))
+        .map((staff: any) => {
+          const fullName = staff.full_name ||`${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
+          const position = staff.position || staff.pos || ""
+          const searchableId = `${fullName} ${position}`.toLowerCase()
+
+          return {
+            id: searchableId,
+            name: position ? (
+              <div className="flex items-center gap-2">
+                <span className="border border-green-300 rounded px-2 py-1 text-xs bg-green-500 text-white">{position}</span>
+                <span>{fullName}</span>
+              </div>
+            ) : (
+                fullName
+              ),
+              realId: String(staff.staff_id || ""),
+          }
+        })
+      : []
 
   // useEffect to preselect patient if coming from individual record page
   useEffect(() => {
@@ -215,8 +246,11 @@ export default function PostpartumFormFirstPg({
       
       const ttStatusValue = latestTTStatus.tts_status?.toLowerCase() || "";
       setValue("postpartumInfo.ttStatus", ttStatusValue);
+      setLatestTtsId(latestTTStatus.tts_id); // ✅ Store the tts_id for FK relationship
+      
     } else {
       setValue("postpartumInfo.ttStatus", "");
+      setLatestTtsId(null);
     }
   }, [ttStatusData, ttStatusLoading, setValue]);
 
@@ -555,7 +589,7 @@ export default function PostpartumFormFirstPg({
 
     try {
       // Only send NEW assessments to prevent duplicates
-      const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId);
+      const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId, latestTtsId);
 
       console.log("Submitting postpartum data:", transformedData);
       console.log("New assessments only:", newAssessments);
@@ -827,6 +861,12 @@ export default function PostpartumFormFirstPg({
                   ]}
                 />
               </div>
+              <div className="grid grid-cols-4 gap-4 mt-4">
+                  <FormInput control={form.control} label="Temperature" name="postpartumTable.temp" placeholder="Temperature" type="number" />
+                  <FormInput control={form.control} label="Respiratory Rate" name="postpartumTable.rr" placeholder="Respiratory Rate" type="number" />
+                  <FormInput control={form.control} label="Pulse" name="postpartumTable.pulse" placeholder="Pulse Rate" type="number" />
+                  <FormInput control={form.control} label="O2" name="postpartumTable.o2" placeholder="Oxygen Rate" type="number" />
+              </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <FormTextArea control={form.control} label="Findings" name="postpartumTable.findings" placeholder="Enter findings" />
                 <FormTextArea control={form.control} label="Nurses Notes" name="postpartumTable.nursesNotes" placeholder="Enter nurses notes" />
@@ -842,6 +882,47 @@ export default function PostpartumFormFirstPg({
               </div>
             </div>
 
+            <div className="flex flex-col gap-2 mt-4">
+              <Label className="text-sm font-medium">Forward record to</Label>
+              <Combobox
+                options={staffOptions}
+                value={staffOptions.find((opt: any) => opt.realId === selectedStaffId)?.id || ""}
+                placeholder={isLoadingStaff ? "Loading staff..." : "Select staff"}
+                emptyMessage="No staff found"
+                onChange={(value:any) => {
+                  // Find the realId and position from the selected option
+                  const selectedOption = staffOptions.find((opt: any) => opt.id === value)
+                  const realStaffId = selectedOption?.realId || value
+                  
+                  // Extract position from the searchable ID (format: "name position")
+                  const fullStaffData = staffsData?.staff.find((staff: any) => String(staff.staff_id) === realStaffId)
+                  const position = fullStaffData?.position || fullStaffData?.pos || ""
+                  
+                  console.log("Selected staff:", value, "Real ID:", realStaffId, "Position:", position)
+                  setSelectedStaffId(realStaffId)
+
+                  // Determine status based on staff position
+                  if (realStaffId) {
+                    let forwardStatus = "pending_review"
+                    let forwardedStatus = "completed"
+                    
+                    if (position.toUpperCase() === "ADMIN") {
+                      forwardStatus = "tbc_by_midwife"
+                      forwardedStatus = "pending"
+                      console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
+                    }
+                    
+                    // Store forward information in form for backend
+                    form.setValue("assigned_to", realStaffId)
+                    form.setValue("status", forwardStatus)
+                    form.setValue("forwarded_status", forwardedStatus)
+                    
+                    console.log("Forward record: Staff ID:", realStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
+                  }
+                }}
+              />
+            </div>
+            
             <div className="mt-8 sm:mt-auto flex justify-end">
               <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
                 {addPostpartumMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
