@@ -197,14 +197,6 @@ export default function AccountRegistrationLayout({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Info Alert */}
-          {/* <Alert className="border-indigo-200 bg-indigo-50">
-            <AlertDescription className="text-indigo-800">
-              <strong>Account Creation:</strong> This step is optional but recommended. Creating an account allows the
-              resident to access their information online and receive important updates.
-            </AlertDescription>
-          </Alert> */}
-
           <Separator />
 
           {/* Form Content */}

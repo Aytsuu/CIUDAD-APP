@@ -37,8 +37,8 @@ export default function AccountRegistrationForm({form, prefix = "", isVerifyingE
           </div>
         }
       </div>
-      <FormInput control={form.control} name={`${prefix}password`} label="Password" placeholder="Enter password" type="password"/>
-      <FormInput control={form.control} name={`${prefix}confirm_password`} label="Confirm Password" placeholder="Re-enter password" type="password"/>
+      {/* <FormInput control={form.control} name={`${prefix}password`} label="Password" placeholder="Enter password" type="password"/>
+      <FormInput control={form.control} name={`${prefix}confirm_password`} label="Confirm Password" placeholder="Re-enter password" type="password"/> */}
     </div>
   )
 }

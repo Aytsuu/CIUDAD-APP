@@ -10,7 +10,7 @@ export const AccountUpdateSchema = z.object({
   email: z
     .string()
     .email({ message: "Invalid email address" })
-    .optional(  ),
+    .optional(),
 
   newPassword: z
     .string()
@@ -37,7 +37,10 @@ export const AccountUpdateSchema = z.object({
 });
 
 export const accountFormSchema = z.object({
-  email: z.string(),
+  email: 
+    z.string()
+    .email({ message: "Invalid email address" })
+    .optional(),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(
@@ -47,80 +50,80 @@ export const accountFormSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
-  password: z.string()
-    .superRefine((val, ctx) => {
-      const errors = [];
+  // password: z.string()
+  //   .superRefine((val, ctx) => {
+  //     const errors = [];
       
-      if (val.length < 6) {
-        errors.push("Password must be at least 6 characters long");
-      }
+  //     if (val.length < 6) {
+  //       errors.push("Password must be at least 6 characters long");
+  //     }
       
-      if (!/[a-z]/.test(val)) {
-        errors.push("Password must contain at least one lowercase letter");
-      }
+  //     if (!/[a-z]/.test(val)) {
+  //       errors.push("Password must contain at least one lowercase letter");
+  //     }
       
-      if (!/[A-Z]/.test(val)) {
-        errors.push("Password must contain at least one uppercase letter");
-      }
+  //     if (!/[A-Z]/.test(val)) {
+  //       errors.push("Password must contain at least one uppercase letter");
+  //     }
       
-      if (!/\d/.test(val)) {
-        errors.push("Password must contain at least one number");
-      }
+  //     if (!/\d/.test(val)) {
+  //       errors.push("Password must contain at least one number");
+  //     }
       
-      if (errors.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: errors.join("\n"), // Using newline instead of comma
-        });
-      }
-    }),
+  //     if (errors.length > 0) {
+  //       ctx.addIssue({
+  //         code: z.ZodIssueCode.custom,
+  //         message: errors.join("\n"), // Using newline instead of comma
+  //       });
+  //     }
+  //   }),
 
-  confirm_password: z
-      .string()
-      .min(1, { message: "Please confirm your password" }),
+  // confirm_password: z
+  //     .string()
+  //     .min(1, { message: "Please confirm your password" }),
 })
-.refine((data) => data.password === data.confirm_password, {
-  message: "Passwords do not match",
-  path: ["confirm_password"],
-});
+// .refine((data) => data.password === data.confirm_password, {
+//   message: "Passwords do not match",
+//   path: ["confirm_password"],
+// });
 
-export const passwordFormSchema = z
-  .object({
-    old_password: z
-      .string()
-      .min(1, { message: "Current password is required" }),
-    new_password: z.string()
-      .superRefine((val, ctx) => {
-        const errors = [];
+// export const passwordFormSchema = z
+//   .object({
+//     old_password: z
+//       .string()
+//       .min(1, { message: "Current password is required" }),
+//     new_password: z.string()
+//       .superRefine((val, ctx) => {
+//         const errors = [];
         
-        if (val.length < 6) {
-          errors.push("Password must be at least 6 characters long");
-        }
+//         if (val.length < 6) {
+//           errors.push("Password must be at least 6 characters long");
+//         }
         
-        if (!/[a-z]/.test(val)) {
-          errors.push("Password must contain at least one lowercase letter");
-        }
+//         if (!/[a-z]/.test(val)) {
+//           errors.push("Password must contain at least one lowercase letter");
+//         }
         
-        if (!/[A-Z]/.test(val)) {
-          errors.push("Password must contain at least one uppercase letter");
-        }
+//         if (!/[A-Z]/.test(val)) {
+//           errors.push("Password must contain at least one uppercase letter");
+//         }
         
-        if (!/\d/.test(val)) {
-          errors.push("Password must contain at least one number");
-        }
+//         if (!/\d/.test(val)) {
+//           errors.push("Password must contain at least one number");
+//         }
         
-        if (errors.length > 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: errors.join("\n"), // Using newline instead of comma
-          });
-        }
-      }),
-    confirm_password: z
-      .string()
-      .min(1, { message: "Please confirm your password" }),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
+//         if (errors.length > 0) {
+//           ctx.addIssue({
+//             code: z.ZodIssueCode.custom,
+//             message: errors.join("\n"), // Using newline instead of comma
+//           });
+//         }
+//       }),
+//     confirm_password: z
+//       .string()
+//       .min(1, { message: "Please confirm your password" }),
+//   })
+//   .refine((data) => data.new_password === data.confirm_password, {
+//     message: "Passwords do not match",
+//     path: ["confirm_password"],
+//   });
