@@ -80,9 +80,7 @@ INSTALLED_APPS = [
     'apps.gad',
     'apps.clerk',
     'apps.landing',
-    'backend.firebase.notifications',
     'apps.act_log',
-    
 ]
 
 MIDDLEWARE = [
@@ -142,7 +140,7 @@ DATABASES = {
         'USER': config('DB_USER', default='my_default_user'),
         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
         'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+        'PORT': config('DB_PORT', default='6543'),
     }
 }
 

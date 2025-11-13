@@ -6,7 +6,10 @@ from apps.administration.models import Staff
 from apps.healthProfiling.models import ResidentProfile
 from utils.create_notification import NotificationQueries
 import traceback
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Create notifications for today\'s follow-up visits and missed follow-ups'
@@ -243,6 +246,8 @@ class Command(BaseCommand):
                     # Mark as notified today
                     self.mark_as_notified_today(followup, followup_type)
                 
+                logger.info(f"NOTIFICATION CREATED: {title_staff} | Patient: {patient_name} | Type: {followup_type} | Job: todays_morning")
+                
             except Exception as e:
                 self.stdout.write(
                     self.style.ERROR(f"   💥 Error for {followup_type} followup {followup.followv_id}: {str(e)}")
@@ -258,7 +263,7 @@ class Command(BaseCommand):
         from django.utils import timezone
         
         today = timezone.now().date().isoformat()
-        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}"
+        cache_key = f"followup_notified_v2_{followup.followv_id}_{followup_type}_{today}"
         
         return cache.get(cache_key, False)
     

@@ -135,20 +135,6 @@ export const FamilyPlanningView = () => {
       }
     }
 
-    // Uncomment and fix this section if you need to process medical history records
-    /*
-    if (recordData?.medical_history_records) {
-      recordData?.medical_history_records.forEach(record => {
-        const isExactStandard = exactStandardConditions.some(condition =>
-          condition.toLowerCase() === record.illname.toLowerCase()
-        );
-        if (!isExactStandard) {
-          illnesses.push(record.illname);
-        }
-      });
-    }
-    */
-
     return illnesses;
   };
 

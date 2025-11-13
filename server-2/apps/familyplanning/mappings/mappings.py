@@ -253,58 +253,59 @@ def get_fp_patient_counts(request):
 @api_view(['GET'])
 def get_detailed_monthly_fp_report(request, year, month):
     try:
-        # Define month range with timezone-aware datetimes
+        # --- DATE DEFINITIONS (BOM = 1-15, EOM = 16-31) ---
         month_start = timezone.make_aware(datetime(int(year), int(month), 1))
         next_month = month_start + relativedelta(months=1)
         month_end = (next_month - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
         
-        # Previous month range
         prev_month_start = month_start - relativedelta(months=1)
         prev_month_end = (month_start - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
-
-        # Check and update dropouts
-        cutoff_start = month_start - timedelta(days=3)
-        cutoff_end = month_end + timedelta(days=3)
         
-        pending_follow_ups = FollowUpVisit.objects.filter(
-            followv_status="Pending",
-            followv_date__range=(cutoff_start, cutoff_end)
-        ).select_related('patrec__pat_id')
+        # BOM: Day 1 (00:00:00)
+        bom_start_date = month_start
+        # BOM: Day 15 (23:59:59)
+        bom_end_date = month_start.replace(day=15, hour=23, minute=59, second=59, microsecond=999999)
         
-        patient_ids = set(fu.patrec.pat_id.pat_id for fu in pending_follow_ups if fu.patrec and fu.patrec.pat_id)
-        for pat_id in patient_ids:
-            _check_and_update_dropouts_for_patient(pat_id)
+        # EOM: Day 16 (00:00:00)
+        eom_start_date = month_start.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
+        # EOM: Last day of month (23:59:59)
+        eom_end_date = month_end
+        # --- END OF DATE DEFINITIONS ---
 
-        # Define methods and age groups
-        methods = ["BTL", "NSV", "Condom", "POP", "COC", "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", "LAM", "BBT", "CMM", "STM", "SDM"]
+        
+        known_methods = ["BTL", "NSV", "Condom", "POP", "COC", "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", "LAM", "BBT", "CMM", "STM", "SDM"]
         age_groups = ['10-14', '15-19', '20-49', 'Total']
+        methods_to_loop = known_methods 
 
-        # METHOD MAPPING
         METHOD_MAP = {
-            "NSV": ["NSV", "Vasectomy"],
-            "CMM": ["CMM", "BOM/CMM"],
-            "Condom": ["Condom", "condom", "CONDOM"],
+            "NSV": ["NSV", "Vasectomy"], "CMM": ["CMM", "BOM/CMM"], "Condom": ["Condom", "condom", "CONDOM"],
             "IUD-Post Partum": ["IUD-Post Partum", "IUD-PostPartum", "IUD Post Partum", "IUD-Postpartum"],
-            "POP": ["POP", "pop", "Progestin-Only Pill"],
-            "SDM": ["SDM", "sdm", "Standard Days Method"],
-            "COC": ["COC", "coc", "Combined Oral Contraceptive"],
-            "Implant": ["Implant", "Implants"],
-            "STM": ["stm", "STM"],
-            "DMPA": ["dmpa", "DMPA"],
-            **{m: [m] for m in methods if m not in ["NSV", "CMM", "Condom", "Implant","IUD-Post Partum", "POP", "DMPA", "SDM", "COC","STM"]}
+            "POP": ["POP", "pop", "Progestin-Only Pill"], "SDM": ["SDM", "sdm", "Standard Days Method"],
+            "COC": ["COC", "coc", "Combined Oral Contraceptive"], "Implant": ["Implant", "Implants"],
+            "STM": ["stm", "STM"], "DMPA": ["dmpa", "DMPA"],
+            **{m: [m] for m in known_methods if m not in ["NSV", "CMM", "Condom", "Implant","IUD-Post Partum", "POP", "DMPA", "SDM", "COC","STM"]}
         }
+        
+        ONE_TIME_METHODS = ["BTL", "NSV", "IUD-Interval", "IUD-Post Partum"]
 
-        # Initialize count dictionaries
-        bom_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        new_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        other_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        drop_outs_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        prev_month_new_counts = {method: {age: 0 for age in age_groups} for method in methods}
+        # Dictionaries for all 6 counts
+        bom_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+        new_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+        other_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+        drop_outs_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+        prev_month_new_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+        eom_counts = {method: {age: 0 for age in age_groups} for method in methods_to_loop}
+
 
         today = timezone.now().date()
+        
+        print(f"--- Generating Report for {year}-{month} (Corrected 1-15/16-31 Logic) ---")
+        print(f"BOM (1-15) Range: {bom_start_date} to {bom_end_date}")
+        print(f"EOM (16-31) Range: {eom_start_date} to {eom_end_date}")
 
-        for method in methods:
-            # Case-insensitive method filter
+        for method in methods_to_loop:
+            is_one_time_method = method in ONE_TIME_METHODS
+
             method_names = METHOD_MAP.get(method, [method])
             method_filter = Q()
             for name in method_names:
@@ -333,128 +334,77 @@ def get_detailed_monthly_fp_report(request, year, month):
                     age_filter = Q(dob__gt=dob_gt, dob__lte=dob_lte)
                 else:
                     age_filter = Q()
+                    
+                first_record_for_method_date = Min(
+                    'pat__fp_records__created_at',
+                    filter=Q(pat__fp_records__fp_type__fpt_method_used__in=method_names)
+                )
 
-                # 1. Previous month new acceptors - DISTINCT PATIENTS
+                # 1. PREVIOUS MONTH NEW ACCEPTORS (Definition 2)
                 prev_month_new_query = FP_Record.objects.annotate(
                     dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at'),
-                    has_current=Exists(
-                        FP_Record.objects.filter(
-                            pat__pat_id=OuterRef('pat__pat_id'),
-                            created_at__range=(prev_month_start, prev_month_end),
-                            fp_type__fpt_client_type__iexact='currentuser'
-                        )
-                    )
+                    first_record_date=first_record_for_method_date,
                 ).filter(
                     age_filter,
                     method_filter,
                     created_at__range=(prev_month_start, prev_month_end),
                     fp_type__fpt_client_type__iexact='newacceptor',
                     first_record_date=F('created_at'),
-                    has_current=False
-                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
-                
+                ).values('pat__pat_id').distinct()
                 prev_month_new_counts[method][age_group] = prev_month_new_query.count()
 
-                # 2. BOM: Previous month's active users + new acceptors - DISTINCT PATIENTS
-                # Get distinct patients from previous month who were active
-                bom_active_patients = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    latest_fp_record_id=Subquery(
-                        FP_Record.objects.filter(
-                            pat__pat_id=OuterRef('pat__pat_id'),
-                            created_at__lt=prev_month_start
-                        ).order_by('-created_at').values('fprecord_id')[:1]
-                    )
-                ).filter(
+                # --- 2. BOM (Current User 1-15) (Definition 1) ---
+                # !! BUG FIX: Removed 'first_record_date=F('created_at')'
+                bom_query = FP_Record.objects.annotate(dob=dob_annotation).filter(
                     age_filter,
                     method_filter,
-                    fprecord_id__isnull=False,
-                    fprecord_id=F('latest_fp_record_id'),
-                ).annotate(
-                    has_dropout=Exists(
-                        FP_Assessment_Record.objects.filter(
-                            fprecord_id=OuterRef('fprecord_id'),
-                            followv__followv_status__iexact='dropout',
-                            followv__followv_date__lt=prev_month_start
-                        )
-                    )
-                ).filter(
-                    has_dropout=False
-                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
-                
-                bom_carryover_count = bom_active_patients.count()
-                bom_counts[method][age_group] = bom_carryover_count + prev_month_new_counts[method][age_group]
+                    fp_type__fpt_client_type__iexact='currentuser', # <-- Your definition
+                    created_at__range=(bom_start_date, bom_end_date) # <-- Days 1-15
+                ).values('pat__pat_id').distinct()
+                bom_counts[method][age_group] = bom_query.count()
 
-                # 3. NEW: Current month new acceptors - DISTINCT PATIENTS
+                # --- 3. NEW ACCEPTORS (Present Month 1-31) (Definition 6) ---
                 new_query = FP_Record.objects.annotate(
                     dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at'),
-                    has_current=Exists(
-                        FP_Record.objects.filter(
-                            pat__pat_id=OuterRef('pat__pat_id'),
-                            created_at__range=(month_start, month_end),
-                            fp_type__fpt_client_type__iexact='currentuser'
-                        )
-                    )
+                    first_record_date=first_record_for_method_date,
                 ).filter(
                     age_filter,
                     method_filter,
                     created_at__range=(month_start, month_end),
                     fp_type__fpt_client_type__iexact='newacceptor',
-                    first_record_date=F('created_at'),
-                    has_current=False
-                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
-                
+                    first_record_date=F('created_at')
+                ).values('pat__pat_id').distinct()
                 new_counts[method][age_group] = new_query.count()
+                
+                # --- 4. OTHER (Reason = 'fp_others', 1-31) (Definition 3) ---
+                other_query = FP_Record.objects.annotate(dob=dob_annotation).filter(
+                    age_filter,
+                    method_filter,
+                    fp_type__fpt_reason_fp__iexact='fp_others', 
+                    created_at__range=(month_start, month_end) 
+                ).values('pat__pat_id').distinct()
+                other_counts[method][age_group] = other_query.count()
 
-                # 4. OTHER: Current users with previous records - DISTINCT PATIENTS
-                other_query = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at')
+                # --- 5. DROP-OUTS (Reason = 'dropoutrestart', 1-31) (Definition 4) ---
+                dropout_query = FP_Record.objects.annotate(
+                    dob=dob_annotation
                 ).filter(
                     age_filter,
                     method_filter,
-                    created_at__range=(month_start, month_end),
-                    fp_type__fpt_client_type__iexact='currentuser',
-                    first_record_date__lt=F('created_at')
-                ).values('pat__pat_id').distinct()  # DISTINCT PATIENTS
-                
-                other_counts[method][age_group] = other_query.count()
-
-                # 5. DROP-OUTS - DISTINCT PATIENTS
-                dropout_method_filter = Q()
-                for name in method_names:
-                    dropout_method_filter |= Q(fprecord__fp_type__fpt_method_used__iexact=name)
-
-                dropout_query = FP_Assessment_Record.objects.annotate(
-                    dob=Case(
-                        When(fprecord__pat__pat_type='Resident', then=F('fprecord__pat__rp_id__per__per_dob')),
-                        When(fprecord__pat__pat_type='Transient', then=F('fprecord__pat__trans_id__tran_dob')),
-                        default=None,
-                        output_field=DateField()
-                    ),
-                    dropout_date=Case(
-                        When(Q(followv__followv_status__iexact='Dropout') | Q(followv__followv_status__iexact='missed'), 
-                            then=F('followv__followv_date')),
-                        When(
-                            Q(followv__followv_status__iexact='pending') & 
-                            Q(followv__followv_date__lte=today - timedelta(days=3)),
-                            then=F('followv__followv_date') + timedelta(days=3)
-                        ),
-                        default=None,
-                        output_field=DateField()
-                    )
-                ).filter(
-                    age_filter,
-                    dropout_method_filter,
-                    Q(followv__followv_status__iexact='dropout') |
-                    Q(followv__followv_status__iexact='missed') | 
-                    Q(followv__followv_status__iexact='pending', followv__followv_date__lte=today - timedelta(days=3)),
-                    dropout_date__range=(month_start, month_end)
-                ).values('fprecord__pat__pat_id').distinct()  # DISTINCT PATIENTS
-                
+                    fp_type__fpt_reason_fp__iexact='dropoutrestart',
+                    created_at__range=(month_start, month_end)
+                ).values('pat__pat_id').distinct()
                 drop_outs_counts[method][age_group] = dropout_query.count()
+
+                # --- 6. EOM (Current User 16-31) (Definition 5) ---
+                # !! BUG FIX: Added 'fp_type__fpt_client_type__iexact='currentuser''
+                eom_query = FP_Record.objects.annotate(dob=dob_annotation).filter(
+                    age_filter,
+                    method_filter,
+                    fp_type__fpt_client_type__iexact='currentuser', # <-- Your definition
+                    created_at__range=(eom_start_date, eom_end_date) # <-- Days 16-31
+                ).values('pat__pat_id').distinct()
+                eom_counts[method][age_group] = eom_query.count()
 
         response_data = {
             'bom_counts': bom_counts,
@@ -462,16 +412,20 @@ def get_detailed_monthly_fp_report(request, year, month):
             'other_counts': other_counts,
             'drop_outs_counts': drop_outs_counts,
             'prev_month_new_counts': prev_month_new_counts,
+            'eom_counts': eom_counts, # <-- Sending all 6 counts
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc() 
         print(f"Error in get_detailed_monthly_fp_report: {str(e)}")
         return Response(
             {'error': f'Failed to generate report: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+  
     
 @api_view(['GET'])
 def get_fp_monthly_records(request):

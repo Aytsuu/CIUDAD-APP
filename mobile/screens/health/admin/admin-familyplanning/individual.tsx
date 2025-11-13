@@ -204,7 +204,7 @@ export default function IndividualFpRecordsScreen() {
                   label="CLIENT TYPE" 
                   value={item.client_type || "Not specified"} 
                   iconColor="#7e22ce"
-                />
+                />1
                 <InfoRow 
                   icon={Calendar} 
                   label="Created Date" 
