@@ -1,4 +1,4 @@
-import { useTBHistory } from '../family-profling/queries/profilingHistoryQueries';
+import { useTBHistory } from '../../pages/record/health-family-profiling/family-profling/queries/profilingHistoryQueries';
 import { HistoryList } from '@/components/health-profiling/HistoryList';
 
 interface TBHistoryDisplayProps {

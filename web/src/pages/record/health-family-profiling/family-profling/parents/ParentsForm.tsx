@@ -11,6 +11,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { DependentRecord } from "../../../profiling/ProfilingTypes"
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ParentsForm({ residents, form, dependentsList, onSelect, prefix, title, hideHealthFields = false }: {
   residents: any;
@@ -28,49 +29,44 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
       <div className="bg-white rounded-lg p-4">
         <div className="mb-4">
           <h2 className="font-semibold text-lg">{title}</h2>
-          <p className="text-xs text-black/50">Loading residents data...</p>
+          <p className="text-xs text-black/50">Review all fields before proceeding</p>
+        </div>
+        <div className="flex items-center justify-center gap-3 py-8">
+          <Spinner size="md" />
+          <p className="text-sm text-gray-500">Loading resident data...</p>
         </div>
       </div>
     );
   }
 
+  // Create a Set of dependent IDs for O(1) lookup instead of O(n) array search
+  const dependentIdsSet = React.useMemo(() => {
+    return new Set(dependentsList.map(dep => dep.id));
+  }, [dependentsList]);
+
+  // Optimize filtering with Set lookup
   const filteredResidents = React.useMemo(() => {
     if (!residents?.formatted) return [];
     return residents.formatted.filter((resident: any) => {
-      const residentId = resident.id.split(" ")[0]
+      const residentId = resident.id.split(" ")[0];
       // Only exclude dependents, allow same person to be selected for multiple parent roles
-      return !dependentsList.some((dependent) => dependent.id == residentId)
-    }
-  )}, [residents?.formatted, dependentsList])
+      return !dependentIdsSet.has(residentId);
+    });
+  }, [residents?.formatted, dependentIdsSet]);
 
+  // Create a Map for O(1) resident lookup instead of O(n) find operation
+  const residentsMap = React.useMemo(() => {
+    if (!residents?.default) return new Map();
+    return new Map(residents.default.map((r: any) => [r.rp_id, r]));
+  }, [residents?.default]);
+
+  // Watch the form field value
+  const selectedResidentValue = form.watch(`${prefix}.id`);
+
+  // Optimize useEffect - only trigger when the actual value changes
   React.useEffect(() => {
-    if (!residents?.default) return;
-
-    const selectedResident = form.watch(`${prefix}.id`);
-    const searchedResident = residents.default.find((value: any) =>
-      value.rp_id === selectedResident?.split(" ")[0]
-    );
-    const personalInfo = searchedResident?.personal_info
-
-    if (personalInfo) {
-      form.setValue(`${prefix}`, {
-        id: selectedResident || '',
-        lastName: personalInfo.per_lname || '',
-        firstName: personalInfo.per_fname || '',
-        middleName: personalInfo.per_mname || '',
-        suffix: personalInfo.per_suffix || '',
-        dateOfBirth: personalInfo.per_dob || '',
-        status: personalInfo.per_status || '',
-        religion: personalInfo.per_religion || '',
-        edAttainment: personalInfo.per_edAttainment || '',
-        contact: personalInfo.per_contact || '',
-        perAddDetails: {
-          bloodType: personalInfo.bloodType || '',
-          philHealthId: personalInfo.philHealthId || '',
-          covidVaxStatus: personalInfo.covidVaxStatus || '',
-        }
-      });
-    } else {
+    if (!residents?.default || !selectedResidentValue) {
+      // Clear form if no selection
       form.setValue(`${prefix}`, {
         id: '',
         lastName: '',
@@ -88,11 +84,37 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
           covidVaxStatus: '',
         },
       });
+      onSelect('');
+      return;
     }
 
-    onSelect(selectedResident?.split(' ')[0])
+    const residentId = selectedResidentValue.split(" ")[0];
+    const searchedResident = residentsMap.get(residentId);
+    const personalInfo = searchedResident?.personal_info;
 
-  }, [form.watch(`${prefix}.id`), residents?.default]);
+    if (personalInfo) {
+      // Batch setValue calls by setting the entire object at once
+      form.setValue(`${prefix}`, {
+        id: selectedResidentValue,
+        lastName: personalInfo.per_lname || '',
+        firstName: personalInfo.per_fname || '',
+        middleName: personalInfo.per_mname || '',
+        suffix: personalInfo.per_suffix || '',
+        dateOfBirth: personalInfo.per_dob || '',
+        status: personalInfo.per_status || '',
+        religion: personalInfo.per_religion || '',
+        edAttainment: personalInfo.per_edAttainment || '',
+        contact: personalInfo.per_contact || '',
+        perAddDetails: {
+          bloodType: personalInfo.bloodType || '',
+          philHealthId: personalInfo.philHealthId || '',
+          covidVaxStatus: personalInfo.covidVaxStatus || '',
+        }
+      }, { shouldValidate: false }); // Skip validation during auto-fill for performance
+      
+      onSelect(residentId);
+    }
+  }, [selectedResidentValue, residentsMap, prefix, form, onSelect]);
 
   return (
     <div className="bg-white rounded-lg">
