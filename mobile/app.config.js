@@ -85,9 +85,9 @@
         router: {
           origin: false
         },
-        eas: {
-          projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
-        }
+        // eas: {
+        //   projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
+        // }
       }
     }
   });
