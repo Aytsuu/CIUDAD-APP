@@ -115,6 +115,25 @@ class CompleteRegistrationView(APIView):
     if family:
         new_fam = self.join_family(family, rp)
 
+        # Create notification
+        fam_notif_recs = []
+        filtered_residents = FamilyComposition.objects.filter(fam=family)
+        for res in filtered_residents:
+           primary_fam = FamilyComposition.objects.filter(rp=res.rp).first()
+           if primary_fam.fam == family:
+              fam_notif_recs.append(res.rp)
+
+        create_notification(
+          title="New Family Member",
+          message="You have a new member registered in your family.",
+          recipients=fam_notif_recs,
+          notif_type="",
+          web_route="",
+          web_params={},
+          mobile_route="/(account)/family",
+          mobile_params={}
+        )
+
     # Perform double query
     double_queries = PostQueries()
     response = double_queries.complete_profile(request.data) 
@@ -131,14 +150,14 @@ class CompleteRegistrationView(APIView):
           results["bus_id"] = bus.pk
 
     # Create notification
-    recipients = [
+    res_notif_recs = [
        assi.staff.rp
        for assi in Assignment.objects.filter(Q(feat__feat_name="PROFILING") & ~Q(staff=staff))
     ]
 
     admins = Staff.objects.filter(Q(pos__pos_title="ADMIN") & ~Q(staff_id=staff.staff_id))
     for staff_data in admins:
-      recipients.append(staff_data.rp)
+      res_notif_recs.append(staff_data.rp)
 
     resident_name = f"{rp.per.per_fname}{f' {rp.per.per_mname[0]}.' if rp.per.per_mname else ''} {rp.per.per_lname}"
     staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
@@ -154,7 +173,7 @@ class CompleteRegistrationView(APIView):
       message=(
           f"{resident_name} has been registered as resident by {staff_name}"
       ),
-      recipients=recipients,
+      recipients=res_notif_recs,
       notif_type="REGISTRATION",
       web_route="profiling/resident/view/personal",
       web_params={"type": "viewing", "data": {"residentId": residentId, "familyId": familyId}},
