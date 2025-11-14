@@ -1,4 +1,4 @@
-import { FlatList, Text, View, Pressable, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
+import { FlatList, Text, View, Pressable, TouchableOpacity, RefreshControl, ScrollView } from "react-native";
 import { Archive, Trash2, ArchiveRestore } from "lucide-react-native";
 import React from "react";
 import { usegetBudgetPlanActive, usegetBudgetPlanInactive } from "./queries/budgetPlanFetchQueries"
@@ -183,7 +183,7 @@ export default function BudgetPlanMain() {
     : 'No records available yet.';
     
     return (
-      <View className="flex-1 justify-center items-center py-8">
+      <View className="flex-1 justify-center items-center p-6">
         <EmptyState emptyMessage={emptyMessage} />
       </View>
     );
@@ -195,6 +195,55 @@ export default function BudgetPlanMain() {
       <LoadingState/>
     </View>
   );
+
+  // Main content component for each tab
+  // Main content component for each tab
+const renderTabContent = (isArchived: boolean) => {
+  if (isLoading && !isRefreshing) {
+    return renderLoadingState();
+  }
+
+  return (
+    <View className="flex-1">
+      {totalCount === 0 ? (
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+              tintColor="#00a8f0"
+            />
+          }
+        >
+          {renderEmptyState()}
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={plans}
+          renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={isArchived} />}
+          keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+              tintColor="#00a8f0"
+            />
+          }
+          contentContainerStyle={{ 
+            paddingBottom: 16,
+            paddingTop: 16,
+            flexGrow: 1
+          }}
+        />
+      )}
+    </View>
+  );
+};
 
   // Handle tab change
   const handleTabChange = (tab: 'active' | 'archive') => {
@@ -262,69 +311,12 @@ export default function BudgetPlanMain() {
 
               {/* Active Tab Content */}
               <TabsContent value="active" className="flex-1 mt-4">
-                {isLoading && !isRefreshing ? (
-                  renderLoadingState()
-                ) : (
-                  <View className="flex-1">
-                    {totalCount === 0 ? (
-                      renderEmptyState()
-                    ) : (
-                      <>
-                        <FlatList
-                          data={plans}
-                          renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={false} />}
-                          keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
-                          showsVerticalScrollIndicator={false}
-                          refreshControl={
-                            <RefreshControl
-                              refreshing={isRefreshing}
-                              onRefresh={handleRefresh}
-                              colors={['#00a8f0']}
-                            />
-                          }
-                          contentContainerStyle={{ 
-                            paddingBottom: 16,
-                            paddingTop: 16
-                          }}
-                        />
-    
-                      </>
-                    )}
-                  </View>
-                )}
+                {renderTabContent(false)}
               </TabsContent>
 
               {/* Archive Tab Content */}
               <TabsContent value="archive" className="flex-1 mt-4">
-                {isLoading && !isRefreshing ? (
-                  renderLoadingState()
-                ) : (
-                  <View className="flex-1">
-                    {totalCount === 0 ? (
-                      renderEmptyState()
-                    ) : (
-                      <>
-                        <FlatList
-                          data={plans}
-                          renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={true} />}
-                          keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
-                          showsVerticalScrollIndicator={false}
-                          refreshControl={
-                            <RefreshControl
-                              refreshing={isRefreshing}
-                              onRefresh={handleRefresh}
-                              colors={['#00a8f0']}
-                            />
-                          }
-                          contentContainerStyle={{ 
-                            paddingBottom: 16,
-                            paddingTop: 16
-                          }}
-                        />
-                      </>
-                    )}
-                  </View>
-                )}
+                {renderTabContent(true)}
               </TabsContent>
             </Tabs>
           </View>

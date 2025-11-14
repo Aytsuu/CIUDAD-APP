@@ -1,4 +1,4 @@
-import { SafeAreaView, View, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView } from "react-native";
+import { SafeAreaView, View, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { useGetBudgetPlanSuppDoc, type BudgetPlanSuppDoc } from "./queries/budgetPlanFetchQueries";
 import { ChevronLeft, ChevronRight, X, Paperclip, Plus, Trash2 } from "lucide-react-native";
 import { useState } from "react";
@@ -12,11 +12,19 @@ import { ImageIcon } from "lucide-react-native";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
     const router = useRouter();
-    const { data: suppDocs = [], isLoading } = useGetBudgetPlanSuppDoc(plan_id);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { data: suppDocs = [], isLoading, refetch } = useGetBudgetPlanSuppDoc(plan_id);
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{bpf_url: string, bpf_name: string, bpf_description: string | null}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const {mutate: deleteFile} = useDeleteBudgetPlanFile();
+
+    // Refresh function
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setIsRefreshing(false);
+    };
 
     const handleViewImages = (images: BudgetPlanSuppDoc[], index = 0) => {
         const formattedImages = images.filter(img => /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(img.bpf_name)).map(img => ({
@@ -44,7 +52,7 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
 
     if (isLoading) {
         return (
-            <View className="flex-1 justify-center items-center bg-gray-50 pt-10">
+            <View className="flex-1 justify-center items-center bg-white pt-10">
                 <LoadingState />
             </View>
         );
@@ -75,19 +83,44 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             {/* Scrollable content */}
             <View className="flex-1">
                 {imageDocs.length === 0 ? (
-                    <View className="flex-1 justify-center items-center py-16 px-6">
-                        <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
-                            <ImageIcon size={48} className="text-gray-300 mb-4" />
-                            <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                                No Supporting Images
-                            </Text>
-                            <Text className="text-gray-400 text-center text-sm">
-                                No supporting images have been added to this budget plan yet.
-                            </Text>
+                    <ScrollView 
+                        className="flex-1"
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                    >
+                        <View className="flex-1 justify-center items-center py-16 px-6">
+                            <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
+                                <ImageIcon size={48} className="text-gray-300 mb-4" />
+                                <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                                    No Supporting Images
+                                </Text>
+                                <Text className="text-gray-400 text-center text-sm">
+                                    No supporting images have been added to this budget plan yet.
+                                </Text>
+                            </View>
                         </View>
-                    </View>
+                    </ScrollView>
                 ) : (
-                    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+                    <ScrollView 
+                        className="flex-1 p-6" 
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                        contentContainerStyle={{ flexGrow: 1 }}
+                    >
                         <View className="pb-3">
                             {/* Image Gallery */}
                             <View className="mb-6">
