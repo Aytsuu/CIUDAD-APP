@@ -134,6 +134,7 @@ export type PaymentRequest = {
     pay_due_date: string;
     pay_req_status: string;
     pay_date_paid: string | null;
+    pay_reason?: string;
     comp_id: number;
     pr_id: number | null;
     pay_amount: number;

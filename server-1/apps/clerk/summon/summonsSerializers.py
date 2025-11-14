@@ -374,6 +374,7 @@ class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
             'pay_due_date', 
             'pay_req_status', 
             'pay_date_paid', 
+            'pay_reason',
             'comp_id', 
             'pr_id',
             'pay_amount',
