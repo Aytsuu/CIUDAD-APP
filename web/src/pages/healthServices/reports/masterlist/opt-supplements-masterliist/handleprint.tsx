@@ -370,7 +370,7 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
             .text-center { text-align: center; }
             .text-right { text-align: right; }
             @page {
-              size: auto;
+              size: legal landscape;
               margin: 10mm;
             }
             @media print {

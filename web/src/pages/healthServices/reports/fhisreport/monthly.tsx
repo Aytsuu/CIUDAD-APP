@@ -16,8 +16,7 @@ export default function FHSISMonthlyRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const { data: apiResponse, isLoading, error, refetch } = useMonthlyData(currentPage, pageSize, yearFilter, searchQuery);
+  const { data: apiResponse, isLoading, error, refetch } = useMonthlyData(currentPage, pageSize, searchQuery);
 
   // Handle errors
   useEffect(() => {
@@ -34,21 +33,15 @@ export default function FHSISMonthlyRecords() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, yearFilter]);
+  }, [searchQuery]);
 
   // Extract data from API response
   // In your FHSISMonthlyRecords component, change these lines:
 
-  // Extract data from API response - FIX THIS
+  // Extract data from API response
   const monthlyData: any[] = apiResponse?.results?.data || apiResponse?.data || [];
   const totalMonths: number = apiResponse?.results?.total_months || apiResponse?.total_months || 0;
   const totalPages = Math.ceil(totalMonths / pageSize);
-
-  // Get available years for filter
-  const availableYears = useMemo(() => {
-    const years = new Set(monthlyData.map((item) => item.year.toString()));
-    return Array.from(years).sort((a, b) => b.localeCompare(a));
-  }, [monthlyData]);
 
   // Filter and sort data
   const filteredMonthlyData = useMemo(() => {
@@ -171,7 +164,7 @@ export default function FHSISMonthlyRecords() {
               <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                 <Folder className="w-16 h-16 text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No months found</h3>
-                <p className="text-sm text-center text-gray-400">{searchQuery || yearFilter !== "all" ? "Try adjusting your search criteria" : "No monthly records available"}</p>
+                <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No monthly records available"}</p>
               </div>
             )}
 

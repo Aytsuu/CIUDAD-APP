@@ -268,23 +268,23 @@ export default function MonthlyFirstAidDetails() {
           </div>
         </div>
 
-        {/* Printable Report Section */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8 flex justify-center">
           <div
-            className="border border-black"
             style={{
-              minHeight: "20in",
-              width: "13in",
-              position: "relative",
+              minHeight: "19in",
               margin: "0 auto",
               padding: "0.5in",
               backgroundColor: "white",
-              display: "flex",
-              flexDirection: "column",
               height: "20in",
             }}
           >
-            <div className="p-4 print-area  " id="printable-area">
+            <div className="p-4 print-area" id="printable-area"
+            
+            
+            style={{
+              width: "13in",
+           
+            }}>
               {/* Main Content Area */}
               <div className="content-area flex-1">
                 {/* Header */}

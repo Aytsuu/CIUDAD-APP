@@ -1,11 +1,9 @@
 // components/pages/Page2.tsx
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
-import { PagelastProps } from "./type";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import {PageProps} from "./type"
 
-
-
-export default function Page10({ state, onBack }: PagelastProps) {
+export default function Page10({ state, onBack, onNext }: PageProps) {
   return (
     <div className="min-h-[500px] flex flex-col">
       <div className="mb-6">
@@ -38,7 +36,10 @@ export default function Page10({ state, onBack }: PagelastProps) {
           Back 
         </Button>
         
-      
+        <Button onClick={onNext}>
+          Continue 
+          <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
       </div>
     </div>
   );
