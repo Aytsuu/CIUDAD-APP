@@ -14,7 +14,6 @@ interface OTPVerificationProps {
   onSuccess: () => void;
   onResend: () => Promise<void>;
   isResending?: boolean;
-  isSignup?: boolean;
 }
 
 export default function RegVerification({
@@ -24,7 +23,6 @@ export default function RegVerification({
   onSuccess,
   onResend,
   isResending = false,
-  isSignup = false,
 }: OTPVerificationProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState("");
