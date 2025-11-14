@@ -26,10 +26,12 @@ export const MedicinesCard = ({ medicinesInfo, currentRecord }: any) => {
             <View className="p-3">
                 {(medicinesInfo as any).map(({ record, supplement }: any, index: any) => {
                     const isCurrentRecord = (record as any).chhist_id === (currentRecord as any)?.chhist_id;
-                    const medrecDetails = (supplement as any).medrec_details;
-                    const minvDetails = (medrecDetails as any)?.minv_details;
-                    const medDetail = (minvDetails as any)?.med_detail;
-                    const invDetail = (minvDetails as any)?.inv_detail;
+                    
+                    // New API structure: medreqitem_details is an array
+                    const medreqItemDetails = (supplement as any).medreqitem_details?.[0];
+                    const medicine = medreqItemDetails?.medicine;
+                    const allocations = medreqItemDetails?.allocations || [];
+                    const actionBy = medreqItemDetails?.action_by;
 
                     return (
                         <View key={(supplement as any).chsupplement_id} className={`p-4 rounded-lg border mb-3 ${isCurrentRecord ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
@@ -47,55 +49,54 @@ export const MedicinesCard = ({ medicinesInfo, currentRecord }: any) => {
                             <View className="space-y-2">
                                 <View className="flex-row justify-between">
                                     <Text className="text-sm font-medium text-gray-700">Medicine Name:</Text>
-                                    <Text className="text-sm text-gray-900">{(medDetail as any)?.med_name || "N/A"}</Text>
-                                </View>
-
-                                <View className="flex-row justify-between">
-                                    <Text className="text-sm font-medium text-gray-700">Category:</Text>
-                                    <Text className="text-sm text-gray-900">{(medDetail as any)?.catlist || "N/A"}</Text>
-                                </View>
-
-                                <View className="flex-row justify-between">
-                                    <Text className="text-sm font-medium text-gray-700">Type:</Text>
-                                    <Text className="text-sm text-gray-900">{(medDetail as any)?.med_type || "N/A"}</Text>
+                                    <Text className="text-sm text-gray-900">{medicine?.med_name || "N/A"}</Text>
                                 </View>
 
                                 <View className="flex-row justify-between">
                                     <Text className="text-sm font-medium text-gray-700">Dosage:</Text>
                                     <Text className="text-sm text-gray-900">
-                                        {(minvDetails as any)?.minv_dsg} {(minvDetails as any)?.minv_dsg_unit}
+                                        {medicine?.med_dsg} {medicine?.med_dsg_unit}
                                     </Text>
                                 </View>
 
                                 <View className="flex-row justify-between">
                                     <Text className="text-sm font-medium text-gray-700">Form:</Text>
-                                    <Text className="text-sm text-gray-900 capitalize">{(minvDetails as any)?.minv_form || "N/A"}</Text>
+                                    <Text className="text-sm text-gray-900 capitalize">{medicine?.med_form || "N/A"}</Text>
                                 </View>
 
                                 <View className="flex-row justify-between">
                                     <Text className="text-sm font-medium text-gray-700">Quantity Given:</Text>
                                     <Text className="text-sm text-gray-900">
-                                        {(medrecDetails as any)?.medrec_qty} {(minvDetails as any)?.minv_qty_unit}
+                                        {medreqItemDetails?.total_quantity} {medreqItemDetails?.unit}
                                     </Text>
                                 </View>
 
-                                {(invDetail as any)?.expiry_date && (
-                                    <View className="flex-row justify-between">
-                                        <Text className="text-sm font-medium text-gray-700">Expiry Date:</Text>
-                                        <Text className="text-sm text-gray-900">{format(new Date((invDetail as any).expiry_date), "MMM dd, yyyy")}</Text>
-                                    </View>
-                                )}
+                                <View className="flex-row justify-between">
+                                    <Text className="text-sm font-medium text-gray-700">Status:</Text>
+                                    <Text className="text-sm text-gray-900 capitalize">{medreqItemDetails?.status || "N/A"}</Text>
+                                </View>
 
-                                {(medrecDetails as any)?.reason && (
+                                {medreqItemDetails?.reason && (
                                     <View className="mt-2">
                                         <Text className="text-sm font-medium text-gray-700 mb-1">Reason:</Text>
-                                        <Text className="text-sm text-gray-600">{(medrecDetails as any).reason}</Text>
+                                        <Text className="text-sm text-gray-600">{medreqItemDetails.reason}</Text>
                                     </View>
                                 )}
 
-                                {/* Fulfillment Info */}
+                                {/* Action By Info */}
+                                {actionBy && (
+                                    <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-200">
+                                        <Text className="text-xs text-gray-500">
+                                            Given by: {actionBy.fname} {actionBy.lname}
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* Created At Info */}
                                 <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-200">
-                                    <Text className="text-xs text-gray-500">Fulfilled: {(medrecDetails as any)?.fulfilled_at && isValid(new Date((medrecDetails as any).fulfilled_at)) ? format(new Date((medrecDetails as any).fulfilled_at), "MMM dd, yyyy") : "N/A"}</Text>
+                                    <Text className="text-xs text-gray-500">
+                                        Created: {medreqItemDetails?.created_at && isValid(new Date(medreqItemDetails.created_at)) ? format(new Date(medreqItemDetails.created_at), "MMM dd, yyyy") : "N/A"}
+                                    </Text>
                                 </View>
                             </View>
                         </View>

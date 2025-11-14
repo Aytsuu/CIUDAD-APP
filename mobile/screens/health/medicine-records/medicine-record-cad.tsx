@@ -5,25 +5,30 @@ import { Pill, FileText, Calendar, Clock, X } from "lucide-react-native";
 import { format, parseISO, isValid } from "date-fns";
 
 interface MedicineRecord {
-  medrec_id: number;
-  medrec_qty: number;
+  medreqitem_id: number;
+  total_allocated_qty: number;
   reason: string;
-  requested_at: string;
-  fulfilled_at: string;
-  signature: string;
-  minv_id: number;
-  medicine_name: string;
-  medicine_category: string;
-  dosage: string;
-  form: string;
-  files: Array<{
+  status: string;
+  created_at: string;
+  fulfilled_at: string | null;
+  med_details: {
+    med_name: string;
+    catlist: string;
+    med_dsg: number;
+    med_dsg_unit: string;
+    med_form: string;
+  };
+  medreq_details: {
+    requested_at: string;
+    signature: string | null;
+  };
+  medicine_files: Array<{
     medf_id: number;
     medf_name: string;
     medf_type: string;
     medf_url: string;
     created_at: string;
   }>;
-  status: string;
 }
 
 interface MedicineRecordCardProps {
@@ -48,14 +53,14 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
       return null; // Do not show signature on web
     }
 
-    if (!record.signature) {
+    if (!record.medreq_details?.signature) {
       return (
         <Text className="text-gray-500 text-sm italic">No signature</Text>
       );
     }
 
     // Construct data URL for base64-encoded signature
-    const signatureUri = `data:image/png;base64,${record.signature}`;
+    const signatureUri = `data:image/png;base64,${record.medreq_details.signature}`;
     return (
       <TouchableOpacity onPress={() => setIsModalVisible(true)}>
         <Image
@@ -68,12 +73,12 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
   };
 
   const renderFiles = () => {
-    if (!record.files || record.files.length === 0) {
+    if (!record.medicine_files || record.medicine_files.length === 0) {
       return (
         <Text className="text-gray-500 text-sm italic">No files</Text>
       );
     }
-    return record.files.map((file) => (
+    return record.medicine_files.map((file) => (
       <TouchableOpacity
         key={file.medf_id}
         onPress={() => Linking.openURL(file.medf_url)}
@@ -96,12 +101,12 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
             <View className="flex-row items-center">
               <Pill size={20} color="#3B82F6" />
               <Text className="ml-2 text-base font-semibold text-gray-900 truncate">
-                {record.medicine_name} ({record.dosage})
+                {record.med_details.med_name} ({record.med_details.med_dsg}{record.med_details.med_dsg_unit})
               </Text>
             </View>
             <Text
               className={`text-sm font-medium ${
-                record.status === "Fulfilled" ? "text-green-600" : "text-yellow-600"
+                record.status === "completed" ? "text-green-600" : "text-yellow-600"
               }`}
             >
               {record.status}
@@ -113,13 +118,13 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
             <View className="flex-1 mr-2">
               <Text className="text-gray-600 text-sm">
                 <Text className="font-medium text-black">Category: </Text>
-                {record.medicine_category}
+                {record.med_details.catlist}
               </Text>
             </View>
             <View className="flex-1">
               <Text className="text-gray-600 text-sm">
                 <Text className="font-medium text-black">Form: </Text>
-                {record.form}
+                {record.med_details.med_form}
               </Text>
             </View>
           </View>
@@ -129,13 +134,13 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
             <View className="flex-1 mr-2">
               <Text className="text-gray-600 text-sm">
                 <Text className="font-medium text-black">Qty: </Text>
-                {record.medrec_qty}
+                {record.total_allocated_qty}
               </Text>
             </View>
             <View className="flex-1">
               <Text className="text-gray-600 text-sm truncate">
                 <Text className="font-medium text-black">Reason: </Text>
-                {record.reason}
+                {record.reason || "No reason provided"}
               </Text>
             </View>
           </View>
@@ -144,13 +149,13 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
           <View className="mt-2 flex-row items-center">
             <Calendar size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
-              Requested: {formatDate(record.requested_at)}
+              Requested: {formatDate(record.medreq_details.requested_at)}
             </Text>
           </View>
           <View className="mt-1 flex-row items-center">
             <Clock size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
-              Fulfilled: {formatDate(record.fulfilled_at)}
+              Fulfilled: {record.fulfilled_at ? formatDate(record.fulfilled_at) : "Not yet fulfilled"}
             </Text>
           </View>
 
@@ -186,7 +191,7 @@ export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
               </TouchableOpacity>
             </View>
             <Image
-              source={{ uri: `data:image/png;base64,${record.signature}` }}
+              source={{ uri: `data:image/png;base64,${record.medreq_details?.signature}` }}
               style={{ width: "100%", height: 200, resizeMode: "contain" }}
             />
           </View>
