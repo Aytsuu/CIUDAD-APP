@@ -17,6 +17,7 @@ import { useMarkAsRead, useMarkAllAsRead } from "./queries/updateNotification";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface NotificationTypeIconProps {
   notif_type?: string;
@@ -253,12 +254,7 @@ export default function NotificationScreen() {
   const ListEmptyComponent = () => {
     if (isLoading) {
       return (
-        <View className="flex-1 justify-center items-center py-20">
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text className="text-gray-500 mt-2">
-            Loading notifications...
-          </Text>
-        </View>
+        <LoadingState />
       );
     }
 
@@ -308,7 +304,7 @@ export default function NotificationScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <FlatList
         data={groupedNotifications}
-        keyExtractor={(item, index) => `section-${item.title}-${index}`}
+        keyExtractor={(item, index) => String(index)}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={{ 
@@ -337,7 +333,7 @@ export default function NotificationScreen() {
             {/* Section Items */}
             {section.data.map((item: any, index: number) => (
               <TouchableOpacity
-                key={item.notif_id}
+                key={index}
                 onPress={() => handleNotificationPress(item)}
                 className={`px-5 py-4 border-b border-gray-100 ${
                   !item.is_read ? "bg-blue-50" : "bg-white"
