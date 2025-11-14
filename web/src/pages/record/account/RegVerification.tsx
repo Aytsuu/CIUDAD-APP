@@ -4,10 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { useLoginMutation } from "@/redux/auth-redux/useAuthMutation";
-import { getMessaging, getToken } from "firebase/messaging";
-import { app } from "@/firebase";
-import { FCMTokenPOST } from "../rest-api/FCMTokenPOST";
+import { useVerifyAccountReg } from "./queries/accountAddQueries";
 
 interface OTPVerificationProps {
   method: "phone" | "email";
@@ -20,7 +17,7 @@ interface OTPVerificationProps {
   isSignup?: boolean;
 }
 
-export default function OTPVerification({
+export default function RegVerification({
   method,
   phone,
   email,
@@ -36,7 +33,8 @@ export default function OTPVerification({
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const validateOTPMutation = useLoginMutation();
+  const {mutateAsync: verifyAccountReg } = useVerifyAccountReg();
+
 
   // const contact = method === "phone" ? phone! : email!;
   const Icon = method === "phone" ? Phone : Mail;
@@ -94,41 +92,13 @@ export default function OTPVerification({
     setIsVerifying(true);
 
     try {
-      // Prepare payload based on method
       const payload = {
         otp: otpCode,
         ...(method === "email" ? { email: email! } : { phone: phone! }),
       };
+      await verifyAccountReg(payload)
+      onSuccess();
 
-      // Call backend to validate OTP
-      const response = await validateOTPMutation.mutateAsync(payload);
-
-      if (response && response.access) {
-        // Request notification permission
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          try {
-            const messaging = getMessaging(app);
-            const vapidKey = "";
-            const fcmToken = await getToken(messaging, { vapidKey });
-
-            if (fcmToken) {
-              console.log("Token generated in frontend: ", fcmToken);
-              await FCMTokenPOST(fcmToken);
-            }
-          } catch (err) {
-            console.error("Error fetching FCM token: ", err);
-          }
-        } else {
-          toast.info("Notifications blocked by user");
-        }
-    
-        toast.success("Successfully signed in!");
-        onSuccess();
-      } else {
-        setErrorMessage("Invalid OTP. Please try again.");
-        resetOtp();
-      }
     } catch (error: any) {
       console.error("OTP verification error:", error);
       setErrorMessage(

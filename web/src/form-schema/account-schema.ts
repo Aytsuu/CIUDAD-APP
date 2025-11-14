@@ -37,10 +37,14 @@ export const AccountUpdateSchema = z.object({
 });
 
 export const accountFormSchema = z.object({
-  email: 
-    z.string()
-    .email({ message: "Invalid email address" })
-    .optional(),
+  email: z.string()
+    .email({ message: "Invalid email (ex. juanlitoy243@gmail.com)" })
+    .refine((val) => {
+      const domain = val.split("@")[1] || "";
+      return domain.includes(".") && domain.split(".").pop()!.length <= 4;
+    }, {
+      message: "Invalid email domain",
+    }),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(
@@ -50,6 +54,8 @@ export const accountFormSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
+  isVerifiedPhone: z.boolean(),
+  isVerifiedEmail: z.boolean()
   // password: z.string()
   //   .superRefine((val, ctx) => {
   //     const errors = [];

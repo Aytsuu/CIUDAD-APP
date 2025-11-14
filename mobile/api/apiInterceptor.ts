@@ -133,9 +133,14 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
                     
                     isRefreshing = false;
                     
+                    // You might want to navigate to login screen here
+                    // NavigationService.navigate('Login');
+                    
                     return Promise.reject(refreshError);
                 }
             }
+
+            // For non-401 errors, just reject
             return Promise.reject(error);
         }
     );

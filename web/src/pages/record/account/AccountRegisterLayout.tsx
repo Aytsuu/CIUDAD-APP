@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CircleUserRound } from "lucide-react";
 import {
   useAddAccount,
-  useVerifyAccountReg,
 } from "./queries/accountAddQueries";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { Button } from "@/components/ui/button/button";
@@ -17,12 +16,18 @@ import { useLocation } from "react-router";
 import { Separator } from "@/components/ui/separator";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import axios from "axios";
+import { useSendOTP } from "@/pages/landing/queries/authPostQueries";
+import { useSendEmailOTPMutation } from "@/redux/auth-redux/useAuthMutation";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import RegVerification from "./RegVerification";
 
 export default function AccountRegistrationLayout({
   tab_params,
 }: {
   tab_params?: Record<string, any>;
 }) {
+  const sendOTPMutation = useSendOTP();
+  const sendEmailOTP = useSendEmailOTPMutation();
   const location = useLocation();
   const { safeNavigate } = useSafeNavigate();
   const params = React.useMemo(() => location.state?.params, [location.state]);
@@ -33,90 +38,183 @@ export default function AccountRegistrationLayout({
     React.useState<boolean>(false);
   const [isVerifiedEmail, setIsVerifiedEmail] = React.useState<boolean>(false);
   const [isVerifiedPhone, setIsVerifiedPhone] = React.useState<boolean>(false);
-
+  const [validPhone, setValidPhone] = React.useState<boolean>(false);
+  const [validEmail, setValidEmail] = React.useState<boolean>(false);
   const { mutateAsync: addAccount } = useAddAccount();
-  const { mutateAsync: verifyAccountReg } = useVerifyAccountReg();
-
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
-      email: undefined,
+      email: undefined
     },
   });
 
+  const hasEmail = tab_params
+    ? tab_params?.form.watch("accountSchema.email")?.length > 0
+    : (form.watch("email")?.length as number) > 0;
+  const hasPhone = tab_params
+    ? tab_params?.form.watch("accountSchema.phone")?.length > 0
+    : form.watch("phone")?.length > 0;
+
+  const watchEmail = tab_params ? tab_params?.form.watch("accountSchema.email") : form.watch("email")
+  const watchPhone = tab_params ? tab_params?.form.watch("accountSchema.phone") : form.watch("phone")
+
+  // ==================== SIDE EFFECTS ======================
+  React.useEffect(() => {
+    setIsVerifiedEmail(tab_params?.form.getValues("accountSchema.isVerifiedEmail"))
+    setIsVerifiedPhone(tab_params?.form.getValues("accountSchema.isVerifiedPhone"))
+  }, [tab_params])
+
+  React.useEffect(() => {
+    if(isVerifiedEmail) {
+      setIsVerifiedEmail(false)
+      tab_params ? tab_params?.form.setValue("accountSchema.isVerifiedEmail", false) : form.setValue("isVerifiedEmail", false)
+    }
+    if(validEmail) setValidEmail(false)
+  }, [watchEmail])
+
+  React.useEffect(() => {
+    if(isVerifiedPhone) {
+      setIsVerifiedPhone(false)
+      tab_params ? tab_params?.form.setValue("accountSchema.isVerifiedPhone", false) : form.setValue("isVerifiedPhone", false)
+    }
+    if(validPhone) setValidPhone(false)
+  }, [watchPhone])
+
   // ==================== HANDLERS ======================
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  const handleValidateEmail = async () => {
+    const email = tab_params
+      ? tab_params?.form.getValues("accountSchema.email")
+      : form.getValues("email");
+
+    try {
+      setIsVerifyingEmail(true);
+      await sendEmailOTP.mutateAsync({
+        email: email,
+        type: "signup",
+      });
+      setValidEmail(true);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        tab_params
+          ? tab_params?.form.setError("accountSchema.email", {
+              type: "server",
+              message: err.response.data.error,
+            })
+          : form.setError("email", {
+              type: "server",
+              message: err.response.data.error,
+            });
+      }
+      setValidEmail(false);
+    }
+  };
+
+  const emailOtpSucess = () => {
+    setIsVerifiedEmail(true)
+    setIsVerifyingEmail(false)
+    tab_params?.form.setValue("accountSchema.isVerifiedEmail", true)
+  };
+
+  const handleValidatePhone = async () => {
+    if (!(await tab_params?.form.trigger(["accountSchema.phone"]))) return;
+
+    const phone = tab_params
+      ? tab_params.form.getValues("accountSchema.phone")
+      : form.getValues("phone");
+    try {
+      setIsVerifyingPhone(true);
+      await sendOTPMutation.mutateAsync({
+        pv_phone_num: phone,
+        pv_type: "signup",
+      });
+      setValidPhone(true);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        tab_params
+          ? tab_params?.form.setError("accountSchema.phone", {
+              type: "server",
+              message: err.response.data.error,
+            })
+          : form.setError("phone", {
+              type: "server",
+              message: err.response.data.error,
+            });
+      }
+    }
+  };
+
+  const phoneOtpSuccess = () => {
+    setIsVerifiedPhone(true)
+    setIsVerifyingPhone(false)
+    tab_params?.form.setValue("accountSchema.isVerifiedPhone", true)
+  };
+
+  // const handleVerify = async () => {
+  //   console.log(tab_params?.form.getValues().accountSchema);
+  //   if (!(await tab_params?.form.trigger(["accountSchema"]))) {
+  //     showErrorToast("Please fill out all required fields.");
+  //     return;
+  //   }
+
+  //   const phone = tab_params?.form.getValues("accountSchema.phone");
+  //   const email = tab_params?.form.getValues("accountSchema.email");
+  //   const promises = [];
+
+  //   if (email?.length > 0) {
+  //     setIsVerifyingEmail(true);
+  //     const emailPromise = verifyAccountReg({ email })
+  //       .then(() => {
+  //         setValidEmail(true);
+  //       })
+  //       .catch((err) => {
+  //         if (axios.isAxiosError(err) && err.response) {
+  //           tab_params?.form.setError("accountSchema.email", {
+  //             type: "server",
+  //             message: err.response.data.error,
+  //           });
+  //         }
+  //         setValidEmail(false);
+  //       })
+  //       .finally(() => {
+  //         setIsVerifyingEmail(false);
+  //       });
+  //     promises.push(emailPromise);
+  //   }
+
+  //   if (phone) {
+  //     setIsVerifyingPhone(true);
+  //     const phonePromise = verifyAccountReg({ phone })
+  //       .then(() => {
+  //         setValidPhone(true);
+  //       })
+  //       .catch((err) => {
+  //         if (axios.isAxiosError(err) && err.response) {
+  //           tab_params?.form.setError("accountSchema.phone", {
+  //             type: "server",
+  //             message: err.response.data.error,
+  //           });
+  //         }
+  //         setIsVerifiedPhone(false);
+  //       })
+  //       .finally(() => {
+  //         setIsVerifyingPhone(false);
+  //       });
+  //     promises.push(phonePromise);
+  //   }
+
+  //   await Promise.allSettled(promises);
+
+  //   // await delay(500);
+  //   // tab_params?.next(true);
+  // };
 
   const handleContinue = async () => {
-    console.log(tab_params?.form.getValues().accountSchema);
-    if (!(await tab_params?.form.trigger(["accountSchema"]))) {
-      showErrorToast("Please fill out all required fields.");
-      return;
-    }
-
-    const phone = tab_params?.form.getValues("accountSchema.phone");
-    const email = tab_params?.form.getValues("accountSchema.email");
-    const promises = [];
-    let emailVerified = false;
-    let phoneVerified = false;
-
-    if (email?.length > 0) {
-      setIsVerifyingEmail(true);
-      const emailPromise = verifyAccountReg({ email })
-        .then(() => {
-          emailVerified = true;
-          setIsVerifiedEmail(true);
-        })
-        .catch((err) => {
-          if (axios.isAxiosError(err) && err.response) {
-            tab_params?.form.setError("accountSchema.email", {
-              type: "server",
-              message: err.response.data.error,
-            });
-          }
-          setIsVerifiedEmail(false);
-        })
-        .finally(() => {
-          setIsVerifyingEmail(false);
-        });
-      promises.push(emailPromise);
-    } else {
-      emailVerified = true; // no email to verify = considered verified
-    }
-
-    if (phone) {
-      setIsVerifyingPhone(true);
-      const phonePromise = verifyAccountReg({ phone })
-        .then(() => {
-          phoneVerified = true;
-          setIsVerifiedPhone(true);
-        })
-        .catch((err) => {
-          if (axios.isAxiosError(err) && err.response) {
-            tab_params?.form.setError("accountSchema.phone", {
-              type: "server",
-              message: err.response.data.error,
-            });
-          }
-          setIsVerifiedPhone(false);
-        })
-        .finally(() => {
-          setIsVerifyingPhone(false);
-        });
-      promises.push(phonePromise);
-    } else {
-      phoneVerified = true; // no phone to verify = considered verified
-    }
-
-    await Promise.allSettled(promises);
-
-    if (email?.length > 0 && !emailVerified) return;
-    if (!phoneVerified) return;
-
-    await delay(500);
+    // if (!(await tab_params?.form.trigger(["accountSchema"]))) {
+    //   showErrorToast("Please fill out all required fields.");
+    //   return;
+    // }
     tab_params?.next(true);
   };
 
@@ -131,8 +229,8 @@ export default function AccountRegistrationLayout({
         return;
       }
 
-      const accountInfo = form.getValues();
-      const { confirm_password, ...account } = accountInfo;
+      const account = form.getValues();
+      // const { confirm_password, ...account } = accountInfo;
 
       await addAccount({
         accountInfo: account,
@@ -142,13 +240,7 @@ export default function AccountRegistrationLayout({
       });
 
       showSuccessToast("Account created successfully!");
-
-      // Navigate based on context
-      if (tab_params?.isRegistrationTab) {
-        tab_params.next?.(true);
-      } else {
-        safeNavigate.back();
-      }
+      safeNavigate.back();
     } catch (error) {
       console.error("Error creating account:", error);
       if (axios.isAxiosError(error) && error.response) {
@@ -174,7 +266,7 @@ export default function AccountRegistrationLayout({
 
   const handleSkip = () => {
     if (tab_params?.isRegistrationTab) {
-      tab_params.next?.(false);
+      tab_params.next(false);
     } else {
       safeNavigate.back();
     }
@@ -212,6 +304,10 @@ export default function AccountRegistrationLayout({
                   isVerifyingPhone={isVerifyingPhone}
                   isVerifiedEmail={isVerifiedEmail}
                   isVerifiedPhone={isVerifiedPhone}
+                  hasEmail={hasEmail}
+                  hasPhone={hasPhone}
+                  handleValidateEmail={handleValidateEmail}
+                  handleValidatePhone={handleValidatePhone}
                 />
               </form>
             </Form>
@@ -231,6 +327,11 @@ export default function AccountRegistrationLayout({
             <Button
               onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
               className="flex-1"
+              disabled={
+                hasEmail
+                  ? !(isVerifiedEmail && isVerifiedPhone)
+                  : !isVerifiedPhone
+              }
             >
               {isSubmitting ? (
                 <>
@@ -268,6 +369,69 @@ export default function AccountRegistrationLayout({
           </div>
         </CardContent>
       </Card>
+      <DialogLayout
+        className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
+        mainContent={
+          <div className="w-96 mx-auto p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Email Verification
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Enter the code sent to your email to verify
+              </p>
+            </div>
+            <RegVerification
+              method="email"
+              email={
+                tab_params
+                  ? tab_params.form.getValues("accountSchema.email")
+                  : form.getValues("email")
+              }
+              onSuccess={emailOtpSucess}
+              onResend={handleValidateEmail}
+              isResending={sendEmailOTP.isPending}
+            />
+          </div>
+        }
+        isOpen={hasEmail && validEmail && isVerifyingEmail && !isVerifiedEmail}
+        onOpenChange={() => {
+          setIsVerifyingEmail(false);
+          setValidEmail(false);
+        }}
+      />
+
+      <DialogLayout
+        className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
+        mainContent={
+          <div className="w-96 mx-auto p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Phone Verification
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Enter the code sent to your mobile number to verify
+              </p>
+            </div>
+            <RegVerification
+              method="phone"
+              phone={
+                tab_params
+                  ? tab_params.form.getValues("accountSchema.phone")
+                  : form.getValues("phone")
+              }
+              onSuccess={phoneOtpSuccess}
+              onResend={handleValidatePhone}
+              isResending={sendOTPMutation.isPending}
+            />
+          </div>
+        }
+        isOpen={hasPhone && validPhone && isVerifyingPhone && !isVerifiedPhone}
+        onOpenChange={() => {
+          setIsVerifyingPhone(false);
+          setValidPhone(false);
+        }}
+      />
     </div>
   );
 }

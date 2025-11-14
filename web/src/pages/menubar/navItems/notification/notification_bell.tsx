@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle  } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
@@ -57,6 +57,12 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
           <Info className="w-5 h-5 text-indigo-600" />
         </div>
       );
+    case "REPORT":
+      return (
+        <div className={`${baseClass} bg-red-100 ${className}`}>
+          <AlertTriangle className="w-5 h-5 text-red-600" />
+        </div>
+      )
     default:
       return (
         <div className={`${baseClass} bg-gray-100 ${className}`}>
@@ -101,24 +107,6 @@ export const NotificationBell: React.FC = () => {
       setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
     }
   }, [data]);
-
-  const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
-    if (!redirectUrl || !redirectUrl.path) return null;
-    
-    const { path, params } = redirectUrl;
-    if (!params || Object.keys(params).length === 0) {
-      return path;
-    }
-    
-    const searchParams = new URLSearchParams(
-      Object.entries(params).reduce((acc, [key, value]) => {
-        acc[key] = String(value);
-        return acc;
-      }, {} as Record<string, string>)
-    ).toString();
-    
-    return `${path}?${searchParams}`;
-  };
 
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
@@ -178,8 +166,13 @@ export const NotificationBell: React.FC = () => {
           avatarSrc: ciudadLogo,
           timestamp: "just now",
           onClick: redirectUrl ? () => {
-            const url = buildRedirectUrl(redirectUrl);
-            if (url) navigate(url);
+
+            const { path, params } = redirectUrl
+            navigate(path, {
+              state: {
+                params: params
+              }
+            })
           } : undefined,
         });
         
@@ -230,10 +223,13 @@ export const NotificationBell: React.FC = () => {
     
     // Navigate using the redirect_url
     if (notification.redirect_url) {
-      const url = buildRedirectUrl(notification.redirect_url);
-      if (url) {
-        navigate(url);
-      }
+
+      const { path, params } = notification.redirect_url
+      navigate(path, {
+        state: {
+          params: params
+        }
+      })
     }
     
     setOpen(false);
@@ -248,10 +244,14 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          const url = buildRedirectUrl(notification.redirect_url);
-          if (url) {
-            navigate(url);
-          }
+          
+          const { path, params } = notification.redirect_url
+          navigate(path, {
+            state: {
+              params: params
+            }
+          })
+
         }
         setOpen(false);
         break;

@@ -139,6 +139,7 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
                 onPress={() => {
                   setModalVisible(false);
                   setOtpValue("");
+                  setOtpInput(["", "", "", "", "", ""]);
                 }}
               >
                 <Text className="text-center text-primaryBlue text-sm font-medium">
