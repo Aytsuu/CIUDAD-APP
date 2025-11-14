@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.conf import settings
 import logging
 from django.http import JsonResponse
-from apps.account.models import Account
+from apps.account.models import Account, PhoneVerification
 from apps.profiling.models import ResidentProfile, BusinessRespondent
 from apps.administration.models import Staff, Assignment
 from ..serializers import UserAccountSerializer, EmailTokenObtainPairSerializer
@@ -94,22 +94,46 @@ class SignupView(APIView):
                 {'error': 'Account creation failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-class VerifyWebAccRegistration(APIView):
-    def post(self, request):
-        phone = request.data.get('phone', None)
+
+class VerifySignup(APIView):
+    def post(self, request, *args, **kwargs):
         email = request.data.get('email', None)
+        phone = request.data.get('phone', None)
+        otp = request.data.get('otp', None)
+
+        print(email, otp)
+        if email:
+            cached_otp = cache.get(email)
+            print(cached_otp)
+            if otp != cached_otp:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+            cache.delete(email)
 
         if phone:
-            exists = Account.objects.filter(phone=phone).exists()
-            if exists:
-                return Response({"error": "Phone is already in use"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            exists = Account.objects.filter(email=email).exists()
-            if exists:
-                return Response({"error": "Email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            phone_verification = PhoneVerification.objects.filter(
+                pv_phone_num=phone
+            ).latest('pv_created_at')
             
+            if otp != phone_verification.pv_otp:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response(status=status.HTTP_200_OK)
+        
+# class VerifyWebAccRegistration(APIView):
+#     def post(self, request):
+#         phone = request.data.get('phone', None)
+#         email = request.data.get('email', None)
+
+#         if phone:
+#             exists = Account.objects.filter(phone=phone).exists()
+#             if exists:
+#                 return Response({"error": "Phone is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             exists = Account.objects.filter(email=email).exists()
+#             if exists:
+#                 return Response({"error": "Email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            
+#         return Response(status=status.HTTP_200_OK)
 
 # class CookieTokenObtainPairView(TokenObtainPairView):
 #     permission_classes = [AllowAny]

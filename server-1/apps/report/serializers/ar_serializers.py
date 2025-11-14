@@ -56,7 +56,6 @@ class ARTableSerializer(serializers.ModelSerializer):
 
 class ARCreateSerializer(serializers.ModelSerializer):
   ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
-  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), write_only=True, required=False)
   files = FileInputSerializer(write_only=True, required=False, many=True)
 
   class Meta:

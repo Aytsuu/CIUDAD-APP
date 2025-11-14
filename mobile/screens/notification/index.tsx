@@ -46,6 +46,12 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
           <Info className="w-5 h-5 text-indigo-600" />
         </View>
       );
+    case "REPORT":
+      return (
+        <View className={`${baseClass} bg-red-100 ${className}`}>
+          <Info className="w-5 h-5 text-red-600" />
+        </View>
+      );
     default:
       return (
         <View className={`${baseClass} bg-gray-100 ${className}`}>
@@ -159,18 +165,10 @@ export default function NotificationScreen() {
       const { screen, params } = item.mobile_route;
       
       try {
-        let parsedParams = {};
-        if (params) {
-          parsedParams = typeof params === 'string' ? JSON.parse(params) : params;
-        }
-        
-        const queryString = Object.entries(parsedParams)
-          .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
-          .join('&');
-        
-        const href = queryString ? `${screen}?${queryString}` : screen;
-        
-        router.push(href as any);
+        router.push({
+          pathname: screen,
+          params: params
+        })
         
       } catch (error) {
         console.error('❌ [NotificationScreen] Navigation error:', error);
@@ -233,7 +231,7 @@ export default function NotificationScreen() {
           </TouchableOpacity>
           
           <View className="flex-1">
-            <Text className="text-xl font-PoppinsSemiBold text-gray-900">Notifications</Text>
+            <Text className="text-lg font-semibold text-gray-900">Notifications</Text>
           </View>
         </View>
         
@@ -257,7 +255,7 @@ export default function NotificationScreen() {
       return (
         <View className="flex-1 justify-center items-center py-20">
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text className="text-gray-500 mt-2 font-PoppinsRegular">
+          <Text className="text-gray-500 mt-2">
             Loading notifications...
           </Text>
         </View>
@@ -270,10 +268,10 @@ export default function NotificationScreen() {
           <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mb-4">
             <Bell size={32} color="#EF4444" />
           </View>
-          <Text className="text-gray-900 font-PoppinsSemiBold text-lg mt-2">
+          <Text className="text-gray-900 font-semibold text-lg mt-2">
             Failed to load notifications
           </Text>
-          <Text className="text-gray-500 font-PoppinsRegular text-center mt-2 px-8">
+          <Text className="text-gray-500 text-center mt-2 px-8">
             {error?.message || "Something went wrong. Please try again."}
           </Text>
           <TouchableOpacity
@@ -283,7 +281,7 @@ export default function NotificationScreen() {
             className="mt-6 bg-blue-500 px-8 py-3 rounded-xl shadow-sm"
             activeOpacity={0.8}
           >
-            <Text className="text-white font-PoppinsSemiBold">Retry</Text>
+            <Text className="text-white font-semibold">Retry</Text>
           </TouchableOpacity>
         </View>
       );
@@ -294,10 +292,10 @@ export default function NotificationScreen() {
         <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
           <Bell size={40} color="#9CA3AF" />
         </View>
-        <Text className="text-gray-900 font-PoppinsSemiBold text-lg mt-2">
+        <Text className="text-gray-900 font-semibold text-lg mt-2">
           No notifications yet
         </Text>
-        <Text className="text-gray-500 font-PoppinsRegular text-center mt-2 px-8">
+        <Text className="text-gray-500 text-center mt-2 px-8">
           You're all caught up! We'll notify you when something new arrives.
         </Text>
       </View>
@@ -331,7 +329,7 @@ export default function NotificationScreen() {
           <View>
             {/* Section Header */}
             <View className="px-5 py-3 bg-gray-50">
-              <Text className="text-xs font-PoppinsSemiBold text-gray-500 uppercase tracking-wider">
+              <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 {section.title}
               </Text>
             </View>
@@ -358,17 +356,17 @@ export default function NotificationScreen() {
                   
                   {/* Content */}
                   <View className="flex-1 pr-8">
-                    <Text className="text-sm text-gray-900 font-PoppinsMedium leading-5 mb-1">
+                    <Text className="text-sm text-gray-900 font-medium leading-5 mb-1">
                       {item.notif_title}
                     </Text>
                     <Text
-                      className="text-sm text-gray-700 font-PoppinsRegular leading-5 mb-1"
+                      className="text-sm text-gray-700 leading-5 mb-1"
                       numberOfLines={2}
                     >
                       {item.notif_message || "No message"}
                     </Text>
 
-                    <Text className="text-xs text-gray-500 font-PoppinsRegular">
+                    <Text className="text-xs text-gray-500">
                       {formatDate(item.notif_created_at)}
                     </Text>
                   </View>
@@ -411,7 +409,7 @@ export default function NotificationScreen() {
                   <Check size={20} color="#6B7280" />
                 )}
               </View>
-              <Text className="text-base font-PoppinsRegular text-gray-900">
+              <Text className="text-base font-normal text-gray-900">
                 {isMarkingAsRead ? "Marking..." : "Mark as Read"}
               </Text>
             </TouchableOpacity>
@@ -421,7 +419,7 @@ export default function NotificationScreen() {
             <View className="p-4 bg-green-50 rounded-xl">
               <View className="flex-row items-center">
                 <CheckCheck size={20} color="#10B981" />
-                <Text className="text-base font-PoppinsRegular text-green-700 ml-3">
+                <Text className="text-base font-normal text-green-700 ml-3">
                   Already read
                 </Text>
               </View>
@@ -452,11 +450,11 @@ export default function NotificationScreen() {
               )}
             </View>
             <View className="flex-1">
-              <Text className={`text-base font-PoppinsRegular ${unreadCount === 0 ? "text-gray-400" : "text-gray-900"}`}>
+              <Text className={`text-base ${unreadCount === 0 ? "text-gray-400" : "text-gray-900"}`}>
                 {isMarkingAllAsRead ? "Marking all..." : "Mark All as Read"}
               </Text>
               {unreadCount > 0 && (
-                <Text className="text-xs font-PoppinsRegular text-gray-500 mt-1">
+                <Text className="text-xs text-gray-500 mt-1">
                   {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
                 </Text>
               )}

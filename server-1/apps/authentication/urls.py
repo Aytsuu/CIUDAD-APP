@@ -21,6 +21,8 @@ urlpatterns = [
     
     # OTP endpoints
     path('email/sendOtp/', emailOTPView.as_view(), name='email-send-otp'),
+    # path('verify/web-registration/', VerifyWebAccRegistration.as_view(), name="verify-credential")
+    path("signup/otp-verification/", VerifySignup.as_view(), name="signup-verification")
 ]
 
 

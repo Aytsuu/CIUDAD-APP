@@ -1,42 +1,77 @@
-import { useRouter } from "expo-router"
-import { ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, View, Text } from "react-native"
-import { useGetIncidentReport } from "../queries/reportFetch";
+import {
+  FlatList,
+  TouchableOpacity,
+  View,
+  Text,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { router, useRouter } from "expo-router";
 import React from "react";
-import PageLayout from "@/screens/_PageLayout";
-import { Card } from "@/components/ui/card";
+import { Search } from "@/lib/icons/Search";
+import { useGetIncidentReport } from "../queries/reportFetch";
+import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import { ChevronRight } from '@/lib/icons/ChevronRight';
-import { ChevronLeft } from '@/lib/icons/ChevronLeft';
-import { Search } from '@/lib/icons/Search';
-import { FileText } from '@/lib/icons/FileText';
-import { Archive } from '@/lib/icons/Archive';
-import { useDebounce } from "@/hooks/use-debounce";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 import { formatDate } from "@/helpers/dateHelpers";
+import { AlertTriangle } from "@/lib/icons/AlertTriangle";
 
-export default () => {
-  const router = useRouter();
-  const [searchInputVal, setSearchInputVal] = React.useState<string>('');
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
+const INITIAL_PAGE_SIZE = 15;
+
+export default function IncidentReports() {
+  // ============ STATE INITIALIZATION ============
+  const [searchInputVal, setSearchInputVal] = React.useState<string>("");
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const [pageSize, setPageSize] = React.useState<number>(20);
+  const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
-  const [activeTab, setActiveTab] = React.useState<'active' | 'archive'>('active');
-  
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const debouncedPageSize = useDebounce(pageSize, 100);
+  const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
+  const [isLoadMore, setIsLoadMore] = React.useState<boolean>(false);
+  const [isInitialRender, setIsInitialRender] = React.useState<boolean>(true);
+  const [activeTab, setActiveTab] = React.useState<"active" | "archive">(
+    "active"
+  );
+  const scrollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-  const { data: IncidentReport, isLoading: isLoadingIR, refetch } = useGetIncidentReport(
+  const {
+    data: incidentReportData,
+    isLoading,
+    refetch,
+    isFetching,
+  } = useGetIncidentReport(
     currentPage,
-    debouncedPageSize as number,
-    debouncedSearchQuery as string,
-    activeTab == 'archive'
+    pageSize,
+    searchQuery,
+    activeTab === "archive"
   );
 
-  const IRList = IncidentReport?.results || [];
-  const totalCount = IncidentReport?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const reports = incidentReportData?.results || [];
+  const totalCount = incidentReportData?.count || 0;
+  const hasNext = incidentReportData?.next;
 
+  // ============ SIDE EFFECTS ============
+  React.useEffect(() => {
+    if (searchQuery != searchInputVal && searchInputVal == "") {
+      setSearchQuery(searchInputVal);
+    }
+  }, [searchQuery, searchInputVal]);
+
+  React.useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  React.useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  React.useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+
+  // ============ HANDLERS ============
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -48,117 +83,90 @@ export default () => {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleTabChange = (tab: 'active' | 'archive') => {
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+
+    scrollTimeout.current = setTimeout(() => setIsScrolling(false), 150);
+  };
+
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  const handleTabChange = (tab: "active" | "archive") => {
     setActiveTab(tab);
     setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
-  const handleItemPress = (item: any) => {
-
+  // ============ RENDER HELPERS ============
+  const severity_color_bg: Record<string, any> = {
+    LOW: "text-green-500",
+    MEDIUM: "text-yellow-500",
+    HIGH: "text-red-500",
   };
 
-  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
+  const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => {
     return (
       <TouchableOpacity
-        className="mb-3 mx-5"
+        onPress={() => {
+          router.push({ 
+            pathname: "/(report)/incident/details", 
+            params: { report: JSON.stringify(item) }
+          });
+        }}
         activeOpacity={0.7}
-        onPress={() => handleItemPress(item)}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <View className="flex-row items-center mb-2">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <FileText size={20} className="text-blue-600" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                    {item.ir_type}
-                  </Text>
-                  <Text className="text-gray-500 text-sm">
-                    ID: {item.ir_id}
-                  </Text>
-                </View>
-              </View>
-              
-              <View className="ml-15">
-                <Text className="text-gray-600 text-sm mb-1">
-                  📍 {item.ir_area}
-                </Text>
-                <Text className="text-gray-600 text-sm mb-1">
-                  📅 {formatDate(item.ir_date, 'short')} at {item.ir_time}
-                </Text>
-                <Text className="text-gray-600 text-sm">
-                  👤 Reported by: {item.ir_reported_by}
+        <View className="flex-row justify-between items-center bg-white border-t border-gray-100 py-5">
+          <View className="flex-1 flex-row justify-between items-center">
+            <View className="flex-shrink pr-4" style={{ maxWidth: "70%" }}>
+              <View className="flex-row gap-4">
+                <Text
+                  className="text-gray-700 font-medium text-md"
+                  numberOfLines={1}
+                >
+                  {item.ir_type}
                 </Text>
               </View>
+
+              <Text
+                className="text-muted-foreground text-xs mt-1"
+                numberOfLines={1}
+              >
+                {item.ir_area} • {formatDate(item.ir_date, "short")}
+              </Text>
             </View>
-            
-            <ChevronRight size={20} className="text-gray-400 ml-2" />
+            <AlertTriangle
+              size={20}
+              className={`${severity_color_bg[item.ir_severity]} mr-5`}
+            />
           </View>
-        </Card>
+
+          <View className="ml-4">
+            <ChevronRight size={20} className="text-primaryBlue" />
+          </View>
+        </View>
       </TouchableOpacity>
     );
   });
 
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <FileText size={32} className="text-gray-400" />
-      </View>
-      <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No reports found' : `No ${activeTab} reports yet`}
-      </Text>
-      <Text className="text-gray-400 text-center px-8">
-        {searchQuery 
-          ? 'Try adjusting your search terms' 
-          : `${activeTab === 'active' ? 'Active' : 'Archived'} incident reports will appear here once added`
-        }
-      </Text>
-    </View>
+  const renderItem = React.useCallback(
+    ({ item }: { item: Record<string, any> }) => <ItemCard item={item} />,
+    []
   );
 
-  const renderLoadingState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading reports...</Text>
-    </View>
-  );
+  if (isLoading && isInitialRender) {
+    return <LoadingState />;
+  }
 
-  const renderTabButtons = () => (
-    <View className="flex-row mx-5 mb-4 justify-end">
-      <TouchableOpacity
-        className={`py-1 px-6 rounded-l-md  ${
-          activeTab === 'active' 
-            ? 'bg-blue-100 ' 
-            : 'bg-white border-gray-300'
-        }`}
-        onPress={() => handleTabChange('active')}
-      >
-        <Text className={`text-center font-medium text-sm ${
-          activeTab === 'active' ? 'text-primaryBlue' : 'text-gray-600'
-        }`}>
-          Active
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        className={`py-1 px-4 rounded-r-md  ${
-          activeTab === 'archive' 
-            ? 'bg-blue-100 ' 
-            : 'bg-white border-gray-300'
-        }`}
-        onPress={() => handleTabChange('archive')}
-      >
-        <Text className={`text-center font-medium text-sm ${
-          activeTab === 'archive' ? 'text-primaryBlue' : 'text-gray-600'
-        }`}>
-          Archived
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
+  // ============ MAIN RENDER ============
   return (
     <PageLayout
       leftAction={
@@ -170,9 +178,7 @@ export default () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">
-          Incident Reports
-        </Text>
+        <Text className="text-gray-900 text-[13px]">Incident Reports</Text>
       }
       rightAction={
         <TouchableOpacity
@@ -184,70 +190,101 @@ export default () => {
       }
       wrapScroll={false}
     >
-      <View className="flex-1 bg-gray-50">
-        {/* Search Bar */}
-        {showSearch && (
-          <SearchInput 
-            value={searchInputVal}
-            onChange={setSearchInputVal}
-            onSubmit={handleSearch} 
+      {/* Search Bar */}
+      {showSearch && (
+        <SearchInput
+          value={searchInputVal}
+          onChange={setSearchInputVal}
+          onSubmit={handleSearch}
+        />
+      )}
+
+      {/* Tab Buttons */}
+      <View className="flex-row px-6 pt-2 pb-3 gap-2">
+        <TouchableOpacity
+          className={`flex-1 py-2 rounded-lg ${
+            activeTab === "active" ? "bg-primaryBlue" : "bg-gray-100"
+          }`}
+          onPress={() => handleTabChange("active")}
+        >
+          <Text
+            className={`text-center font-medium text-sm ${
+              activeTab === "active" ? "text-white" : "text-gray-600"
+            }`}
+          >
+            Active
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`flex-1 py-2 rounded-lg ${
+            activeTab === "archive" ? "bg-primaryBlue" : "bg-gray-100"
+          }`}
+          onPress={() => handleTabChange("archive")}
+        >
+          <Text
+            className={`text-center font-medium text-sm ${
+              activeTab === "archive" ? "text-white" : "text-gray-600"
+            }`}
+          >
+            Archived
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View className="flex-1 px-6">
+        {!isRefreshing && (
+          <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${reports.length} of ${totalCount} ${activeTab} reports`}</Text>
+        )}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+        {!isRefreshing && (
+          <FlatList
+            maxToRenderPerBatch={10}
+            overScrollMode="never"
+            initialNumToRender={10}
+            contentContainerStyle={{
+              paddingTop: 0,
+              paddingBottom: 20,
+            }}
+            windowSize={21}
+            removeClippedSubviews
+            data={reports}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.ir_id}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={["#00a8f0"]}
+              />
+            }
+            ListFooterComponent={() =>
+              isFetching ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2">
+                    Loading more...
+                  </Text>
+                </View>
+              ) : (
+                !hasNext &&
+                reports.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more incident reports
+                    </Text>
+                  </View>
+                )
+              )
+            }
+            ListEmptyComponent={<View></View>}
           />
         )}
-
-        <View className="flex-1 py-4">
-          {/* Stats Card */}
-          <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
-            <View className="p-3 bg-white/20 rounded-full mr-4">
-              {activeTab === 'active' ? (
-                <FileText size={24} className="text-white" />
-              ) : (
-                <Archive size={24} className="text-white" />
-              )}
-            </View>
-            <View className="flex-1">
-              <Text className="text-white/80 text-sm font-medium">
-                {activeTab === 'active' ? 'Active Reports' : 'Archived Reports'}
-              </Text>
-              <Text className="text-white text-2xl font-bold">
-                {totalCount}
-              </Text>
-              {searchQuery && (
-                <Text className="text-white/80 text-xs">
-                  Showing {totalCount} results
-                </Text>
-              )}
-            </View>
-          </Card>
-
-          {/* Tab Buttons */}
-          {renderTabButtons()}
-
-          {/* Reports List */}
-          <View className="flex-1">
-            {isLoadingIR && !isRefreshing ? (
-              renderLoadingState()
-            ) : totalCount === 0 ? (
-              renderEmptyState()
-            ) : (
-              <>
-                <FlatList
-                  data={IRList}
-                  renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                  keyExtractor={(item) => item.ir_id}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                />
-              </>
-            )}
-          </View>
-        </View>
       </View>
     </PageLayout>
   );

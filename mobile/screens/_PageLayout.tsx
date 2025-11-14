@@ -1,7 +1,7 @@
 import { ChevronDown } from "@/lib/icons/ChevronDown"
 import React, { useState, useRef, useCallback } from "react"
 import { View, TouchableOpacity, Dimensions, ScrollView } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 
@@ -99,6 +99,7 @@ export default function PageLayout({
   const responsiveFontSize = getResponsiveFontSize()
   const responsivePadding = getResponsivePadding()
   const responsiveFooterHeight = getResponsiveFooterHeight()
+  const insets = useSafeAreaInsets();
 
   // Determine if footer should be shown
   const shouldShowFooter = showFooter || !!footer
@@ -272,7 +273,7 @@ export default function PageLayout({
 
         {/* Floating Scroll Indicator */}
         {wrapScroll && showScrollIndicator && showScrollArrow && isScrollable && (
-          <View style={getScrollIndicatorPositionStyles()}>
+          <View style={[getScrollIndicatorPositionStyles(), {paddingBottom: Math.max(insets.bottom, 10)}]}>
             <TouchableOpacity
               onPress={handleScrollIndicatorPress}
               className={`${scrollIndicatorColor} rounded-full`}
@@ -280,7 +281,7 @@ export default function PageLayout({
                 width: 45,
                 height: 45,
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: 'center'
               }}
               activeOpacity={1}
             >

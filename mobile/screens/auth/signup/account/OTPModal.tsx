@@ -22,6 +22,9 @@ export default function OTPModal({
   resendOtp: () => void
 }) {
   const otpRefs = React.useRef<Array<TextInput | null>>([]);
+  const [timer, setTimer] = React.useState(180); // 3 minutes in seconds
+  const [canResend, setCanResend] = React.useState(false);
+
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);
     const newOtp = [...otp];
@@ -39,11 +42,48 @@ export default function OTPModal({
     }
   };
 
+  const handleResendOtp = () => {
+    if (canResend) {
+      resendOtp();
+      setTimer(180);
+      setCanResend(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   React.useEffect(() => {
     if(invalid) {
       otpRefs.current[0]?.focus();
     }
-  }, [invalid])
+  }, [invalid]);
+
+  React.useEffect(() => {
+    if (modalVisible) {
+      setTimer(180);
+      setCanResend(false);
+    }
+  }, [modalVisible]);
+
+  React.useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
   
   return (
     <SafeAreaView>
@@ -75,11 +115,14 @@ export default function OTPModal({
             </View>
             {invalid && <Text className="text-red-500 text-xs">Incorrect verification code. Please try again.</Text>}
             <TouchableOpacity
-              className="flex-row justify-center items-center mt-6 mb-4"
-              onPress={resendOtp}
+              className={`flex-row justify-center items-center mt-6 mb-4 ${!canResend ? 'opacity-50' : ''}`}
+              onPress={handleResendOtp}
+              disabled={!canResend}
             >
-              <RefreshCcw size={18} color="#3B82F6" />
-              <Text className="text-primaryBlue font-semibold ml-2">Resend OTP</Text>
+              <RefreshCcw size={18} color={canResend ? "#3B82F6" : "#9CA3AF"} />
+              <Text className={`font-semibold ml-2 ${canResend ? 'text-primaryBlue' : 'text-gray-400'}`}>
+                {canResend ? 'Resend OTP' : `Resend OTP (${formatTime(timer)})`}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

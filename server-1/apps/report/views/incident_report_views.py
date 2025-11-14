@@ -43,6 +43,7 @@ class IRTableView(generics.ListAPIView):
       'ir_date',
       'ir_time',
       'ir_area',
+      'ir_severity',
       'ir_involved',
       'ir_is_tracker',
       'ir_track_rep_id',
