@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { Button } from "@/components/ui/button/button";
 import { MonthInfoCard } from "../month-folder-component";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 // Main Component
 export default function FHSISMonthlyRecords() {
@@ -90,33 +91,17 @@ export default function FHSISMonthlyRecords() {
   }
 
   return (
-    <div className="w-full">
+  <LayoutWithBack title="FHSIS Monthly Reports" description="View and manage Family Health Survey Information System monthly reports">
+      <div className="w-full">
       <Card className="p-6">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Monthly Records</h2>
-            <p className="text-sm text-gray-500">View records grouped by month</p>
-          </div>
-
+        <div className="flex flex-col sm:flex-row gap-4 justify-end items-start sm:items-center mb-6">
+       
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Year Filter */}
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-32 bg-white">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          
 
             {/* Search Input */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-[250px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
               <Input placeholder="Search months..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
@@ -140,9 +125,7 @@ export default function FHSISMonthlyRecords() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="25">20</SelectItem>
                 </SelectContent>
               </Select>
               <span className="text-sm text-gray-600">entries per page</span>
@@ -206,5 +189,6 @@ export default function FHSISMonthlyRecords() {
         </div>
       </Card>
     </div>
+  </LayoutWithBack>
   );
 }
