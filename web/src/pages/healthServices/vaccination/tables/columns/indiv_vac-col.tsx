@@ -18,13 +18,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
       return <div className="text-center p-1 rounded-md">{totalRows - row.index}</div>;
     },
   },
-  {
-    accessorKey: "date_administered",
-    header: "Date Administered",
-    cell: ({ row }) => {
-      return <div className="text-sm text-gray-600">{row.original.date_administered}</div>;
-    },
-  },
+
   {
     accessorKey: "vaccine_name",
     header: "Vaccine",
@@ -132,42 +126,64 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     },
   },
 
-  {
-    accessorKey: "nextDose",
-    header: "Next follow up",
-    size: 110,
-
+  
+    {
+    accessorKey: "date_administered",
+    header: "Date Administered",
     cell: ({ row }) => {
-      return (
-        <div className="flex flex-col justify-center">
-          {/* <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              statusColors[displayStatus as keyof typeof statusColors] ||
-              "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {displayStatus}
-          </span> */}
-          <div>
-            <div className="text-xs mt-1">
-              {(row.original.follow_up_visit?.followv_status?.toLowerCase() ?? "") === "completed" ? (
-                "Next Dose: completed"
-              ) : (
-                <>
-                  {" "}
-                  {isNaN(new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").getTime()) ? (
-                    "No Schedule"
-                  ) : (
-                    <span className="text-red-500">{new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").toLocaleDateString()}</span>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      );
+      return <div className="text-sm text-gray-600">{row.original.date_administered}</div>;
     },
   },
+
+  {
+
+    accessorKey: "status",
+    header: "Status",
+    cell: ({}) => (
+      <div className="w-full flex justify-center">
+        <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Completed</span>
+      </div>
+    ),
+  },
+
+
+  
+  // {
+  //   accessorKey: "nextDose",
+  //   header: "Next follow up",
+  //   size: 110,
+
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="flex flex-col justify-center">
+  //         {/* <span
+  //           className={`px-3 py-1 rounded-full text-sm font-medium ${
+  //             statusColors[displayStatus as keyof typeof statusColors] ||
+  //             "bg-gray-100 text-gray-800"
+  //           }`}
+  //         >
+  //           {displayStatus}
+  //         </span> */}
+  //         <div>
+  //           <div className="text-xs mt-1">
+  //             {(row.original.follow_up_visit?.followv_status?.toLowerCase() ?? "") === "completed" ? (
+  //               "Next Dose: completed"
+  //             ) : (
+  //               <>
+  //                 {" "}
+  //                 {isNaN(new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").getTime()) ? (
+  //                   "No Schedule"
+  //                 ) : (
+  //                   <span className="text-red-500">{new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").toLocaleDateString()}</span>
+  //                 )}
+  //               </>
+  //             )}
+  //           </div>
+  //         </div>
+  //       </div>
+  //     );
+  //   },
+  // },
 
   // {
   //   accessorKey: "signature",

@@ -9,6 +9,7 @@ import { useVaccineMonths } from "./queries/fetch";
 import { MonthInfoCard } from "../../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyInventoryAntigenRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -43,18 +44,16 @@ export default function MonthlyInventoryAntigenRecords() {
   }, [searchQuery, yearFilter]);
 
   return (
-    <div>
+   <LayoutWithBack title="Monthly Antigen Inventory Reports" description="Review monthly summaries of antigen inventory and utilization.">
+     <div>
       <Card className="p-6">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-900">Inventory Stock Report</h2>
-            <p className="text-sm text-gray-500">View antigen transactions grouped by month</p>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-4 justify-end items-start sm:items-center mb-6">
+         
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search Input */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-[350px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
               <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
@@ -145,5 +144,6 @@ export default function MonthlyInventoryAntigenRecords() {
         </div>
       </Card>
     </div>
+    </LayoutWithBack>
   );
 }

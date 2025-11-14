@@ -27,7 +27,7 @@ export function exportToExcel(data: any[], filename: string) {
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-export function exportToPDF(p0: any[], p1: string, orientation: 'portrait' | 'landscape' = 'portrait') {
+export function exportToPDF(orientation: 'portrait' | 'landscape' = 'portrait') {
   try {
     const element = document.getElementById("printable-area");
     if (!element) {

@@ -12,8 +12,8 @@ export const useImmunizationMutations = () => {
     const payload = {
       data: {
         notes: data.notes || "",
-        followUpVisit: data.followUpVisit || "",
-        follov_description: data.follov_description || ""
+        followUpVisit: data.followUpVisit || undefined,
+        follov_description: data.follov_description || undefined
       },
       vital_id: vital_id,
       vaccines: vaccines.map((vaccine: any) => ({

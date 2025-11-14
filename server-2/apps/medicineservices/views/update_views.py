@@ -43,15 +43,15 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
         status_messages = {
             'rejected': {
                 'title': 'Medicine Request Rejected',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} was rejected. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} was rejected. Reason: {reason or ""}'
             },
             'referred': {
                 'title': 'Medicine Request Referred',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been referred. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form}has been referred. Reason: {reason or ""}'
             },
             'confirmed': {
                 'title': 'Medicine Request Confirmed',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been confirmed. Please proceed to the health center to pick up your medicine.'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} has been confirmed. Please proceed to the health center to pick up your medicine.'
             }
         }
                 
@@ -87,31 +87,33 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
     
     
     
-class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
-    serializer_class = MedicineRequestSerializer 
-    queryset = MedicineRequest.objects.all()
-    lookup_field = "medreq_id"
+# class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
+#     serializer_class = MedicineRequestSerializer 
+#     queryset = MedicineRequest.objects.all()
+#     lookup_field = "medreq_id"
 
-class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView): 
+class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
     serializer_class = MedicineRequestItemSerializer
     queryset = MedicineRequestItem.objects.all()
     lookup_field = "medreqitem_id"
-    
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Check if we're updating status to rejected
-        if new_status in ['rejected', 'referred']:
-            archive_reason = request.data.get('archive_reason', '')
-            # Update the instance
-            instance.status = 'rejected'
-            instance.is_archived = True
-            instance.archive_reason = archive_reason
-            instance.save()
-            # Return the updated data
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        # For other updates, use default behavior
-        return super().update(request, *args, **kwargs)
+        
+        # Update with archive logic
+        archive_reason = request.data.get('archive_reason', '')
+        status = request.data.get('status', '')
+        
+        # Update the instance
+        instance.status = status
+        instance.is_archived = True
+        instance.archive_reason = archive_reason
+        instance.cancelled_rejected_reffered_at = timezone.now()
+        instance.save()
+        
+        # Return the updated data
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class UpdateConfirmAllPendingItemsView(APIView):
@@ -184,12 +186,14 @@ class UpdateConfirmAllPendingItemsView(APIView):
                 if existing_items.exists():
                     medicine_item = existing_items.first()
                     medicine_item.status = 'confirmed'
+                    medicine_item. confirmed_at=timezone.now()
                     medicine_item.save()
                 else:
                     medicine_item = MedicineRequestItem.objects.create(
                         reason=reason,
                         med_id=med_id,
                         medreq_id=medicine_request,
+                        confirmed_at=timezone.now(),
                         status='confirmed',
                         action_by=staff_instance,
                     )
@@ -226,7 +230,6 @@ class UpdateConfirmAllPendingItemsView(APIView):
                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             # Update medicine request status to confirmed
-            medicine_request.status = 'confirmed'
             medicine_request.save()
             response_data = {
                 "success": True,

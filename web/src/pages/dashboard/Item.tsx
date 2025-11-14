@@ -4,26 +4,31 @@ import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sid
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+
+// HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
-import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+import { MedicineDistributionChart } from "@/components/analytics/health/medicine-chart";
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
-import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
 // import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
 import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
 // import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
-
 // import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
-
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
+import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
+import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
+import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
+import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
+import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+
+
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
@@ -47,6 +52,7 @@ export const getItemsConfig = (
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
+  const currentYear= format(new Date(), "yyyy");
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -182,7 +188,7 @@ export const getItemsConfig = (
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
-            title: "Medical History",
+            title: "Morbidity",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
          
@@ -198,6 +204,16 @@ export const getItemsConfig = (
           title: "Family Planning",
           element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
         },
+        {
+          title: "Vaccination",
+          element: <VaccineResidentChart initialYear={currentYear} />,
+        },
+          {
+            title: "Medicine",
+            element: <MedicineDistributionChart initialMonth={currentMonth} />,
+          },
+        
+
         ],
         sidebar: [
           {
@@ -219,22 +235,22 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          // {
-          //   title: "Weekly Schedule",
-          //   element: <SchedulerSidebar />,
-          // },
+
           {
-            title: "Medicine",
-            element: <MedicineDistributionSidebar />,
+            title: "Medicine Alerts",
+            element: <MedicineAlertsSidebar />,
           },
           {
-            title: "First Aid",
-            element: <FirstAidDistributionSidebar />,
+            title: "Antigen Alerts",
+            element: <AntigenAlertsSidebar />,
           },
-          {
-            title: "Administered Vaccination",
-            element: <VaccinationDistributionSidebar />,
+          { title: "First Aid Alerts",
+            element: <FirstAidAlertsSidebar />,
           },
+          { title: "Commodity Alerts",
+            element: <CommodityAlertsSidebar />,
+          }
+       
         ],
       },
       {

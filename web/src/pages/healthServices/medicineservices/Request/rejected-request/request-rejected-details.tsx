@@ -59,7 +59,7 @@ export default function RejectedRequestDetail() {
   }
 
   return (
-    <LayoutWithBack title="rejected Medicine Request" description="View details of rejected medicine request">
+    <LayoutWithBack title="Rejected Medicine Request" description="View details of rejected medicine request">
       <div className="">
         {/* Patient Information Card */}
         <div className="mb-5">
@@ -71,7 +71,7 @@ export default function RejectedRequestDetail() {
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
               <CardTitle>
-                rejected Medicine Items{" "}
+                Rejected Medicine Items{" "}
                 <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
               </CardTitle>
               <CardDescription>All rejected medicine request items with allocation details</CardDescription>

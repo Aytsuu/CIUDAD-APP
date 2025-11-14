@@ -1,55 +1,56 @@
-// import BHWReportsMainTable from "@/pages/healthServices/Reports/bhw-report/bhw-main-table";
-// import BHWReportsForm from "@/pages/healthServices/Reports/bhw-report/bhw-m-accmplshmnt-form";
+// import BHWReportsMainTable from "@/pages/healthServices/reports/bhw-report/bhw-main-table";
+// import BHWReportsForm from "@/pages/healthServices/reports/bhw-report/bhw-m-accmplshmnt-form";
 
-import HealthcareReports from "@/pages/healthServices/Reports/MainReports";
-import MonthlyMedicineRecords from "@/pages/healthServices/Reports/medicine-report/monthly";
-import MonthlyMedicineDetails from "@/pages/healthServices/Reports/medicine-report/records";
-import MonthlyFirstAidRecords from "@/pages/healthServices/Reports/firstaid-report/monthly";
-import MonthlyFirstAidDetails from "@/pages/healthServices/Reports/firstaid-report/records";
-import EditMonthlyRecipientList from "@/pages/healthServices/Reports/firstaid-report/edit-report";
-import MonthlyVaccineRecords from "@/pages/healthServices/Reports/vaccination-report/monthly";
-import MonthlyVaccinationDetails from "@/pages/healthServices/Reports/vaccination-report/records";
+import HealthcareReports from "@/pages/healthServices/reports/MainReports";
+import MonthlyMedicineRecords from "@/pages/healthServices/reports/medicine-report/monthly";
+import MonthlyMedicineDetails from "@/pages/healthServices/reports/medicine-report/records";
+import MonthlyFirstAidRecords from "@/pages/healthServices/reports/firstaid-report/monthly";
+import MonthlyFirstAidDetails from "@/pages/healthServices/reports/firstaid-report/records";
+import EditMonthlyRecipientList from "@/pages/healthServices/reports/firstaid-report/edit-report";
+import MonthlyVaccineRecords from "@/pages/healthServices/reports/vaccination-report/monthly";
+import MonthlyVaccinationDetails from "@/pages/healthServices/reports/vaccination-report/records";
 
-// iINVENTORY REPORTS
-import InventoryMonthlyMedicineRecords from "@/pages/healthServices/Reports/inventory/medicine/monthly";
-import InventoryMonthlyMedicineDetails from "@/pages/healthServices/Reports/inventory/medicine/records";
-import MonthlyCommodityDetails from "@/pages/healthServices/Reports/inventory/commodity/records";
-import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/Reports/inventory/firstaid/monthly";
-import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/Reports/inventory/firstaid/records";
-import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inventory/antigen/monthly";
-import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records";
+// INVENTORY REPORTS
+import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
+import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports/inventory/medicine/records";
+import MonthlyCommodityDetails from "@/pages/healthServices/reports/inventory/commodity/records";
+import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inventory/firstaid/monthly";
+import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/reports/inventory/firstaid/records";
+import MonthlyInventoryAntigenRecords from "@/pages/healthServices/reports/inventory/antigen/monthly";
+import MonthlyInventoryAntigenDetails from "@/pages/healthServices/reports/inventory/antigen/records";
+import InventoryMonthlyCommodityRecords from "@/pages/healthServices/reports/inventory/commodity/monthly";
 // OPT
-import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
-import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";
-import OPTSummariesAllMonths from "@/pages/healthServices/Reports/opt-tracking-summary/monthly";
-import OPTMonthlyDetails from "@/pages/healthServices/Reports/opt-tracking-summary/records";
-import MasterListChildHealthSupplementsReport from "@/pages/healthServices/Reports/masterlist/opt-supplements-masterliist/masterlist";
-import YearlySemiAnnualOPTRecords from "@/pages/healthServices/Reports/opt-semiannual/yearly";
-import SemiAnnualOPTDetails from "@/pages/healthServices/Reports/opt-semiannual/records";
-import YearlyJanDecOPTRecords from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/yearly";
-import YearlyJanDecOPTDetails from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/records";
+import MonthlyOPTRecords from "@/pages/healthServices/reports/opt-tracking/monthly";
+import MonthlyOPTDetails from "@/pages/healthServices/reports/opt-tracking/records";
+import OPTSummariesAllMonths from "@/pages/healthServices/reports/opt-tracking-summary/monthly";
+import OPTMonthlyDetails from "@/pages/healthServices/reports/opt-tracking-summary/records";
+import MasterListChildHealthSupplementsReport from "@/pages/healthServices/reports/masterlist/opt-supplements-masterliist/masterlist";
+import YearlySemiAnnualOPTRecords from "@/pages/healthServices/reports/opt-semiannual/yearly";
+import SemiAnnualOPTDetails from "@/pages/healthServices/reports/opt-semiannual/records";
+import YearlyJanDecOPTRecords from "@/pages/healthServices/reports/opt-tracking-023mos.tsx/yearly";
+import YearlyJanDecOPTDetails from "@/pages/healthServices/reports/opt-tracking-023mos.tsx/records";
 
 // EXPIRED
-import MedicineProblemDetails from "@/pages/healthServices/Reports/inventory/medicine/expoutstock/records";
-import FirstAidProblemDetails from "@/pages/healthServices/Reports/inventory/firstaid/expoutstock/records";
-import CommodityProblemDetails from "@/pages/healthServices/Reports/inventory/commodity/expoutstock/records";
-import AntigenProblemDetails from "@/pages/healthServices/Reports/inventory/antigen/expoutstock/records";
+import MedicineProblemDetails from "@/pages/healthServices/reports/inventory/medicine/expoutstock/records";
+import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/firstaid/expoutstock/records";
+import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
+import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
 
-import MedicineInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/medicine/Main";
-import CommodityInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/commodity/Main";
-import FirstAidInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/firstaid/Main";
-import AntigenInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/antigen/Main";
+import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
+import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
 
-import MonthlyNewChildrenRecords from "@/pages/healthServices/Reports/newchildren-list-report/monthly";
-import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/Reports/newchildren-list-report/records";
+import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main";
+import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
+import YearlyPopulationRecords from "@/pages/healthServices/reports/healthprofiling-report/yearly";
+import PopulationStructureRecords from "@/pages/healthServices/reports/healthprofiling-report/records";
+import HealthProfilingSummaryReport from "@/pages/healthServices/reports/healthprofiling-report/HealthProfilingSummaryReport";
 
-import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
-import FHSISMonthlyRecords from "@/pages/healthServices/Reports/fhisreport/monthly";
-import YearlyPopulationRecords from "@/pages/healthServices/Reports/healthprofiling-report/yearly";
-import PopulationStructureRecords from "@/pages/healthServices/Reports/healthprofiling-report/records";
-import HealthProfilingSummaryReport from "@/pages/healthServices/Reports/healthprofiling-report/HealthProfilingSummaryReport";
+// DOCTOR REPORTS
+import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
+import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
 
-
+import MonthlyMorbiditySummary from "@/pages/healthServices/reports/monthly_morbidity/monthly";
+import MonthlyMorbidityDetails from "@/pages/healthServices/reports/monthly_morbidity/records";
 
 export const healthreports_router = [
   // {
@@ -62,163 +63,178 @@ export const healthreports_router = [
   // },
   {
     path: "/reports",
-    element: <HealthcareReports />
+    element: <HealthcareReports />,
   },
   {
     path: "/reports/monthly-medicine",
-    element: <MonthlyMedicineRecords />
+    element: <MonthlyMedicineRecords />,
   },
   { path: "/reports/monthly-medicine/records", element: <MonthlyMedicineDetails /> },
   {
     path: "/reports/monthly-firstaid",
-    element: <MonthlyFirstAidRecords />
+    element: <MonthlyFirstAidRecords />,
   },
   { path: "/reports/monthly-firstaid/records", element: <MonthlyFirstAidDetails /> },
   {
     path: "/edit-monthly-recipient-list",
-    element: <EditMonthlyRecipientList />
+    element: <EditMonthlyRecipientList />,
   },
   {
     path: "/reports/monthly-vaccination",
-    element: <MonthlyVaccineRecords />
+    element: <MonthlyVaccineRecords />,
   },
   {
     path: "/reports/monthly-vaccination/records",
-    element: <MonthlyVaccinationDetails />
+    element: <MonthlyVaccinationDetails />,
   },
 
   //  INVENTORY REPORTS
   { path: "/reports/monthly-inventory-medicine", element: <InventoryMonthlyMedicineRecords /> },
   {
     path: "/reports/monthly-inventory-medicine/records",
-    element: <InventoryMonthlyMedicineDetails />
+    element: <InventoryMonthlyMedicineDetails />,
   },
 
   {
     path: "/inventory-monthly-firstaid-records",
-    element: <MonthlyInventoryFirstAidRecords />
+    element: <MonthlyInventoryFirstAidRecords />,
   },
   {
     path: "/inventory-monthly-firstaid-details",
-    element: <MonthlyInventoryFirstAidDetails />
+    element: <MonthlyInventoryFirstAidDetails />,
   },
   {
-    path: "/inventory-monthly-antigen-records",
-    element: <MonthlyInventoryAntigenRecords />
+    path: "/reports/inventory/monthly-antigen",
+    element: <MonthlyInventoryAntigenRecords />,
   },
   {
     path: "/inventory-monthly-antigen-details",
-    element: <MonthlyInventoryAntigenDetails />
+    element: <MonthlyInventoryAntigenDetails />,
   },
   {
     path: "/monthly-opt-records",
-    element: <MonthlyOPTRecords />
+    element: <MonthlyOPTRecords />,
   },
   {
     path: "/monthly-opt-details",
-    element: <MonthlyOPTDetails />
+    element: <MonthlyOPTDetails />,
   },
   {
     path: "/opt-summaries-all-months",
-    element: <OPTSummariesAllMonths />
+    element: <OPTSummariesAllMonths />,
   },
   {
     path: "/opt-summry-details",
-    element: <OPTMonthlyDetails />
+    element: <OPTMonthlyDetails />,
   },
   {
     path: "/child-supplements-masterlist",
-    element: <MasterListChildHealthSupplementsReport />
+    element: <MasterListChildHealthSupplementsReport />,
   },
   {
     path: "/semiannual-opt-yearly",
-    element: <YearlySemiAnnualOPTRecords />
+    element: <YearlySemiAnnualOPTRecords />,
   },
   {
     path: "/semiannual-opt-yearly/details",
-    element: <SemiAnnualOPTDetails />
+    element: <SemiAnnualOPTDetails />,
   },
   {
     path: "/yearly-opt-records-jantodec",
-    element: <YearlyJanDecOPTRecords />
+    element: <YearlyJanDecOPTRecords />,
   },
 
   {
     path: "/yearly-opt-records-jantodec/details",
-    element: <YearlyJanDecOPTDetails />
+    element: <YearlyJanDecOPTDetails />,
   },
 
   {
     path: "/medicine-expired-out-of-stock-summary/details",
-    element: <MedicineProblemDetails />
+    element: <MedicineProblemDetails />,
   },
 
   {
     path: "/firstaid-expired-out-of-stock-summary/details",
-    element: <FirstAidProblemDetails />
+    element: <FirstAidProblemDetails />,
   },
 
   {
     path: "/antigen-expired-out-of-stock-summary/details",
-    element: <AntigenProblemDetails />
+    element: <AntigenProblemDetails />,
   },
   {
     path: "/medicine-inventory-reports",
-    element: <MedicineInventoryReportsTabs />
+    element: <InventoryMonthlyMedicineRecords />,
   },
   {
     path: "/reports/inventory/monthly-commodity",
-    element: <CommodityInventoryReportsTabs />
+    element: <InventoryMonthlyCommodityRecords />,
   },
   {
     path: "/reports/inventory/monthly-commodity/transaction-records",
-    element: <MonthlyCommodityDetails />
+    element: <MonthlyCommodityDetails />,
   },
   {
     path: "/reports/inventory/monthly-commodity/expoutstock-records",
-    element: <CommodityProblemDetails />
+    element: <CommodityProblemDetails />,
   },
 
   {
     path: "/firstaid-inventory-reports",
-    element: <FirstAidInventoryReportsTabs />
+    element: <MonthlyInventoryFirstAidRecords />,
   },
-  {
-    path: "/antigen-inventory-reports",
-    element: <AntigenInventoryReportsTabs />
-  },
+
 
   {
     path: "/monthly-new-children-records",
-    element: <MonthlyNewChildrenRecords />
+    element: <MonthlyNewChildrenRecords />,
   },
   {
     path: "/monthly-new-children-records/details",
-    element: <MonthlyNewChildrenRecordsDetails />
+    element: <MonthlyNewChildrenRecordsDetails />,
   },
 
   // ------FHIS
   {
-    path: "/reports/fhis-monthly-records"
-    , element: <FHSISMonthlyRecords />
+    path: "/reports/fhis-monthly-records",
+    element: <FHSISMonthlyRecords />,
   },
   {
     path: "/reports/fhis-monthly-records/details",
-    element: <MultiStepFormFHIS />
+    element: <MultiStepFormFHIS />,
   },
 
   // Health Profiling Population Structure Report
   {
     path: "/health-family-profiling",
-    element: <YearlyPopulationRecords />
+    element: <YearlyPopulationRecords />,
   },
   {
     path: "/health-family-profiling/records",
-    element: <PopulationStructureRecords />
+    element: <PopulationStructureRecords />,
   },
   {
     path: "/health-family-profiling/summary",
-    element: <HealthProfilingSummaryReport />
+    element: <HealthProfilingSummaryReport />,
+  },
+
+  // DOCTOR REPORTS
+  {
+    path: "/reports/monthly-consulted-summaries",
+    element: <MonthlyConsultedSummaries />,
+  },
+  {
+    path: "/reports/monthly-consulted-summaries/records",
+    element: <MonthlyConsultedDetails />,
+  },
+  {
+    path: "/reports/monthly-morbidity-summary",
+    element: <MonthlyMorbiditySummary />,
+  },
+  {
+    path: "/reports/monthly-morbidity-summary/records",
+    element: <MonthlyMorbidityDetails />,
   },
 
 

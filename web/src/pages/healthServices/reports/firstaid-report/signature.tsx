@@ -33,6 +33,23 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
     }
   }, [initialSignature]);
 
+  // Configure signature pad for bolder drawing
+  useEffect(() => {
+    if (sigRef.current && isEditing) {
+      // Apply bolder stroke configuration
+      const canvas = sigRef.current.getCanvas();
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Enhance line quality and appearance for bolder strokes
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+      }
+    }
+  }, [isEditing]);
+
   const handleClear = () => {
     if (sigRef.current) {
       sigRef.current.clear();
@@ -141,13 +158,17 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
               <img src={signatureData} alt="Signature" className="max-w-full max-h-full object-contain" />
             </div>
           ) : isEditing ? (
-            // Show signature canvas for editing
+            // Show signature canvas for editing with bolder configuration
             <SignatureCanvas
               ref={sigRef}
               canvasProps={{
                 className: "w-full h-full bg-white"
               }}
               penColor="black"
+              minWidth={2.5}    // Increased for bolder strokes
+              maxWidth={4.5}    // Increased for bolder strokes
+              velocityFilterWeight={0.7}
+              minDistance={1}
             />
           ) : (
             // Show placeholder when no signature

@@ -28,3 +28,18 @@ export const getIllnessChart = async (month: string): Promise<any> => {
     }
   };
   
+
+
+
+// vaccination chart new
+export const getVaccineResidentChart = async (year: string): Promise<any> => {
+    try {
+        const url = `/reports/vaccination-resident-counts/${year}/`;
+        const response = await api2.get<any>(url);
+        console.log("Vaccine Resident Chart Response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching Vaccine Resident Chart:", error);
+        throw error;
+    }
+};

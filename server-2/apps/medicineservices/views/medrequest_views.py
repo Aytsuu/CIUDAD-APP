@@ -261,7 +261,6 @@ class SubmitMedicineRequestView(APIView):
                 trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
                 mode='app',
                 requested_at=timezone.now(),
-                fulfilled_at=None,
                 signature=data.get('signature', ''),
                 patrec=patient_record
             )

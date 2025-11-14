@@ -100,7 +100,7 @@ export default function HealthcareReports() {
       icon: <Box className="w-6 h-6 text-teal-600" />,
       bgColor: "bg-gradient-to-br from-teal-50 to-cyan-50",
       description: "Monthly report of antigen inventory status",
-      link: "/antigen-inventory-reports"
+      link: "/reports/inventory/monthly-antigen"
     }
   ];
 

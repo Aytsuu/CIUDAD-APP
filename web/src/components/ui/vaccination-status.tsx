@@ -21,8 +21,18 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
     return record.vac_details || record.vac;
   };
 
-  // Helper function to get total doses - FIXED VERSION
+  // Helper function to check if vaccine is routine
+  const isRoutineVaccine = (record: any) => {
+    const vaccineDetails = getVaccineDetails(record);
+    return vaccineDetails?.vac_type_choices === 'routine';
+  };
+
+  // Helper function to get total doses
   const getTotalDoses = (record: any) => {
+    // For routine vaccines, always treat as single dose
+    if (isRoutineVaccine(record)) {
+      return 1;
+    }
     // First check if we have vacrec_totaldose (this should be the authoritative source)
     if (record.vacrec_details?.vacrec_totaldose) {
       return record.vacrec_details.vacrec_totaldose;
@@ -37,8 +47,12 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
     return record.vac_details?.no_of_doses || 0;
   };
 
-  // Group filtered vaccinations by vaccine ID and find the latest record for each vaccine
-  const latestVaccinationsByVaccine = filteredVaccinations.reduce((acc, record) => {
+  // Separate routine and non-routine vaccines
+  const routineVaccinations = filteredVaccinations.filter(record => isRoutineVaccine(record));
+  const nonRoutineVaccinations = filteredVaccinations.filter(record => !isRoutineVaccine(record));
+
+  // For non-routine vaccines: group by vaccine ID and find the latest record for each vaccine
+  const latestNonRoutineVaccinations = nonRoutineVaccinations.reduce((acc, record) => {
     const vaccineDetails = getVaccineDetails(record);
     const vaccineId = vaccineDetails?.vac_id;
 
@@ -52,8 +66,8 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
     return acc;
   }, {});
 
-  // For each vaccine, find the maximum dose number administered from filtered vaccinations
-  const maxDoseByVaccine = filteredVaccinations.reduce((acc, record) => {
+  // For non-routine vaccines: find the maximum dose number administered
+  const maxDoseByVaccine = nonRoutineVaccinations.reduce((acc, record) => {
     const vaccineDetails = getVaccineDetails(record);
     const vaccineId = vaccineDetails?.vac_id;
 
@@ -65,46 +79,26 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
     return acc;
   }, {});
 
-  // Debug function to check vaccine categorization
-  // const debugVaccine = (record: any) => {
-  //   const vaccineDetails = getVaccineDetails(record);
-  //   const vaccineId = vaccineDetails?.vac_id;
-
-  //   if (!vaccineId) return { maxDose: 0, totalDose: 0 };
-
-  //   const maxDose = maxDoseByVaccine[vaccineId];
-  //   const totalDose = getTotalDoses(record);
-
-  //   console.log("Vaccine Debug:", {
-  //     vaccineName: vaccineDetails?.vac_name,
-  //     vaccineId,
-  //     maxDose,
-  //     totalDose,
-  //     isPartial: maxDose < totalDose,
-  //     isCompleted: maxDose === totalDose,
-  //     vachist_doseNo: record.vachist_doseNo,
-  //     vacrec_totaldose: record.vacrec_details?.vacrec_totaldose,
-  //     vaccinelist_doses: record.vaccine_stock?.vaccinelist?.no_of_doses
-  //   });
-
-  //   return { maxDose, totalDose };
-  // };
-
-  // Categorize the vaccines (only non-"in queue" status)
+  // Categorize the vaccines
   const categorizedVaccines = {
-    completed: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
-      const vaccineDetails = getVaccineDetails(record);
-      const vaccineId = vaccineDetails?.vac_id;
+    // Routine vaccines are always considered "completed" as individual doses
+    completed: [
+      ...routineVaccinations, // All routine vaccinations are completed doses
+      ...Object.values(latestNonRoutineVaccinations).filter((record: any) => {
+        const vaccineDetails = getVaccineDetails(record);
+        const vaccineId = vaccineDetails?.vac_id;
 
-      if (!vaccineId) return false;
+        if (!vaccineId) return false;
 
-      const maxDose = maxDoseByVaccine[vaccineId];
-      const totalDose = getTotalDoses(record);
+        const maxDose = maxDoseByVaccine[vaccineId];
+        const totalDose = getTotalDoses(record);
 
-      return maxDose === totalDose;
-    }),
+        return maxDose === totalDose;
+      })
+    ],
 
-    partial: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
+    // Only non-routine vaccines can be partial
+    partial: Object.values(latestNonRoutineVaccinations).filter((record: any) => {
       const vaccineDetails = getVaccineDetails(record);
       const vaccineId = vaccineDetails?.vac_id;
 
@@ -128,10 +122,21 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
     }[type];
 
     return (
-      <button onClick={onClick} className={`flex-1 py-2 text-sm flex flex-row justify-center items-center gap-2 transition-colors border-b-2 ${active ? `border-${config.color}-600 text-${config.color}-700 font-medium` : "border-transparent text-gray-600 hover:border-gray-300"}`}>
+      <button 
+        onClick={onClick} 
+        className={`flex-1 py-2 text-sm flex flex-row justify-center items-center gap-2 transition-colors border-b-2 ${
+          active 
+            ? `border-${config.color}-600 text-${config.color}-700 font-medium` 
+            : "border-transparent text-gray-600 hover:border-gray-300"
+        }`}
+      >
         <config.icon className={`h-4 w-4 ${active ? `text-${config.color}-600` : "text-gray-500"}`} />
         <span className="capitalize">{type === "partial" ? "Partially " : type}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-md ${active ? `bg-${config.color}-100 text-${config.color}-800` : "bg-gray-200 text-gray-600"}`}>{count}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-md ${
+          active ? `bg-${config.color}-100 text-${config.color}-800` : "bg-gray-200 text-gray-600"
+        }`}>
+          {count}
+        </span>
       </button>
     );
   };
@@ -144,7 +149,9 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
             <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-4 shadow-sm">
               {activeTab === "completed" ? <CheckCircle className="h-8 w-8 text-gray-700" /> : activeTab === "partial" ? <Clock className="h-8 w-8 text-gray-700" /> : <AlertCircle className="h-8 w-8 text-gray-700" />}
             </div>
-            <p className="text-gray-800 font-bold text-lg">{activeTab === "completed" ? "No completed vaccines" : activeTab === "partial" ? "No partially vaccinated" : "No unvaccinated vaccines"}</p>
+            <p className="text-gray-800 font-bold text-lg">
+              {activeTab === "completed" ? "No completed vaccines" : activeTab === "partial" ? "No partially vaccinated" : "No unvaccinated vaccines"}
+            </p>
           </div>
         </div>
       );
@@ -177,21 +184,36 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
 
             // For completed/partial vaccines
             const vaccineDetails = getVaccineDetails(record);
-            const vaccineId = vaccineDetails?.vac_id;
-            const maxDose = maxDoseByVaccine[vaccineId];
-            const totalDose = getTotalDoses(record);
+            const isRoutine = isRoutineVaccine(record);
 
             return (
               <li key={index} className="bg-white rounded-xl p-4 border border-gray-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" role="listitem">
                 <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-md flex-shrink-0 shadow-sm ${activeTab === "completed" ? "bg-green-500" : "bg-yellow-500"}`}></div>
+                  <div className={`w-4 h-4 rounded-md flex-shrink-0 shadow-sm ${
+                    activeTab === "completed" ? "bg-green-500" : "bg-yellow-500"
+                  }`}></div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-gray-800">{vaccineDetails?.vac_name || "Unknown Vaccine"}</span>
+                    <span className="font-semibold text-gray-800">
+                      {vaccineDetails?.vac_name || "Unknown Vaccine"}
+                      {isRoutine && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                          Routine
+                        </span>
+                      )}
+                    </span>
                     <div className="flex gap-4 mt-1">
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <span className="font-medium">Dose:</span>
-                        {maxDose} of {totalDose}
-                      </span>
+                      {!isRoutine && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <span className="font-medium">Dose:</span>
+                          {record.vachist_doseNo} of {getTotalDoses(record)}
+                        </span>
+                      )}
+                      {isRoutine && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <span className="font-medium">Type:</span>
+                          Single Dose (Routine)
+                        </span>
+                      )}
                       {vaccineDetails?.age_group?.agegroup_name && (
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <span className="font-medium">Age Group:</span>
@@ -201,7 +223,9 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500">{record.date_administered && new Date(record.date_administered).toLocaleDateString()}</div>
+                <div className="text-xs text-gray-500">
+                  {record.date_administered && new Date(record.date_administered).toLocaleDateString()}
+                </div>
               </li>
             );
           })}
@@ -220,9 +244,24 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
       </div>
 
       <div className="flex gap-2 mb-4">
-        <TabButton active={activeTab === "unvaccinated"} type="unvaccinated" count={categorizedVaccines.unvaccinated.length} onClick={() => setActiveTab("unvaccinated")} />
-        <TabButton active={activeTab === "partial"} type="partial" count={categorizedVaccines.partial.length} onClick={() => setActiveTab("partial")} />
-        <TabButton active={activeTab === "completed"} type="completed" count={categorizedVaccines.completed.length} onClick={() => setActiveTab("completed")} />
+        <TabButton 
+          active={activeTab === "unvaccinated"} 
+          type="unvaccinated" 
+          count={categorizedVaccines.unvaccinated.length} 
+          onClick={() => setActiveTab("unvaccinated")} 
+        />
+        <TabButton 
+          active={activeTab === "partial"} 
+          type="partial" 
+          count={categorizedVaccines.partial.length} 
+          onClick={() => setActiveTab("partial")} 
+        />
+        <TabButton 
+          active={activeTab === "completed"} 
+          type="completed" 
+          count={categorizedVaccines.completed.length} 
+          onClick={() => setActiveTab("completed")} 
+        />
       </div>
 
       <div>

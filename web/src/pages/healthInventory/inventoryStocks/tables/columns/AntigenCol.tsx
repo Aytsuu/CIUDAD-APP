@@ -155,39 +155,18 @@ export const getStockColumns = (
       );
     }
   },
-  {
-    accessorKey: "administered",
-    header: "Qty Used",
-    cell: ({ row }) => {
-      const expired = row.original.isExpired;
-      const record = row.original;
-      let total_stocks = 0;
-      let unit = "";
-      const availQty = Number(record.availableStock) || 0;
+    {
+      accessorKey: "administered",
+      header: "Qty Used",
+      cell: ({ row }) => {
+        const expired = row.original.isExpired;
+    
 
-      if (record.type === "vaccine") {
-        if (record.solvent === "diluent") {
-          total_stocks = Number(record.qty_number) - availQty - (row.original.wastedDose || 0);
-          unit = "containers";
-        } else {
-          total_stocks = Number(record.qty_number) * Number(record.dose_ml) - availQty - (row.original.wastedDose || 0);
-          unit = "doses";
-        }
-      } else if (record.type === "supply") {
-        if (record.imzStck_unit === "boxes") {
-          total_stocks = Number(record.qty_number) * Number(record.imzStck_pcs) - availQty - (row.original.wastedDose || 0);
-          unit = "pcs";
-        } else {
-          total_stocks = Number(record.qty_number) - availQty - (row.original.wastedDose || 0);
-          unit = "pcs";
-        }
-      }
-
-      return (
+        return (
         <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>
-          {total_stocks} {unit}
+          {row.original.administered || 0}
         </div>
-      );
+        );
     }
   },
   {

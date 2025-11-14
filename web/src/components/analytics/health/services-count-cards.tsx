@@ -127,7 +127,7 @@ export const useHealthServicesSectionCards = () => {
    
     consultationsByDoctor: (
       <HealthCard 
-        title="Adult Consultated" 
+        title="Adult Consulted" 
         value={healthCardAnalytics?.data?.completed_consultations_by_doctor || 0} 
         isLoading={isLoading}
         onClick={() => {
@@ -137,7 +137,7 @@ export const useHealthServicesSectionCards = () => {
     ),
     chilrenConsulted:(
       <HealthCard
-        title="Child Consultated"
+        title="Child Consulted"
         value={healthCardAnalytics?.data?.completed_childconsultations_by_doctor || 0}
         isLoading={isLoading}
         onClick={() => {

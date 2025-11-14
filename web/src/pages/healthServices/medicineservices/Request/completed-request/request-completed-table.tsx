@@ -32,18 +32,7 @@ export default function CompletedRequest() {
     };
   }, [searchQuery]);
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-    refetch,
-  } = useMedicineRequestStatuses(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-    dateFilter, // Pass date filter to the server
-    "completed"
-  );
+  const { data: apiResponse, isLoading, error, refetch } = useMedicineRequestStatuses(currentPage, pageSize, debouncedSearch, dateFilter, "completed");
 
   // Extract data from paginated response
   const medicineRequests = apiResponse?.results || [];

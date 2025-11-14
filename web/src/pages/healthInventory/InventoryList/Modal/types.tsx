@@ -27,15 +27,15 @@ export const vaccineTypes = [
 ];
 
 export const formMedOptions = [
-  { id: "tablet", name: "tablet" },
-  { id: "capsule", name: "capsule" },
+  { id: "Tablet", name: "tablet" },
+  { id: "Capsule", name: "capsule" },
 ];
 
 
 
 export const dosageUnitOptions = [
-    { id: "mg", name: "mg" },
-    { id: "ml", name: "ml" },
+    { id: "Mg", name: "mg" },
+    { id: "Ml", name: "ml" },
   ]
 
 export interface DoseDetail {

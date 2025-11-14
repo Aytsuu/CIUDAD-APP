@@ -3,17 +3,8 @@ from rest_framework import serializers
 from apps.administration.serializers.staff_serializers import *
 from utils.supabase_client import upload_to_storage
 
-class MonthlyRCPReportSerializer(serializers.ModelSerializer):
-    staff_details = StaffFullSerializer(source='staff', read_only=True)
-    class Meta:
-        model = MonthlyRecipientListReport
-        fields = '__all__'
-        
-
-
-
 from rest_framework import serializers
-from .models import MonthlyRecipientListReport
+from .models import *
 from supabase import create_client, Client
 from django.conf import settings
 import base64
@@ -26,6 +17,19 @@ supabase: Client = create_client(
     settings.SUPABASE_ANON_KEY,
 )
 
+
+
+class MonthlyRCPReportSerializer(serializers.ModelSerializer):
+    staff_details = StaffFullSerializer(source='staff', read_only=True)
+    class Meta:
+        model = MonthlyRecipientListReport
+        fields = '__all__'
+
+class HeaderRecipientListReportTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HeaderRecipientListReporTemplate
+        fields = '__all__'
+    
 class FileInputSerializer(serializers.Serializer):
     file = serializers.CharField()
     name = serializers.CharField()
@@ -37,23 +41,7 @@ class UpdateMonthlyRecipientListReportSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MonthlyRecipientListReport
-        fields = [
-            'month_year', 'staff', 'office', 'control_no', 'total_records', 
-            'rcp_type', 'logo', 'contact_number', 'location', 'department',
-            'signature'
-        ]
-        extra_kwargs = {
-            'month_year': {'required': False},
-            'staff': {'required': False},
-            'office': {'required': False},
-            'control_no': {'required': False},
-            'signature': {'required': False},
-            'total_records': {'required': False},
-            'rcp_type': {'required': False},
-            'contact_number': {'required': False},
-            'location': {'required': False},
-            'department': {'required': False},
-        }
+        fields = "__all__"
 
     def update(self, instance, validated_data):
         logo_data = validated_data.pop('logo', None)
@@ -67,8 +55,8 @@ class UpdateMonthlyRecipientListReportSerializer(serializers.ModelSerializer):
                 logger.error("Failed to upload logo to storage")
         
         # Handle logo clearing if empty value is sent
-        elif 'logo' in self.initial_data and self.initial_data['logo'] in ['', None]:
-            instance.logo = None
+        # elif 'logo' in self.initial_data and self.initial_data['logo'] in ['', None]:
+        #     instance.logo = None
         
         # Update other fields
         for attr, value in validated_data.items():
@@ -81,3 +69,40 @@ class UpdateMonthlyRecipientListReportSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['logo'] = instance.logo
         return representation
+
+
+class UpdateHeaderReportTemplateSerializer(serializers.ModelSerializer):
+    doh_logo = FileInputSerializer(write_only=True, required=False)
+    
+    class Meta:
+        model = HeaderRecipientListReporTemplate
+        fields = "__all__"
+     
+
+    def update(self, instance, validated_data):
+        doh_logo_data = validated_data.pop('doh_logo', None)
+        
+        # Handle doh_logo upload
+        if doh_logo_data:
+            url = upload_to_storage(doh_logo_data, 'manage-images', 'reports')
+            if url:
+                instance.doh_logo = url
+            else:
+                logger.error("Failed to upload DOH logo to storage")
+        
+        # # Handle doh_logo clearing if empty value is sent
+        # elif 'doh_logo' in self.initial_data and self.initial_data['doh_logo'] in ['', None]:
+        #     instance.doh_logo = None
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['doh_logo'] = instance.doh_logo
+        return representation
+

@@ -55,26 +55,20 @@ export const getFirstAidStocksTable= async (
   }
 };
 
-
 export const FetchFirstAid = () => {
   return useQuery({
     queryKey: ["firstAid"],
     queryFn: async () => {
       try {
-        const firstAid = await getFirstAid();
-
-        if (!firstAid || !Array.isArray(firstAid)) {
-          return {
-            default: [],
-            formatted: []
-          };
-        }
+        const response = await getFirstAid();
+        // Expecting response to be an object with a "results" array
+        const firstAidList = Array.isArray(response?.results) ? response.results : [];
 
         return {
-          default: firstAid,
-          formatted: firstAid.map((fa: any) => ({
-            id:`${ String(fa.fa_id)},${fa.fa_name}`,
-            name: `${fa.fa_name}`,
+          default: firstAidList,
+          formatted: firstAidList.map((fa: any) => ({
+            id: `${String(fa.fa_id)},${fa.fa_name}`,
+            name: fa.fa_name,
             rawName: fa.fa_name,
             category: fa.catlist || "No Category"
           }))

@@ -11,7 +11,7 @@ from apps.administration.models import *
 from apps.maternal.serializers.serializer import *
 
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
-    patient_details = PatientMiniMalSerializer(source='*', read_only=True)
+    patient_details = PatientMiniMalSerializerWithAddtionalInfo(source='*', read_only=True)
     medicalrec_count = serializers.IntegerField(read_only=True)
     latest_consultation_date = serializers.SerializerMethodField()
  
@@ -89,7 +89,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
             'assigned_to',
             'is_phrecord',
             'app_id',
-            'lab',
+            # 'lab',
             
             # Nested fields
             'vital_signs',
@@ -100,7 +100,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
             'assigned_to_details',
             'philhealth_details',
             'formatted_date',
-            'lab_details',
+            # 'lab_details',
         ]
     
     def get_formatted_date(self, obj):

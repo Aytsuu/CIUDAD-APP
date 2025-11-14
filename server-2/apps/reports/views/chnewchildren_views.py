@@ -174,9 +174,13 @@ class MonthlyChildrenDetailAPIView(APIView):
                     # Sitio-specific search
                     sitio_search_match = False
                     if sitio_search:
-                        sitio_search_match = (
-                            sitio_search in (sitio or '').lower()
-                        )
+                        # Split sitio search by commas to handle multiple sitios
+                        sitios_to_search = [s.strip().lower() for s in sitio_search.split(',') if s.strip()]
+                        # Check if any of the sitios match (OR logic)
+                        for sitio_term in sitios_to_search:
+                            if sitio_term in (sitio or '').lower():
+                                sitio_search_match = True
+                                break   
                     
                     # Apply combined search logic
                     if search_query and sitio_search:

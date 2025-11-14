@@ -29,6 +29,29 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString("en-US", options);
 };
 
+// Helper function to get lab test names
+const getLabTestNames = (labDetails: any) => {
+  if (!labDetails) return [];
+  
+  const tests = [];
+  
+  if (labDetails.is_cbc) tests.push("CBC w/ platelet count");
+  if (labDetails.is_urinalysis) tests.push("Urinalysis");
+  if (labDetails.is_fecalysis) tests.push("Fecalysis");
+  if (labDetails.is_sputum_microscopy) tests.push("Sputum Microscopy");
+  if (labDetails.is_creatine) tests.push("Creatinine");
+  if (labDetails.is_hba1c) tests.push("HbA1C");
+  if (labDetails.is_chestxray) tests.push("Chest X-Ray");
+  if (labDetails.is_papsmear) tests.push("Pap smear");
+  if (labDetails.is_fbs) tests.push("FBS");
+  if (labDetails.is_oralglucose) tests.push("Oral Glucose Tolerance Test");
+  if (labDetails.is_lipidprofile) tests.push("Lipid profile");
+  if (labDetails.is_fecal_occult_blood) tests.push("Fecal Occult Blood");
+  if (labDetails.is_ecg) tests.push("ECG");
+  
+  return tests;
+};
+
 // Tab component
 const TabButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
   <button onClick={onClick} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${active ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
@@ -98,6 +121,11 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
     console.log("Processed exam sections:", sections);
     return sections;
   }, [sectionsQuery.data, optionsQuery.data, selectedPhysicalExamOptions]);
+
+  // Get lab tests for display in Plan/Treatment
+  const labTests = useMemo(() => {
+    return getLabTestNames(consultation?.find_details?.lab_details);
+  }, [consultation?.find_details?.lab_details]);
 
   const generatePDF = async () => {
     if (!printRef.current) return;
@@ -200,7 +228,18 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm">Address:</span>
             <div className="border-b border-black flex-1 min-w-0 pb-1">
-            <span className="text-sm ">{toTitleCase(patientData?.addressFull)}</span>
+            <span className="text-sm ">
+              {[
+                patientData?.address?.add_sitio,
+                patientData?.address?.add_street,
+                patientData?.address?.add_barangay,
+                patientData?.address?.add_city,
+                patientData?.address?.add_province
+              ]
+                .filter(Boolean)
+                .map(toTitleCase)
+                .join(", ")}
+            </span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
@@ -345,6 +384,10 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
             <div className="border border-black py-4">
               <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">Plan Treatment</h5>
               <div className="space-y-2 px-3">
+                {/* Display Lab Tests if any */}
+             
+
+                {/* Original Plan Treatment Summary */}
                 <div>
                   <div className="text-sm mt-1">
                     {consultation?.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
@@ -352,6 +395,26 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
                     ))}
                   </div>
                 </div>
+
+
+                   {labTests.length > 0 && (
+                  <div>
+                    <span className="font-bold text-black text-sm">Laboratory Tests:</span>
+                    <div className="text-sm mt-1">
+                      {labTests.map((test, index) => (
+                        <div key={index}>• {test}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Display Other Lab Details if any */}
+                {consultation?.find_details?.lab_details?.others && (
+                  <div>
+                    <span className="font-bold text-black text-sm">Other Lab Details:</span>
+                    <div className="text-sm mt-1">{consultation.find_details.lab_details.others}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

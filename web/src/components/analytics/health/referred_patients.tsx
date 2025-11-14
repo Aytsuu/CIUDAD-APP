@@ -163,7 +163,7 @@ export const ReferredPatientsSidebar = () => {
       {/* Footer */}
       {totalCount > 0 && (
         <div className="p-4 border-t border-gray-100">
-          <Link to="/referred-patients/upcoming-consultations">
+          <Link to="/referred-patients/pending-assessment">
             <Button variant="link" className="w-full justify-start text-blue-600 hover:text-blue-700">
               View All Referred Patients ({totalCount > 100 ? "100+" : totalCount})
               {totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}

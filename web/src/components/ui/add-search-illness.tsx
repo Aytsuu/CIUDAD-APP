@@ -71,59 +71,38 @@ export const IllnessComponent = ({
     refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
   });
 
-  // Mutation for adding new illness
+  // Mutation for adding new illness - SIMPLIFIED like PhysicalExam component
   const { mutate: addIllness } = useMutation({
     mutationFn: createIllness,
-    onMutate: async (newIllnessName) => {
+    onMutate: (newIllnessName) => {
       setIsAdding(true);
-      await queryClient.cancelQueries({ queryKey: ['illnesses'] });
-      
-      const previousIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']);
-      
-      // Optimistically add the new illness
-      const optimisticIllness: Illness = {
-        ill_id: Date.now(),
-        illname: newIllnessName,
-        created_at: new Date().toISOString()
-      };
-      
-      queryClient.setQueryData<Illness[]>(['illnesses'], (old = []) => [
-        optimisticIllness,
-        ...old,
-      ]);
-      
-      return { previousIllnesses };
-    },
-    onError: (_error, _variables, context: any) => {
-      queryClient.setQueryData(['illnesses'], context?.previousIllnesses);
-      toast.error("Failed to add illness");
+      // Just show loading state, don't create optimistic data with fake IDs
     },
     onSuccess: (createdIllness) => {
-      // Refetch to get the actual data from server
+      // Refetch to get the updated list with the real illness
       queryClient.invalidateQueries({ queryKey: ['illnesses'] });
       
-      // Automatically check the newly added illness
-      const updatedSelected = [...selectedIllnesses, createdIllness.ill_id];
-      onIllnessSelectionChange(updatedSelected);
-      
-      // Get the current illnesses list from cache
-      const currentIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']) || [];
-      
-      // Build assessment with the newly created illness included
-      const allIllnesses = currentIllnesses.some(i => i.ill_id === createdIllness.ill_id)
-        ? currentIllnesses
-        : [createdIllness, ...currentIllnesses];
-      
-      const selectedIllnessNames = allIllnesses
-        .filter((illness) => updatedSelected.includes(illness.ill_id))
-        .map((illness) => illness.illname)
-        .join(", ");
-      
-      onAssessmentUpdate(selectedIllnessNames);
-      toast.success("Illness added and selected successfully");
+      // Wait a moment for the cache to update, then select the new illness with its REAL ID
+      setTimeout(() => {
+        const updatedSelected = [...selectedIllnesses, createdIllness.ill_id];
+        onIllnessSelectionChange(updatedSelected);
+        
+        // Update assessment with the newly selected illness
+        const currentIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']) || [];
+        const selectedIllnessNames = currentIllnesses
+          .filter((illness) => updatedSelected.includes(illness.ill_id))
+          .map((illness) => illness.illname)
+          .join(", ");
+        
+        onAssessmentUpdate(selectedIllnessNames);
+        toast.success("Illness added and selected successfully");
+      }, 100);
     },
-    onSettled: () => {
-      setIsAdding(false);
+    onError: (error) => {
+      toast.error("Failed to add illness");
+      console.error("Error creating illness:", error);
+    },
+    onSettled: () => {-0
       setSearchTerm("");
     },
   });

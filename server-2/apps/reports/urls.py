@@ -7,13 +7,13 @@ from .views.chopt_formplus_views import MonthlyOPTChildHealthSummariesAPIView, M
 from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIView,SemiAnnualOPTChildHealthReportAPIView
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
-from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsRCPDetailAPIView, MonthlyMedicineChart
-from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
+from .views.medicines_views import *
+from .views.inv_medicine_views import *
 from .views.counts import ReportsCount
-from .views.monthly_illnesschart import MedicalHistoryMonthlyChart
-from .views.recipeint_report_views import UpdateMonthlyRCPReportDetailView
-from .views.fhis_report import FHISMonthlyView  
-from .views.vaccination_views import MonthlyVaccinationChart
+from .views.monthly_illnesschart import *
+from .views.recipeint_report_views import *
+from .views.fhis_report import *  
+from .views.vaccination_views import *
 from.views.doctor_report_assessed import  *
 from .views.morbidity_report import *
 
@@ -21,6 +21,7 @@ from .views.morbidity_report import *
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
         path('update/monthly_recipient_list_report/<int:monthlyrcplist_id>/', UpdateMonthlyRCPReportDetailView.as_view(), name='healthstaff-detail'),
+        path('update-headerreport/<int:rcpheader_id>/',UpdateHeaderReport.as_view(),name="update-header-report"),
     
         
         # CHILD HEALTH REPORTS
@@ -50,6 +51,7 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsRCPDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
+        path('deworming-list/',DewormingRecipientListAPIView.as_view(),name="deworming-list"),
         
         
         # INVENTORY MEDICINE REPORTS
@@ -67,6 +69,8 @@ urlpatterns=[
         
         # Vaccination Reports
         path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
+        path('vaccination-resident-counts/<str:year>/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
+
 
         # doctor assessed reports
         path('doctor-assessed/monthly-summaries/', MonthlyConsultedSummariesAPIView.as_view(), name='monthly-doctor-assessed-summaries'),

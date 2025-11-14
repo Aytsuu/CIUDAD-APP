@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
+import { ChevronLeft, Printer, Search, Loader2, AlertTriangle } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -11,7 +11,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyMedicineRecords } from "./queries/fetch";
-import { MedicineInventorySummaryItem } from "./types";
 
 export default function MonthlyMedicineDetails() {
   const location = useLocation();
@@ -26,7 +25,7 @@ export default function MonthlyMedicineDetails() {
 
   const { data: apiResponse, isLoading, error } = useMonthlyMedicineRecords(month, currentPage, pageSize, searchTerm);
 
-  const records: MedicineInventorySummaryItem[] = apiResponse?.data?.inventory_summary || [];
+  const records: any[] = useMemo(() => apiResponse?.data?.inventory_summary || [], [apiResponse]);
 
   useEffect(() => {
     if (isLoading) showLoading();
@@ -63,19 +62,20 @@ export default function MonthlyMedicineDetails() {
   // Prepare data for export (full filtered records)
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
+      "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "Medicine Name": item.med_name,
       Opening: item.opening,
       Received: item.received,
       Dispensed: item.dispensed,
       Closing: item.closing,
       Unit: item.unit,
-      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
 
   // Export handlers
   const handleExportCSV = () => exportToCSV(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   const handleExportExcel = () => exportToExcel(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
-  const handleExportPDF = () => exportToPDF(`medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportPDF = () => exportToPDF("landscape");
 
   // Print handler prints full filtered table (printable area)
   const handlePrint = () => {
@@ -88,7 +88,7 @@ export default function MonthlyMedicineDetails() {
     window.location.reload(); // <-- simplest but reloads entire page (loses app state)
   };
 
-  const tableHeader = ["Medicine Name", "Stocks On Hand", "Stock Available", "Qty Used", "Unit", "Expiry"];
+  const tableHeader = ["Date Received","Medicine Name", "Stocks On Hand", "Stock Available", "Qty Used", "Unit", "Expiry"];
 
   return (
     <div>
@@ -118,6 +118,24 @@ export default function MonthlyMedicineDetails() {
             <span>Print</span>
           </Button>
         </div>
+      </div>
+
+      <div className="flex justify-end  pt-4 bg-white">
+        <Button
+          variant="ghost"
+          onClick={() =>
+            navigate("/medicine-expired-out-of-stock-summary/details", {
+              state: {
+                month,
+                monthName,
+              },
+            })
+          }
+          className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
+        >
+          View Medicine that Need Restocks
+          <AlertTriangle className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Pagination controls */}
@@ -162,7 +180,7 @@ export default function MonthlyMedicineDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px"
+            fontSize: "12px",
           }}
         >
           <div className="text-center mb-6">
@@ -174,16 +192,24 @@ export default function MonthlyMedicineDetails() {
           <div className="bg-white p-4 mt-4">
             {isLoading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">loading....</span>
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
               </div>
             ) : (
               <TableLayout
-                header={tableHeader}
-                rows={paginatedRecords.map((item) => [item.med_name, item.opening.toString(), item.closing.toString(), item.dispensed.toString(), item.unit, item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"])}
-                tableClassName="border rounded-lg w-full"
-                bodyCellClassName="border border-gray-600 text-center text-xs p-2"
-                headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+              header={tableHeader}
+              rows={paginatedRecords.map((item) => [
+                item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+                item.med_name,
+                item.opening.toString(),
+                item.closing.toString(),
+                item.dispensed.toString(),
+                item.unit,
+                item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
+              ])}
+              tableClassName="border rounded-lg w-full"
+              bodyCellClassName="border border-gray-600 text-center text-xs p-2"
+              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
               />
             )}
           </div>

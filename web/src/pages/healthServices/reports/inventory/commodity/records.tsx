@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
+import { ChevronLeft, Printer, Search, Loader2, AlertTriangle } from "lucide-react";
 import { exportToCSV, exportToExcel } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -10,7 +10,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyCommodityRecords } from "./queries/fetch"; // commodity hook here
-import { CommodityInventorySummaryItem } from "./types"; // commodity types here
 
 export default function MonthlyCommodityDetails() {
   const location = useLocation();
@@ -25,7 +24,7 @@ export default function MonthlyCommodityDetails() {
 
   const { data: apiResponse, isLoading, error } = useMonthlyCommodityRecords(month, currentPage, pageSize, searchTerm);
 
-  const records: CommodityInventorySummaryItem[] = apiResponse?.data?.inventory_summary || [];
+  const records: any[] = apiResponse?.data?.inventory_summary || [];
 
   useEffect(() => {
     if (isLoading) showLoading();
@@ -60,13 +59,15 @@ export default function MonthlyCommodityDetails() {
   // Prepare data for export (full filtered records)
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
+      "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+
       "Commodity Name": item.com_name,
       "Stock on Hand Available (beg. Balance)": item.opening,
       "Dispensed (DOH)": item.received_from === "DOH" ? item.dispensed : 0,
       "Dispensed (CHD)": item.received_from === "CHD" ? item.dispensed : 0,
       "Dispensed (OTHERS)": item.received_from !== "DOH" && item.received_from !== "CHD" ? item.dispensed : 0,
       "Stock on Hand Present Month": item.closing,
-      "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+      "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
 
   // Export handlers
@@ -88,17 +89,18 @@ export default function MonthlyCommodityDetails() {
   };
 
   // Format the table data
-  const formatTableData = (items: CommodityInventorySummaryItem[]) => {
+  const formatTableData = (items: any[]) => {
     return items.map((item) => ({
+      date_received: item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       commodity: item.com_name,
       stockOnHand: item.opening.toString(),
       dispensed: {
         doh: item.received_from === "DOH" ? item.dispensed.toString() : "0",
         chd: item.received_from === "CHD" ? item.dispensed.toString() : "0",
-        others: item.received_from !== "DOH" && item.received_from !== "CHD" ? item.dispensed.toString() : "0"
+        others: item.received_from !== "DOH" && item.received_from !== "CHD" ? item.dispensed.toString() : "0",
       },
       presentMonth: item.closing.toString(),
-      expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+      expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
   };
 
@@ -174,7 +176,7 @@ export default function MonthlyCommodityDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px"
+            fontSize: "12px",
           }}
         >
           <div className="text-center mb-6">
@@ -190,10 +192,32 @@ export default function MonthlyCommodityDetails() {
               </div>
             ) : (
               <div className="overflow-x-auto">
+                <div className="flex justify-end pt-4 bg-white">
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      navigate("/reports/inventory/monthly-commodity/expoutstock-records", {
+                        state: {
+                          month,
+                          monthName,
+                        },
+                      })
+                    }
+                    className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
+                  >
+                    View Commodity that Need Restocks
+                    {/* Import AlertTriangle from lucide-react if not already */}
+                    <AlertTriangle className="h-4 w-4" />
+                  </Button>
+                </div>
+
                 <table className="border rounded-lg w-full border-gray-600">
                   <thead>
                     {/* Main header row */}
                     <tr>
+                      <th rowSpan={2} className="font-bold text-xs border border-gray-600 text-black text-center p-2">
+                        <span className="font-bold text-xs  border-gray-600 text-black text-center p-2">Date Received</span>
+                      </th>
                       <th rowSpan={2} className="font-bold text-xs border border-gray-600 text-black text-center p-2">
                         Commodity
                       </th>
@@ -220,6 +244,7 @@ export default function MonthlyCommodityDetails() {
                   <tbody>
                     {formatTableData(paginatedRecords).map((row, rowIndex) => (
                       <tr key={rowIndex}>
+                        <td className="border border-gray-600 text-center text-xs p-2">{row.date_received}</td>
                         <td className="border border-gray-600 text-center text-xs p-2">{row.commodity}</td>
                         <td className="border border-gray-600 text-center text-xs p-2">{row.stockOnHand}</td>
                         <td className="border border-gray-600 text-center text-xs p-2">{row.dispensed.doh}</td>
