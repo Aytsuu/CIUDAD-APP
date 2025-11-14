@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, date
+from django.core.exceptions import ObjectDoesNotExist
+
 
 def default_due_date():
     return timezone.now().date() + timezone.timedelta(days=7)
@@ -103,6 +105,7 @@ class BusinessPermitRequest(models.Model):
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
     bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
+    bus_reason = models.TextField(null=True, blank=True)
 
 
     class Meta:
@@ -170,7 +173,7 @@ class SummonTimeAvailability(models.Model):
 
 
 class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.CharField(primary_key=True, max_length=50)
+    pay_id = models.CharField(primary_key=True, max_length=50, editable=False)
     pay_sr_type = models.CharField(max_length=200)
     pay_status = models.CharField(max_length=200, default='Unpaid')
     pay_date_req = models.DateTimeField(default=datetime.now)
@@ -183,6 +186,38 @@ class ServiceChargePaymentRequest(models.Model):
 
     class Meta:
         db_table = 'service_charge_payment_request'
+
+    def save(self, *args, **kwargs):
+        if not self.pay_id:
+            self.pay_id = self.generate_custom_id()
+        super().save(*args, **kwargs)
+
+    def generate_custom_id(self):
+        current_year = datetime.now().year % 100
+        year_suffix = f"-{current_year:02d}"
+
+        try:
+            current_year_ids = ServiceChargePaymentRequest.objects.filter(
+                pay_id__endswith=year_suffix
+            )
+            if current_year_ids.exists():
+                max_id = 0
+                for obj in current_year_ids:
+                    try:
+                        numeric_part = obj.pay_id[2:6]  #
+                        numeric_value = int(numeric_part)
+                        if numeric_value > max_id:
+                            max_id = numeric_value
+                    except (ValueError, IndexError):
+                        continue
+                next_number = max_id + 1
+            else:
+                next_number = 1
+        except ObjectDoesNotExist:
+            next_number = 1
+
+        number_part = f"{next_number:04d}"  # 4-digit number with leading zeros
+        return f"SP{number_part}{year_suffix}"
 
 
 class SummonCase(models.Model):

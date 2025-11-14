@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { getSummonDates, getSummonTimeSlots, getCaseTrackingDetails, getSummonScheduleList } from "../restful-API/summon-relatedGetAPI"
-import { CaseTrackingType, SummonDates, SummonTimeSlots, ScheduleList } from "../types"
+import { getSummonDates, getSummonTimeSlots, getCaseTrackingDetails, getSummonScheduleList, getSummonPaymentLogs, getFileActionPaymentLogs } from "../restful-API/summon-relatedGetAPI"
+import { CaseTrackingType, SummonDates, SummonTimeSlots, ScheduleList, PaymentRequest } from "../types"
 
 export const useGetSummonDates = () => {
     return useQuery<SummonDates[]>({
@@ -28,10 +28,28 @@ export const useGetCaseTrackingDetails = (comp_id: string) => {
 }
 
 export const useGetScheduleList = (sc_id: string) => {
-     return useQuery<ScheduleList[]>({
+    return useQuery<ScheduleList[]>({
         queryKey: ['schedList', sc_id],
         queryFn: () => getSummonScheduleList(sc_id),
         enabled: !!sc_id, 
+        staleTime: 5000,
+    });
+}
+
+export const useGetSummonPaymentLogs = (comp_id: string) => {
+    return useQuery<PaymentRequest[]>({
+        queryKey: ['summonPayLogs', comp_id],
+        queryFn: () => getSummonPaymentLogs(comp_id),
+        enabled: !!comp_id, 
+        staleTime: 5000,
+    });
+}
+
+export const useGetFileActionPaymentLogs = (comp_id: string) => {
+    return useQuery<PaymentRequest[]>({
+        queryKey: ['fileActionPayLogs', comp_id],
+        queryFn: () => getFileActionPaymentLogs(comp_id),
+        enabled: !!comp_id, 
         staleTime: 5000,
     });
 }

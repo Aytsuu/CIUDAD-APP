@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonCaseDetail, getSummonDates, 
     getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail} from "../requestAPI/summonGetAPI";
-import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList } from "../summon-types";
+import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList, ComplaintData } from "../summon-types";
 
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
@@ -81,6 +81,15 @@ export const useGetScheduleList = (sc_id: string) => {
         staleTime: 5000,
     });
 }
+
+export const useGetComplaintDetails = (comp_id: string) => {
+    return useQuery<ComplaintData>({
+        queryKey: ['complaintDetails', comp_id],
+        queryFn: () => getComplaintDetails(comp_id),
+        staleTime: 5000
+    })
+}
+
   
 
 

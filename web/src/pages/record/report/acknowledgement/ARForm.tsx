@@ -19,7 +19,8 @@ export default function ARForm({
   activeVideoId,
   setActiveVideoId,
   setMediaFiles,
-  submit
+  submit,
+  isEdit = false,
 } : {
   form: UseFormReturn<z.infer<typeof ARFormSchema>>;
   mediaFiles: MediaUploadType;
@@ -28,8 +29,9 @@ export default function ARForm({
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   submit: () => void;
+  isEdit?: boolean
 }) {
-
+  
   return (
     <>
       {/* First row: Name, Location, and Sitio fields */}
@@ -64,14 +66,14 @@ export default function ARForm({
         {!isSubmitting ? (<ConfirmationModal 
           trigger={<Button className="w-auto">
             <Check />
-            Create Report
+            {isEdit ? "Save Changes" : "Create Report"}
           </Button>}
-          title="Confirm Create"
-          description="Are you sure you want to create a report?"
+          title={`Confirm ${isEdit ? "Save" : "Create"}`}
+          description={`Are you sure you want to ${isEdit ? "Save Changes" : "create a report"}?`}
           actionLabel="Confirm"
           onClick={submit}
         />) : (
-          <LoadButton>Creating...</LoadButton>
+          <LoadButton>{isEdit ? "Saving..." : "Creating..."}</LoadButton>
         )}
       </div>
     </>

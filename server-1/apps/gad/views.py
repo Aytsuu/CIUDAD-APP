@@ -342,10 +342,53 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 logger.error(f"Serializer validation failed: {serializer.errors}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            # Save the instance
+            # Save the instance and log activity
             try:
                 instance = serializer.save()
                 logger.info(f"Successfully created proposal with ID: {instance.gpr_id}")
+                
+                # Log the activity if staff exists with staff_id
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff from request data or user
+                    staff_id = request.data.get('staff_id') or request.data.get('staffId') or request.data.get('staff')
+                    
+                    # Try to get staff from user if not in request
+                    if not staff_id:
+                        try:
+                            staff_id = getattr(request.user, 'staff', None)
+                            if staff_id:
+                                staff_id = getattr(staff_id, 'staff_id', None)
+                        except:
+                            pass
+                    
+                    if staff_id:
+                        # Format staff_id properly (pad with leading zeros if needed)
+                        if isinstance(staff_id, str) and len(staff_id) < 11:
+                            staff_id = staff_id.zfill(11)
+                        elif isinstance(staff_id, int):
+                            staff_id = str(staff_id).zfill(11)
+                        
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                        
+                        if staff:
+                            # Create activity log
+                            create_activity_log(
+                                act_type="Project Proposal Created",
+                                act_description=f"Project proposal {instance.gpr_id} created for development plan {instance.dev_id}",
+                                staff=staff,
+                                record_id=str(instance.gpr_id)
+                            )
+                            logger.info(f"Activity logged for project proposal creation: {instance.gpr_id}")
+                        else:
+                            logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    else:
+                        logger.warning("No staff_id provided in request for activity logging")
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity for project proposal creation: {str(log_error)}")
+                    # Don't fail the request if logging fails
                 
                 # Verify the instance was actually saved
                 saved_instance = ProjectProposal.objects.get(pk=instance.gpr_id)
@@ -559,7 +602,7 @@ class ProjectProposalForBT(generics.ListAPIView):
             projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
             
             # Get budget items from dev_gad_items
-            budget_items = dev_plan.dev_gad_items or []
+            budget_items = dev_plan.dev_budget_items or []
             
             for project_index, project_title in enumerate(projects):
                 if not project_title:  # Skip empty project titles
@@ -806,6 +849,11 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        # Auto-archive GAD development plans that have passed
+        # COMMENTED OUT: Archiving disabled
+        # from .signals import archive_passed_gad_plans
+        # archive_passed_gad_plans()
+        
         year = self.request.query_params.get('year')
         qs = DevelopmentPlan.objects.all()
         
@@ -829,7 +877,9 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 Q(dev_indicator__icontains=search)
             )
         
-        return qs.order_by('-dev_date')
+        # Support dynamic ordering
+        ordering = self.request.query_params.get('ordering', '-dev_date')
+        return qs.order_by(ordering)
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -848,6 +898,153 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             development_plan = serializer.save()
+            
+            # Check if announcements were requested
+            selected_announcements = request.data.get('selectedAnnouncements', [])
+            event_subject = request.data.get('eventSubject', '')
+            
+            # Check if plan is eligible for announcement (mandated OR has project proposal with resolution)
+            is_mandated = development_plan.dev_mandated == True
+            has_proposal_with_resolution = False
+            
+            if not is_mandated:
+                # Check if there's a project proposal with a resolution
+                from apps.gad.models import ProjectProposal
+                from apps.council.models import Resolution
+                
+                # Optimized query: Check if any proposal has a resolution in a single query
+                has_proposal_with_resolution = ProjectProposal.objects.filter(
+                    dev_id=development_plan.dev_id,
+                    gpr_is_archive=False,
+                    resolution_set__res_is_archive=False  # Using reverse relation from Resolution.gpr_id (default: modelname_set)
+                ).exists()
+            
+            # Only create announcement if eligible (mandated OR has proposal with resolution)
+            announcement_eligible = is_mandated or has_proposal_with_resolution
+            
+            if selected_announcements and len(selected_announcements) > 0 and announcement_eligible:
+                try:
+                    from apps.announcement.models import Announcement
+                    from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
+                    from django.utils import timezone
+                    
+                    # Extract participant information from dev_indicator
+                    dev_indicator = development_plan.dev_indicator
+                    participant_info = ""
+                    
+                    if dev_indicator:
+                        if isinstance(dev_indicator, list):
+                            participant_info = ", ".join([
+                                f"{item.get('category', '')}: {item.get('count', 0)}" 
+                                if isinstance(item, dict) else str(item)
+                                for item in dev_indicator
+                            ])
+                        elif isinstance(dev_indicator, dict):
+                            participant_info = f"{dev_indicator.get('category', '')}: {dev_indicator.get('count', 0)}"
+                        else:
+                            participant_info = str(dev_indicator)
+                    
+                    # Create announcement for the GAD activity
+                    announcement = Announcement.objects.create(
+                        ann_title=f"GAD ACTIVITY: {development_plan.dev_client or 'GAD Development Plan'}",
+                        ann_details=event_subject or f"GAD Activity: {development_plan.dev_client or 'Development Plan'}\nProject: {development_plan.dev_project or 'N/A'}\nDate: {development_plan.dev_date}\nIssue: {development_plan.dev_issue or 'N/A'}\nParticipants: {participant_info if participant_info else 'N/A'}",
+                        ann_created_at=timezone.now(),
+                        ann_type="event",
+                        ann_to_email=True,
+                        ann_to_sms=True,
+                        ann_status="Active",
+                        staff_id=request.data.get('staff_id') or request.data.get('staff')
+                    )
+                    
+                    # Prepare recipients data for BulkAnnouncementRecipientSerializer
+                    recipients_data = []
+                    for announcement_type in selected_announcements:
+                        recipient_dict = {'ann': announcement.ann_id}
+                        
+                        # Map client-focused options (from frontend)
+                        announcement_type_lower = announcement_type.lower()
+                        
+                        if announcement_type == "all":
+                            recipient_dict['ar_category'] = "all"
+                            recipient_dict['ar_type'] = "ALL"
+                        elif announcement_type == "allbrgystaff":
+                            recipient_dict['ar_category'] = "staff"
+                            recipient_dict['ar_type'] = "ALL"
+                        elif announcement_type == "residents":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "RESIDENT"
+                        elif announcement_type == "wmstaff":
+                            recipient_dict['ar_category'] = "staff"
+                            recipient_dict['ar_type'] = "WASTE_MANAGEMENT"
+                        elif announcement_type == "drivers":
+                            recipient_dict['ar_category'] = "staff"
+                            recipient_dict['ar_type'] = "DRIVER"
+                        elif announcement_type == "collectors":
+                            recipient_dict['ar_category'] = "staff"
+                            recipient_dict['ar_type'] = "LOADER"
+                        elif announcement_type == "watchmen":
+                            recipient_dict['ar_category'] = "staff"
+                            recipient_dict['ar_type'] = "WATCHMAN"
+                        # (GAD)
+                        elif announcement_type_lower == "women":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "WOMEN"
+                        elif announcement_type_lower in ["lgbtqia+", "lgbtqia"]:
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "LGBTQIA+"
+                        elif announcement_type_lower == "senior":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "SENIOR"
+                        elif announcement_type_lower == "pwd":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "PWD"
+                        elif announcement_type_lower == "soloparent":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "SOLO_PARENT"
+                        elif announcement_type_lower == "erpat":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "ERPAT"
+                        elif announcement_type_lower == "children":
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "CHILDREN"
+                        else:
+                            # Default to all residents if type not recognized
+                            recipient_dict['ar_category'] = "resident"
+                            recipient_dict['ar_type'] = "RESIDENT"
+                        
+                        recipients_data.append(recipient_dict)
+                    
+                    bulk_serializer = BulkAnnouncementRecipientSerializer(
+                        data={'recipients': recipients_data},
+                        context={'request': request}
+                    )
+                    
+                    if bulk_serializer.is_valid():
+                        try:
+                            bulk_serializer.save()
+                            logger.info(f"Announcement recipients created and notifications sent for GAD activity announcement {announcement.ann_id}")
+                            serializer.data['announcement_id'] = announcement.ann_id
+                            serializer.data['announcement_created'] = True
+                        except Exception as e:
+                            logger.error(f"Error saving announcement recipients: {str(e)}")
+                            serializer.data['announcement_id'] = announcement.ann_id
+                            serializer.data['announcement_created'] = False
+                            serializer.data['announcement_error'] = str(e)
+                    else:
+                        logger.error(f"Error validating announcement recipients: {bulk_serializer.errors}")
+                        serializer.data['announcement_id'] = announcement.ann_id
+                        serializer.data['announcement_created'] = False
+                        serializer.data['announcement_error'] = bulk_serializer.errors
+                except Exception as e:
+                    logger.error(f"Error creating announcement: {str(e)}")
+                    serializer.data['announcement_created'] = False
+                    serializer.data['announcement_error'] = str(e)
+            elif selected_announcements and len(selected_announcements) > 0 and not announcement_eligible:
+                # Announcement requested but plan is not eligible (not mandated and no proposal with resolution)
+                logger.info(f"Announcement requested for dev_id {development_plan.dev_id} but plan is not eligible (not mandated and no proposal with resolution)")
+                serializer.data['announcement_created'] = False
+                serializer.data['announcement_skipped'] = True
+                serializer.data['announcement_skip_reason'] = "Plan must be mandated or have a project proposal with resolution to send announcements"
             
             # Log the activity
             try:
@@ -874,7 +1071,8 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 logger.error(f"Failed to log activity for GAD development plan creation: {str(log_error)}")
                 # Don't fail the request if logging fails
             
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_data = serializer.data
+            return Response(response_data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
             logger.error(f"Error creating GAD development plan: {str(e)}")
@@ -948,7 +1146,13 @@ class GADDevelopmentPlanYears(APIView):
     def get(self, request, *args, **kwargs):
         # Add search functionality for years
         search = request.query_params.get('search', None)
+        dev_archived = request.query_params.get('dev_archived', None)
         queryset = DevelopmentPlan.objects.all()
+        
+        # Filter by archived status if provided
+        if dev_archived is not None:
+            is_archived = dev_archived.lower() == 'true'
+            queryset = queryset.filter(dev_archived=is_archived)
         
         if search:
             queryset = queryset.filter(

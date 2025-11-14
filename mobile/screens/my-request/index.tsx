@@ -10,45 +10,39 @@ export default () => {
   const menuItem = [
     {
       title: "Garbage Pickup Request",
-      description: "Monitor garbage pickup request.",
       route: "/(my-request)/garbage-pickup/garbage-pickup-tracker",
       icon: "",
-      gradient: ['#10b981', '#059669'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Certification Request",
-      description: "Request official certification documents for personal or legal use.",
       route: "/(my-request)/certification-tracking/certificate-request-tracker",
       icon: "",
-      gradient: ['#8b5cf6', '#7c3aed'],
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Blotter Request",
-      description: "File a request to document the incident and promtoe a peaceful settlement.",
       route: "/(my-request)/complaint-tracking/compMain",
       icon: "",
-      gradient: ['#EBEFFE', '#0875DC']
+      gradient: ['#2563eb', '#1e40af'],
     },
     {
       title: "Medicine Request",
-      description: "Monitor your medicine requests.",
       route: "/(health)/medicine-request/my-requests",
       icon: "",
-      gradient: ['#f59e0b', '#d97706'],
+      gradient: ['#93c5fd', '#60a5fa'],
     },
     {
       title: "Maternal Appointment",
-      description: "Track your maternal health appointments.",
       route: "",
       icon: "",
-      gradient: ['#ec4899', '#db2777'],
+      gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Medical Consultation",
-      description: "Monitor your medical consultation requests.",
       route: "",
       icon: "",
-      gradient: ['#06b6d4', '#0891b2'],
+      gradient: ['#2563eb', '#1e40af'],
     },
   ]
 
@@ -67,9 +61,6 @@ export default () => {
       wrapScroll={false}
     >
       <View className="flex-1 px-6 py-4">
-        <Text className="text-sm text-center text-gray-600 leading-6 mb-6">
-          Monitor your own requests. Select a category below to view records.
-        </Text>
         <View className="flex-row flex-wrap gap-3">
           {menuItem.map((item: any, index: number) => (
             <TouchableOpacity
@@ -103,9 +94,6 @@ export default () => {
                   <View>
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
-                    </Text>
-                    <Text className="text-white/80 text-xs mt-1 leading-tight">
-                      {item.description}
                     </Text>
                   </View>
                 </View>

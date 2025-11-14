@@ -122,7 +122,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const fetchPlans = async () => {
     try {
-      const data = await getAnnualDevPlansByYear(year);
+      const data = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for view
       // Handle both array and paginated response formats
       const plansData = Array.isArray(data) ? data : data?.results || [];
       setPlans(plansData);
@@ -172,17 +172,51 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     setSelectedResolution(null);
   };
 
+  // Helper function to check if a dev plan has a resolution
+  const hasResolution = (devId: number): boolean => {
+    const proposal = proposalByDevId.get(devId);
+    if (!proposal || !proposal.gprId) return false;
+    return resolutionByGprId.has(proposal.gprId as number);
+  };
+
+  // Check if all plans have resolutions
+  const allPlansHaveResolutions = useMemo(() => {
+    if (!plans || plans.length === 0) return false;
+    return plans.every(plan => {
+      const proposal = proposalByDevId.get(plan.dev_id);
+      if (!proposal || !proposal.gprId) return false;
+      return resolutionByGprId.has(proposal.gprId as number);
+    });
+  }, [plans, proposalByDevId, resolutionByGprId]);
+
   const handleArchiveClick = () => {
-    // Toggle showing individual archive buttons instead of archiving all
+    if (allPlansHaveResolutions) {
+      showErrorToast("Cannot archive");
+      return;
+    }
     setShowArchiveButtons(true);
   };
 
   const handleConfirmArchive = async () => {
     setIsArchiving(true);
     try {
-      const planIds = plans.map(plan => plan.dev_id);
-      await archivePlansMutation.mutateAsync(planIds);
-      showSuccessToast(`Successfully archived ${plans.length} development plan(s)`);
+      const planIdsWithoutResolutions = plans
+        .filter(plan => !hasResolution(plan.dev_id))
+        .map(plan => plan.dev_id);
+      
+      if (planIdsWithoutResolutions.length === 0) {
+        showErrorToast("Cannot archive: All plans have linked resolutions.");
+        setShowArchiveDialog(false);
+        return;
+      }
+      
+      if (planIdsWithoutResolutions.length < plans.length) {
+        const skippedCount = plans.length - planIdsWithoutResolutions.length;
+        showErrorToast(`Cannot archive ${skippedCount} plan(s) with linked resolutions. Archiving remaining plans.`);
+      }
+      
+      await archivePlansMutation.mutateAsync(planIdsWithoutResolutions);
+      showSuccessToast(`Successfully archived ${planIdsWithoutResolutions.length} development plan(s)`);
       setShowArchiveDialog(false);
       setShowArchiveButtons(false);
       onBack(); // Go back to main view after archiving
@@ -195,6 +229,11 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   };
 
   const handleSingleArchiveClick = (planId: number) => {
+   
+    if (hasResolution(planId)) {
+      showErrorToast("Cannot archive this development plan");
+      return;
+    }
     setArchiveDialogPlanId(planId);
     setShowArchiveDialog(true);
   };
@@ -202,6 +241,14 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   // Archive a single plan
   const handleConfirmSingleArchive = async () => {
     if (!archiveDialogPlanId) return;
+    
+    // Safety check: ensure plan doesn't have a resolution
+    if (hasResolution(archiveDialogPlanId)) {
+      showErrorToast("Cannot archive this development plan");
+      setShowArchiveDialog(false);
+      setArchiveDialogPlanId(null);
+      return;
+    }
     
     setIsArchiving(true);
     try {
@@ -279,7 +326,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div className="font-semibold text-blue-900">{plan.dev_client}</div>
-                        {showArchiveButtons && (
+                        {showArchiveButtons && !hasResolution(plan.dev_id) && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -303,7 +350,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                           <div className="mt-2 space-y-1">
                             {proposal && (
                               <div 
-                                className="text-xs text-yellow-600 font-medium cursor-pointer hover:text-yellow-800 hover:underline"
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 underline"
                                 onClick={() => handleViewProject(proposal)}
                               >
                                 View Project Proposal
@@ -311,7 +358,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                             )}
                             {resolution && (
                               <div 
-                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 underline"
                                 onClick={() => handleViewResolution(resolution)}
                               >
                                 Resolution #{resolution.res_num}
@@ -580,7 +627,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             <Button 
               onClick={handleArchiveClick}
               className="bg-red-600 text-white hover:bg-red-700 w-28"
-              disabled={isArchiving}
+              disabled={isArchiving || allPlansHaveResolutions}
+              title={allPlansHaveResolutions ? "Cannot archive: All plans have linked resolutions" : ""}
             >
               Archive
             </Button>

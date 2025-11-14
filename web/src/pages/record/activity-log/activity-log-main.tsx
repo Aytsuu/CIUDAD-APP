@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLoading } from '@/context/LoadingContext';
 import { useDebounce } from '@/hooks/use-debounce';
 import { ActivityLog, ActivityLogResponse } from './queries/ActlogQueries';
+import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 
 function groupByDate(logs: ActivityLog[]) {
   return logs.reduce((acc, log) => {
@@ -215,48 +216,16 @@ const ActivityLogMain = () => {
       
       {/* Pagination Controls */}
       {!isLoading && !error && logs.length > 0 && totalPages > 1 && (
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 p-4">
+        <div className="mt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-600">
-              Showing <span className="font-medium">{((currentPage - 1) * 10) + 1}</span> to <span className="font-medium">{Math.min(currentPage * 10, totalCount)}</span> of <span className="font-medium">{totalCount}</span> results
+              Showing <span className="font-medium">{((currentPage - 1) * 10) + 1}</span>-<span className="font-medium">{Math.min(currentPage * 10, totalCount)}</span> of <span className="font-medium">{totalCount}</span> rows
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ← Previous
-              </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                  if (pageNum > totalPages) return null;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm rounded-md transition-colors ${
-                        pageNum === currentPage
-                          ? 'bg-[#1273B8] text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next →
-              </Button>
-            </div>
+            <PaginationLayout
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       )}

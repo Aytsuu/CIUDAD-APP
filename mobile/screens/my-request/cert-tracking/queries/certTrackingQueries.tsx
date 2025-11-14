@@ -1,14 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPersonalCertifications, getBusinessPermitRequests, cancelCertificate, cancelBusinessPermit } from "../restful-API/certTrackingGetAPI";
+import { getPersonalCertifications, getBusinessPermitRequests, getServiceChargeRequests, cancelCertificate, cancelBusinessPermit, cancelServiceCharge } from "../restful-API/certTrackingGetAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useCertTracking = (residentId: string) => {
     return useQuery({
         queryKey: ["cert-tracking", residentId],
         queryFn: async () => {
-            const [personal, business] = await Promise.all([
+            const [personal, business, serviceCharge] = await Promise.all([
                 getPersonalCertifications(residentId),
-                getBusinessPermitRequests(residentId)
+                getBusinessPermitRequests(residentId),
+                getServiceChargeRequests(residentId)
             ]);
 
             const byResident = (item: any) => {
@@ -18,8 +19,9 @@ export const useCertTracking = (residentId: string) => {
 
             return {
                 personal: Array.isArray(personal) ? personal.filter(byResident) : [],
-                business: Array.isArray(business) ? business.filter(byResident) : []
-            } as { personal: any[]; business: any[] };
+                business: Array.isArray(business) ? business.filter(byResident) : [],
+                serviceCharge: Array.isArray(serviceCharge) ? serviceCharge : []
+            } as { personal: any[]; business: any[]; serviceCharge: any[] };
         },
         enabled: !!residentId,
         staleTime: 0,
@@ -36,7 +38,7 @@ export const useCancelCertificate = (residentId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
     }
-  })
+  });
 }
 
 export const useCancelBusinessPermit = (residentId: string) => {
@@ -46,7 +48,17 @@ export const useCancelBusinessPermit = (residentId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
     }
-  })
+  });
+}
+
+export const useCancelServiceCharge = (residentId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pay_id: string) => cancelServiceCharge(pay_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
+    }
+  });
 }
 
 

@@ -4,37 +4,37 @@ import { router } from "expo-router";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 
 const recordMenuItem = [
-    {
-      title: "Incident",
-      description: "",
-      route: "/(report)/incident/records",
-      user: [User.resident, User.brgyStaff]
-    },
-    {
-      title: 'Acknowledgement',
-      description: '',
-      route: '/(report)/acknowledgement/records',
-      user: [User.brgyStaff]
-    },
-    {
-      title: 'Weekly Accomplishment',
-      description: '',
-      route: '/(report)/weekly-ar/records',
-      user: [User.brgyStaff]
-    },
-    {
-      title: 'Securado',
-      description: '',
-      route: '',
-      user: [User.resident, User.brgyStaff]
-    },
-    {
-      title: 'Illegal Dumping',
-      description: '',
-      route: '/(waste)/illegal-dumping/resident/illegal-dump-res-main',
-      user: [User.resident, User.brgyStaff]
-    },    
-  ]
+  {
+    title: "Incident",
+    description: "",
+    route: "/(report)/incident/records",
+    user: [User.resident, User.brgyStaff],
+  },
+  {
+    title: "Acknowledgement",
+    description: "",
+    route: "/(report)/acknowledgement/records",
+    user: [User.brgyStaff],
+  },
+  {
+    title: "Weekly Accomplishment",
+    description: "",
+    route: "/(report)/weekly-ar/records",
+    user: [User.brgyStaff],
+  },
+  {
+    title: "Securado",
+    description: "",
+    route: "/(report)/securado/map",
+    user: [User.brgyStaff],
+  },
+  {
+    title: 'Illegal Dumping',
+    description: '',
+    route: '/(waste)/illegal-dumping/resident/illegal-dump-res-main',
+    user: [User.resident, User.brgyStaff]
+  },
+];
 
 export default function ReportRecord() {
   return (

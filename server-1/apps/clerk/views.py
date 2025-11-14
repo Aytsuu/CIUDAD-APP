@@ -577,12 +577,19 @@ class CancelBusinessPermitView(APIView):
     def post(self, request, bpr_id):
         try:
             permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
-            permit.req_status = 'Cancelled'
-            permit.save(update_fields=['req_status'])
+            # Accept req_status from request, default to 'Cancelled' if not provided
+            permit.req_status = request.data.get('req_status', 'Cancelled')
+            # Set cancellation date for cancelled requests
+            permit.req_date_completed = timezone.now().date()
+            # Save the decline/cancel reason
+            permit.bus_reason = request.data.get('bus_reason')
+            permit.save(update_fields=['req_status', 'req_date_completed', 'bus_reason'])
             return Response({
-                'message': 'Cancelled',
+                'message': permit.req_status,
                 'bpr_id': permit.bpr_id,
-                'req_status': permit.req_status
+                'req_status': permit.req_status,
+                'req_date_completed': permit.req_date_completed,
+                'bus_reason': permit.bus_reason
             }, status=status.HTTP_200_OK)
         except BusinessPermitRequest.DoesNotExist:
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -1248,6 +1255,7 @@ class PersonalClearancesView(generics.ListAPIView):
     def get_queryset(self):
         queryset = ClerkCertificate.objects.select_related(
             'rp_id__per',
+            'rp_id__voter',  # Include voter for eligibility check
             'pr_id'
         ).only(
             'cr_id',
@@ -1256,6 +1264,9 @@ class PersonalClearancesView(generics.ListAPIView):
             'cr_req_status',
             'rp_id__per__per_fname',
             'rp_id__per__per_lname',
+            'rp_id__per__per_dob',
+            'rp_id__per__per_disability',
+            'rp_id__voter',
             'pr_id__pr_purpose',
             'pr_id__pr_rate'
         ).all()
@@ -1624,6 +1635,14 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             'comp_id__complaintaccused_set__acsd'
         ) 
 
+        # Filter by resident if provided (can be complainant OR accused)
+        rp_filter = self.request.GET.get('rp', None) or self.request.GET.get('rp_id', None)
+        if rp_filter:
+            queryset = queryset.filter(
+                Q(comp_id__complaintcomplainant__cpnt__rp_id__rp_id=rp_filter) |
+                Q(comp_id__complaintaccused__acsd__rp_id__rp_id=rp_filter)
+            ).distinct()
+
         sr_type_filter = self.request.GET.get('sr_type', None)
         if sr_type_filter:
             queryset = queryset.filter(pay_sr_type=sr_type_filter)
@@ -1811,10 +1830,20 @@ class UpdateServiceChargePaymentStatusView(APIView):
                 payment_request.pay_status = request.data['pay_status']
                 if request.data['pay_status'] == "Paid":
                     payment_request.pay_date_paid = timezone.now()
+                    # DO NOT automatically change pay_req_status to Completed
+                    # pay_req_status should only change to Completed when explicitly updated
             
             # Update request status if provided
             if 'pay_req_status' in request.data:
                 payment_request.pay_req_status = request.data['pay_req_status']
+                # If declining, also set pay_status to Unpaid and clear payment date
+                if request.data['pay_req_status'] == "Declined":
+                    payment_request.pay_status = "Unpaid"
+                    payment_request.pay_date_paid = None
+            
+            # Update reason if provided (for declining)
+            if 'pay_reason' in request.data:
+                payment_request.pay_reason = request.data['pay_reason']
             
             payment_request.save()
             

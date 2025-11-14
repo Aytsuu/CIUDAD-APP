@@ -1,19 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Linking,
-  Alert,
-  Modal,
-  ScrollView,
-  Image
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image} from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Search, Eye, FileText, X, Plus, Edit } from 'lucide-react-native';
+import { ChevronLeft, Search, Eye, FileText, X, Plus } from 'lucide-react-native';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useOrdinances, OrdinanceData } from './queries/ordinance-fetch-queries';
 import { useUpdateOrdinance } from './queries/ordinance-fetch-insert-queries';
@@ -93,9 +83,15 @@ function OrdinancePage() {
     return options;
   }, []);
 
-  // Group ordinances into folders
+  // Group ordinances into folders and sort by ord_num
   const ordinanceFolders = useMemo(() => {
-    return groupOrdinancesIntoFolders(fetchedData);
+    const folders = groupOrdinancesIntoFolders(fetchedData);
+    // Sort by ord_num (extract number and year for proper sorting)
+    return folders.sort((a, b) => {
+      const aNum = a.baseOrdinance.ord_num || '';
+      const bNum = b.baseOrdinance.ord_num || '';
+      return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
+    });
   }, [fetchedData]);
 
   // Get available ordinances for amendment/repeal selection
@@ -148,28 +144,30 @@ function OrdinancePage() {
     setCreationMode('new');
   };
 
-
-
   // Get category badge color
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Council': return { bg: 'bg-purple-100', text: 'text-purple-800' };
-      case 'Waste Committee': return { bg: 'bg-green-100', text: 'text-green-800' };
-      case 'GAD': return { bg: 'bg-pink-100', text: 'text-pink-800' };
-      case 'Finance': return { bg: 'bg-yellow-100', text: 'text-yellow-800' };
-      default: return { bg: 'bg-gray-100', text: 'text-gray-800' };
+  const getCategoryColor = (category: string | string[]) => {
+    // Handle array - take first element, or handle string directly
+    const categoryStr = Array.isArray(category) ? (category[0] || '') : (category || '');
+    
+    switch ((categoryStr || '').toLowerCase()) {
+      case 'gad':
+        return { bg: 'bg-purple-100', text: 'text-purple-800' };
+      case 'finance':
+        return { bg: 'bg-orange-100', text: 'text-orange-800' };
+      case 'council':
+        return { bg: 'bg-gray-100', text: 'text-gray-700' };
+      case 'waste committee':
+        return { bg: 'bg-green-100', text: 'text-green-800' };
+      default:
+        return { bg: 'bg-gray-100', text: 'text-gray-800' };
     }
   };
 
-  // Loading state component (same as certificates module)
-  const renderLoadingState = () => (
-    <View className="flex-1 justify-center items-center p-6">
-      <LoadingState />
-    </View>
-  );
-
   const renderFolderItem = ({ item: folder }: { item: OrdinanceFolder }) => {
-    const categoryColor = getCategoryColor(folder.baseOrdinance.ord_category);
+    // Normalize category to handle both array and string
+    const categories = Array.isArray(folder.baseOrdinance.ord_category) 
+      ? folder.baseOrdinance.ord_category 
+      : [folder.baseOrdinance.ord_category];
     
     // Check if this ordinance has been repealed (either base ordinance is repealed or has repeal amendments)
     const hasRepeal = folder.baseOrdinance.ord_repealed || 
@@ -201,7 +199,18 @@ function OrdinancePage() {
           </View>
 
           <View className="flex-row items-center gap-2">
-            {folder.totalOrdinances > 1 && (
+            {/* View More for single ordinance, View All for multiple ordinances */}
+            {folder.totalOrdinances === 1 ? (
+              <TouchableOpacity
+                onPress={() => handleFolderView(folder)}
+                className="bg-blue-50 px-2 py-1 rounded"
+              >
+                <View className="flex-row items-center">
+                  <Eye size={12} color="#2563eb" />
+                  <Text className="text-xs text-blue-600 ml-1 font-medium">View More</Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
               <TouchableOpacity
                 onPress={() => handleFolderView(folder)}
                 className="bg-blue-50 px-2 py-1 rounded"
@@ -210,20 +219,6 @@ function OrdinancePage() {
                   <Eye size={12} color="#2563eb" />
                   <Text className="text-xs text-blue-600 ml-1 font-medium">View All</Text>
                 </View>
-              </TouchableOpacity>
-            )}
-            
-            {/* Action buttons - only show if not repealed */}
-            {!hasRepeal && (
-              <TouchableOpacity
-                onPress={() => {
-                  setCreationMode('amend');
-                  setSelectedOrdinance(folder.baseOrdinance.ord_num);
-                  setUploadModalVisible(true);
-                }}
-                className="bg-yellow-50 px-2 py-1 rounded"
-              >
-                <Edit size={12} color="#d97706" />
               </TouchableOpacity>
             )}
             
@@ -244,25 +239,36 @@ function OrdinancePage() {
         </CardHeader>
 
         <CardContent className="space-y-2">
-          <View className="flex-row items-center gap-2 mb-2">
-            {folder.totalOrdinances === 1 ? (
-              <View className="px-2 py-0.5 rounded bg-gray-100">
-                <Text className="text-xs text-gray-600">Single Ordinance</Text>
-              </View>
-            ) : folder.amendments.length > 0 ? (
-              <View className="px-2 py-0.5 rounded bg-blue-100">
-                <Text className="text-xs text-blue-600">Multiple Ordinances</Text>
-              </View>
-            ) : (
-              <View className="px-2 py-0.5 rounded bg-green-100">
-                <Text className="text-xs text-green-600">Base Ordinance</Text>
-              </View>
-            )}
+          <View className="mb-2">
+            {/* Status badge */}
+            <View className="mb-2">
+              {folder.totalOrdinances === 1 ? (
+                <View className="px-2 py-0.5 rounded bg-gray-100 self-start">
+                  <Text className="text-xs text-gray-600">Single Ordinance</Text>
+                </View>
+              ) : folder.amendments.length > 0 ? (
+                <View className="px-2 py-0.5 rounded bg-blue-100 self-start">
+                  <Text className="text-xs text-blue-600">Multiple Ordinances</Text>
+                </View>
+              ) : (
+                <View className="px-2 py-0.5 rounded bg-green-100 self-start">
+                  <Text className="text-xs text-green-600">Base Ordinance</Text>
+                </View>
+              )}
+            </View>
             
-            <View className={`px-2 py-0.5 rounded ${categoryColor.bg}`}>
-              <Text className={`text-xs ${categoryColor.text} font-medium`}>
-                {folder.baseOrdinance.ord_category}
-              </Text>
+            {/* Category badges - handle both array and string with proper wrapping */}
+            <View className="flex-row flex-wrap gap-1">
+              {categories.map((cat: string, index: number) => {
+                const categoryColor = getCategoryColor(cat);
+                return (
+                  <View key={index} className={`px-2 py-0.5 rounded ${categoryColor.bg} mb-1`}>
+                    <Text className={`text-xs ${categoryColor.text} font-medium`}>
+                      {cat}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
 
@@ -298,6 +304,14 @@ function OrdinancePage() {
       </Card>
     );
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   if (isError) {
     return (
@@ -390,22 +404,18 @@ function OrdinancePage() {
         </View>
 
         {/* Ordinances List */}
-        {isLoading ? (
-          renderLoadingState()          
-        ) : (
-          <FlatList
-            data={ordinanceFolders}
-            renderItem={renderFolderItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={{ paddingBottom: 500 }}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <Text className="text-center text-gray-500 py-4">
-                No ordinances found
-              </Text>
-            }
-          />
-        )}
+        <FlatList
+          data={ordinanceFolders}
+          renderItem={renderFolderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: 500 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text className="text-center text-gray-500 py-4">
+              No ordinances found
+            </Text>
+          }
+        />
 
         {/* Folder View Modal */}
         <Modal

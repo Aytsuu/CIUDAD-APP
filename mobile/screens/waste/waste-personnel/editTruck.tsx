@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormSelect } from '@/components/ui/form/form-select';
-import ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { TruckFormValues } from './waste-personnel-types';
@@ -14,6 +14,7 @@ import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function WasteTruckEdit() {
   const router = useRouter();
@@ -46,7 +47,6 @@ export default function WasteTruckEdit() {
     truck_last_maint: truck?.truck_last_maint
       ? truck.truck_last_maint.split('T')[0]
       : new Date().toISOString().split('T')[0],
-    truck_track_device: truck?.truck_track_device,
   };
 
   // Populate form with truck data
@@ -60,7 +60,6 @@ export default function WasteTruckEdit() {
         truck_last_maint: truck.truck_last_maint
           ? truck.truck_last_maint.split('T')[0]
           : new Date().toISOString().split('T')[0],
-        truck_track_device: truck.truck_track_device,
       });
     }
   }, [truck, reset]);
@@ -81,60 +80,47 @@ export default function WasteTruckEdit() {
   // Handle loading state
   if (isTruckLoading) {
     return (
-      <ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity onPress={() => router.back()}>
             <ChevronLeft size={30} color="black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-        showExitButton={false}
-        headerAlign="left"
-        scrollable={true}
-        keyboardAvoiding={true}
-        contentPadding="medium"
+        headerTitle={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+        rightAction={<View />}
       >
         <View className="flex-1 justify-center items-center">
           <LoadingState/>
         </View>
-      </ScreenLayout>
+      </PageLayout>
     );
   }
 
   // Handle error or no truck found
   if (error || !truck) {
     return (
-      <ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
-     ><Text>No Truck Data</Text></ScreenLayout>
+      headerTitle={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+     ><Text>No Truck Data</Text>
+     rightAction={<View />}
+     </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Updating truck..."
+      headerTitle={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      rightAction={<View />}
       footer={
         <View className="px-4 pb-4">
           {/* Hide Edit button if truck is archived */}
@@ -170,7 +156,7 @@ export default function WasteTruckEdit() {
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color="white" />
+                       <LoadingModal visible={isSubmitting} />
                     ) : (
                       <Text className="text-white text-base font-semibold">Save</Text>
                     )}
@@ -192,7 +178,6 @@ export default function WasteTruckEdit() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
       <View className="flex-1 px-6">
         {/* Show archived badge if truck is archived */}
@@ -257,18 +242,8 @@ export default function WasteTruckEdit() {
             editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
-
-        <View className="relative">
-          <FormInput
-            control={control}
-            name="truck_track_device"
-            label="Tracking Device ID"
-            placeholder="Enter tracking device ID (optional)"
-            editable={isEditing && !isArchived} // Disable if archived
-          />
-        </View>
       </View>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 }

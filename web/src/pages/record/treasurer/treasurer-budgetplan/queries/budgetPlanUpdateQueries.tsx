@@ -14,7 +14,8 @@ export const useUpdateBudgetHeader = (onSuccess: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
-    
+            queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
+
             toast.success('Budget Header Updated!', {
                 id: "updateHeader",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

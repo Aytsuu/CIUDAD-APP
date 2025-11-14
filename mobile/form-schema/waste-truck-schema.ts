@@ -16,7 +16,6 @@ const TruckFormSchema = z.object({
   truck_capacity: DataRequirement,
   truck_status: z.enum(['Operational', 'Maintenance']),
   truck_last_maint: z.string().min(1, 'Last maintenance date is required'),
-  truck_track_device: z.string().optional().nullable(),
   staff: z.string().optional().nullable(),
 });
 

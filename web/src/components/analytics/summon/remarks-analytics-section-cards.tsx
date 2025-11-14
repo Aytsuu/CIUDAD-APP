@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useGetRemarksAnalytics } from "./remarks-analytics-queries";
+import { useEffect } from "react";
 
 // Memoized card component with hover effects and navigation
 const RemarkCard = React.memo(({ 
@@ -50,13 +51,17 @@ RemarkCard.displayName = "RemarkCard";
 // Hook version for single card
 export const useNoRemarksSectionCard = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetRemarksAnalytics();
+  const { data, isLoading, refetch: refetchRemarks, isFetching } = useGetRemarksAnalytics();
+
+  useEffect(() => {
+    refetchRemarks();
+  }, [refetchRemarks]);
 
   const card = (
     <RemarkCard 
       title="No Remarks"
       value={data?.no_remarks_count ?? 0}
-      isLoading={isLoading}
+      isLoading={isLoading || isFetching}
       description=""
       onClick={() => {
         navigate("/summon-remarks") // Update with your actual route

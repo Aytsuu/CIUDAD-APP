@@ -23,7 +23,6 @@ export default function OTPVerification({
   method,
   phone,
   email,
-  serverOtp,
   onSuccess,
   onResend,
   isResending = false
@@ -37,9 +36,9 @@ export default function OTPVerification({
   
   const validateOTPMutation = useLoginMutation();
 
-  const contact = method === "phone" ? phone! : email!;
+  // const contact = method === "phone" ? phone! : email!;
   const Icon = method === "phone" ? Phone : Mail;
-  const iconColorClass = method === "phone" ? "text-green-600" : "text-blue-600";
+  // const iconColorClass = method === "phone" ? "text-green-600" : "text-blue-600";
   const bgGradient = method === "phone" 
     ? "bg-gradient-to-br from-green-500 to-green-600" 
     : "bg-gradient-to-br from-blue-500 to-blue-600";
@@ -166,18 +165,18 @@ export default function OTPVerification({
     }
   };
 
-  const formatContact = (contact: string, method: "phone" | "email") => {
-    if (method === "email") {
-      const [username, domain] = contact.split('@');
-      if (username && domain) {
-        const hiddenPart = username.length > 2
-          ? username[0] + '*'.repeat(username.length - 2) + username[username.length - 1]
-          : username;
-        return `${hiddenPart}@${domain}`;
-      }
-    }
-    return contact;
-  };
+  // const formatContact = (contact: string, method: "phone" | "email") => {
+  //   if (method === "email") {
+  //     const [username, domain] = contact.split('@');
+  //     if (username && domain) {
+  //       const hiddenPart = username.length > 2
+  //         ? username[0] + '*'.repeat(username.length - 2) + username[username.length - 1]
+  //         : username;
+  //       return `${hiddenPart}@${domain}`;
+  //     }
+  //   }
+  //   return contact;
+  // };
 
   return (
     <div className="space-y-6">

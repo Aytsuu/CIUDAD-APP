@@ -495,7 +495,29 @@ class CaseTrackingView(APIView):
                 {"error": "Internal server error"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class SummonPaymentLogsView(generics.ListAPIView):
+    serializer_class = ServiceChargePaymentReqSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        comp_id = self.kwargs.get('comp_id')  
+        return ServiceChargePaymentRequest.objects.filter(
+            comp_id=comp_id,
+            pay_sr_type='Summon'
+        )
 
+class FileActionPaymentLogsView(generics.ListAPIView):
+    serializer_class = ServiceChargePaymentReqSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        comp_id = self.kwargs.get('comp_id')  
+        return ServiceChargePaymentRequest.objects.filter(
+            comp_id=comp_id,
+            pay_sr_type='File Action'
+        )
+    
 # ============= COMPLAINT DETAIL VIEW ===============
 class ComplaintDetailView(APIView):
     def get(self, request, comp_id, *args, **kwargs):  # Add comp_id as parameter

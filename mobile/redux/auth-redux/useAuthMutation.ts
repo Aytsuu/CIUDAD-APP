@@ -3,7 +3,7 @@ import {useAppDispatch} from "@/redux/redux";
 import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
-import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
+import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse } from "./auth-types";
 import { KeychainService } from "@/services/keychainService";
 
 export const useLoginMutation = () => {

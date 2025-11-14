@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useCreateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
@@ -11,6 +11,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+
+const toDisplayDate = (dateStr: string): string => {
+  if (!dateStr) return "";
+  const [year, month, day] = dateStr.split("-");
+  return month && day && year ? `${month}/${day}/${year}` : "";
+};
 
 const clientOptions = [
   { value: "Women", label: "Women" },
@@ -29,6 +41,12 @@ const getClientOptions = () => (
     ))}
   </>
 );
+
+const announcementOptions = clientOptions.map(option => ({
+    id: option.value.toLowerCase().replace(/\s+/g, ''),
+    label: option.label,
+    checked: false
+}));
 
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
@@ -50,6 +68,8 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_gad_budget: "0",
       dev_mandated: false,
       staff: staffId || "",
+      selectedAnnouncements: [],
+      eventSubject: "",
     }
   });
   const [budgetItems, setBudgetItems] = useState<{name: string, quantity: string, price: string}[]>([]);
@@ -189,12 +209,20 @@ export default function AnnualDevelopmentPlanCreate() {
       const resPersonsArray = selectedStaff.map(s => s.position);
       const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
       
-      await createMutation.mutateAsync({ 
+      const response = await createMutation.mutateAsync({ 
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
         budgetItems: budgetItems as BudgetItemType[], 
-        resPersons: resPersonsArray 
+        resPersons: resPersonsArray,
+        selectedAnnouncements: data.selectedAnnouncements || [],
+        eventSubject: data.eventSubject || ""
       });
-      showSuccessToast("Annual development plan created successfully!");
+      
+      // Show appropriate success message based on announcement status
+      if (response?.announcement_created) {
+        showSuccessToast("Annual development plan created and announcement sent successfully!");
+      } else {
+        showSuccessToast("Annual development plan created successfully!");
+      }
       navigate(-1);
     } catch (error) {
       console.error("Error creating annual development plan:", error);
@@ -228,11 +256,37 @@ export default function AnnualDevelopmentPlanCreate() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Date</label>
-              <input 
-                type="date" 
-                {...form.register("dev_date")}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={toDisplayDate(form.watch("dev_date"))}
+                      readOnly
+                      placeholder="MM/DD/YYYY"
+                      className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                    />
+                    <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.watch("dev_date") ? new Date(form.watch("dev_date") + "T00:00:00") : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateStr = format(date, "yyyy-MM-dd");
+                        form.setValue("dev_date", dateStr, { shouldValidate: true });
+                      }
+                    }}
+                    disabled={(date) => {
+                      const currentYear = new Date().getFullYear();
+                      return date.getFullYear() < currentYear;
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {form.formState.errors.dev_date && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_date.message}</p>
               )}
@@ -613,6 +667,54 @@ export default function AnnualDevelopmentPlanCreate() {
           </div>
         </div>
 
+        {/* Announcement Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Announcement Settings</h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Select audience for mobile app announcement:
+              </Label>
+              <Card className="border border-gray-200">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {announcementOptions.map((option) => (
+                      <div key={option.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                        <Checkbox
+                          id={option.id}
+                          checked={form.watch("selectedAnnouncements")?.includes(option.id) || false}
+                          onCheckedChange={(checked) => {
+                            const currentValue = form.watch("selectedAnnouncements") || [];
+                            let newSelected;
+                            if (checked) {
+                              newSelected = [...currentValue, option.id];
+                            } else {
+                              newSelected = currentValue.filter((id) => id !== option.id);
+                            }
+                            form.setValue("selectedAnnouncements", newSelected);
+                          }}
+                        />
+                        <Label htmlFor={option.id} className="text-sm cursor-pointer">{option.label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {(form.watch("selectedAnnouncements") || []).length > 0 && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Event Subject</Label>
+                <Textarea 
+                  {...form.register("eventSubject")}
+                  placeholder="Enter event subject for announcement (participant information from Performance Indicator will be automatically included)" 
+                  className="w-full" 
+                  rows={4}
+                />
+              </div>
+            )}
+          </div>
+        </div>
         
         <div className="flex justify-end gap-4 pt-6">
           <Button 

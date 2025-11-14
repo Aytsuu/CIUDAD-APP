@@ -121,7 +121,7 @@ function BusinessDocumentPage() {
       ),
       cell: ({ row }) => (
         <div className="capitalize flex justify-center items-center">
-          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#fffbe6] text-[#b59f00] border border-[#f7e7b6]">
             {row.getValue("bpr_id")}
           </span>
         </div>

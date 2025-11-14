@@ -23,19 +23,21 @@ export default function MediaPicker({
   setSelectedImages,
   limit = 1,
   editable = true,
+  allowCrop,
 }: {
   selectedImages?: MediaItem[];
   setSelectedImages?: React.Dispatch<React.SetStateAction<MediaItem[]>>;
   limit?: number;
   editable?: boolean;
+  allowCrop?: boolean;
 }) {
   const pickImage = async () => {
     if (!editable) return;
     
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      allowsEditing: limit == 1,
-      aspect: [4, 3],
+      allowsEditing: allowCrop ?? (limit == 1),
+      aspect: allowCrop ? [4, 3] : undefined,
       quality: 1,
       selectionLimit: limit,
       allowsMultipleSelection: limit > 1,
@@ -157,7 +159,6 @@ export default function MediaPicker({
               <Text className="text-primaryBlue font-medium">
                 Click here {""}
               </Text>
-              to upload your {limit > 1 ? "photos" : "photo"}
               to upload your {limit > 1 ? "photos" : "photo"}
             </Text>
           </View>

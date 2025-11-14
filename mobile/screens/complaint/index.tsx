@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, FlatList, Alert, ActivityIndicator } from "react-native";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
-import ScreenLayout from "../_ScreenLayout";
+import PageLayout from "../_PageLayout";
 import { getComplaintLists } from "./queries/ComplaintGetQueries";
 import { updateComplaintStatus } from "./queries/ComplaintUpdateQueries";
 import { router } from "expo-router";
@@ -515,8 +515,8 @@ export default function ComplaintLists() {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
@@ -524,12 +524,12 @@ export default function ComplaintLists() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={
+      headerTitle={
         <Text className="text-md font-PoppinsRegular text-gray-900">
           Blotter
         </Text>
       }
-      customRightAction={<View className="w-10 h-10" />}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
         <SearchWithTabs
@@ -557,6 +557,6 @@ export default function ComplaintLists() {
           } as any)}
         />
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 }
