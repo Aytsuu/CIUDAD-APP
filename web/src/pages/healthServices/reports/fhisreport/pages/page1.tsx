@@ -7,11 +7,9 @@ export default function Page1({ state, onNext }: Page1Props) {
     <div className="min-h-[500px] flex flex-col">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          Page 1 – Family Planning (FHSIS)
+          Page 1 – Family Planning Report
         </h2>
-        <p className="text-gray-600">
-          Working with: <strong>{state.monthName}</strong>
-        </p>
+    
       </div>
 
       {/* The whole FP table lives here */}

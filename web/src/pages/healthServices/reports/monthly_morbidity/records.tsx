@@ -2,42 +2,49 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2, Edit } from "lucide-react";
+import { Printer, Loader2, Edit } from "lucide-react";
 import { exportToPDF } from "../export/export-report";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useMonthlyMorbidityDetails } from "./queries/fetch";
 import { toast } from "sonner";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { EditHeaderDialog } from "./edit_header";
 
-export default function MonthlyMorbidityDetails() {
+interface MonthlyMorbidityDetailsProps {
+  state?: {
+    month: string;
+    monthName: string;
+    recordCount?: number;
+    totalIllnesses?: number;
+  };
+  showLayout?: boolean;
+}
+
+export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMorbidityDetailsProps) {
   const location = useLocation();
-  const state = location.state as {
+  const locationState = location.state as {
     month: string;
     monthName: string;
     recordCount: number;
     totalIllnesses: number;
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // Use prop state if provided, otherwise fall back to location state
+  const state = propState || locationState;
+
   const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { month, monthName } = state || {};
-
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const { month } = state || {};
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, pageSize]);
+  }, [pageSize]);
 
   // The hook should now handle pagination parameters
-  const { data: apiResponse, isLoading, error } = useMonthlyMorbidityDetails(month || "", currentPage, pageSize, debouncedSearchTerm);
+  const { data: apiResponse, isLoading, error } = useMonthlyMorbidityDetails(month || "", currentPage, pageSize, "");
 
   // Extract paginated data from API response
   const morbidityData = useMemo(() => apiResponse?.morbidity_data || [], [apiResponse]);
@@ -241,30 +248,21 @@ export default function MonthlyMorbidityDetails() {
   };
 
   return (
-    <LayoutWithBack title="Monthly Morbidity Details" description={`${monthName} - Surveillance Cases`}>
-      {/* Search and Export Controls */}
+    <>
+      {/* Export Controls */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-            <div className="flex-1 flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input placeholder="Search by illness name, code..." className="pl-10 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
-            </div>
+          <div className="flex justify-end gap-2 items-center mb-4">
+            <Button variant="outline" onClick={handleExportPDF} className="flex items-center gap-2">
+              <Printer className="h-4 w-4 mr-1" />
+              Export PDF
+            </Button>
 
-            <div className="flex gap-2 items-center">
-              <Button variant="outline" onClick={handleExportPDF} className="flex items-center gap-2">
-                <Printer className="h-4 w-4 mr-1" />
-                Export PDF
-              </Button>
-
-              {/* Add the Edit Header Button */}
-              <Button onClick={() => setIsEditDialogOpen(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                <Edit className="h-4 w-4" />
-                Edit Header
-              </Button>
-            </div>
+            {/* Add the Edit Header Button */}
+            <Button onClick={() => setIsEditDialogOpen(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+              <Edit className="h-4 w-4" />
+              Edit Header
+            </Button>
           </div>
 
           {/* Pagination Controls */}
@@ -312,13 +310,6 @@ export default function MonthlyMorbidityDetails() {
                   <span className="text-sm text-gray-600">Loading morbidity details...</span>
                 </div>
               </div>
-            ) : morbidityData.length === 0 ? (
-              <div className="w-full h-[200px] flex items-center justify-center">
-                <div className="text-center">
-                  <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">{searchTerm ? "No illnesses found matching your search" : "No morbidity data available for this month"}</p>
-                </div>
-              </div>
             ) : (
               <div
                 className="overflow-x-auto print-area"
@@ -336,26 +327,27 @@ export default function MonthlyMorbidityDetails() {
                 <table className="w-full border border-black">
                   {renderCustomHeader()}
                   <tbody>
-                    {tableRows.map((row: any, rowIndex: number) => (
-                      <tr key={rowIndex}>
-                        {row.map((cell: any, cellIndex: number) => (
-                          <td key={cellIndex} className="border border-black text-sm p-2">
-                            {cell}
+                    {morbidityData.length > 0 ? (
+                      tableRows.map((row: any, rowIndex: number) => (
+                        <tr key={rowIndex}>
+                          {row.map((cell: any, cellIndex: number) => (
+                            <td key={cellIndex} className="border border-black text-sm p-2">
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : null}
+                    {/* Empty rows for consistent height */}
+                    {Array.from({ length: pageSize - morbidityData.length }).map((_, index) => (
+                      <tr key={`empty-${index}`}>
+                        {Array.from({ length: tableHeader.reduce((total: number, header: any) => total + (header.subHeaders ? header.subHeaders.length : 1), 0) }).map((_, cellIndex) => (
+                          <td key={cellIndex} className="border border-black text-sm p-2 h-11">
+                            &nbsp;
                           </td>
                         ))}
                       </tr>
                     ))}
-                    {/* Empty rows for consistent height */}
-                    {morbidityData.length < pageSize &&
-                      Array.from({ length: pageSize - morbidityData.length }).map((_, index) => (
-                        <tr key={`empty-${index}`}>
-                          {Array.from({ length: tableHeader.reduce((total: number, header: any) => total + (header.subHeaders ? header.subHeaders.length : 1), 0) }).map((_, cellIndex) => (
-                            <td key={cellIndex} className="border border-black text-sm p-2 h-11">
-                              &nbsp;
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
                   </tbody>
                 </table>
               </div>
@@ -366,6 +358,6 @@ export default function MonthlyMorbidityDetails() {
 
       {/* Add the EditHeaderDialog component */}
       <EditHeaderDialog isOpen={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} headerData={headerDisplay} />
-    </LayoutWithBack>
+    </>
   );
 }

@@ -16,24 +16,24 @@ import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 import { calculateAge } from "@/helpers/ageCalculator";
 
-// Helper function to convert base64 to image file
-const base64ToImageFile = async (base64Data: string, fileName: string): Promise<File | null> => {
-  try {
-    let dataUrl = base64Data;
+// // Helper function to convert base64 to image file
+// const base64ToImageFile = async (base64Data: string, fileName: string): Promise<File | null> => {
+//   try {
+//     let dataUrl = base64Data;
 
-    // If it's raw base64 without data URL prefix, add it
-    if (base64Data.startsWith("iVBORw0KGgo")) {
-      dataUrl = `data:image/png;base64,${base64Data}`;
-    }
+//     // If it's raw base64 without data URL prefix, add it
+//     if (base64Data.startsWith("iVBORw0KGgo")) {
+//       dataUrl = `data:image/png;base64,${base64Data}`;
+//     }
 
-    const response = await fetch(dataUrl);
-    const blob = await response.blob();
-    return new File([blob], fileName, { type: "image/png" });
-  } catch (error) {
-    console.error("Error converting base64 to file:", error);
-    return null;
-  }
-};
+//     const response = await fetch(dataUrl);
+//     const blob = await response.blob();
+//     return new File([blob], fileName, { type: "image/png" });
+//   } catch (error) {
+//     console.error("Error converting base64 to file:", error);
+//     return null;
+//   }
+// };
 
 export default function MonthlyVaccinationDetails() {
   const location = useLocation();
@@ -48,7 +48,7 @@ export default function MonthlyVaccinationDetails() {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isExporting, setIsExporting] = useState(false);
+  const [, setIsExporting] = useState(false);
 
   const { month, monthName } = state || {};
 

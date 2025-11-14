@@ -48,7 +48,6 @@ import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/month
 import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
 import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
 
-import MonthlyMorbiditySummary from "@/pages/healthServices/reports/monthly_morbidity/monthly";
 import MonthlyMorbidityDetails from "@/pages/healthServices/reports/monthly_morbidity/records";
 
 export const healthreports_router = [
@@ -213,10 +212,7 @@ export const healthreports_router = [
     path: "/reports/monthly-consulted-summaries/records",
     element: <MonthlyConsultedDetails />,
   },
-  {
-    path: "/reports/monthly-morbidity-summary",
-    element: <MonthlyMorbiditySummary />,
-  },
+
   {
     path: "/reports/monthly-morbidity-summary/records",
     element: <MonthlyMorbidityDetails />,
