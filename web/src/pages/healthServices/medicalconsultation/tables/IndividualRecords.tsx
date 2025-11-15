@@ -1,28 +1,18 @@
 // InvMedicalConRecords.tsx
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, HeartPulse, Search, Users, Syringe, AlertCircle } from "lucide-react";
+import { Loader2, Search, Syringe, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { useConsultationHistory, useFamHistory } from "../queries/fetch";
-import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
+import { useConsultationHistory } from "../queries/fetch";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { ProtectedComponent } from "@/ProtectedComponent";
-import { MedicalHistoryTab } from "./medical-history-card";
-import { FamilyHistoryTab } from "./family-history-card";
 import { serializePatientData } from "@/helpers/serializePatientData";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-
-// Tab component
-const TabButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
-  <button onClick={onClick} className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${active ? "border-blue-600 text-blue-600 bg-blue-50" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
-    {children}
-  </button>
-);
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -30,17 +20,11 @@ export default function InvMedicalConRecords() {
   const { patientData } = params || {};
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [medHistorySearch, setMedHistorySearch] = useState("");
-  const [famHistorySearch, setFamHistorySearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<"medical" | "family">("medical");
   const pat_id = patientData?.pat_id || "";
 
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(pat_id, currentPage, pageSize, searchQuery);
-  const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(pat_id, medHistorySearch);
-  const { data: famHistoryData, isLoading: isFamHistoryLoading, isError: isFamHistoryError } = useFamHistory(pat_id || "", famHistorySearch);
-  const isLoading = isFamHistoryLoading || isMedicalRecordsLoading || isMedHistoryLoading;
 
   const medicalRecords = useMemo(() => {
     return medicalRecordsResponse?.results || medicalRecordsResponse || [];
@@ -74,26 +58,10 @@ export default function InvMedicalConRecords() {
     setCurrentPage(1);
   };
 
-  const handleMedHistorySearchChange = useCallback((value: string) => {
-    setMedHistorySearch(value);
-  }, []);
-
-  const clearMedHistorySearch = useCallback(() => {
-    setMedHistorySearch("");
-  }, []);
-
-  const handleFamHistorySearchChange = useCallback((value: string) => {
-    setFamHistorySearch(value);
-  }, []);
-
-  const clearFamHistorySearch = useCallback(() => {
-    setFamHistorySearch("");
-  }, []);
-
   // Use ORIGINAL patientData (which has app_id) for column highlighting
   const columns = useMemo(() => {
     return getMedicalConsultationColumns(patientData);
-  }, [patientData?.app_id]);
+  }, [patientData]);
 
   if (!patientData?.pat_id) {
     return (
@@ -112,45 +80,6 @@ export default function InvMedicalConRecords() {
       <div>
         <div className="mb-4">
           <PatientInfoCard patient={derivedPatientData} isLoading={isMedicalRecordsLoading} />
-        </div>
-
-        {/* History Section with Tabs */}
-        <div className="mb-4 w-full border border-gray-200 rounded-lg shadow-sm bg-white">
-          <div className="overflow-hidden">
-            <div className="border-b border-gray-200">
-              <div className="flex space-x-4">
-                <TabButton active={activeTab === "medical"} onClick={() => setActiveTab("medical")}>
-                  <div className="flex items-center gap-2">
-                    <HeartPulse className="h-4 w-4" />
-                    Medical History
-                  </div>
-                </TabButton>
-                <TabButton active={activeTab === "family"} onClick={() => setActiveTab("family")}>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Family History
-                  </div>
-                </TabButton>
-              </div>
-            </div>
-
-            <div className="p-4">
-              {activeTab === "medical" ? (
-                <MedicalHistoryTab
-                  pat_id={patientData.pat_id}
-                  searchValue={medHistorySearch}
-                  onSearchChange={handleMedHistorySearchChange}
-                  onClearSearch={clearMedHistorySearch}
-                  medHistoryData={medHistoryData}
-                  isMedHistoryLoading={isLoading}
-                  isMedHistoryError={isMedHistoryError}
-                  medHistoryError={medHistoryError}
-                />
-              ) : (
-                <FamilyHistoryTab pat_id={patientData.pat_id} searchValue={famHistorySearch} onSearchChange={handleFamHistorySearchChange} onClearSearch={clearFamHistorySearch} famHistoryData={famHistoryData} isFamHistoryLoading={isLoading} isFamHistoryError={isFamHistoryError} />
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Medical Consultations Section */}

@@ -1,45 +1,44 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
-import { OPTMonthItem } from "./types";
-import { useOPTMonths } from "./queries/fetch";
+import type { DewormingYearItem } from "./types";
+import { useDewormingYears } from "./queries/fetch";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-export default function MonthlyOPTRecords() {
+export default function YearlyDewormingRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter] = useState<string>("all");
 
-  const { data: apiResponse, isLoading, error } = useOPTMonths(currentPage, pageSize, yearFilter, searchQuery);
+  const { data: apiResponse, isLoading, error } = useDewormingYears(
+    currentPage, 
+    pageSize, 
+    searchQuery || "" // Send empty string instead of "all"
+  );
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch OPT months");
-      toast("Retrying to fetch OPT report...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      toast.error("Failed to fetch deworming years");
     }
   }, [error]);
 
-  const monthlyData: OPTMonthItem[] = apiResponse?.results?.data || [];
-  const totalMonths: number = apiResponse?.results?.total_months || 0;
-  const totalPages = Math.ceil(totalMonths / pageSize);
+  // Access data from API response with proper pagination
+  const yearlyData: DewormingYearItem[] = apiResponse?.results?.data || [];
+  const totalCount = apiResponse?.results?.total_years || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, yearFilter]);
+  }, [searchQuery, pageSize]);
 
   return (
-    <LayoutWithBack
-      title="Monthly OPT Records"
-      description={`View child health records grouped by month (${totalMonths} months found)`}>
+    <LayoutWithBack title="Yearly Deworming Records" description={`View deworming records grouped by year (${totalCount} years found)`}>
       <div>
         <Card className="">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
@@ -47,13 +46,13 @@ export default function MonthlyOPTRecords() {
 
             <div className="flex flex-col sm:flex-row gap-3 p-3 w-full sm:w-auto">
               {/* Search Input */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-[350px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input
-                  placeholder="Search by month..."
-                  className="pl-10 bg-white w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                <Input 
+                  placeholder="Search by year (e.g., 2025, 202...)" 
+                  className="pl-10 bg-white w-full" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
                 />
               </div>
             </div>
@@ -82,67 +81,59 @@ export default function MonthlyOPTRecords() {
                 <span className="text-sm text-gray-600">entries per page</span>
               </div>
 
-              {totalPages > 1 && (
-                <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  className="justify-end"
-                />
-              )}
+              {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
             </div>
 
             <div className="bg-white w-full px-4 pt-3">
               {isLoading ? (
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500">
                   <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                  <span>Loading OPT records...</span>
+                  <span>Loading deworming records...</span>
                 </div>
-              ) : monthlyData.length > 0 ? (
+              ) : yearlyData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {monthlyData.map((monthItem) => (
+                  {yearlyData.map((yearItem) => (
                     <MonthInfoCard
-                      key={monthItem.month}
+                      key={yearItem.year}
                       monthItem={{
-                        month: monthItem.month,
-                        total_items: monthItem.record_count,
-                        month_name: monthItem.month_name
+                        month: yearItem.year,
+                        month_name: yearItem.year,
+                        total_items: yearItem.total_recipients
                       }}
                       navigateTo={{
-                        path: "/monthly-opt-details",
+                        path: "/reports/deworming-yearly/details",
                         state: {
-                          month: monthItem.month,
-                          monthName: monthItem.month_name
+                          year: yearItem.year,
+                          yearName: yearItem.year,
+                          totalRecipients: yearItem.total_recipients,
+                          totalDoses: yearItem.total_doses
                         }
                       }}
-                      className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 hover:scale-105 transition-transform duration-200"
+                      record_name="recipients"
+                      className="[&_.icon-gradient]:from-green-400 [&_.icon-gradient]:to-green-600 
+                                [&_.item-count]:bg-green-100 [&_.item-count]:text-green-700 
+                                hover:scale-105 transition-transform duration-200"
                     />
                   ))}
                 </div>
               ) : (
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                   <Folder className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No months found</h3>
+                  <h3 className="text-lg font-medium mb-2">No years found</h3>
                   <p className="text-sm text-center text-gray-400">
-                    {searchQuery ? "Try adjusting your search criteria" : "No OPT records available"}
+                    {searchQuery ? "Try adjusting your search criteria" : "No deworming records available"}
                   </p>
                 </div>
               )}
 
               {/* Footer with Pagination */}
-              {monthlyData.length > 0 && (
+              {yearlyData.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full py-6 gap-3 border-t mt-6">
                   <p className="text-sm text-gray-600">
-                    Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
+                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} years
                   </p>
 
-                  {totalPages > 1 && (
-                    <PaginationLayout
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  )}
+                  {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
                 </div>
               )}
             </div>

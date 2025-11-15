@@ -28,7 +28,7 @@ export default function NutritionStatisticsTable({ data }: NutritionStatisticsTa
       {/* Printable Area */}
       <div
         id="printable-area"
-        className="print-area bg-white overflow-x-auto"
+        className="print-area bg-white overflow-x-auto px-4"
         style={{
           width: "13in",
           margin: "0 auto",
@@ -76,7 +76,7 @@ export default function NutritionStatisticsTable({ data }: NutritionStatisticsTa
           </table>
 
           {/* Nutritional Status Assessment Table */}
-          <table className="w-full border-collapse mt-6">
+          <table className="w-full border-collapse">
             <colgroup>
               <col style={{ width: '60%' }} />
               <col style={{ width: '13.33%' }} />
@@ -87,9 +87,6 @@ export default function NutritionStatisticsTable({ data }: NutritionStatisticsTa
             <thead>
               <tr className="border-b-2 border-black">
                 <th className="border-r border-black p-3 text-left font-bold bg-white text-xs">Nutritional Status</th>
-                <th className="border-r border-black p-2 text-center font-bold text-xs bg-white">Female</th>
-                <th className="border-r border-black p-2 text-center font-bold text-xs bg-white">Male</th>
-                <th className="p-2 text-center font-bold text-xs bg-white">Total</th>
               </tr>
             </thead>
 

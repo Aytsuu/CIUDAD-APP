@@ -28,7 +28,7 @@ export default function DewormingStatisticsTable({ data }: DewormingStatisticsTa
       {/* Printable Area */}
       <div
         id="printable-area"
-        className="print-area bg-white overflow-x-auto"
+        className="print-area bg-white overflow-x-auto px-4"
         style={{
           width: "13in",
           margin: "0 auto",

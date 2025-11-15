@@ -92,7 +92,7 @@ export default function OPTTrackingDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(`opt_records_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF("landscape");
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

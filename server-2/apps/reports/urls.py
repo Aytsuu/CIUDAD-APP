@@ -8,6 +8,7 @@ from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIVi
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
 from .views.medicines_views import *
+from .views.deworming_report import *
 from .views.inv_medicine_views import *
 from .views.counts import ReportsCount
 from .views.monthly_illnesschart import *
@@ -53,9 +54,12 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsRCPDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
-        path('deworming-list/',DewormingRecipientListAPIView.as_view(),name="deworming-list"),
         path('deworming-statistics/monthly/<str:month>/', DewormingMonthlyStatisticsAPIView.as_view(), name='deworming-statistics-monthly'),
         
+
+        # DEWORMING REPORTS (Round-based: Round 1 Jan-June, Round 2 July-Dec)
+        path('deworming-records/yearly/', DewormingMonthlyReportAPIView.as_view(), name='yearly_deworming_records'),
+        path('deworming-reports/<str:year>/', DewormingMonthlyDetailAPIView.as_view(), name='deworming-reports'),  # Accepts YYYY format, supports ?round=1 or ?round=2
         
         # INVENTORY MEDICINE REPORTS
        path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),

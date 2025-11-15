@@ -28,7 +28,7 @@ export interface VaccinationStatisticsResponse {
   month: string;
   special_vaccines: VaccineStatistic[];
   "0_12_months": VaccineStatistic[];
-  "12_23_months": VaccineStatistic[];
+  "13_23_months": VaccineStatistic[];
 }
 
 export const getVaccinationStatistics = async (month: string): Promise<VaccinationStatisticsResponse> => {

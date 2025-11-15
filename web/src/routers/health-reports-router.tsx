@@ -51,6 +51,12 @@ import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-repor
 
 import MonthlyMorbidityDetails from "@/pages/healthServices/reports/fhisreport/fhis_pge17";
 
+
+// DEWORMING REPORTS
+import YearlyDewormingRecords from "@/pages/healthServices/reports/deworming-reports/yearly";
+import DewormingRecordsDetails from "@/pages/healthServices/reports/deworming-reports/records";
+import path from "path";
+
 export const healthreports_router = [
   // {
   //   path: "/bhw-monthly-reports",
@@ -233,6 +239,15 @@ export const healthreports_router = [
     element: <MonthlyMorbidityDetails />,
   },
 
+  // DEWORMING REPORTS
+{
+  path: "/reports/deworming-yearly",
+  element: <YearlyDewormingRecords />,
+},
+{
+  path: "/reports/deworming-yearly/details",
+  element: <DewormingRecordsDetails />,
+}
 
 
   // DOCTOR REPORTS - TODO: Add these components when they are created

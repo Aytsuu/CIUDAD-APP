@@ -29,7 +29,9 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
     );
   }
 
-  const hasData = data.special_vaccines.some((v) => v.total > 0) || data["0_12_months"].length > 0 || data["12_23_months"].length > 0;
+  const hasData = data.special_vaccines?.some((v) => v.total > 0) || 
+                  (data["0_12_months"]?.length ?? 0) > 0 || 
+                  (data["13_23_months"]?.length ?? 0) > 0;
 
   if (!hasData) {
     return (
@@ -52,7 +54,7 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
       {/* Printable Area */}
       <div
         id="printable-area"
-        className="print-area bg-white overflow-x-auto"
+        className="print-area bg-white overflow-x-auto p-4"
         style={{
           width: "13in",
           margin: "0 auto",
@@ -64,7 +66,7 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
             {/* Header Row */}
             <thead>
               <tr className="border-b-2 border-black">
-                <th className="border-r border-black p-3 text-left font-bold bg-white text-xs">Vaccine / Age Group</th>
+                <th className="border-r border-black p-3 text-left font-bold bg-white text-xs">IMMMUNIZATION</th>
                 <th className="border-r border-black p-2 text-center font-bold text-xs bg-white">Female</th>
                 <th className="border-r border-black p-2 text-center font-bold text-xs bg-white">Male</th>
                 <th className="p-2 text-center font-bold text-xs bg-white">Total</th>
@@ -80,7 +82,7 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
               </tr>
 
               {/* BCG 0-28 days */}
-              {data.special_vaccines[0] && (
+              {data.special_vaccines?.[0] && (
                 <tr className="border-b border-black">
                   <td className="border-r border-black p-2 text-xs pl-6">1. BCG (0-28 days old)</td>
                   <td className="border-r border-black p-2 text-center text-xs">{data.special_vaccines[0].female}</td>
@@ -90,7 +92,7 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
               )}
 
               {/* BCG 29 days - 1 year */}
-              {data.special_vaccines[1] && (
+              {data.special_vaccines?.[1] && (
                 <tr className="border-b border-black">
                   <td className="border-r border-black p-2 text-xs pl-6">2. BCG (29 days to 59 days old)</td>
                   <td className="border-r border-black p-2 text-center text-xs">{data.special_vaccines[1].female}</td>
@@ -100,7 +102,7 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
               )}
 
               {/* HepB */}
-              {data.special_vaccines[2] && (
+              {data.special_vaccines?.[2] && (
                 <tr className="border-b-2 border-black">
                   <td className="border-r border-black p-2 text-xs pl-6">3. HepB (24 hours - 14 days)</td>
                   <td className="border-r border-black p-2 text-center text-xs">{data.special_vaccines[2].female}</td>
@@ -110,15 +112,15 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
               )}
 
               {/* A.2 - 0-12 Months Section */}
-              {data["0_12_months"].length > 0 && (
+              {data["0_12_months"] && data["0_12_months"].length > 0 && (
                 <>
                   <tr className="border-b border-black bg-gray-100">
                     <td colSpan={4} className="p-2 font-bold text-xs">
-                      A.2 - Fully Immunized Children (FIC) (0-11 months old)
+                      A.2 - Immunization Services (0-12 months old)
                     </td>
                   </tr>
 
-                  {data["0_12_months"].map((vaccine, index) => (
+                  {data["0_12_months"].map((vaccine: any, index: number) => (
                     <tr key={index} className="border-b border-black">
                       <td className="border-r border-black p-2 text-xs pl-6">
                         {index + 1}. {vaccine.vaccine_name}
@@ -132,15 +134,15 @@ export default function VaccinationStatisticsTable({ data, isLoading }: Vaccinat
               )}
 
               {/* A.3 - 12-23 Months Section */}
-              {data["12_23_months"].length > 0 && (
+              {data["13_23_months"] && data["13_23_months"].length > 0 && (
                 <>
                   <tr className="border-b border-black bg-gray-100">
                     <td colSpan={4} className="p-2 font-bold text-xs">
-                      A.3 - Fully Immunized Children (12-23 months old)
+                      A.3 - Immunization Services  (12-23 months old)
                     </td>
                   </tr>
 
-                  {data["12_23_months"].map((vaccine, index) => (
+                  {data["13_23_months"].map((vaccine: any, index: number) => (
                     <tr key={index} className="border-b border-black">
                       <td className="border-r border-black p-2 text-xs pl-6">
                         {index + 1}. {vaccine.vaccine_name}

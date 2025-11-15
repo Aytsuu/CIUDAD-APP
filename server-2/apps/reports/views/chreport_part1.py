@@ -113,7 +113,7 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
             'bcg_29_days_1_year': {'male': 0, 'female': 0},
             'hepb_24h_14_days': {'male': 0, 'female': 0},
             '0_12_months': {},  # Will hold vaccines with doses
-            '12_23_months': {}  # Will hold vaccines with doses
+            '13_23_months': {}  # Will hold vaccines with doses
         }
 
         # Initialize all vaccines with 0 counts
@@ -126,11 +126,11 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
                 for dose in range(1, no_of_doses + 1):
                     vaccine_key = f"{vaccine_name} {dose}"
                     stats['0_12_months'][vaccine_key] = {'male': 0, 'female': 0}
-                    stats['12_23_months'][vaccine_key] = {'male': 0, 'female': 0}
+                    stats['13_23_months'][vaccine_key] = {'male': 0, 'female': 0}
             else:
                 # Single dose vaccine
                 stats['0_12_months'][vaccine_name] = {'male': 0, 'female': 0}
-                stats['12_23_months'][vaccine_name] = {'male': 0, 'female': 0}
+                stats['13_23_months'][vaccine_name] = {'male': 0, 'female': 0}
 
         # Process each vaccination history
         for vac_hist in vaccination_histories:
@@ -176,10 +176,10 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
                 if vaccine_key not in stats['0_12_months']:
                     stats['0_12_months'][vaccine_key] = {'male': 0, 'female': 0}
                 stats['0_12_months'][vaccine_key][gender] += 1
-            elif 12 <= age_months < 24:
-                if vaccine_key not in stats['12_23_months']:
-                    stats['12_23_months'][vaccine_key] = {'male': 0, 'female': 0}
-                stats['12_23_months'][vaccine_key][gender] += 1
+            elif 13 <= age_months < 23:
+                if vaccine_key not in stats['13_23_months']:
+                    stats['13_23_months'][vaccine_key] = {'male': 0, 'female': 0}
+                stats['13_23_months'][vaccine_key][gender] += 1
 
         # Format the response
         def format_vaccine_stats(vaccine_dict):
@@ -217,7 +217,7 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
                 }
             ],
             '0_12_months': format_vaccine_stats(stats['0_12_months']),
-            '12_23_months': format_vaccine_stats(stats['12_23_months'])
+            '13_23_months': format_vaccine_stats(stats['13_23_months'])
         }
 
         return Response(response_data, status=200)
