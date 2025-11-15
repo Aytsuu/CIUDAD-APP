@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from django.db import transaction
-from pagination import StandardResultsPagination
 from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.models import *
 from apps.profiling.serializers.all_record_serializers import *
@@ -21,52 +20,7 @@ from ..utils import *
 from ..double_queries import PostQueries
 import copy
 import json
-
-# class AllRecordTableView(generics.GenericAPIView):
-#   serializer_class = AllRecordTableSerializer
-#   pagination_class = StandardResultsPagination
-
-#   def get(self, request, *args, **kwargs):
-#     search = request.query_params.get('search', '').strip()
-
-#     residents = [
-#       {
-#         'id': res.rp_id,
-#         'lname': res.per.per_lname,
-#         'fname': res.per.per_fname,
-#         'mname': res.per.per_mname,
-#         'suffix': res.per.per_suffix,
-#         'sex': res.per.per_sex,
-#         'date_registered': res.rp_date_registered,
-#         'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
-#         'type': 'Resident',
-#       }
-#       for res in ResidentProfile.objects.select_related('per').filter(
-#           Q(per__per_fname__icontains=search) |
-#           Q(per__per_lname__icontains=search) |
-#           Q(per__per_mname__icontains=search) |
-#           Q(per__per_suffix__icontains=search)
-#       )
-#     ]
-#     respondents = [
-#       {
-#         'id': res.br_id,
-#         'lname': res.br_lname,
-#         'fname': res.br_fname,
-#         'mname': res.br_mname,
-#         'suffix': '',
-#         'sex': res.br_sex,
-#         'date_registered': res.br_date_registered,
-#         'type': 'Business',
-#       }
-#       for res in BusinessRespondent.objects.all()
-#     ]
-    
-#     unified_data = residents + respondents
-#     page = self.paginate_queryset(unified_data)
-#     serializer = self.get_serializer(page, many=True)
-#     return self.get_paginated_response(serializer.data)
-  
+from ..notif_recipients import general_recipients, family_recipients
 
 class CompleteRegistrationView(APIView):
   permission_classes = [AllowAny]
@@ -84,6 +38,10 @@ class CompleteRegistrationView(APIView):
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
+
+    # Initialize general recipients
+    general_all = general_recipients(False, staff.staff_id)
+    general_is_brgy = general_recipients(True, staff.staff_id)
 
     results = {}
     hh = []
@@ -106,27 +64,48 @@ class CompleteRegistrationView(APIView):
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
+        
+        # Create notification
+        create_notification(
+          title="New House Record",
+          message=(
+              f"{len(houses)} new house{"s" if len(houses) > 1 else ""} has been registered."
+          ),
+          recipients=general_all,
+          notif_type="REGISTRATION",
+          web_route="profiling/household",
+          web_params={},
+          mobile_route="/(profiling)/household/records",
+          mobile_params={},
+        )
 
     if livingSolo:
         new_fam = self.create_family(livingSolo, rp, hh, staff)
         if new_fam:
           results["fam_id"] = new_fam.pk
+        
+        # Create notification
+        create_notification(
+          title="New Family Record",
+          message=(
+              f"A new family has been registered."
+          ),
+          recipients=general_all,
+          notif_type="REGISTRATION",
+          web_route="profiling/family",
+          web_params={},
+          mobile_route="/(profiling)/family/records",
+          mobile_params={},
+        )
 
     if family:
         new_fam = self.join_family(family, rp)
 
         # Create notification
-        fam_notif_recs = []
-        filtered_residents = FamilyComposition.objects.filter(fam=family)
-        for res in filtered_residents:
-           primary_fam = FamilyComposition.objects.filter(rp=res.rp).first()
-           if primary_fam.fam == family:
-              fam_notif_recs.append(res.rp)
-
         create_notification(
           title="New Family Member",
           message="You have a new member registered in your family.",
-          recipients=fam_notif_recs,
+          recipients=family_recipients(family),
           notif_type="",
           web_route="",
           web_params={},
@@ -149,16 +128,21 @@ class CompleteRegistrationView(APIView):
         if bus:
           results["bus_id"] = bus.pk
 
+          # Create notification
+          create_notification(
+            title="New Business Record",
+            message=(
+                f"A new business has been registered."
+            ),
+            recipients=general_is_brgy,
+            notif_type="REGISTRATION",
+            web_route="profiling/business/record",
+            web_params={},
+            mobile_route="/(profiling)/business/records",
+            mobile_params={},
+          )
+
     # Create notification
-    res_notif_recs = [
-       assi.staff.rp
-       for assi in Assignment.objects.filter(Q(feat__feat_name="PROFILING") & ~Q(staff=staff))
-    ]
-
-    admins = Staff.objects.filter(Q(pos__pos_title="ADMIN") & ~Q(staff_id=staff.staff_id))
-    for staff_data in admins:
-      res_notif_recs.append(staff_data.rp)
-
     resident_name = f"{rp.per.per_fname}{f' {rp.per.per_mname[0]}.' if rp.per.per_mname else ''} {rp.per.per_lname}"
     staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
     residentId = rp.rp_id
@@ -173,7 +157,7 @@ class CompleteRegistrationView(APIView):
       message=(
           f"{resident_name} has been registered as resident by {staff_name}"
       ),
-      recipients=res_notif_recs,
+      recipients=general_all,
       notif_type="REGISTRATION",
       web_route="profiling/resident/view/personal",
       web_params={"type": "viewing", "data": {"residentId": residentId, "familyId": familyId}},

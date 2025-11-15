@@ -80,6 +80,7 @@ class HouseholdTableView(generics.ListAPIView):
 
 class HouseholdCreateView(generics.CreateAPIView):
   serializer_class = HouseholdCreateSerializer
+  queryset = Household.objects.all()
 
 class HouseholdUpdateView(generics.UpdateAPIView):
   serializer_class = HouseholdBaseSerializer
