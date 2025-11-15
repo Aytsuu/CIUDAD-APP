@@ -5,9 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from django.db import transaction
-from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.models import *
-from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileTableSerializer
 from apps.administration.models import Staff, Assignment
 from apps.account.models import Account
