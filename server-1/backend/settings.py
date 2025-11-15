@@ -6,6 +6,7 @@ import os
 from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
+import json
 
 
 # Build paths
@@ -39,11 +40,17 @@ SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 # ========================
 # FIREBASE CONFIGURATION
 # ========================
-FIREBASE_CREDENTIAL_PATH = os.path.join(BASE_DIR, 'firebase', 'firebase-key.json')
+FIREBASE_KEY = config('FIREBASE_KEY', default='MY_FIREBASE_KEY')
 
-if not firebase_admin._apps and os.path.exists(FIREBASE_CREDENTIAL_PATH):
-    cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
-    firebase_admin.initialize_app(cred)
+if FIREBASE_KEY:
+    try:
+        cred_dict = json.loads(FIREBASE_KEY)
+        cred = credentials.Certificate(cred_dict)
+
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(e)
 
 # ========================
 # APPLICATION DEFINITION

@@ -33,7 +33,7 @@ export const ProtectedRoute = ({
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/home" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
   
   const hasAccess = user?.staff?.assignments?.includes(requiredFeature) || 
