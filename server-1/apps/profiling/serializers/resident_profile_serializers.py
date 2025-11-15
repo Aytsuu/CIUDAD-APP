@@ -8,6 +8,9 @@ from apps.account.serializers import UserAccountSerializer
 from apps.administration.models import Staff
 from datetime import datetime
 from ..utils import *
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
+import json
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -116,6 +119,28 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             per = personal,
             staff = staff
         )
+
+        # Create notification
+        resident_name = f"{resident_profile.per.per_fname}{f' {resident_profile.per.per_mname[0]}.' if resident_profile.per.per_mname else ''} {resident_profile.per.per_lname}"
+        staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
+        residentId = resident_profile.rp_id
+        json_data = json.dumps(
+        ResidentProfileTableSerializer(resident_profile).data,
+            default=str
+        )
+
+        create_notification(
+            title="New Resident",
+            message=(
+                f"{resident_name} has been registered as resident by {staff_name}"
+            ),
+            recipients=general_recipients(False, resident_profile.staff),
+            notif_type="REGISTRATION",
+            web_route="profiling/resident/view/personal",
+            web_params={"type": "viewing", "data": {"residentId": residentId, "familyId": ""}},
+            mobile_route="/(profiling)/resident/details",
+            mobile_params={"resident": json_data},
+        )
         
         return resident_profile
 
@@ -215,8 +240,8 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.staff_serializers import StaffFullSerializer
-        return StaffFullSerializer(obj.staff).data
+        from apps.administration.serializers.staff_serializers import StaffBaseSerializer
+        return StaffBaseSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
         return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    

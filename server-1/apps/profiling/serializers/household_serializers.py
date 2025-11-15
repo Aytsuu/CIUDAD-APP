@@ -4,6 +4,8 @@ from django.utils import timezone
 from ..models import *
 from django.db.models import Count
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -107,6 +109,20 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       except ValueError:
           error_detail = response.text
       raise serializers.ValidationError({"error": error_detail})
+
+    # Create notification
+    create_notification(
+      title="New House Record",
+      message=(
+          f"A new house has been registered."
+      ),
+      recipients=general_recipients(False, household.staff.staff_id),
+      notif_type="REGISTRATION",
+      web_route="profiling/household",
+      web_params={},
+      mobile_route="/(profiling)/household/records",
+      mobile_params={},
+    )
 
     return household
 

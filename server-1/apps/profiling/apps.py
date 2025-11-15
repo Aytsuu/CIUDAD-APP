@@ -12,6 +12,7 @@ class ProfilingConfig(AppConfig):
 
     def ready(self):
         # Start scheduler only when Django is fully loaded
+        import apps.profiling.signals
         if settings.SCHEDULER_AUTOSTART: 
             self.start_scheduler()
 
