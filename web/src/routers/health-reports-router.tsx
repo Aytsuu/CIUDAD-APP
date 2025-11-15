@@ -10,8 +10,8 @@ import EditMonthlyRecipientList from "@/pages/healthServices/reports/firstaid-re
 import MonthlyVaccineRecords from "@/pages/healthServices/reports/vaccination-report/monthly";
 import MonthlyVaccinationDetails from "@/pages/healthServices/reports/vaccination-report/records";
 
-// iINVENTORY REPORTS
-// import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
+// INVENTORY REPORTS
+import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
 import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports/inventory/medicine/records";
 import MonthlyCommodityDetails from "@/pages/healthServices/reports/inventory/commodity/records";
 import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inventory/firstaid/monthly";
@@ -36,13 +36,14 @@ import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/fir
 import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
 import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
 
-import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
-
 import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
 
 import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main";
 import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
+import YearlyPopulationRecords from "@/pages/healthServices/reports/healthprofiling-report/yearly";
+import PopulationStructureRecords from "@/pages/healthServices/reports/healthprofiling-report/records";
+import HealthProfilingSummaryReport from "@/pages/healthServices/reports/healthprofiling-report/HealthProfilingSummaryReport";
 
 // DOCTOR REPORTS
 import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
@@ -203,7 +204,21 @@ export const healthreports_router = [
     element: <MultiStepFormFHIS />,
   },
 
-  // DOCTOR REPORTTS
+  // Health Profiling Population Structure Report
+  {
+    path: "/health-family-profiling",
+    element: <YearlyPopulationRecords />,
+  },
+  {
+    path: "/health-family-profiling/records",
+    element: <PopulationStructureRecords />,
+  },
+  {
+    path: "/health-family-profiling/summary",
+    element: <HealthProfilingSummaryReport />,
+  },
+
+  // DOCTOR REPORTS
   {
     path: "/reports/monthly-consulted-summaries",
     element: <MonthlyConsultedSummaries />,
@@ -217,4 +232,16 @@ export const healthreports_router = [
     path: "/reports/monthly-morbidity-summary/records",
     element: <MonthlyMorbidityDetails />,
   },
+
+
+
+  // DOCTOR REPORTS - TODO: Add these components when they are created
+  // {
+  //   path: "/reports/monthly-consulted-summaries",
+  //   element: <MonthlyConsultedSummaries />
+  // },
+  // {
+  //   path: "/reports/monthly-consulted-summaries/records",
+  //   element: <MonthlyConsultedDetails />
+  // },
 ];

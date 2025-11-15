@@ -58,6 +58,7 @@ export default function ServiceScheduleForm({
   const [newServiceName, setNewServiceName] = useState("")
   const [isAddingService, setIsAddingService] = useState(false)
   const [isAddingDay, setIsAddingDay] = useState(false)
+  const [dayError, setDayError] = useState<string>("") // State for day validation error
 
   // mutation hook
   const addServiceMutation = useAddService()
@@ -83,7 +84,7 @@ export default function ServiceScheduleForm({
   }
 
   const getNextAvailableDay = (): string => {
-    const weekDaysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    const weekDaysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] // Only weekdays
 
     for(const day of weekDaysOrder) {
       if(!days.includes(day)) {
@@ -93,7 +94,13 @@ export default function ServiceScheduleForm({
 
     return `Day ${days.length + 1}` 
   }
-  
+
+  // Validate if a day is allowed (not Saturday or Sunday)
+  const isDayAllowed = (day: string): boolean => {
+    const lowerCaseDay = day.toLowerCase().trim();
+    return lowerCaseDay !== 'saturday' && lowerCaseDay !== 'sunday';
+  }
+
   // update fetched services
   useEffect(() => {
     if (servicesData && servicesData.length > 0) {
@@ -194,19 +201,28 @@ export default function ServiceScheduleForm({
 
   // add day
   const handleAddDay = async () => {
-    if (days.length >= 7) { // Use local 'days' state for count
+    if (days.length >= 5) { // Maximum 5 weekdays
+      setDayError("Maximum 5 weekdays allowed (Monday to Friday)")
       return
     }
 
     const nextDay = getNextAvailableDay()
 
+    // Validate the day
+    if (!isDayAllowed(nextDay)) {
+      setDayError("Cannot add Saturday or Sunday. Services are not scheduled on weekends.")
+      return
+    }
+
     try {
       await addDayMutation.mutateAsync({day: nextDay, day_description: `${nextDay} Schedule`})
+      setDayError("") // Clear any previous errors
       onAddDay(new Date()) // Call prop function to update parent state (SchedulerMain)
       setIsAddingDay(false) // Close the input field
       console.log("Successfully added day: ", nextDay)
     } catch (error: any) {
       console.error("Error adding day: ", error)
+      setDayError("Failed to add day. Please try again.")
     }
   }
 
@@ -405,40 +421,57 @@ export default function ServiceScheduleForm({
               <Text className="text-sm font-medium text-gray-700">Add Day:</Text>
             </View>
             {isAddingDay ? (
-              <View className="flex-row items-center gap-2">
-                <TextInput
-                  value={getNextAvailableDay()}
-                  editable={false} // Not editable, just displays next available day
-                  className="flex-1 border border-gray-300 rounded-md p-2 text-sm bg-gray-100 text-gray-700" // Mimics Input
-                />
-                <TouchableOpacity
-                  onPress={handleAddDay}
-                  disabled={days.length >= 7 || addDayMutation.isPending}
-                  className={`px-3 py-2 rounded-md ${days.length >= 7 || addDayMutation.isPending ? 'bg-blue-300' : 'bg-blue-600'}`} // Mimics Button
-                >
-                  {addDayMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text className="text-white text-sm font-semibold">Add Day</Text>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setIsAddingDay(false)}
-                  className="px-2 py-2 rounded-md border border-gray-300" // Mimics Button variant="outline"
-                >
-                  <X className="h-4 w-4 text-gray-600" />
-                </TouchableOpacity>
+              <View>
+                <View className="flex-row items-center gap-2 mb-2">
+                  <TextInput
+                    value={getNextAvailableDay()}
+                    editable={false} // Not editable, just displays next available day
+                    className="flex-1 border border-gray-300 rounded-md p-2 text-sm bg-gray-100 text-gray-700" // Mimics Input
+                  />
+                  <TouchableOpacity
+                    onPress={handleAddDay}
+                    disabled={days.length >= 5 || addDayMutation.isPending}
+                    className={`px-3 py-2 rounded-md ${days.length >= 5 || addDayMutation.isPending ? 'bg-blue-300' : 'bg-blue-600'}`} // Mimics Button
+                  >
+                    {addDayMutation.isPending ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text className="text-white text-sm font-semibold">Add Day</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsAddingDay(false)
+                      setDayError("") // Clear error when closing
+                    }}
+                    className="px-2 py-2 rounded-md border border-gray-300" // Mimics Button variant="outline"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </TouchableOpacity>
+                </View>
+                {/* Error message display */}
+                {dayError ? (
+                  <View className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                    <Text className="text-red-700 text-xs">{dayError}</Text>
+                  </View>
+                ) : (
+                  <View className="mt-2">
+                    <Text className="text-xs text-gray-500">
+                      Note: Saturday and Sunday cannot be added as there are no services scheduled on weekends.
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (
               <TouchableOpacity
                 onPress={() => setIsAddingDay(true)}
-                disabled={days.length >= 7}
-                className={`flex-row items-center gap-2 px-3 py-2 rounded-md border border-gray-300 bg-white ${days.length >= 7 ? 'opacity-50' : ''}`} // Mimics Button variant="outline"
+                disabled={days.length >= 5}
+                className={`flex-row items-center gap-2 px-3 py-2 rounded-md border border-gray-300 bg-white ${days.length >= 5 ? 'opacity-50' : ''}`} // Mimics Button variant="outline"
               >
                 <Calendar className="h-4 w-4 text-gray-700" />
                 <Text className="text-gray-700 font-semibold text-sm">
                   Add New Day
-                  {days.length >= 7 && " (Max 7)"}
+                  {days.length >= 5 && " (Max 5 weekdays)"}
                 </Text>
               </TouchableOpacity>
             )}

@@ -206,7 +206,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
             ]} readOnly/>
             <FormDateTimeInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" type="date" readOnly />
             {/* Common field for all ages */}
-            <FormInput control={form.control} name="dependentsInfo.new.relationshipToHead" label="Relationship to household head" placeholder="e.g., Son, Daughter, None" />
+            <FormInput control={form.control} name="dependentsInfo.new.relationshipToHead" label="Relationship to family head" placeholder="e.g., Son, Daughter, None" />
 
             {/* Conditional fields for ages 0-5 */}
             {typeof age === 'number' && age >= 0 && age <= 5 && (

@@ -12,9 +12,10 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { differenceInDays } from 'date-fns';
 import { AppointmentItem, useUserAppointments, cancelAppointment } from './queries/fetch';
+import { PaginationControls } from '../admin/components/pagination-layout';
 
 // Types
-type TabType = "pending" | "confirmed" | "completed" | "rejected" | "cancelled" | "referred";
+type TabType = "pending" | "missed" | "confirmed" | "completed" | "rejected" | "cancelled" | "referred";
 
 // Utility Functions
 const getStatusConfig = (status: string) => {
@@ -27,6 +28,14 @@ const getStatusConfig = (status: string) => {
         borderColor: 'border-yellow-200', 
         label: 'Pending',
         icon: '⏳'
+      };
+      case 'missed':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-yellow-200', 
+        label: 'Missed',
+        icon: '✕'
       };
     case 'confirmed':
       return { 
@@ -86,7 +95,8 @@ const getStatusParam = (tab: TabType): string => {
     'completed': 'completed',
     'cancelled': 'cancelled',
     'rejected': 'rejected',
-    'referred': 'referred'
+    'referred': 'referred',
+    'missed': 'missed',
   };
   return statusMap[tab];
 };
@@ -107,7 +117,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const TabBar: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
-  counts: { pending: number; confirmed: number; completed: number; rejected: number; cancelled: number; referred: number };
+  counts: { pending: number; confirmed: number; completed: number; rejected: number; cancelled: number; referred: number; missed: number;};
 }> = ({ activeTab, setActiveTab, counts }) => {
   const tabs: { key: TabType; label: string; color: string; bgColor: string }[] = [
     { key: 'pending', label: 'Pending', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
@@ -116,6 +126,7 @@ const TabBar: React.FC<{
     { key: 'rejected', label: 'Rejected', color: 'text-red-700', bgColor: 'bg-red-50' },
     { key: 'cancelled', label: 'Cancelled', color: 'text-gray-700', bgColor: 'bg-gray-50' },
     { key: 'referred', label: 'Referred', color: 'text-purple-700', bgColor: 'bg-purple-50' },
+    { key: 'missed', label: 'Missed', color: 'text-red-700', bgColor: 'bg-red-50' },
   ];
 
   return (
@@ -298,39 +309,39 @@ const CancelModal: React.FC<{
   );
 };
 
-const PaginationControls: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}> = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages <= 1) return null;
+// const PaginationControls: React.FC<{
+//   currentPage: number;
+//   totalPages: number;
+//   onPageChange: (page: number) => void;
+// }> = ({ currentPage, totalPages, onPageChange }) => {
+//   if (totalPages <= 1) return null;
 
-  return (
-    <View className="flex-row justify-center items-center p-4 border-t border-gray-200 bg-white">
-      <TouchableOpacity 
-        onPress={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === 1 ? 'bg-gray-100' : 'bg-gray-200'}`}
-      >
-        <ChevronLeftIcon size={16} color={currentPage === 1 ? '#9CA3AF' : '#374151'} />
-        <Text className={`ml-1 ${currentPage === 1 ? 'text-gray-500' : 'text-gray-700'}`}>Previous</Text>
-      </TouchableOpacity>
+//   return (
+//     <View className="flex-row justify-center items-center p-4 border-t border-gray-200 bg-white">
+//       <TouchableOpacity 
+//         onPress={() => onPageChange(currentPage - 1)}
+//         disabled={currentPage === 1}
+//         className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === 1 ? 'bg-gray-100' : 'bg-gray-200'}`}
+//       >
+//         <ChevronLeftIcon size={16} color={currentPage === 1 ? '#9CA3AF' : '#374151'} />
+//         <Text className={`ml-1 ${currentPage === 1 ? 'text-gray-500' : 'text-gray-700'}`}>Previous</Text>
+//       </TouchableOpacity>
       
-      <Text className="mx-4 text-gray-700">
-        Page {currentPage} of {totalPages}
-      </Text>
+//       <Text className="mx-4 text-gray-700">
+//         Page {currentPage} of {totalPages}
+//       </Text>
       
-      <TouchableOpacity 
-        onPress={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === totalPages ? 'bg-gray-100' : 'bg-gray-200'}`}
-      >
-        <Text className={`mr-1 ${currentPage === totalPages ? 'text-gray-500' : 'text-gray-700'}`}>Next</Text>
-        <ChevronRight size={16} color={currentPage === totalPages ? '#9CA3AF' : '#374151'} />
-      </TouchableOpacity>
-    </View>
-  );
-};
+//       <TouchableOpacity 
+//         onPress={() => onPageChange(currentPage + 1)}
+//         disabled={currentPage === totalPages}
+//         className={`flex-row items-center px-4 py-2 rounded-lg mx-1 ${currentPage === totalPages ? 'bg-gray-100' : 'bg-gray-200'}`}
+//       >
+//         <Text className={`mr-1 ${currentPage === totalPages ? 'text-gray-500' : 'text-gray-700'}`}>Next</Text>
+//         <ChevronRight size={16} color={currentPage === totalPages ? '#9CA3AF' : '#374151'} />
+//       </TouchableOpacity>
+//     </View>
+//   );
+// };
 
 const AppointmentTracker = () => {
   const [activeTab, setActiveTab] = useState<TabType>('pending');
@@ -418,13 +429,7 @@ const AppointmentTracker = () => {
     },
   });
 
-  const { data: allAppointmentsData } = useUserAppointments(
-    rpId || '',
-    undefined,
-    undefined,
-    1,
-    1000
-  );
+  const { data: allAppointmentsData } = useUserAppointments(rpId || '',undefined,undefined,1,1000);
 
   const counts = {
     pending: allAppointmentsData?.results.filter(a => a.status === 'pending').length || 0,
@@ -433,6 +438,7 @@ const AppointmentTracker = () => {
     rejected: allAppointmentsData?.results.filter(a => a.status === 'rejected').length || 0,
     cancelled: allAppointmentsData?.results.filter(a => a.status === 'cancelled').length || 0,
     referred: allAppointmentsData?.results.filter(a => a.status === 'referred').length || 0,
+    missed: allAppointmentsData?.results.filter(a=> a.status === 'missed').length || 0
   };
 
   const onRefresh = async () => {

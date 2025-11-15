@@ -12,97 +12,99 @@ import PageLayout from "@/screens/_PageLayout";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 
 import { useMaternalRecords, useMaternalCount } from "./queries/maternalFETCH";
+import { StatusBadge } from "../components/status-badge";
+import { TabBar, TabType } from "../components/tab-bar";
 
 interface maternalRecords {
-   pat_id: string;
-   age: number;
-   personal_info: {
-      per_fname: string;
-      per_lname: string;
-      per_mname: string;
-      per_sex: string;
-      per_dob?: string;
-      ageTime: string;
-   };
-   address?: {
-      add_street?: string;
-      add_barangay?: string;
-      add_city?: string;
-      add_province?: string;
-      add_external_sitio?: string;
-      add_sitio?: string;
-   };
-   pat_type: "Transient" | "Resident";
-   patrec_type?: string;
-   completed_pregnancy_count?: number;
+  pat_id: string;
+  age: number;
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+    per_sex: string;
+    per_dob?: string;
+    ageTime: string;
+  };
+  address?: {
+    add_street?: string;
+    add_barangay?: string;
+    add_city?: string;
+    add_province?: string;
+    add_external_sitio?: string;
+    add_sitio?: string;
+  };
+  pat_type: "Transient" | "Resident";
+  patrec_type?: string;
+  completed_pregnancy_count?: number;
 }
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-const StatusBadge = React.memo<{ type: string }>(({ type }) => {
-  const typeConfig = useMemo(() => {
-    switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
-      default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
-    }
-  }, [type]);
+// const StatusBadge = React.memo<{ type: string }>(({ type }) => {
+//   const typeConfig = useMemo(() => {
+//     switch (type.toLowerCase()) {
+//       case 'resident':
+//         return {
+//           color: 'text-green-700',
+//           bgColor: 'bg-green-100',
+//           borderColor: 'border-green-200',
+//         };
+//       case 'transient':
+//         return {
+//           color: 'text-amber-700',
+//           bgColor: 'bg-amber-100',
+//           borderColor: 'border-amber-200',
+//         };
+//       default:
+//         return {
+//           color: 'text-gray-700',
+//           bgColor: 'bg-gray-100',
+//           borderColor: 'border-gray-200',
+//         };
+//     }
+//   }, [type]);
 
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
-    </View>
-  );
-});
+//   return (
+//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+//       <Text className={`text-xs font-semibold ${typeConfig.color}`}>
+//         {type}
+//       </Text>
+//     </View>
+//   );
+// });
 
-const TabBar = React.memo<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-}>(({ activeTab, setActiveTab}) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients
-      </Text>
-    </TouchableOpacity>
-  </View>
-));
+// const TabBar = React.memo<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+// }>(({ activeTab, setActiveTab}) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('all')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         All
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('resident')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Residents
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('transient')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Transients
+//       </Text>
+//     </TouchableOpacity>
+//   </View>
+// ));
 
 // Optimized MaternalRecordCard with memoization and computed values
 const MaternalRecordCard = React.memo<{
@@ -110,16 +112,16 @@ const MaternalRecordCard = React.memo<{
   onPress: () => void;
 }>(({ record, onPress }) => {
   // Pre-compute expensive operations
-  const fullName = useMemo(() => 
-    `${record.personal_info?.per_fname} ${record.personal_info?.per_lname}`, 
+  const fullName = useMemo(() =>
+    `${record.personal_info?.per_fname} ${record.personal_info?.per_lname}`,
     [record.personal_info?.per_fname, record.personal_info?.per_lname]
   );
-  
-  const calculatedAge = useMemo(() => 
-    AgeCalculation(record?.personal_info?.per_dob ?? ""), 
+
+  const calculatedAge = useMemo(() =>
+    AgeCalculation(record?.personal_info?.per_dob ?? ""),
     [record.personal_info?.per_dob]
   );
-  
+
   const fullAddress = useMemo(() => {
     if (!record.address) return null;
     const addressParts = [
@@ -190,19 +192,19 @@ const EmptyState = React.memo<{
 }>(({ searchQuery, activeTab }) => (
   <View className="px-4">
     <Card className="bg-white border-slate-200">
-       <CardContent className="items-center justify-center py-12">
-          <FileText size={48} color="#94a3b8" />
-          <Text className="text-lg font-medium text-slate-900 mt-4">
+      <CardContent className="items-center justify-center py-12">
+        <FileText size={48} color="#94a3b8" />
+        <Text className="text-lg font-medium text-slate-900 mt-4">
           No records found
-          </Text>
-          <Text className="text-gray-600 text-center mt-2">
-            {searchQuery
-              ? `No ${activeTab} records match your search.`
-              : `No ${activeTab} records found.`}
-          </Text>
-       </CardContent>
+        </Text>
+        <Text className="text-gray-600 text-center mt-2">
+          {searchQuery
+            ? `No ${activeTab} records match your search.`
+            : `No ${activeTab} records found.`}
+        </Text>
+      </CardContent>
     </Card>
- </View>
+  </View>
 ));
 
 // Memoized Pagination Component
@@ -225,9 +227,8 @@ const PaginationFooter = React.memo<{
               className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
             >
               <Text
-                className={`font-medium ${
-                  page === 1 ? "text-slate-400" : "text-white"
-                }`}
+                className={`font-medium ${page === 1 ? "text-slate-400" : "text-white"
+                  }`}
               >
                 Previous
               </Text>
@@ -244,9 +245,8 @@ const PaginationFooter = React.memo<{
               className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
             >
               <Text
-                className={`font-medium ${
-                  page === totalPages ? "text-slate-400" : "text-white"
-                }`}
+                className={`font-medium ${page === totalPages ? "text-slate-400" : "text-white"
+                  }`}
               >
                 Next
               </Text>
@@ -259,12 +259,12 @@ const PaginationFooter = React.memo<{
 });
 
 export default function OverallMaternalRecordsScreen() {
-  const [searchInput, setSearchInput] = useState(""); 
+  const [searchInput, setSearchInput] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
   const debouncedSearchTerm = useDebounce(searchInput, 300);
-const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
   // Optimized search debouncing with useCallback
@@ -286,7 +286,7 @@ const [currentPage, setCurrentPage] = useState(1);
     getStatusForAPI(activeTab) || ''
   );
   const { data: maternalCount } = useMaternalCount();
-  
+
   const maternalRecordss = maternalData?.results || [];
   const totalMCount = maternalData?.count || 0;
   const totalMPages = Math.ceil(totalMCount / pageSize);
@@ -410,18 +410,17 @@ const [currentPage, setCurrentPage] = useState(1);
           </View>
         </View>
 
-        {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={handleTabChange} />
-        
+
         {/* Results Info */}
-                <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
-                  <Text className="text-sm text-gray-600">
-                    Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalMCount)} of {totalMCount} records
-                  </Text>
-                  <Text className="text-sm font-medium text-gray-800">
-                    Page {currentPage} of {totalMPages}
-                  </Text>
-                </View>
+        <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
+          <Text className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalMCount)} of {totalMCount} records
+          </Text>
+          <Text className="text-sm font-medium text-gray-800">
+            Page {currentPage} of {totalMPages}
+          </Text>
+        </View>
         {/* Records List */}
         {maternalRecordss.length === 0 ? (
           <EmptyState searchQuery={debouncedSearchTerm} activeTab={activeTab} />
@@ -431,20 +430,20 @@ const [currentPage, setCurrentPage] = useState(1);
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl 
-                refreshing={refreshing} 
-                onRefresh={onRefresh} 
-                colors={['#3B82F6']} 
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
               />
             }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ padding: 16 }}
-            
+
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={10}
             removeClippedSubviews={true}
-            
+
             ListFooterComponent={
               <PaginationFooter
                 page={page}

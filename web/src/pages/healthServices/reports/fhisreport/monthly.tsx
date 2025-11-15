@@ -9,14 +9,14 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { Button } from "@/components/ui/button/button";
 import { MonthInfoCard } from "../month-folder-component";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 // Main Component
 export default function FHSISMonthlyRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const { data: apiResponse, isLoading, error, refetch } = useMonthlyData(currentPage, pageSize, yearFilter, searchQuery);
+  const { data: apiResponse, isLoading, error, refetch } = useMonthlyData(currentPage, pageSize, searchQuery);
 
   // Handle errors
   useEffect(() => {
@@ -33,21 +33,15 @@ export default function FHSISMonthlyRecords() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, yearFilter]);
+  }, [searchQuery]);
 
   // Extract data from API response
   // In your FHSISMonthlyRecords component, change these lines:
 
-  // Extract data from API response - FIX THIS
+  // Extract data from API response
   const monthlyData: any[] = apiResponse?.results?.data || apiResponse?.data || [];
   const totalMonths: number = apiResponse?.results?.total_months || apiResponse?.total_months || 0;
   const totalPages = Math.ceil(totalMonths / pageSize);
-
-  // Get available years for filter
-  const availableYears = useMemo(() => {
-    const years = new Set(monthlyData.map((item) => item.year.toString()));
-    return Array.from(years).sort((a, b) => b.localeCompare(a));
-  }, [monthlyData]);
 
   // Filter and sort data
   const filteredMonthlyData = useMemo(() => {
@@ -90,33 +84,17 @@ export default function FHSISMonthlyRecords() {
   }
 
   return (
-    <div className="w-full">
+  <LayoutWithBack title="FHSIS Monthly Reports" description="View and manage Family Health Survey Information System monthly reports">
+      <div className="w-full">
       <Card className="p-6">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">Monthly Records</h2>
-            <p className="text-sm text-gray-500">View records grouped by month</p>
-          </div>
-
+        <div className="flex flex-col sm:flex-row gap-4 justify-end items-start sm:items-center mb-6">
+       
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Year Filter */}
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-32 bg-white">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          
 
             {/* Search Input */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-[250px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
               <Input placeholder="Search months..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
@@ -140,9 +118,7 @@ export default function FHSISMonthlyRecords() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="25">20</SelectItem>
                 </SelectContent>
               </Select>
               <span className="text-sm text-gray-600">entries per page</span>
@@ -188,7 +164,7 @@ export default function FHSISMonthlyRecords() {
               <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                 <Folder className="w-16 h-16 text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No months found</h3>
-                <p className="text-sm text-center text-gray-400">{searchQuery || yearFilter !== "all" ? "Try adjusting your search criteria" : "No monthly records available"}</p>
+                <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No monthly records available"}</p>
               </div>
             )}
 
@@ -206,5 +182,6 @@ export default function FHSISMonthlyRecords() {
         </div>
       </Card>
     </div>
+  </LayoutWithBack>
   );
 }

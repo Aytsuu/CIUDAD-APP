@@ -266,22 +266,23 @@ export default function MonthlyMedicineDetails() {
         </div>
 
         {/* Report Display Section */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8 flex justify-center">
           <div
-            className="border border-black"
             style={{
               minHeight: "19in",
-              width: "13in",
-              position: "relative",
               margin: "0 auto",
               padding: "0.5in",
               backgroundColor: "white",
-              display: "flex",
-              flexDirection: "column",
               height: "20in",
             }}
           >
-            <div className="p-4 print-area" id="printable-area">
+            <div className="p-4 print-area" id="printable-area"
+            
+            
+            style={{
+              width: "13in",
+           
+            }}>
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="p-2 border-black flex items-center">

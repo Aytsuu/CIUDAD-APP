@@ -223,16 +223,14 @@ export default function MonthlyNewChildrenDetails() {
 
       {/* Main Content */}
       <div className="bg-white rounded-b-lg overflow-x-auto   ">
-        <div
-          style={{
-            width: "19in",
-            overflowX: "auto",
-            position: "relative",
-            margin: "0 auto",
-            fontSize: "12px",
-          }}
-        >
-          <div id="printable-area" className="p-4">
+        <div>
+          <div
+            id="printable-area"
+            className="p-4"
+            style={{
+              width: "19in",
+            }}
+          >
             <div>
               <div className="text-center py-2">
                 <Label className="text-sm font-bold uppercase tracking-widest underline block">NEW CHILDREN REGISTRATION RECORDS</Label>

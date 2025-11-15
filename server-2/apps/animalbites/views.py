@@ -418,24 +418,39 @@ class AnimalbiteReferralView(generics.ListCreateAPIView):
 
 @api_view(['GET'])
 def get_animal_bite_analytics(request):
-    months = int(request.GET.get('months', 12))  # Default last 12 months
-    month_str = request.GET.get('month')  # Optional: YYYY-MM to set the end month
+    months = int(request.GET.get('months', 12)) 
+    month_str = request.GET.get('month')  
     
-    # Calculate date range
-    end_date = datetime.now().date()
+    # --- MODIFICATION START ---
+    months_to_average = months # Default to the 'months' parameter
+    
     if month_str:
+        # If a specific month is requested, override the date range
         try:
             year, month = map(int, month_str.split('-'))
             _, last_day = calendar.monthrange(year, month)
-            end_date = datetime(year, month, last_day).date()
+            
+            # Set start and end date to the same month
+            start_date = datetime(year, month, 1).date() 
+            end_date = datetime(year, month, last_day).date() 
+            
+            months_to_average = 1 # We are only calculating for one month
+            
+            print(f"📊 Fetching analytics for SINGLE MONTH: {month_str} (from {start_date} to {end_date})")
+            
         except ValueError:
             return Response({'error': 'Invalid month format. Use YYYY-MM'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        # No specific month, use the 'months' parameter for a rolling window
+        end_date = datetime.now().date()
+        start_date = (end_date - relativedelta(months=months - 1)).replace(day=1)
+        # months_to_average is already set to 'months'
+        
+        print(f"📊 Fetching animal bite analytics for {months} months (from {start_date} to {end_date})")
     
-    start_date = (end_date - relativedelta(months=months - 1)).replace(day=1)
+    # --- MODIFICATION END ---
     
-    print(f"📊 Fetching animal bite analytics for {months} months (from {start_date} to {end_date})")
-    
-    # Get all Animal Bite referrals in date range
+    # Get all Animal Bite referrals in the calculated date range
     referrals = AnimalBite_Referral.objects.filter(
         date__gte=start_date,
         date__lte=end_date,
@@ -472,7 +487,15 @@ def get_animal_bite_analytics(request):
             'bites': monthly_bites.get(month, 0)
         })
     
-    print(f"📈 Monthly trends calculated: {len(monthly_trends)} months")
+    # If viewing a single month, the 'monthlyTrends' will be small.
+    # If no month_str was provided, we should populate the full trend data.
+    if not month_str:
+        # This part is fine, it will just show the 12-month trend
+        print(f"📈 Monthly trends calculated: {len(monthly_trends)} months")
+    else:
+        # When a single month is selected, the 'monthlyTrends' list
+        # will only contain data for that one month, which is correct for the chart.
+        print(f"📈 Monthly trends calculated for single month.")
     
     animal_counts = bite_details.values(
         'biting_animal'
@@ -551,8 +574,10 @@ def get_animal_bite_analytics(request):
     # Most common animal
     most_common_animal = animal_types[0]['animal'] if animal_types else 'N/A'
     
-    # Monthly average
-    monthly_average = round(total_cases / months) if months > 0 else 0
+    # --- MODIFICATION START ---
+    # Monthly average - now uses the correct divisor
+    monthly_average = round(total_cases / months_to_average) if months_to_average > 0 else 0
+    # --- MODIFICATION END ---
     
     # Most common exposure site
     most_common_site = exposure_sites[0]['site'] if exposure_sites else 'N/A'
@@ -604,7 +629,7 @@ def get_animal_bite_analytics(request):
         'recentCases': recent_timeline
     }
     
-    print(f"📦 Returning analytics data with {len(monthly_trends)} months of data")
+    print(f"📦 Returning analytics data (Date Range: {start_date} to {end_date})")
     return Response(response_data)
 
 

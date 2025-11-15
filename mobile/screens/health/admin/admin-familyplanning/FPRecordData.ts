@@ -14,11 +14,20 @@ export interface FPRecordData {
     province?: string;
     municipality?: string;
   };
+  spouse?:{
+    s_givenName?: string;
+    s_lastName?: string;
+    s_middleInitial?: string;
+    s_dateOfBirth?: string;
+    s_age?: number;
+    s_occupation?: string;
+  }
   fp_assessment?: any;
   educationalAttainment?: string;
   philhealthNo?: string;
   nhts_status?: boolean;
   typeOfClient?: string;
+  subTypeOfClient?: string;
   reasonForFP?: string;
   methodCurrentlyUsed?: string;
   avg_monthly_income_display?: number;
@@ -67,6 +76,14 @@ export interface FPRecordData {
     uterinePosition?: string;
     uterineDepth?: string;
   };
+  fp_type?:{
+    fpt_client_type: string,
+    fpt_subtype: string,
+        fpt_reason_fp: string,
+        fpt_reason: string,
+        fpt_method_used: string,
+        fpt_other_method: string,
+  }
   pregnancyCheck?: {
     breastfeeding?: boolean;
     abstained?: boolean;

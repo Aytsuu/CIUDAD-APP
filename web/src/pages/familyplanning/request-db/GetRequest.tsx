@@ -28,8 +28,6 @@ export interface FPPatientsCount {
   minor_fp_patients: number;
 }
 
-// Define the structure for the paginated response from the backend
-// This interface describes the object returned by your Django REST Framework's pagination
 export interface PaginatedFPRecords {
   count: number; // Total number of items across all pages
   next: string | null; // URL for the next page, or null if no next page
@@ -37,8 +35,6 @@ export interface PaginatedFPRecords {
   results: FPRecord[]; // The actual list of records for the current page
 }
 
-// Define the structure for a single FPRecord as it comes from the backend
-// This should match the structure of the objects within the 'results' array
 export interface FPRecord {
   fprecord_id: number;
   patient_id: string;

@@ -14,6 +14,7 @@ import Page7 from "./page7";
 import Page8 from "./page8";
 import Page9 from "./page9";
 import Page10 from "./page10";
+import Page17 from "./page17";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MultiPageFormFHIS() {
@@ -64,7 +65,10 @@ export default function MultiPageFormFHIS() {
         {currentPage === 7 && <Page7 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 8 && <Page8 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 9 && <Page9 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 10 && <Page10 state={state} onBack={prevPage} />}
+
+        {currentPage === 17 && <Page17 state={state} onBack={prevPage} />}
+
+
       </Card>
     </LayoutWithBack>
   );

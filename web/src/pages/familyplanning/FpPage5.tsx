@@ -53,23 +53,19 @@ const methodLabels: Record<string, string> = {
   Others: "Others",
   Pills: "Pills",
   DMPA: "DMPA",
-  // lactating: "Lactating Amenorrhea",
   BTL: "BTL",
   Vasectomy: "Vasectomy",
-  // others: "Others",
 }
 
 // Helper function to map method values between pages
 const mapMethodFromPage1 = (methodFromPage1: string,otherMethod?: string): string => {
   const methodMapping: Record<string, string> = {
-    // From FpPage1 to FpPage5 mapping
     Pills: "Pills",
     DMPA: "DMPA",
     "IUD-Interval": "IUD-Interval",
     "IUD-Post Partum": "IUD-Post Partum",
     Implant: "Implant",
     Condom: "Condom",
-    // "Lactating Amenorrhea": "Lactating Amenorrhea",
     "BTL": "BTL",
     Vasectomy: "Vasectomy",
     COC: "COC",

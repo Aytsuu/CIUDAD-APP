@@ -196,6 +196,10 @@ export type FamilyPlanningRecordDetail = {
   occupation?: string;
   created_at: string;
   updated_at: string;
+  fp_type?: {
+    fpt_reason_fp: string;
+    fpt_reason?: string;
+  }
 
   // Nested Patient Info (example, adjust based on actual serializer output)
   patient_info?: PatientInfo; // From PatientSerializer

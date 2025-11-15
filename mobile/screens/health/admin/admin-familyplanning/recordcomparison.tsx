@@ -146,7 +146,7 @@ const RecordComparisonScreen: React.FC = () => {
         <Section title="FP Record Details">
           <FieldRow label="Type of Client" value1={record1.typeOfClient} value2={record2.typeOfClient} />
           <FieldRow label="Subtype of Client" value1={record1.subTypeOfClient} value2={record2.subTypeOfClient} />
-          <FieldRow label="Reason for FP" value1={record1.reasonForFP} value2={record2.reasonForFP} />
+          <FieldRow label="Reason for FP" value1={record1.fp_type?.fpt_reason} value2={record2.fp_type?.fpt_reason} />
           <FieldRow label="Other Reason for FP" value1={record1.otherReasonForFP} value2={record2.otherReasonForFP} />
           <FieldRow label="Method Currently Used" value1={record1.methodCurrentlyUsed} value2={record2.methodCurrentlyUsed} />
           <FieldRow label="Other Method" value1={record1.otherMethod} value2={record2.otherMethod} />

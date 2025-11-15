@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import  HealthInfoForm from "../healthInfo/HealthInfoForm";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ParentsFormLayout({
   form,
@@ -35,6 +36,19 @@ export default function ParentsFormLayout({
   const [, setInternalSelectedRespondentId] = React.useState("")
   const respondentSetter = setSelectedRespondentId || setInternalSelectedRespondentId;
 
+  // Add loading state for initial render
+  const [isFormsReady, setIsFormsReady] = React.useState(false);
+
+  // Set forms as ready after initial mount
+  React.useEffect(() => {
+    if (residents?.formatted && residents?.default) {
+      // Small delay to allow memoized components to render
+      const timer = setTimeout(() => setIsFormsReady(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [residents]);
+
+  // Memoize submit handler to prevent recreating on every render
   const submit = React.useCallback(() => {
     const isValid = Object.values(selectedParents).some(
       (value) => value !== ""
@@ -54,52 +68,87 @@ export default function ParentsFormLayout({
         },
       });
     }
-  }, [selectedParents]);
+  }, [selectedParents, onSubmit]);
+
+  // Memoize ParentsForm components to prevent unnecessary re-renders
+  const respondentForm = React.useMemo(() => (
+    <ParentsForm
+      residents={residents}
+      form={form}
+      dependentsList={dependentsList}
+      onSelect={respondentSetter}
+      prefix="respondentInfo"
+      title="Respondent's Information"
+      hideHealthFields={true}
+    />
+  ), [residents, form, dependentsList, respondentSetter]);
+
+  const fatherForm = React.useMemo(() => (
+    <ParentsForm
+      residents={residents}
+      form={form}
+      dependentsList={dependentsList}
+      onSelect={setSelectedFatherId}
+      prefix="fatherInfo"
+      title="Father's Information"
+    />
+  ), [residents, form, dependentsList, setSelectedFatherId]);
+
+  const motherForm = React.useMemo(() => (
+    <ParentsForm
+      residents={residents}
+      form={form}
+      dependentsList={dependentsList}
+      onSelect={setSelectedMotherId}
+      prefix="motherInfo"
+      title="Mother's Information"
+    />
+  ), [residents, form, dependentsList, setSelectedMotherId]);
+
+  const motherHealthForm = React.useMemo(() => (
+    <HealthInfoForm
+      form={form}
+      prefix="motherInfo.motherHealthInfo"
+      title="Mother's Health Information"
+    />
+  ), [form]);
+
+  // Show loading state while forms are being prepared
+  if (!isFormsReady) {
+    return (
+      <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
+        <div className="flex flex-col items-center justify-center gap-6 py-20 animate-fadeIn">
+          <Spinner size="lg" variant="primary" />
+          <div className="text-center space-y-2">
+            <p className="text-lg font-semibold text-gray-800">Preparing Forms...</p>
+            <p className="text-sm text-gray-600">Loading family member information</p>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <div className="h-2 w-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="h-2 w-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="h-2 w-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
       <div className="space-y-6">
         {/* Respondent's Information */}
-        <ParentsForm
-          residents={residents}
-          form={form}
-          dependentsList={dependentsList}
-          onSelect={respondentSetter}
-          prefix="respondentInfo"
-          title="Respondent's Information"
-          hideHealthFields={true}
-        />
+        {respondentForm}
 
         <Separator />
 
         {/* Father's Information */}
-        <ParentsForm
-          residents={residents}
-          form={form}
-          dependentsList={dependentsList}
-          onSelect={setSelectedFatherId}
-          prefix="fatherInfo"
-          title="Father's Information"
-        />
+        {fatherForm}
 
         <Separator />
 
         {/* Mother's Information */}
-        <ParentsForm
-          residents={residents}
-          form={form}
-          dependentsList={dependentsList}
-          onSelect={setSelectedMotherId}
-          prefix="motherInfo"
-          title="Mother's Information"
-        />
-        <HealthInfoForm
-          form={form}
-          prefix="motherInfo.motherHealthInfo"
-          title="Mother's Health Information"
-        />
-        
-
+        {motherForm}
+        {motherHealthForm}
       </div>
 
       <div className="mt-8 flex justify-end gap-2 sm:gap-3">

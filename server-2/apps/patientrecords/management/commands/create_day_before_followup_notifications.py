@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 # Create notification for staff
                 staff_success = notifier.create_notification(
                     title="Follow-Up Visit Tomorrow",
-                    message=f"A follow-up visit is scheduled for tomorrow for {patient_name}{description_text}",
+                    message=f"{description_text} is scheduled for tomorrow for {patient_name}",
                     recipients=staff_recipient_rp_ids,
                     notif_type="REMINDER",
                     web_route="/notification",
@@ -167,7 +167,7 @@ class Command(BaseCommand):
         from django.utils import timezone
         
         today = timezone.now().date().isoformat()
-        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}"
+        cache_key = f"followup_notified_v2_{followup.followv_id}_{followup_type}_{today}"
         
         return cache.get(cache_key, False)
     
