@@ -20,7 +20,7 @@ import { GrowthChart } from "./growth-chart";
 import { ProtectedComponent } from "@/ProtectedComponent";
 import { processHistoryData } from "./formattedData";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 
 export default function InvChildHealthRecords() {
   const location = useLocation();

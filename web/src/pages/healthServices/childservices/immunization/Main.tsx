@@ -12,7 +12,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
 import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 
 export default function ChildImmunization() {
   const location = useLocation();

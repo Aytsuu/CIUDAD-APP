@@ -10,7 +10,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
 import { useChildHealthCurrentAndPreviousHistory } from "../forms/queries/fetchQueries";
 import { LayoutWithBack } from "../../../../components/ui/layout/layout-with-back";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing

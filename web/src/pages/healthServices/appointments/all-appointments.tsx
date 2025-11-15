@@ -22,7 +22,7 @@ import ScheduleTab from "./appointments-tab";
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 import ViewButton from "@/components/ui/view-button";
 import { useDebounce } from "@/hooks/use-debounce";
-import TableLoading from "../table-loading";
+import TableLoading from "../../../components/ui/table-loading";
 
 // main component           
 export default function ScheduleRecords() {

@@ -9,7 +9,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { useCombinedConsultationColumns } from "./columns/combineconsult-col";
 import { useCombinedHealthRecords } from "./queries/fetch";

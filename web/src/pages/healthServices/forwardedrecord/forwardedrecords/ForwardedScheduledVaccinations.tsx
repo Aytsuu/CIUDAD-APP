@@ -15,7 +15,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { api2 } from "@/api/api";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScheduledVaccinationColumns } from "./columns/scheduledvac-col";
 

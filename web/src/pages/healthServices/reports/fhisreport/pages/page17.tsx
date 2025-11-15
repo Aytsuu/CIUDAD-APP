@@ -2,13 +2,13 @@
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { PagelastProps } from "./type";
-import MonthlyMorbidityDetails from "../../monthly_morbidity/records";
+import MonthlyMorbidityDetails from "../fhis_pge17";
 
 export default function Page17({ state, onBack }: PagelastProps) {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 2 – Morbidity Report</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 17 – Morbidity Report</h2>
       </div>
 
       <MonthlyMorbidityDetails state={state} />

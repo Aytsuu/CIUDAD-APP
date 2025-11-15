@@ -12,7 +12,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 interface VaccineAgeGroup {
   age_group_id: number | string | null;

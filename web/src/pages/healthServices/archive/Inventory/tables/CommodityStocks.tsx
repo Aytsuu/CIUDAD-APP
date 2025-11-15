@@ -14,7 +14,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { getArchiveCommodityStocks } from "./columns/CommodityCol"
 import { useNavigate } from "react-router-dom"
 import { useArchivedCommodityStocks } from "../queries/fetch"
-import TableLoading from "@/pages/healthServices/table-loading"
+import TableLoading from "@/components/ui/table-loading"
 
 export default function CommodityArchiveTable() {
   const navigate = useNavigate()

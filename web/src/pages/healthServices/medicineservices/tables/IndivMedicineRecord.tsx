@@ -13,7 +13,7 @@ import { medicineRecordColumns } from "./columns/inv-med-col";
 import { useIndividualMedicineRecords } from "../queries/fetch";
 import { ProtectedComponent } from "@/ProtectedComponent";
 import { serializePatientData } from "@/helpers/serializePatientData";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function IndivMedicineRecords({ patientDataProps }: { patientDataProps?: any }) {

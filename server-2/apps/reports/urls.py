@@ -14,7 +14,8 @@ from .views.monthly_illnesschart import *
 from .views.recipeint_report_views import *
 from .views.fhis_report import *  
 from .views.vaccination_views import *
-from .views.chreport_part1 import  MonthlyVaccinationStatisticsAPIView
+from .views.chreport_part1 import  MonthlyVaccinationStatisticsAPIView, MonthlyNutritionStatisticsAPIView
+from .views.fhisdeworming import DewormingMonthlyStatisticsAPIView
 from.views.doctor_report_assessed import  *
 from .views.morbidity_report import *
 
@@ -53,6 +54,7 @@ urlpatterns=[
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsRCPDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
         path('deworming-list/',DewormingRecipientListAPIView.as_view(),name="deworming-list"),
+        path('deworming-statistics/monthly/<str:month>/', DewormingMonthlyStatisticsAPIView.as_view(), name='deworming-statistics-monthly'),
         
         
         # INVENTORY MEDICINE REPORTS
@@ -72,6 +74,9 @@ urlpatterns=[
         path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
         path('vaccination-resident-counts/<str:year>/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
         path('fhischildhealth-page4/monthly/<str:month>/', MonthlyVaccinationStatisticsAPIView.as_view(), name='vaccination-statistics-monthly'),
+        
+        # Child Health Nutrition Reports
+        path('fhischildhealth-page5/monthly/<str:month>/', MonthlyNutritionStatisticsAPIView.as_view(), name='nutrition-statistics-monthly'),
 
 
         # doctor assessed reports

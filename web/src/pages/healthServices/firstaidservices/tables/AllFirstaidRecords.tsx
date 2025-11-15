@@ -18,7 +18,7 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import {firstAidColumns} from "./columns/all_records_cols";
 
 export default function AllFirstAidRecords() {

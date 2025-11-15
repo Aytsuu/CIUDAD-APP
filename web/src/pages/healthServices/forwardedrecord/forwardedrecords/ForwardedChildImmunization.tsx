@@ -12,7 +12,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/context/AuthContext";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { useChildImmunizationColumns } from "./columns/childimmunization-col";
 import { getChildHealthHistoryRecordRecords } from "../restful-api/fetch";

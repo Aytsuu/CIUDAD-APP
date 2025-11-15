@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useMonthlyMorbidityDetails } from "./queries/fetch";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { EditHeaderDialog } from "./edit_header";
+import TableLoading from "@/components/ui/table-loading";
 
 interface MonthlyMorbidityDetailsProps {
   state?: {
@@ -250,7 +251,7 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
   return (
     <>
       {/* Export Controls */}
-      <Card>
+      <div>
         <CardContent className="p-4">
           <div className="flex justify-end gap-2 items-center mb-4">
             <Button variant="outline" onClick={handleExportPDF} className="flex items-center gap-2">
@@ -274,7 +275,7 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[15, 30, 50, 100].map((size) => (
+                  {[15].map((size) => (
                     <SelectItem key={size} value={size.toString()}>
                       {size}
                     </SelectItem>
@@ -304,12 +305,7 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
           {/* Morbidity Data Table */}
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="w-full h-[200px] flex items-center justify-center">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  <span className="text-sm text-gray-600">Loading morbidity details...</span>
-                </div>
-              </div>
+              <TableLoading />
             ) : (
               <div
                 className="overflow-x-auto print-area"
@@ -327,17 +323,17 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
                 <table className="w-full border border-black">
                   {renderCustomHeader()}
                   <tbody>
-                    {morbidityData.length > 0 ? (
-                      tableRows.map((row: any, rowIndex: number) => (
-                        <tr key={rowIndex}>
-                          {row.map((cell: any, cellIndex: number) => (
-                            <td key={cellIndex} className="border border-black text-sm p-2">
-                              {cell}
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    ) : null}
+                    {morbidityData.length > 0
+                      ? tableRows.map((row: any, rowIndex: number) => (
+                          <tr key={rowIndex}>
+                            {row.map((cell: any, cellIndex: number) => (
+                              <td key={cellIndex} className="border border-black text-sm p-2">
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      : null}
                     {/* Empty rows for consistent height */}
                     {Array.from({ length: pageSize - morbidityData.length }).map((_, index) => (
                       <tr key={`empty-${index}`}>
@@ -354,7 +350,7 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
             )}
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {/* Add the EditHeaderDialog component */}
       <EditHeaderDialog isOpen={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} headerData={headerDisplay} />

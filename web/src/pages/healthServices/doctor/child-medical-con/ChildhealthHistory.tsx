@@ -6,7 +6,7 @@ import { useChildHealthCurrentAndPreviousHistory } from "../../childservices/for
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { HealthHistoryTable } from "../../childservices/viewrecords/health-history-table";
 import { Link } from "react-router";
 

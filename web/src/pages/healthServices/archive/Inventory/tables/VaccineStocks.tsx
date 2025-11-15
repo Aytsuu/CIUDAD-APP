@@ -12,7 +12,7 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { getArchivedStockColumns  } from "./columns/AntigenCol";
 import { useAntigenSocks } from "../queries/fetch";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 export default function CombinedStockTableArchive() {
   const [searchQuery, setSearchQuery] = useState("");

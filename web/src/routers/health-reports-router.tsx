@@ -49,7 +49,7 @@ import HealthProfilingSummaryReport from "@/pages/healthServices/reports/healthp
 import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
 import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
 
-import MonthlyMorbidityDetails from "@/pages/healthServices/reports/monthly_morbidity/records";
+import MonthlyMorbidityDetails from "@/pages/healthServices/reports/fhisreport/fhis_pge17";
 
 export const healthreports_router = [
   // {
