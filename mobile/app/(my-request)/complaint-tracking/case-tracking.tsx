@@ -1,5 +1,5 @@
-// import CaseTrackingScreen from "@/screens/my-request/complaint/caseTracking";
+import CaseTrackingScreen from "@/screens/my-request/complaint/caseTracking";
 
-// export default () => {
-//     return <CaseTrackingScreen/>
-// }
+export default () => {
+    return <CaseTrackingScreen/>
+}

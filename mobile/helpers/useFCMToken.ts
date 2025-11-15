@@ -136,7 +136,7 @@ export function useFCMToken() {
 
         // 6️⃣ Notification received (foreground)
         notificationListener.current = Notifications.addNotificationReceivedListener((n) => {
-          console.log('📩 Notification received (foreground):', n);
+        console.log('📩 Notification received (foreground):', n);
           
           // ✨ Invalidate notifications query
           queryClient.invalidateQueries({ queryKey: ['notifications'] });

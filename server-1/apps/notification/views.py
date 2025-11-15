@@ -236,3 +236,4 @@ class SingleMarkAsReadView(APIView):
         except Exception as e:
             logger.error(f"❌ Error in SingleMarkAsReadView: {str(e)}")
             return Response({'error': 'Failed to update notification.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
