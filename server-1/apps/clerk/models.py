@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, date
+from django.core.exceptions import ObjectDoesNotExist
+
 
 def default_due_date():
     return timezone.now().date() + timezone.timedelta(days=7)
@@ -39,12 +41,14 @@ class ClerkCertificate(models.Model):
         managed = False
 
 class NonResidentCertificateRequest(models.Model):
-    nrc_id = models.BigAutoField(primary_key=True)  
+    nrc_id = models.CharField(primary_key=True, max_length=20)  # For formatted ID like NRC001-25
     nrc_req_date = models.DateTimeField(default = datetime.now)
     nrc_req_status = models.CharField(max_length=100, default = 'None')
     nrc_req_payment_status = models.CharField(max_length=100, default='None')
     nrc_pay_date = models.DateTimeField(null = True, blank = True)
-    nrc_requester = models.CharField(max_length=500)
+    nrc_lname = models.CharField(max_length=500)
+    nrc_fname = models.CharField(max_length=500)
+    nrc_mname = models.CharField(max_length=500)
     nrc_address = models.CharField(max_length=500)
     nrc_birthdate = models.DateField(default=date.today)
     nrc_date_completed = models.DateTimeField(null=True, blank=True)
@@ -101,6 +105,7 @@ class BusinessPermitRequest(models.Model):
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
     bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
+    bus_reason = models.TextField(null=True, blank=True)
 
 
     class Meta:
@@ -166,72 +171,53 @@ class SummonTimeAvailability(models.Model):
         db_table = 'summon_time_availability'
         managed = False
 
-# ====================== MIGHT DELETE THESE LATER ============================
-
-class ServiceChargeRequest(models.Model):
-    sr_id = models.CharField(primary_key=True, max_length = 200)
-    sr_code = models.CharField(max_length=10, blank=True, null=True) 
-    sr_type = models.CharField(max_length = 250, null=True, blank=True)
-    sr_req_date = models.DateTimeField(default=datetime.now)
-    sr_req_status = models.CharField(max_length = 250)
-    sr_case_status = models.CharField(max_length = 250)
-    sr_date_marked = models.DateTimeField(null=True, blank = True)
-    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
-
-    class Meta:
-        db_table = 'service_charge_request'
-
-class ServiceChargeDecision(models.Model):
-    scd_id = models.BigAutoField(primary_key=True)
-    scd_decision_date = models.DateTimeField(default=datetime.now)
-    scd_reason = models.TextField(null = True, blank = True)
-    sr_id = models.OneToOneField('ServiceChargeRequest', db_column = 'sr_id', on_delete=models.CASCADE, null = True, blank = True)
-
-    class Meta:
-        db_table = 'service_charge_decision'
-
-
-class SummonSchedule(models.Model):
-    ss_id = models.BigAutoField(primary_key=True)
-    ss_mediation_level = models.CharField(max_length=500)
-    ss_is_rescheduled = models.BooleanField(default=False)
-    ss_reason = models.TextField()
-    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sr_id = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
-
-    class Meta:
-        db_table = 'summon_schedule'
-
-
-class SummonSuppDoc(models.Model):
-    ssd_id = models.BigAutoField(primary_key=True)
-    ssd_name = models.CharField(max_length=255)
-    ssd_type = models.CharField(max_length=100)
-    ssd_path = models.CharField(max_length=500)
-    ssd_url = models.CharField(max_length=500)
-    ssd_upload_date = models.DateTimeField(default=datetime.now)
-    ss_id = models.ForeignKey('SummonSchedule', on_delete=models.CASCADE, null=True, db_column="ss_id", related_name="supporting_docs")
-
-    class Meta:
-        db_table = 'summon_supp_doc'
-
-
-# =========================================================
 
 class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.BigAutoField(primary_key=True)
+    pay_id = models.CharField(primary_key=True, max_length=50, editable=False)
     pay_sr_type = models.CharField(max_length=200)
-    pay_status = models.CharField(max_length=200)
+    pay_status = models.CharField(max_length=200, default='Unpaid')
     pay_date_req = models.DateTimeField(default=datetime.now)
     pay_due_date = models.DateField(default = default_due_date())
+    pay_req_status = models.CharField(max_length=200, default='Pending')
     pay_date_paid = models.DateTimeField(null = True, blank = True)
+    pay_reason = models.TextField(null=True, blank=True, default=None)  
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')
 
     class Meta:
         db_table = 'service_charge_payment_request'
+
+    def save(self, *args, **kwargs):
+        if not self.pay_id:
+            self.pay_id = self.generate_custom_id()
+        super().save(*args, **kwargs)
+
+    def generate_custom_id(self):
+        current_year = datetime.now().year % 100
+        year_suffix = f"-{current_year:02d}"
+
+        try:
+            current_year_ids = ServiceChargePaymentRequest.objects.filter(
+                pay_id__endswith=year_suffix
+            )
+            if current_year_ids.exists():
+                max_id = 0
+                for obj in current_year_ids:
+                    try:
+                        numeric_part = obj.pay_id[2:6]  #
+                        numeric_value = int(numeric_part)
+                        if numeric_value > max_id:
+                            max_id = numeric_value
+                    except (ValueError, IndexError):
+                        continue
+                next_number = max_id + 1
+            else:
+                next_number = 1
+        except ObjectDoesNotExist:
+            next_number = 1
+
+        number_part = f"{next_number:04d}"  # 4-digit number with leading zeros
+        return f"SP{number_part}{year_suffix}"
 
 
 class SummonCase(models.Model):
@@ -242,6 +228,13 @@ class SummonCase(models.Model):
     sc_date_marked = models.DateTimeField(null=True, blank=True)
     sc_reason = models.TextField(null=True, blank=True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'summon_case'
@@ -277,7 +270,14 @@ class Remark(models.Model):
     rem_remarks = models.TextField()
     rem_date = models.DateTimeField(default = datetime.now)
     hs_id = models.OneToOneField('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remark')
-
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
     class Meta:
         db_table = 'remark'
 

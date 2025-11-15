@@ -8,6 +8,7 @@
         plan_balUnappropriated: number;
         plan_issue_date: string;
         staff_name?: string;
+        plan_is_archive: boolean;
     }
 
     export const useGetCurrentYearBudgetPlan = () => {

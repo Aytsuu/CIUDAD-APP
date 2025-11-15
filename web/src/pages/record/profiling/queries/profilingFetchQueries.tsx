@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getActiveBusinesses,
   getBusinessRespondent,
+  getDeceasedResidentsList,
   getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
@@ -106,6 +107,15 @@ export const usePersonalModification = (per_id?: string) => {
     staleTime: 5000
   })
 }
+
+export const useDeceasedResidentsList = () => {
+  return useQuery({
+    queryKey: ["deceasedResidentsList"],
+    queryFn: getDeceasedResidentsList,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
+  });
+};
 
 export const useResidentsList = (
   is_staff: boolean = false,

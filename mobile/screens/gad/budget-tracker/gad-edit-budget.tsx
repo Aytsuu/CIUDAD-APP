@@ -23,6 +23,7 @@ import BudgetTrackerSchema, {
 import PageLayout from "@/screens/_PageLayout";
 import { BudgetYear } from "./gad-btracker-types";
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 function GADViewEditEntryForm() {
   const router = useRouter();
@@ -381,11 +382,7 @@ function GADViewEditEntryForm() {
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </Text>
                   {isSubmitting && (
-                    <ActivityIndicator
-                      size="small"
-                      color="white"
-                      className="ml-2"
-                    />
+                     <LoadingModal visible={isSubmitting} />
                   )}
                 </View>
               </TouchableOpacity>

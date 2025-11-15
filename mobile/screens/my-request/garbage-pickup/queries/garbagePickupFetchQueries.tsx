@@ -38,6 +38,7 @@ export type GarbageRequestReject = {
     dec_reason: string;
     file_url: string;
     sitio_name: string;
+    staff_name: string;
 };
 
 
@@ -74,6 +75,7 @@ export type GarbageRequestAccept = {
   } | null;
   file_url: string;
   sitio_name: string;
+  staff_name: string;
 };
 
 
@@ -116,6 +118,7 @@ export type GarbageRequestComplete = {
   } | null;
   file_url: string;
   sitio_name: string;
+  staff_name: string;
 }
 
 export const useGetGarbageCompleteResident = (rp_id: string) => {

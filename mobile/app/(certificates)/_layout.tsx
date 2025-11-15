@@ -9,6 +9,7 @@ export default function CertificatesLayout() {
       <Stack.Screen name="cert-list" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen name="business-list" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen name="issued-cert-list" options={{ headerShown: false, animation: 'fade' }} />
+      <Stack.Screen name="service-charge-list" options={{ headerShown: false, animation: 'fade' }} />
     </Stack>
     </ToastProvider>
   )

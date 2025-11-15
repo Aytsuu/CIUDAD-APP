@@ -64,6 +64,7 @@ export default function SummonRemarksDetails() {
     sc_date_marked,
     sc_reason,
     comp_id,
+    staff_name,
     hearing_schedules = [],
   } = caseDetails || {}
 
@@ -131,6 +132,7 @@ export default function SummonRemarksDetails() {
                   rem_remarks={remark.rem_remarks}
                   rem_date={remark.rem_date}
                   supp_docs={remark.supp_docs}
+                  staff_name = {remark.staff_name}
                 />
               }
               title="Remarks"
@@ -309,8 +311,10 @@ export default function SummonRemarksDetails() {
               // Only show date marked if not null and case is closed
               sc_date_marked && (
                 <p className="text-sm text-gray-500">
-                  Marked on{" "}
-                  {formatTimestamp(new Date(sc_date_marked))}
+                  Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
+                  {staff_name && (
+                    <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
+                  )}
                 </p>
               )
             )}

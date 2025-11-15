@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOrdinances, OrdinanceData } from "../request/ordinance-get-request";
+import { getOrdinances, OrdinanceData } from "../rest-api/ordinanceGetAPI";
 
 export type { OrdinanceData };
 

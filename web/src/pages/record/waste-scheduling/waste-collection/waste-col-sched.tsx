@@ -1,10 +1,8 @@
-
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form } from '@/components/ui/form/form';
+import { Loader2 } from "lucide-react";
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -28,15 +26,6 @@ interface WasteColSchedProps {
     onSuccess?: () => void;
 }
 
-const announcementOptions = [
-    { id: "all", label: "All" },
-    { id: "allbrgystaff", label: "All Barangay Staff" },
-    { id: "residents", label: "Residents" },
-    { id: "wmstaff", label: "Waste Management Staff" },
-    { id: "drivers", label: "Drivers" },
-    { id: "collectors", label: "Collectors" },
-    { id: "watchmen", label: "Watchmen" },
-];
 
 const dayOptions = [
     { id: "Monday", name: "Monday" },
@@ -55,9 +44,9 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors, isPending } = useAssignCollectors();
+    const { mutate: assignCollectors } = useAssignCollectors();
 
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     //FETCH QUERY MUTATIONS
     const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
@@ -106,11 +95,12 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
             selectedCollectors: [],
             driver: '',
             collectionTruck: '',
-            selectedAnnouncements: [],
         },
     });
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+        setIsSubmitting(true);
+
         const [hour, minute] = values.time.split(":");
         const formattedTime = `${hour}:${minute}:00`;
 
@@ -206,7 +196,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -215,7 +205,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -258,45 +248,17 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                 </div>
 
 
-
-                {/* Announcement Audience Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedAnnouncements"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="announcements">
-                                    <AccordionTrigger>Select Audience</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {announcementOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value?.includes(option.id) || false}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                        ? [...(field.value || []), option.id]
-                                                        : (field.value || []).filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending}>
-                        {isPending ? "Submitting..." : "Schedule"}
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Save"
+                        )}
                     </Button>
                 </div>
             </form>

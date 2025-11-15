@@ -53,19 +53,20 @@ export const expense_log = async (iet_num: number, expenseLogInfo: Record<string
     try{
         const currentTimestamp = new Date().toISOString();
 
-        console.log({
+        console.log("ADD EXPENSER LOG: ",{
             el_datetime: currentTimestamp,
-            el_return_amount: expenseLogInfo.returnAmount,
-            el_proposed_budget: expenseLogInfo.el_proposed_budget,
-            el_actual_expense: expenseLogInfo.el_actual_expense,
+            el_return_amount: parseFloat(expenseLogInfo.returnAmount || 0).toFixed(2),
+            el_proposed_budget: parseFloat(expenseLogInfo.el_proposed_budget || 0).toFixed(2),
+            el_actual_expense: parseFloat(expenseLogInfo.el_actual_expense || 0).toFixed(2),
+            iet_num: iet_num
         })
 
         const res = await api.post('treasurer/expense-log/',{
 
             el_datetime: currentTimestamp,
-            el_return_amount: expenseLogInfo.returnAmount,
-            el_proposed_budget: expenseLogInfo.el_proposed_budget,
-            el_actual_expense: expenseLogInfo.el_actual_expense,
+            el_return_amount: parseFloat(expenseLogInfo.returnAmount || 0).toFixed(2),
+            el_proposed_budget: parseFloat(expenseLogInfo.el_proposed_budget || 0).toFixed(2),
+            el_actual_expense: parseFloat(expenseLogInfo.el_actual_expense || 0).toFixed(2),
             iet_num: iet_num
 
         })

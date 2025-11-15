@@ -10,10 +10,10 @@ from .views.logout_view import *
 urlpatterns = [
     
     # Web authentication endpoints
-    path('web/login/', WebLoginView.as_view(), name='web-login'),
+    path('web/login/', ValidateOTPWebView.as_view(), name='web-login'),
     
     # Mobile authentication endpoints
-    path('mobile/login/', MobileLoginView.as_view(), name='mobile-login'),
+    path('mobile/login/', ValidateOTPMobileView.as_view(), name='mobile-login'),
     
     # Mobile and Web shared endpoints
     path('signup/', SignupView.as_view(), name='signup'),
@@ -21,7 +21,8 @@ urlpatterns = [
     
     # OTP endpoints
     path('email/sendOtp/', emailOTPView.as_view(), name='email-send-otp'),
-    path('email/verifyOtp/', ValidateEmailOTPView.as_view(), name='email-verify-otp'),
+    # path('verify/web-registration/', VerifyWebAccRegistration.as_view(), name="verify-credential")
+    path("signup/otp-verification/", VerifySignup.as_view(), name="signup-verification")
 ]
 
 

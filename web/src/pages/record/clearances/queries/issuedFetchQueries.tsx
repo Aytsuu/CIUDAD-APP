@@ -3,6 +3,7 @@ import { api } from "@/api/api";
 
 export type IssuedCertificate = {
   ic_id: string;
+  cr_id: string;
   requester: string;
   dateIssued: string;
   purpose: string;
@@ -20,6 +21,7 @@ export type IssuedCertificate = {
 
 export type IssuedBusinessPermit = {
   ibp_id: string;
+  bpr_id: string;
   business_name: string;
   dateIssued: string;
   purpose: string;
@@ -78,6 +80,7 @@ export const getIssuedCertificates = async (
 
     const normalized: IssuedCertificate[] = rawItems.map((item: any) => ({
       ic_id: String(item.ic_id ?? item.id ?? ''),
+      cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? ''),
       requester: item.requester ?? item.requester_name ?? item.name ?? '',
       dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
       purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
@@ -105,6 +108,7 @@ export const getIssuedCertificates = async (
 
         const normalized: IssuedCertificate[] = rawItems.map((item: any) => ({
           ic_id: String(item.ic_id ?? item.id ?? ''),
+          cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? ''),
           requester: item.requester ?? item.requester_name ?? item.name ?? '',
           dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
           purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
@@ -147,6 +151,7 @@ export const getIssuedBusinessPermits = async (
 
     let normalized: IssuedBusinessPermit[] = rawItems.map((item: any) => ({
       ibp_id: String(item.ibp_id ?? item.id ?? ''),
+      bpr_id: String(item.bpr_id ?? item.original_permit?.bpr_id ?? item.permit_request?.bpr_id ?? ''),
       business_name: item.business_name ?? item.name ?? item.permit_request?.business_name ?? '',
       dateIssued: item.dateIssued ?? item.ibp_date_of_issuance ?? item.permit_request?.req_date_completed ?? '',
       purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? item.permit_request?.purpose ?? '',

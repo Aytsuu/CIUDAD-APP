@@ -9,7 +9,7 @@ export interface BackendOrdinanceData {
     ord_title: string;
     ord_details: string;
     ord_date_created: string;
-    ord_category: string;
+    ord_category: string[];
     ord_year: number;
     staff_id: string; // Changed from 'staff' to 'staff_id' to match backend
 }
@@ -24,7 +24,7 @@ export const transformFormDataToBackend = (
         ord_title: formData.ordTitle || '',
         ord_details: formData.ordDetails || '',
         ord_date_created: formData.ordDate || new Date().toISOString().split('T')[0],
-        ord_category: (formData.ordAreaOfFocus || []).join(', '),
+        ord_category: formData.ordAreaOfFocus || [],
         ord_year: new Date(formData.ordDate || new Date()).getFullYear(),
         staff_id: String(staffId), // Ensure staff_id is a string
     };

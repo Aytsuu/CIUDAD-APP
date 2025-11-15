@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useMemo, useState, useCallback } from "react" // MODIFIED: Added useState and useCallback
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
+import React, { useMemo } from "react"
+import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native"
+import { User, FileText, Package, Clock, Shield, ChevronLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
@@ -14,7 +14,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
 import { getPatientById } from "../admin/admin-animalbites/api/get-api"
 import { calculateAge } from "@/helpers/ageCalculator"
-import { PaginationControls } from "../admin/components/pagination-layout"
 
 // Remove the mock API function and use your actual API call
 type PatientRecordDetail = {

@@ -1,8 +1,8 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FormInput } from "@/components/ui/form/form-input";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import IllegalDumpResSchema from '@/form-schema/waste/waste-illegal-dump-res';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -88,33 +88,34 @@ export default function IllegalDumpCreateForm() {
 
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Report Illegal Dumping</Text>}
-      showExitButton={false}
-      loading={ isLoading || isCreating }
-      loadingMessage={
-        isCreating ? "Submitting report..." : 
-        "Loading..."
-      }
+      headerTitle={<Text className="text-[13px]">Report Illegal Dumping</Text>}
       footer={
         <View className="w-full">
             <TouchableOpacity
                 className="bg-primaryBlue py-4 rounded-md w-full items-center"
                 onPress={handleSubmit(onSubmit)}
+                disabled={isCreating}
             >
-                <Text className="text-white text-base font-semibold">Submit</Text>
+              <View className="flex-row justify-center items-center gap-2">
+                  {isCreating && (
+                      <ActivityIndicator size="small" color="white" className="ml-2" />
+                  )}                           
+                  <Text className="text-white text-base font-semibold">
+                      {isCreating ? "Submitting..." : "Submit"}
+                  </Text>                                   
+              </View> 
             </TouchableOpacity>
         </View>        
-      }
-      stickyFooter={true}      
+      }  
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8 p-5">
+        <View className="mb-8 p-6">
           <View className="space-y-4">
             <FormSelect
               control={control}
@@ -177,6 +178,6 @@ export default function IllegalDumpCreateForm() {
           </View>
         </View>
       </ScrollView>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }

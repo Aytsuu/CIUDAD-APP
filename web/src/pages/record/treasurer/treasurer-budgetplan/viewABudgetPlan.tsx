@@ -43,6 +43,7 @@ function ViewBudgetPlan() {
   const [isEditingItem, setIsEditingItem] = useState(false);
   const [activeTab, setActiveTab] = useState("current");
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  const [dialogContentType, setDialogContentType] = useState('menu');
 
   const planId = location.state?.planId;
   const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
@@ -100,6 +101,90 @@ function ViewBudgetPlan() {
 
         {fetchedData?.plan_year === String(new Date().getFullYear()) &&
           activeTab == "current" && (
+            // <DialogLayout
+            //   trigger={
+            //     <Button>
+            //       <Pen size={16} /> <span>Edit</span>
+            //     </Button>
+            //   }
+            //   title={
+            //     isEditingHeader
+            //       ? "Edit Budget Plan Header"
+            //       : "Edit Budget Plan"
+            //   }
+            //   description={
+            //     isEditingHeader
+            //       ? "Update the budget plan header information."
+            //       : "Select a part of the budget plan that you want to update."
+            //   }
+            //   mainContent={
+            //     isEditingHeader ? (
+            //       <div className="flex flex-col gap-4">
+            //         <Button variant="outline" className="w-fit" onClick={() => setIsEditingHeader(false)}
+            //         >
+            //           <ChevronLeft size={16} /> Back to menu
+            //         </Button>
+            //         <BudgetHeaderEditForm
+            //           balance={fetchedData?.plan_balance || 0}
+            //           realtyTaxShare={fetchedData?.plan_tax_share || 0}
+            //           taxAllotment={fetchedData?.plan_tax_allotment || 0}
+            //           clearanceAndCertFees={fetchedData?.plan_cert_fees || 0}
+            //           otherSpecificIncome={fetchedData?.plan_other_income || 0}
+            //           actualIncome={fetchedData?.plan_actual_income || 0}
+            //           actualRPT={fetchedData?.plan_rpt_income || 0}
+            //           budgetaryObligations={
+            //             fetchedData?.plan_budgetaryObligations
+            //           }
+            //           planId={planId}
+            //           onSuccess={() => {
+            //             setIsEditingHeader(false);
+            //             setEditingRowId(null);
+            //           }}
+            //         />
+            //       </div>
+            //     ) : isEditingItem ? (
+            //       <div className="flex flex-col gap-5">
+            //         <Button
+            //           variant="outline"
+            //           className="w-fit"
+            //           onClick={() => setIsEditingItem(false)}
+            //         >
+            //           <ChevronLeft size={16} /> Back to menu
+            //         </Button>
+            //         <BudgetItemEditForm
+            //           planId={planId}
+            //           budgetItems={fetchedData?.details || []}
+            //           plan_year = {fetchedData.plan_year}
+            //           balanceUnappropriated={
+            //             fetchedData?.plan_balUnappropriated
+            //           }
+            //           budgetaryObligations={
+            //             fetchedData?.plan_budgetaryObligations
+            //           }
+            //           onSuccess={() => {
+            //             setIsEditingItem(false);
+            //             setEditingRowId(null);
+            //           }}
+            //         />
+            //       </div>
+            //     ) : (
+            //       <div className="flex flex-col gap-2">
+            //         <Button className="w-full" onClick={() => setIsEditingHeader(true)} >
+            //           Budget Plan Header
+            //         </Button>
+            //         <Button className="w-full" onClick={() => setIsEditingItem(true)}>
+            //           Budget Plan Items
+            //         </Button>
+            //       </div>
+            //     )
+            //   }
+            //   isOpen={editingRowId === Number(planId)}
+            //   onOpenChange={(open) =>
+            //     setEditingRowId(open ? Number(planId) : null)
+            //   }
+            //   className={isEditingHeader || isEditingItem ? "min-w-[1500px]" : "min-w-[400px] max-w-[500px]"}
+            // />
+
             <DialogLayout
               trigger={
                 <Button>
@@ -122,7 +207,10 @@ function ViewBudgetPlan() {
                     <Button
                       variant="outline"
                       className="w-fit"
-                      onClick={() => setIsEditingHeader(false)}
+                      onClick={() => {
+                        setIsEditingHeader(false);
+                        setDialogContentType('menu');
+                      }}
                     >
                       <ChevronLeft size={16} /> Back to menu
                     </Button>
@@ -141,21 +229,26 @@ function ViewBudgetPlan() {
                       onSuccess={() => {
                         setIsEditingHeader(false);
                         setEditingRowId(null);
+                        setDialogContentType('menu');
                       }}
                     />
                   </div>
                 ) : isEditingItem ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-5">
                     <Button
                       variant="outline"
                       className="w-fit"
-                      onClick={() => setIsEditingItem(false)}
+                      onClick={() => {
+                        setIsEditingItem(false);
+                        setDialogContentType('menu');
+                      }}
                     >
                       <ChevronLeft size={16} /> Back to menu
                     </Button>
                     <BudgetItemEditForm
                       planId={planId}
                       budgetItems={fetchedData?.details || []}
+                      plan_year = {fetchedData.plan_year}
                       balanceUnappropriated={
                         fetchedData?.plan_balUnappropriated
                       }
@@ -165,20 +258,27 @@ function ViewBudgetPlan() {
                       onSuccess={() => {
                         setIsEditingItem(false);
                         setEditingRowId(null);
+                        setDialogContentType('menu');
                       }}
                     />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => setIsEditingHeader(true)}
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        setIsEditingHeader(true);
+                        setDialogContentType('header');
+                      }}
                     >
                       Budget Plan Header
                     </Button>
-                    <Button
-                      className="w-full"
-                      onClick={() => setIsEditingItem(true)}
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        setIsEditingItem(true);
+                        setDialogContentType('item');
+                      }}
                     >
                       Budget Plan Items
                     </Button>
@@ -186,10 +286,19 @@ function ViewBudgetPlan() {
                 )
               }
               isOpen={editingRowId === Number(planId)}
-              onOpenChange={(open) =>
-                setEditingRowId(open ? Number(planId) : null)
+              onOpenChange={(open) => {
+                setEditingRowId(open ? Number(planId) : null);
+                if (open) {
+                  setDialogContentType('menu');
+                }
+              }}
+              className={
+                dialogContentType === 'item' 
+                  ? "min-w-[1500px]" 
+                  : dialogContentType === 'header'
+                  ? "" // or whatever default size you prefer
+                  : "min-w-[400px]" // size for the menu with 2 buttons
               }
-              className="min-w-[800px]"
             />
           )}
       </div>

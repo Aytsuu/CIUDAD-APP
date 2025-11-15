@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
 from ..serializers.staff_serializers import *
-from pagination import *
 from ..double_queries import *
+from pagination import *
+from apps.notification.utils import create_notification
 
 class StaffCreateView(generics.CreateAPIView):
   serializer_class = StaffCreateSerializer
@@ -60,17 +61,30 @@ class StaffUpdateView(generics.UpdateAPIView):
       serializer = self.get_serializer(instance, data=request.data, partial=True)
 
       if serializer.is_valid():
-          serializer.save()
+        serializer.save()
 
-          double_queries = UpdateQueries()
-          response = double_queries.staff(request.data, instance.staff_id)
-          if not response.ok:
-            try:
-                error_detail = response.json()
-            except ValueError:
-                error_detail = response.text
-            raise serializers.ValidationError({"error": error_detail})        
-          return Response(serializer.data, status=status.HTTP_200_OK)
+        double_queries = UpdateQueries()
+        response = double_queries.staff(request.data, instance.staff_id)
+        if not response.ok:
+          try:
+              error_detail = response.json()
+          except ValueError:
+              error_detail = response.text
+          raise serializers.ValidationError({"error": error_detail}) 
+
+        create_notification(
+          title="Staff Assignment",
+          message=(
+              f"You've been assigned to a new position ({register.pos.pos_title})"
+          ),
+          recipients=[instance.staff_id],
+          notif_type="",
+          web_route="",
+          web_params={},
+          # mobile_route="",
+          # mobile_params={},
+        )  
+        return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
   
 class StaffDeleteView(generics.DestroyAPIView):
@@ -91,6 +105,20 @@ class StaffDeleteView(generics.DestroyAPIView):
       except ValueError:
         error_detail = response.text
       raise serializers.ValidationError({'error': error_detail})
+    
+    create_notification(
+      title="Staff Assignment",
+      message=(
+          f"Your assignment to the position {register.pos.pos_title} has been removed"
+      ),
+      recipients=[staff_id],
+      notif_type="",
+      web_route="",
+      web_params={},
+      # mobile_route="",
+      # mobile_params={},
+    )
+    
     return Response(status=status.HTTP_200_OK)
 
 

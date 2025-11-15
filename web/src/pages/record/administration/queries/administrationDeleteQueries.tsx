@@ -44,3 +44,24 @@ export const useDeleteStaff = () => {
     }
   })
 }
+
+export const useDeleteSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sitio_id: string) => {
+      try {
+        const res = await api.delete(`profiling/sitio/${sitio_id}/delete/`);
+        return res.status;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    }, 
+    onSuccess: (_, sitio_id) => { 
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => 
+        old.filter((sitio:any) => sitio.sitio_id !== sitio_id)
+      )
+      queryClient.invalidateQueries({ queryKey: ["sitioList"] })
+    }
+  })
+}

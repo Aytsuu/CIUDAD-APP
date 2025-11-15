@@ -15,6 +15,7 @@ import { formatDate } from "@/helpers/dateHelpers";
 import { useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { LoadingModal } from "@/components/ui/loading-modal"; // Import the LoadingModal
 
 const CLCreateEvent = () => {
   const { user } = useAuth();
@@ -61,6 +62,8 @@ const CLCreateEvent = () => {
 
       queryClient.invalidateQueries({ queryKey: ["attendees", newEvent] });
       router.back();
+    } catch (error) {
+      console.error("Error creating event:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -135,6 +138,11 @@ const CLCreateEvent = () => {
             This will create empty rows for attendees to fill out manually
           </Text>
         </View>
+
+        {/* Loading Modal for form submission */}
+        <LoadingModal 
+          visible={isSubmitting} 
+        />
       </View>
     </PageLayout>
   );

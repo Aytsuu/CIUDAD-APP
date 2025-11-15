@@ -99,24 +99,12 @@ class CreateReminderNotificationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # secret_key = request.headers.get('Secret-Key')
-        # expected_key = config('NOTIFICATION_SECRET_KEY')
-
-        # if secret_key != expected_key:
-            # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
         try:
             recipient_ids = request.data.get('recipients', [])
             print(f"Recipient IDs for reminder: {recipient_ids}")
-            # recipients = []
+            recipients = []
 
-            # accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
-            resident_profiles = ResidentProfile.objects.filter(rp_id__in=recipient_ids).select_related("account")
-            recipients = [
-                rp.account for rp in resident_profiles 
-                if hasattr(rp, 'account') and rp.account
-            ]
-            
+            accounts = list(Account.objects.filter(acc_id__in=recipient_ids))
             print(f"Accounts found for reminder: {accounts}")
             if accounts:
                 recipients = accounts
@@ -126,8 +114,6 @@ class CreateReminderNotificationView(APIView):
                     rp.account for rp in resident_profiles 
                     if hasattr(rp, 'account') and rp.account
                 ]
-                
-            print(f"Accounts found for reminder: {recipients}")
 
             if not recipients:
                 return Response(
@@ -135,15 +121,10 @@ class CreateReminderNotificationView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            send_at_str = request.data.get('remind_at')
-            if not send_at_str:
-                 return Response({'error': 'Missing required \'remind_at\' field.'}, status=status.HTTP_400_BAD_REQUEST)
-             
-            send_at = datetime.fromisoformat(send_at_str)
-            
+            send_at = datetime.fromisoformat(request.data.get('send_at'))
             if send_at.tzinfo is None:
                 send_at = pytz.utc.localize(send_at)
-                
+
             reminder_notification(
                 title=request.data.get('title'),
                 message=request.data.get('message'),

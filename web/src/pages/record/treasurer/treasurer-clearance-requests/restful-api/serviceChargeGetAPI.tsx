@@ -36,6 +36,8 @@ export async function getTreasurerServiceCharges(
   if (page) params.append('page', page.toString());
   if (pageSize) params.append('page_size', pageSize.toString());
   
+  // Don't filter by payment_status here - let the frontend tabs handle filtering
+  
   const { data } = await api.get<ServiceChargeResponse>(`/clerk/treasurer/service-charges/?${params.toString()}`);
   return data ?? { results: [], count: 0, next: null, previous: null };
 }
@@ -62,18 +64,19 @@ export async function getServiceChargeRate(): Promise<PurposeRate | null> {
   return serviceChargeRate ?? null;
 }
 
-export async function createServiceChargePaymentRequest(params: { sr_id: string; pr_id: number | string; spay_amount?: number; spay_status?: string; }): Promise<any> {
+export async function createServiceChargePaymentRequest(params: { sr_id: string; pr_id: number | string; spay_amount?: number; spay_status?: string; pay_sr_type?: string; }): Promise<any> {
   const payload = {
     sr_id: params.sr_id,
     pr_id: params.pr_id,
     spay_amount: params.spay_amount,
     spay_status: params.spay_status ?? 'Unpaid',
+    pay_sr_type: params.pay_sr_type ?? 'File Action',
   } as const;
-  const { data } = await api.post('/clerk/service-charge-payment-request/', payload);
+  const { data } = await api.post('/clerk/service-charge-payment-req/', payload);
   return data;
 }
 
 export async function acceptSummonRequest(sr_id: string): Promise<any> {
-  const { data } = await api.put(`/clerk/update-summon-request/${sr_id}/`, { sr_req_status: 'Accepted' });
+  const { data } = await api.put(`/clerk/update-summon-case/${sr_id}/`, { sr_req_status: 'Accepted' });
   return data;
 }

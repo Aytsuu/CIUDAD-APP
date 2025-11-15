@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
@@ -12,7 +12,7 @@ import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { useCreateResolution } from './queries/resolution-add-queries';
 import { useApprovedProposals } from './queries/resolution-fetch-queries';
@@ -174,33 +174,29 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
     );
 
     return (
-        <_ScreenLayout
-            headerBetweenAction={<Text className="text-[13px]">Add Resolution</Text>}
-            headerAlign="left"
-            showBackButton={true}
-            showExitButton={false}
-            customLeftAction={
+        <PageLayout
+            headerTitle={<Text className="text-[13px]">Add Resolution</Text>}
+            leftAction={
                 <TouchableOpacity onPress={() => router.back()}>
                     <ChevronLeft size={24} color="black" />
                 </TouchableOpacity>
             }
-            scrollable={true}
-            keyboardAvoiding={true}
-            contentPadding="medium"
-            loading={isPending}
-            loadingMessage="Saving resolution..."
             footer={
                 <TouchableOpacity
                     className="bg-primaryBlue py-4 rounded-xl w-full items-center"
                     onPress={form.handleSubmit(onSubmit)}
                     disabled={isPending}
                 >
-                    <Text className="text-white text-base font-semibold">
-                        {isPending ? "Saving..." : "Save Resolution"}
-                    </Text>
+                    <View className="flex-row justify-center items-center gap-2">
+                        {isPending && (
+                            <ActivityIndicator size="small" color="white" className="ml-2" />
+                        )}                           
+                        <Text className="text-white text-base font-semibold">
+                            {isPending ? "Saving..." : "Save Resolution"}
+                        </Text>                                   
+                    </View>                    
                 </TouchableOpacity>
             }
-            stickyFooter={true}
         >
             <View className="w-full space-y-4 px-6 pt-5">
                 {/* Tabs for New/Old Resolution */}
@@ -283,7 +279,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
                     />    
                 </View>
             </View>
-        </_ScreenLayout>
+        </PageLayout>
     );
 }
 

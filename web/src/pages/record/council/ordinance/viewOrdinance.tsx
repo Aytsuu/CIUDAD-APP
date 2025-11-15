@@ -18,17 +18,31 @@ function ViewOrdinance({
 
     if (!folder) return null;
 
-    const amendmentItems = folder.amendments || [];
+    
+    const allItems = (folder.amendments || []).slice();
+    const amendmentItems = allItems.filter(item => item.ord_is_ammend === true).sort(
+      (a, b) => (a.ord_ammend_ver || 0) - (b.ord_ammend_ver || 0)
+    );
+    const repealItems = allItems.filter(item => item.ord_repealed === true && item.ord_is_ammend === false);
 
     return (
         <DialogLayout
             isOpen={isOpen}
             onOpenChange={onOpenChange}
             className="max-w-4xl"
-            title={`Ordinance Details - ${folder.baseOrdinance.ord_title}`}
-            description={`Viewing ordinance ${folder.baseOrdinance.ord_num} and its related documents`}
+            title={undefined}
+            description={undefined}
             mainContent={
                 <div className="max-h-[80vh] overflow-y-auto p-4">
+                    {/* Custom header with break classes */}
+                    <div className="pb-2">
+                        <div className="font-bold text-lg md:text-2xl mb-1 break-words break-all whitespace-pre-line max-w-full">
+                            {folder.baseOrdinance.ord_title}
+                        </div>
+                        <div className="text-xs text-gray-500 break-words break-all whitespace-pre-line max-w-full">
+                            Viewing ordinance {folder.baseOrdinance.ord_num} and its related documents
+                        </div>
+                    </div>
                     <div className="space-y-6">
                         {/* Base Ordinance */}
                         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -57,13 +71,13 @@ function ViewOrdinance({
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <div className="text-sm font-medium text-gray-800">
+                                    <div className="text-sm font-medium text-gray-800 break-all break-words">
                                         {folder.baseOrdinance.ord_title}
                                     </div>
                                     <div className="text-xs text-gray-600">
                                         ORD: {folder.baseOrdinance.ord_num} • {folder.baseOrdinance.ord_date_created}
                                     </div>
-                                    <div className="text-sm text-gray-700">
+                                    <div className="text-sm text-gray-700 whitespace-pre-line break-all break-words max-w-full overflow-x-hidden">
                                         {folder.baseOrdinance.ord_details || 'No details available'}
                                     </div>
                                 </div>
@@ -81,7 +95,9 @@ function ViewOrdinance({
                                     <div key={amendment.ord_num} className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
                                         <div className="flex items-center gap-2 mb-3">
                                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span className="text-sm font-semibold text-green-700">Amendment {index + 1}</span>
+                                            <span className="text-sm font-semibold text-green-700">
+                                                Amendment ({amendment.ord_ammend_ver || index + 1})
+                                            </span>
                                         </div>
                                         
                                         <div className="space-y-3">
@@ -104,14 +120,66 @@ function ViewOrdinance({
                                             </div>
                                             
                                             <div className="space-y-2">
-                                                <div className="text-sm font-medium text-gray-800">
+                                                <div className="text-sm font-medium text-gray-800 break-all break-words">
                                                     {amendment.ord_title}
                                                 </div>
                                                 <div className="text-xs text-gray-600">
                                                     ORD: {amendment.ord_num} • {amendment.ord_date_created}
                                                 </div>
-                                                <div className="text-sm text-gray-700">
+                                                <div className="text-sm text-gray-700 whitespace-pre-line break-all break-words max-w-full overflow-x-hidden">
                                                     {amendment.ord_details || 'No details available'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Repeals */}
+                        {repealItems.length > 0 && (
+                            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
+                                <div className="flex items-center justify-between border-b pb-2 mb-4">
+                                    <h3 className="text-lg font-semibold text-red-700">Repeal</h3>
+                                </div>
+
+                                {repealItems.map((repeal) => (
+                                    <div key={repeal.ord_num} className="bg-grey-50 rounded-lg border p-4 mb-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                            <span className="text-sm font-semibold text-red-600">
+                                                Repeal
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (repeal.file && repeal.file.file_url) {
+                                                            window.open(repeal.file.file_url, '_blank');
+                                                        } else {
+                                                            showErrorToast('No file available to view');
+                                                        }
+                                                    }}
+                                                    className="text-xs px-3 py-1 h-7"
+                                                >
+                                                    <Eye className="h-3 w-3 mr-1" />
+                                                    View File
+                                                </Button>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                <div className="text-sm font-medium text-gray-800 break-all break-words">
+                                                    {repeal.ord_title}
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    ORD: {repeal.ord_num} • {repeal.ord_date_created}
+                                                </div>
+                                                <div className="text-sm text-gray-700 whitespace-pre-line break-all break-words max-w-full overflow-x-hidden">
+                                                    {repeal.ord_details || 'No details available'}
                                                 </div>
                                             </div>
                                         </div>

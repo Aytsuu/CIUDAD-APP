@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import date
 from abstract_classes import AbstractModels
-from abstract_classes import AbstractModels
 
 class ReportType(AbstractModels):
     rt_id = models.BigAutoField(primary_key=True)
@@ -60,7 +59,8 @@ class ARFile(models.Model):
   arf_type = models.CharField(max_length=50)
   arf_path = models.CharField(max_length=500)
   arf_url = models.URLField()
-  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
+  arf_is_supp = models.BooleanField(default=False)
+  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE, related_name="ar_files")
 
   class Meta:
     db_table = 'ar_file'

@@ -661,7 +661,7 @@ const WasteCollectionMain = () => {
       {/* Create Button */}
       <View className="pb-4 px-6">
         <TouchableOpacity
-          className="bg-primaryBlue flex-row items-center justify-center w-full px-4 py-4 rounded-lg mb-3"
+          className="bg-primaryBlue flex-row items-center justify-center w-full px-4 py-4 rounded-xl mb-3"
           onPress={() => router.push('/(waste)/waste-collection/waste-col-create')}
         >
           <Plus size={16} className="text-white mr-2" />

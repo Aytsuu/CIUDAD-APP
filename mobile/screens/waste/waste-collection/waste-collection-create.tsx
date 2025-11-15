@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
@@ -38,7 +38,7 @@ function WasteColCreate() {
   const { user } = useAuth(); 
 
   //ADD QUERY MUTATIONS
-  const { mutate: createSchedule, } = useCreateWasteSchedule();
+  const { mutate: createSchedule, isPending: isPendingSchedule} = useCreateWasteSchedule();
   const { mutate: assignCollectors, isPending } = useAssignCollectors();
   
 
@@ -174,35 +174,29 @@ function WasteColCreate() {
     };
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Schedule Waste Collection</Text>}
-      headerAlign="left"
-
-      showBackButton={true}
-      showExitButton={false}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text className="text-[13px]">Schedule Waste Collection</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
             <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-
-      // State Management
-      loading={isPending || isLoading}
-      loadingMessage={ isPending ? "Creating schedule..." : "Loading..."}
-
       footer={
             <TouchableOpacity
               className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
+              disabled={isPending || isPendingSchedule}
             >
-              <Text className="text-white text-base font-semibold">Schedule</Text>
+                <View className="flex-row justify-center items-center gap-2">
+                    {(isPending || isPendingSchedule) && (
+                    <ActivityIndicator size="small" color="white" />
+                    )}
+                    <Text className="text-white text-base font-semibold">
+                    {isPending || isPendingSchedule ? "Scheduling..." : "Schedule"}
+                    </Text>
+                </View>  
             </TouchableOpacity>
       }
-      stickyFooter={true}
     >
         <View className="w-full px-6">
 
@@ -231,7 +225,7 @@ function WasteColCreate() {
               <FormComboCheckbox
                   control={form.control}
                   name="selectedCollectors"
-                  label="Collectors"
+                  label="Loader(s)"
                   options={collectorOptions}
               />
             </View>
@@ -239,7 +233,7 @@ function WasteColCreate() {
             <FormSelect
                 control={form.control}
                 name="driver"
-                label="Driver"
+                label="Driver Loader"
                 options={driverOptions}
             />
 
@@ -258,7 +252,7 @@ function WasteColCreate() {
             />
 
         </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

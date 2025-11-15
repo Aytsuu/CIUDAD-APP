@@ -12,12 +12,7 @@ export const useDeleteARFile = () => {
         throw err;
       }
     }, 
-    onSuccess: (_data, variables) => {
-      const arf_id  = variables;
-      queryClient.setQueryData(['ARInfo'], (old: any) => ({
-        ...old,
-        ar_files: old.ar_files.filter((file: any) => file.arf_id !== arf_id)
-      }))
+    onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['ARInfo']});
     }
   })
@@ -34,12 +29,7 @@ export const useDeleteWARFile = () => {
         throw err;
       }
     }, 
-    onSuccess: (_data, variables) => {
-      const warf_id  = variables;
-      queryClient.setQueryData(['WARInfo'], (old: any) => ({
-        ...old,
-        war_files: old.war_files.filter((file: any) => file.warf_id !== warf_id)
-      }))
+    onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['ARInfo']});
     }
   })

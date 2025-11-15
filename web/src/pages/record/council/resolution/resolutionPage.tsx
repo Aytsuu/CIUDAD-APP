@@ -41,13 +41,13 @@ export const getAreaFocusDisplayName = (focus: string): string => {
 export const getAreaFocusColor = (focus: string): string => {
   switch (focus) {
     case "gad":
-      return "bg-primary/10 text-primary"
-    case "finance":
-      return "bg-green-100 text-green-800"
-    case "council":
       return "bg-purple-100 text-purple-800"
-    case "waste":
+    case "finance":
       return "bg-orange-100 text-orange-800"
+    case "council":
+      return "bg-primary/10 text-primary"
+    case "waste":
+      return "bg-green-100 text-green-800"
     default:
       return "bg-gray-100 text-gray-800"
   }
@@ -391,7 +391,7 @@ function ResolutionPage() {
                                     trigger={<div className="bg-[#10b981] hover:bg-[#34d399] text-white border px-3 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"><ArchiveRestore size={16}/></div>}
                                     title="Restore Archived Resolution"
                                     description="Would you like to restore this resolution from the archive and make it active again?"
-                                    actionLabel="confirm"
+                                    actionLabel="Confirm"
                                     onClick={() => handleRestore(row.original.res_num)}
                                 />
                             </div>
@@ -405,7 +405,7 @@ function ResolutionPage() {
                                     trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white border px-3 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"><Trash size={16}/></div>}
                                     title="Confirm Delete"
                                     description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
-                                    actionLabel="confirm"
+                                    actionLabel="Confirm"
                                     onClick={() => handleDelete(row.original.res_num)}
                                 />
                             </div>
@@ -451,6 +451,7 @@ function ResolutionPage() {
                         placeholder="Area Filter"
                         options={filterOptions}
                         value={filter}
+                        valueLabel="Area"
                         onChange={handleFilterChange}
                     />
 
@@ -460,6 +461,7 @@ function ResolutionPage() {
                         placeholder="Year Filter"
                         options={yearOptions}
                         value={yearFilter}
+                        valueLabel="Year"
                         onChange={handleYearFilterChange}
                     />                              
                 </div>

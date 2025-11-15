@@ -13,7 +13,7 @@ import type { ComplaintFormData } from "@/form-schema/complaint-schema";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
-import { X, UserPlus, ChevronRight, Info } from "lucide-react-native";
+import { X, UserPlus, ChevronRight, Info, UserCircle } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetResidentLists } from "../api-operations/queries/ComplaintGetQueries";
 
@@ -280,6 +280,15 @@ export const Complainant: React.FC<ComplainantProps> = ({
         </View>
       ) : (
         <>
+          <View className="bg-white rounded-lg p-4 mb-2 border border-gray-100">
+            <View className="flex-row items-center mb-2">
+              {/* <UserCircle size={20} color="#111111" className="mr-2" /> */}
+              <Text className="text-lg font-semibold text-gray-900">Complainant</Text>
+            </View>
+            <Text className="text-sm text-gray-600">
+              Information about the person submitting the complaint.
+            </Text>
+          </View>
           <View className="flex-row justify-end mb-3">
             <TouchableOpacity
               onPress={addComplainantManually}
@@ -287,7 +296,7 @@ export const Complainant: React.FC<ComplainantProps> = ({
               className="bg-blue-600 px-4 py-3 rounded-lg shadow-sm flex-row items-center"
             >
               <UserPlus size={20} color="#fff" />
-              <Text className="text-white font-medium ml-2">Add Manually</Text>
+              <Text className="text-white font-medium ml-2">Add Comp.</Text>
             </TouchableOpacity>
           </View>
 

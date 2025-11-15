@@ -28,17 +28,13 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     
-    // Try multiple ways to get staff_id
+   
     const getStaffId = () => {
         if (!user?.staff) return undefined;
-        
-        // Try different possible field names
         const staff = user.staff;
         let staffId = staff.staff_id || staff.id || staff.staffId || staff.staff_ID;
-        
-        // Handle truncated staff_id by padding with zeros
         if (staffId && typeof staffId === 'string') {
-            // If staff_id is less than 11 digits, pad with leading zeros
+            
             if (staffId.length < 11) {
                 staffId = staffId.padStart(11, '0');
             }
@@ -132,15 +128,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
         }
     };
 
-    // Helper function to format requester name in all capital letters
-    const formatRequesterName = (lastName: string, firstName: string, middleName?: string): string => {
-        const nameParts = [lastName, firstName];
-        if (middleName && middleName.trim()) {
-            nameParts.push(middleName);
-        }
-        return nameParts.join(', ').toUpperCase();
-    };
-
     const onSubmitNonResident = async (values: z.infer<typeof NonResidentFormSchema>) => {
         try {   
             setIsSubmitting(true);
@@ -150,11 +137,11 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 return;
             }
 
-            // Combine name fields into requester field using helper function
-            const requester = formatRequesterName(values.last_name, values.first_name, values.middle_name);
-
+            // Use individual name fields instead of combined requester field
             const payload = {
-                requester: requester,
+                last_name: values.last_name,
+                first_name: values.first_name,
+                middle_name: values.middle_name,
                 purpose: values.purpose,
                 address: values.address,
                 birthdate: values.birthdate,

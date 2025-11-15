@@ -9,13 +9,14 @@ import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/toast';
-import { Provider } from "react-redux"
+import * as NavigationBar from 'expo-navigation-bar';
+import {Provider} from "react-redux"
 import { store, persistor } from '@/redux/store';
 import { PersistGate } from 'redux-persist/integration/react';
-import { View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFCMToken } from '@/helpers/useFCMToken';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -40,6 +41,11 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    NavigationBar.setBackgroundColorAsync('#ffffff');
+    NavigationBar.setButtonStyleAsync('dark');
+  }, []);
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
@@ -52,42 +58,44 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <View style={{ flex: 1 }}>
-        <StatusBar style='dark' translucent/>
-        <ThemeProvider value={LIGHT_THEME}>
-          <GestureHandlerRootView className='flex-1'>
-            <Provider store={store}>
-              <PersistGate loading={null} persistor={persistor}>
-                <QueryClientProvider client={queryClient}>
-                  <ToastProvider>
-                    <Stack initialRouteName='(auth)'>
-                      <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
-                      <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
-                      <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
-                      <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
-                      <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
-                      <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
-                      <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
-                      <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
-                      <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
-                      <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
-                    </Stack>
-                  </ToastProvider>
-                </QueryClientProvider>
-              </PersistGate>
-            </Provider>
-          </GestureHandlerRootView>
-        </ThemeProvider>
-        <PortalHost />
+          <StatusBar style='dark' translucent/>
+          <ThemeProvider value={LIGHT_THEME}>
+            <GestureHandlerRootView className='flex-1'>
+              <Provider store={store}>
+                <PersistGate loading={null} persistor={persistor}>
+                  <QueryClientProvider client={queryClient}>
+                    <ToastProvider>
+                      <FCMTokenInitializer/>
+                      <Stack initialRouteName='(auth)'>
+                        <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
+                        <Stack.Screen name="(donation)" options = {{ headerShown: false, animation: 'fade' }}/>
+                        <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
+                        <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
+                        <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
+                        <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
+                        <Stack.Screen name="(gad)" options = {{ headerShown: false, animation: 'fade' }}/>
+                        <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
+                        <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
+                        <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
+                        <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
+                      </Stack>
+                    </ToastProvider>
+                  </QueryClientProvider>
+                </PersistGate>
+              </Provider>
+              <PortalHost />
+            </GestureHandlerRootView>
+          </ThemeProvider>
       </View>
     </SafeAreaProvider>
   );

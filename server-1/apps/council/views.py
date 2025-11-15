@@ -499,7 +499,50 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         # Continue with the normal creation process
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = serializer.save()
+    
+        try:
+            from apps.act_log.utils import create_activity_log, log_model_change
+            from apps.administration.models import Staff
+            
+            # Try to get staff from request data first
+            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            
+            # If not in request data, try to get from request.user.staff
+            if not staff_id:
+                try:
+                    user_staff = getattr(request.user, 'staff', None)
+                    if user_staff:
+                        staff_id = getattr(user_staff, 'staff_id', None)
+                except:
+                    pass
+            
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Use log_model_change for consistency with ActivityLogMixin
+                    log_model_change(instance, 'create', staff)
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for Resolution create: No valid staff")
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution creation: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -511,7 +554,56 @@ class DeleteResolutionView(generics.DestroyAPIView):
 
     def get_object(self):
         res_num = self.kwargs.get('res_num')
-        return get_object_or_404(Resolution, res_num=res_num) 
+        return get_object_or_404(Resolution, res_num=res_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Log the activity if staff exists with staff_id (before deletion)
+        try:
+            from apps.act_log.utils import log_model_change
+            from apps.administration.models import Staff
+            
+            # Try to get staff from request data first
+            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            
+            # If not in request data, try to get from request.user.staff
+            if not staff_id:
+                try:
+                    user_staff = getattr(request.user, 'staff', None)
+                    if user_staff:
+                        staff_id = getattr(user_staff, 'staff_id', None)
+                except:
+                    pass
+            
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Log before deletion
+                    log_model_change(instance, 'delete', staff)
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for Resolution delete: No valid staff")
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution deletion: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        # Proceed with deletion
+        return super().destroy(request, *args, **kwargs) 
 
 
 class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
@@ -959,24 +1051,22 @@ class OrdinanceFileView(generics.ListCreateAPIView):
     serializer_class = OrdinanceFileSerializer
 
     def create(self, request, *args, **kwargs):
-        # Get file data from request
-        file_data = {
-            'of_name': request.data.get('of_name'),
-            'of_type': request.data.get('of_type'),
-            'of_path': request.data.get('of_path'),
-            'of_url': request.data.get('of_url')
-        }
+        # Handle file uploads like resolution does
+        files = request.data.get('files', [])
         
-        print(f"Creating ordinance file with data: {file_data}")
+        if not files:
+            return Response(
+                {"error": "No files provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        serializer = self.get_serializer(data=file_data)
-        if not serializer.is_valid():
-            print(f"Serializer errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Uploading {len(files)} ordinance files")
         
-        file_obj = serializer.save()
-        print(f"Created ordinance file with ID: {file_obj.of_id}")
+        # Call serializer's upload method and get created files
+        created_files = self.get_serializer()._upload_files(files)
         
+        # Return the created file data
+        serializer = self.get_serializer(created_files, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceFileDetailView(generics.RetrieveUpdateDestroyAPIView):

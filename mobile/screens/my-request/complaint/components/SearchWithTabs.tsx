@@ -1,6 +1,7 @@
 import React from "react";
 import { View } from "react-native";
-import { SearchInput } from "@/components/ui/search-input";
+import { Search } from "lucide-react-native";
+import { Input } from "@/components/ui/input";
 import { StatusFilterTabs, Tab } from "./StatufFilterBar";
 
 interface SearchWithTabsProps {
@@ -22,16 +23,25 @@ export const SearchWithTabs: React.FC<SearchWithTabsProps> = ({
   activeTab,
   onTabChange,
   showTabCounts = true,
-  searchPlaceholder,
+  searchPlaceholder = "Search...",
 }) => {
   return (
-    <View>
-      <SearchInput
-        value={searchValue}
-        onChange={onSearchChange}
-        onSubmit={onSearchSubmit}
-        // placeholder={searchPlaceholder}
-      />
+    <View className="px-4">
+      {/* Search Input Container */}
+      <View className="mb-3 flex-row items-center bg-white rounded-lg px-3 border border-gray-200">
+        <Search size={18} color="#9CA3AF" />
+        <Input
+          className="flex-1 ml-2 bg-transparent border-0 h-9"
+          placeholder={searchPlaceholder}
+          value={searchValue}
+          onChangeText={onSearchChange}
+          onSubmitEditing={onSearchSubmit}
+          returnKeyType="search"
+          placeholderTextColor="#9CA3AF"
+        />
+      </View>
+
+      {/* Status Filter Tabs */}
       <StatusFilterTabs
         tabs={tabs}
         activeTab={activeTab}

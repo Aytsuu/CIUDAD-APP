@@ -1,8 +1,6 @@
 import z from "zod"
 
 const PermitClearanceFormSchema = z.object({
-
-    serialNo: z.string().min(1, "Receipt Serial No. is required"),
     businessName: z.string().min(1, 'Business is required.'), // Now stores business ID
     requestor: z.string().min(1, 'Requestor Name is required.'),
     address: z.string().min(1, 'Address is required.'),

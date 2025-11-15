@@ -60,12 +60,6 @@ export default function ComplaintTable({
     });
   };
 
-  const handleArchiveClick = () => {
-    if (selectedCount > 0) {
-      setShowArchiveDialog(true);
-    }
-  };
-
   const handleConfirmArchive = async () => {
     setIsArchiving(true);
     try {
@@ -121,21 +115,6 @@ export default function ComplaintTable({
         </div>
                  
         <div className={`flex gap-2 transition-opacity duration-200 ${selectedCount > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <Button
-            variant="outline"
-            className="border-2 border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 hover:text-orange-800"
-            onClick={handleArchiveClick}
-            disabled={isArchiving}
-          >
-            <Archive size={16} />
-            {isArchiving 
-              ? "Archiving..." 
-              : selectedCount === 1
-              ? `Archive ${selectedCount} complaint`
-              : `Archive ${selectedCount} complaints`
-            }
-          </Button>
-           
           <Link to="/complaint/archive">
             <Button variant="outline" className="gap-2 text-darkGray">
               <FileInput size={16} className="text-gray-400" />

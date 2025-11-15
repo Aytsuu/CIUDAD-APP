@@ -103,72 +103,76 @@ export default function BusinessRecords() {
         }}
         activeOpacity={0.7}
       >
-        <View className="flex-row justify-between items-center py-5 border-t border-gray-100">
-          <View className="flex-1">
-            {/* Business Header */}
-            <View className="flex-row items-center mb-3">
-              <View className="flex-1">
-                <Text
-                  className="text-gray-900 font-semibold text-base"
-                  numberOfLines={1}
-                >
-                  {item.bus_name || "Unnamed Business"}
-                </Text>
-                <Text className="text-gray-500 text-sm">ID: {item.bus_id}</Text>
+        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1">
+              {/* Business Header */}
+              <View className="flex-row items-center mb-3">
+                <View className="flex-1">
+                  <Text
+                    className="text-gray-900 font-semibold text-base"
+                    numberOfLines={1}
+                  >
+                    {item.bus_name || "Unnamed Business"}
+                  </Text>
+                  <Text className="text-gray-500 text-sm">
+                    ID: {item.bus_id}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Business Details */}
+              <View className="space-y-2">
+                {/* Gross Sales */}
+                {item.bus_gross_sales && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm flex-1">
+                      Gross Sales:{" "}
+                      <Text className="font-medium text-green-600">
+                        {formatCurrency(item.bus_gross_sales)}
+                      </Text>
+                    </Text>
+                  </View>
+                )}
+
+                {/* Location */}
+                {item?.bus_location && (
+                  <View className="flex-row items-center">
+                    <Text
+                      className="text-gray-600 text-sm flex-1"
+                      numberOfLines={1}
+                    >
+                      {item?.bus_location}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Respondent */}
+                {item.respondent && (
+                  <View className="flex-row items-center">
+                    <Text
+                      className="text-gray-600 text-sm flex-1"
+                      numberOfLines={1}
+                    >
+                      Contact: {item.respondent}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Contact Number */}
+                {item.bus_respondentContact && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm">
+                      {item.bus_respondentContact}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
 
-            {/* Business Details */}
-            <View className="space-y-2">
-              {/* Gross Sales */}
-              {item.bus_gross_sales && (
-                <View className="flex-row items-center">
-                  <Text className="text-gray-600 text-sm flex-1">
-                    Gross Sales:{" "}
-                    <Text className="font-medium text-green-600">
-                      {formatCurrency(item.bus_gross_sales)}
-                    </Text>
-                  </Text>
-                </View>
-              )}
-
-              {/* Location */}
-              {item?.bus_location && (
-                <View className="flex-row items-center">
-                  <Text
-                    className="text-gray-600 text-sm flex-1"
-                    numberOfLines={1}
-                  >
-                    {item?.bus_location}
-                  </Text>
-                </View>
-              )}
-
-              {/* Respondent */}
-              {item.respondent && (
-                <View className="flex-row items-center">
-                  <Text
-                    className="text-gray-600 text-sm flex-1"
-                    numberOfLines={1}
-                  >
-                    Contact: {item.respondent}
-                  </Text>
-                </View>
-              )}
-
-              {/* Contact Number */}
-              {item.bus_respondentContact && (
-                <View className="flex-row items-center">
-                  <Text className="text-gray-600 text-sm">
-                    {item.bus_respondentContact}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <ChevronRight size={20} className="text-gray-400 ml-2" />
           </View>
-
-          <ChevronRight size={20} className="text-primaryBlue" />
-        </View>
+        </Card>
       </TouchableOpacity>
     );
   });

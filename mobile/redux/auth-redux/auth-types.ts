@@ -24,7 +24,7 @@ export interface AuthState {
 export interface LoginCredentials {
     email?: string;
     phone?: string;
-    password: string;
+    otp: string;
 }
 
 export interface SignupCredentials {

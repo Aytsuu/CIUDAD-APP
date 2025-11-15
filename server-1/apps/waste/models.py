@@ -202,6 +202,9 @@ class WasteTruck(models.Model):
     )
     truck_last_maint = models.DateField(default=date.today)
     truck_is_archive = models.BooleanField(default=False) 
+    # truck_track_device = models.CharField(null=True, blank=True)
+    # truck_track_device_lat = models.FloatField(null=True, blank=True)
+    # truck_track_device_lng = models.FloatField(null=True, blank=True)
     
     staff = models.ForeignKey(
         'administration.Staff',

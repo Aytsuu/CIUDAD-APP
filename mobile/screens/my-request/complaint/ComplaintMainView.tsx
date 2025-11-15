@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { 
-  TouchableOpacity, 
-  View, 
-  Text,
-} from "react-native";
+import { TouchableOpacity, View, Text,} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import {
-  ChevronLeft,
-  AlertCircle,
-} from "lucide-react-native";
+import { ChevronLeft, AlertCircle, } from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
 import ComplaintDetails from "./ComplaintDetails";
 import { ComplaintData } from "./types";
 import { useGetComplaintById } from "./queries/ComplaintGetQueries";
 import { LoadingState } from "@/components/ui/loading-state";
+import CaseTrackingScreen from "./caseTracking";
 
 interface TabButtonProps {
   title: string;
@@ -84,16 +78,6 @@ export default function ComplaintMainView(): React.JSX.Element {
     </TouchableOpacity>
   );
 
-  // Shared Header Actions
-  const LeftHeader = (
-    <TouchableOpacity
-      onPress={() => router.back()}
-      className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
-    >
-      <ChevronLeft size={20} color="#374151" />
-    </TouchableOpacity>
-  );
-
   const RightHeader = <View className="w-10 h-10" />;
 
   // Render Loading State
@@ -111,9 +95,17 @@ export default function ComplaintMainView(): React.JSX.Element {
     
     return (
       <PageLayout
-        leftAction={LeftHeader}
-        headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={20} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 font-medium">Blotter Request</Text>}
         rightAction={RightHeader}
+        wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center px-4 bg-gray-50">
           <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mb-4">
@@ -142,9 +134,17 @@ export default function ComplaintMainView(): React.JSX.Element {
   // Main Render
   return (
     <PageLayout
-      leftAction={LeftHeader}
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#374151" />
+        </TouchableOpacity>
+      }
       headerTitle={<Text className="flex items-start text-gray-900 font-medium">Blotter Request</Text>}
       rightAction={RightHeader}
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Tab Navigation */}
@@ -167,6 +167,13 @@ export default function ComplaintMainView(): React.JSX.Element {
         <View className="flex-1">
           {activeTab === 'details' && (
             <ComplaintDetails data={complaintData} />
+          )}
+
+          {activeTab === 'tracking' && (
+            <CaseTrackingScreen 
+              comp_id={params.comp_id}
+              isRaised={fetchedComplaint?.comp_status}
+            />
           )}
         </View>
       </View>

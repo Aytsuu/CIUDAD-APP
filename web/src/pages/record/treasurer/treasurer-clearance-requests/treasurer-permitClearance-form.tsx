@@ -37,13 +37,13 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
         resolver: zodResolver(PermitClearanceFormSchema),
         defaultValues: {
-            serialNo: "",
             businessName: "", 
             requestor: "",
             address: "",
             grossSales: "",
             purposes: "", 
             rp_id: "",
+
         },
     })
 
@@ -158,20 +158,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="flex flex-col max-w-3xl mx-auto gap-7">
-                    <FormField
-                        control={form.control}
-                        name="serialNo"
-                        render={({field}) => (
-                            <FormItem>
-                                <FormLabel>Serial No. </FormLabel>
-                                <FormControl>
-                                    <Input {...field} type="number" placeholder="e.g.(123456)" className="w-full"></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}>
-                    </FormField>
-
                     <FormField
                         control={form.control}
                         name="businessName"

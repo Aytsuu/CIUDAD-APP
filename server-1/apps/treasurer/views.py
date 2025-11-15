@@ -16,6 +16,8 @@ from rest_framework.permissions import AllowAny
 import logging
 from apps.pagination import StandardResultsPagination
 from django.db.models.functions import ExtractYear
+from apps.gad.serializers import GADBudgetYearSerializer
+from apps.gad.models import GAD_Budget_Year
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +29,7 @@ class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
         current_year = str(timezone.now().year)
         
         budget_plan = Budget_Plan.objects.filter(
-            plan_year=current_year,
-            plan_is_archive=False
+            plan_year=current_year
         ).select_related(
             'staff_id__rp__per'
         ).only(
@@ -37,6 +38,7 @@ class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
             'plan_budgetaryObligations',
             'plan_balUnappropriated',
             'plan_issue_date',
+            'plan_is_archive',  
             'staff_id__rp__per__per_lname',
             'staff_id__rp__per__per_fname',
             'staff_id__rp__per__per_mname',
@@ -59,7 +61,7 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
             'plan_id',
             'plan_year',
             'plan_actual_income',
-            'plan_rpt_income'
+            'plan_rpt_income',
             'plan_balance',
             'plan_tax_share',
             'plan_tax_allotment',
@@ -278,6 +280,19 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class GADBudgetYearByYearView(generics.RetrieveAPIView):
+    serializer_class = GADBudgetYearSerializer
+    lookup_field = 'gbudy_year'
+    lookup_url_kwarg = 'year'
+
+    def get_object(self):
+        year = self.kwargs.get('year')
+        try:
+            return GAD_Budget_Year.objects.get(gbudy_year=year)
+        except GAD_Budget_Year.DoesNotExist:
+            raise NotFound(f"GAD budget record for year {year} not found")
     
 # -------------------------------- DISBURSEMENT ------------------------------------
 class DisbursementArchiveMixin:
@@ -624,21 +639,6 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# class GetParticularsView(generics.ListAPIView):
-#     serializer_class = Budget_Plan_DetailSerializer
-
-#     def get_queryset(self):
-#         current_year = timezone.now().year
-#         # Get the current year's budget plan
-#         current_plan = Budget_Plan.objects.filter(plan_year=str(current_year)).first()
-        
-#         if current_plan:
-#             # Return all details for the current year's plan
-#             return Budget_Plan_Detail.objects.filter(plan=current_plan)
-#         return Budget_Plan_Detail.objects.none()
-    
-
 class GetParticularsView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
@@ -709,14 +709,6 @@ class Expense_LogView(generics.ListCreateAPIView):
         return queryset.order_by('-el_datetime')  # Add ordering
 
 # ------------------------- INCOME --------------------------------------
-
- 
-
-# class Income_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_TrackingSerializers
-#     queryset = Income_Tracking.objects.all().select_related('incp_id')
-
-
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
@@ -1357,6 +1349,57 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
         if serializer.is_valid():
             instance.cr_req_payment_status = serializer.validated_data['payment_status']
             instance.save()
+            
+            # Log payment status change activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{instance.cr_req_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for payment status change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No staff found for payment status change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
             
             # Check if payment status changed to "Paid" and create automatic income entry
             new_payment_status = instance.cr_req_payment_status
