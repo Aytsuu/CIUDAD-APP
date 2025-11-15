@@ -66,6 +66,7 @@ export const formatAddresses = (addresses: any) => {
     ) => {
       if (item.sitio) {
         return {
+          add_id: item.add_id,
           id: `${item.add_id}-${item.sitio}-${item.add_street}`,
           name: `ADDRESS ${idx + 1} - ${item.sitio}, ${item.add_street}`,
         };
