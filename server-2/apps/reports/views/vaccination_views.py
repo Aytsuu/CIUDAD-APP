@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.db.models import Count, Sum
 from django.db.models.functions import ExtractMonth
+from django.utils import timezone
 
 
 class MonthlyVaccinationChart(APIView):

@@ -1,8 +1,7 @@
 // MonthlyChildrenDetails.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import {  Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";

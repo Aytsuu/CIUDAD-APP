@@ -14,6 +14,7 @@ from .views.monthly_illnesschart import *
 from .views.recipeint_report_views import *
 from .views.fhis_report import *  
 from .views.vaccination_views import *
+from .views.chreport_part1 import  MonthlyVaccinationStatisticsAPIView
 from.views.doctor_report_assessed import  *
 from .views.morbidity_report import *
 
@@ -70,6 +71,7 @@ urlpatterns=[
         # Vaccination Reports
         path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
         path('vaccination-resident-counts/<str:year>/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
+        path('fhischildhealth-page4/monthly/<str:month>/', MonthlyVaccinationStatisticsAPIView.as_view(), name='vaccination-statistics-monthly'),
 
 
         # doctor assessed reports
@@ -80,4 +82,4 @@ urlpatterns=[
         path('morbidity/monthly-details/<str:month>/', MonthlyMorbidityView.as_view(), name='monthly-morbidity'),
         path('morbidity/monthly-summaries/', MonthlyMorbiditySummaryAPIView.as_view(), name='yearly-morbidity'),
  
-]
+] 
