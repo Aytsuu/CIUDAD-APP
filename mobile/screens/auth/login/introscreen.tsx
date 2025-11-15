@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Animated } from "react-native";
 import Video from "react-native-video";
+import { Asset } from "expo-asset";
 
 interface IntroScreenProps {
   onAnimationFinish: () => void;
@@ -40,12 +41,19 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <Video
-        source={require("@/assets/animated/ciudad_intro.mp4")}
-        style={{ width: "100%", height: 250 }}
-        controls={false}
-        resizeMode="contain"
-      />
+      {isReady && (
+        <Animated.View style={{ opacity: fadeAnim, width: "100%", height: 250 }}>
+          <Video
+            source={require("@/assets/animated/ciudad_intro.mp4")}
+            style={{ width: "100%", height: 250 }}
+            controls={false}
+            resizeMode="cover"
+            paused={paused}
+            onReadyForDisplay={handleReadyForDisplay}
+            repeat={false}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 };
