@@ -813,14 +813,8 @@ class ArchivedMedicineTable(APIView):
                 
                 # Determine archive reason
                 archive_reason = 'Expired' if is_expired else 'Out of Stock'
-                
-                # Calculate actual used quantity
-                # If available stock is 0, then quantity used should be 0
-                if minv_qty_avail == 0:
-                    actual_used = 0
-                else:
-                    # Otherwise, calculate as Total Qty - Available Stock - Wasted
-                    actual_used = total_pcs - minv_qty_avail - wasted
+                unit_type = 'pcs' if (inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == 'boxes') else (inventory.minv_qty_unit or 'units')
+
                 
                 item_data = {
                     'type': 'medicine',
@@ -828,15 +822,15 @@ class ArchivedMedicineTable(APIView):
                     'category': 'Medicine',
                     'item': {
                         'med_name': inventory.med_id.med_name if inventory.med_id else "Unknown Medicine",
-                        'form': inventory.med_id.med_form or 'N/A',  # FIXED: Changed from minv_form to med_id.med_form
-                        'dosage': f"{minv_dsg} {inventory.med_id.med_dsg_unit or 'N/A'}",  # Also fixed dosage unit
-                        'unit': inventory.minv_qty_unit or 'units',
+                        'form': inventory.med_id.med_form or 'N/A',
+                        'dosage': f"{minv_dsg} {inventory.med_id.med_dsg_unit or 'N/A'}",
+                        'unit': unit_type,
                     },
                     'qty': {
                         'minv_qty': minv_qty,
-                        'minv_pcs': total_pcs  # Total pieces for boxes, otherwise same as minv_qty
+                        'minv_pcs': total_pcs
                     },
-                    'administered': actual_used,
+                    'qty_used': total_pcs - wasted,
                     'wasted': wasted,
                     'availableStock': minv_qty_avail,
                     'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
@@ -845,8 +839,7 @@ class ArchivedMedicineTable(APIView):
                     'inv_id': inv_record.inv_id if inv_record else None,
                     'med_id': inventory.med_id.med_id if inventory.med_id else None,
                     'minv_id': inventory.minv_id,
-                    'minv_qty_unit': inventory.minv_qty_unit or 'units',
-                    'minv_pcs': minv_pcs,
+                    'minv_qty_unit': unit_type,
                     'isArchived': inv_record.is_Archived if inv_record else False,
                     'created_at': inventory.created_at.isoformat() if inventory.created_at else None,
                 }

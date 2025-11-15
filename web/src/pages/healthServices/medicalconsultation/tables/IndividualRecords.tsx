@@ -1,16 +1,18 @@
 // InvMedicalConRecords.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Syringe, AlertCircle } from "lucide-react";
+import { Loader2, HeartPulse, Search, Syringe, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { useConsultationHistory } from "../queries/fetch";
+import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { ProtectedComponent } from "@/ProtectedComponent";
+import { MedicalHistoryTab } from "./medical-history-card";
 import { serializePatientData } from "@/helpers/serializePatientData";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
@@ -20,11 +22,13 @@ export default function InvMedicalConRecords() {
   const { patientData } = params || {};
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [medHistorySearch, setMedHistorySearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const pat_id = patientData?.pat_id || "";
 
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(pat_id, currentPage, pageSize, searchQuery);
+  const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(pat_id, medHistorySearch);
 
   const medicalRecords = useMemo(() => {
     return medicalRecordsResponse?.results || medicalRecordsResponse || [];
@@ -58,6 +62,14 @@ export default function InvMedicalConRecords() {
     setCurrentPage(1);
   };
 
+  const handleMedHistorySearchChange = useCallback((value: string) => {
+    setMedHistorySearch(value);
+  }, []);
+
+  const clearMedHistorySearch = useCallback(() => {
+    setMedHistorySearch("");
+  }, []);
+
   // Use ORIGINAL patientData (which has app_id) for column highlighting
   const columns = useMemo(() => {
     return getMedicalConsultationColumns(patientData);
@@ -82,6 +94,31 @@ export default function InvMedicalConRecords() {
           <PatientInfoCard patient={derivedPatientData} isLoading={isMedicalRecordsLoading} />
         </div>
 
+        {/* Medical History Section */}
+        <div className="mb-4 w-full border border-gray-200 rounded-lg shadow-sm bg-white">
+          <div className="overflow-hidden">
+            <div className="border-b border-gray-200 bg-blue-500 px-6 py-4">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+                <HeartPulse className="h-5 w-5 text-white" />
+                Medical History
+              </h3>
+            </div>
+
+            <div className="p-4">
+              <MedicalHistoryTab
+                pat_id={patientData.pat_id}
+                searchValue={medHistorySearch}
+                onSearchChange={handleMedHistorySearchChange}
+                onClearSearch={clearMedHistorySearch}
+                medHistoryData={medHistoryData}
+                isMedHistoryLoading={isMedHistoryLoading}
+                isMedHistoryError={isMedHistoryError}
+                medHistoryError={medHistoryError}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Medical Consultations Section */}
         <div className="w-full lg:flex justify-between items-center px-4 gap-6 mt-4 bg-white py-4 border">
           <div className="flex gap-2 items-center p-2">
@@ -98,7 +135,7 @@ export default function InvMedicalConRecords() {
             <div className="flex flex-1 justify-between items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search by date, diagnosis, assessment, or findings..." className="pl-10 bg-white w-full" value={searchQuery} onChange={handleSearchChange} />
+                <Input placeholder="Search by diagnosis, assessment, or findings..." className="pl-10 bg-white w-full" value={searchQuery} onChange={handleSearchChange} />
               </div>
               <div>
                 <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>

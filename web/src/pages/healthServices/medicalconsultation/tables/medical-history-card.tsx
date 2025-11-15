@@ -1,6 +1,6 @@
 // components/MedicalHistoryTab.tsx
 import React, { useCallback } from "react";
-import { Loader2, HeartPulse, Calendar, Search, X, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, Search, X, AlertCircle } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { getServiceTypeColor } from "./servicetype-badge";
 import { Input } from "@/components/ui/input";
@@ -118,8 +118,6 @@ export const MedicalHistoryTab: React.FC<MedicalHistoryTabProps> = ({
       <CardLayout
         title={
           <div className="flex items-center gap-2">
-            <HeartPulse className="h-5 w-5 text-sky-500" />
-            <span className="text-lg font-semibold text-sky-600">Medical History</span>
             {searchValue && !isMedHistoryLoading && (
               <span className="text-sm text-gray-500 ml-2">
                 ({medicalHistoryCards.length} results for "{searchValue}")
