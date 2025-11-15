@@ -67,8 +67,7 @@ export default function SanRoqueMap(): JSX.Element {
     <div className="flex-1 relative">
       <div
         ref={mapContainerRef}
-        className="w-full h-full rounded-lg shadow-md"
-        style={{ minHeight: "500px" }} // Add minimum height
+        className="w-full h-[300px] sm:h-[400px] lg:h-[500px] rounded-lg shadow-md"
       />
     </div>
   );

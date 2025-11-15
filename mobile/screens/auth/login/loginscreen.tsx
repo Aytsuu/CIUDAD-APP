@@ -12,15 +12,15 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
 import { SignupOptions } from "./SignupOptions";
+import { DrawerTrigger, DrawerView } from "@/components/ui/drawer";
+import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import LoginOTP from "./loginOTP";
-
-const SignupOptionsMemo = React.memo(SignupOptions);
 
 export default function Login() {
   const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
-  const [showSignupOptions, setShowSignupOptions] = React.useState<boolean>(false);
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToastContext();
+  const bottomSheetRef = React.useRef<BottomSheet>(null)
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -29,13 +29,13 @@ export default function Login() {
     }
   }, [user, isAuthenticated, toast]);
 
-  const handleCloseSignupOptions = () => setShowSignupOptions(false);
   const handleSwitchMethod = () => {
     setLoginMethod(loginMethod === "phone" ? "email" : "phone");
   };
 
   return (
-    <PageLayout
+    <>
+      <PageLayout
       leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
@@ -47,11 +47,9 @@ export default function Login() {
       }
       headerTitle={<View></View>}
       rightAction={
-        <View className="h-10 pr-2">
-          <TouchableOpacity onPress={() => setShowSignupOptions(true)}>
-            <Text className="text-[13px]">Sign up</Text>
-          </TouchableOpacity>
-        </View>
+        <DrawerTrigger bottomSheetRef={bottomSheetRef}>
+          <Text className="text-[13px] mr-2">Sign up</Text>
+        </DrawerTrigger>
       }
     >
       <ScrollView
@@ -66,12 +64,23 @@ export default function Login() {
           onSwitchMethod={handleSwitchMethod}
         />
       </ScrollView>
-
-      {/* Signup Options Modal */}
-      <SignupOptionsMemo
-        visible={showSignupOptions}
-        onClose={handleCloseSignupOptions}
-      />
     </PageLayout>
+      <DrawerView
+        bottomSheetRef={bottomSheetRef}
+        snapPoints={["80%"]}
+        title={"Reports"}
+        description={"View all reports"}
+      >
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingBottom: 10,
+            gap: 10,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <SignupOptions />
+        </BottomSheetScrollView>
+      </DrawerView>
+    </>
   );
 }

@@ -35,11 +35,9 @@ export default function ReportDocument() {
     type === 'AR' ? data.id : null
   ) 
   const images = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) =>   
-    file.arf_type.startsWith('image/')), [ARInfo]);
+    !file.is_supp), [ARInfo]);
   const arDocs = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) => 
-    file.arf_type.startsWith('application/')), [ARInfo])
-
-  console.log(data.id)
+    file.is_supp), [ARInfo])
 
   // For Weekly Accomplishment Report Document
   const { mutateAsync: addWARFile } = useAddWARFile();
@@ -55,11 +53,11 @@ export default function ReportDocument() {
   const currentDocs = type === "AR" ? arDocs : warDocs; 
   const signed = currentInfo?.status?.toLowerCase() === 'signed' || currentDocs?.length > 0
   const formatDocs = React.useMemo(() => currentDocs?.map((doc: any) => ({
-    id: doc.warf_id || doc.arf_id,
-    name: doc.warf_name || doc.arf_name,
-    type: doc.warf_type || doc.arf_type,
+    id: doc.warf_id || doc.id,
+    name: doc.warf_name || doc.name,
+    type: doc.warf_type || doc.type,
     file: null,
-    url: doc.warf_url || doc.arf_url,
+    url: doc.warf_url || doc.url,
   })), [currentDocs])
 
   // ----------------- SIDE EFFECTS ---------------------
@@ -87,6 +85,7 @@ export default function ReportDocument() {
         // Adding signed document for acknolwedgement report
         addARFile({
           'files': files,
+          'arf_is_supp': true,
           'ar_id': ARInfo?.id
         }, {
           onSuccess: () => {
@@ -270,6 +269,10 @@ export default function ReportDocument() {
               location={ARInfo?.ar_area}
               act_taken={ARInfo?.ar_action_taken}
               images={images}
+              completeData={{
+                ...ARInfo,
+                ar_files: images
+              }}
             /> : 
             <WARDocTemplate 
               data={compositions.map((comp: any) => ({

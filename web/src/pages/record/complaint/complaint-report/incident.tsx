@@ -1,11 +1,5 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Textarea } from "@/components/ui/textarea";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -21,26 +15,13 @@ interface IncidentInfoProps {
   isSubmitting: boolean;
 }
 
-export const IncidentInfo: React.FC<IncidentInfoProps> = ({
-  onSubmit,
-  onPrevious,
-  isSubmitting,
-}) => {
+export const IncidentInfo: React.FC<IncidentInfoProps> = ({ onSubmit, onPrevious, isSubmitting }) => {
   const { control, setValue, watch, trigger } = useFormContext();
-  const incidentType = useWatch({
-    control,
-    name: "incident.comp_incident_type",
-  });
-
-  // Watch the documents field from the form
+  const incidentType = useWatch({ control, name: "incident.comp_incident_type"});
+  const otherType = useWatch({control, name: "incident.otherType"});
   const formFiles = watch("files") || [];
-  const [mediaFiles, setMediaFiles] =
-    React.useState<MediaUploadType>(formFiles);
-
-  // Watch the datetime field to sync with date/time inputs
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>(formFiles);
   const compDateTime = watch("incident.comp_datetime") || "";
-
-  // Extract date and time from comp_datetime for the UI inputs
   const currentDate = compDateTime ? compDateTime.split("T")[0] : "";
   const currentTime = compDateTime ? compDateTime.split("T")[1] : "";
 
@@ -114,6 +95,8 @@ export const IncidentInfo: React.FC<IncidentInfoProps> = ({
     ]);
 
     if (isValid) {
+      const finalIncidentType = incidentType === "Other" ? otherType : incidentType;
+      setValue("incident.comp_incident_type", finalIncidentType);
       onSubmit();
     }
   };

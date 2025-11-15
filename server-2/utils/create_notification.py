@@ -5,16 +5,13 @@ from datetime import datetime
 class NotificationQueries:
     def __init__(self):
         self.client = config("CLIENT", default="http://localhost:8001")
-        self.secret_key = config("NOTIFICATION_SECRET_KEY")
 
     def create_notification(
         self,
         title: str,
         message: str,
-        sender,
         recipients: list,
         notif_type: str,
-        target_obj=None,
         web_route: str = None,
         web_params: dict = None,
         mobile_route: str = None,
@@ -23,16 +20,13 @@ class NotificationQueries:
         payload = {
             "title": title,
             "message": message,
-            "sender": sender,
             "recipients": recipients or [],
             "notif_type": notif_type,
-            "target_obj": target_obj,
             "web_route": web_route,
             "web_params": web_params or {},
             "mobile_route": mobile_route,
             "mobile_params": mobile_params or {},
         }
-        headers = {"Secret-Key": self.secret_key}
 
         try:
             response = requests.post(
@@ -52,11 +46,9 @@ class NotificationQueries:
         self,
         title: str,
         message: str,
-        sender,
         recipients: list,
         notif_type: str,
         remind_at: datetime,
-        target_obj=None,
         web_route=None,
         web_params=None,
         mobile_route=None,
@@ -68,17 +60,14 @@ class NotificationQueries:
         payload = {
             "title": title,
             "message": message,
-            "sender": sender,
             "recipients": recipients or [],
             "notif_type": notif_type,
             "remind_at": remind_at_iso,
-            "target_obj": target_obj,
             "web_route": web_route,
             "web_params": web_params or {},
             "mobile_route": mobile_route,
             "mobile_params": mobile_params or {},
         }
-        headers = {"Secret-Key": self.secret_key}
 
         try:
             response = requests.post(

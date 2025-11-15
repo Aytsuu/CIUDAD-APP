@@ -100,7 +100,6 @@ export function useFCMToken() {
 
         // 4️⃣ Register FCM token with backend
         try {
-          console.log('📤 Sending token to backend...');
           const res = await api.post('notification/register-token/', {
             fcm_token: fcmToken,
             fcm_device_id: deviceId,

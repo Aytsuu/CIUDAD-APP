@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -7,17 +7,20 @@ from django.db.models import Q
 from django.db import transaction
 from pagination import StandardResultsPagination
 from apps.profiling.serializers.all_record_serializers import *
-from apps.profiling.models import ResidentProfile, BusinessRespondent
+from apps.profiling.models import *
 from apps.profiling.serializers.all_record_serializers import *
-from apps.administration.models import Staff
+from apps.profiling.serializers.resident_profile_serializers import ResidentProfileTableSerializer
+from apps.administration.models import Staff, Assignment
 from apps.account.models import Account
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
 from utils.supabase_client import upload_to_storage
+from apps.notification.utils import create_notification
 from ..utils import *
 from ..double_queries import PostQueries
 import copy
+import json
 
 # class AllRecordTableView(generics.GenericAPIView):
 #   serializer_class = AllRecordTableSerializer
@@ -110,7 +113,7 @@ class CompleteRegistrationView(APIView):
           results["fam_id"] = new_fam.pk
 
     if family:
-        self.join_family(family, rp)
+        new_fam = self.join_family(family, rp)
 
     # Perform double query
     double_queries = PostQueries()
@@ -126,6 +129,38 @@ class CompleteRegistrationView(APIView):
         bus = self.create_business(business, rp, staff)
         if bus:
           results["bus_id"] = bus.pk
+
+    # Create notification
+    recipients = [
+       assi.staff.rp
+       for assi in Assignment.objects.filter(Q(feat__feat_name="PROFILING") & ~Q(staff=staff))
+    ]
+
+    admins = Staff.objects.filter(Q(pos__pos_title="ADMIN") & ~Q(staff_id=staff.staff_id))
+    for staff_data in admins:
+      recipients.append(staff_data.rp)
+
+    resident_name = f"{rp.per.per_fname}{f' {rp.per.per_mname[0]}.' if rp.per.per_mname else ''} {rp.per.per_lname}"
+    staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
+    residentId = rp.rp_id
+    familyId = new_fam.fam_id
+    json_data = json.dumps(
+       ResidentProfileTableSerializer(rp).data,
+       default=str
+    )
+
+    create_notification(
+      title="New Resident",
+      message=(
+          f"{resident_name} has been registered as resident by {staff_name}"
+      ),
+      recipients=recipients,
+      notif_type="REGISTRATION",
+      web_route="profiling/resident/view/personal",
+      web_params={"type": "viewing", "data": {"residentId": residentId, "familyId": familyId}},
+      mobile_route="/(profiling)/resident/details",
+      mobile_params={"resident": json_data},
+    )
           
     return Response(results, status=status.HTTP_200_OK)
   
@@ -176,7 +211,7 @@ class CompleteRegistrationView(APIView):
       email=account.get("email", None),
       rp=rp,
       username=account.get('phone'),
-      password=account.get('password')
+      password="!"
     )
 
     return instance
@@ -270,3 +305,5 @@ class CompleteRegistrationView(APIView):
           BusinessFile.objects.bulk_create(business_files)
 
     return business
+
+  

@@ -359,7 +359,7 @@ export default function SignIn() {
             method={signInMethod}
             phone={verificationData.phone}
             email={verificationData.email}
-            serverOtp={verificationData.serverOtp}
+            // serverOtp={verificationData.serverOtp}
             onSuccess={handleOTPSuccess}
             onResend={signInMethod === "phone" ? handlePhoneOTPResend : handleEmailOTPResend}
             isResending={sendOTPMutation.isPending || sendEmailOTP.isPending}

@@ -4,9 +4,9 @@ import React from "react";
 
 
 export default function ComplaintList() {
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, _setSearchQuery] = React.useState("");
   const pageSize = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [_currentPage, setCurrentPage] = React.useState(1);
   // const {data: complaints = [], isLoading, error} = useGetComplaint();
 
   React.useEffect(() =>{

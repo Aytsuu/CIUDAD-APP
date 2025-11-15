@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import React from "react";
 import { TouchableOpacity, View, Text, ScrollView } from "react-native";
 import PhoneOTP from "./PhoneOTP";
-import AccountDetails from "./AccountDetails";
 import EmailOTP from "./EmailOTP";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
@@ -36,7 +35,7 @@ export default function AccountSetup({ params } : {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Account Setup ({currentStep}/{3})</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Account Setup ({currentStep}/{2})</Text>}
       rightAction={<View className="w-10 h-10"/>
       }
     >
@@ -55,13 +54,6 @@ export default function AccountSetup({ params } : {
         }
         {currentStep == 2 && 
           <EmailOTP 
-            params={{
-              next: () => setCurrentStep((prev) => prev + 1)
-            }}
-          />
-        }
-        {currentStep == 3 && 
-          <AccountDetails 
             params={{
               next: () => params.next()
             }}

@@ -128,6 +128,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "COMPLAINT",
+        card: []
       },
       {
         dashboard: "CONCILIATION PROCEEDINGS",

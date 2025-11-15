@@ -6,7 +6,6 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  Image,
 } from "react-native";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Plus, X, ChevronRight, ChevronLeft } from "lucide-react-native";
@@ -46,32 +45,10 @@ const AccusedFormSection = memo<AccusedFormSectionProps>(
     const residentOptions = useMemo(() => {
       if (!residentsData) return [];
       return residentsData.map((resident: any) => ({
-        label: (
-          <View className="flex-row items-center">
-            <View className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-3">
-              {resident.profile_image ? (
-                <Image
-                  source={{ uri: resident.profile_image }}
-                  className="w-full h-full"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-full h-full items-center justify-center bg-gray-300">
-                  <Text className="text-xs text-gray-600">No Img</Text>
-                </View>
-              )}
-            </View>
-            <Text className="text-gray-800 font-medium">{resident.name}</Text>
-          </View>
-        ),
+        label: resident.name,
         value: resident.rp_id?.toString(),
-        data: {
-          name: resident.name,
-          age: resident.age,
-          gender: resident.gender,
-          address: resident.address || "Address not available",
-          profile_image: resident.profile_image,
-        },
+        // Store additional data if your FormSelect component supports it
+        ...(resident.profile_image && { profileImage: resident.profile_image }),
       }));
     }, [residentsData]);
 
@@ -108,7 +85,6 @@ const AccusedFormSection = memo<AccusedFormSectionProps>(
               placeholder="Select a resident..."
               isInModal={false}
               disabled={isManual}
-              onChange={(val: string) => onResidentSelect(index, val)}
             />
           )}
         </View>
@@ -273,7 +249,17 @@ export const Accused: React.FC<AccusedProps> = memo(
 
     return (
       <View className="flex-1 p-4">
+        <View className="bg-white rounded-lg p-4 mb-2 border border-gray-100">
+          <View className="flex-row items-center mb-2">
+            {/* <UserCircle size={20} color="#111111" className="mr-2" /> */}
+            <Text className="text-lg font-semibold text-gray-900">Respondent</Text>
+          </View>
+          <Text className="text-sm text-gray-600">
+            Person identified as involved  in the reported incident.
+          </Text>
+        </View>
         {/* Add Respondent Manually */}
+        <View className="flex-row justify-end mb-3">
         <TouchableOpacity
           onPress={handleAddManually}
           disabled={isLoadingResidents}
@@ -281,9 +267,10 @@ export const Accused: React.FC<AccusedProps> = memo(
         >
           <Plus size={20} className="text-white" />
           <Text className="text-white font-medium ml-2">
-            Add Respondent Manually
+            Add Res.
           </Text>
         </TouchableOpacity>
+        </View>
 
         {/* Tabs */}
         {fields.length > 0 && (

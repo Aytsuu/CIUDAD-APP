@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Search, Megaphone } from "lucide-react";
+import { Search, Megaphone, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { formatDate, formatTimeAgo } from "@/helpers/dateHelper";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "@/components/ui/media-gallery";
-import { capitalize } from "@/helpers/capitalize";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAnnouncementList } from "../announcement/queries/announcementFetchQueries";
 
@@ -96,26 +95,25 @@ function AnnouncementTracker() {
   }, []);
 
   return (
-    <section className="relative w-full h-full bg-white py-16 overflow-hidden">
-      <div className="container mx-auto px-8">
+    <div className="relative w-full h-full bg-white lg:py-16 overflow-hidden">
+      <div className="container mx-auto px-4 lg:px-8">
         <div
           ref={headerRef}
-          className={`w-4/5 mx-auto text-darkBlue1 mb-8 gap-3 transition-all duration-700 ${
+          className={`w-full lg:w-4/5 mx-auto text-darkBlue1 mb-5 lg:mb-8 gap-3 transition-all duration-700 ${
             isHeaderVisible
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-10"
           }`}
         >
-          <p className="text-3xl font-bold">Public Announcements</p>
-          <p className="text-base text-darkBlue2">
-            Stay informed with the latest updates, activities, and public
-            notices from Barangay San Roque.
+          <p className="text-2xl sm:text-3xl font-bold">Public Announcements</p>
+          <p className="text-md sm:text-base text-darkBlue2">
+            Stay informed with the latest updates from Barangay San Roque.
           </p>
         </div>
 
         <div
           ref={mainContentRef}
-          className={`w-4/5 mx-auto rounded-lg border ${
+          className={`w-full lg:w-4/5 mx-auto rounded-lg border ${
             totalPages > 0 ? "h-[750px]" : "h-[300px]"
           } border-gray-200 shadow-md mb-6 overflow-hidden transition-all duration-700 ${
             isMainContentVisibile
@@ -127,13 +125,13 @@ function AnnouncementTracker() {
             <>
               <div className="flex flex-col gap-4 items-center justify-between">
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full lg:w-2/3 p-5">
-                  <div className="relative w-full max-w-md">
+                  <div className="relative w-full lg:max-w-md">
                     <Search
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                       size={18}
                     />
                     <Input
-                      placeholder="Search announcements..."
+                      placeholder="Search"
                       className="pl-11 bg-white border-gray-200 shadow-sm w-full focus:ring-2 focus:ring-blue-500/20"
                       value={searchQuery}
                       onChange={(e) => {
@@ -149,7 +147,7 @@ function AnnouncementTracker() {
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-[150px] bg-white border-gray-200 shadow-sm">
+                    <SelectTrigger className="w-full lg:w-[200px] bg-white border-gray-200 shadow-sm">
                       <SelectValue placeholder="Sort" />
                     </SelectTrigger>
                     <SelectContent>
@@ -167,7 +165,7 @@ function AnnouncementTracker() {
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-[150px] bg-white border-gray-200 shadow-sm">
+                    <SelectTrigger className="w-full lg:w-[200px] bg-white border-gray-200 shadow-sm">
                       <SelectValue placeholder="Filter" />
                     </SelectTrigger>
                     <SelectContent>
@@ -179,7 +177,7 @@ function AnnouncementTracker() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row justify-between items-center border-b py-4 px-5">
-                <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+                <p className="text-sm text-gray-600 mb-4 sm:mb-0">
                   Showing{" "}
                   <span className="font-medium">
                     {(currentPage - 1) * pageSize + 1}
@@ -224,7 +222,11 @@ function AnnouncementTracker() {
 
           {!isLoading && data.length > 0 && (
             <div className="flex h-full">
-              <ScrollArea className="relative w-full max-w-sm border-r">
+              <ScrollArea
+                className={`relative w-full lg:max-w-sm lg:border-r transition-all duration-300 ${
+                  selected ? "w-0 lg:w-full" : "w-full"
+                }`}
+              >
                 <div className="w-full flex flex-col pb-16 p-4 gap-4">
                   {data.map((announcement: any) => (
                     <div
@@ -233,7 +235,7 @@ function AnnouncementTracker() {
                     >
                       <Button
                         variant={"link"}
-                        className={`justify-start ${
+                        className={`justify-start p-0 ${
                           announcement.ann_id == selected?.ann_id
                             ? "text-primary cursor-default hover:no-underline"
                             : "text-gray-700 hover:text-primary"
@@ -259,27 +261,26 @@ function AnnouncementTracker() {
                   </div>
                 )}
               </ScrollArea>
-              <ScrollArea className="relative w-full">
+              <ScrollArea
+                className={`hidden lg:block relative w-full transition-all duration-300 ${
+                  selected ? "block" : "hidden"
+                }`}
+              >
                 {/* Display full info of selected announcement */}
                 {selected && (
-                  <div className="w-full p-8 pb-44">
-                    <div className="flex flex-col mb-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-end gap-4">
-                          <Label className="text-xl text-primary">
-                            {capitalize(selected.staff.name)}
-                          </Label>
-                          <p className="text-sm text-gray-400">
-                            {handleFormatDate(selected.ann_start_at)}
-                          </p>
-                        </div>
+                  <div className="w-full p-4 lg:p-8 pb-44">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="bg-gray-100 shadow-sm border rounded-full p-1 lg:hidden"
+                        onClick={() => setSelected(null)}
+                      >
+                        <ArrowLeft className="text-gray-700 w-5 h-5"/>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">
-                        {selected.staff.position}
+                      <p className="text-sm text-gray-400">
+                        {handleFormatDate(selected.ann_start_at)}
                       </p>
                     </div>
-                    <Label className="text-md mb-4">{selected.ann_title}</Label>
-                    <p className="mb-6">{selected.ann_details}</p>
+                    <Label className="text-sm sm:text-md mb-4">{selected.ann_title}</Label>
+                    <p className="text-sm sm:text-md mb-6">{selected.ann_details}</p>
                     <MediaGallery
                       mediaFiles={selected.files}
                       emptyState={<div></div>}
@@ -299,7 +300,7 @@ function AnnouncementTracker() {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

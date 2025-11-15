@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useDeleteAnnouncement } from "./queries/announcementDeleteQueries";
 import { useGetAnnouncementList } from "./queries/announcementFetchQueries";
 import { Button } from "@/components/ui/button/button";
-
-
 import { useAuth } from "@/context/AuthContext";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -20,8 +18,6 @@ import { capitalize } from "@/helpers/capitalize";
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
-
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 function AnnouncementTracker() {
@@ -106,7 +102,7 @@ function AnnouncementTracker() {
 
               <div className="w-full lg:w-1/2 flex justify-center gap-3 lg:justify-end p-5">
                 <SelectLayout
-                  withRest={false}
+                  withReset={false}
                   value={isCreated ? "created" : isCreated == null ? "" : "all"}
                   valueLabel="View"
                   className="gap-4 focus:ring-0"
@@ -122,7 +118,7 @@ function AnnouncementTracker() {
                 />
 
                 <SelectLayout
-                  withRest={false}
+                  withReset={false}
                   value={sort}
                   valueLabel="Sort"
                   className="gap-4 focus:ring-0"
@@ -140,7 +136,7 @@ function AnnouncementTracker() {
                 />
 
                 <SelectLayout
-                  withRest={false}
+                  withReset={false}
                   value={filter}
                   valueLabel="Type"
                   className="gap-4 focus:ring-0"
@@ -157,7 +153,7 @@ function AnnouncementTracker() {
                 />
 
                 <SelectLayout
-                  withRest={false}
+                  withReset={false}
                   value={recipient}
                   valueLabel="Recipient"
                   className="gap-4 focus:ring-0"

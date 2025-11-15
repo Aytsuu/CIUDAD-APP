@@ -2,9 +2,12 @@ import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
 import Constants from 'expo-constants'
 
+export const mapApi = axios.create({
+  baseURL: Constants.expoConfig?.extra?.apiUrl,
+})
 
 // export const api = axios.create({
-//   baseURL: Constants.expoConfig?.extra?.apiUrl,
+//   baseURL: "http://192.168.1.7:8000",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
@@ -26,15 +29,6 @@ export const api = axios.create({
 //   timeout: 10000,
 // });
 
-// export const api2 = axios.create({
-//   baseURL: Constants.expoConfig?.extra?.apiUrl2,
-//   withCredentials: true,
-//   headers: {
-//     "Content-Type": "application/json",
-//     "Accept": "application/json",
-//   },
-// });
-
 export const api2 = axios.create({
   baseURL: Constants.expoConfig?.extra?.apiUrl2,
   withCredentials: true,
@@ -43,7 +37,6 @@ export const api2 = axios.create({
     "Accept": "application/json",
   },
 });
-
 
 setupApiInterceptor(api)
 

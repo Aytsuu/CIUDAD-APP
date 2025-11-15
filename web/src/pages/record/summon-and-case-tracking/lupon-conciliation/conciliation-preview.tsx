@@ -489,7 +489,7 @@ function LuponPreview({
 
     // Function to add header to each page
     const addHeader = (currentY: number) => {
-      let headerY = currentY;
+      const headerY = currentY;
 
       // WATERMARK
       if (barangayLogoData && barangayLogoData !== "no-image-url-fetched") {

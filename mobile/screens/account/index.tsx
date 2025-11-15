@@ -18,7 +18,7 @@ import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
 import StaffCard from '@/assets/icons/essentials/staff-card.svg'
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Drawer } from "@/components/ui/drawer";
+import { Drawer } from "@/components/ui/drawer-deprecated";
 import React from "react";
 
 export default () => {

@@ -103,7 +103,7 @@ export default function BusinessRecords() {
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <SelectLayout
-                  withRest={false}
+                  withReset={false}
                   value={size}
                   valueLabel="Size"
                   className="gap-4"

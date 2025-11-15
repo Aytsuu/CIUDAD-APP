@@ -1,22 +1,9 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  X,
-  Search,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  PlusCircle,
-} from "lucide-react";
+import { X, Search, Trash2, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
 import { Input } from "@/components/ui/input";
@@ -39,25 +26,12 @@ interface AccusedInfoProps {
   isSubmitting: boolean;
 }
 
-export const AccusedInfo: React.FC<AccusedInfoProps> = ({
-  onNext,
-  onPrevious,
-  isSubmitting,
-}) => {
+export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, isSubmitting}) => {
   const { control, watch, setValue } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "accused",
-  });
-
+  const { fields, append, remove } = useFieldArray({control, name: "accused",});
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
-  const [selectedResidentValue, setSelectedResidentValue] =
-    useState<string>("");
-
-  const { data: allResidents = [], isLoading: isResidentsLoading } =
-    useAllResidents();
-
+  const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
+  const { data: allResidents = [] } = useAllResidents();
   const currentAccused = watch(`accused.${activeTab}`);
 
   const addAccused = () => {
@@ -71,7 +45,7 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
       acsd_address: "",
     });
     setActiveTab(newIndex);
-    setSelectedResident(null);
+
     setSelectedResidentValue("");
   };
 
@@ -83,7 +57,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
     } else if (activeTab > index) {
       setActiveTab(activeTab - 1);
     }
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -91,7 +64,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
     const resident = allResidents.find((r: Resident) => r.rp_id === residentId);
     if (!resident) return;
 
-    setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
     setValue(`accused.${activeTab}.acsd_name`, resident.name);
@@ -112,7 +84,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
   };
 
   const clearSelection = () => {
-    setSelectedResident(null);
     setSelectedResidentValue("");
     setValue(`accused.${activeTab}.rp_id`, null);
     setValue(`accused.${activeTab}.acsd_name`, "");
@@ -133,13 +104,8 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({
   useEffect(() => {
     const currentAccusedData = watch(`accused.${activeTab}`);
     if (currentAccusedData?.rp_id) {
-      const resident = allResidents.find(
-        (r: Resident) => r.rp_id === currentAccusedData.rp_id
-      );
-      setSelectedResident(resident || null);
       setSelectedResidentValue(currentAccusedData.rp_id);
     } else {
-      setSelectedResident(null);
       setSelectedResidentValue("");
     }
   }, [activeTab, allResidents, watch]);

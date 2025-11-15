@@ -139,7 +139,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
     per_disability = serializers.CharField(source="per.per_disability")
-    per_is_deceased = serializers.BooleanField(source="per.per_is_deceased")
+    per_is_deceased = serializers.CharField(source="per.per_is_deceased")
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()

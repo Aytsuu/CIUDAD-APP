@@ -21,7 +21,7 @@ export const StatusFilterTabs: React.FC<StatusFilterTabsProps> = ({
   showCounts = true,
 }) => {
   return (
-    <View className="bg-white border-b border-gray-200 px-4 py-2">
+    <View className="bg-white border-b border-gray-200 px-4 py-4">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
