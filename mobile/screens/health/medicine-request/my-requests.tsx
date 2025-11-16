@@ -57,10 +57,11 @@ const getUserMedicineRequests = async (
     results: results.map((item: any) => {
       let normalizedStatus = item.status?.toLowerCase() || 'pending';
 
-      if (['rejected', 'declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
+      if (['declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
       if (['fulfilled', 'completed'].includes(normalizedStatus)) normalizedStatus = 'completed';
       if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
       if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
+      if (['rejected'].includes(normalizedStatus)) normalizedStatus = 'rejected';
 
       return {
         medreqitem_id: item.medreqitem_id,
@@ -271,16 +272,10 @@ const MedicineRequestTracker: React.FC = () => {
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Add local filtering as a safety net until backend filtering is implemented
-  // This ensures items are only shown in the correct tab based on normalized status
   const filteredRequests = useMemo(() => {
     return requests.filter(item => item.status === activeTab);
   }, [requests, activeTab]);
 
-  // Remove counts hook as per request; tabs now without counts
-  // If needed later, re-add after backend fixes
-
-  // Handle page change with reset if search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, activeTab]);

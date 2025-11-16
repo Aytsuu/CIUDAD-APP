@@ -43,7 +43,7 @@ export default function IndividualMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(2);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
   const params = useLocalSearchParams();
   const { pat_id } = useAuth();
   const [patId, setPatientId] = useState("");

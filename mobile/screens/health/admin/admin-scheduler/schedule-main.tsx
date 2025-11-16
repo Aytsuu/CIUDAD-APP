@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function SchedulerMain() {
   const { user, hasCheckedAuth } = useAuth();
-  const isAdmin = !!user?.staff;
+   const isAdmin = user?.staff?.staff_type.toLowerCase() === "health staff";
 
   const { data: servicesData = [], isLoading: isLoadingServices, error: servicesError } = useGetServices();
   const { data: schedulersData = [], isLoading: isLoadingSchedulers, error: schedulersError } = useGetScheduler();

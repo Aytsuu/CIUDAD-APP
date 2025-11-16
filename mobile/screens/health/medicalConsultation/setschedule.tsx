@@ -94,7 +94,7 @@ const SetSchedule = () => {
         setAmAvailable(false);
         setPmAvailable(false);
         if (showLoader) {
-          Alert.alert('No Slots', 'No available slots in the next 90 days. Contact support.');
+          Alert.alert('No Slots', 'No available slots, or check the service scheduler.');
         }
       }
     } catch (error: any) {
@@ -143,7 +143,7 @@ const SetSchedule = () => {
         setAmAvailable(slot.am_available);
         setPmAvailable(slot.pm_available);
       } else {
-        Alert.alert('Unavailable', 'This date is not available for booking. Please check the scheduler.');
+        Alert.alert('No slot', 'This date is not available for booking. Please check the scheduler.');
       }
     }
   };

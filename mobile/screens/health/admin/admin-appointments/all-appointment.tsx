@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, AlertCircle, Calendar, ChevronLeft, RefreshCw, ChevronRight, ChevronLeft as ChevronLeftIcon } from "lucide-react-native";
+import { Search, AlertCircle, Calendar, ChevronLeft, RefreshCw, ChevronDown, CalendarDays } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { format } from "date-fns";
@@ -30,6 +30,7 @@ type ScheduleRecord = {
 };
 
 type TabType = "pending" | "completed" | "missed" | "cancelled";
+type DateFilterType = "all" | "today" | "thisWeek" | "thisMonth";
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -40,11 +41,6 @@ function useDebounce<T>(value: T, delay: number): T {
   }, [value, delay]);
   return debouncedValue;
 }
-
-// StatusBadge Component
-
-
-  // export const statusConfig = getStatusConfig(status);
 
 // TabBar Component
 const TabBar: React.FC<{
@@ -128,96 +124,76 @@ const ResultsInfo: React.FC<{
   );
 };
 
-// Pagination Component
-// const Pagination: React.FC<{
-//   currentPage: number;
-//   totalPages: number;
-//   onPageChange: (page: number) => void;
-//   isLoading: boolean;
-// }> = ({ currentPage, totalPages, onPageChange, isLoading }) => {
-//   if (totalPages <= 1) return null;
+// Date Filter Dropdown Component
+const DateFilterDropdown: React.FC<{
+  selectedFilter: DateFilterType;
+  onFilterChange: (filter: DateFilterType) => void;
+}> = ({ selectedFilter, onFilterChange }) => {
+  const [showDropdown, setShowDropdown] = useState(false);
 
-//   const getVisiblePages = () => {
-//     const delta = 2;
-//     const range = [];
-//     const rangeWithDots = [];
+  const filterOptions = [
+    { value: "all", label: "All Time" },
+    { value: "today", label: "Today" },
+    { value: "thisWeek", label: "This Week" },
+    { value: "thisMonth", label: "This Month" },
+  ];
 
-//     for (
-//       let i = Math.max(2, currentPage - delta);
-//       i <= Math.min(totalPages - 1, currentPage + delta);
-//       i++
-//     ) {
-//       range.push(i);
-//     }
+  const currentLabel = filterOptions.find(opt => opt.value === selectedFilter)?.label || "All Time";
 
-//     if (currentPage - delta > 2) {
-//       rangeWithDots.push(1, '...');
-//     } else {
-//       rangeWithDots.push(1);
-//     }
+  return (
+    <View className="relative px-4 py-3 bg-white border-b border-gray-200">
+      <TouchableOpacity
+        onPress={() => setShowDropdown(!showDropdown)}
+        className="flex-row items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+      >
+        <View className="flex-row items-center gap-2">
+          <CalendarDays size={18} color="#6B7280" />
+          <Text className="text-gray-900 font-medium">{currentLabel}</Text>
+        </View>
+        <ChevronDown 
+          size={18} 
+          color="#6B7280"
+          style={{ transform: [{ rotate: showDropdown ? "180deg" : "0deg" }] }}
+        />
+      </TouchableOpacity>
 
-//     rangeWithDots.push(...range);
-
-//     if (currentPage + delta < totalPages - 1) {
-//       rangeWithDots.push('...', totalPages);
-//     } else {
-//       rangeWithDots.push(totalPages);
-//     }
-
-//     return rangeWithDots;
-//   };
-
-//   const visiblePages = getVisiblePages();
-
-//   return (
-//     <View className="flex-row items-center justify-center py-4 px-2 bg-white border-t border-gray-200">
-//       <TouchableOpacity
-//         onPress={() => onPageChange(currentPage - 1)}
-//         disabled={currentPage === 1 || isLoading}
-//         className={`flex-row items-center px-3 py-2 rounded-lg mr-2 ${currentPage === 1 || isLoading ? 'opacity-50' : 'bg-gray-100'
-//           }`}
-//       >
-//         <ChevronLeftIcon size={16} color="#374151" />
-//         <Text className="ml-1 text-sm font-medium text-gray-700">Prev</Text>
-//       </TouchableOpacity>
-
-//       <View className="flex-row items-center mx-2">
-//         {visiblePages.map((page, index) => (
-//           <React.Fragment key={index}>
-//             {page === '...' ? (
-//               <Text className="px-3 py-2 text-gray-500">...</Text>
-//             ) : (
-//               <TouchableOpacity
-//                 onPress={() => onPageChange(page as number)}
-//                 disabled={isLoading}
-//                 className={`px-3 py-2 rounded-lg mx-1 min-w-10 items-center ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-//                   }`}
-//               >
-//                 <Text className={`text-sm font-medium ${currentPage === page ? 'text-white' : 'text-gray-700'}`}>
-//                   {page}
-//                 </Text>
-//               </TouchableOpacity>
-//             )}
-//           </React.Fragment>
-//         ))}
-//       </View>
-
-//       <TouchableOpacity
-//         onPress={() => onPageChange(currentPage + 1)}
-//         disabled={currentPage === totalPages || isLoading}
-//         className={`flex-row items-center px-3 py-2 rounded-lg ml-2 ${currentPage === totalPages || isLoading ? 'opacity-50' : 'bg-gray-100'
-//           }`}
-//       >
-//         <Text className="mr-1 text-sm font-medium text-gray-700">Next</Text>
-//         <ChevronRight size={16} color="#374151" />
-//       </TouchableOpacity>
-//     </View>
-//   );
-// };
+      {showDropdown && (
+        <View className="absolute top-full left-4 right-4 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+          {filterOptions.map((option) => {
+            const isSelected = selectedFilter === option.value;
+            
+            return (
+              <TouchableOpacity
+                key={option.value}
+                onPress={() => {
+                  onFilterChange(option.value as DateFilterType);
+                  setShowDropdown(false);
+                }}
+                className={`flex-row items-center justify-between px-4 py-3 ${
+                  isSelected ? "bg-blue-50" : ""
+                }`}
+              >
+                <Text className={`font-medium ${
+                  isSelected ? "text-blue-600" : "text-gray-700"
+                }`}>
+                  {option.label}
+                </Text>
+                {isSelected && (
+                  <View className="w-2 h-2 rounded-full bg-blue-600" />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+};
 
 export default function AllAppointments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -229,11 +205,11 @@ export default function AllAppointments() {
       page_size: pageSize,
       search: debouncedSearch,
       tab: activeTab,
-      time_frame: 'all', // Adjust as needed
+      time_frame: dateFilter, // Send the date filter directly as time_frame
       sort_by: 'scheduledDate',
       sort_order: 'desc' as 'desc' | 'asc',
     }),
-    [currentPage, debouncedSearch, activeTab]
+    [currentPage, debouncedSearch, activeTab, dateFilter]
   );
 
   const {
@@ -245,20 +221,7 @@ export default function AllAppointments() {
 
   const appointments = useMemo(() => paginatedData?.results || [], [paginatedData]);
   const totalCount = paginatedData?.total_records || paginatedData?.count || paginatedData?.totalCount || 0;
-
-  console.log('Paginated Data:', paginatedData);
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  console.log('Pagination Debug:', {
-    totalCount,
-    pageSize,
-    totalPages,
-    currentPage,
-    appointmentsLength: appointments.length
-  });
-
-
-  const counts = useMemo(() => paginatedData?.counts || { pending: 0, completed: 0, missed: 0, cancelled: 0 }, [paginatedData]);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -273,12 +236,16 @@ export default function AllAppointments() {
     setCurrentPage(1);
   }, []);
 
+  const handleDateFilterChange = useCallback((filter: DateFilterType) => {
+    setDateFilter(filter);
+    setCurrentPage(1);
+  }, []);
+
   const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   }, [totalPages]);
-
 
   if (isLoading && !refreshing) {
     return (
@@ -347,6 +314,7 @@ export default function AllAppointments() {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
           <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
@@ -360,6 +328,12 @@ export default function AllAppointments() {
             />
           </View>
         </View>
+
+        {/* Date Filter Dropdown */}
+        <DateFilterDropdown 
+          selectedFilter={dateFilter}
+          onFilterChange={handleDateFilterChange}
+        />
 
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={handleTabChange} />
@@ -388,7 +362,8 @@ export default function AllAppointments() {
                   {searchQuery || activeTab !== 'pending' ? 'No appointments found' : 'No appointments scheduled'}
                 </Text>
                 <Text className="text-gray-500 text-center">
-                  {searchQuery ? `No ${activeTab} appointments match "${searchQuery}"` : `No ${activeTab} appointments found`}</Text>
+                  {searchQuery ? `No ${activeTab} appointments match "${searchQuery}"` : `No ${activeTab} appointments found`}
+                </Text>
               </View>
             )}
             renderItem={({ item }) => (

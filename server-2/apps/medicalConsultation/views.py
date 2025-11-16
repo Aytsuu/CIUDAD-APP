@@ -2303,5 +2303,3 @@ class MedicalUserAppointmentsView(generics.ListAPIView):
                 'success': False,
                 'error': f'Error fetching appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
