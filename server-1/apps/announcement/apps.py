@@ -11,10 +11,10 @@ class AnnouncementConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.announcement'
 
-    # def ready(self):
-    #     # Prevent duplicate schedulers in autoreload
-    #     if settings.SCHEDULER_AUTOSTART and os.environ.get("RUN_MAIN") == "true":
-    #         self.start_scheduler()
+    def ready(self):
+        # Prevent duplicate schedulers in autoreload
+        if settings.SCHEDULER_AUTOSTART:
+            self.start_scheduler()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""
@@ -29,9 +29,8 @@ class AnnouncementConfig(AppConfig):
                 next_run_time=timezone.now(),  # timezone-aware
                 misfire_grace_time=900,
                 id='announcement_status_update',
-                replace_existing=True
             )
             scheduler.start()
-            logger.info("Announcement scheduler started successfully")
+            logger.info("✅ Announcement scheduler started successfully")
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")

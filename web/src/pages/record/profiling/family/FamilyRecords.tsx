@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Users, FileDown } from "lucide-react"
+import { Search, Plus, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -10,11 +10,11 @@ import FamilyProfileOptions from "./FamilyProfileOptions"
 import { useFamiliesTable } from "../queries/profilingFetchQueries"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Spinner } from "@/components/ui/spinner"
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 export default function FamilyRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -22,10 +22,16 @@ export default function FamilyRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const [occupancy, setOccupancy] = React.useState<string>("all")
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
-  const { data: familiesTableData, isLoading } = useFamiliesTable(currentPage, debouncedPageSize, debouncedSearchQuery)
+  const { data: familiesTableData, isLoading } = useFamiliesTable(
+    currentPage, 
+    debouncedPageSize, 
+    debouncedSearchQuery,
+    occupancy
+  )
 
   const families = familiesTableData?.results || []
   const totalCount = familiesTableData?.count || 0
@@ -36,21 +42,6 @@ export default function FamilyRecords() {
     if(isLoading) showLoading();
     else hideLoading();
   }, [isLoading])
-
-  // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        // exportToCSV(families)
-        break
-      case "excel":
-        // exportToExcel(families)
-        break
-      case "pdf":
-        // exportToPDF(families)
-        break
-    }
-  }
 
   return (
     // ----------------- RENDER --------------------
@@ -71,29 +62,24 @@ export default function FamilyRecords() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport("csv")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("excel")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as Excel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex gap-3">
+                <SelectLayout
+                  withReset={false}
+                  value={occupancy}
+                  valueLabel="Occupancy"
+                  className="gap-4 focus:ring-0"
+                  onChange={(val) => {
+                    val !== occupancy && setOccupancy(val)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "owner", name: "Owner" },
+                    { id: "renter", name: "Renter" },
+                    { id: "sharer", name: "Sharer" },
+                  ]}
+                />
 
                 <DialogLayout
                   trigger={
@@ -147,7 +133,7 @@ export default function FamilyRecords() {
               <p className="text-gray-500 mb-4">
                 {searchQuery
                   ? `No families match "${searchQuery}". Try adjusting your search.`
-                  : "Get started by registering your first family."}
+                  : "Get started by registering a family."}
               </p>
             </div>
           )}

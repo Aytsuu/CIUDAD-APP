@@ -11,7 +11,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { formatDate, formatTimeAgo } from "@/helpers/dateHelper";
+import { formatDate, formatTimeAgo, formatTimeUntil } from "@/helpers/dateHelper";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "@/components/ui/media-gallery";
 import { capitalize } from "@/helpers/capitalize";
@@ -269,6 +269,13 @@ function AnnouncementTracker() {
                 <ScrollArea className="relative w-full h-full">
                   {selected && (
                     <div className="w-full p-8">
+                      {selected.ann_event_start && (
+                        <div className="border border-green-500 px-4 py-1 rounded-lg bg-green-50 mb-2">
+                          <Label className="text-green-700">
+                            The event will start {formatTimeUntil(selected.ann_event_start)}
+                          </Label>
+                        </div>
+                      )}
                       <div className="flex flex-col mb-4">
                         <div className="flex justify-between items-center">
                           <div className="flex items-end gap-4">
@@ -330,7 +337,7 @@ function AnnouncementTracker() {
                         <p className="text-sm font-medium text-gray-600">
                           {selected.staff.position}
                         </p>
-                      </div>
+                      </div>              
                       <Label className="text-md mb-4">
                         {selected.ann_title}
                       </Label>
