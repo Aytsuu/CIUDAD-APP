@@ -116,10 +116,10 @@ class CompleteRegistrationView(APIView):
     response = double_queries.complete_profile(request.data) 
     if not response.ok:
       try:
-          error_detail = response.json()
+          error_details = response.json()
       except ValueError:
-          error_detail = response.text
-      raise serializers.ValidationError({"error": error_detail})
+          error_details = response.text
+      raise serializers.ValidationError({"error": error_details})
     
     if business:
         bus = self.create_business(business, rp, staff)

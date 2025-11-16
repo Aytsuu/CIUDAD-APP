@@ -20,15 +20,6 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
     preload();
   }, []);
 
-  useEffect(() => {
-    if (!isReady) return;
-
-    const timer = setTimeout(() => {
-      onAnimationFinish();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [isReady]);
-
   const handleReadyForDisplay = () => {
     setPaused(false);
     // Fade in smoothly when video is ready
@@ -37,6 +28,17 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
       duration: 300,
       useNativeDriver: true,
     }).start();
+  };
+
+  const handleVideoEnd = () => {
+    // Fade out before finishing
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 0,
+      useNativeDriver: true,
+    }).start(() => {
+      onAnimationFinish();
+    });
   };
 
   return (
@@ -50,6 +52,7 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
             resizeMode="cover"
             paused={paused}
             onReadyForDisplay={handleReadyForDisplay}
+            onEnd={handleVideoEnd}
             repeat={false}
           />
         </Animated.View>
