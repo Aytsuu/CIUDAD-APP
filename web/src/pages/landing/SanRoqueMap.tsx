@@ -12,16 +12,6 @@ export default function SanRoqueMap(): JSX.Element {
 
     const apiKey = import.meta.env.VITE_MAP_TILE_API_KEY;
 
-    // Debug logging (remove after testing)
-    console.log('MapTiler API Key exists:', !!apiKey);
-    console.log('API Key prefix:', apiKey?.substring(0, 10));
-
-    if (!apiKey) {
-      console.error('MapTiler API key is missing!');
-      // Show error UI to user
-      return;
-    }
-
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
