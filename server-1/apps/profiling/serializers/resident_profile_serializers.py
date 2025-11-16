@@ -10,7 +10,9 @@ from datetime import datetime
 from ..utils import *
 from apps.notification.utils import create_notification
 from ..notif_recipients import general_recipients
+from ..double_queries import PostQueries
 import json
+import copy
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -120,10 +122,23 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             staff = staff
         )
 
+        # Double Query
+        request = self.context.get('request')
+        double_query = PostQueries()
+        response = double_query.resident_personal(request.data)
+
+        if not response.ok:
+            try:
+                error_details = response.json()
+            except ValueError:
+                error_details = response.text
+            raise serializers.ValidationError({'error': error_details})
+
         # Create notification
         resident_name = f"{resident_profile.per.per_fname}{f' {resident_profile.per.per_mname[0]}.' if resident_profile.per.per_mname else ''} {resident_profile.per.per_lname}"
         staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
         residentId = resident_profile.rp_id
+            
         json_data = json.dumps(
         ResidentProfileTableSerializer(resident_profile).data,
             default=str

@@ -31,6 +31,6 @@ class ProfilingConfig(AppConfig):
                 id='expired_requests_check'  # Unique ID for the job
             )
             scheduler.start()
-            logger.info("Scheduler started successfully")
+            logger.info("Expired request checker started successfully")
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")

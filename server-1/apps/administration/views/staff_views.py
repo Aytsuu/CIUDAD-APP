@@ -43,7 +43,7 @@ class StaffTableView(generics.ListCreateAPIView):
         Q(staff_type__icontains=search_query)
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-staff_id')
   
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
