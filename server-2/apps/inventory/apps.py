@@ -1,6 +1,8 @@
 from django.apps import AppConfig
-from django.db.models.signals import post_migrate
 import logging
+from django.conf import settings
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +20,42 @@ class InventoryConfig(AppConfig):
     name = 'apps.inventory'
     
     def ready(self):
-        post_migrate.connect(create_initial_categories, sender=self)
-        # Import signals to enable realtime inventory notifications when models change
+        # Import and register signals
+        self.register_signals()
+        
+        # Only start the scheduler if SCHEDULER_AUTOSTART is True in settings
+        if settings.SCHEDULER_AUTOSTART: 
+            # Crucial check: only allow the scheduler to run in the main process
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
+                self.start_scheduler()
+
+    def register_signals(self):
+        """Import and register signal handlers"""
         try:
-            from . import signals  # noqa: F401
-            logger.info("✅✅✅ Inventory signals module imported (realtime notifications enabled) ✅✅✅")
-            logger.info(f"📡 Registered signal handlers: inventory_post_save, capture_previous_qty, inventory_post_delete")
+            from . import signals
+            logger.info("✅ Inventory signals registered")
         except Exception as e:
-            logger.exception(f"❌❌❌ Failed to import inventory signals: {e}")
+            logger.error(f"❌ Failed to register inventory signals: {e}")
+
+    def start_scheduler(self):
+        try:
+            from apscheduler.schedulers.background import BackgroundScheduler
+            from .tasks import run_inventory_checks
+
+            scheduler = BackgroundScheduler()
+
+            # Schedule with reasonable interval since notifications are one-time
+            scheduler.add_job(
+                run_inventory_checks,
+                'interval',
+                hours=12,  # Check twice a day, but notifications are one-time only
+                misfire_grace_time=3600,
+                id="inventory_notification_job",
+                replace_existing=True,
+            )
+
+            scheduler.start()
+            logger.info("✅ Inventory Scheduler started: checks every 12 hours (one-time notifications only)")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to start inventory scheduler: {str(e)}")

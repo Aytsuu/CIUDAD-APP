@@ -1,47 +1,47 @@
+# apps/medicineservices/apps.py
+
+from django.apps import AppConfig
+from django.conf import settings
 import logging
 import os
 import sys
-from django.apps import AppConfig
-from django.db import connection
-from django.db.utils import OperationalError
-from django.db.backends.signals import connection_created
-from django.dispatch import receiver
-from apps.medicineservices.task import update_expired_medicine_requests
 
 logger = logging.getLogger(__name__)
 
-
-class MedicineConfig(AppConfig):
+class MedicineservicesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.medicineservices'
 
     def ready(self):
-        # Avoid double-execution with Django's autoreloader
-        is_runserver = 'runserver' in sys.argv
-        is_reloader_child = is_runserver and os.environ.get('RUN_MAIN') != 'true'
-        if is_reloader_child:
-            return
+        """
+        Start the scheduler only if SCHEDULER_AUTOSTART is True and
+        we are running the server (not during migrations).
+        """
+        if getattr(settings, 'SCHEDULER_AUTOSTART', False):
+            # Only run scheduler for the main process
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
+                self.start_scheduler()
 
-        # Only run the task update if the database is ready and we're not in a migration
-        if 'migrate' not in sys.argv and 'makemigrations' not in sys.argv:
-            try:
-                # Check if database connection is ready
-                connection.ensure_connection()
+    def start_scheduler(self):
+        """Initialize and start the background scheduler for medicine services tasks."""
+        try:
+            from apscheduler.schedulers.background import BackgroundScheduler
+            from apscheduler.triggers.interval import IntervalTrigger
+            from .task import update_expired_medicine_requests  # your task function
 
-                @receiver(connection_created)
-                def run_startup_tasks(sender, connection, **kwargs):
-                    # This runs after the database connection is established
-                    # Remove the receiver after first execution
-                    connection_created.disconnect(run_startup_tasks)
+            scheduler = BackgroundScheduler()
 
-                    try:
-                        updated = update_expired_medicine_requests()
-                        logger.info(f"[MedicineConfig.ready] Updated {updated} expired medicine requests on startup")
-                    except Exception:
-                        logger.exception("[MedicineConfig.ready] Failed to update expired medicine requests on startup")
+            # Schedule the job to run every 1 minute
+            scheduler.add_job(
+                update_expired_medicine_requests,
+                trigger=IntervalTrigger(minutes=1),
+                id="update_expired_medicine_requests",
+                max_instances=1,
+                replace_existing=True,
+            )
 
-            except OperationalError:
-                # Database not ready yet (e.g., during initial setup)
-                logger.warning("[MedicineConfig.ready] Database not ready, skipping expired medicine requests update")
-            except Exception as e:
-                logger.exception(f"[MedicineConfig.ready] Error during startup: {e}")
+            scheduler.start()
+
+            logger.info("✅ Medicineservices Scheduler started: update_expired_medicine_requests every 1 minute")
+        except Exception as e:
+            logger.error(f"Failed to start Medicineservices scheduler: {str(e)}")

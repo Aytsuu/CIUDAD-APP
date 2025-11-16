@@ -30,7 +30,7 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
     size: 120,
     cell: ({ row }) => (
       <div className="flex justify-center px-2 py-2">
-        <div className="text-center font-medium">MR{row.original.medreq_id.toString().padStart(5, "0")}</div>
+        <div className="text-center font-medium">{row.original.medreq_id.toString().padStart(5, "0")}</div>
       </div>
     )
   },
@@ -162,15 +162,39 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
   {
     accessorKey: "medicine",
     header: () => <div className="text-center">Medicine Details</div>,
-    size: 250,
-    cell: ({ row }) => (
-      <div className="px-3 py-2">
-        <div className="text-center space-y-1">
-          <div className="font-semibold text-gray-900">{row.original.med_name || "No name provided"}</div>
-          <div className="text-sm text-gray-600">{row.original.med_type || "No type provided"}</div>
+    size: 300,
+    cell: ({ row }) => {
+      // Use formatted_med_name which includes dosage and form (e.g., "Paracetamol 500mg Tablet")
+      const formattedName = row.original.med_name 
+  
+      
+      const medType = row.original.med_type ? toTitleCase(row.original.med_type) : "No type provided";
+      
+      // Show dosage and form info separately if available
+      const dosageInfo = row.original.med_dsg && row.original.med_dsg_unit 
+        ? `${row.original.med_dsg}${row.original.med_dsg_unit}`
+        : row.original.med_dsg 
+          ? row.original.med_dsg 
+          : null;
+      
+      const formInfo = row.original.med_form ? toTitleCase(row.original.med_form) : null;
+
+      return (
+        <div className="px-3 py-2">
+          <div className="text-center space-y-1">
+            <div className="font-semibold text-gray-900">{formattedName}</div>
+            {(dosageInfo || formInfo) && (
+              <div className="text-xs text-gray-500">
+                {dosageInfo && <span className="font-medium">{dosageInfo}</span>}
+                {dosageInfo && formInfo && <span className="mx-1">•</span>}
+                {formInfo && <span>{formInfo}</span>}
+              </div>
+            )}
+          </div>
+          <div className="text-sm text-gray-600">{medType}</div>
         </div>
-      </div>
-    )
+      );
+    }
   },
   {
     accessorKey: "reason",

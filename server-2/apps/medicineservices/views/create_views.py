@@ -21,6 +21,7 @@ from apps.reports.serializers import *
 from pagination import *
 from django.db.models import Q, Prefetch
 from utils import * 
+from utils.create_notification import NotificationQueries
 
 
 class CreateMedicineRecordView(generics.CreateAPIView):
@@ -208,7 +209,7 @@ class CreateMedicineRequestView(APIView):
 #                 })
 #                 # Continue with other medicines even if one fails
         
-#         # Check if all operations were successful
+#         # Check if all operations were successful2
 #         all_success = all(result['success'] for result in results)
         
 #         return Response(
@@ -313,7 +314,6 @@ class CreateMedicineRequestView(APIView):
 
 
 
-
 class CreateMedicineRequestAllocationAPIView(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -360,6 +360,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             medicine_request.save()
 
             medicine_transactions = []
+            picked_up_medicines = []  # Track picked up medicines for notification
 
             for medicine in selected_medicines:
                 minv_id = medicine.get('minv_id')
@@ -385,9 +386,36 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                             medreq_id=medicine_request
                         )
                         request_item.status = 'completed'
-                        request_item.fulfilled_at=timezone.now()
+                        request_item.fulfilled_at = timezone.now()
                         request_item.completed_by = staff_instance
                         request_item.save()
+
+                        # Get medicine details for notification
+                        medicine_name = "Medicine"
+                        med_dsg = ""
+                        med_dsg_unit = ""
+                        med_form = ""
+                        
+                        if request_item.med:
+                            medicine_name = request_item.med.med_name or "Medicine"
+                            med_dsg = request_item.med.med_dsg or ""
+                            med_dsg_unit = request_item.med.med_dsg_unit or ""
+                            med_form = request_item.med.med_form or ""
+                        
+                        # Build complete medicine display with dosage and form
+                        medicine_display = medicine_name
+                        if med_dsg:
+                            medicine_display += f" {med_dsg}"
+                        if med_dsg_unit:
+                            medicine_display += f"{med_dsg_unit}"
+                        if med_form:
+                            medicine_display += f" {med_form}"
+                        
+                        # Add to picked up medicines list for notification
+                        picked_up_medicines.append({
+                            'medicine_name': medicine_display.strip()
+                        })
+
                     except MedicineRequestItem.DoesNotExist:
                         return Response({
                             "error": f"Medicine request item with ID {medreqitem_id} not found"
@@ -426,6 +454,9 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             medicine_request.signature = signature
             medicine_request.save()
 
+            # Create pickup success notification
+            self.create_medicine_pickup_notification(medicine_request, picked_up_medicines)
+
             response_data = {
                 "success": True,
                 "message": "Medicine allocation processed successfully",
@@ -444,43 +475,95 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                 "error": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-#=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
-class CreateMedicineRequestProcessingView(generics.ListCreateAPIView): 
-    serializer_class = MedicineRequestSerializer
-    
-    @transaction.atomic
-    def create(self, request, *args, **kwargs):
+    def create_medicine_pickup_notification(self, medicine_request, picked_up_medicines):
         try:
-            # Validate required fields
-            if not request.data.get('pat_id') and not request.data.get('rp_id'):
-                raise ValidationError("Either patient ID or resident ID must be provided")
+            notifier = NotificationQueries()
             
-            if not request.data.get('medicines') or len(request.data['medicines']) == 0:
-                raise ValidationError("At least one medicine is required")
+            # Determine recipient (resident)
+            recipient_rp_ids = []
+            resident_name = "Resident"
+            
+            if medicine_request.rp_id:
+                # Direct resident request
+                recipient_rp_ids = [str(medicine_request.rp_id.rp_id)]
+                if medicine_request.rp_id.per:
+                    resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+            elif medicine_request.pat_id and medicine_request.pat_id.rp_id:
+                # Patient with resident profile
+                recipient_rp_ids = [str(medicine_request.pat_id.rp_id.rp_id)]
+                if medicine_request.pat_id.rp_id.per:
+                    resident_name = f"{medicine_request.pat_id.rp_id.per.per_fname} {medicine_request.pat_id.rp_id.per.per_lname}"
+            
+            if not recipient_rp_ids:
+                print("⚠️ No recipient found for medicine pickup notification")
+                return
+            
+            # Create medicine list for message
+            medicine_list = ", ".join([f"{med['medicine_name']}" for med in picked_up_medicines])
+            
+            # Create notification
+            success = notifier.create_notification(
+                title="Medicine pickup successful",
+                message=(
+                    f"Medicines picked up: {medicine_list}.\n"
+                    "Thank you for using Barangay Health Services! We hope you feel better soon."
+                ),
+                # sender="00001250924",  # System sender
+                recipients=recipient_rp_ids,
+                notif_type="MEDICINE_PICKUP_SUCCESS",
+                # target_obj=None,
+                web_route="/services/medicine/requests/completed",
+                web_params="",
+                mobile_route="/(health)/medicine-request/my-requests",
+                mobile_params={"request_id": str(medicine_request.medreq_id)},
+            )
 
-            # Handle patient reference
-            pat_id = request.data.get('pat_id')
-            patient = None
-            if pat_id:
-                try:
-                    patient = Patient.objects.get(pat_id=pat_id)
-                except Patient.DoesNotExist:
-                    raise ValidationError(f"Patient with ID {pat_id} not found")
+            if success:
+                print(f"✅ Medicine pickup success notification sent to {resident_name}")
+            else:
+                print(f"❌ Failed to send medicine pickup success notification to {resident_name}")
+                
+        except Exception as e:
+            print(f"❌ Error creating medicine pickup success notification: {e}")
+
+
+
+# #=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
+# class CreateMedicineRequestProcessingView(generics.ListCreateAPIView): 
+#     serializer_class = MedicineRequestSerializer
+    
+#     @transaction.atomic
+#     def create(self, request, *args, **kwargs):
+#         try:
+#             # Validate required fields
+#             if not request.data.get('pat_id') and not request.data.get('rp_id'):
+#                 raise ValidationError("Either patient ID or resident ID must be provided")
+            
+#             if not request.data.get('medicines') or len(request.data['medicines']) == 0:
+#                 raise ValidationError("At least one medicine is required")
+
+#             # Handle patient reference
+#             pat_id = request.data.get('pat_id')
+#             patient = None
+#             if pat_id:
+#                 try:
+#                     patient = Patient.objects.get(pat_id=pat_id)
+#                 except Patient.DoesNotExist:
+#                     raise ValidationError(f"Patient with ID {pat_id} not found")
 
         
-            return Response({
-                "success": True,
-                "message": "Medicine request created successfully"
-            }, status=status.HTTP_201_CREATED)
+#             return Response({
+#                 "success": True,
+#                 "message": "Medicine request created successfully"
+#             }, status=status.HTTP_201_CREATED)
             
 
-        except ValidationError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"error": "Internal server error", "details": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )   
+#         except ValidationError as e:
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response(
+#                 {"error": "Internal server error", "details": str(e)},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )   
         
         

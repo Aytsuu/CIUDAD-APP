@@ -79,14 +79,6 @@ export default function MainAppointments() {
           <Tabs value={selectedView} onValueChange={handleTabChange} className="w-full">
             <div className="px-2 sm:px-4 pt-2 sm:pt-4">
               <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1 sm:gap-2 h-auto p-1">
-                <TabsTrigger value="appointment" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <ClipboardList className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="truncate">Confirmed</span>
-                  {!isLoading && data?.data?.confirmed_appointments_count > 0 && (
-                    <span className="text-[10px] sm:text-xs font-semibold text-white bg-red-500 rounded-full px-1.5 sm:px-2 h-4 sm:h-5 min-w-[16px] sm:min-w-[20px] flex items-center justify-center">{data.data.confirmed_appointments_count > 99 ? "99+" : data.data.confirmed_appointments_count}</span>
-                  )}
-                </TabsTrigger>
-
                 <TabsTrigger value="pending" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="truncate">Pending</span>
@@ -95,6 +87,21 @@ export default function MainAppointments() {
                   )}
                 </TabsTrigger>
 
+                <TabsTrigger value="appointment" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                  <ClipboardList className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">Confirmed</span>
+                  {!isLoading && data?.data?.confirmed_appointments_count > 0 && (
+                    <span className="text-[10px] sm:text-xs font-semibold text-white bg-red-500 rounded-full px-1.5 sm:px-2 h-4 sm:h-5 min-w-[16px] sm:min-w-[20px] flex items-center justify-center">{data.data.confirmed_appointments_count > 99 ? "99+" : data.data.confirmed_appointments_count}</span>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger value="completed" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">Completed</span>
+                  {!isLoading && data?.data?.completed_appointments_count > 0 && (
+                    <span className="text-[10px] sm:text-xs font-semibold text-white bg-red-500 rounded-full px-1.5 sm:px-2 h-4 sm:h-5 min-w-[16px] sm:min-w-[20px] flex items-center justify-center">{data.data.completed_appointments_count > 99 ? "99+" : data.data.completed_appointments_count}</span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="referred" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="truncate">Referred</span>
@@ -124,14 +131,6 @@ export default function MainAppointments() {
                   <span className="truncate">Missed</span>
                   {!isLoading && data?.data?.missed_appointments_count > 0 && (
                     <span className="text-[10px] sm:text-xs font-semibold text-white bg-red-500 rounded-full px-1.5 sm:px-2 h-4 sm:h-5 min-w-[16px] sm:min-w-[20px] flex items-center justify-center">{data.data.missed_appointments_count > 99 ? "99+" : data.data.missed_appointments_count}</span>
-                  )}
-                </TabsTrigger>
-
-                <TabsTrigger value="completed" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="truncate">Completed</span>
-                  {!isLoading && data?.data?.completed_appointments_count > 0 && (
-                    <span className="text-[10px] sm:text-xs font-semibold text-white bg-red-500 rounded-full px-1.5 sm:px-2 h-4 sm:h-5 min-w-[16px] sm:min-w-[20px] flex items-center justify-center">{data.data.completed_appointments_count > 99 ? "99+" : data.data.completed_appointments_count}</span>
                   )}
                 </TabsTrigger>
               </TabsList>

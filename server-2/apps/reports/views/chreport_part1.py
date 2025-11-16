@@ -223,7 +223,6 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
         return Response(response_data, status=200)
     
 
-
 class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
     """
     Returns nutrition statistics for infants and children
@@ -237,6 +236,8 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
     6. Children 6-11 months who completed MNP supplements
     
     Returns counts by male, female, and total
+    
+    For annual nutritional status assessment: collects data from January up to the passed month
     """
     
     def get(self, request, month):
@@ -244,6 +245,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
         from apps.medicineservices.models import MedicineRequest, MedicineRequestItem
         from apps.patientrecords.models import Patient
         from decimal import Decimal
+        from datetime import date
         
         # Validate month format (YYYY-MM)
         try:
@@ -258,6 +260,19 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
                 'success': False,
                 'error': 'Invalid month format. Use YYYY-MM'
             }, status=400)
+
+        # Get current date to determine if we should limit data collection
+        current_date = date.today()
+        current_year = current_date.year
+        current_month = current_date.month
+
+        # Determine the end month for data collection
+        # If the requested year is current year, only go up to current month
+        # If the requested year is past year, go up to December
+        if year == current_year:
+            end_month = min(month_num, current_month)
+        else:
+            end_month = month_num  # For past years, use the requested month
 
         # Get Vitamin A, MNP, and LNS-SQ categories
         vitamin_a_category = Category.objects.filter(cat_name__icontains='vitamin a').first()
@@ -301,7 +316,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
             'mnp_12_23_months': {'male': 0, 'female': 0},
             'lns_sq_6_11_months': {'male': 0, 'female': 0},
             'lns_sq_12_23_months': {'male': 0, 'female': 0},
-            # Nutritional Status Assessment (Annual)
+            # Nutritional Status Assessment (Annual - from January to passed month)
             'total_children_0_59_months': {'male': 0, 'female': 0},
             'underweight': {'male': 0, 'female': 0},
             'severely_underweight': {'male': 0, 'female': 0},
@@ -310,6 +325,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
             'obese_overweight': {'male': 0, 'female': 0}
         }
 
+        # MONTHLY STATISTICS (for the specific month only)
         # 1. Newborn Initiated on breastfeeding within 1 hour after birth
         breastfeeding_records = ChildHealthrecord.objects.filter(
             created_at__year=year,
@@ -360,7 +376,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
 
         # 4. Infants 6-11 months given 1 dose of Vitamin A
         if vitamin_a_category:
-            # Get all child health supplements with Vitamin A
+            # Get all child health supplements with Vitamin A for the specific month
             vit_a_supplements = ChildHealthSupplements.objects.filter(
                 chhist__created_at__year=year,
                 chhist__created_at__month=month_num,
@@ -490,13 +506,14 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
                                     stats['lns_sq_12_23_months'][gender] += 1
                                     lns_sq_patients_12_23.add(patient_id)
 
-        # 10. Nutritional Status Assessment (Annual - based on year from month parameter)
-        # Get all child health records created in the specified year
+        # ANNUAL NUTRITIONAL STATUS ASSESSMENT (from January up to passed month)
+        # Get all child health records created from January to the specified month of the year
         child_health_records = ChildHealthrecord.objects.filter(
-            created_at__year=year
+            created_at__year=year,
+            created_at__month__lte=end_month  # From January to the specified month
         ).select_related('patrec__pat_id__rp_id__per', 'patrec__pat_id__trans_id')
 
-        # Track unique children assessed
+        # Track unique children assessed for the annual data
         assessed_children = set()
 
         for child_record in child_health_records:
@@ -513,10 +530,11 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
                         stats['total_children_0_59_months'][gender] += 1
                         assessed_children.add(patient_id)
                         
-                        # Get the most recent OPT body measurement for this child in the year
+                        # Get the most recent OPT body measurement for this child in the year range
                         body_measurement = BodyMeasurement.objects.filter(
                             pat=child_record.patrec.pat_id,
                             created_at__year=year,
+                            created_at__month__lte=end_month,  # From January to specified month
                             is_opt=True
                         ).order_by('-created_at').first()
                         
@@ -550,6 +568,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
         response_data = {
             'success': True,
             'month': month,
+            'data_range': f'January to {month} (Annual Nutritional Status)',
             'nutrition_services': [
                 {
                     'service_name': 'Newborn Initiated on breastfeeding within 1 hour after birth',
