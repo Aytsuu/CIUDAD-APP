@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, Text } from "react-native";
 
 export type TabType = "all" | "resident" | "transient"
-export type MedTabType = "pending" | "cancelled" | "confirmed" | "completed";
+export type MedTabType = "pending" | "cancelled" | "confirmed" | "completed" | "rejected";
 
 
 const getStatusConfig = (status: string) => {
@@ -16,6 +16,12 @@ const getStatusConfig = (status: string) => {
         label: lowerStatus === 'referred_to_doctor' ? 'Referred to Doctor' : 'Pending'
       };
     case 'rejected':
+      return {
+        color: 'text-red-700',
+        bgColor: 'bg-red-100',
+        borderColor: 'border-red-200',
+        label: 'Rejected'
+      };
     case 'declined':
     case 'cancelled':
       return {
@@ -96,6 +102,14 @@ export const MedTabBar: React.FC<{
     >
       <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
         Cancelled
+      </Text>
+    </TouchableOpacity>
+     <TouchableOpacity
+      onPress={() => setActiveTab('rejected')}
+      className={`flex-1 items-center py-3 ${activeTab === 'rejected' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'rejected' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Rejected
       </Text>
     </TouchableOpacity>
   </View>

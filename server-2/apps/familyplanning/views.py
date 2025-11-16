@@ -1777,7 +1777,8 @@ def get_complete_fp_record_data(request, fprecord_id):
                 "ill_id": history.ill.ill_id,
                 "illname": history.ill.illname,
                 "ill_code": history.ill.ill_code,
-                "created_at": history.created_at.isoformat() if history.created_at else None
+                "created_at": history.created_at.isoformat() if history.created_at else None,
+                "is_for_surveillance": True
             })
             current_selected_illness_ids.append(history.ill.ill_id)
 
@@ -2071,7 +2072,8 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             # Check for existing medical history
             existing_medhist = MedicalHistory.objects.filter(
                 ill=illness_instance,
-                patrec=current_patient_record
+                patrec=current_patient_record,
+                is_for_surveillance=True,   
             ).first()
             
             if existing_medhist:
@@ -2080,7 +2082,8 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             else:
                 medhist = MedicalHistory.objects.create(
                     ill=illness_instance,
-                    patrec=current_patient_record
+                    patrec=current_patient_record,
+                    is_for_surveillance=True,
                 )
                 created_instances['medical_history'] = created_instances.get('medical_history', []) + [medhist]
                 logger.info(f"Created new MedicalHistory record {medhist.medhist_id}")

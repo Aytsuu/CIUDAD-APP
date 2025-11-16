@@ -200,7 +200,7 @@ export default function IndividualVaccinationRecords() {
             </View>
           </View>
           <View className="p-4 mt-4">
-            <View className="flex-row items-center px-2 border p-2  border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+            <View className="flex-row items-center px-2 border   border-gray-300 bg-gray-50 rounded-lg shadow-sm">
               <Search size={20} color="#6B7280" />
               <TextInput className="flex-1 ml-3  text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
               {isSearching && ( 

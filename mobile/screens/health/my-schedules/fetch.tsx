@@ -156,6 +156,8 @@ export const useAllAppointments = (filters: AppointmentFilters, options = {}) =>
     staleTime: 60 * 1000, // 1 minute
     retry: 3,
     placeholderData: keepPreviousData,
+	refetchInterval: 5000, 
+    refetchOnWindowFocus: true,
     ...options,
   });
 };

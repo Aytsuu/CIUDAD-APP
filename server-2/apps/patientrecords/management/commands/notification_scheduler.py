@@ -1,4 +1,3 @@
-# notification_scheduler.py
 import time
 import logging
 from django.core.management.base import BaseCommand
@@ -33,10 +32,10 @@ class Command(BaseCommand):
 
         scheduler = BackgroundScheduler()
 
-        # JOB 1: Today + Missed (8:30 AM)
+        # JOB 1: Today + Missed (8am)
         scheduler.add_job(
             lambda: self.run_cmd('create_todays_followup_notifications'),
-            trigger=CronTrigger(hour=8, minute=30),
+            trigger=CronTrigger(hour=8, minute=00),
             id='daily_followup_notifications_morning',
             replace_existing=True
         )

@@ -280,4 +280,4 @@ def send_appointment_status_notifications(appointment, status: str):
             web_params={},
             mobile_route="/(admin)/appointments",
             mobile_params={"focus_tab": "appointments"},
-        )
+        )   
