@@ -142,22 +142,22 @@ export const NotificationBell: React.FC = () => {
         const notifTitle = payload.notification?.title || "No title";
         const notifMessage = payload.notification?.body || "No message";
 
-        // const newNotif: Notification = {
-        //   notif_id: payload.data?.notification_id || Date.now().toString(),
-        //   notif_title: payload.notification?.title || "No title",
-        //   notif_message: payload.notification?.body || "No message",
-        //   notif_type: payload.data?.notif_type || "",
-        //   is_read: false,
-        //   notif_created_at: new Date().toISOString(),
-        //   redirect_url: redirectUrl,
-        // };
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: payload.notification?.title || "No title",
+          notif_message: payload.notification?.body || "No message",
+          notif_type: payload.data?.notif_type || "",
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
 
-        // // Update state first
-        // setNotifications((prev) => {
-        //   console.log('📝 Adding notification to state. Current count:', prev.length);
-        //   return [newNotif, ...prev];
-        // });
-        // setUnreadCount((prev) => prev + 1);
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
 
         // Show toast notification
         showNotificationToast({

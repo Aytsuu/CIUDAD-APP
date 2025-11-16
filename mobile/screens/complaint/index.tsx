@@ -121,24 +121,20 @@ const ComplaintCard = ({
       disabled={isProcessing}
     >
       {/* Header Section */}
-      <View className="p-4 border-2 bg-gray-100 border-gray-100 rounded-t-xl">
+      <View className="p-4 border-2 bg-blue-500 border-gray-100 rounded-t-xl">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
-            {/* <View className="w-15 h-15 rounded-full bg-gray-200 text-gray-200 items-center justify-center mr-3 overflow-hidden"> */}
-              {/* <UserCircle size={45}/> */}
-            {/* </View> */}
             <View className="flex-1">
-              <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+              <Text className="text-lg font-PoppinsSemiBold text-white">
                 {requesterName}
               </Text>
-              <Text className="text-sm font-PoppinsRegular text-gray-500">
-                {item.comp_incident_type}
-              </Text>
+              <View className="bg-red-500 px-3 py-1 self-start rounded-lg">
+                <Text className="text-sm font-PoppinsRegular text-white">
+                  {item.comp_incident_type}
+                </Text>
+              </View>
             </View>
           </View>
-          <TouchableOpacity className="p-2">
-            <MoreVertical size={20} color="#9CA3AF" />
-          </TouchableOpacity>
         </View>
       </View>
 
