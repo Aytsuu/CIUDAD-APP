@@ -36,8 +36,9 @@ class MedicalconsultationConfig(AppConfig):
             # Schedule the appointment checker to run every minute
             scheduler.add_job(
                 update_missed_appointments_background,
-                'interval',
-                minutes=1,
+                'cron',
+                hour=18,
+                minute=0,
                 misfire_grace_time=300,  # Allow up to 5 minutes to run if missed
                 id='medical_consultation_appointment_checker',
                 replace_existing=True

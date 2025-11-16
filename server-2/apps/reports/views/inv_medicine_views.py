@@ -18,6 +18,7 @@ from pagination import StandardResultsPagination
     
             
 # ==================MEDICINE REPORT=======================
+# ==================MEDICINE REPORT=======================
 class MedicineSummaryMonthsAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -27,55 +28,62 @@ class MedicineSummaryMonthsAPIView(APIView):
 
             search_query = request.GET.get('search', '').strip().lower()
 
-            # Get distinct years in queryset, sorted descending
-            distinct_years = queryset.dates('created_at', 'year', order='DESC')
+            # Get distinct months in queryset, sorted descending
+            distinct_months = queryset.dates('created_at', 'month', order='DESC')
 
-            formatted_years = []
+            formatted_months = []
 
-            for year_date in distinct_years:
-                year = year_date.year
-                year_str = str(year)
+            for month_date in distinct_months:
+                year = month_date.year
+                month = month_date.month
+                month_str = f"{year}-{month:02d}"  # Format as YYYY-MM
+                month_name = month_date.strftime("%B %Y")  # Format as "November 2025"
 
-                if search_query and search_query not in year_str:
+                if search_query and search_query not in month_str.lower() and search_query not in month_name.lower():
                     continue
 
-                # Get the date range for this year
-                start_date = datetime(year, 1, 1).date()
-                end_date = datetime(year, 12, 31).date()
+                # Get the date range for this month
+                start_date = datetime(year, month, 1).date()
+                # Get the last day of the month
+                if month == 12:
+                    end_date = datetime(year, month, 31).date()
+                else:
+                    end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
 
-                # Filter transactions for this year - EXCLUDE expired items
-                year_transactions = queryset.filter(
+                # Filter transactions for this month - EXCLUDE expired items
+                month_transactions = queryset.filter(
                     created_at__date__gte=start_date,
                     created_at__date__lte=end_date
                 ).exclude(
-                    # Exclude items that expired BEFORE this year
+                    # Exclude items that expired BEFORE this month
                     minv_id__inv_id__expiry_date__lt=start_date
                 )
 
                 # Count distinct medicine+inventory combos
-                total_items = year_transactions.values(
+                total_items = month_transactions.values(
                     "minv_id__med_id",
                     "minv_id__inv_id"
                 ).distinct().count()
 
-                formatted_years.append({
-                    'year': year_str,
+                formatted_months.append({
+                    'month': month_str,  # "YYYY-MM"
+                    'month_name': month_name,  # "November 2025"
                     'total_items': total_items,
                 })
 
             paginator = self.pagination_class()
-            page = paginator.paginate_queryset(formatted_years, request)
+            page = paginator.paginate_queryset(formatted_months, request)
             if page is not None:
                 return paginator.get_paginated_response({
                     'success': True,
                     'data': page,
-                    'total_years': len(formatted_years),
+                    'total_months': len(formatted_months),
                 })
 
             return Response({
                 'success': True,
-                'data': formatted_years,
-                'total_years': len(formatted_years),
+                'data': formatted_months,
+                'total_months': len(formatted_months),
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
