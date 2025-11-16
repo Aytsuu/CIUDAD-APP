@@ -29,6 +29,6 @@ class AccountConfig(AppConfig):
                 id='clean_expired_otp'
             )
             scheduler.start()
-            logger.info('OTP cleaner started successfully')
+            logger.info('✅ OTP cleaner started successfully')
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")
