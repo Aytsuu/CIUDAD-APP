@@ -76,39 +76,37 @@ def create_garbage_request_notification(sender, instance, created, **kwargs):
         
         if (previous_status != current_status and 
             current_status.lower() in notify_statuses and 
-            instance.rp):
+            instance.rp and 
+            hasattr(instance.rp, 'account') and 
+            instance.rp.account):
             
-            resident_id = instance.rp.id
-            
-            # Customize notification based on status
+            account = instance.rp.account
+                        
             status_config = {
                 'accepted': {
                     'title': 'Request Accepted',
                     'message': 'Your garbage pickup request has been accepted and is scheduled for collection.',
-                    'notif_type': 'PICKUP_REQUEST_ACCEPTED'
+                    'notif_type': 'REQUEST'
                 },
                 'completed': {
                     'title': 'Request Completed', 
                     'message': 'Your garbage pickup has been completed. Thank you!',
-                    'notif_type': 'PICKUP_REQUEST_COMPLETED'
+                    'notif_type': 'REQUEST'
                 },
                 'rejected': {
                     'title': 'Request Rejected',
                     'message': 'Your garbage pickup request has been rejected.',
-                    'notif_type': 'PICKUP_REQUEST_REJECTED'
+                    'notif_type': 'REQUEST'
                 }
             }
             
-            config = status_config.get(current_status.lower(), {
-                'title': 'Request Update',
-                'message': f'Your request status has been updated to {current_status}.',
-                'notif_type': 'REQUEST_UPDATE'
-            })
+            config = status_config.get(current_status.lower())
             
+            # FIX: Wrap the account in a list
             create_notification(
                 title=config['title'],
                 message=config['message'],
-                recipients=resident_id,
+                recipients=[account],  # Pass as a list with one account
                 notif_type=config['notif_type'],
                 mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
             )
