@@ -20,6 +20,7 @@ from django.db.models import Case, When, Value, IntegerField
 from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
 from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
+from apps.notification.utils import create_notification
 import logging
 
 logger = logging.getLogger(__name__)

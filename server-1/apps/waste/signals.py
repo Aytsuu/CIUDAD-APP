@@ -2,6 +2,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from django.utils import timezone
 from .models import WasteHotspot, WasteEvent
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from .models import *
+from apps.notification.utils import create_notification
+
 
 def archive_completed_hotspots():
     print('Running trigger...')
@@ -49,3 +54,61 @@ def archive_passed_waste_events():
         return updated
     
     return 0
+
+@receiver(pre_save, sender=Garbage_Pickup_Request)
+def store_previous_status(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            previous = Garbage_Pickup_Request.objects.get(pk=instance.pk)
+            instance._previous_status = previous.garb_req_status
+        except Garbage_Pickup_Request.DoesNotExist:
+            instance._previous_status = None
+    else:
+        instance._previous_status = None
+
+@receiver(post_save, sender=Garbage_Pickup_Request)
+def create_garbage_request_notification(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_previous_status'):
+        previous_status = instance._previous_status
+        current_status = instance.garb_req_status
+        
+        notify_statuses = ['accepted', 'completed', 'rejected']
+        
+        if (previous_status != current_status and 
+            current_status.lower() in notify_statuses and 
+            instance.rp):
+            
+            resident_id = instance.rp.id
+            
+            # Customize notification based on status
+            status_config = {
+                'accepted': {
+                    'title': 'Request Accepted',
+                    'message': 'Your garbage pickup request has been accepted and is scheduled for collection.',
+                    'notif_type': 'PICKUP_REQUEST_ACCEPTED'
+                },
+                'completed': {
+                    'title': 'Request Completed', 
+                    'message': 'Your garbage pickup has been completed. Thank you!',
+                    'notif_type': 'PICKUP_REQUEST_COMPLETED'
+                },
+                'rejected': {
+                    'title': 'Request Rejected',
+                    'message': 'Your garbage pickup request has been rejected.',
+                    'notif_type': 'PICKUP_REQUEST_REJECTED'
+                }
+            }
+            
+            config = status_config.get(current_status.lower(), {
+                'title': 'Request Update',
+                'message': f'Your request status has been updated to {current_status}.',
+                'notif_type': 'REQUEST_UPDATE'
+            })
+            
+            create_notification(
+                title=config['title'],
+                message=config['message'],
+                recipients=resident_id,
+                notif_type=config['notif_type'],
+                mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+            )
