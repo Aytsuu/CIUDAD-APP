@@ -85,28 +85,61 @@ def create_garbage_request_notification(sender, instance, created, **kwargs):
             status_config = {
                 'accepted': {
                     'title': 'Request Accepted',
-                    'message': 'Your garbage pickup request has been accepted and is scheduled for collection.',
+                    'message': f'Your garbage pickup request {instance.garb_id} has been accepted and is scheduled for collection.',
                     'notif_type': 'REQUEST'
                 },
                 'completed': {
                     'title': 'Request Completed', 
-                    'message': 'Your garbage pickup has been completed. Thank you!',
+                    'message': f'Your garbage pickup request {instance.garb_id} has been completed. Thank you!',
                     'notif_type': 'REQUEST'
                 },
                 'rejected': {
                     'title': 'Request Rejected',
-                    'message': 'Your garbage pickup request has been rejected.',
+                    'message': f'Your garbage pickup request {instance.garb_id} has been rejected.',
                     'notif_type': 'REQUEST'
                 }
             }
             
             config = status_config.get(current_status.lower())
             
-            # FIX: Wrap the account in a list
             create_notification(
                 title=config['title'],
                 message=config['message'],
                 recipients=[account],  # Pass as a list with one account
                 notif_type=config['notif_type'],
                 mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+            )
+
+@receiver(pre_save, sender=WasteReport)
+def store_previous_waste_report_status(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            previous = WasteReport.objects.get(pk=instance.pk)
+            instance._previous_rep_status = previous.rep_status
+        except WasteReport.DoesNotExist:
+            instance._previous_rep_status = None
+    else:
+        instance._previous_rep_status = None
+
+@receiver(post_save, sender=WasteReport)
+def create_waste_report_notification(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_previous_rep_status'):
+        previous_status = instance._previous_rep_status
+        current_status = instance.rep_status
+        
+        # Only notify when status changes to 'resolved'
+        if (previous_status != current_status and 
+            current_status.lower() == 'resolved' and 
+            instance.rp_id and 
+            hasattr(instance.rp_id, 'account') and 
+            instance.rp_id.account):
+            
+            account = instance.rp_id.account
+            
+            create_notification(
+                title='Report Resolved',
+                message=f'Your waste report {instance.rep_id} has been resolved. Thank you for helping keep our community clean!',                
+                recipients=[account],
+                notif_type='REPORT',
+                mobile_route="/(waste)/illegal-dumping/resident/illegal-dump-res-main",
             )
