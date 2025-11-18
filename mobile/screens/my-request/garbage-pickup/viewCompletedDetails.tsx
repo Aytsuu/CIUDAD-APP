@@ -32,7 +32,7 @@ export default function ResidentCompletedDetails() {
   };
 
   // Function to handle viewing the image
-  const handleViewImage = (imageUrl: string, imageName: string = "Attached Image") => {
+  const handleViewImage = (imageUrl: string, imageName: string = "") => {
     setSelectedImage({
       url: imageUrl,
       name: imageName
@@ -246,7 +246,7 @@ export default function ResidentCompletedDetails() {
           
           {/* Make the image clickable */}
           <TouchableOpacity 
-            onPress={() => handleViewImage(requestDetails.file_url, "Garbage Pickup Image")}
+            onPress={() => handleViewImage(requestDetails.file_url)}
             className="bg-gray-50 rounded-lg p-2"
           >
             <Image
@@ -322,7 +322,7 @@ export default function ResidentCompletedDetails() {
           {/* Header with close button and file name */}
           <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
             <Text className="text-white text-lg font-medium w-[90%]" numberOfLines={1}>
-              {selectedImage?.name || 'Garbage Pickup Image'}
+              {selectedImage?.name || ''}
             </Text>
             <TouchableOpacity 
               onPress={() => setViewImageModalVisible(false)}

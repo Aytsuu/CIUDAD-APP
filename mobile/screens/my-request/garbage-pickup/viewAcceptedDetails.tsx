@@ -17,10 +17,10 @@ export default function ResidentAcceptedDetails() {
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
   
-  // Add refresh state
+  // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Add refetch to the query hook
+  // Query with refetch
   const { data: requestDetails, isLoading, refetch } = useGetAcceptedDetailsResident(garb_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, true)
   
@@ -40,7 +40,7 @@ export default function ResidentAcceptedDetails() {
   }
 
   // Function to handle viewing the image
-  const handleViewImage = (imageUrl: string, imageName: string = "Attached Image") => {
+  const handleViewImage = (imageUrl: string, imageName: string = "") => {
     setSelectedImage({
       url: imageUrl,
       name: imageName
@@ -182,7 +182,7 @@ export default function ResidentAcceptedDetails() {
                     <View 
                       key={index} 
                       className="bg-blue-100 px-3 py-1 rounded-full flex-row items-center self-start"
-                      style={{ minWidth: 0 }} // Allows text to shrink properly
+                      style={{ minWidth: 0 }}
                     >
                       <Text 
                         className="font-PoppinsSemiBold text-blue-800 text-sm"
@@ -230,7 +230,7 @@ export default function ResidentAcceptedDetails() {
         </View>
       )}
 
-      {/* Attached Image Section - Updated with modal functionality */}
+      {/* Attached Image Section */}
       {requestDetails?.file_url && (
         <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
           <View className="flex-row items-center mb-4 gap-2">
@@ -238,7 +238,6 @@ export default function ResidentAcceptedDetails() {
             <Text className="font-PoppinsBold text-lg text-gray-800 font-bold">Attached Image</Text>
           </View>
           
-          {/* Make the image clickable */}
           <TouchableOpacity 
             onPress={() => handleViewImage(requestDetails.file_url, "Garbage Pickup Image")}
             className="bg-gray-50 rounded-lg p-2"
@@ -291,7 +290,7 @@ export default function ResidentAcceptedDetails() {
       rightAction={
         <View className="w-10 h-10"></View>
       }
-      wrapScroll={false} // Important: Let FlatList handle scrolling
+      wrapScroll={false} // Let FlatList handle scrolling
     >
       <View className="flex-1 bg-white">
         <View className="flex-1 px-6">
@@ -323,7 +322,7 @@ export default function ResidentAcceptedDetails() {
         </View>
       </View>
 
-      {/* Image Viewer Modal - Simplified for single image */}
+      {/* Image Viewer Modal */}
       <Modal
         visible={viewImageModalVisible}
         transparent={true}
@@ -331,10 +330,9 @@ export default function ResidentAcceptedDetails() {
         animationType="fade"
       >
         <View className="flex-1 bg-black/90">
-          {/* Header with close button and file name */}
           <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
             <Text className="text-white text-lg font-medium w-[90%]" numberOfLines={1}>
-              {selectedImage?.name || 'Garbage Pickup Image'}
+              {selectedImage?.name || ''}
             </Text>
             <TouchableOpacity 
               onPress={() => setViewImageModalVisible(false)}
@@ -344,7 +342,6 @@ export default function ResidentAcceptedDetails() {
             </TouchableOpacity>
           </View>
 
-          {/* Main Image */}
           {selectedImage && (
             <Image
               source={{ uri: selectedImage.url }}
