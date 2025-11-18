@@ -175,7 +175,7 @@ export default function CreateBudgetPlanSuppDocs (){
             headerTitle={<Text className="text-gray-900 text-[13px]">Upload Supporting Documents</Text>}
             wrapScroll={false}
             footer={
-                <View className="p-6 bg-white border-t border-gray-200">
+                <View className="p-6 bg-white">
                     <Button 
                         onPress={handleSubmit(onSubmit)} 
                         className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"

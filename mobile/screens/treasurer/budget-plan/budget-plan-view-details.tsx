@@ -178,6 +178,7 @@ export default function BudgetPlanView() {
             }
             headerTitle={<Text className="text-gray-900 text-[13px]">Budget Plan {fetchedData.plan_year}</Text>}
             rightAction={<Text className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" > </Text>}
+            wrapScroll={false} // Important: This prevents the PageLayout from adding a ScrollView
         >
           <View className="flex-1 bg-gray-50">
             {/* Fixed Tab Headers */}
@@ -218,39 +219,42 @@ export default function BudgetPlanView() {
                 </View>
             </View>
 
-            {/* Main ScrollView with RefreshControl */}
-            <ScrollView 
-                className="flex-1"
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefreshing}
-                        onRefresh={handleRefresh}
-                        colors={['#00a8f0']}
-                        tintColor="#00a8f0"
-                    />
-                }
-                contentContainerStyle={{ flexGrow: 1 }}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Tab Content */}
-                <View className="flex-1">
-                    {activeTab === "plan" && (
+            {/* Tab Content - No outer ScrollView */}
+            <View className="flex-1">
+                {activeTab === "plan" && (
+                    <ScrollView 
+                        className="flex-1"
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        showsVerticalScrollIndicator={false}
+                    >
                         <MobileBudgetPlanView budgetData={fetchedData} />
-                    )}
+                    </ScrollView>
+                )}
 
-                    {activeTab === "history" && (
+                {activeTab === "history" && (
+                    <View className="flex-1">
                         <BudgetPlanHistory planId={plan_id as string} />
-                    )}
+                    </View>
+                )}
 
-                    {activeTab === "documents" && (
+                {activeTab === "documents" && (
+                    <View className="flex-1">
                         <BudgetPlanSuppDocs 
                             plan_id={plan_id as string} 
                             isArchive={fetchedData?.plan_is_archive || false}
                         />
-                    )}
-                </View>
-            </ScrollView>
+                    </View>
+                )}
+            </View>
           </View>
        </PageLayout>
     );
-}   
+}

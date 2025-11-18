@@ -50,7 +50,7 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
         deleteFile(bpf_id)
     };
 
-    if (isLoading) {
+    if (isLoading && !isRefreshing) {
         return (
             <View className="flex-1 justify-center items-center bg-white pt-10">
                 <LoadingState />
@@ -126,40 +126,49 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
                             <View className="mb-6">
                                 <View className="flex-row flex-wrap justify-between">
                                     {imageDocs.map((doc, index) => (
-                                        <View key={doc.bpf_id} className="w-[48%] mb-3">
+                                        <View key={doc.bpf_id} className="w-[48%] mb-4">
                                             <Pressable 
                                                 onPress={() => handleViewImages(imageDocs, index)}
                                                 className="relative bg-white border border-gray-200 rounded-lg overflow-hidden"
                                             >
-                                                <Image 
-                                                    source={{ uri: doc.bpf_url }}
-                                                    className="w-full h-32"
-                                                    resizeMode="cover"
-                                                />
-                                                <View className="p-2">
-                                                    <Text className="text-gray-900 font-medium text-xs font-sans" numberOfLines={1}>
+                                                {/* Consistent Image Height */}
+                                                <View className="w-full h-40 bg-gray-100">
+                                                    <Image 
+                                                        source={{ uri: doc.bpf_url }}
+                                                        className="w-full h-full"
+                                                        resizeMode="cover"
+                                                    />
+                                                </View>
+                                                
+                                                {/* Card Content with Consistent Height */}
+                                                <View className="p-3 min-h-[100px]">
+                                                    <Text className="text-gray-900 font-medium text-xs font-sans mb-1" numberOfLines={1}>
                                                         {doc.bpf_name}
                                                     </Text>
-                                                    <Text className="text-gray-500 text-xs mt-1 font-sans">
+                                                    <Text className="text-gray-500 text-xs mb-2 font-sans">
                                                         {formatTimestamp(doc.bpf_upload_date)}
                                                     </Text>
-                                                    <Text className="text-gray-600 text-xs mt-1 font-sans" numberOfLines={2}>
+                                                    <Text className="text-gray-600 text-xs font-sans" numberOfLines={2}>
                                                         {doc.bpf_description || 'No description available'}
                                                     </Text>
                                                 </View>
-                                                <ConfirmationModal
-                                                    trigger={
-                                                        <TouchableOpacity
-                                                            className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
-                                                        >
-                                                            <Trash2 size={16} color="#FFFFFF" />
-                                                        </TouchableOpacity>
-                                                    }
-                                                    title="Confirm Delete"
-                                                    description={`Are you sure you want to delete ${doc.bpf_name}?`}
-                                                    actionLabel="Confirm"
-                                                    onPress={() => handleDeleteDocument(doc.bpf_id)}
-                                                />
+                                                
+                                                {/* Delete Button */}
+                                                {!isArchive && (
+                                                    <ConfirmationModal
+                                                        trigger={
+                                                            <TouchableOpacity
+                                                                className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
+                                                            >
+                                                                <Trash2 size={16} color="#FFFFFF" />
+                                                            </TouchableOpacity>
+                                                        }
+                                                        title="Confirm Delete"
+                                                        description={`Are you sure you want to delete ${doc.bpf_name}?`}
+                                                        actionLabel="Confirm"
+                                                        onPress={() => handleDeleteDocument(doc.bpf_id)}
+                                                    />
+                                                )}
                                             </Pressable>
                                         </View>
                                     ))}
@@ -178,25 +187,28 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             >
                 <View className="flex-1 bg-gray-900">
                     {/* Header with close button, file name, and description */}
-                    <View className="absolute top-0 left-0 right-0 z-10 bg-gray-900/80 p-4">
-                        <View className="flex-row justify-between items-center">
+                    <View className="absolute top-0 left-0 right-0 z-10 bg-gray-900/90 p-4 pt-14">
+                        <View className="flex-row justify-between items-start">
                             <View className="flex-1 pr-8">
-                                <Text className="text-white text-base font-medium font-sans" numberOfLines={1}>
+                                <Text className="text-white text-lg font-semibold font-sans mb-2" numberOfLines={1}>
                                     {selectedImages[currentIndex]?.bpf_name || 'Document'}
                                 </Text>
-                                <Text className="text-gray-300 text-xs mt-1 font-sans" numberOfLines={2}>
+                                <Text className="text-gray-200 text-sm font-sans" numberOfLines={3}>
                                     {selectedImages[currentIndex]?.bpf_description || 'No description available'}
                                 </Text>
                             </View>
-                            <TouchableOpacity onPress={() => setViewImagesModalVisible(false)}>
-                                <X size={24} color="#FFFFFF" />
+                            <TouchableOpacity 
+                                onPress={() => setViewImagesModalVisible(false)}
+                                className="bg-gray-800/80 rounded-full p-2"
+                            >
+                                <X size={20} color="#FFFFFF" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     {/* Main Image */}
                     <Pressable 
-                        className="flex-1 justify-center items-center"
+                        className="flex-1 justify-center items-center mt-20 mb-16"
                         onPress={() => setViewImagesModalVisible(false)}
                     >
                         <Image
@@ -208,17 +220,22 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
 
                     {/* Pagination indicators */}
                     {selectedImages.length > 1 && (
-                        <View className="absolute bottom-4 left-0 right-0 items-center">
-                            <View className="flex-row bg-gray-900/80 rounded-full px-3 py-1">
-                                {selectedImages.map((_, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        onPress={() => setCurrentIndex(index)}
-                                        className="p-1"
-                                    >
-                                        <View className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-400'}`} />
-                                    </TouchableOpacity>
-                                ))}
+                        <View className="absolute bottom-20 left-0 right-0 items-center">
+                            <View className="flex-row bg-gray-900/80 rounded-full px-4 py-2">
+                                <Text className="text-white text-sm font-medium font-sans mr-3">
+                                    {currentIndex + 1} of {selectedImages.length}
+                                </Text>
+                                <View className="flex-row items-center">
+                                    {selectedImages.map((_, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            onPress={() => setCurrentIndex(index)}
+                                            className="p-1"
+                                        >
+                                            <View className={`w-2 h-2 rounded-full mx-1 ${index === currentIndex ? 'bg-white' : 'bg-gray-400'}`} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </View>
                         </View>
                     )}
@@ -228,18 +245,18 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
                         <>
                             {currentIndex > 0 && (
                                 <TouchableOpacity
-                                    className="absolute left-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-2"
+                                    className="absolute left-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-3"
                                     onPress={() => setCurrentIndex(prev => prev - 1)}
                                 >
-                                    <ChevronLeft size={20} color="#FFFFFF" />
+                                    <ChevronLeft size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             )}
                             {currentIndex < selectedImages.length - 1 && (
                                 <TouchableOpacity
-                                    className="absolute right-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-2"
+                                    className="absolute right-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-3"
                                     onPress={() => setCurrentIndex(prev => prev + 1)}
                                 >
-                                    <ChevronRight size={20} color="#FFFFFF" />
+                                    <ChevronRight size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             )}
                         </>
