@@ -1,6 +1,6 @@
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert } from "react-native"
+import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert, RefreshControl } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight} from "@/lib/icons/ChevronRight" 
 import { X } from "@/lib/icons/X" 
@@ -21,10 +21,18 @@ export default function SummonRemarkDetails(){
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const { sc_id, incident_type, hasResident, comp_names, acc_names, sc_code, sc_mediation_status} = params
 
-    const {data: details, isLoading} = useGetSummonCaseDetails(String(sc_id))
+    const {data: details, isLoading, refetch} = useGetSummonCaseDetails(String(sc_id))
+
+    // Refresh function
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setIsRefreshing(false);
+    };
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -73,7 +81,7 @@ export default function SummonRemarkDetails(){
     }
 
    
-    if(isLoading){
+    if(isLoading && !isRefreshing){
         return (
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
@@ -84,7 +92,19 @@ export default function SummonRemarkDetails(){
 
     // Case Details Tab Content
     const CaseDetailsTab = () => (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+            className="flex-1" 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                />
+            }
+            contentContainerStyle={{ flexGrow: 1 }}
+        >
             <View className="p-6">
                 {/* Case Information */}
                 <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
@@ -214,20 +234,45 @@ export default function SummonRemarkDetails(){
 
             if (hearingSchedules.length === 0) {
                 return (
-                    <View className="flex-1 justify-center items-center p-6">
-                        <Calendar size={48} className="text-gray-300 mb-4" />
-                        <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                            No Hearing Schedules
-                        </Text>
-                        <Text className="text-gray-400 text-center text-sm">
-                            No hearing schedules have been created for this case yet.
-                        </Text>
-                    </View>
+                    <ScrollView 
+                        className="flex-1"
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                    >
+                        <View className="flex-1 justify-center items-center p-6">
+                            <Calendar size={48} className="text-gray-300 mb-4" />
+                            <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                                No Hearing Schedules
+                            </Text>
+                            <Text className="text-gray-400 text-center text-sm">
+                                No hearing schedules have been created for this case yet.
+                            </Text>
+                        </View>
+                    </ScrollView>
                 );
             }
 
             return (
-                <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                <ScrollView 
+                    className="flex-1" 
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            colors={['#00a8f0']}
+                            tintColor="#00a8f0"
+                        />
+                    }
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >
                     <View className="p-6">
                         {hearingSchedules.map((schedule: any, index: number) => (
                             <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-3">
@@ -335,15 +380,28 @@ export default function SummonRemarkDetails(){
             {details?.comp_id ? (
                 <ComplaintRecordForSummon comp_id={details.comp_id as string} />
             ) : (
-                <View className="flex-1 justify-center items-center p-6">
-                    <FileText size={48} className="text-gray-300 mb-4" />
-                    <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                        No Case ID Available
-                    </Text>
-                    <Text className="text-gray-400 text-center text-sm">
-                        Unable to load complaint record without case ID
-                    </Text>
-                </View>
+                <ScrollView 
+                    className="flex-1"
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            colors={['#00a8f0']}
+                            tintColor="#00a8f0"
+                        />
+                    }
+                >
+                    <View className="flex-1 justify-center items-center p-6">
+                        <FileText size={48} className="text-gray-300 mb-4" />
+                        <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                            No Case ID Available
+                        </Text>
+                        <Text className="text-gray-400 text-center text-sm">
+                            Unable to load complaint record without case ID
+                        </Text>
+                    </View>
+                </ScrollView>
             )}
         </View>
     )

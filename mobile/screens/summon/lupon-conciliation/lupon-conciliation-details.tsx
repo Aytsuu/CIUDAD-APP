@@ -1,6 +1,6 @@
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert, Linking } from "react-native"
+import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert, Linking, RefreshControl } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight" 
 import { X } from "@/lib/icons/X" 
@@ -31,6 +31,7 @@ export default function LuponConciliationDetails() {
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false)
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
+    const [isRefreshing, setIsRefreshing] = useState(false)
 
     const { 
         sc_id, 
@@ -43,11 +44,21 @@ export default function LuponConciliationDetails() {
         sc_code 
     } = params
 
-    const { data: caseDetails, isLoading } = useGetLuponCaseDetails(String(sc_id))
-    const { data: paymentLogs = [], isLoading: isLogsLoading} = useGetFileActionPaymentLogs(caseDetails?.comp_id || "")
+    const { data: caseDetails, isLoading, refetch } = useGetLuponCaseDetails(String(sc_id))
+    const { data: paymentLogs = [], isLoading: isLogsLoading, refetch: refetchPaymentLogs } = useGetFileActionPaymentLogs(caseDetails?.comp_id || "")
     const { mutate: resolve, isPending: isResolvePending } = useResolveCase()
     const { mutate: escalate, isPending: isEscalatePending } = useEscalateCase()
     const { mutate: reescalate, isPending: isReescalatePending } = useReEscalateCase()
+
+    // Refresh function
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await Promise.all([
+            refetch(),
+            refetchPaymentLogs()
+        ]);
+        setIsRefreshing(false);
+    };
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -112,14 +123,22 @@ export default function LuponConciliationDetails() {
     const handleResolve = () => {
         const staff_id = user?.staff?.staff_id
         const status_type = "Lupon"
-        resolve({ status_type, sc_id: String(sc_id), staff_id})
+        resolve({ status_type, sc_id: String(sc_id), staff_id}, {
+            onSuccess: () => {
+                refetch(); // Refetch after resolving
+            }
+        })
     }
     
     const handleEscalate = () => {
         const staff_id = user?.staff?.staff_id
 
         if (comp_id) {
-            escalate({ sc_id: String(sc_id), comp_id: String(comp_id), staff_id })
+            escalate({ sc_id: String(sc_id), comp_id: String(comp_id), staff_id }, {
+                onSuccess: () => {
+                    refetch(); // Refetch after escalating
+                }
+            })
         } else {
             Alert.alert("Error", "Cannot escalate: Complaint ID is missing")
         }
@@ -134,7 +153,11 @@ export default function LuponConciliationDetails() {
             toast.error("Cannot re-escalate: There is a pending request for file action.");
             return;
         } else {
-            reescalate(String(comp_id))
+            reescalate(String(comp_id), {
+                onSuccess: () => {
+                    refetch(); // Refetch after re-escalating
+                }
+            })
         }
     }
 
@@ -204,7 +227,7 @@ export default function LuponConciliationDetails() {
         }
     }
 
-    if (isLoading || isLogsLoading) {
+    if ((isLoading && !isRefreshing) || (isLogsLoading && !isRefreshing)) {
         return (
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
@@ -214,7 +237,19 @@ export default function LuponConciliationDetails() {
 
     // Case Details Tab Content
     const CaseDetailsTab = () => (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+            className="flex-1" 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                />
+            }
+            contentContainerStyle={{ flexGrow: 1 }}
+        >
             <View className="p-6">
                 {/* 3rd Conciliation Proceedings Alert */}
                 {isThirdMediation && !isCaseClosed && (
@@ -434,20 +469,43 @@ export default function LuponConciliationDetails() {
 
         return (
             <View className="flex-1">
-                {/* REMOVED: Create Schedule Button from here since we're adding floating button */}
-
                 {hearingSchedules.length === 0 ? (
-                    <View className="flex-1 justify-center items-center p-6">
-                        <Calendar size={48} className="text-gray-300 mb-4" />
-                        <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                            No Hearing Schedules
-                        </Text>
-                        <Text className="text-gray-400 text-center text-sm">
-                            No hearing schedules have been created for this case yet.
-                        </Text>
-                    </View>
+                    <ScrollView 
+                        className="flex-1"
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                    >
+                        <View className="flex-1 justify-center items-center p-6">
+                            <Calendar size={48} className="text-gray-300 mb-4" />
+                            <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                                No Hearing Schedules
+                            </Text>
+                            <Text className="text-gray-400 text-center text-sm">
+                                No hearing schedules have been created for this case yet.
+                            </Text>
+                        </View>
+                    </ScrollView>
                 ) : (
-                    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                    <ScrollView 
+                        className="flex-1" 
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                        contentContainerStyle={{ flexGrow: 1 }}
+                    >
                         <View className="p-6">
                             {hearingSchedules.map((schedule: any, index: number) => {
                                 const hasRemarks = schedule.remark && schedule.remark.rem_id
@@ -592,15 +650,28 @@ export default function LuponConciliationDetails() {
             {comp_id ? (
                 <ComplaintRecordForSummon comp_id={String(comp_id)} />
             ) : (
-                <View className="flex-1 justify-center items-center p-6">
-                    <FileText size={48} className="text-gray-300 mb-4" />
-                    <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                        No Case ID Available
-                    </Text>
-                    <Text className="text-gray-400 text-center text-sm">
-                        Unable to load complaint record without case ID
-                    </Text>
-                </View>
+                <ScrollView 
+                    className="flex-1"
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            colors={['#00a8f0']}
+                            tintColor="#00a8f0"
+                        />
+                    }
+                >
+                    <View className="flex-1 justify-center items-center p-6">
+                        <FileText size={48} className="text-gray-300 mb-4" />
+                        <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                            No Case ID Available
+                        </Text>
+                        <Text className="text-gray-400 text-center text-sm">
+                            Unable to load complaint record without case ID
+                        </Text>
+                    </View>
+                </ScrollView>
             )}
         </View>
     )

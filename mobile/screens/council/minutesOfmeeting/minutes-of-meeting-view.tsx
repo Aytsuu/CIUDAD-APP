@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Linking, Image, Modal, Pressable, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Linking, Image, Modal, Pressable, Alert, RefreshControl } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import PageLayout from '@/screens/_PageLayout';
@@ -17,7 +17,8 @@ export default function MinutesOfMeetingView() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const mom_id = params.mom_id;
-    const { data: momDetails, isLoading } = useGetMinutesOfMeetingDetails(String(mom_id));
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { data: momDetails, isLoading, refetch } = useGetMinutesOfMeetingDetails(String(mom_id));
     const { mutate: archiveData, isPending: archivePending } = useArchiveMinutesOfMeeting();
     const { mutate: deleteData, isPending: deletePending} = useDeleteMinutesofMeeting();
     const { mutate: restoreData, isPending: restorePending} = useRestoreMinutesOfMeeting();
@@ -25,7 +26,14 @@ export default function MinutesOfMeetingView() {
     const [selectedImages, setSelectedImages] = useState<{momsp_url: string, momsp_name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    if(isLoading || archivePending || deletePending || restorePending){
+    // Refresh function
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setIsRefreshing(false);
+    };
+
+    if((isLoading && !isRefreshing) || archivePending || deletePending || restorePending){
         return(
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
@@ -67,15 +75,28 @@ export default function MinutesOfMeetingView() {
     
 
     const handleArchive = (mom_id: string) => {
-        archiveData(mom_id);
+        archiveData(mom_id, {
+            onSuccess: () => {
+                refetch(); // Refetch after archiving
+            }
+        });
     };
 
     const handleRestore = (mom_id: string) => {
-        restoreData(mom_id)
+        restoreData(mom_id, {
+            onSuccess: () => {
+                refetch(); // Refetch after restoring
+            }
+        })
     }
 
     const handleDelete = (mom_id: string) => {
-        deleteData(mom_id)
+        deleteData(mom_id, {
+            onSuccess: () => {
+                // Navigate back after successful deletion
+                router.back();
+            }
+        })
     }
 
     return (
@@ -94,7 +115,19 @@ export default function MinutesOfMeetingView() {
             {momDetails && (
                 <>
                     <View className="flex-1 bg-gray-50">
-                        <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+                        <ScrollView 
+                            className="flex-1 p-6" 
+                            showsVerticalScrollIndicator={false}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={isRefreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={['#00a8f0']}
+                                    tintColor="#00a8f0"
+                                />
+                            }
+                            contentContainerStyle={{ flexGrow: 1 }}
+                        >
                             {/* Meeting Date Section */}
 
                             <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
@@ -278,10 +311,7 @@ export default function MinutesOfMeetingView() {
                         >
                             <View className="flex-1 bg-black/90">
                                 {/* Header with close button and file name */}
-                                <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
-                                    <Text className="text-white text-lg font-medium w-[90%]">
-                                        {selectedImages[currentIndex]?.momsp_name || 'Document'}
-                                    </Text>
+                               <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-end items-center">
                                     <TouchableOpacity onPress={() => setViewImagesModalVisible(false)}>
                                         <X size={24} color="white" />
                                     </TouchableOpacity>

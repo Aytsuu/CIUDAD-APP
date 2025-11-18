@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, RefreshControl } from 'react-native';
 import { MapPin, Calendar, Clock, FileText, Users, User, ChevronDown, ChevronUp, AlertTriangle, ExternalLink } from "lucide-react-native";
 import { useGetComplaintDetails } from "./queries/summonFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
@@ -11,12 +11,20 @@ export function ComplaintRecordForSummon({
 }: {
   comp_id: string;
 }) {
-  const { data: complaintDetails, isLoading, error } = useGetComplaintDetails(comp_id);
+  const { data: complaintDetails, isLoading, error, refetch } = useGetComplaintDetails(comp_id);
   const [openSections, setOpenSections] = useState({
     complainants: true,
     accused: true,
     files: true,
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({
@@ -36,7 +44,7 @@ export function ComplaintRecordForSummon({
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !isRefreshing) {
     return (
       <View className="h-64 justify-center items-center">
         <LoadingState/>
@@ -46,18 +54,31 @@ export function ComplaintRecordForSummon({
 
   if (error || !complaintDetails) {
     return (
-      <View className="flex-1 justify-center items-center p-6">
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="pt-6">
-            <View className="items-center">
-              <AlertTriangle size={32} className="text-red-500 mb-2" />
-              <Text className="text-red-700 text-center font-medium">
-                {(error as Error)?.message || "Complaint not found"}
-              </Text>
-            </View>
-          </CardContent>
-        </Card>
-      </View>
+      <ScrollView 
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#00a8f0']}
+            tintColor="#00a8f0"
+          />
+        }
+      >
+        <View className="flex-1 justify-center items-center p-6">
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="pt-6">
+              <View className="items-center">
+                <AlertTriangle size={32} className="text-red-500 mb-2" />
+                <Text className="text-red-700 text-center font-medium">
+                  {(error as Error)?.message || "Complaint not found"}
+                </Text>
+              </View>
+            </CardContent>
+          </Card>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -170,7 +191,19 @@ export function ComplaintRecordForSummon({
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 bg-gray-50" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={['#00a8f0']}
+          tintColor="#00a8f0"
+        />
+      }
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <View className="p-6 space-y-4">
         {/* Case Overview Card */}
         <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
