@@ -26,8 +26,8 @@ class PostpartumDetailViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostpartumRecord
-        fields = ['ppr_id', 'ppr_lochial_discharges', 'ppr_vit_a_date_given', 'ppr_num_of_pads',
-                 'ppr_mebendazole_date_given', 'ppr_date_of_bf', 'ppr_time_of_bf', 'created_at',
+        fields = ['ppr_id', 'ppr_lochial_discharges', 'ppr_num_of_pads',
+                 'ppr_date_of_bf', 'ppr_time_of_bf', 'created_at',
                  'delivery_date', 'vital_systolic', 'vital_diastolic']
         
     def get_delivery_date(self, obj):
@@ -144,8 +144,8 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostpartumRecord
         fields = [
-            'ppr_lochial_discharges', 'ppr_vit_a_date_given',
-            'ppr_num_of_pads', 'ppr_mebendazole_date_given', 'ppr_date_of_bf',
+            'ppr_lochial_discharges',
+            'ppr_num_of_pads', 'ppr_date_of_bf',
             'ppr_time_of_bf', 'pat_id', 'patrec_type', 'delivery_record', 'assessments',
             'spouse_data', 'vital_bp_systolic', 'vital_bp_diastolic', 'followup_date',
             'followup_description', 'selected_medicines', 'staff_id'
