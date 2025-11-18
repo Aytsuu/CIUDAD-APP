@@ -108,7 +108,8 @@ export type GarbageRequestComplete = {
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
-  conf_staff_conf: boolean | null; 
+  conf_staff_conf: boolean | null;
+  garb_additional_notes?: string; 
   assignment_info?: {
     driver?: string;
     collectors?: string[];

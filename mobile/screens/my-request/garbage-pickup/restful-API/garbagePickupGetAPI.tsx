@@ -183,6 +183,7 @@ export const getCompletedDetailsResident = async (garb_id: string) => {
             garb_location: data.garb_location ?? '',
             garb_waste_type: data.garb_waste_type ?? '',
             garb_created_at: data.garb_created_at ?? '',
+            garb_additional_notes: data.garb_additional_notes || '',
             conf_resident_conf_date: data.confirmation_info?.conf_resident_conf_date ?? null,
             conf_staff_conf_date: data.confirmation_info?.conf_staff_conf_date ?? null,
             conf_resident_conf: data.confirmation_info?.conf_resident_conf ?? null,
