@@ -10,8 +10,8 @@ export const useDeleteResolution = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (res_num: string) => deleteResolution(res_num),
-    onMutate: async (res_num) => {
+    mutationFn: ({ res_num, staffId }: { res_num: string; staffId?: string }) => deleteResolution(res_num, staffId),
+    onMutate: async ({ res_num }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['resData'] });
       
@@ -21,8 +21,11 @@ export const useDeleteResolution = () => {
       return { res_num };
     },
     onSuccess: () => {
-      // Invalidate and refetch
+      // Invalidate and refetch resolution
       queryClient.invalidateQueries({ queryKey: ['resData'] });
+      
+      // Invalidate annual dev plans
+      queryClient.invalidateQueries({ queryKey: ['annualDevPlans'] });
       
       // Show success toast
       toast.success("Resolution deleted", {
@@ -47,6 +50,7 @@ export const useDeleteResolution = () => {
 interface ArchiveResolutionPayload {
   res_num: string;
   res_is_archive: boolean;
+  staffId?: string;
 }
 
 export const useArchiveOrRestoreResolution = (onSuccess?: () => void) => {
@@ -56,7 +60,8 @@ export const useArchiveOrRestoreResolution = (onSuccess?: () => void) => {
     mutationFn: async (data: ArchiveResolutionPayload) => {
       // Single API call to archive/restore the resolution
       return await archiveOrRestoreRes(data.res_num, { 
-        res_is_archive: data.res_is_archive 
+        res_is_archive: data.res_is_archive,
+        staff_id: data.staffId
       });
     },
     onSuccess: (_, data) => {
@@ -72,6 +77,9 @@ export const useArchiveOrRestoreResolution = (onSuccess?: () => void) => {
 
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['resData'] });
+      
+      // Invalidate annual dev plans
+      queryClient.invalidateQueries({ queryKey: ['annualDevPlans'] });
       
       if (onSuccess) onSuccess();
     },

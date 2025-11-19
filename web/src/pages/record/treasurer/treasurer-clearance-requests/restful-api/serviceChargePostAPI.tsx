@@ -15,11 +15,23 @@ export const updateServiceChargeStatus = async (
 
 export const declineServiceChargeRequest = async (
   pay_id: string | number,
-  reason: string
+  reason: string,
+  staff_id?: string | number
 ) => {
-  const response = await api.put(`clerk/treasurer/service-charge-payment/${pay_id}/`, {
+  const payload: {
+    pay_req_status: string;
+    pay_reason: string;
+    staff_id?: string | number;
+  } = {
     pay_req_status: "Declined",
     pay_reason: reason
-  });
+  };
+  
+  // Include staff_id if provided
+  if (staff_id) {
+    payload.staff_id = staff_id;
+  }
+  
+  const response = await api.put(`clerk/treasurer/service-charge-payment/${pay_id}/`, payload);
   return response.data;
 };

@@ -18,23 +18,22 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
   
   
   const filteredPlans = annualDevPlans.filter((plan: any) => {
-    // COMMENTED OUT: Archiving filtering disabled
-    // // STRICT: Check archived status - handle all possible formats
-    // const archivedValue = plan?.dev_archived;
-    // if (archivedValue === true) {
-    //   return false; // Exclude archived
-    // }
-    // 
-    // // STRICT: Also exclude past dates (backend should archive but frontend backup)
-    // if (plan?.dev_date) {
-    //   const planDate = new Date(plan.dev_date);
-    //   const today = new Date();
-    //   today.setHours(0, 0, 0, 0);
-    //   planDate.setHours(0, 0, 0, 0);
-    //   if (planDate < today) {
-    //     return false; // Exclude past dates
-    //   }
-    // }
+    // STRICT: Check archived status - handle all possible formats
+    const archivedValue = plan?.dev_archived;
+    if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+      return false; // Exclude archived
+    }
+    
+    // STRICT: Also exclude past dates (backend should archive but frontend backup)
+    if (plan?.dev_date) {
+      const planDate = new Date(plan.dev_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      planDate.setHours(0, 0, 0, 0);
+      if (planDate < today) {
+        return false; // Exclude past dates
+      }
+    }
     
     const isMandated = Boolean(plan?.dev_mandated);
     const hasProposal = devIdsWithProposals.has(plan.dev_id);
@@ -198,10 +197,6 @@ const parsePerformanceIndicator = (raw: any) => {
   }
 };
 
-const formatBudget = (total: any) => {
-  return total ? `₱${Number(total).toFixed(2)}` : "-";
-};
-
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', { 
     day: 'numeric', 
@@ -210,8 +205,6 @@ const formatDate = (date: string) => {
   });
 };
 
-
-// Column definitions and constants moved from constants directory
 const annualDevPlanColumns = [
   { accessorKey: "title", header: "GAD Mandate" },
   { accessorKey: "project", header: "Project/Activity" },
@@ -224,58 +217,6 @@ const annualDevPlanColumns = [
     }
   },
   { accessorKey: "responsible_person", header: "Responsible Person" },
-  { 
-    accessorKey: "budget_items", 
-    header: "Budget Breakdown",
-    cell: ({ row }: { row: { original: any } }) => {
-      const budgetItems = row.original.budget_items || [];
-      if (!Array.isArray(budgetItems) || budgetItems.length === 0) {
-        return (
-          <div className="text-gray-600">
-            <p className="font-semibold mb-2">GAD Budget:</p>
-            <p className="text-lg">{formatBudget(row.original.total)}</p>
-          </div>
-        );
-      }
-      
-      return (
-        <div className="w-full">
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b border-gray-300">CLIENT FOCUSED</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b border-gray-300">pax/quantity</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b border-gray-300">amount (PHP)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b border-gray-300">total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {budgetItems.map((item: any, index: number) => {
-                  const quantity = Number(item.quantity || item.pax || 0);
-                  const price = Number(item.price || item.amount || 0);
-                  const itemTotal = quantity * price;
-                  
-                  return (
-                    <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="px-3 py-2 text-sm text-gray-900 border-b border-gray-200">{item.name || "-"}</td>
-                      <td className="px-3 py-2 text-sm text-center text-gray-700 border-b border-gray-200">{quantity}</td>
-                      <td className="px-3 py-2 text-sm text-right text-gray-700 border-b border-gray-200">₱{price.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 border-b border-gray-200">₱{itemTotal.toFixed(2)}</td>
-                    </tr>
-                  );
-                })}
-                <tr className="bg-blue-50">
-                  <td colSpan={3} className="px-3 py-2 text-sm font-semibold text-gray-900 text-right border-t-2 border-gray-400">Total GAD Budget:</td>
-                  <td className="px-3 py-2 text-sm font-bold text-blue-700 text-right border-t-2 border-gray-400">{formatBudget(row.original.total)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-  },
 ];
 
 const wasteEventColumns = [
@@ -371,9 +312,12 @@ export const useGADCalendarSource = (enabled: boolean = true) => {
   const { data: projectProposals = [] } = useGetProjectProposals(1, 1000, undefined, false, undefined, { enabled });
   const { data: resolutions = [] } = useResolution(1, 1000);
   
-  // Determine the start year based on plans with proposals and resolutions
-  const startYear = useMemo(() => {
-    if (!enabled) return new Date().getFullYear();
+  // Determine the start and end years based on plans with proposals and resolutions
+  const { startYear, endYear } = useMemo(() => {
+    if (!enabled) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
     
     const allPlans = safeExtractArray(allAnnualDevPlansData);
     const proposalsList = safeExtractArray(projectProposals);
@@ -398,15 +342,24 @@ export const useGADCalendarSource = (enabled: boolean = true) => {
       })
       .filter((year): year is number => year !== null);
     
-    // Return the minimum year, or current year if no qualifying plans found
-    return years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+    if (years.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
+    
+    // Return both min and max years to include future plans
+    const currentYear = new Date().getFullYear();
+    const maxYear = Math.max(...years, currentYear); // Include current year at minimum, or max plan year
+    return { 
+      startYear: Math.min(...years), 
+      endYear: maxYear 
+    };
   }, [allAnnualDevPlansData, projectProposals, resolutions, enabled]);
   
-  // Dynamically generate years from start year to current year
+  // Dynamically generate years from start year to end year (includes future years)
   const yearsToFetch = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
-  }, [startYear]);
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  }, [startYear, endYear]);
   
   // Fetch data for all years using useQueries for cleaner parallel fetching (including archived)
   const yearQueries = useQueries({
@@ -419,33 +372,30 @@ export const useGADCalendarSource = (enabled: boolean = true) => {
   });
   
   // Combine all year plans into a single array using helper function
-  // COMMENTED OUT: Archiving filtering disabled
   const annualDevPlans = useMemo(() => {
     if (!enabled) return [];
     const allPlans = yearQueries.map(query => safeExtractArray(query.data)).flat();
-    // COMMENTED OUT: Archiving disabled
-    // const today = new Date();
-    // today.setHours(0, 0, 0, 0);
-    // 
-    // return allPlans.filter((plan: any) => {
-    //   // STRICT archived check
-    //   const archivedValue = plan?.dev_archived;
-    //   if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
-    //     return false;
-    //   }
-    //   
-    //   // STRICT past date check
-    //   if (plan?.dev_date) {
-    //     const planDate = new Date(plan.dev_date);
-    //     planDate.setHours(0, 0, 0, 0);
-    //     if (planDate < today) {
-    //       return false;
-    //     }
-    //   }
-    //   
-    //   return true;
-    // });
-    return allPlans;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return allPlans.filter((plan: any) => {
+      // STRICT archived check
+      const archivedValue = plan?.dev_archived;
+      if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+        return false;
+      }
+      
+      // STRICT past date check
+      if (plan?.dev_date) {
+        const planDate = new Date(plan.dev_date);
+        planDate.setHours(0, 0, 0, 0);
+        if (planDate < today) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
   }, [yearQueries, enabled]);
   
   const devIdsWithProposals = useMemo(() => {
@@ -492,8 +442,8 @@ function GADActivityPage() {
   const { data: projectProposals = [], isLoading: isProjectProposalsLoading } = useGetProjectProposals();
   const { data: resolutions = [], isLoading: isResolutionsLoading } = useResolution();
   
-  // Determine the start year based on plans with proposals and resolutions
-  const startYear = useMemo(() => {
+  // Determine the start and end years based on plans with proposals and resolutions
+  const { startYear, endYear } = useMemo(() => {
     const allPlans = safeExtractArray(allAnnualDevPlansData);
     const proposalsList = safeExtractArray(projectProposals);
     const resolutionsList = safeExtractArray(resolutions);
@@ -517,13 +467,23 @@ function GADActivityPage() {
       })
       .filter((year): year is number => year !== null);
     
-    return years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+    if (years.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
+    
+    // Return both min and max years to include future plans
+    const currentYear = new Date().getFullYear();
+    const maxYear = Math.max(...years, currentYear); // Include current year at minimum, or max plan year
+    return { 
+      startYear: Math.min(...years), 
+      endYear: maxYear 
+    };
   }, [allAnnualDevPlansData, projectProposals, resolutions]);
   
   const yearsToFetch = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
-  }, [startYear]);
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  }, [startYear, endYear]);
   
   const yearQueries = useQueries({
     queries: yearsToFetch.map((year) => ({
@@ -534,33 +494,29 @@ function GADActivityPage() {
     })),
   });
   
-  // Combine plans from all years using helper function
-  // COMMENTED OUT: Archiving filtering disabled
   const annualDevPlans = useMemo(() => {
     const allPlans = yearQueries.map(query => safeExtractArray(query.data)).flat();
-    // COMMENTED OUT: Archiving disabled
-    // const today = new Date();
-    // today.setHours(0, 0, 0, 0);
-    // 
-    // return allPlans.filter((plan: any) => {
-    //   // STRICT archived check
-    //   const archivedValue = plan?.dev_archived;
-    //   if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
-    //     return false;
-    //   }
-    //   
-    //   // STRICT past date check
-    //   if (plan?.dev_date) {
-    //     const planDate = new Date(plan.dev_date);
-    //     planDate.setHours(0, 0, 0, 0);
-    //     if (planDate < today) {
-    //       return false;
-    //     }
-    //   }
-    //   
-    //   return true;
-    // });
-    return allPlans;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return allPlans.filter((plan: any) => {
+      // STRICT archived check
+      const archivedValue = plan?.dev_archived;
+      if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+        return false;
+      }
+      
+      // STRICT past date check
+      if (plan?.dev_date) {
+        const planDate = new Date(plan.dev_date);
+        planDate.setHours(0, 0, 0, 0);
+        if (planDate < today) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
   }, [yearQueries]);
   
   const isAnnualDevPlansLoading = yearQueries.some(query => query.isLoading);

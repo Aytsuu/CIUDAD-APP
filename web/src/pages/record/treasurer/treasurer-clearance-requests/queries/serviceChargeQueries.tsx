@@ -3,10 +3,10 @@ import { getTreasurerServiceCharges, getServiceChargeRate, PurposeRate, createSe
 import { updateServiceChargeStatus, declineServiceChargeRequest } from '../restful-api/serviceChargePostAPI';
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
-export function useTreasurerServiceCharges(search?: string, page?: number, pageSize?: number) {
+export function useTreasurerServiceCharges(search?: string, page?: number, pageSize?: number, tab?: "unpaid" | "paid" | "declined") {
   return useQuery<ServiceChargeResponse>({
-    queryKey: ['treasurer-service-charges', search, page, pageSize],
-    queryFn: () => getTreasurerServiceCharges(search, page, pageSize),
+    queryKey: ['treasurer-service-charges', search, page, pageSize, tab],
+    queryFn: () => getTreasurerServiceCharges(search, page, pageSize, tab),
     staleTime: 60 * 1000,
   });
 }
@@ -45,8 +45,8 @@ export function useDeclineServiceChargeRequest(onSuccess?: () => void) {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ pay_id, reason }: { pay_id: string | number; reason: string }) => 
-      declineServiceChargeRequest(pay_id, reason),
+    mutationFn: ({ pay_id, reason, staff_id }: { pay_id: string | number; reason: string; staff_id?: string | number }) => 
+      declineServiceChargeRequest(pay_id, reason, staff_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
       showSuccessToast('Request Declined!');

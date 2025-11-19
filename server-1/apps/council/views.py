@@ -502,41 +502,94 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         instance = serializer.save()
     
         try:
-            from apps.act_log.utils import create_activity_log, log_model_change
+            from apps.act_log.utils import create_activity_log, log_model_change, resolve_staff_from_request
             from apps.administration.models import Staff
             
-            # Try to get staff from request data first
-            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            # Resolve staff using the utility function
+            staff, staff_identifier = resolve_staff_from_request(request)
             
-            # If not in request data, try to get from request.user.staff
-            if not staff_id:
-                try:
-                    user_staff = getattr(request.user, 'staff', None)
-                    if user_staff:
-                        staff_id = getattr(user_staff, 'staff_id', None)
-                except:
-                    pass
-            
-            if staff_id:
-                # Format staff_id properly (pad with leading zeros if needed)
-                if isinstance(staff_id, str) and len(staff_id) < 11:
-                    staff_id = staff_id.zfill(11)
-                elif isinstance(staff_id, int):
-                    staff_id = str(staff_id).zfill(11)
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Build detailed description for resolution creation
+                description_parts = []
                 
-                staff = Staff.objects.filter(staff_id=staff_id).first()
+                # Resolution number
+                if instance.res_num:
+                    description_parts.append(f"Resolution #{instance.res_num}")
                 
-                if staff:
-                    # Use log_model_change for consistency with ActivityLogMixin
-                    log_model_change(instance, 'create', staff)
-                else:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                # Resolution title
+                if instance.res_title:
+                    description_parts.append(f"Title: {instance.res_title}")
+                
+                # Date approved
+                if instance.res_date_approved:
+                    date_str = instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(instance.res_date_approved, str) else instance.res_date_approved
+                    description_parts.append(f"Date Approved: {date_str}")
+                
+                # Area of focus
+                if instance.res_area_of_focus and len(instance.res_area_of_focus) > 0:
+                    areas = ", ".join([area.upper() for area in instance.res_area_of_focus])
+                    description_parts.append(f"Area of Focus: {areas}")
+                
+                # Related project proposal and dev plan
+                if instance.gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts.append(f"Linked to GAD Development Plan: {project_title}")
+                    except Exception:
+                        pass
+                
+                description = ". ".join(description_parts) if description_parts else "Resolution record created"
+                
+                create_activity_log(
+                    act_type="Resolution Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.res_num)
+                )
+                
+                # Always log GAD Development Plan Updated when a resolution is created with a project proposal
+                if instance.gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        # Build description with dev plan details - highlight the dev plan
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts = [f"GAD Development Plan ({project_title})"]
+                        
+                        if dev_plan.dev_date:
+                            date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                            description_parts.append(f"Date: {date_str}")
+                        if dev_plan.dev_client:
+                            description_parts.append(f"Client: {dev_plan.dev_client}")
+                        
+                        # Check if dev plan already had a proposal (it should since we're linking to one)
+                        description_parts.append("now has both project proposal and resolution")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="GAD Development Plan Updated",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(dev_plan.dev_id)
+                        )
+                        logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated with resolution")
+                    except Exception as check_error:
+                        logger.debug(f"Error logging dev plan update for resolution: {str(check_error)}")
+                        # Don't fail if this check fails
             else:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.debug(f"Skipping activity log for Resolution create: No valid staff")
+                logger.warning(
+                    f"No valid staff with staff_id resolved for activity logging "
+                    f"(input id: {staff_identifier or 'not provided'})"
+                )
         except Exception as log_error:
             import logging
             logger = logging.getLogger(__name__)
@@ -559,47 +612,105 @@ class DeleteResolutionView(generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
+        # Store resolution details before deletion (for GAD Development Plan logging)
+        gpr_id = instance.gpr_id
+        
         # Log the activity if staff exists with staff_id (before deletion)
         try:
-            from apps.act_log.utils import log_model_change
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
             from apps.administration.models import Staff
+            import logging
+            logger = logging.getLogger(__name__)
             
-            # Try to get staff from request data first
-            staff_id = request.data.get('staff_id') or request.data.get('staff')
+            # Try to get staff_id from request body first, then fall back to resolve_staff_from_request
+            staff = None
+            staff_id_from_request = request.data.get('staff_id')
             
-            # If not in request data, try to get from request.user.staff
-            if not staff_id:
+            if staff_id_from_request:
                 try:
-                    user_staff = getattr(request.user, 'staff', None)
-                    if user_staff:
-                        staff_id = getattr(user_staff, 'staff_id', None)
-                except:
-                    pass
+                    staff = Staff.objects.get(staff_id=staff_id_from_request)
+                    logger.info(f"Found staff from request for deletion: {staff.staff_id}")
+                except Staff.DoesNotExist:
+                    logger.warning(f"Staff with staff_id {staff_id_from_request} not found, falling back to resolve_staff_from_request")
             
-            if staff_id:
-                # Format staff_id properly (pad with leading zeros if needed)
-                if isinstance(staff_id, str) and len(staff_id) < 11:
-                    staff_id = staff_id.zfill(11)
-                elif isinstance(staff_id, int):
-                    staff_id = str(staff_id).zfill(11)
+            # Fall back to resolve_staff_from_request if staff_id not in request or not found
+            if not staff:
+                staff, staff_identifier = resolve_staff_from_request(request)
+                logger.info(f"Staff from resolve_staff_from_request for deletion: staff={staff}, staff_identifier={staff_identifier}")
+            
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Build detailed description for resolution deletion
+                description_parts = []
                 
-                staff = Staff.objects.filter(staff_id=staff_id).first()
+                # Resolution number
+                if instance.res_num:
+                    description_parts.append(f"Resolution #{instance.res_num}")
                 
-                if staff:
-                    # Log before deletion
-                    log_model_change(instance, 'delete', staff)
-                else:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                # Resolution title
+                if instance.res_title:
+                    description_parts.append(f"Title: {instance.res_title}")
+                
+                # Date approved
+                if instance.res_date_approved:
+                    date_str = instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(instance.res_date_approved, str) else instance.res_date_approved
+                    description_parts.append(f"Date Approved: {date_str}")
+                
+                # Area of focus
+                if instance.res_area_of_focus and len(instance.res_area_of_focus) > 0:
+                    areas = ", ".join([area.upper() for area in instance.res_area_of_focus])
+                    description_parts.append(f"Area of Focus: {areas}")
+                
+                description_parts.append("Status: Deleted")
+                
+                description = ". ".join(description_parts) if description_parts else "Resolution deleted"
+                
+                create_activity_log(
+                    act_type="Resolution Delete",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.res_num)
+                )
+                logger.info(f"Activity logged: Resolution {instance.res_num} deleted")
+                
+                # Log GAD Development Plan Updated if resolution is linked to a project proposal
+                if gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        if dev_plan:
+                            # Build description with dev plan details - highlight the dev plan
+                            project_title = dev_plan.dev_project or 'N/A'
+                            description_parts = [f"GAD Development Plan ({project_title})"]
+                            
+                            if dev_plan.dev_date:
+                                date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                                description_parts.append(f"Date: {date_str}")
+                            if dev_plan.dev_client:
+                                description_parts.append(f"Client: {dev_plan.dev_client}")
+                            
+                            description_parts.append("resolution deleted")
+                            
+                            description = ". ".join(description_parts)
+                            
+                            create_activity_log(
+                                act_type="GAD Development Plan Updated",
+                                act_description=description,
+                                staff=staff,
+                                record_id=str(dev_plan.dev_id)
+                            )
+                            logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated - resolution deleted")
+                    except Exception as dev_plan_error:
+                        logger.warning(f"Error logging dev plan update for resolution deletion: {str(dev_plan_error)}")
+                        # Don't fail if this check fails
             else:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.debug(f"Skipping activity log for Resolution delete: No valid staff")
+                logger.warning(f"No valid staff found for logging resolution deletion. Staff: {staff}")
         except Exception as log_error:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to log activity for resolution deletion: {str(log_error)}")
+            logger.error(f"Failed to log activity for resolution deletion: {str(log_error)}", exc_info=True)
             # Don't fail the request if logging fails
         
         # Proceed with deletion
@@ -614,9 +725,222 @@ class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_gpr_id = instance.gpr_id  # Store old gpr_id before update
+        old_res_is_archive = instance.res_is_archive  # Store old archive status before update
+        
+        # Store old values for comparison
+        old_values = {
+            'res_title': instance.res_title,
+            'res_date_approved': instance.res_date_approved,
+            'res_area_of_focus': instance.res_area_of_focus,
+            'gpr_id': instance.gpr_id,
+            'res_is_archive': instance.res_is_archive
+        }
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Refresh from database to ensure we have the latest relationships
+            updated_instance.refresh_from_db()
+            
+            # Build detailed description for resolution update
+            try:
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    description_parts = []
+                    
+                    # Resolution number (always include)
+                    if updated_instance.res_num:
+                        description_parts.append(f"Resolution #{updated_instance.res_num}")
+                    
+                    # Track what changed
+                    changes = []
+                    
+                    # Title changed
+                    if 'res_title' in serializer.validated_data and old_values['res_title'] != updated_instance.res_title:
+                        changes.append(f"Title: '{old_values['res_title']}' → '{updated_instance.res_title}'")
+                    
+                    # Date approved changed
+                    if 'res_date_approved' in serializer.validated_data and old_values['res_date_approved'] != updated_instance.res_date_approved:
+                        old_date = old_values['res_date_approved'].strftime('%Y-%m-%d') if old_values['res_date_approved'] and not isinstance(old_values['res_date_approved'], str) else str(old_values['res_date_approved'])
+                        new_date = updated_instance.res_date_approved.strftime('%Y-%m-%d') if updated_instance.res_date_approved and not isinstance(updated_instance.res_date_approved, str) else str(updated_instance.res_date_approved)
+                        changes.append(f"Date Approved: '{old_date}' → '{new_date}'")
+                    
+                    # Area of focus changed
+                    if 'res_area_of_focus' in serializer.validated_data and old_values['res_area_of_focus'] != updated_instance.res_area_of_focus:
+                        old_areas = ", ".join([area.upper() for area in old_values['res_area_of_focus']]) if old_values['res_area_of_focus'] else 'None'
+                        new_areas = ", ".join([area.upper() for area in updated_instance.res_area_of_focus]) if updated_instance.res_area_of_focus else 'None'
+                        changes.append(f"Area of Focus: '{old_areas}' → '{new_areas}'")
+                    
+                    # Archive status changed - include resolution details
+                    if old_res_is_archive != updated_instance.res_is_archive:
+                        # Include resolution details when archiving/restoring
+                        if updated_instance.res_title:
+                            changes.append(f"Title: {updated_instance.res_title}")
+                        if updated_instance.res_date_approved:
+                            date_str = updated_instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(updated_instance.res_date_approved, str) else updated_instance.res_date_approved
+                            changes.append(f"Date Approved: {date_str}")
+                        if updated_instance.res_area_of_focus and len(updated_instance.res_area_of_focus) > 0:
+                            areas = ", ".join([area.upper() for area in updated_instance.res_area_of_focus])
+                            changes.append(f"Area of Focus: {areas}")
+                        if updated_instance.res_is_archive:
+                            changes.append("Status: Archived")
+                        else:
+                            changes.append("Status: Restored")
+                    
+                    # Project proposal link changed
+                    if old_gpr_id != updated_instance.gpr_id:
+                        if not old_gpr_id and updated_instance.gpr_id:
+                            try:
+                                from apps.gad.models import DevelopmentPlan
+                                project_proposal = updated_instance.gpr_id
+                                dev_plan = project_proposal.dev
+                                project_title = dev_plan.dev_project or 'N/A'
+                                changes.append(f"Linked to GAD Development Plan: {project_title}")
+                            except Exception:
+                                changes.append("Linked to project proposal")
+                        elif old_gpr_id and not updated_instance.gpr_id:
+                            changes.append("Unlinked from project proposal")
+                        elif old_gpr_id and updated_instance.gpr_id and old_gpr_id != updated_instance.gpr_id:
+                            changes.append("Project proposal link changed")
+                    
+                    if changes:
+                        description_parts.extend(changes)
+                        description = ". ".join(description_parts)
+                    else:
+                        description = f"Resolution #{updated_instance.res_num} updated"
+                    
+                    create_activity_log(
+                        act_type="Resolution Update",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(updated_instance.res_num)
+                    )
+            except Exception as log_error:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Error logging resolution update: {str(log_error)}")
+                # Don't fail if logging fails
+            
+            # Check if gpr_id was added (was None, now has value)
+            if not old_gpr_id and updated_instance.gpr_id:
+                try:
+                    from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                    from apps.gad.models import DevelopmentPlan
+                    
+                    staff, staff_identifier = resolve_staff_from_request(request)
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        project_proposal = updated_instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        # Build description with dev plan details - highlight the dev plan
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts = [f"GAD Development Plan ({project_title})"]
+                        
+                        if dev_plan.dev_date:
+                            date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                            description_parts.append(f"Date: {date_str}")
+                        if dev_plan.dev_client:
+                            description_parts.append(f"Client: {dev_plan.dev_client}")
+                        
+                        description_parts.append("now has both project proposal and resolution")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="GAD Development Plan Updated",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(dev_plan.dev_id)
+                        )
+                        logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} now has both proposal and resolution (via resolution update)")
+                except Exception as log_error:
+                    logger.debug(f"Error logging dev plan proposal/resolution link: {str(log_error)}")
+                    # Don't fail if logging fails
+            
+            # Log GAD Development Plan Updated when resolution is archived/restored
+            # Check if archive status changed and resolution is linked to a project proposal
+            archive_status_changed = old_res_is_archive != updated_instance.res_is_archive
+            has_project_proposal = updated_instance.gpr_id is not None
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Resolution archive/restore check: archive_status_changed={archive_status_changed}, has_project_proposal={has_project_proposal}, old_archive={old_res_is_archive}, new_archive={updated_instance.res_is_archive}, gpr_id={updated_instance.gpr_id}")
+            
+            if archive_status_changed and has_project_proposal:
+                try:
+                    from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                    from apps.gad.models import DevelopmentPlan
+                    from apps.administration.models import Staff
+                    
+                    # Try to get staff_id from request body first, then fall back to resolve_staff_from_request
+                    staff = None
+                    staff_id_from_request = request.data.get('staff_id')
+                    logger.info(f"Attempting to get staff: staff_id_from_request={staff_id_from_request}, request.data={request.data}")
+                    
+                    if staff_id_from_request:
+                        try:
+                            staff = Staff.objects.get(staff_id=staff_id_from_request)
+                            logger.info(f"Found staff from request: {staff.staff_id}")
+                        except Staff.DoesNotExist:
+                            logger.warning(f"Staff with staff_id {staff_id_from_request} not found, falling back to resolve_staff_from_request")
+                    
+                    # Fall back to resolve_staff_from_request if staff_id not in request or not found
+                    if not staff:
+                        staff, staff_identifier = resolve_staff_from_request(request)
+                        logger.info(f"Staff from resolve_staff_from_request: staff={staff}, staff_identifier={staff_identifier}")
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        logger.info(f"Staff is valid, proceeding with logging. staff_id={staff.staff_id}")
+                        project_proposal = updated_instance.gpr_id
+                        if project_proposal:
+                            dev_plan = project_proposal.dev
+                            if dev_plan:
+                                # Build description with dev plan details - highlight the dev plan
+                                project_title = dev_plan.dev_project or 'N/A'
+                                description_parts = [f"GAD Development Plan ({project_title})"]
+                                
+                                if dev_plan.dev_date:
+                                    date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                                    description_parts.append(f"Date: {date_str}")
+                                if dev_plan.dev_client:
+                                    description_parts.append(f"Client: {dev_plan.dev_client}")
+                                
+                                # Add archive/restore status
+                                if updated_instance.res_is_archive:
+                                    description_parts.append("resolution archived")
+                                else:
+                                    description_parts.append("resolution restored")
+                                
+                                description = ". ".join(description_parts)
+                                
+                                create_activity_log(
+                                    act_type="GAD Development Plan Updated",
+                                    act_description=description,
+                                    staff=staff,
+                                    record_id=str(dev_plan.dev_id)
+                                )
+                                logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated - resolution {'archived' if updated_instance.res_is_archive else 'restored'}")
+                            else:
+                                logger.warning(f"Dev plan not found for project proposal {project_proposal.gpr_id}")
+                        else:
+                            logger.warning(f"Project proposal not found for resolution {updated_instance.res_num}")
+                    else:
+                        logger.warning(f"No valid staff found for logging resolution archive/restore. Staff: {staff}, hasattr staff_id: {hasattr(staff, 'staff_id') if staff else 'N/A'}, staff_id value: {getattr(staff, 'staff_id', None) if staff else 'N/A'}")
+                except Exception as log_error:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error logging dev plan archive/restore update: {str(log_error)}", exc_info=True)
+                    # Don't fail if logging fails
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -911,9 +1235,16 @@ class OrdinanceListView(generics.ListCreateAPIView):
             
             # Get staff member from the ordinance or request
             staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Created",
@@ -923,7 +1254,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
                 )
                 logger.info(f"Activity logged for ordinance creation: {ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance creation logging: {ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance creation: {str(log_error)}")
@@ -949,10 +1280,17 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or request.data.get('staff')
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Updated",
@@ -962,7 +1300,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                 )
                 logger.info(f"Activity logged for ordinance update: {updated_ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance update logging: {updated_ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance update: {str(log_error)}")
@@ -982,9 +1320,16 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             
             # Get staff member from the ordinance or request
             staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Deleted",
@@ -994,7 +1339,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                 )
                 logger.info(f"Activity logged for ordinance deletion: {ordinance_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance deletion logging: {ordinance_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance deletion: {str(log_error)}")
@@ -1020,9 +1365,16 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
             
             # Get staff member from the ordinance or request
             staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Archived",
@@ -1032,7 +1384,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
                 )
                 logger.info(f"Activity logged for ordinance archiving: {ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance archiving logging: {ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance archiving: {str(log_error)}")

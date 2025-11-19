@@ -5,6 +5,58 @@ import inspect
 import os
 from rest_framework.response import Response
 
+
+def resolve_staff_from_request(request):
+    """
+    Attempt to resolve a Staff instance associated with the incoming request.
+    Priority:
+      1. Explicit identifiers in request data or query params (staff_id, staffId, staff)
+      2. Authenticated user staff relation
+
+    Returns:
+        tuple[Staff | None, str | None]: (resolved_staff, normalized_staff_id)
+    """
+    normalized_id = None
+
+    def _normalize(value):
+        if isinstance(value, Staff):
+            return value
+        if value is None:
+            return None
+        staff_str = str(value).strip()
+        if not staff_str:
+            return None
+        if staff_str.isdigit() and len(staff_str) < 11:
+            staff_str = staff_str.zfill(11)
+        return staff_str
+
+    data_sources = []
+    for attr in ('data', 'query_params'):
+        source = getattr(request, attr, None)
+        if source is not None and hasattr(source, 'get'):
+            data_sources.append(source)
+
+    for source in data_sources:
+        for key in ('staff_id', 'staffId', 'staff'):
+            value = source.get(key)
+            normalized = _normalize(value)
+            if isinstance(normalized, Staff):
+                return normalized, normalized.staff_id
+            if isinstance(normalized, str):
+                normalized_id = normalized
+                staff = Staff.objects.filter(staff_id=normalized_id).first()
+                if staff:
+                    return staff, normalized_id
+        if normalized_id:
+            break
+
+    user = getattr(request, 'user', None)
+    staff = getattr(user, 'staff', None) if user else None
+    if staff is not None and getattr(staff, 'staff_id', None):
+        return staff, staff.staff_id
+
+    return None, normalized_id
+
 def create_activity_log(
     act_type,
     act_description,
@@ -38,17 +90,27 @@ def create_activity_log(
     
     frame = inspect.currentframe().f_back
     module_name = "unknown"
-    
-    if frame:
-      
+
+    # Walk back the stack until we find the actual Django app module
+    while frame:
         filename = frame.f_code.co_filename
         if filename:
-            
             path_parts = filename.replace('\\', '/').split('/')
+            candidate = None
             for i, part in enumerate(path_parts):
                 if part == 'apps' and i + 1 < len(path_parts):
-                    module_name = path_parts[i + 1]
+                    candidate = path_parts[i + 1]
                     break
+            if candidate:
+                module_name = candidate
+                # Skip helper modules such as act_log itself
+                if module_name != 'act_log':
+                    break
+                # Reset to unknown so we keep searching upwards
+                module_name = "unknown"
+        frame = frame.f_back
+        if module_name != "unknown":
+            break
     
     act_action = "custom"
     act_type_lower = act_type.lower()
@@ -153,12 +215,15 @@ def log_model_change(model_instance, action, staff, description=None, **kwargs):
 
 class ActivityLogMixin:
     """Reusable mixin to automatically log create/update/destroy actions."""
+    def _resolve_logging_staff(self):
+        staff, _ = resolve_staff_from_request(self.request)
+        return staff
+
     def perform_create(self, serializer):
         instance = serializer.save()
         try:
-            staff = getattr(self.request.user, 'staff', None)
+            staff = self._resolve_logging_staff()
             
-            # Only log if staff exists and has a staff_id
             if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
                 log_model_change(instance, 'create', staff)
             else:
@@ -237,9 +302,8 @@ class ActivityLogMixin:
 
         instance = serializer.save()
         try:
-            staff = getattr(self.request.user, 'staff', None)
+            staff = self._resolve_logging_staff()
             
-            # Only log if staff exists and has a staff_id
             if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
                 # Debug logging
                 import logging
@@ -273,8 +337,7 @@ class ActivityLogMixin:
         instance = self.get_object()
         response = super().destroy(request, *args, **kwargs)
         try:
-            staff = getattr(self.request.user, 'staff', None)
-            # Only log if staff exists and has a staff_id
+            staff = self._resolve_logging_staff()
             if staff is not None and hasattr(staff, 'staff_id') and staff.staff_id is not None:
                 # instance might be deleted; log with id only if accessible
                 log_model_change(instance, 'delete', staff)
