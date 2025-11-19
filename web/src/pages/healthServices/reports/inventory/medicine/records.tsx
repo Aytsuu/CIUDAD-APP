@@ -20,7 +20,7 @@ export default function MonthlyMedicineDetails() {
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: apiResponse, isLoading, error } = useMonthlyMedicineRecords(month, currentPage, pageSize, searchTerm);
@@ -47,6 +47,53 @@ export default function MonthlyMedicineDetails() {
     return records.filter((item) => item.med_name.toLowerCase().includes(lower));
   }, [records, searchTerm]);
 
+  // Format quantity unit - convert "boxes" to "pcs"
+  const formatQtyUnit = (unit: string) => {
+    return unit.toLowerCase() === "boxes" ? "pcs" : unit;
+  };
+
+  // Format quantity display - divide by pcs for boxes to get actual box count
+  const formatQuantityDisplay = (item: any, field: "opening" | "received" | "dispensed" | "closing") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      // Backend already multiplied by pcs, so we divide to get box count
+      const boxCount = quantity / pcs;
+      return (
+        <div className="text-center">
+          {boxCount} boxes ({quantity} pcs)
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center">
+        {quantity} {unit}
+      </div>
+    );
+  };
+
+  // Format quantity for export (keep as pieces for consistency)
+  const formatQuantityForExport = (item: any, field: "opening" | "received" | "dispensed" | "closing") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      const boxCount = quantity / pcs;
+      return `${boxCount} boxes (${quantity} pcs)`;
+    }
+
+    return `${quantity} ${unit}`;
+  };
+
+  // Format unit for display - convert boxes to pcs
+  const formatUnitDisplay = (item: any) => {
+    return formatQtyUnit(item.unit);
+  };
+
   // Pagination calculations (for on-screen table only)
   const totalPages = Math.ceil(filteredRecords.length / pageSize);
   const paginatedRecords = useMemo(() => {
@@ -64,12 +111,11 @@ export default function MonthlyMedicineDetails() {
     filteredRecords.map((item) => ({
       "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "Medicine Name": item.med_name,
-      Opening: item.opening,
-      Received: item.received,
-      Dispensed: item.dispensed,
-      Closing: item.closing,
-      Unit: item.unit,
-      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
+      "Stocks On Hand": formatQuantityForExport(item, "opening"),
+      "Stock Available": formatQuantityForExport(item, "closing"),
+      "Qty Used": `${item.dispensed} ${formatUnitDisplay(item)}`,
+      "Qty Wasted": `${item.wasted} ${formatUnitDisplay(item)}`,
+      Expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
     }));
 
   // Export handlers
@@ -77,18 +123,7 @@ export default function MonthlyMedicineDetails() {
   const handleExportExcel = () => exportToExcel(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   const handleExportPDF = () => exportToPDF("landscape");
 
-  // Print handler prints full filtered table (printable area)
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
-  };
-
-  const tableHeader = ["Date Received","Medicine Name", "Stocks On Hand", "Stock Available", "Qty Used", "Unit", "Expiry"];
+  const tableHeader = ["Date Received", "Medicine Name", "Stocks On Hand", "Stock Available", "Qty Used", "Qty Wasted", "Expiry"];
 
   return (
     <div>
@@ -113,10 +148,6 @@ export default function MonthlyMedicineDetails() {
 
         <div className="flex gap-2 items-center">
           <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-          <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4" />
-            <span>Print</span>
-          </Button>
         </div>
       </div>
 
@@ -127,8 +158,8 @@ export default function MonthlyMedicineDetails() {
             navigate("/medicine-expired-out-of-stock-summary/details", {
               state: {
                 month,
-                monthName,
-              },
+                monthName
+              }
             })
           }
           className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
@@ -153,7 +184,7 @@ export default function MonthlyMedicineDetails() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[1, 10, 15, 20].map((size) => (
+              {[15].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -180,7 +211,7 @@ export default function MonthlyMedicineDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px",
+            fontSize: "12px"
           }}
         >
           <div className="text-center mb-6">
@@ -192,24 +223,32 @@ export default function MonthlyMedicineDetails() {
           <div className="bg-white p-4 mt-4">
             {isLoading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
               </div>
             ) : (
               <TableLayout
-              header={tableHeader}
-              rows={paginatedRecords.map((item) => [
-                item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
-                item.med_name,
-                item.opening.toString(),
-                item.closing.toString(),
-                item.dispensed.toString(),
-                item.unit,
-                item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
-              ])}
-              tableClassName="border rounded-lg w-full"
-              bodyCellClassName="border border-gray-600 text-center text-xs p-2"
-              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+                header={tableHeader}
+                rows={paginatedRecords.map((item) => [
+                  item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+                  item.med_name,
+                  // Custom rendering for Stocks On Hand (opening)
+                  <div key={`opening-${item.med_name}`}>{formatQuantityDisplay(item, "opening")}</div>,
+                  // Custom rendering for Stock Available (closing)
+                  <div key={`closing-${item.med_name}`}>{formatQuantityDisplay(item, "closing")}</div>,
+                  // Custom rendering for Qty Used (dispensed)
+                  <div key={`dispensed-${item.med_name}`}>
+                    {Math.abs(item.dispensed - item.wasted)} {formatUnitDisplay(item)}
+                  </div>,
+                  <div key={`wasted-${item.med_name}`}>
+                    {item.wasted} {formatUnitDisplay(item)}
+                  </div>,
+                  item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
+                ])}
+                tableClassName="border rounded-lg w-full"
+                bodyCellClassName="border border-gray-600 text-center text-xs p-2"
+                headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+                defaultRowCount={15}
               />
             )}
           </div>

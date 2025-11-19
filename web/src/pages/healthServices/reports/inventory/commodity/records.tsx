@@ -1,15 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2, AlertTriangle } from "lucide-react";
-import { exportToCSV, exportToExcel } from "../../export/export-report";
+import { ChevronLeft, Search, Loader2, AlertTriangle } from "lucide-react";
+import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
-import { useMonthlyCommodityRecords } from "./queries/fetch"; // commodity hook here
+import { useMonthlyCommodityRecords } from "./queries/fetch";
 
 export default function MonthlyCommodityDetails() {
   const location = useLocation();
@@ -19,7 +19,7 @@ export default function MonthlyCommodityDetails() {
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: apiResponse, isLoading, error } = useMonthlyCommodityRecords(month, currentPage, pageSize, searchTerm);
@@ -39,6 +39,63 @@ export default function MonthlyCommodityDetails() {
     }
   }, [error]);
 
+
+
+  // Format quantity display - divide by pcs for boxes to get actual box count
+  const formatQuantityDisplay = (item: any, field: "opening" | "received" | "dispensed" | "closing" | "wasted") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      // Backend already multiplied by pcs, so we divide to get box count
+      const boxCount = quantity / pcs;
+      return (
+        <div className="text-center">
+          {boxCount} boxes ({quantity} pcs)
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center">
+        {quantity} {unit}
+      </div>
+    );
+  };
+
+  // Format dispensed quantity - ALWAYS show in pcs for dispensed
+  const formatDispensedDisplay = (item: any) => {
+    const dispensed = item.dispensed || 0;
+    return (
+      <div className="text-center">
+        {dispensed} pcs
+      </div>
+    );
+  };
+
+  // Format quantity for export (keep as pieces for consistency)
+  const formatQuantityForExport = (item: any, field: "opening" | "received" | "dispensed" | "closing" | "wasted") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      const boxCount = quantity / pcs;
+      return `${boxCount} boxes (${quantity} pcs)`;
+    }
+
+    return `${quantity} ${unit}`;
+  };
+
+  // Format dispensed for export - ALWAYS show in pcs
+  const formatDispensedForExport = (item: any) => {
+    const dispensed = item.dispensed || 0;
+    return `${dispensed} pcs`;
+  };
+
+  
+
   // Filter records by search term (client-side filtering on com_name)
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return records;
@@ -53,6 +110,16 @@ export default function MonthlyCommodityDetails() {
     return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [filteredRecords, currentPage, pageSize]);
 
+  // Create empty rows to maintain 15 rows display
+  const displayRecords = useMemo(() => {
+    const records = [...paginatedRecords];
+    // Add empty rows if we have less than 15 records
+    while (records.length < 15) {
+      records.push(null); // Add null for empty rows
+    }
+    return records;
+  }, [paginatedRecords]);
+
   const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalItems);
 
@@ -60,48 +127,80 @@ export default function MonthlyCommodityDetails() {
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
       "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
-
       "Commodity Name": item.com_name,
-      "Stock on Hand Available (beg. Balance)": item.opening,
-      "Dispensed (DOH)": item.received_from === "DOH" ? item.dispensed : 0,
-      "Dispensed (CHD)": item.received_from === "CHD" ? item.dispensed : 0,
-      "Dispensed (OTHERS)": item.received_from !== "DOH" && item.received_from !== "CHD" ? item.dispensed : 0,
-      "Stock on Hand Present Month": item.closing,
+      "Stock on Hand Available (beg. Balance)": formatQuantityForExport(item, "opening"),
+      "Dispensed (DOH)": item.received_from === "DOH" ? formatDispensedForExport(item) : "0 pcs",
+      "Dispensed (CHD)": item.received_from === "CHD" ? formatDispensedForExport(item) : "0 pcs",
+      "Dispensed (OTHERS)": item.received_from !== "DOH" && item.received_from !== "CHD" ? formatDispensedForExport(item) : "0 pcs",
+      "Stock on Hand Present Month": formatQuantityForExport(item, "closing"),
       "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
     }));
 
   // Export handlers
   const handleExportCSV = () => exportToCSV(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
-
   const handleExportExcel = () => exportToExcel(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const handleExportPDF = ()=>exportToPDF("landscape")
 
-  // const handleExportPDF = () => exportToPDF( `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
-  // Print handler
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
-  };
-
-  // Format the table data
+  // Format the table data with proper quantity formatting
   const formatTableData = (items: any[]) => {
-    return items.map((item) => ({
-      date_received: item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
-      commodity: item.com_name,
-      stockOnHand: item.opening.toString(),
-      dispensed: {
-        doh: item.received_from === "DOH" ? item.dispensed.toString() : "0",
-        chd: item.received_from === "CHD" ? item.dispensed.toString() : "0",
-        others: item.received_from !== "DOH" && item.received_from !== "CHD" ? item.dispensed.toString() : "0",
-      },
-      presentMonth: item.closing.toString(),
-      expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
-    }));
+    return items.map((item, index) => {
+      // If it's an empty row (null), return empty cells
+      if (item === null) {
+        return {
+          date_received: <div className="text-center p-2"> </div>,
+          commodity: <div className="text-center"> </div>,
+          stockOnHand: <div className="text-center"> </div>,
+          dispensed: {
+            doh: <div className="text-center"> </div>,
+            chd: <div className="text-center"> </div>,
+            others: <div className="text-center"> </div>,
+          },
+          presentMonth: <div className="text-center"> </div>,
+          expiry: <div className="text-center"> </div>,
+        };
+      }
+
+      // Regular item with data
+      return {
+        date_received: item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+        commodity: item.com_name,
+        stockOnHand: (
+          <div key={`opening-${item.com_name}-${index}`}>
+            {formatQuantityDisplay(item, "opening")}
+          </div>
+        ),
+        dispensed: {
+          doh: item.received_from === "DOH" ? (
+            <div key={`doh-${item.com_name}-${index}`}>
+              {formatDispensedDisplay(item)}
+            </div>
+          ) : (
+            <div className="text-center">0 pcs</div>
+          ),
+          chd: item.received_from === "CHD" ? (
+            <div key={`chd-${item.com_name}-${index}`}>
+              {formatDispensedDisplay(item)}
+            </div>
+          ) : (
+            <div className="text-center">0 pcs</div>
+          ),
+          others: item.received_from !== "DOH" && item.received_from !== "CHD" ? (
+            <div key={`others-${item.com_name}-${index}`}>
+              {formatDispensedDisplay(item)}
+            </div>
+          ) : (
+            <div className="text-center">0 pcs</div>
+          ),
+        },
+        presentMonth: (
+          <div key={`closing-${item.com_name}-${index}`}>
+            {formatQuantityDisplay(item, "closing")}
+          </div>
+        ),
+        expiry: item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A",
+      };
+    });
   };
 
   return (
@@ -126,11 +225,8 @@ export default function MonthlyCommodityDetails() {
         </div>
 
         <div className="flex gap-2 items-center">
-          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={() => {}} className="border-gray-200 hover:bg-gray-50" />
-          <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4" />
-            <span>Print</span>
-          </Button>
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
+         
         </div>
       </div>
 
@@ -149,7 +245,7 @@ export default function MonthlyCommodityDetails() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10].map((size) => (
+              {[15].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -206,7 +302,6 @@ export default function MonthlyCommodityDetails() {
                     className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
                   >
                     View Commodity that Need Restocks
-                    {/* Import AlertTriangle from lucide-react if not already */}
                     <AlertTriangle className="h-4 w-4" />
                   </Button>
                 </div>
@@ -242,7 +337,7 @@ export default function MonthlyCommodityDetails() {
                     </tr>
                   </thead>
                   <tbody>
-                    {formatTableData(paginatedRecords).map((row, rowIndex) => (
+                    {formatTableData(displayRecords).map((row, rowIndex) => (
                       <tr key={rowIndex}>
                         <td className="border border-gray-600 text-center text-xs p-2">{row.date_received}</td>
                         <td className="border border-gray-600 text-center text-xs p-2">{row.commodity}</td>

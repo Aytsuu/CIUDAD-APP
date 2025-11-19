@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
 import { FetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
+import { unitOptions } from "./options";
+
 
 export default function FirstAidStockModal() {
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ export default function FirstAidStockModal() {
     defaultValues: {
       fa_id: "",
       category: "",
-      finv_qty_unit: "boxes",
+      finv_qty_unit: "pcs",
       finv_qty: undefined,
       finv_pcs: undefined,
       expiry_date: new Date().toISOString().split("T")[0],
@@ -105,12 +107,7 @@ export default function FirstAidStockModal() {
               control={form.control}
               name="finv_qty_unit"
               label="Unit"
-              options={[
-                { id: "boxes", name: "Boxes" },
-                { id: "bottles", name: "Bottles" },
-                { id: "packs", name: "Packs" },
-                { id: "pcs", name: "Pc/s" }
-              ]}
+              options={unitOptions}
             />
           </div>
 

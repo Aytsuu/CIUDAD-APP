@@ -2,6 +2,18 @@ import { ColumnDef } from "@tanstack/react-table";
 
 export const getArchivedStockColumns = (): ColumnDef<any>[] => [
   {
+    accessorKey: "archivedDate",
+    header: "Archived Date",
+    cell: ({ row }) => {
+      const archivedDate = row.original.archivedDate;
+      return (
+        <div className="text-center">
+          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "batchNumber",
     header: "Batch Number",
     cell: ({ row }) => {
@@ -139,18 +151,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
       );
     },
   },
-  {
-    accessorKey: "archivedDate",
-    header: "Archived Date",
-    cell: ({ row }) => {
-      const archivedDate = row.original.archivedDate;
-      return (
-        <div className="text-center">
-          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "reason",
     header: "Reason",

@@ -15,6 +15,10 @@ import { useLoading } from "@/context/LoadingContext";
 import { useOPTMonthlyReport } from "./queries/fetch";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 
+// Export utilities
+import { exportToPDF } from "../export/export-report";
+import { ExportDropdown } from "../export/export-dropdown";
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -75,6 +79,107 @@ export default function OPTMonthlyDetails() {
     window.print();
     document.body.innerHTML = originalContents;
     window.location.reload();
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF("landscape");
+  };
+
+  const handleExportCSV = () => {
+    if (!reportData?.report) return;
+
+    const { WFA, HFA, WFH } = reportData.report;
+    const ageGroups = ["0-5", "6-11", "12-23", "24-35", "36-47", "48-59", "60-71"];
+
+    const csvData = [];
+
+    // Add headers
+    csvData.push([
+      "Age Group",
+      "WFA Normal M",
+      "WFA Normal F",
+      "WFA Severely Underweight M",
+      "WFA Severely Underweight F",
+      "WFA Underweight M",
+      "WFA Underweight F",
+      "WFA Overweight M",
+      "WFA Overweight F",
+      "WFA Total M",
+      "WFA Total F",
+      "HFA Normal M",
+      "HFA Normal F",
+      "HFA Tall M",
+      "HFA Tall F",
+      "HFA SST M",
+      "HFA SST F",
+      "HFA Stunted M",
+      "HFA Stunted F",
+      "HFA Total M",
+      "HFA Total F",
+      "WFH Normal M",
+      "WFH Normal F",
+      "WFH Wasted M",
+      "WFH Wasted F",
+      "WFH Overweight M",
+      "WFH Overweight F",
+      "WFH Total M",
+      "WFH Total F"
+    ]);
+
+    // Add data rows
+    ageGroups.forEach((ageGroup) => {
+      const row = [
+        ageGroup + " months",
+        WFA.age_groups[ageGroup]?.N?.Male || 0,
+        WFA.age_groups[ageGroup]?.N?.Female || 0,
+        WFA.age_groups[ageGroup]?.SUW?.Male || 0,
+        WFA.age_groups[ageGroup]?.SUW?.Female || 0,
+        WFA.age_groups[ageGroup]?.UW?.Male || 0,
+        WFA.age_groups[ageGroup]?.UW?.Female || 0,
+        WFA.age_groups[ageGroup]?.OW?.Male || 0,
+        WFA.age_groups[ageGroup]?.OW?.Female || 0,
+        WFA.age_groups[ageGroup]?.Total?.Male || 0,
+        WFA.age_groups[ageGroup]?.Total?.Female || 0,
+        HFA.age_groups[ageGroup]?.N?.Male || 0,
+        HFA.age_groups[ageGroup]?.N?.Female || 0,
+        HFA.age_groups[ageGroup]?.T?.Male || 0,
+        HFA.age_groups[ageGroup]?.T?.Female || 0,
+        HFA.age_groups[ageGroup]?.SST?.Male || 0,
+        HFA.age_groups[ageGroup]?.SST?.Female || 0,
+        HFA.age_groups[ageGroup]?.ST?.Male || 0,
+        HFA.age_groups[ageGroup]?.ST?.Female || 0,
+        HFA.age_groups[ageGroup]?.Total?.Male || 0,
+        HFA.age_groups[ageGroup]?.Total?.Female || 0,
+        WFH.age_groups[ageGroup]?.N?.Male || 0,
+        WFH.age_groups[ageGroup]?.N?.Female || 0,
+        (WFH.age_groups[ageGroup]?.W?.Male || 0) + (WFH.age_groups[ageGroup]?.SW?.Male || 0),
+        (WFH.age_groups[ageGroup]?.W?.Female || 0) + (WFH.age_groups[ageGroup]?.SW?.Female || 0),
+        (WFH.age_groups[ageGroup]?.OW?.Male || 0) + (WFH.age_groups[ageGroup]?.OB?.Male || 0),
+        (WFH.age_groups[ageGroup]?.OW?.Female || 0) + (WFH.age_groups[ageGroup]?.OB?.Female || 0),
+        WFH.age_groups[ageGroup]?.Total?.Male || 0,
+        WFH.age_groups[ageGroup]?.Total?.Female || 0
+      ];
+      csvData.push(row);
+    });
+
+    // Convert to CSV string
+    const csvContent = csvData.map((row) => row.join(",")).join("\n");
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `OPT_Report_${monthName}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportExcel = () => {
+    // For now, we'll use CSV as Excel - you can implement proper Excel export if needed
+    handleExportCSV();
   };
 
   const handleClearFilter = () => {
@@ -329,16 +434,16 @@ export default function OPTMonthlyDetails() {
             </tr>
 
             {/* Grand Summary Row */}
-            <tr className="font-bold">
+            <tr className="font-bold bg-gray-100">
               <td className="border border-black p-2 text-xs">GRAND TOTAL</td>
-              <td colSpan={10} className="border border-black p-2 text-center text-xs">
-                WFA: {wfaTotals.Male + wfaTotals.Female}
+              <td colSpan={9} className="border border-black px-1 py-3 text-center text-xs">
+                <span className="font-bold">WFA: {wfaTotals.Male + wfaTotals.Female}</span>
               </td>
-              <td colSpan={10} className="border border-black p-2 text-center text-xs">
-                HFA: {hfaTotals.Male + hfaTotals.Female}
+              <td colSpan={9} className="border border-black px-1 py-3 text-center text-xs">
+                <span className="font-bold">HFA: {hfaTotals.Male + hfaTotals.Female}</span>
               </td>
-              <td colSpan={8} className="border border-black p-2 text-center text-xs">
-                WFH: {wfhTotals.Male + wfhTotals.Female}
+              <td colSpan={7} className="border border-black px-1 py-3 text-center text-xs">
+                <span className="font-bold">WFH: {wfhTotals.Male + wfhTotals.Female}</span>
               </td>
             </tr>
           </tbody>
@@ -359,106 +464,142 @@ export default function OPTMonthlyDetails() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
+      <div className="w-full bg-white flex-1 flex flex-col overflow-hidden">
+        {/* Filter Section */}
+        <div className="flex flex-col p-4 border bg-white py-4 w-full flex-shrink-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input 
+                  placeholder="Search by sitio..." 
+                  className="pl-10 w-full" 
+                  value={sitioSearch} 
+                  onChange={(e) => handleManualSitioSearch(e.target.value)} 
+                />
+              </div>
 
-      <div className="flex flex-col p-4 border bg-white py-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input placeholder="Search by sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
-            </div>
+              {/* Sitio Filter Dropdown */}
+              <div className="relative">
+                <Button onClick={() => setShowSitioFilter(!showSitioFilter)} className="gap-2" variant="outline">
+                  <Filter className="h-4 w-4" />
+                  Filter Sitios
+                  {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
+                </Button>
 
-            {/* Sitio Filter Dropdown */}
-            <div className="relative">
-              <Button onClick={() => setShowSitioFilter(!showSitioFilter)} className="gap-2" variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter Sitios
-                {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
-              </Button>
-
-              {showSitioFilter && (
-                <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
-                  {isLoadingSitios ? (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Loading sitios...
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-2 mb-2 p-2 border-b">
-                        <Checkbox id="select-all-sitios" checked={selectedSitios.length === sitios.length && sitios.length > 0} onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)} />
-                        <label htmlFor="select-all-sitios" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Select All
-                        </label>
+                {showSitioFilter && (
+                  <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
+                    {isLoadingSitios ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading sitios...
                       </div>
-
-                      {filteredSitios.map((sitio: any) => (
-                        <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
-                          <Checkbox id={`sitio-${sitio.id}`} checked={selectedSitios.includes(sitio.sitio_name)} onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)} />
-                          <label htmlFor={`sitio-${sitio.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {sitio.sitio_name}
+                    ) : (
+                      <>
+                        <div className="flex items-center space-x-2 mb-2 p-2 border-b">
+                          <Checkbox 
+                            id="select-all-sitios" 
+                            checked={selectedSitios.length === sitios.length && sitios.length > 0} 
+                            onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)} 
+                          />
+                          <label 
+                            htmlFor="select-all-sitios" 
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            Select All
                           </label>
                         </div>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
+
+                        {filteredSitios.map((sitio: any) => (
+                          <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                            <Checkbox 
+                              id={`sitio-${sitio.id}`} 
+                              checked={selectedSitios.includes(sitio.sitio_name)} 
+                              onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)} 
+                            />
+                            <label 
+                              htmlFor={`sitio-${sitio.id}`} 
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {sitio.sitio_name}
+                            </label>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2 items-center flex-shrink-0">
+              <ExportDropdown 
+                onExportCSV={handleExportCSV} 
+                onExportExcel={handleExportExcel} 
+                onExportPDF={handleExportPDF} 
+                className="border-gray-200 hover:bg-gray-50" 
+              />
             </div>
           </div>
 
-          <Button onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print Report
-          </Button>
+          {/* Display selected sitios as chips */}
+          {selectedSitios.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-sm font-medium">Filtered by sitios:</span>
+              {selectedSitios.map((sitio) => (
+                <span key={sitio} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {sitio}
+                  <button onClick={() => handleSitioSelection(sitio, false)} className="ml-1.5 rounded-full flex-shrink-0">
+                    ×
+                  </button>
+                </span>
+              ))}
+              <button onClick={handleClearFilter} className="text-xs text-blue-600 hover:text-blue-800 ml-2">
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Display selected sitios as chips */}
-        {selectedSitios.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="text-sm font-medium">Filtered by sitios:</span>
-            {selectedSitios.map((sitio) => (
-              <span key={sitio} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {sitio}
-                <button onClick={() => handleSitioSelection(sitio, false)} className="ml-1.5 rounded-full flex-shrink-0">
-                  ×
-                </button>
-              </span>
-            ))}
-            <button onClick={handleClearFilter} className="text-xs text-blue-600 hover:text-blue-800 ml-2">
-              Clear all
-            </button>
-          </div>
-        )}
-      </div>
+        {/* Printable area for PDF export */}
+        <div className="flex-1  flex justify-center p-4">
+          <div
+            id="printable-area"
+            className="bg-white p-6 shadow-lg"
+            style={{
+            height: "13in",
+              width: "15in",
+              fontSize: "12px"
+            }}
+          >
+            <div className="text-center mb-6">
+              <h2 className="font-bold uppercase tracking-wide text-lg">OPT SUMMARY</h2>
+              <h3 className="text-lg font-bold">CEBU CITY HEALTH DEPARTMENT</h3>
+              <h4 className="text-base font-semibold mb-4">NUTRITION PROGRAM</h4>
+              <div className="text-sm mb-4">
+                <p>
+                  <strong>OPT Month:</strong> {monthName}
+                </p>
+                {selectedSitios.length > 0 && (
+                  <p>
+                    <strong>Filtered by Sitio:</strong> {selectedSitios.join(", ")}
+                  </p>
+                )}
+              </div>
+            </div>
 
-      <div id="printable-area" className="bg-white h-full border">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold">OPT SUMMARY</h2>
-          <h3 className="text-lg font-bold">CEBU CITY HEALTH DEPARTMENT</h3>
-          <h4 className="text-base font-semibold mb-4">NUTRITION PROGRAM</h4>
-          <div className="text-sm mb-4">
-            <p>
-              <strong>OPT Month:</strong> {monthName}
-            </p>
-            {selectedSitios.length > 0 && (
-              <p>
-                <strong>Filtered by Sitio:</strong> {selectedSitios.join(", ")}
-              </p>
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading report...</span>
+              </div>
+            ) : reportData ? (
+              <>{renderOPTSummaryTable()}</>
+            ) : (
+              <div className="text-center text-gray-500">No data available</div>
             )}
           </div>
         </div>
-
-        {isLoading ? (
-          <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading report...</span>
-          </div>
-        ) : reportData ? (
-          <>{renderOPTSummaryTable()}</>
-        ) : (
-          <div className="text-center text-gray-500">No data available</div>
-        )}
       </div>
     </div>
   );

@@ -89,7 +89,7 @@ def notify_assigned_staff_on_pending_status(sender, instance, created, **kwargs)
                 title=title,
                 message=message,
                 recipients=[staff_rp_id],  # Send to staff's resident profile ID
-                notif_type="reminder",
+                notif_type="REMINDER",
                 web_route="/medical-consultation",  # Web route for consultation page
                 web_params={"medrec_id": instance.medrec_id},
                 mobile_route=None,  # No mobile route (web only)

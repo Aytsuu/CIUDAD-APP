@@ -1,17 +1,18 @@
 import { ColumnDef } from "@tanstack/react-table";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const CommodityTransactionColumns = (): ColumnDef<any>[] => [
-  // {
-  //   accessorKey: "id",
-  //   header: "#",
-  //   cell: ({ row }) => (
-  //     <div className="flex justify-center">
-  //       <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-  //         {row.original.comt_id}
-  //       </div>
-  //     </div>
-  //   ),
-  // },
+  {
+    accessorKey: "id",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+          {row.original.comt_id}
+        </div>
+      </div>
+    ),
+  },
   {
     accessorKey: "com_name",
     header: "Commodity Name",
@@ -24,9 +25,13 @@ export const CommodityTransactionColumns = (): ColumnDef<any>[] => [
     accessorKey: "comt_action",
     header: "Action",
   },
-  {
-    accessorKey: "staff",
+{
+    accessorKey: "staff", 
     header: "Staff",
+    cell: ({ row }) => {
+      const staffName = row.original.staff;
+      return toTitleCase(staffName);
+    }
   },
   {
     accessorKey: "created_at",

@@ -41,7 +41,7 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
     : [];
 
   // Take top 10 and group the rest for chart
-  const topN = 1;
+  const topN = 10;
   const topIllnesses = allIllnesses.slice(0, topN);
   const othersCount = allIllnesses.slice(topN).reduce((sum, item) => sum + item.count, 0);
 
@@ -53,13 +53,13 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
   const totalIllnesses = allIllnesses.length;
   const otherIllnessesCount = totalIllnesses - topN;
 
-  const getLinkState = (medicineName?: string, itemCount?: number) => ({
-    medicineName: medicineName || "",
-    itemCount: itemCount || data?.total_records,
-    monthlyrcplist_id: data?.monthly_report_id,
-    month: currentMonth,
-    monthName: format(currentDate, "MMMM yyyy"),
-  });
+  // const getLinkState = (medicineName?: string, itemCount?: number) => ({
+  //   medicineName: medicineName || "",
+  //   itemCount: itemCount || data?.total_records,
+  //   monthlyrcplist_id: data?.monthly_report_id,
+  //   month: currentMonth,
+  //   monthName: format(currentDate, "MMMM yyyy"),
+  // });
 
   // Calculate additional statistics
   const getIllnessStats = (illness: { name: string; count: number }, rank: number) => {
@@ -288,14 +288,14 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
             {/* Table Container - This is the scrollable area */}
             <div className="flex-1 overflow-hidden bg-white">
               <div className="h-full overflow-y-auto pb-4" style={{ maxHeight: "calc(95vh - 300px)" }}>
-                <div className="flex justify-end p-2">
+                {/* <div className="flex justify-end p-2">
                   <Link to="/reports/monthly-morbidity-summary/records" state={getLinkState()}>
                     <Button variant="outline" className="flex items-center gap-2 text-sm font-medium italic text-blue-800">
                       View Complete Details With Age Group Filter
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                </div>
+                </div> */}
 
                 <table className="w-full">
                   <thead className="bg-gray-50 sticky top-0 z-10">
