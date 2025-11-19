@@ -132,11 +132,19 @@ export const getColumns = (handleArchiveInventory: (firstAid: any) => void, onOp
     }
   },
   {
-    accessorKey: "administered",
+    accessorKey: "qty_used",
     header: "Qty Used",
     cell: ({ row }) => {
       const expired = row.original.isExpired;
-      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.administered}</div>;
+      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.qty_used}</div>;
+    }
+  },
+  {
+    accessorKey: "wasted",
+    header: "Qty Wasted",
+    cell: ({ row }) => {
+      const expired = row.original.isExpired;
+      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wasted}</div>;
     }
   },
 

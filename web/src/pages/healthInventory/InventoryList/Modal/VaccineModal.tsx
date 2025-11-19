@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
 import { VaccineSchema, type VaccineType } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { Label } from "@/components/ui/label";
@@ -18,6 +17,7 @@ import { timeUnits, vaccineTypes } from "./types";
 import { fetchAgeGroups } from "@/pages/healthServices/agegroup/queries/fetch";
 import { isDuplicateVaccine, isDuplicateVaccineList } from "./duplicateChecker";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Combobox } from "@/components/ui/combobox";
 
 interface VaccineModalProps {
   mode: "add" | "edit";
@@ -37,8 +37,8 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
     default: any[];
     formatted: { id: string; name: string }[];
   }>({ default: [], formatted: [] });
-  const [loadingAgeGroups, setLoadingAgeGroups] = useState(false);
   const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>(isEditMode && vaccineData?.agegrp_id && vaccineData.agegrp_id !== "N/A" ? String(vaccineData.agegrp_id) : "");
+  const [loadingAgeGroups, setLoadingAgeGroups] = useState(false);
 
   const defaultFormData: VaccineType =
     isEditMode && vaccineData
@@ -113,7 +113,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
       }
     };
     loadAgeGroups();
-  }, [isEditMode, form]);
+  }, [isEditMode, form, vaccineData?.agegrp_id]);
 
   const handleAgeGroupSelection = (id: string) => {
     setSelectedAgeGroupId(id);
@@ -223,6 +223,36 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
     }
   };
 
+  // Adjusted the onSubmit function to match the expected form data types
+  const onSubmit = async (data: {
+    vaccineName: string;
+    noOfDoses: number;
+    type: string;
+    ageGroup: string;
+    intervals: number[];
+    timeUnits: string[];
+    routineFrequency?: { interval: number; unit: string };
+  }) => {
+    try {
+      // Validate intervals and timeUnits fields
+      if (!data.intervals || !Array.isArray(data.intervals) || data.intervals.length === 0) {
+        toast.error("Intervals field is required and must contain at least one entry.");
+        return;
+      }
+
+      if (!data.timeUnits || !Array.isArray(data.timeUnits) || data.timeUnits.length === 0) {
+        toast.error("Time Units field is required and must contain at least one entry.");
+        return;
+      }
+
+      // Proceed with form submission
+      await submitVaccine(data);
+      toast.success("Form submitted successfully.");
+    } catch (error) {
+      toast.error("An error occurred during form submission: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+
   const isSaveButtonDisabled = () => {
     const values = getValues();
     const hasRequiredFields = values.vaccineName && values.ageGroup && values.type;
@@ -255,22 +285,14 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
         <div className="space-y-3 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <p className="text-sm text-yellow-700">Conditional vaccine details</p>
           <div className="bg-white p-4 rounded-lg border">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Vaccine Name:</span>
-                <span className="text-sm font-medium">{watch("vaccineName") || "Not specified"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Age Group:</span>
-                <span className="text-sm font-medium">{selectedAgeGroup ? `${selectedAgeGroup.agegroup_name} (${selectedAgeGroup.min_age}-${selectedAgeGroup.max_age} ${selectedAgeGroup.time_unit})` : "Not selected"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Type:</span>
-                <span className="text-sm font-medium text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Conditional</span>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-sm font-medium">
+                {selectedAgeGroup
+                  ? `${selectedAgeGroup.agegroup_name} (${selectedAgeGroup.min_age}-${selectedAgeGroup.max_age} ${selectedAgeGroup.time_unit})`
+                  : "No age group selected"}
+              </span>
             </div>
           </div>
-          <p className="text-xs text-yellow-800">Note: Administered based on healthcare provider assessment.</p>
         </div>
       );
     }
@@ -317,7 +339,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
 
       <div className="flex-1 overflow-y-auto px-4">
         <Form {...form}>
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormInput control={control} name="vaccineName" label="Vaccine Name" placeholder="Enter vaccine name" />
@@ -326,9 +348,9 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
                   <Combobox
                     options={ageGroups.formatted}
                     value={loadingAgeGroups ? "" : isEditMode ? selectedAgeGroupId : ageGroup}
-                    onChange={(id) => {
-                      if (id) {
-                        isEditMode ? handleAgeGroupSelection(id) : form.setValue("ageGroup", id);
+                    onChange={(value: string | undefined) => {
+                      if (value) {
+                        handleAgeGroupSelection(value);
                       }
                     }}
                     triggerClassName="w-full mt-2"

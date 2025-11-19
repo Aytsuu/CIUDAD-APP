@@ -8,13 +8,33 @@ import { Button } from "@/components/ui/button/button";
 import { useConsultationHistory } from "../queries/fetch";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
+// Define lab tests configuration (move this outside the component if used elsewhere)
+const labTests = {
+  asRequired: [
+    { name: "is_cbc", label: "CBC w/ platelet count" },
+    { name: "is_urinalysis", label: "Urinalysis" },
+    { name: "is_fecalysis", label: "Fecalysis" },
+    { name: "is_sputum_microscopy", label: "Sputum Microscopy" },
+    { name: "is_creatine", label: "Creatinine" },
+    { name: "is_hba1c", label: "HbA1C" },
+  ],
+  mandatory: [
+    { name: "is_chestxray", label: "Chest X-Ray", age: "≥10" },
+    { name: "is_papsmear", label: "Pap smear", age: "≥20" },
+    { name: "is_fbs", label: "FBS", age: "≥40" },
+    { name: "is_oralglucose", label: "Oral Glucose Tolerance Test", age: "≥40" },
+    { name: "is_lipidprofile", label: "Lipid profile (Total Cholesterol, HDL and LDL Cholesterol, Triglycerides)", age: "≥40" },
+    { name: "is_fecal_occult_blood", label: "Fecal Occult Blood", age: "≥50" },
+    { name: "is_ecg", label: "ECG", age: "≥60" },
+  ],
+};
+
 export function ConsultationHistoryTable({ patientId, currentConsultationId }: { patientId: string; currentConsultationId: number | undefined }) {
   const pageSize = 3;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Call the hook directly here
-  // In your ConsultationHistoryTable component
   const { data, isLoading } = useConsultationHistory(patientId, currentPage, pageSize, undefined, currentConsultationId);
+
   // Process the data with safe access
   const relevantHistory = useMemo(() => {
     if (!data?.results) return [];
@@ -30,7 +50,7 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
       vital_signs: history.vital_signs || {},
       bmi_details: history.bmi_details || {},
       staff_details: history.staff_details || {},
-      find_details: history.find_details || {}
+      find_details: history.find_details || {},
     }));
 
     // If no current consultation ID, return all records
@@ -54,13 +74,40 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
+  // Helper function to get lab test names that are true
+  const getLabTests = (labDetails: any) => {
+    if (!labDetails) return [];
+
+    const tests: string[] = [];
+
+    // Check asRequired tests
+    labTests.asRequired.forEach((test) => {
+      if (labDetails[test.name] === true) {
+        tests.push(test.label);
+      }
+    });
+
+    // Check mandatory tests
+    labTests.mandatory.forEach((test) => {
+      if (labDetails[test.name] === true) {
+        tests.push(test.label);
+      }
+    });
+
+    // Add others field if present
+    if (labDetails.others && labDetails.others.trim() !== "") {
+      tests.push(labDetails.others);
+    }
+
+    return tests;
+  };
+
   const tableData = useMemo(() => {
     if (relevantHistory.length <= 0) return [];
 
     const tableRows = [
       { attribute: "Bhw Assigned", type: "data" },
       { attribute: "Doctor Assigned", type: "data" },
-
       { attribute: "Chief Complaint", type: "data" },
       { attribute: "Blood Pressure", type: "data" },
       { attribute: "Temperature", type: "data" },
@@ -70,14 +117,15 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
       { attribute: "WT", type: "data" },
       { attribute: "Subjective Summary", type: "data" },
       { attribute: "Objective Summary", type: "data" },
+      { attribute: "Diagnosis", type: "data" },
       { attribute: "Plan Treatment Summary", type: "data" },
-      { attribute: "Diagnosis", type: "data" }
+      { attribute: "Laboratory Details", type: "data" }, // NEW ROW ADDED HERE
     ];
 
     return tableRows.map((row) => {
       const rowData: any = {
         attribute: row.attribute,
-        type: row.type
+        type: row.type,
       };
 
       relevantHistory.forEach((record: any) => {
@@ -104,6 +152,10 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
           rowData[recordId] = record.bmi_details?.height ?? "N/A";
         } else if (row.attribute === "WT") {
           rowData[recordId] = record.bmi_details?.weight ?? "N/A";
+        } else if (row.attribute === "Laboratory Details") {
+          // NEW CASE FOR LAB DETAILS
+          const labTests = getLabTests(record.find_details?.lab_details);
+          rowData[recordId] = labTests.length > 0 ? labTests.join(", ") : "N/A";
         } else if (row.attribute === "Subjective Summary") {
           rowData[recordId] = record.find_details?.subj_summary || "N/A";
         } else if (row.attribute === "Objective Summary") {
@@ -113,9 +165,13 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
         } else if (row.attribute === "Diagnosis") {
           rowData[recordId] = record.find_details?.assessment_summary || "N/A";
         } else if (row.attribute === "Bhw Assigned") {
-          rowData[recordId] = toTitleCase(`${record.staff_details?.fname || ""} ${record.staff_details?.mname || ""} ${record.staff_details?.lname || ""} ${record.staff_details?.suffix || ""}`.trim()) || "N/A";
+          rowData[recordId] =
+            toTitleCase(`${record.staff_details?.fname || ""} ${record.staff_details?.mname || ""} ${record.staff_details?.lname || ""} ${record.staff_details?.suffix || ""}`.trim()) || "N/A";
         } else if (row.attribute === "Doctor Assigned") {
-          rowData[recordId] = toTitleCase(`${record.assigned_to_details?.fname || ""} ${record.assigned_to_details?.mname || ""} ${record.assigned_to_details?.lname || ""} ${record.assigned_to_details?.suffix || ""}`.trim()) || "N/A";
+          rowData[recordId] =
+            toTitleCase(
+              `${record.assigned_to_details?.fname || ""} ${record.assigned_to_details?.mname || ""} ${record.assigned_to_details?.lname || ""} ${record.assigned_to_details?.suffix || ""}`.trim()
+            ) || "N/A";
         } else {
           rowData[recordId] = "N/A";
         }
@@ -132,9 +188,13 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
         header: "",
         cell: ({ row }) => {
           const rowType = row.original.type;
-          return rowType === "heading" ? <div className="font-semibold text-gray-900 text-sm sm:text-base w-[200px] min-w-[200px] max-w-[200px]">{row.getValue("attribute")}</div> : <div className="font-medium text-gray-700 text-sm sm:text-base px-4">{row.getValue("attribute")}</div>;
-        }
-      }
+          return rowType === "heading" ? (
+            <div className="font-semibold text-gray-900 text-sm sm:text-base w-[200px] min-w-[200px] max-w-[200px]">{row.getValue("attribute")}</div>
+          ) : (
+            <div className="font-medium text-gray-700 text-sm sm:text-base px-4">{row.getValue("attribute")}</div>
+          );
+        },
+      },
     ];
 
     relevantHistory.forEach((record: any) => {
@@ -147,7 +207,11 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
         header: () => {
           return (
             <div className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-              {isCurrent ? <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">{format(new Date(record.created_at || Date.now()), "MMM d, yyyy")} (Current)</span> : format(new Date(record.created_at || Date.now()), "MMM d, yyyy")}
+              {isCurrent ? (
+                <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">{format(new Date(record.created_at || Date.now()), "MMM d, yyyy")} (Current)</span>
+              ) : (
+                format(new Date(record.created_at || Date.now()), "MMM d, yyyy")
+              )}
             </div>
           );
         },
@@ -156,6 +220,32 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
           const rowData = row.original;
 
           if (rowData.attribute === "Chief Complaint") {
+            const formattedValue =
+              value && value !== "N/A"
+                ? value
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+            return (
+              <div className="text-justify pr-4">
+                {formattedValue.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm sm:text-base">
+                    {formattedValue.map((item, index) => (
+                      <li key={index} className="whitespace-normal break-words">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm sm:text-base break-words whitespace-normal">N/A</span>
+                )}
+              </div>
+            );
+          }
+
+          // NEW: Laboratory Details rendering - similar to Diagnosis style
+          if (rowData.attribute === "Laboratory Details") {
             const formattedValue =
               value && value !== "N/A"
                 ? value
@@ -211,7 +301,7 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
             const groupedArray = Object.entries(grouped).map(([keyword, values]) => ({
               keyword,
               content: keyword !== "Other" ? values.join(", ") : values.join(", "),
-              hasKeyword: keyword !== "Other"
+              hasKeyword: keyword !== "Other",
             }));
 
             return (
@@ -300,7 +390,7 @@ export function ConsultationHistoryTable({ patientId, currentConsultationId }: {
           }
 
           return <div className="text-sm sm:text-base min-w-[250px]">{value || "N/A"}</div>;
-        }
+        },
       });
     });
 

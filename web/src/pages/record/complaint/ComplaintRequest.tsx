@@ -25,7 +25,7 @@ export default function ComplaintRequest() {
   // Filter for pending complaints that are not archived
   const pendingComplaints = useMemo(() => {
     return complaints.filter((c: Complaint) => 
-      c.comp_status === 'Pending' && !c.comp_is_archive
+      c.comp_status === 'Pending'
     );
   }, [complaints]);
 

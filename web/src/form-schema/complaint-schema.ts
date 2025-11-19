@@ -29,8 +29,8 @@ const complainantSchema = z.object({
 
 const accusedSchema = z.object({
   rp_id: z.string().nullable().optional(),
-  acsd_name: z.string().min(1, "Name/alias is required"), 
-  acsd_age: z.string() // Changed from age
+  acsd_name: z.string().min(1, "Full Name is required"), 
+  acsd_age: z.string()
     .min(1, "Age is required")
     .refine((val) => {
       const age = parseInt(val);

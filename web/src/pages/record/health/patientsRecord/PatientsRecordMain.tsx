@@ -78,7 +78,7 @@ export const getPatType = (type: string) => {
 };
 
 // Define the columns for the data table
-const columns: ColumnDef<Report>[] = [
+export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (

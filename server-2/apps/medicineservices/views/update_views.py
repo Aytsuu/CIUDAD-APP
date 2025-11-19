@@ -43,15 +43,15 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
         status_messages = {
             'rejected': {
                 'title': 'Medicine Request Rejected',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} was rejected. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} was rejected. Reason: {reason or ""}'
             },
             'referred': {
                 'title': 'Medicine Request Referred',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been referred. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form}has been referred. Reason: {reason or ""}'
             },
             'confirmed': {
                 'title': 'Medicine Request Confirmed',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been confirmed. Please proceed to the health center to pick up your medicine.'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} has been confirmed. Please proceed to the health center to pick up your medicine.'
             }
         }
                 
@@ -87,31 +87,106 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
     
     
     
-class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
-    serializer_class = MedicineRequestSerializer 
-    queryset = MedicineRequest.objects.all()
-    lookup_field = "medreq_id"
+# class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
+#     serializer_class = MedicineRequestSerializer 
+#     queryset = MedicineRequest.objects.all()
+#     lookup_field = "medreq_id"
 
-class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView): 
+class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
     serializer_class = MedicineRequestItemSerializer
     queryset = MedicineRequestItem.objects.all()
     lookup_field = "medreqitem_id"
-    
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Check if we're updating status to rejected
-        if new_status in ['rejected', 'referred']:
-            archive_reason = request.data.get('archive_reason', '')
-            # Update the instance
-            instance.status = 'rejected'
-            instance.is_archived = True
-            instance.archive_reason = archive_reason
-            instance.save()
-            # Return the updated data
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        # For other updates, use default behavior
-        return super().update(request, *args, **kwargs)
+        
+        # Update with archive logic
+        archive_reason = request.data.get('archive_reason', '')
+        status = request.data.get('status', '')
+        
+        # Store old status for comparison
+        old_status = instance.status
+        
+        # Update the instance
+        instance.status = status
+        instance.is_archived = True
+        instance.archive_reason = archive_reason
+        instance.cancelled_rejected_reffered_at = timezone.now()
+        instance.save()
+        
+        # Create notification for reject or refer status
+        if status in ['rejected', 'referred']:
+            self.create_status_notification(instance, status, archive_reason)
+        
+        # Return the updated data
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def create_status_notification(self, medicine_request_item, status, reason):
+        try:
+            notifier = NotificationQueries()
+            recipient_rp_ids = []
+            resident_name = "Resident"
+            medicine_request = medicine_request_item.medreq_id
+
+            if medicine_request.rp_id:
+                recipient_rp_ids = [str(medicine_request.rp_id.rp_id)]
+                if medicine_request.rp_id.per:
+                    resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+            elif medicine_request.pat_id and medicine_request.pat_id.rp_id:
+                recipient_rp_ids = [str(medicine_request.pat_id.rp_id.rp_id)]
+                if medicine_request.pat_id.rp_id.per:
+                    resident_name = f"{medicine_request.pat_id.rp_id.per.per_fname} {medicine_request.pat_id.rp_id.per.per_lname}"
+
+            if not recipient_rp_ids:
+                print("⚠️ No recipient found for medicine status notification")
+                return
+
+            # Get medicine details
+            medicine = getattr(medicine_request_item, "med", None)
+            if medicine:
+                medicine_name = medicine.med_name
+                med_dsg = medicine.med_dsg
+                med_dsg_unit = medicine.med_dsg_unit
+                med_form = medicine.med_form
+                medicine_display = f"{medicine_name} {med_dsg}{med_dsg_unit} ({med_form})"
+            else:
+                medicine_display = "Medicine"
+
+            status_display = status.capitalize()
+            if status == 'referred':
+                status_display = 'Referred'
+
+            title = f"Medicine request {status_display}"
+            message = f"Your request for {medicine_display} has been {status_display.lower()}"
+            if reason:
+                message += f". Reason: {reason}"
+
+            web_route = ""
+            if status == 'rejected':
+                web_route = "/services/medicine/requests/rejected"
+            elif status == 'referred':
+                web_route = "/services/medicine/requests/referred"
+
+            success = notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=recipient_rp_ids,
+                notif_type=f"MEDICINE_{status.upper()}",
+                web_route=web_route,
+                web_params="",
+                mobile_route="/(health)/medicine-request/my-requests",
+                mobile_params={"request_id": str(medicine_request.medreq_id)},
+            )
+
+            if success:
+                print(f"✅ Medicine {status} notification sent to {resident_name}")
+            else:
+                print(f"❌ Failed to send medicine {status} notification to {resident_name}")
+
+        except Exception as e:
+            print(f"❌ Error creating medicine {status} notification: {e}")
+
 
 
 class UpdateConfirmAllPendingItemsView(APIView):
@@ -150,6 +225,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
                     print(f"Staff with ID {staff_id} not found, continuing without staff")
 
             allocations_created = 0
+            confirmed_medicines = []  # Track confirmed medicines for notification
 
             # Group selected medicines by med_id
             medid_to_allocations = {}
@@ -184,15 +260,44 @@ class UpdateConfirmAllPendingItemsView(APIView):
                 if existing_items.exists():
                     medicine_item = existing_items.first()
                     medicine_item.status = 'confirmed'
+                    medicine_item.confirmed_at = timezone.now()
                     medicine_item.save()
                 else:
                     medicine_item = MedicineRequestItem.objects.create(
                         reason=reason,
                         med_id=med_id,
                         medreq_id=medicine_request,
+                        confirmed_at=timezone.now(),
                         status='confirmed',
                         action_by=staff_instance,
                     )
+                
+                # Get medicine details from the med foreign key
+                medicine_name = "Medicine"
+                med_dsg = ""
+                med_dsg_unit = ""
+                med_form = ""
+                
+                if medicine_item.med:
+                    medicine_name = medicine_item.med.med_name or "Medicine"
+                    med_dsg = medicine_item.med.med_dsg or ""
+                    med_dsg_unit = medicine_item.med.med_dsg_unit or ""
+                    med_form = medicine_item.med.med_form or ""
+                
+                # Build complete medicine display with dosage and form
+                medicine_display = medicine_name
+                if med_dsg:
+                    medicine_display += f" {med_dsg}"
+                if med_dsg_unit:
+                    medicine_display += f"{med_dsg_unit}"
+                if med_form:
+                    medicine_display += f" {med_form}"
+                
+                # Add to confirmed medicines list for notification
+                confirmed_medicines.append({
+                    'medicine_name': medicine_display.strip()
+                })
+                
                 # For each allocation, create MedicineAllocation
                 for alloc in allocations:
                     minv_id = alloc['minv_id']
@@ -226,8 +331,11 @@ class UpdateConfirmAllPendingItemsView(APIView):
                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             # Update medicine request status to confirmed
-            medicine_request.status = 'confirmed'
             medicine_request.save()
+            
+            # Create notification
+            self.create_medicine_confirmed_notification(medicine_request, confirmed_medicines)
+            
             response_data = {
                 "success": True,
                 "message": f"Medicine request confirmed successfully",
@@ -245,7 +353,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
                 "error": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def create_medicine_ready_notification(self, medicine_request, confirmed_medicines):
+    def create_medicine_confirmed_notification(self, medicine_request, confirmed_medicines):
         try:
             notifier = NotificationQueries()
             
@@ -265,7 +373,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
                     resident_name = f"{medicine_request.pat_id.rp_id.per.per_fname} {medicine_request.pat_id.rp_id.per.per_lname}"
             
             if not recipient_rp_ids:
-                print("⚠️ No recipient found for medicine ready notification")
+                print("⚠️ No recipient found for medicine confirmed notification")
                 return
             
             # Create medicine list for message
@@ -273,26 +381,26 @@ class UpdateConfirmAllPendingItemsView(APIView):
             
             # Create notification
             success = notifier.create_notification(
-                title="Medicine request ready for pickup",
-                message=(
+                title="Medicine request confirmed",
+                     message=(
                     f"Medicines requested: {medicine_list}.\n"
                     "Please note that if you do not pick up your medicine within 2 days, "
                     "your request will be automatically cancelled."
                 ),
                 # sender="00001250924",  # System sender
                 recipients=recipient_rp_ids,
-                notif_type="MEDICINE_READY",
+                notif_type="MEDICINE_CONFIRMED",
                 # target_obj=None,
-                web_route="",
+                web_route="/services/medicine/requests/pickup",
                 web_params="",
                 mobile_route="/(health)/medicine-request/my-requests",
                 mobile_params={"request_id": str(medicine_request.medreq_id)},
             )
 
             if success:
-                print(f"✅ Medicine ready notification sent to {resident_name}")
+                print(f"✅ Medicine confirmed notification sent to {resident_name}")
             else:
-                print(f"❌ Failed to send medicine ready notification to {resident_name}")
+                print(f"❌ Failed to send medicine confirmed notification to {resident_name}")
                 
         except Exception as e:
-            print(f"❌ Error creating medicine ready notification: {e}")
+            print(f"❌ Error creating medicine confirmed notification: {e}")

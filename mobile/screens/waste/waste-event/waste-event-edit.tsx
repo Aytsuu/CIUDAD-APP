@@ -9,7 +9,7 @@ import WasteEventSchema, { type WasteEventFormData } from '@/form-schema/waste/w
 import { useUpdateWasteEvent } from './queries/waste-event-update-queries';
 import { useGetWasteSitio } from '@/screens/waste/waste-collection/queries/waste-col-fetch-queries';
 import { SelectLayout, DropdownOption } from '@/components/ui/select-layout';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 
 
 // Announcement options matching web implementation
@@ -85,30 +85,14 @@ function WasteEventEdit() {
   ];
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Edit Waste Event</Text>}
-      headerAlign="left"
-      showBackButton={true}
-      showExitButton={false}
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={24} color="black" />
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={updateWasteEvent.isPending}
-      loadingMessage="Updating event..."
-      footer={
-        <TouchableOpacity
-          className="bg-orange-500 py-5 rounded-xl w-full items-center"
-          onPress={form.handleSubmit(onSubmit)}
-        >
-          <Text className="text-white text-base font-semibold">Update Event</Text>
-        </TouchableOpacity>
-      }
-      stickyFooter={true}
+      headerTitle={<Text className="text-[13px]">Edit Waste Event</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="w-full px-6">
         {/* Event Name */}
@@ -355,8 +339,21 @@ function WasteEventEdit() {
             />
           </View>
         </View>
+
+        {/* Submit Button */}
+        <View className="px-6 py-4 border-t border-gray-200 bg-white">
+          <TouchableOpacity
+            className="bg-orange-500 py-4 rounded-xl w-full items-center"
+            onPress={form.handleSubmit(onSubmit)}
+            disabled={updateWasteEvent.isPending}
+          >
+            <Text className="text-white text-base font-semibold">
+              {updateWasteEvent.isPending ? 'Updating...' : 'Update Event'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

@@ -111,7 +111,7 @@ export default function MedicineRequestScreen() {
       
       switch (selectedFilter) {
         case "available":
-          return !isOutOfStock && !hasPending;
+          return !isOutOfStock;
         case "pending":
           return hasPending && !isOutOfStock;
         case "out_of_stock":

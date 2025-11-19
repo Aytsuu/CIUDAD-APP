@@ -463,7 +463,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # If the invoice is linked to a complaint
         if obj.pay_id is not None:
             try:
-                complaint = obj.pay_id.sr_id.comp_id
+                complaint = obj.pay_id.comp_id
                 complainants = complaint.complainant.all()
                 
                 if complainants.exists():
@@ -489,22 +489,27 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Coerce empty strings from the client into None so DRF doesn't try bad lookups
-        for key in ['bpr_id', 'nrc_id', 'cr_id', 'spay_id']:
+        for key in ['bpr_id', 'nrc_id', 'cr_id']:
             if key in attrs and (attrs[key] == '' or attrs[key] == 0):
                 attrs[key] = None
+        
+        # Don't convert pay_id to None when it's 0, as 0 is a valid ID
+        if 'pay_id' in attrs and attrs['pay_id'] == '':
+            attrs['pay_id'] = None
 
         link_keys = [
             attrs.get('bpr_id'),
             attrs.get('nrc_id'),
             attrs.get('cr_id'),
-            attrs.get('spay_id'),
+            attrs.get('pay_id'),
         ]
         
-        provided = sum(1 for v in link_keys if v)
+        # Count non-None values (including 0 as valid)
+        provided = sum(1 for v in link_keys if v is not None)
         if provided == 0:
-            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or pay_id")
         if provided > 1:
-            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or pay_id")
         return attrs
 
     def create(self, validated_data):
@@ -603,13 +608,13 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 non_resident_cert.save()
             
             # Check if it's a service charge payment request
-            elif invoice.spay_id:
-                print(f"[InvoiceSerializer] Processing service charge payment for spay_id: {invoice.spay_id}")
+            elif invoice.pay_id:
+                print(f"[InvoiceSerializer] Processing service charge payment for pay_id: {invoice.pay_id}")
                 
                 # Update inv_nat_of_collection with service charge purpose if available
-                if hasattr(invoice.spay_id, 'pr_id') and invoice.spay_id.pr_id:
-                    invoice.inv_nat_of_collection = invoice.spay_id.pr_id.pr_purpose
-                elif hasattr(invoice.spay_id, 'sr_id') and hasattr(invoice.spay_id.sr_id, 'comp_id'):
+                if hasattr(invoice.pay_id, 'pr_id') and invoice.pay_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.pay_id.pr_id.pr_purpose
+                elif hasattr(invoice.pay_id, 'comp_id'):
                     # For service charges, use a default purpose name
                     invoice.inv_nat_of_collection = "Service Charge"
                 
@@ -618,12 +623,14 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 invoice.save()
                 
                 # Update service charge payment request status
-                service_charge_payment = invoice.spay_id
-                service_charge_payment.spay_status = "Paid"
-                service_charge_payment.spay_date_paid = invoice.inv_date
+                service_charge_payment = invoice.pay_id
+                service_charge_payment.pay_status = "Paid"
+                # DO NOT set pay_req_status to "Completed" here
+                # pay_req_status should remain "Pending" until the service charge is issued/printed
+                service_charge_payment.pay_date_paid = invoice.inv_date
                 service_charge_payment.save()
                 
-                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for spay_id: {service_charge_payment.spay_id}")
+                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for pay_id: {service_charge_payment.pay_id}")
                 
                 # Do not change sr_req_status here; leave case status management to clerk/council flows
                 
@@ -642,7 +649,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     if staff:
                         create_activity_log(
                             act_type="Receipt Created",
-                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.spay_id}. Payment status updated to Paid.",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.pay_id}. Payment status updated to Paid.",
                             staff=staff,
                             record_id=invoice.inv_serial_num
                         )

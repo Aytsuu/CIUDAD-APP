@@ -32,25 +32,36 @@ interface MedicineRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicine_count: number;
+  count: number;
   patient_details?: {
+    pat_id: string;
     personal_info: {
       per_fname: string;
       per_lname: string;
-      per_mname: string;
-      per_sex: string;
+      per_mname: string | null;
+      per_suffix: string | null;
       per_dob: string;
+      per_sex: string;
+      per_status: string;
+      per_edAttainment: string | null;
+      per_religion: string | null;
+      per_contact: string;
     };
     address: {
       add_street: string;
-      add_sitio: string;
       add_barangay: string;
       add_city: string;
       add_province: string;
+      add_sitio: string;
+      full_address: string;
     };
     pat_type: string;
-    households?: Array<{ hh_id: string }>;
+    pat_status: string;
+    rp_id: string | null;
+    trans_id: string | null;
   };
+  medicine_count: number;
+  latest_medicine_date: string | null;
 }
 
 // interface ApiResponse {
@@ -119,25 +130,32 @@ export default function AllMedicineRecords() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      const addressString = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim().length > 0).join(", ") || "";
+      // Use full_address if available, otherwise construct it
+      const addressString = address.full_address || 
+        [address.add_street, address.add_barangay, address.add_city, address.add_province]
+          .filter((part) => part && part.trim().length > 0)
+          .join(", ") || "";
 
       return {
-        pat_id: record.pat_id,
+        pat_id: record.pat_id || "",
         fname: info.per_fname || "",
         lname: info.per_lname || "",
         mname: info.per_mname || "",
         sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
+        age: info.per_dob ? calculateAge(info.per_dob).toString() : "",
         dob: info.per_dob || "",
-        householdno: details.households?.[0]?.hh_id || "",
+        householdno: details.rp_id || details.trans_id || "",
         street: address.add_street || "",
         sitio: address.add_sitio || "",
         barangay: address.add_barangay || "",
         city: address.add_city || "",
         province: address.add_province || "",
-        pat_type: details.pat_type || "",
+        pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
-        count: record.medicine_count || 0
+        count: record.medicine_count || 0,
+        patient_details: details,
+        medicine_count: record.medicine_count || 0,
+        latest_medicine_date: record.latest_medicine_date || null
       };
     });
   }, [apiResponse?.results]);

@@ -10,7 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestCompletedColumns } from "./columns";
 import { useMedicineRequestStatuses } from "../queries/fetch";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function CompletedRequest() {
@@ -32,18 +32,7 @@ export default function CompletedRequest() {
     };
   }, [searchQuery]);
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-    refetch,
-  } = useMedicineRequestStatuses(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-    dateFilter, // Pass date filter to the server
-    "completed"
-  );
+  const { data: apiResponse, isLoading, error, refetch } = useMedicineRequestStatuses(currentPage, pageSize, debouncedSearch, dateFilter, "completed");
 
   // Extract data from paginated response
   const medicineRequests = apiResponse?.results || [];

@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
+import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
 import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
 import PageLayout from '../../_PageLayout'
@@ -7,18 +8,17 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
+import { CustomDropdown } from '@/components/ui/custom-dropdown'
 
 const BusinessList = () => {
   const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected' | 'completed'>('all')
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'completed' | 'rejected'>('all')
+  const [purposeFilter, setPurposeFilter] = useState<string>('all')
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
 
-  // Fetch business permits from API
   useEffect(() => {
     const fetchBusinessPermits = async () => {
       try {
@@ -51,14 +51,6 @@ const BusinessList = () => {
     return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
   }
 
-  const getNormalizedStatus = (status?: string): 'approved' | 'pending' | 'rejected' | 'completed' => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("reject")) return 'rejected';
-    if (normalized.includes("approve")) return 'approved';
-    if (normalized.includes("complete")) return 'completed';
-    return 'pending';
-  }
-
   const formatDate = (d?: string) => {
     if (!d) return '—';
     try {
@@ -83,11 +75,25 @@ const BusinessList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Filter business permits based on status and search
+  // Extract unique purposes (business types) from business permits
+  const purposes = useMemo(() => {
+    const uniquePurposes = new Set<string>();
+    businessPermits.forEach(business => {
+      if (business.business_type) {
+        uniquePurposes.add(business.business_type);
+      }
+    });
+    return Array.from(uniquePurposes).sort();
+  }, [businessPermits])
+
+  // Filter business permits based on purpose and search
   const filteredBusinesses = useMemo(() => {
     let filtered = businessPermits.filter(business => {
-      if (activeTab === 'all') return true;
-      return getNormalizedStatus(business.req_status) === activeTab;
+      // Purpose filter (using business_type as purpose)
+      if (purposeFilter !== 'all' && business.business_type !== purposeFilter) {
+        return false;
+      }
+      return true;
     });
 
     // Apply search filter
@@ -104,7 +110,15 @@ const BusinessList = () => {
     }
 
     return filtered;
-  }, [businessPermits, activeTab, searchQuery])
+  }, [businessPermits, purposeFilter, searchQuery])
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <PageLayout
@@ -137,69 +151,23 @@ const BusinessList = () => {
           />
         )}
 
-        {/* Fixed Tab Headers */}
-        <View className="bg-white border-b border-gray-200">
-          <View className="flex-row">
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'all' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('all')}
-            >
-              <Text className={`font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-500'}`}>
-                All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'pending' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('pending')}
-            >
-              <Text className={`font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Pending
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'approved' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('approved')}
-            >
-              <Text className={`font-medium ${activeTab === 'approved' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Approved
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'completed' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('completed')}
-            >
-              <Text className={`font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Completed
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === 'rejected' ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onPress={() => setActiveTab('rejected')}
-            >
-              <Text className={`font-medium ${activeTab === 'rejected' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Rejected
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Purpose Filter */}
+        <View className="bg-white px-6 py-4 border-b border-gray-200">
+          <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
+          <CustomDropdown
+            value={purposeFilter}
+            onSelect={(value: string) => setPurposeFilter(value)}
+            data={[
+              { label: 'All', value: 'all' },
+              ...purposes.map(purpose => ({ label: purpose, value: purpose }))
+            ]}
+            placeholder="Select purpose"
+          />
         </View>
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
-          {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <LoadingState />
-            </View>
-          ) : error ? (
+          {error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <Text className="text-red-800 text-sm text-center">Failed to load business permits.</Text>
@@ -230,10 +198,10 @@ const BusinessList = () => {
                       <Text className="text-gray-500 text-2xl">🏢</Text>
                     </View>
                     <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                      {searchQuery ? 'No business permits found matching your search' : `No ${activeTab} business permits yet`}
+                      {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
                     </Text>
                     <Text className="text-gray-500 text-sm text-center">
-                      {searchQuery ? 'Try adjusting your search terms' : `Your ${activeTab} business permits will appear here`}
+                      {searchQuery ? 'Try adjusting your search terms' : 'Your business permits will appear here'}
                     </Text>
                   </View>
                 </View>

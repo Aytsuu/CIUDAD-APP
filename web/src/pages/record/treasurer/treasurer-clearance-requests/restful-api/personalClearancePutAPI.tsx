@@ -40,12 +40,10 @@ export const acceptNonResReq = async (nrc_id: string, discountReason?: string) =
             payload.nrc_discount_reason = discountReason;
         }
         
-        const numericId = Number(nrc_id);
-        const url = `/clerk/update-personal-req-status/${numericId}/`;
+        const url = `/clerk/update-personal-req-status/${nrc_id}/`;
         console.log("[acceptNonResReq] Calling:", {
             nrc_id,
             typeof_nrc_id: typeof nrc_id,
-            numericId,
             url,
             payload
         });
@@ -64,8 +62,7 @@ export const acceptNonResReq = async (nrc_id: string, discountReason?: string) =
 export const declineNonResReq = async (nrc_id: string, reason: string) => {
     try{
         console.log("DECLINE RES ID: ", nrc_id)
-        const numericId = Number(nrc_id);
-        const url = `/clerk/update-personal-req-status/${numericId}/`;
+        const url = `/clerk/update-personal-req-status/${nrc_id}/`;
         const payload = {
             nrc_req_status: "Declined",
             nrc_reason: reason,
@@ -74,7 +71,6 @@ export const declineNonResReq = async (nrc_id: string, reason: string) => {
         console.log("[declineNonResReq] Calling:", {
             nrc_id,
             typeof_nrc_id: typeof nrc_id,
-            numericId,
             url,
             payload
         });

@@ -32,8 +32,7 @@ from apps.medicalConsultation.utils import apply_patient_type_filter
 
 
       
-      
-# CHILD IMMUNIZAION  
+# CHILD IMMUNIZATION  
 class SaveImmunizationDataAPIView(APIView):
     
     def post(self, request):
@@ -50,7 +49,7 @@ class SaveImmunizationDataAPIView(APIView):
             child_health_record = data.get('ChildHealthRecord', {})
             staff_id = data.get('staff_id')
             pat_id = data.get('pat_id')
-            vital_id=data.get('vital_id')
+            vital_id = data.get('vital_id')
             
             # Validation
             if not pat_id:
@@ -75,7 +74,7 @@ class SaveImmunizationDataAPIView(APIView):
             with transaction.atomic():
                 created_records = self.save_immunization_data(
                     form_data, vaccines, existing_vaccines, 
-                    child_health_record, staff_id, pat_id,vital_id
+                    child_health_record, staff_id, pat_id, vital_id
                 )
                 
                 return Response({
@@ -89,7 +88,7 @@ class SaveImmunizationDataAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def save_immunization_data(self, form_data, vaccines, existing_vaccines, child_health_record, staff_id, pat_id,vital_id):
+    def save_immunization_data(self, form_data, vaccines, existing_vaccines, child_health_record, staff_id, pat_id, vital_id):
         """
         Save immunization data with proper transaction handling
         """
@@ -156,14 +155,14 @@ class SaveImmunizationDataAPIView(APIView):
         for vaccine in vaccines:
             self.process_new_vaccine(
                 vaccine, child_health_record, staff_instance, 
-                pat_id, patrec_id, chhist_instance, created_records,vital_id
+                pat_id, patrec_id, chhist_instance, created_records, vital_id
             )
         
         # Process existing vaccines
         for existing_vaccine in existing_vaccines:
             self.process_existing_vaccine(
                 existing_vaccine, child_health_record, staff_instance, 
-                pat_id, chhist_instance, created_records,vital_id
+                pat_id, chhist_instance, created_records, vital_id
             )
         
         # Update child health history status
@@ -197,7 +196,7 @@ class SaveImmunizationDataAPIView(APIView):
                 staff=staff_instance
             )
     
-    def process_new_vaccine(self, vaccine, child_health_record, staff_instance, pat_id, patrec_id, chhist_instance, created_records,vital_id):
+    def process_new_vaccine(self, vaccine, child_health_record, staff_instance, pat_id, patrec_id, chhist_instance, created_records, vital_id):
         """
         Process a new vaccine administration
         """
@@ -222,6 +221,12 @@ class SaveImmunizationDataAPIView(APIView):
         vaccine_type = vaccine_stock.vac_id.vac_type_choices if vaccine_stock else 'routine'
         current_dose = int(vaccine.get('dose', 1))
         total_doses = int(vaccine.get('totalDoses', 1))
+        
+        # CHECK: If it's a routine vaccine and previous follow-up was missed
+        if vaccine_stock and vaccine_stock.vac_id.vac_type_choices == 'routine':
+            is_routine_missed = self.check_routine_followup_missed_for_child(pat_id, vaccine_stock.vac_id)
+            if is_routine_missed:
+                raise ValueError(f"Cannot administer routine vaccine {vaccine_stock.vac_id.vac_name} - previous follow-up was missed and scheduled date has passed the interval")
         
         # Update vaccine stock if needed
         if vaccine_stock:
@@ -248,7 +253,6 @@ class SaveImmunizationDataAPIView(APIView):
             patient_record = PatientRecord.objects.create(
                 pat_id=patient_instance,
                 patrec_type='Vaccination Record',
-                # Note: staff field doesn't exist in PatientRecord model based on your schema
             )
             created_records['patrec_ids'].append(patient_record.patrec_id)
             
@@ -260,7 +264,11 @@ class SaveImmunizationDataAPIView(APIView):
             created_records['vacrec_ids'].append(vaccination_record.vacrec_id)
             vacrec_id = vaccination_record.vacrec_id
         else:
+            # Get existing vaccination record
             vaccination_record = get_object_or_404(VaccinationRecord, vacrec_id=vacrec_id)
+            # For routine vaccines, always use dose 1
+            if vaccine_type == 'routine':
+                current_dose = 1
         
         # Handle follow-up for vaccine
         vaccine_followv_instance = None
@@ -282,8 +290,7 @@ class SaveImmunizationDataAPIView(APIView):
         
         # Get vital signs
         vital_instance = None
-        vital_signs = vital_id
-        if vital_signs :
+        if vital_id:
             try:
                 vital_instance = VitalSigns.objects.get(vital_id=vital_id)
             except VitalSigns.DoesNotExist:
@@ -311,13 +318,24 @@ class SaveImmunizationDataAPIView(APIView):
         )
         created_records['imt_ids'].append(immunization_record.imt_id)
     
-    def process_existing_vaccine(self, existing_vaccine, child_health_record, staff_instance, pat_id, chhist_instance, created_records,vital_id):
+    def process_existing_vaccine(self, existing_vaccine, child_health_record, staff_instance, pat_id, chhist_instance, created_records, vital_id):
         """
         Process an existing vaccine record
         """
         vaccine_type = existing_vaccine.get('vaccineType', 'routine')
         current_dose = int(existing_vaccine.get('dose', 1))
         total_doses = int(existing_vaccine.get('totalDoses', 1))
+        
+        # CHECK: If it's a routine vaccine and previous follow-up was missed
+        if existing_vaccine.get('vac_id') and vaccine_type == 'routine':
+            try:
+                from apps.inventory.models import VaccineList
+                vaccine = VaccineList.objects.get(vac_id=existing_vaccine['vac_id'])
+                is_routine_missed = self.check_routine_followup_missed_for_child(pat_id, vaccine)
+                if is_routine_missed:
+                    raise ValueError(f"Cannot record routine vaccine {vaccine.vac_name} - previous follow-up was missed and scheduled date has passed the interval")
+            except VaccineList.DoesNotExist:
+                pass
         
         # Create new records if needed
         vacrec_id = existing_vaccine.get('vacrec')
@@ -338,9 +356,11 @@ class SaveImmunizationDataAPIView(APIView):
             created_records['vacrec_ids'].append(vaccination_record.vacrec_id)
             vacrec_id = vaccination_record.vacrec_id
         else:
+            # Get existing vaccination record
             vaccination_record = get_object_or_404(VaccinationRecord, vacrec_id=vacrec_id)
-        
-        #
+            # For routine vaccines, always use dose 1
+            if vaccine_type == 'routine':
+                current_dose = 1
         
         # Get vaccine list instance
         vaccine_instance = None
@@ -371,6 +391,69 @@ class SaveImmunizationDataAPIView(APIView):
             hasExistingVaccination=True
         )
         created_records['imt_ids'].append(immunization_record.imt_id)
+    
+    def check_routine_followup_missed_for_child(self, pat_id, vaccine):
+        """
+        Check if a routine vaccine has missed follow-up for child immunization
+        """
+        try:
+            # Get routine frequency for this vaccine
+            routine_freq = RoutineFrequency.objects.get(vac_id=vaccine.vac_id)
+        except RoutineFrequency.DoesNotExist:
+            # No frequency defined, can't check intervals
+            return False
+        
+        # Get the most recent completed vaccination for this patient and vaccine
+        previous_vaccination = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=pat_id,
+            vachist_status='completed'
+        ).filter(
+            Q(vacStck_id__vac_id=vaccine.vac_id) | 
+            Q(vac__vac_id=vaccine.vac_id)
+        ).order_by('-date_administered').first()
+        
+        if not previous_vaccination:
+            # No previous vaccination, so no follow-up to miss
+            return False
+        
+        # Check if previous vaccination had a follow-up that was missed
+        if previous_vaccination.followv:
+            previous_followup = previous_vaccination.followv
+            today = timezone.now().date()
+            
+            # Calculate the expected completion date based on frequency
+            last_administered = previous_vaccination.date_administered
+            
+            if routine_freq.time_unit == 'days':
+                expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+            elif routine_freq.time_unit == 'weeks':
+                expected_completion_date = last_administered + timedelta(weeks=routine_freq.interval)
+            elif routine_freq.time_unit == 'months':
+                expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 30)
+            elif routine_freq.time_unit == 'years':
+                expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 365)
+            else:
+                expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+            
+            # Check conditions for missed follow-up:
+            # 1. Previous follow-up status is not 'completed'
+            # 2. Today is past the expected completion date
+            # 3. The scheduled follow-up date has passed
+            is_missed = (
+                previous_followup.followv_status != 'completed' and
+                today > expected_completion_date and
+                previous_followup.followv_date and
+                today > previous_followup.followv_date
+            )
+            
+            if is_missed:
+                logger.warning(f"Routine vaccine follow-up missed for child: vaccine {vaccine.vac_name}, "
+                             f"last administered {last_administered}, "
+                             f"expected by {expected_completion_date}, "
+                             f"scheduled for {previous_followup.followv_date}")
+                return True
+        
+        return False
     
     def parse_date(self, date_string):
         """

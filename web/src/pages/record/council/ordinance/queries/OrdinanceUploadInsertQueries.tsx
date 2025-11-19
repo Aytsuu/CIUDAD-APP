@@ -9,7 +9,7 @@ export interface OrdinanceUploadData {
     values: {
         ordinanceTitle: string;
         ordinanceDate: string;
-        ordinanceCategory: string;
+        ordinanceCategory: string[]; 
         ordinanceDetails: string;
         ordinanceFile: string;
         ord_repealed?: boolean;

@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBusinesses, getPermitPurposes, getGrossSales, getPermitClearances,getAnnualGrossSalesForPermit,getPurposesAndRates } from "../restful-api/permitClearanceGetAPI";
+import { declinePermitClearance } from "../restful-api/permitClearancePostAPI";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 
 export type Businesses = {
@@ -96,4 +98,21 @@ export const useGetPurposesAndRates = () => {
     });
 }
 
-
+// Hook for declining permit clearance
+export const useDeclinePermitClearance = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: ({ bpr_id, reason }: { bpr_id: string; reason: string }) => 
+            declinePermitClearance(bpr_id, reason),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['permitClearances'] });
+            showSuccessToast('Request Declined!');
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error declining permit clearance", err);
+            showErrorToast("Failed to decline request. Please check the data and try again.");
+        }
+    });
+}

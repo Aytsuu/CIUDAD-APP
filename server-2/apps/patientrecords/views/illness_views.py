@@ -107,7 +107,8 @@ class PatientPHIllnessCheckSimpleAPIView(APIView):
             # Get patient's medical history using the patient records
             patient_record_ids = list(patient_records.values_list('patrec_id', flat=True))
             patient_medical_history = MedicalHistory.objects.filter(
-                patrec_id__in=patient_record_ids
+                patrec_id__in=patient_record_ids,
+                is_from_famhistory=False  # EXCLUDE family history records
             ).select_related('ill')
             
             # Create a set of illness IDs that the patient has

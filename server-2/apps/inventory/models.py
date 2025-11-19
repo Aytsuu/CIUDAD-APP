@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
 
 
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -263,7 +264,7 @@ class FirstAidTransactions(models.Model):
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
 
-    class Meta:
+    class Meta: 
         db_table = 'firstaid_transaction'
         ordering = ['-created_at']
 
@@ -398,6 +399,7 @@ class ImmunizationStock(models.Model):
     imzStck_avail = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    wasted=models.PositiveIntegerField(default=0)
 
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock',db_column='inv_id')
     imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.PROTECT ,related_name='immunization_stock',db_column='imz_id')

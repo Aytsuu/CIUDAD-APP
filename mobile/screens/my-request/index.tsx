@@ -1,84 +1,99 @@
-import { Text, View, TouchableOpacity } from "react-native"
-import { useRouter } from "expo-router";
-import {ChevronRight} from "@/lib/icons/ChevronRight"
+import { Text, View, TouchableOpacity } from "react-native";
 import PageLayout from "../_PageLayout";
+import { useRouter } from "expo-router";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default () => {
   const router = useRouter();
 
   const menuItem = [
-  {
-    title: "Garbage Pickup Request",
-    description: "Monitor garbage pickup request.",
-    route: "/(my-request)/garbage-pickup/garbage-pickup-tracker"
-  },
-  {
-    title: "Certification Request",
-     description: "Request official certification documents for personal or legal use.",
-     route: "/(my-request)/certification-tracking/cert-choices-tracking"
-  },
-  {
-    title: "Blotter Request",
-    description: "Monitor blotter request",
-    route: "/(my-request)/complaint-tracking/compMain"
-  },
-  {
-    title: "Medicine Request",
-     description: "Monitor your medicine requests.",
-     route: "/(health)/medicine-request/my-requests"
-  },
-  {
-    title: "Prenatal Appointment",
-     description: "Monitor your prenatal appointments.",
-     route: "/(health)/maternal/my-appointments"
-  },
-  {
-    title: "Medical Consultation Appointment",
-     description: "Monitor your medical consultation appointments",
-     route: "/(health)/medconsultation/my-medappointments"
-  },
-]
+    {
+      title: "Garbage Pickup Request",
+      route: "/(my-request)/garbage-pickup/garbage-pickup-tracker",
+      icon: "",
+      gradient: ["#60a5fa", "#3b82f6"],
+    },
+    {
+      title: "Certification Request",
+      route: "/(my-request)/certification-tracking/certificate-request-tracker",
+      icon: "",
+      gradient: ["#3b82f6", "#2563eb"],
+    },
+    {
+      title: "Blotter Request",
+      route: "/(my-request)/complaint-tracking/compMain",
+      icon: "",
+      gradient: ["#2563eb", "#1e40af"],
+    },
+    {
+      title: "Medicine Request",
+      route: "/(health)/medicine-request/my-requests",
+      icon: "",
+      gradient: ["#93c5fd", "#60a5fa"],
+    },
+    {
+      title: "Maternal Appointment",
+      route: "",
+      icon: "",
+      gradient: ["#60a5fa", "#3b82f6"],
+    },
+    {
+      title: "Medical Consultation",
+      route: "",
+      icon: "",
+      gradient: ["#2563eb", "#1e40af"],
+    },
+  ];
 
   return (
     <PageLayout
-      headerTitle={<Text className="text-gray-900 text-[13px]">Inbox</Text>}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">My Requests</Text>
+      }
     >
-      <View className="flex-1 px-5">
-        <Text className="text-sm text-center text-gray-600 leading-6 px-5 mb-4">
-          Monitor your own requests. Select a category below to view records.
-        </Text> 
-        {
-          menuItem.map((item: any, index: number) => (
+      <View className="flex-1 px-6 py-4">
+        <View className="flex-row flex-wrap gap-3">
+          {menuItem.map((item: any, index: number) => (
             <TouchableOpacity
               key={index}
-              className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-              activeOpacity={0.7}
-              onPress={() => router.push(item.route)}
+              className="rounded-2xl overflow-hidden"
+              style={{
+                width: "48%",
+                aspectRatio: 1,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+              activeOpacity={0.8}
+              onPress={() => item.route && router.push(item.route)}
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
+              <LinearGradient
+                colors={item.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="flex-1 p-5"
+              >
+                <View className="flex-1 justify-between">
+                  <View className="items-start">
+                    <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center">
+                      <Text className="text-3xl"></Text>
+                    </View>
+                  </View>
 
-                  {/* Add Visual Image */}
-
-                  <View className="flex-1">
-                    <Text className="text-gray-900 font-semibold text-base">
+                  <View>
+                    <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
-                    </Text>
-
-                    <Text className="text-gray-500 text-sm mt-1">
-                      {item.description}
                     </Text>
                   </View>
                 </View>
-
-                <View className="ml-2">
-                  <ChevronRight className="text-gray-400" size={20} />
-                </View>
-              </View>
+              </LinearGradient>
             </TouchableOpacity>
-          ))
-        }
+          ))}
+        </View>
       </View>
     </PageLayout>
-  )
-}
+  );
+};

@@ -25,7 +25,7 @@ export default function RefferedRequestDetail() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch reffered request details
-  const { data: apiResponse, isLoading, error: refferedRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "reffered");
+  const { data: apiResponse, isLoading, error: refferedRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "referred");
 
   // Extract data from paginated response
   const medicineData = apiResponse?.results || [];
@@ -54,7 +54,7 @@ export default function RefferedRequestDetail() {
   }
 
   return (
-    <LayoutWithBack title="reffered Medicine Request" description="View details of reffered medicine request">
+    <LayoutWithBack title="Reffered Medicine Request" description="View details of reffered medicine request">
       <div className="">
         {/* Patient Information Card */}
         <div className="mb-5">
@@ -66,7 +66,7 @@ export default function RefferedRequestDetail() {
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
               <CardTitle>
-                reffered Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
+                Reffered Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
               </CardTitle>
               <CardDescription>All reffered medicine request items with allocation details</CardDescription>
             </div>

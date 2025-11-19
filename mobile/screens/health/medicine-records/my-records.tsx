@@ -18,18 +18,18 @@ import { useIndividualMedicineRecords } from "./queries/fetch";
 
 // Medicine-specific patient data serializer
 const serializeMedicinePatientData = (medicineRecord: any): SerializedPatientData | null => {
-  if (!medicineRecord?.patient_record) return null;
+  if (!medicineRecord?.pat_details) return null;
 
-  const patientRecord = medicineRecord.patient_record;
+  const patDetails = medicineRecord.pat_details;
 
   // Create the structure that your existing serializer expects
   const dataForSerializer = {
-    pat_id: patientRecord.pat_id || "",
-    personal_info: patientRecord.pat_details?.personal_info || {},
-    address: patientRecord.pat_details?.address || {},
-    households: patientRecord.pat_details?.households || [],
-    pat_type: patientRecord.pat_details?.pat_type || "Resident",
-    pat_status: patientRecord.pat_details?.pat_status || "Active"
+    pat_id: patDetails.pat_id || "",
+    personal_info: patDetails.personal_info || {},
+    address: patDetails.address || {},
+    households: [], // Not provided in the API response
+    pat_type: "Resident", // Default value
+    pat_status: "Active" // Default value
   };
 
   console.log("Data for serializer:", dataForSerializer);
@@ -43,7 +43,7 @@ export default function IndividualMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(2);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
   const params = useLocalSearchParams();
   const { pat_id } = useAuth();
   const [patId, setPatientId] = useState("");
@@ -73,7 +73,7 @@ export default function IndividualMedicineRecords() {
 
     // Get patient data from the first record
     const firstRecord = apiResponse.results[0];
-    console.log("First record patient data:", firstRecord?.patient_record);
+    console.log("First record patient data:", firstRecord?.pat_details);
 
     const serialized = serializeMedicinePatientData(firstRecord);
     console.log("Serialized patient data:", serialized);
@@ -243,7 +243,7 @@ export default function IndividualMedicineRecords() {
             </View>
           ) : (
             <>
-              <FlatList data={medicineRecords} keyExtractor={(item) => `medicine-record-${item.medrec_id}`} showsVerticalScrollIndicator={false} scrollEnabled={false} renderItem={({ item }) => <MedicineRecordCard record={item} />} ListFooterComponent={<View className="h-4" />} />
+              <FlatList data={medicineRecords} keyExtractor={(item) => `medicine-record-${item.medreqitem_id}`} showsVerticalScrollIndicator={false} scrollEnabled={false} renderItem={({ item }) => <MedicineRecordCard record={item} />} ListFooterComponent={<View className="h-4" />} />
               {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             </>
           )}

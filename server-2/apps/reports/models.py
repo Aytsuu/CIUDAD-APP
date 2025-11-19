@@ -1,20 +1,23 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from apps.administration.models import Staff  # Adjust the import based on your project structure
 from apps.patientrecords.models import Illness
 
-# class HeaderRecipientListReporTemplate(models.Model):
-#     rcpheader_id = models.AutoField(primary_key=True)
-#     logo = models.URLField(null=True)
-#     contact_number = models.CharField(max_length=100)
-#     location = models.CharField(max_length=255)
-#     department = models.CharField(max_length=255)
-#     type = models.CharField(max_length=100,null=True, blank=True)  # e.g., 'Monthly', 'Weekly', etc.)
+class HeaderRecipientListReporTemplate(models.Model):
+    rcpheader_id = models.AutoField(primary_key=True)
+    province = models.CharField(max_length=255, default='Cebu')
+    doh_logo = models.URLField(
+        null=True,
+        default="https://miornhcxxzxecwnkgupq.supabase.co/storage/v1/object/public/manage-images/reports/cebucity_logo.png"
+    )
+    health_facility = models.CharField(max_length=255, default='Cebu City Health Department')
+    city =  models.CharField(max_length=255, default='Cebu City')
 
-#     def __str__(self):
-#         return f"{self.department} - {self.location}"
+    def __str__(self):
+        return f"{self.department} - {self.location}"
     
-#     class Meta:
-#         db_table = 'header_recipient_list_report_template'
+    class Meta:
+        db_table = 'header_recipient_list_report_template'
 
 
 class MonthlyRecipientListReport(models.Model):
@@ -33,9 +36,9 @@ class MonthlyRecipientListReport(models.Model):
             ('Medicine', 'Medicine'),
         ]
     )
-    logo = models.URLField(null=True)
-    contact_number = models.CharField(max_length=100,default='09705678765')
-    location = models.CharField(max_length=255,default='San Roque, Cebu City')
+    logo = models.URLField(null=True,  default="https://miornhcxxzxecwnkgupq.supabase.co/storage/v1/object/public/manage-images/reports/cebucity_logo.png")
+    contact_number = models.CharField(max_length=100,default='(032) 232-6820; 232-6863')
+    location = models.CharField(max_length=255,default='General Maxilom Extension, Carreta, Cebu City')
     department = models.CharField(max_length=255,default='Cebu City Health Department')
 
     unique_together = ('month_year', 'rcp_type')  # Prevent duplicates per month+type

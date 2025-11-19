@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronLeft } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import _ScreenLayout from "@/screens/_ScreenLayout";
+import PageLayout from "@/screens/_PageLayout";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
@@ -14,6 +14,7 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
 import { useUpdateMinutesOfMeeting } from "./queries/MOMUpdateQueries";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function MOMEdit() {
     const router = useRouter();
@@ -97,83 +98,91 @@ export default function MOMEdit() {
     };
 
   return (
-    <_ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+    <PageLayout
+      leftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Edit Minutes of Meeting</Text>}
-      showExitButton={false}
-      loading={isPending}
-      loadingMessage="Updating..."
-      footer={
-        <Button
-          className="bg-primaryBlue py-3 rounded-md w-full items-center"
-          onPress={handleSubmit(onSubmit)}
-        >
-          <Text className="text-white text-base font-semibold">Update</Text>
-        </Button>
-      }
-      stickyFooter={true}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Edit Minutes of Meeting</Text>}
+      wrapScroll={false}
     >
-      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
-        <View className="mb-8 space-y-4">
-          <FormInput
-            control={control}
-            label="Meeting Title"
-            name="meetingTitle"
-            placeholder="Enter meeting title"
-          />
-
-          <FormInput
-            control={control}
-            label="Meeting Agenda"
-            name="meetingAgenda"
-            placeholder="Enter meeting agenda"
-          />
-
-          <FormDateTimeInput
-            control={control}
-            label="Meeting Date"
-            name="meetingDate"
-            type="date"
-            maximumDate={new Date()}
-          />
-
-          <FormComboCheckbox
-            control={control}
-            name="meetingAreaOfFocus"
-            label="Area of Focus"
-            options={areaOfFocusOptions}
-            placeholder="Select Areas of Focus"
-          />
-
-          <View className="pt-5">
-            <Text className="text-[13px] font-PoppinsRegular">Meeting File</Text>
-            <DocumentPickerComponent
-                selectedDocuments={selectedDocuments}
-                setSelectedDocuments={setSelectedDocuments}
-                multiple={true} 
-                maxDocuments={1} 
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+          <View className="py-8">
+            <FormInput
+              control={control}
+              label="Meeting Title"
+              name="meetingTitle"
+              placeholder="Enter meeting title"
             />
-            {formError && (
-                <Text className="text-red-500 text-xs font-semibold">
-                    {formError}
-                </Text>
-            )}
-          </View>
 
-          <View className="pt-7">
-              <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Documents</Text>
-              <MediaPicker
-                  selectedImages={selectedImages}
-                  setSelectedImages={setSelectedImages}
-                  multiple={true}
+            <FormInput
+              control={control}
+              label="Meeting Agenda"
+              name="meetingAgenda"
+              placeholder="Enter meeting agenda"
+            />
+
+            <FormDateTimeInput
+              control={control}
+              label="Meeting Date"
+              name="meetingDate"
+              type="date"
+              maximumDate={new Date()}
+            />
+
+            <FormComboCheckbox
+              control={control}
+              name="meetingAreaOfFocus"
+              label="Area of Focus"
+              options={areaOfFocusOptions}
+              placeholder="Select Areas of Focus"
+            />
+
+            <View className="pt-5">
+              <Text className="text-[13px] font-PoppinsRegular">Meeting File</Text>
+              <DocumentPickerComponent
+                  selectedDocuments={selectedDocuments}
+                  setSelectedDocuments={setSelectedDocuments}
+                  multiple={true} 
+                  maxDocuments={1} 
               />
+              {formError && (
+                  <Text className="text-red-500 text-xs font-semibold">
+                      {formError}
+                  </Text>
+              )}
+            </View>
+
+            <View className="pt-7">
+                <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Documents</Text>
+                <MediaPicker
+                    selectedImages={selectedImages}
+                    setSelectedImages={setSelectedImages}
+                    limit={10}
+                    editable={true}
+                />
+            </View>
+
+            <View className="py-6 bg-white border-t border-gray-200">
+              <View className="py-6 bg-white border-t border-gray-200">
+                  <Button
+                    onPress={handleSubmit(onSubmit)}
+                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+                  >
+                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Update</Text>
+                  </Button>
+              </View>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </_ScreenLayout>
+        </ScrollView>
+
+        <LoadingModal visible={isPending} />
+      </View>
+    </PageLayout>
   );
 }

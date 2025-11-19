@@ -1,8 +1,7 @@
-import { LogBox } from 'react-native';
 import App from "@/screens/auth/login";
-import HomeScreen from '@/screens/home';
-import Report from '@/screens/report';
-import Securado from '../(securado)';
+
+// Makes the Error Overlay dissapear
+import { LogBox } from 'react-native';
 
 // Makes the Error Overlay dissapear
 if (__DEV__) {

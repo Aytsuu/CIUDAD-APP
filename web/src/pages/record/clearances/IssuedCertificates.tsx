@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
-import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/serviceChargeFetchQueries";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -33,12 +33,12 @@ function IssuedCertificates() {
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValue, setFilterValue] = useState("All");
+  const [filterValue, setFilterValue] = useState("");
   const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
   
   
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
-  const [businessFilterValue, setBusinessFilterValue] = useState("All");
+  const [businessFilterValue, setBusinessFilterValue] = useState("");
   
   const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,6 +102,25 @@ function IssuedCertificates() {
   };
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
+    {
+      accessorKey: "cr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
+        </div>
+      ),
+    },
     {
       accessorKey: "requester",
       header: "Requester",
@@ -173,6 +192,25 @@ function IssuedCertificates() {
   ];
 
   const businessPermitColumns: ColumnDef<IssuedBusinessPermit>[] = [
+    {
+      accessorKey: "bpr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#fffbe6] text-[#b59f00] border border-[#f7e7b6]">
+            {row.getValue("bpr_id")}
+          </span>
+        </div>
+      ),
+    },
     {
       accessorKey: "business_name",
       header: "Business Name",
@@ -253,13 +291,15 @@ function IssuedCertificates() {
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          SR No.
+          Request No.
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="capitalize flex justify-center items-center gap-2">
-          {row.getValue("sr_code")}
+        <div className="flex justify-center items-center gap-2">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#e6f7e6] text-[#16a34a] border border-[#d1f2d1]">
+            {row.getValue("sr_code")}
+          </span>
         </div>
       ),
     },
@@ -335,10 +375,12 @@ function IssuedCertificates() {
     queryFn: () => getIssuedBusinessPermits(businessSearchQuery, currentPage, pageSize, businessFilterValue),
   });
 
-  const { data: serviceCharges, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery<ServiceCharge[]>({
-    queryKey: ["issuedServiceCharges"],
-    queryFn: getPaidServiceCharges,
+  const { data: serviceChargesData, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery({
+    queryKey: ["issuedServiceCharges", serviceChargeSearchQuery, currentPage, pageSize],
+    queryFn: () => getPaidServiceCharges(serviceChargeSearchQuery, currentPage, pageSize, 'completed'),
   });
+
+  const serviceCharges = serviceChargesData?.results || [];
 
   const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
@@ -362,7 +404,7 @@ function IssuedCertificates() {
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = filterValue === "All" || cert.purpose === filterValue;
+    const matchesFilter = !filterValue || filterValue === "All" || cert.purpose === filterValue;
     return matchesSearch && matchesFilter;
   });
 
@@ -386,12 +428,15 @@ function IssuedCertificates() {
 
   useEffect(() => {
     setCurrentPage(1);
+    // Clear selected certificate/permit when switching tabs
+    setSelectedCertificate(null);
+    setSelectedBusinessPermit(null);
   }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
 
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
     const matchesSearch = permit.business_name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
       (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
-    const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
+    const matchesFilter = !businessFilterValue || businessFilterValue === "All" || permit.purpose === businessFilterValue;
     return matchesSearch && matchesFilter;
   });
 
@@ -432,10 +477,7 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={personalPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
@@ -459,10 +501,7 @@ function IssuedCertificates() {
               placeholder="Filter by Purpose"
               label=""
               className="bg-white"
-              options={[
-                { id: "All", name: "All" },
-                ...permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))
-              ]}
+              options={permitPurposes.map(purpose => ({ id: purpose.pr_purpose, name: purpose.pr_purpose }))}
               value={businessFilterValue}
               onChange={(value) => setBusinessFilterValue(value)}
             />
@@ -586,7 +625,7 @@ function IssuedCertificates() {
         )}
       </div>
 
-      <div className="w-full sm:w-auto flex justify-center">
+      <div className="w-full sm:w-auto flex justify-end">
         <PaginationLayout 
           totalPages={activeTab === 'certificates' ? totalPagesCert : activeTab === 'businessPermits' ? totalPagesBP : 1}
           currentPage={currentPage}
@@ -641,6 +680,10 @@ function IssuedCertificates() {
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          // Clear viewing certificate when dialog is closed
+          if (!open) {
+            setViewingCertificate(null);
+          }
         }}
         className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"

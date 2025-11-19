@@ -8,7 +8,7 @@ import { usePopulationYearlyRecords } from "./queries/fetchQueries";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { MonthInfoCard } from "../month-folder-component";
+import { MonthInfoCard } from "../../reports/month-folder-component";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router-dom";
 

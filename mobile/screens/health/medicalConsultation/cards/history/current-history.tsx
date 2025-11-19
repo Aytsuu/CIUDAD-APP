@@ -55,7 +55,7 @@ const ConsultationDetailCard = ({ record, isCurrent = false }: { record: any; is
     });
   };
 
-  const bhwName = `${record.staff_details?.rp?.per?.per_fname || "N/A"} ${record.staff_details?.rp?.per?.per_lname || "N/A"}`;
+  const bhwName = `${record.staff_details?.fname || "N/A"} ${record.staff_details?.lname || "N/A"}`;
 
   return (
     <View style={{ width: screenWidth - 32 }} className={`bg-white rounded-xl border-2 p-4 shadow-sm ${isCurrent ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}>

@@ -8,18 +8,18 @@
       scheme: "myapp",
       userInterfaceStyle: "automatic",
       newArchEnabled: true,
-      splash: {
-        image: "./assets/images/CIUDADLogo.svg",
-        resizeMode: "contain",
-        backgroundColor: "#ffffff"
-      },
+      // splash: {
+      //   image: "./assets/images/CIUDADLogo.svg",
+      //   resizeMode: "contain",
+      //   backgroundColor: "#ffffff"
+      // },
       ios: {
         supportsTablet: true
       },
       android: {
         package: "com.aytsuu.mobile",
         edgeToEdgeEnabled: true,
-        config: {
+        config: { 
           googleMaps: {
             apiKey: "AIzaSyBUMbZ3dQl6eGAUD8SQXuq7S6UeOebroTo"
           }
@@ -27,20 +27,20 @@
       },
       web: {
         bundler: "metro",
-        output: "static",
+        output: "static", 
         favicon: "./assets/images/CIUDADLogo.svg"
       },
       plugins: [
         "expo-router",
-        [
-          "expo-splash-screen",
-          {
-            image: "./assets/images/splash-icon.png",
-            imageWidth: 200,
-            resizeMode: "contain",
-            backgroundColor: "#ffffff"
-          }
-        ],
+        // [
+        //   "expo-splash-screen",
+        //   {
+        //     image: "./assets/images/splash-icon.png",
+        //     imageWidth: 200,
+        //     resizeMode: "contain",
+        //     backgroundColor: "#ffffff"
+        //   }
+        // ],
         [
           "expo-dev-client",
           {
@@ -85,9 +85,9 @@
         router: {
           origin: false
         },
-        eas: {
-          projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
-        }
+        // eas: {
+        //   projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
+        // }
       }
     }
   });

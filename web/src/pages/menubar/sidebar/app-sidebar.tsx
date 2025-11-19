@@ -159,7 +159,7 @@ export function AppSidebar() {
   const barangayItems: BaseMenuItem[] = [
     {
       title: "Calendar",
-      url: "/waste-calendar-scheduling",
+      url: "/calendar-page",
     },
     ...(featureValidator("report")
       ? [
@@ -190,8 +190,12 @@ export function AppSidebar() {
     ...(featureValidator("complaint")
       ? [
           {
-            title: "Complaint",
-            url: "/complaint",
+            title: "Blotter",
+            url: "/",
+            items: [
+              {title: "Process", url: "/complaint"},
+              {title: "Record", url: "/record"}
+            ]
           },
         ]
       : []),
@@ -205,7 +209,7 @@ export function AppSidebar() {
             title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Summon Calendar", url: "/summon-calendar" },
+              { title: "Date & Time Availability", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
@@ -250,7 +254,7 @@ export function AppSidebar() {
             title: "Council",
             url: "/",
             items: [
-              { title: "Council Events", url: "/calendar-page" },
+              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
@@ -293,6 +297,32 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("waste")
+    ? [
+        {
+          title: "Waste",
+          url: "/", 
+          items: [
+            {
+              title: "Illegal Dumping Reports",
+              url: "/waste-illegaldumping-report",
+            },
+            {
+              title: "Garbage Pickup Request",
+              url: "/garbage-pickup-request",
+            },
+            {
+              title: "Waste Collection",
+              url: "/waste-collection",
+            },
+            {
+              title: "Waste Personnel & Collection Vehicle",
+              url: "/waste-personnel",
+            },
+          ]
+        }
+      ]
+    : []),
     ...(featureValidator("certificate & clearances")
       ? [
           {
@@ -308,6 +338,10 @@ export function AppSidebar() {
                 url: "record/clearances/businesspermit",
               },
               {
+                title: "Service Charge",
+                url: "record/clearances/servicecharge",
+              },
+              {
                 title: "Issued Certificates",
                 url: "record/clearances/issuedcertificates",
               },
@@ -320,22 +354,6 @@ export function AppSidebar() {
           {
             title: "Donation",
             url: "/donation-record",
-          },
-        ]
-      : []),
-    ...(featureValidator("waste")
-      ? [
-          {
-            title: "Illegal Dumping Reports",
-            url: "/waste-illegaldumping-report",
-          },
-          {
-            title: "Garbage Pickup Request",
-            url: "/garbage-pickup-request",
-          },
-          {
-            title: "Waste Personnel & Collection Vehicle",
-            url: "/waste-personnel",
           },
         ]
       : []),

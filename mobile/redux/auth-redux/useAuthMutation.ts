@@ -3,7 +3,7 @@ import {useAppDispatch} from "@/redux/redux";
 import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
-import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
+import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse } from "./auth-types";
 import { KeychainService } from "@/services/keychainService";
 
 export const useLoginMutation = () => {
@@ -94,41 +94,6 @@ export const useSendEmailOTPMutation = () => {
   });
 };
 
-export const useVerifyEmailOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<TokenResponse, Error, EmailOTPCredentials>({
-    mutationFn: async ({ email, otp }) => {
-      console.log('🔐 Verifying Email OTP...');
-      const response = await api.post('authentication/email/verifyOtp/', {
-        email,
-        otp,
-      });
-      console.log('✅ Email OTP verification successful');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data) => {
-      if (data.access && data.user) {
-        dispatch(setAuthData({ 
-          accessToken: data.access, 
-          user: data.user,
-        }));
-        dispatch(clearAuthState());
-      }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Email OTP verification failed';
-      console.error('❌ Email OTP verification failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
 
 export const useLogoutMutation = () => {
   const dispatch = useAppDispatch();

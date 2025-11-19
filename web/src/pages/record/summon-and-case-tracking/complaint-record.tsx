@@ -6,7 +6,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-export function ComplaintRecordForSummon({ comp_id}: {
+export function ComplaintRecordForSummon({comp_id}: {
   comp_id: string;
 }) {
   const { data: complaintDetails, isLoading, error } = useGetComplaintDetails(comp_id);

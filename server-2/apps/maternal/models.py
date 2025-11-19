@@ -349,7 +349,6 @@ class PrenatalCare(models.Model):
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
     ppr_lochial_discharges = models.CharField(max_length=100)
-    ppr_vit_a_date_given = models.DateField(null=True, blank=True)
     ppr_num_of_pads = models.PositiveIntegerField()
     ppr_date_of_bf = models.DateField()
     ppr_time_of_bf = models.TimeField()

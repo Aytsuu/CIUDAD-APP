@@ -1,6 +1,7 @@
+// my-schedules.tsx - With Enhanced Sorting Feature
 import React, { useState, useMemo } from "react"
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
-import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, RefreshCw } from "lucide-react-native"
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, Modal } from "react-native"
+import { Search, AlertCircle, Calendar, ChevronLeft, RefreshCw, ArrowUpDown, X } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
@@ -8,7 +9,8 @@ import { useAppointmentsByResidentId, CombinedAppointmentsResponse } from "./fet
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
-import { StatBadge } from "../admin/components/status-badge"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
 type ScheduleRecord = {
   id: number
@@ -21,89 +23,97 @@ type ScheduleRecord = {
   createdAt?: string
 }
 
-type FilterType = "All" | "Pending" | "Completed" | "Missed"
-type TabType = "pending" | "completed" | "missed" 
+type TabType = "pending" | "completed" | "missed"
+type SortOption = "date_desc" | "date_asc" | "type" | "status"
 
-// Components
-// const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-//   const getStatusConfig = (status: string) => {
-//     switch (status.toLowerCase()) {
-//       case 'pending':
-//         return {
-//           color: 'text-yellow-700',
-//           bgColor: 'bg-yellow-100',
-//           borderColor: 'border-yellow-200',
-//         }
-//       case 'completed':
-//         return {
-//           color: 'text-green-700',
-//           bgColor: 'bg-green-100',
-//           borderColor: 'border-green-200',
-//         }
-//       case 'missed':
-//         return {
-//           color: 'text-red-700',
-//           bgColor: 'bg-red-100',
-//           borderColor: 'border-red-200',
-//         }
-//       default:
-//         return {
-//           color: 'text-gray-700',
-//           bgColor: 'bg-gray-100',
-//           borderColor: 'border-gray-200',
-//         }
-//     }
-//   }
+// Sort Modal Component
+const SortModal: React.FC<{
+  visible: boolean
+  onClose: () => void
+  currentSort: SortOption
+  onSelectSort: (sort: SortOption) => void
+}> = ({ visible, onClose, currentSort, onSelectSort }) => {
+  const sortOptions: { value: SortOption; label: string; description: string }[] = [
+    { value: "date_desc", label: "Date (Newest First)", description: "Latest appointments first" },
+    { value: "date_asc", label: "Date (Oldest First)", description: "Earliest appointments first" },
+  ]
 
-//   const statusConfig = getStatusConfig(status)
-//   return (
-//     <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
-//       <Text className={`text-xs font-semibold ${statusConfig.color}`}>
-//         {status}
-//       </Text>
-//     </View>
-//   )
-// }
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View className="flex-1 bg-black/50 justify-end">
+        <View className="bg-white rounded-t-3xl max-h-[70%]">
+          {/* Header */}
+          <View className="flex-row items-center justify-between p-5 border-b border-gray-200">
+            <View>
+              <Text className="text-lg font-semibold text-gray-900">Sort By</Text>
+              <Text className="text-sm text-gray-500 mt-0.5">Choose how to organize your appointments</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center">
+              <X size={18} color="#374151" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Sort Options */}
+          <View className="p-4">
+            {sortOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                onPress={() => {
+                  onSelectSort(option.value)
+                  onClose()
+                }}
+                className={`flex-row items-center p-4 rounded-xl mb-2 border ${
+                  currentSort === option.value
+                    ? "bg-blue-50 border-blue-200"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <View className="flex-1">
+                  <Text className={`font-medium ${
+                    currentSort === option.value ? "text-blue-700" : "text-gray-900"
+                  }`}>
+                    {option.label}
+                  </Text>
+                  <Text className="text-xs text-gray-500 mt-0.5">{option.description}</Text>
+                </View>
+                {currentSort === option.value && (
+                  <View className="w-6 h-6 rounded-full bg-blue-600 items-center justify-center">
+                    <Text className="text-white text-xs font-bold">✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
 
 const TabBar: React.FC<{
   activeTab: TabType
   setActiveTab: (tab: TabType) => void
-  counts: { pending: number; completed: number; missed: number; }
+  counts: { pending: number; completed: number; missed: number }
 }> = ({ activeTab, setActiveTab, counts }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('pending')}
-      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Pending ({counts.pending})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('completed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Completed ({counts.completed})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('missed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'missed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'missed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Missed ({counts.missed})
-      </Text>
-    </TouchableOpacity>
-  
+    {(["pending", "completed", "missed"] as TabType[]).map((tab) => (
+      <TouchableOpacity
+        key={tab}
+        onPress={() => setActiveTab(tab)}
+        className={`flex-1 items-center py-3 ${activeTab === tab ? "border-b-2 border-blue-600" : ""}`}
+      >
+        <Text className={`text-sm font-medium ${activeTab === tab ? "text-blue-600" : "text-gray-600"}`}>
+          {tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab]})
+        </Text>
+      </TouchableOpacity>
+    ))}
   </View>
 )
 
 const AppointmentCard: React.FC<{
   appointment: ScheduleRecord
   actualStatus: string
-  onPress: () => void
-}> = ({ appointment, actualStatus, onPress }) => {
+}> = ({ appointment, actualStatus }) => {
   const formatDateSafely = (dateString: string) => {
     if (!dateString) return "N/A"
     try {
@@ -113,111 +123,99 @@ const AppointmentCard: React.FC<{
     }
   }
 
-  // Get appointment type badge
-  const getAppointmentTypeBadge = (type: string) => {
-    const typeConfig = {
-      'Follow-up': { color: 'text-blue-700', bgColor: 'bg-blue-100', borderColor: 'border-blue-200' },
-      'Consultation': { color: 'text-green-700', bgColor: 'bg-green-100', borderColor: 'border-green-200' },
-      'Prenatal': { color: 'text-purple-700', bgColor: 'bg-purple-100', borderColor: 'border-purple-200' },
-    }[type] || { color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-200' };
+  const getStatusColor = (status: string) => {
+    const statusConfig = {
+      "Pending": { color: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200" },
+      "Completed": { color: "text-green-700", bgColor: "bg-green-50", borderColor: "border-green-200" },
+      "Missed": { color: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200" },
+    }[status] || { color: "text-gray-700", bgColor: "bg-gray-50", borderColor: "border-gray-200" }
 
-    return (
-      <View className={`px-2 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-        <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-          {type}
-        </Text>
-      </View>
-    );
-  };
+    return statusConfig
+  }
+
+  const statusConfig = getStatusColor(actualStatus)
 
   return (
-    <TouchableOpacity
-      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
-      activeOpacity={0.8}
-      onPress={onPress}
-    >
-      {/* Header */}
-      <View className="p-4 border-b border-gray-100">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                <User color="white" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
-                  {appointment.patrecType} 
-                </Text>
-                {/* <Text className="text-sm text-gray-500">ID: {appointment.id}</Text> */}
-              </View>
-              <StatBadge status={actualStatus} />
+    <Card className="mb-3 bg-white border-gray-200 rounded-2xl">
+      <CardContent className="p-5 mt-1 bg-gray-100 rounded-2xl">
+        <View className="flex-row justify-between items-start mb-4">
+          <View className="flex-row items-center">
+            <View className="w-10 h-10 rounded-xl bg-blue-100 items-center justify-center">
+              <Calendar size={20} color="#2563EB" />
+            </View>
+            <View className="ml-3">
+              <Text className="font-semibold text-lg text-gray-900">
+                {appointment.patrecType}
+              </Text>
+              <Text className="text-gray-500 text-sm mt-1">
+                {formatDateSafely(appointment.scheduledDate)}
+              </Text>
             </View>
           </View>
-         
+          <Badge 
+            variant="outline" 
+            className={`${statusConfig.bgColor} ${statusConfig.borderColor}`}
+          >
+            <Text className={`text-xs font-medium ${statusConfig.color}`}>
+              {actualStatus}
+            </Text>
+          </Badge>
         </View>
-      </View>
+        
+        <View className="mb-3">
+          <Text className="text-gray-600 text-sm font-medium mb-1">Purpose</Text>
+          <Text className="text-gray-900 leading-5">{appointment.purpose}</Text>
+        </View>
 
-      {/* Details */}
-      <View className="p-4">
-        <View className="flex-row items-center mb-3">
-          <Calendar size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Scheduled: <Text className="font-medium text-gray-900">{formatDateSafely(appointment.scheduledDate)}</Text>
-          </Text>
-        </View>
-        <View className="flex-row items-center mb-3">
-          <FileText size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Reason: <Text className="font-medium text-gray-900">{appointment.purpose}</Text>
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      
+      </CardContent>
+    </Card>
   )
 }
 
 export default function MyAppointmentsScreen() {
   const { user } = useAuth()
-  const rp_id = user?.rp;
+  const rp_id = user?.rp
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("pending")
+  const [sortBy, setSortBy] = useState<SortOption>("date_desc")
+  const [showSortModal, setShowSortModal] = useState(false)
 
-  const { data: appointments = {
-    follow_up_appointments: [],
-    med_consult_appointments: [],
-    prenatal_appointments: []
-  }, isLoading, isError, refetch } = useAppointmentsByResidentId(rp_id || "")
+  const {
+    data: appointments = {
+      follow_up_appointments: [],
+      med_consult_appointments: [],
+      prenatal_appointments: [],
+    },
+    isLoading,
+    isError,
+    refetch,
+  } = useAppointmentsByResidentId(rp_id || "")
 
-  // Utility functions
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
-    console.log("getAppointmentStatus called with:", { scheduledDate, currentStatus })
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const appointmentDate = new Date(scheduledDate)
     appointmentDate.setHours(0, 0, 0, 0)
 
     if (appointmentDate < today && currentStatus.toLowerCase() === "pending") {
-      console.log(`Appointment on ${scheduledDate} marked as Missed (was ${currentStatus})`)
       return "Missed"
     }
     return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
   }
 
   const userAppointments = useMemo(() => {
-    // Type guard to ensure appointments has the correct structure
-    const apptData = appointments as CombinedAppointmentsResponse;
-    
-    if (!apptData || (
-      apptData.follow_up_appointments.length === 0 && 
-      apptData.med_consult_appointments.length === 0 && 
-      apptData.prenatal_appointments.length === 0
-    )) {
-      console.warn("No appointments data")
+    const apptData = appointments as CombinedAppointmentsResponse
+
+    if (
+      !apptData ||
+      (apptData.follow_up_appointments.length === 0 &&
+        apptData.med_consult_appointments.length === 0 &&
+        apptData.prenatal_appointments.length === 0)
+    ) {
       return []
     }
-
-    console.log("Raw appointments data:", apptData)
 
     const transformed: ScheduleRecord[] = []
 
@@ -225,7 +223,7 @@ export default function MyAppointmentsScreen() {
     if (apptData.follow_up_appointments && apptData.follow_up_appointments.length > 0) {
       apptData.follow_up_appointments.forEach((visit: any) => {
         try {
-          const record: ScheduleRecord = {
+          transformed.push({
             id: visit.followv_id || visit.id || 0,
             scheduledDate: visit.followv_date || "",
             purpose: visit.followv_description || "Follow-up Visit",
@@ -233,11 +231,8 @@ export default function MyAppointmentsScreen() {
             sitio: "",
             type: "Resident",
             patrecType: "Follow-up",
-            // Add created/requested date for sorting
-            createdAt: visit.created_at || visit.followv_date || "", // Use created_at if available
-          }
-          console.log("Transformed follow-up record:", record)
-          transformed.push(record)
+            createdAt: visit.created_at || visit.followv_date || "",
+          })
         } catch (error) {
           console.error("Error transforming follow-up visit data:", error, visit)
         }
@@ -248,7 +243,7 @@ export default function MyAppointmentsScreen() {
     if (apptData.med_consult_appointments && apptData.med_consult_appointments.length > 0) {
       apptData.med_consult_appointments.forEach((consult: any) => {
         try {
-          const record: ScheduleRecord = {
+          transformed.push({
             id: consult.id || 0,
             scheduledDate: consult.scheduled_date || "",
             purpose: consult.chief_complaint || "Medical Consultation",
@@ -257,9 +252,7 @@ export default function MyAppointmentsScreen() {
             type: "Resident",
             patrecType: "Medical Consultation",
             createdAt: consult.created_at || consult.scheduled_date || "",
-          }
-          console.log("Transformed consultation record:", record)
-          transformed.push(record)
+          })
         } catch (error) {
           console.error("Error transforming consultation data:", error, consult)
         }
@@ -270,7 +263,7 @@ export default function MyAppointmentsScreen() {
     if (apptData.prenatal_appointments && apptData.prenatal_appointments.length > 0) {
       apptData.prenatal_appointments.forEach((prenatal: any) => {
         try {
-          const record: ScheduleRecord = {
+          transformed.push({
             id: prenatal.par_id || 0,
             scheduledDate: prenatal.requested_date || "",
             purpose: prenatal.reason || "Prenatal Appointment",
@@ -278,29 +271,28 @@ export default function MyAppointmentsScreen() {
             sitio: "",
             type: "Resident",
             patrecType: "Prenatal",
-            createdAt: prenatal.requested_at || prenatal.created_at || "", // Use requested_at for prenatal
-          }
-          console.log("Transformed prenatal record:", record)
-          transformed.push(record)
+            createdAt: prenatal.requested_at || prenatal.created_at || "",
+          })
         } catch (error) {
           console.error("Error transforming prenatal data:", error, prenatal)
         }
       })
     }
 
-    console.log("All transformed appointments:", transformed)
     return transformed
   }, [appointments])
 
-  // Filter and sort appointments based on search and active tab
-  const filteredAppointments = useMemo(() => {
-    const result = userAppointments
+  // Filter and sort appointments
+  const filteredAndSortedAppointments = useMemo(() => {
+    let result = userAppointments
       .map((appt: any) => ({ ...appt, status: getAppointmentStatus(appt.scheduledDate, appt.status) }))
       .filter((appt: any) => {
-        if (activeTab === 'pending' && appt.status !== 'Pending') return false
-        if (activeTab === 'completed' && appt.status !== 'Completed') return false
-        if (activeTab === 'missed' && appt.status !== 'Missed') return false
+        // Filter by tab
+        if (activeTab === "pending" && appt.status !== "Pending") return false
+        if (activeTab === "completed" && appt.status !== "Completed") return false
+        if (activeTab === "missed" && appt.status !== "Missed") return false
 
+        // Filter by search query
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase()
           return (
@@ -312,24 +304,32 @@ export default function MyAppointmentsScreen() {
         return true
       })
 
-    // Sort by created/requested date (latest first)
+    // Apply sorting
     result.sort((a: any, b: any) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-      
-      return dateB - dateA // Latest first
+      switch (sortBy) {
+        case "date_desc":
+          return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
+        case "date_asc":
+          return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+        case "type":
+          return a.patrecType.localeCompare(b.patrecType)
+        case "status":
+          return a.status.localeCompare(b.status)
+        default:
+          return 0
+      }
     })
 
     return result
-  }, [userAppointments, searchQuery, activeTab])
+  }, [userAppointments, searchQuery, activeTab, sortBy])
 
-  // Calculate stats for tabs
+  // Calculate stats for tabs and pending count
   const counts = useMemo(() => {
-    return {
-      pending: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length,
-      completed: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length,
-      missed: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length,
-    }
+    const pending = userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length
+    const completed = userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length
+    const missed = userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length
+
+    return { pending, completed, missed }
   }, [userAppointments])
 
   const onRefresh = React.useCallback(async () => {
@@ -342,31 +342,29 @@ export default function MyAppointmentsScreen() {
     setRefreshing(false)
   }, [refetch])
 
-  if (isLoading) { return <LoadingState/> }
+  if (isLoading) {
+    return <LoadingState />
+  }
 
   if (isError) {
     return (
       <PageLayout
         leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm">
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+        headerTitle={<Text className="text-gray-900 font-semibold text-base">My Appointments</Text>}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading appointments</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">
+        <View className="flex-1 justify-center items-center bg-white px-6">
+          <View className="bg-red-50 p-4 rounded-2xl mb-4">
+            <AlertCircle size={40} color="#DC2626" />
+          </View>
+          <Text className="text-xl font-semibold text-gray-900 mb-2 text-center">Unable to Load Appointments</Text>
+          <Text className="text-gray-500 text-center text-sm mb-6">
             Failed to load appointment data. Please check your connection and try again.
           </Text>
-          <TouchableOpacity
-            onPress={onRefresh}
-            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
-          >
+          <TouchableOpacity onPress={onRefresh} className="flex-row items-center bg-blue-600 px-6 py-3 rounded-xl">
             <RefreshCw size={18} color="white" />
             <Text className="ml-2 text-white font-medium">Try Again</Text>
           </TouchableOpacity>
@@ -378,77 +376,93 @@ export default function MyAppointmentsScreen() {
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm">
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+      headerTitle={<Text className="text-gray-900 font-semibold text-base">My Appointments</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-gray-50">
-        {/* Search Bar */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
-            <Search size={20} color="#6B7280" />
-            <TextInput
-              className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search appointments..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
+      <View className="flex-1 bg-white">
+        {/* Search Bar and Sort Button */}
+        <View className="px-4 pt-1 pb-4">
+          <View className="flex-row items-center gap-3">
+            <View className="flex-1 flex-row items-center bg-gray-100 rounded-2xl ">
+              <Search size={18} color="#6B7280" className="ml-4" />
+              <TextInput
+                className="flex-1 ml-3 text-gray-900 font-medium"
+                placeholder="Search..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowSortModal(true)}
+              className="bg-blue-600 rounded-2xl px-4 py-3 flex-row items-center"
+            >
+              <ArrowUpDown size={18} color="white" />
+              {/* <Text className="text-white font-medium text-sm ml-2">{getSortLabel(sortBy)}</Text> */}
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
-
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts}  />
+<View className="mb-3"></View>
         {/* Appointments List */}
         {userAppointments.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
-            <Calendar size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No appointments found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              There are no appointments scheduled yet.
+            <View className="bg-gray-100 w-16 h-16 rounded-full items-center justify-center mb-4">
+              <Calendar size={32} color="#9CA3AF" />
+            </View>
+            <Text className="text-lg font-semibold text-gray-900 mb-1 text-center">No Appointments Yet</Text>
+            <Text className="text-gray-500 text-center text-sm">
+              You don't have any scheduled appointments at this time.
             </Text>
           </View>
         ) : (
           <FlatList
-            data={filteredAppointments}
-            keyExtractor={(item) => `appointment-${item.id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            data={filteredAndSortedAppointments}
+            keyExtractor={(item) => `appointment-${item.id}-${item.patrecType}`}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                colors={["#2563EB"]}
+                tintColor="#2563EB"
+              />
+            }
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
-            windowSize={21}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
             renderItem={({ item }) => {
               const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
-              return (
-                <AppointmentCard
-                  appointment={item}
-                  actualStatus={actualStatus}
-                  onPress={() => console.log("")}
-                />
-              ) 
+              return <AppointmentCard appointment={item} actualStatus={actualStatus} />
             }}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
-                <Calendar size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments in this category</Text>
-                <Text className="text-gray-500 text-center">
+                <View className="bg-gray-100 w-16 h-16 rounded-full items-center justify-center mb-4">
+                  <Calendar size={32} color="#9CA3AF" />
+                </View>
+                <Text className="text-lg font-semibold text-gray-900 mb-1 text-center">No Appointments Found</Text>
+                <Text className="text-gray-500 text-center text-sm px-8">
                   {searchQuery
                     ? `No ${activeTab} appointments match your search.`
-                    : `No ${activeTab} appointments found.`}
+                    : `You don't have any ${activeTab} appointments.`}
                 </Text>
               </View>
             )}
           />
         )}
       </View>
+
+      {/* Sort Modal */}
+      <SortModal
+        visible={showSortModal}
+        onClose={() => setShowSortModal(false)}
+        currentSort={sortBy}
+        onSelectSort={setSortBy}
+      />
     </PageLayout>
   )
 }

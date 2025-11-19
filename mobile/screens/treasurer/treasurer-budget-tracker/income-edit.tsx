@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Loader2 } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +15,7 @@ import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -52,9 +52,7 @@ function IncomeEditForm() {
     },
   });
 
-//   const { mutate: createIncome, isPending } = useCreateIncome(() => {
-//     router.back();
-//   });
+
 
   const { mutate: updateEntry, isPending } = useUpdateIncome(Number(inc_num), () => {
     setIsEditing(false);
@@ -114,26 +112,16 @@ function IncomeEditForm() {
         }
         
         updateEntry(allValues);
-
-        setIsEditing(false);
   };
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Edit Income Entry</Text>}
-      headerAlign="left"
-      showExitButton={false}
-      showBackButton={true}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text className="text-[13px]">Edit Income Entry</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Updating income entry..."
       footer={
         <View className="w-full">
           {!isEditing ? (
@@ -151,6 +139,7 @@ function IncomeEditForm() {
                   setIsEditing(false);
                   form.reset();
                 }}
+                disabled={isPending}
               >
                 <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -163,7 +152,7 @@ function IncomeEditForm() {
                   >
                     {isPending ? (
                       <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
+                        <ActivityIndicator size="small" color="white" className="mr-2" />
                         <Text className="text-white text-base font-semibold">Saving...</Text>
                       </>
                     ) : (
@@ -180,7 +169,6 @@ function IncomeEditForm() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
       <View className="w-full px-6 pt-5">
         {/* Date Input */}
@@ -273,7 +261,7 @@ function IncomeEditForm() {
         </View>
       </View>
       {ConfirmationDialogs()}
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

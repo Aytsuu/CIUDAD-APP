@@ -16,6 +16,8 @@ export const useMedicines = (
     queryKey: ["medicines", page, pageSize, search, category], // Include all filters
     queryFn: () => getMedicinesTable(page, pageSize, search, category),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 5000, 
+    refetchOnWindowFocus: true,
   });
 };
 

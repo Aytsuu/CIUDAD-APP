@@ -1,14 +1,14 @@
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert } from "react-native"
+import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert, Linking } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight" 
 import { X } from "@/lib/icons/X" 
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { ComplaintRecordForSummon } from "../complaint-record"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Users, User, FileText, Calendar, Paperclip, Eye, Check, Forward, CircleAlert, Plus } from "lucide-react-native"
+import { Users, User, FileText, Calendar, Paperclip, Eye, Check, Forward, CircleAlert, Plus, Info } from "lucide-react-native"
 import { useGetCouncilCaseDetails } from "../queries/summonFetchQueries"
 import { useResolveCase, useForwardcase } from "../queries/summonUpdateQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
@@ -16,15 +16,15 @@ import { formatDate } from "@/helpers/dateHelpers"
 import { formatTime } from "@/helpers/timeFormatter"
 import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import CreateSummonSched from "../summon-create"
+import { LoadingModal } from "@/components/ui/loading-modal"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function CouncilMediationDetails() {
+    const {user} = useAuth()
     const router = useRouter()
     const params = useLocalSearchParams()
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false)
-    const [createScheduleModalVisible, setCreateScheduleModalVisible] = useState(false)
-    const [confirmationModal, setConfirmationModal] = useState<{ visible: boolean; type: "resolve" | "forward" | null }>({ visible: false, type: null })
     const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -40,8 +40,8 @@ export default function CouncilMediationDetails() {
     } = params
 
     const { data: caseDetails, isLoading } = useGetCouncilCaseDetails(String(sc_id))
-    const { mutate: resolve } = useResolveCase()
-    const { mutate: forward } = useForwardcase()
+    const { mutate: resolve, isPending: isResolvePending } = useResolveCase()
+    const { mutate: forward, isPending: isForwardPending } = useForwardcase()
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -57,18 +57,15 @@ export default function CouncilMediationDetails() {
         sc_date_marked,
         sc_reason,
         comp_id,
+        staff_name,
         hearing_schedules = [],
     } = caseDetails || {}
 
     const isCaseClosed = case_status === "Resolved" || case_status === "Forwarded to Lupon"
     
-    const lastScheduleIsRescheduled = hearing_schedules.length > 0 
-        ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
-        : false
-
     // Check if current mediation is 3rd level and closed
     const isThirdMediation = hearing_schedules.some(schedule => 
-        schedule.hs_level === "3rd Mediation" && schedule.hs_is_closed
+        schedule.hs_level === "3rd MEDIATION" 
     )
 
     // Check if all hearing schedules have remarks
@@ -84,6 +81,10 @@ export default function CouncilMediationDetails() {
     // Check if buttons should be disabled
     const shouldDisableButtons = !allSchedulesHaveRemarks || !allSchedulesAreClosed
 
+    const lastScheduleIsRescheduled = hearing_schedules.length > 0 
+    ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
+    : false
+
     // Determine if Create button should be shown
     const shouldShowCreateButton = !isCaseClosed && 
                                   !hasResidentBool && 
@@ -93,30 +94,36 @@ export default function CouncilMediationDetails() {
     // Determine if Resolve button should be shown
     const shouldShowResolveButton = !isCaseClosed
 
+    // Check if there's an open schedule (for floating button logic)
+    const hasOpenSchedule = hearing_schedules.some((schedule: any) => !schedule.hs_is_closed);
+
     const handleResolve = () => {
+        const staff_id = user?.staff?.staff_id
         const status_type = "Council"
-        resolve({ status_type, sc_id: String(sc_id) })
-        setConfirmationModal({ visible: false, type: null })
+        resolve({ status_type, sc_id: String(sc_id), staff_id})
     }
     
     const handleForward = () => {
         forward(String(sc_id))
-        setConfirmationModal({ visible: false, type: null })
     }
 
     const handleViewImages = (files: any[], index = 0) => {
         const images = files.map(file => ({
-            url: file.url || file.momsp_url || file.sd_url,
-            name: file.name || file.momsp_name || file.sd_name || 'Document'
+            url: file.url || file.rsd_url ,
+            name: file.name || file.rsd_name
         }))
         setSelectedImages(images)
         setCurrentIndex(index)
         setViewImagesModalVisible(true)
     }
 
-    const handleMinutesClick = (hearingMinutes: any[], hs_id: string) => {
+    const handleMinutesClick = (hearingMinutes: any[], hs_id: string, hasRemarks: boolean) => {
         // For mobile, navigate to hearing minutes form
         if (hearingMinutes.length === 0 || !hearingMinutes.some(minute => minute.hm_url)) {
+            if (!hasRemarks) {
+                Alert.alert("Cannot Add Minutes", "Please add remarks first before adding hearing minutes.")
+                return
+            }
             router.push({
                 pathname: "/(summon)/add-hearing-minutes",
                 params: {
@@ -126,16 +133,28 @@ export default function CouncilMediationDetails() {
                 }
             })
         } else {
-            // Open URL in browser for mobile
             const firstMinute = hearingMinutes.find(minute => minute.hm_url)
             if (firstMinute?.hm_url) {
                 Alert.alert("Open Minutes", "Would you like to view the minutes?", [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Open", onPress: () => {} } // Add Linking.openURL(firstMinute.hm_url)
+                    { text: "Open", onPress: () => {
+                        Linking.openURL(firstMinute.hm_url).catch(() =>
+                            Alert.alert('Cannot Open File', 'Please make sure you have a PDF reader app installed.')
+                        );
+                    } } 
                 ])
             }
         }
     }
+
+    const handleCreateSched = () => {        
+        router.push({
+            pathname: "/(summon)/create-schedule",
+            params: {
+                sc_id: String(sc_id)
+            }
+        });
+    };
 
     const getStatusColor = (status: string | null | undefined) => {
         if (!status) return "bg-gray-100 text-gray-800 border-gray-200"
@@ -166,6 +185,23 @@ export default function CouncilMediationDetails() {
     const CaseDetailsTab = () => (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             <View className="p-6">
+                {/* 3rd Mediation Reached Notice */}
+                {isThirdMediation && !isCaseClosed && (
+                    <View className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <View className="flex-row items-start space-x-2 gap-2">
+                            <Info size={16} className="text-red-600 mt-0.5" />
+                            <View className="flex-1">
+                                <Text className="text-red-800 text-sm font-semibold">
+                                    3rd Mediation Reached
+                                </Text>
+                                <Text className="text-red-700 text-sm mt-1">
+                                    This case has reached the final mediation level. You can either mark the case as resolved or forward it to Lupon Tagapamayapa for further action.
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
                 {/* Case Information */}
                 <Card className="border-2 border-gray-200 shadow-sm bg-white mb-4">
                     <CardHeader className="flex flex-row gap-3 items-center">
@@ -201,11 +237,21 @@ export default function CouncilMediationDetails() {
                         )}
 
                         {sc_date_marked && (
-                            <View className="flex-row justify-between items-center py-2">
-                                <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
-                                <Text className="text-sm font-semibold text-gray-900">
-                                    {formatTimestamp(sc_date_marked)}
-                                </Text>
+                            <View className="py-2">
+                                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                    <Text className="text-sm font-medium text-gray-600">Date Marked</Text>
+                                    <Text className="text-sm font-semibold text-gray-900">
+                                        {formatTimestamp(sc_date_marked)}
+                                    </Text>
+                                </View>
+                                {staff_name && (
+                                    <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                                        <Text className="text-sm font-medium text-gray-600">Marked By</Text>
+                                        <Text className="text-sm font-semibold text-gray-900">
+                                            {staff_name}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         )}
                     </CardContent>
@@ -283,42 +329,43 @@ export default function CouncilMediationDetails() {
 
                 {/* Action Buttons */}
                 {!isCaseClosed && (
-                    <Card className="border-2 border-gray-200 shadow-sm bg-white">
-                        <CardHeader>
-                            <Text className="text-md font-bold text-gray-900">Case Actions</Text>
-                        </CardHeader>
-                        <CardContent className="space-y-3 flex flex-col gap-3">
+                    <View className="flex flex-col gap-3">
                             {shouldShowResolveButton && (
-                                <Button
-                                    className={` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
-                                    onPress={() => setConfirmationModal({ visible: true, type: "resolve" })}
-                                    disabled={shouldDisableButtons}
-                                >
-                                    <Check size={20} color="white" />
-                                    <Text className="text-white font-semibold ml-2">Mark as Resolved</Text>
-                                </Button>
+                                <ConfirmationModal
+                                    trigger={
+                                        <Button
+                                            className={` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
+                                            disabled={shouldDisableButtons}
+                                        >
+                                            <Check size={20} color="white" />
+                                            <Text className="text-white font-semibold ml-2">Mark as Resolved</Text>
+                                        </Button>
+                                    }
+                                    title="Confirm Resolution"
+                                    description="Are you sure you want to mark this case as resolved?"
+                                    actionLabel="Confirm"
+                                    onPress={() => handleResolve()}
+                                />
                             )}
                             
                             {isThirdMediation && (
-                                <Button
-                                    className={ ` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
-                                    onPress={() => setConfirmationModal({ visible: true, type: "forward" })}
-                                    disabled={shouldDisableButtons}
-                                >
-                                    <Forward size={20} color="white" />
-                                    <Text className="text-white font-semibold ml-2">Forward to Lupon</Text>
-                                </Button>
+                                <ConfirmationModal
+                                    trigger={
+                                        <Button
+                                            className={ ` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
+                                            disabled={shouldDisableButtons}
+                                        >
+                                            <Forward size={20} color="white" />
+                                            <Text className="text-white font-semibold ml-2">Forward to Lupon</Text>
+                                        </Button>
+                                    }
+                                    title="Forward to Lupon"
+                                    description="Are you sure you want to forward this case to Lupon for further action?"
+                                    actionLabel="Confirm"
+                                    onPress={() => handleForward()}
+                                />
                             )}
-
-                            {(shouldDisableButtons && (shouldShowResolveButton || isThirdMediation)) && (
-                                <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
-                                    <Text className="text-yellow-800 text-sm text-center">
-                                        All hearing schedules must have remarks and be closed before taking action
-                                    </Text>
-                                </View>
-                            )}
-                        </CardContent>
-                    </Card>
+                    </View>
                 )}
 
                 {/* Notices */}
@@ -341,25 +388,14 @@ export default function CouncilMediationDetails() {
             <View className="flex-1">
                 {/* Resident Case Notice */}
                 {hasResidentBool && !isCaseClosed && (
-                    <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mx-4 mt-4 mb-2">
+                    <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mx-6 mt-4 mb-2">
                         <Text className="text-blue-800 text-sm">
                             <Text className="font-bold">Resident Case:</Text> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule.
                         </Text>
                     </View>
                 )}
 
-                {/* Create Schedule Button */}
-                {shouldShowCreateButton && (
-                    <View className="p-4 border-b border-gray-200 bg-white">
-                        <Button
-                            className="bg-blue-500 py-3 rounded-lg"
-                            onPress={() => setCreateScheduleModalVisible(true)}
-                        >
-                            <Plus size={20} color="white" />
-                            <Text className="text-white font-semibold ml-2">Create New Schedule</Text>
-                        </Button>
-                    </View>
-                )}
+                {/* REMOVED: Create Schedule Button from here since we're adding floating button */}
 
                 {hearingSchedules.length === 0 ? (
                     <View className="flex-1 justify-center items-center p-6">
@@ -374,55 +410,52 @@ export default function CouncilMediationDetails() {
                 ) : (
                     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                         <View className="p-6">
-                            {hearingSchedules.map((schedule: any, index: number) => (
-                                <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-4">
-                                    <CardContent className="p-4">
-                                        {/* Header with Hearing Level and Status */}
-                                        <View className="flex-row justify-between items-start mb-3">
-                                            <View className="flex flex-row items-center gap-3">
-                                                <Text className="text-md font-bold text-gray-900">
-                                                    {schedule.hs_level}
-                                                </Text>
-                                                <View className={`px-2 py-1 rounded-full ${
-                                                    schedule.hs_is_closed
-                                                        ? "bg-orange-100 border border-orange-200"
-                                                        : "bg-green-100 border border-green-200"
-                                                }`}> 
-                                                    <Text className={`text-xs font-medium ${
-                                                        schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
-                                                    }`}>
-                                                        {schedule.hs_is_closed ? "Closed" : "Open"}
+                            {hearingSchedules.map((schedule: any, index: number) => {
+                                const hasRemarks = schedule.remark && schedule.remark.rem_id
+                                
+                                return (
+                                    <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-4">
+                                        <CardContent className="p-4">
+                                            {/* Header with Hearing Level and Status */}
+                                            <View className="flex-row justify-between items-start mb-3">
+                                                <View className="flex flex-row items-center gap-3">
+                                                    <Text className="text-md font-bold text-gray-900">
+                                                        {schedule.hs_level}
+                                                    </Text>
+                                                    <View className={`px-2 py-1 rounded-full ${
+                                                        schedule.hs_is_closed
+                                                            ? "bg-orange-100 border border-orange-200"
+                                                            : "bg-green-100 border border-green-200"
+                                                    }`}> 
+                                                        <Text className={`text-xs font-medium ${
+                                                            schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
+                                                        }`}>
+                                                            {schedule.hs_is_closed ? "Closed" : "Open"}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+
+                                            {/* Hearing Date and Time */}
+                                            <View className="space-y-2 mb-3">
+                                                <View className="flex-row justify-between items-center">
+                                                    <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
+                                                    <Text className="text-sm font-semibold text-gray-900">
+                                                        {formatDate(schedule.summon_date?.sd_date, "long")}, {formatTime(schedule.summon_time?.st_start_time)}
                                                     </Text>
                                                 </View>
                                             </View>
-                                        </View>
 
-                                        {/* Hearing Date and Time */}
-                                        <View className="space-y-2 mb-3">
-                                            <View className="flex-row justify-between items-center">
-                                                <Text className="text-sm font-medium text-gray-600">Hearing Date</Text>
-                                                <Text className="text-sm font-semibold text-gray-900">
-                                                    {formatDate(schedule.summon_date?.sd_date, "long")}
-                                                </Text>
-                                            </View>
-                                            <View className="flex-row justify-between items-center">
-                                                <Text className="text-sm font-medium text-gray-600">Hearing Time</Text>
-                                                <Text className="text-sm font-semibold text-gray-900">
-                                                    {formatTime(schedule.summon_time?.st_start_time)}
-                                                </Text>
-                                            </View>
-                                        </View>
-
-                                        {/* Remarks Section */}
-                                        <View className="border-t border-gray-100 pt-3 mb-3">
-                                            {schedule.remark && schedule.remark.rem_id ? (
+                                            {/* Remarks Section */}
+                                            <View className="border-t border-gray-100 pt-3 mb-3">
+                                            {hasRemarks ? (
                                                 <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                                    <View className="flex-row justify-between items-start mb-2">
-                                                        <Text className="text-sm font-semibold text-blue-800">
-                                                            Remarks Added
+                                                    <View className="mb-2">
+                                                        <Text className="text-sm font-semibold text-blue-800 mb-1">
+                                                            Remarks
                                                         </Text>
-                                                        <Text className="text-xs text-blue-600">
-                                                            {formatTimestamp(schedule.remark.rem_date)}
+                                                        <Text className="text-xs text-blue-600 italic">
+                                                            by{schedule.remark.staff_name ? ` ${schedule.remark.staff_name}` : ' Unknown'}, on {formatTimestamp(schedule.remark.rem_date)}
                                                         </Text>
                                                     </View>
                                                     <Text className="text-sm text-gray-700 mb-2">
@@ -436,7 +469,7 @@ export default function CouncilMediationDetails() {
                                                             >
                                                                 <View className="flex-row items-center">
                                                                     <Paperclip size={16} color="#3b82f6" />
-                                                                    <Text className="text-blue-700 font-medium ml-2">
+                                                                    <Text className="text-blue-700 text-sm font-semibold ml-2">
                                                                         View Attached Files ({schedule.remark.supp_docs.length})
                                                                     </Text>
                                                                 </View>
@@ -447,79 +480,66 @@ export default function CouncilMediationDetails() {
                                                 </View>
                                             ) : (
                                                 <View className="bg-red-50 rounded-lg p-3 border border-red-200">
-                                                    <View className="flex-row items-center space-x-2">
+                                                    <View className="flex-row items-center space-x-2 gap-2">
                                                         <CircleAlert size={16} color="#dc2626" />
                                                         <Text className="text-sm font-semibold text-red-800">
                                                             No Remarks Available
                                                         </Text>
                                                     </View>
-                                                    <Text className="text-xs text-red-600 mt-1">
-                                                        Add remarks to close this hearing schedule
-                                                    </Text>
                                                 </View>
                                             )}
-                                        </View>
+                                            </View>
 
-                                        {/* Minutes Section */}
-                                        <View className="border-t border-gray-100 pt-3 mb-3">
-                                            <Text className="text-sm font-medium text-gray-600 mb-2">Hearing Minutes</Text>
-                                            {schedule.hearing_minutes && schedule.hearing_minutes.length > 0 ? (
-                                                <TouchableOpacity 
-                                                    onPress={() => handleMinutesClick(schedule.hearing_minutes, schedule.hs_id)}
-                                                    className="flex-row items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3"
-                                                >
-                                                    <View className="flex-row items-center">
-                                                        <FileText size={16} color="#16a34a" />
-                                                        <Text className="text-green-700 font-medium ml-2">
-                                                            View Minutes
-                                                        </Text>
-                                                    </View>
-                                                    <Eye size={16} color="#16a34a" />
-                                                </TouchableOpacity>
-                                            ) : (
-                                                <TouchableOpacity 
-                                                    onPress={() => handleMinutesClick([], schedule.hs_id)}
-                                                    className="flex-row items-center justify-between bg-red-50 border border-red-200 rounded-lg p-3"
-                                                >
-                                                    <View className="flex-row items-center">
-                                                        <CircleAlert size={16} color="#dc2626" />
-                                                        <Text className="text-red-700 font-medium ml-2">
-                                                            No Minutes Available
-                                                        </Text>
-                                                    </View>
-                                                    <Plus size={16} color="#dc2626" />
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
-
-                                        {/* Generate Summon Button */}
-                                        {/* <Button
-                                            className={`py-2 rounded-lg ${schedule.hs_is_closed ? 'bg-gray-400' : 'bg-blue-500'}`}
-                                            onPress={() => {
-                                                // Navigate to summon preview/generation
-                                                router.push({
-                                                    pathname: "/(summon)/summon-preview",
-                                                    params: {
-                                                        sc_id: String(sc_id),
-                                                        hs_id: schedule.hs_id,
-                                                        sc_code: String(sc_code),
-                                                        comp_names: String(comp_names),
-                                                        acc_names: String(acc_names),
-                                                        complainant_addresses: String(complainant_addresses),
-                                                        accused_addresses: String(accused_addresses),
-                                                        hearing_date: schedule.summon_date?.sd_date,
-                                                        hearing_time: schedule.summon_time?.st_start_time,
-                                                        mediation_level: schedule.hs_level
-                                                    }
-                                                })
-                                            }}
-                                            disabled={schedule.hs_is_closed}
-                                        >
-                                            <Text className="text-white font-semibold">Generate Summon</Text>
-                                        </Button> */}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                            {/* Minutes Section - UPDATED WITH DISABLED STATE */}
+                                            <View className="border-t border-gray-100 pt-3 mb-3">
+                                                <Text className="text-sm font-medium text-gray-600 mb-2">Hearing Minutes</Text>
+                                                {schedule.hearing_minutes && schedule.hearing_minutes.length > 0 ? (
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleMinutesClick(schedule.hearing_minutes, schedule.hs_id, hasRemarks)}
+                                                        className="flex-row items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3"
+                                                    >
+                                                        <View className="flex-row items-center">
+                                                            <FileText size={16} color="#16a34a" />
+                                                            <Text className="text-green-700 text-sm font-semibold ml-2">
+                                                                View Minutes
+                                                            </Text>
+                                                        </View>
+                                                        <Eye size={16} color="#16a34a" />
+                                                    </TouchableOpacity>
+                                                ) : (
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleMinutesClick([], schedule.hs_id, hasRemarks)}
+                                                        className={`flex-row items-center justify-between rounded-lg p-3 ${
+                                                            hasRemarks 
+                                                                ? "bg-red-50 border border-red-200" 
+                                                                : "bg-gray-100 border border-gray-300"
+                                                        }`}
+                                                        disabled={!hasRemarks}
+                                                    >
+                                                        <View className="flex-row items-center">
+                                                            {hasRemarks ? (
+                                                                <CircleAlert size={16} color="#dc2626" />
+                                                            ) : (
+                                                                <CircleAlert size={16} color="#9ca3af" />
+                                                            )}
+                                                            <Text className={`text-sm font-semibold ml-2 ${
+                                                                hasRemarks ? "text-red-700" : "text-gray-500"
+                                                            }`}>
+                                                                No Minutes Available
+                                                            </Text>
+                                                        </View>
+                                                        {hasRemarks ? (
+                                                            <Plus size={16} color="#dc2626" />
+                                                        ) : (
+                                                            <Plus size={16} color="#9ca3af" />
+                                                        )}
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        </CardContent>
+                                    </Card>
+                                )
+                            })}
                         </View>
                     </ScrollView>
                 )}
@@ -607,63 +627,28 @@ export default function CouncilMediationDetails() {
                     </View>
                 </View>
 
-                {/* Create Schedule Modal */}
-                <Modal
-                    visible={createScheduleModalVisible}
-                    animationType="slide"
-                    presentationStyle="pageSheet"
-                >
-                    <View className="flex-1 bg-white">
-                        <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-                            <Text className="text-lg font-semibold">Create New Schedule</Text>
-                            <TouchableOpacity onPress={() => setCreateScheduleModalVisible(false)}>
-                                <X size={24} color="black" />
-                            </TouchableOpacity>
-                        </View>
-                        {/* <CreateSummonSched
-                            sc_id={String(sc_id)}
-                            onSuccess={() => setCreateScheduleModalVisible(false)}
-                        /> */}
-                    </View>
-                </Modal>
-
-                {/* Confirmation Modal */}
-                <Modal
-                    visible={confirmationModal.visible}
-                    transparent={true}
-                    animationType="fade"
-                >
-                    <View className="flex-1 justify-center items-center bg-black/50 p-4">
-                        <View className="bg-white rounded-lg p-6 w-full max-w-sm">
-                            <Text className="text-lg font-semibold mb-2">
-                                {confirmationModal.type === "resolve" ? "Confirm Resolution" : "Forward to Lupon"}
-                            </Text>
-                            <Text className="text-gray-600 mb-6">
-                                {confirmationModal.type === "resolve" 
-                                    ? "Are you sure you want to mark this case as resolved?"
-                                    : "Are you sure you want to forward this case to Lupon for further action?"}
-                            </Text>
-                            <View className="flex-row justify-end space-x-3">
-                                <Button
-                                    className="bg-gray-300 px-4 py-2 rounded-lg"
-                                    onPress={() => setConfirmationModal({ visible: false, type: null })}
-                                >
-                                    <Text className="text-gray-700 font-medium">Cancel</Text>
-                                </Button>
-                                <Button
-                                    className={`px-4 py-2 rounded-lg ${
-                                        confirmationModal.type === "resolve" ? "bg-green-500" : "bg-red-500"
-                                    }`}
-                                    onPress={confirmationModal.type === "resolve" ? handleResolve : handleForward}
-                                >
-                                    <Text className="text-white font-medium">
-                                        {confirmationModal.type === "resolve" ? "Confirm" : "Forward"}
-                                    </Text>
-                                </Button>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
+                {/* Floating Add Button - Only show when activeTab is "schedule" */}
+                {activeTab === "schedule" && shouldShowCreateButton && (
+                    <TouchableOpacity 
+                        onPress={handleCreateSched}
+                        disabled={hasOpenSchedule || isCaseClosed}
+                        className={`absolute bottom-6 right-6 w-16 h-16 rounded-full items-center justify-center shadow-lg z-50 ${
+                            hasOpenSchedule || isCaseClosed ? "bg-gray-400" : "bg-blue-600"
+                        }`}
+                        style={{
+                            shadowColor: "#000",
+                            shadowOffset: {
+                                width: 0,
+                                height: 2,
+                            },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                            elevation: 5,
+                        }}
+                    >
+                        <Plus size={24} color="white" />
+                    </TouchableOpacity>
+                )} 
 
                 {/* Image Viewer Modal */}
                 <Modal
@@ -734,6 +719,7 @@ export default function CouncilMediationDetails() {
                         )}
                     </View>
                 </Modal>
+                <LoadingModal visible={isForwardPending || isResolvePending}/>
             </PageLayout>
         </>
     )

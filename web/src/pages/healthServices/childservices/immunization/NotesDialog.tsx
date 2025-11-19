@@ -28,12 +28,13 @@ export function NotesDialog({ isOpen, onClose, form, isLoading, onSave, editingD
       // Get the latest historical note
       const latestHistoricalNote = filteredNotes.length > 0 ? filteredNotes[0] : null;
 
-      // Get current form values
+      // Get current form values (which includes localStorage values)
       const currentFormValues = form.getValues();
 
-      // Priority: Current form values > Latest historical note > Editing data
+      // Priority: Current form values (includes localStorage) > Latest historical note > Editing data
       const formData = {
-        ...currentFormValues, // Keep all current form values
+        ...editingData, // Keep vital signs data
+        ...currentFormValues, // Keep all current form values (includes localStorage)
         notes: currentFormValues.notes || latestHistoricalNote?.notes || editingData.notes || "",
         follov_description: currentFormValues.follov_description || latestHistoricalNote?.follov_description || editingData.follov_description || "",
         followUpVisit: currentFormValues.followUpVisit || latestHistoricalNote?.followUpVisit || editingData.followUpVisit || "",
@@ -42,7 +43,11 @@ export function NotesDialog({ isOpen, onClose, form, isLoading, onSave, editingD
         chnotes_id: latestHistoricalNote?.chnotes_id || editingData.chnotes_id || ""
       };
 
-      form.reset(formData);
+      // Don't use reset, just set the specific fields to preserve other form data
+      form.setValue("notes", formData.notes);
+      form.setValue("follov_description", formData.follov_description);
+      form.setValue("followUpVisit", formData.followUpVisit);
+      form.setValue("followv_status", formData.followv_status);
 
       console.log("Autofill data:", {
         currentFormValues,

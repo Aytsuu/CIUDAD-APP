@@ -1,8 +1,7 @@
 // MonthlyChildrenDetails.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import {  Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -224,16 +223,14 @@ export default function MonthlyNewChildrenDetails() {
 
       {/* Main Content */}
       <div className="bg-white rounded-b-lg overflow-x-auto   ">
-        <div
-          style={{
-            width: "16in",
-            overflowX: "auto",
-            position: "relative",
-            margin: "0 auto",
-            fontSize: "12px",
-          }}
-        >
-          <div id="printable-area" className="p-4">
+        <div>
+          <div
+            id="printable-area"
+            className="p-4"
+            style={{
+              width: "19in",
+            }}
+          >
             <div>
               <div className="text-center py-2">
                 <Label className="text-sm font-bold uppercase tracking-widest underline block">NEW CHILDREN REGISTRATION RECORDS</Label>

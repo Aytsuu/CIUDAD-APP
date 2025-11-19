@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useMemo, useState, useCallback } from "react" // MODIFIED: Added useState and useCallback
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
@@ -14,9 +12,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
 import { getPatientById } from "../admin/admin-animalbites/api/get-api"
 import { calculateAge } from "@/helpers/ageCalculator"
-import { PaginationControls } from "../admin/components/pagination-layout"
 
-// Remove the mock API function and use your actual API call
 type PatientRecordDetail = {
   bite_id: number
   actions_taken: string
@@ -198,7 +194,7 @@ export default function MyAnimalBiteRecordsScreen() {
           <ChevronLeft size={24} className="text-slate-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-slate-900 text-[13px]">My Animal Bite Records</Text>}
+      headerTitle={<Text className="text-slate-900 text-[13px]">Animal Bite Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 ">
@@ -282,10 +278,10 @@ export default function MyAnimalBiteRecordsScreen() {
                 </View>
                 <View className="items-center">
                   <Text className="text-3xl font-bold text-orange-600">
-                    {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "scratch")
+                    {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "non-bite")
                       .length || 0}
                   </Text>
-                  <Text className="text-gray-600 text-sm">Scratch Incidents</Text>
+                  <Text className="text-gray-600 text-sm">Non-bite Incidents</Text>
                 </View>
               </View>
             </View>

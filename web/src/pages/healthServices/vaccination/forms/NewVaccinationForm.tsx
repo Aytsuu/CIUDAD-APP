@@ -42,7 +42,7 @@ export default function VaccinationRecordForm() {
   const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [, setNextVisitDate] = useState<string | null>(null);
+  const [,setNextVisitDate] = useState<string | null>(null);
   const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
   const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(null);
   const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
@@ -270,6 +270,11 @@ export default function VaccinationRecordForm() {
           }
         : undefined;
 
+        if(!selectedStaffId){
+          showErrorToast("Please select a staff member to forward the record.");
+          setSubmitting(false);
+          return;
+        }
       await submitStep2.mutateAsync({
         data,
         signature: signature || "",

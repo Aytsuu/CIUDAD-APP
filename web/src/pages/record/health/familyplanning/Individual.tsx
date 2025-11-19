@@ -338,7 +338,7 @@ const IndividualFamPlanningTable: React.FC = () => {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Calendar className="h-5 w-5 text-green-500" />
-        <h3 className="text-green-800 font-medium">Upcoming follow-up visit</h3>
+        <h3 className="text-green-800 font-medium">Follow-up visit</h3>
       </div>
       <span className="text-green-600 font-semibold">
         Date: {formatDate(groupedRecords[0][1][0].dateOfFollowUp!)}

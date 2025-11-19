@@ -2,12 +2,14 @@ import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
-import { router, Href } from "expo-router"; // Import Href
+import { router, Href } from "expo-router";
 import { Archive, Baby, Calendar, Dog, Heart, Pill, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, ChevronLeft, UserRoundPlus, Venus, BriefcaseMedical, SyringeIcon, NotebookPen } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import PageLayout from "../_PageLayout";
+import { usePendingAppointments } from "./my-schedules/pendingAppointment";
+import { Badge } from "@/components/ui/badge"
 
 const { width } = Dimensions.get("window");
 
@@ -38,7 +40,8 @@ interface Module {
 
 const Homepage = () => {
   const { user, hasCheckedAuth } = useAuth();
-
+  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+  
   // Determine user role
   const isAdmin = user?.staff?.staff_type.toLowerCase() === "health staff";
   const isResident = !!user?.rp;
@@ -52,11 +55,8 @@ const Homepage = () => {
     );
   }
 
-  // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
-
   const modules: Module[] = [
     { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
-    // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
     { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
     { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
     { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
@@ -122,9 +122,6 @@ const Homepage = () => {
       backgroundColor="bg-blue-800"
       wrapScroll={false}
     >
-
-
-
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
           <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
@@ -208,12 +205,18 @@ const Homepage = () => {
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
             <TouchableOpacity
-              className="bg-blue-700 p-1 rounded-xl relative"
+              className="bg-blue-700 px-4 py-2 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My schedules</Text>
-              {/* Notification Badge */}
-              {/* <NotificationBadge count={pendingCount} showBadge={!isLoadingPending && pendingCount > 0} /> */}
+              <Text className="text-white text-sm font-PoppinsSemiBold">My schedules</Text>
+              {/* Pending Count Badge - FIXED: using pendingCount instead of counts.pending */}
+              {!isLoadingPending && pendingCount > 0 && (
+                <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                  <Text className="text-white text-xs font-bold">
+                    {pendingCount > 9 ? '9+' : pendingCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -282,7 +285,6 @@ const Homepage = () => {
           </View>
         )}
       </ScrollView>
-
     </PageLayout>
   );
 };

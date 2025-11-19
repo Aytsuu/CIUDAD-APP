@@ -8,7 +8,7 @@ from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
-from .signals import archive_completed_hotspots
+from .signals import archive_completed_hotspots, archive_passed_waste_events
 from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 from django.db.models import OuterRef, Subquery
@@ -19,11 +19,28 @@ from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
 from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
+from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteEventSerializer
     queryset = WasteEvent.objects.all()
     permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        # Auto-archive waste events that have passed
+        archive_passed_waste_events()
+        
+        queryset = WasteEvent.objects.all()
+        
+        # Archive filter
+        is_archive = self.request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            queryset = queryset.filter(we_is_archive=is_archive.lower() == 'true')
+        
+        return queryset
     
     def create(self, request, *args, **kwargs):
         # Create the waste event first
@@ -50,55 +67,58 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     staff_id=event_data.get('staff')
                 )
                 
-                # Create announcement recipients based on selected options
+                # Prepare recipients data for BulkAnnouncementRecipientSerializer
+                recipients_data = []
                 for announcement_type in selected_announcements:
+                    recipient_dict = {'ann': announcement.ann_id}
+                    
                     if announcement_type == "all":
-                        # Create recipients for all categories
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="all",
-                            ar_type="ALL"
-                        )
+                        recipient_dict['ar_category'] = "all"
+                        recipient_dict['ar_type'] = "ALL"
                     elif announcement_type == "allbrgystaff":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="staff",
-                            ar_type="ALL"
-                        )
+                        recipient_dict['ar_category'] = "staff"
+                        recipient_dict['ar_type'] = "ALL"
                     elif announcement_type == "residents":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="resident",
-                            ar_type="RESIDENT"
-                        )
+                        recipient_dict['ar_category'] = "resident"
+                        recipient_dict['ar_type'] = "RESIDENT"
                     elif announcement_type == "wmstaff":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="staff",
-                            ar_type="WASTE_MANAGEMENT"
-                        )
+                        recipient_dict['ar_category'] = "staff"
+                        recipient_dict['ar_type'] = "WASTE_MANAGEMENT"
                     elif announcement_type == "drivers":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="staff",
-                            ar_type="DRIVER"
-                        )
+                        recipient_dict['ar_category'] = "staff"
+                        recipient_dict['ar_type'] = "DRIVER"
                     elif announcement_type == "collectors":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="staff",
-                            ar_type="LOADER"
-                        )
+                        recipient_dict['ar_category'] = "staff"
+                        recipient_dict['ar_type'] = "LOADER"
                     elif announcement_type == "watchmen":
-                        AnnouncementRecipient.objects.create(
-                            ann=announcement,
-                            ar_category="staff",
-                            ar_type="WATCHMAN"
-                        )
+                        recipient_dict['ar_category'] = "staff"
+                        recipient_dict['ar_type'] = "WATCHMAN"
+                    
+                    recipients_data.append(recipient_dict)
                 
-                # Add announcement ID to response
-                response.data['announcement_id'] = announcement.ann_id
-                response.data['announcement_created'] = True
+                # Use BulkAnnouncementRecipientSerializer to create recipients and send notifications/emails
+                bulk_serializer = BulkAnnouncementRecipientSerializer(
+                    data={'recipients': recipients_data},
+                    context={'request': request}
+                )
+                
+                if bulk_serializer.is_valid():
+                    try:
+                        bulk_serializer.save()
+                        logger.info(f"Announcement recipients created and notifications sent for waste event announcement {announcement.ann_id}")
+                        # Add announcement ID to response
+                        response.data['announcement_id'] = announcement.ann_id
+                        response.data['announcement_created'] = True
+                    except Exception as e:
+                        logger.error(f"Error saving announcement recipients: {str(e)}")
+                        response.data['announcement_id'] = announcement.ann_id
+                        response.data['announcement_created'] = False
+                        response.data['announcement_error'] = str(e)
+                else:
+                    logger.error(f"Error validating announcement recipients: {bulk_serializer.errors}")
+                    response.data['announcement_id'] = announcement.ann_id
+                    response.data['announcement_created'] = False
+                    response.data['announcement_error'] = bulk_serializer.errors
                 
             except Exception as e:
                 # Log error but don't fail the event creation
@@ -107,6 +127,52 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 response.data['announcement_error'] = str(e)
         
         return response
+
+class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WasteEventSerializer
+    queryset = WasteEvent.objects.all()
+    lookup_field = 'we_num'
+    permission_classes = [AllowAny]
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        lookup_value = self.kwargs[self.lookup_field]
+        try:
+            obj = queryset.get(pk=lookup_value)
+        except WasteEvent.DoesNotExist:
+            raise status.HTTP_404_NOT_FOUND
+        return obj
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            # Permanent delete
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            # Soft delete (archive)
+            instance.we_is_archive = True
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+class WasteEventRestoreView(generics.UpdateAPIView):
+    queryset = WasteEvent.objects.filter(we_is_archive=True)
+    serializer_class = WasteEventSerializer
+    lookup_field = 'we_num'
+    permission_classes = [AllowAny]
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.we_is_archive = False
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class WasteCollectionStaffView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -1252,7 +1318,7 @@ class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
 
 class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
-    serializer_class = ResidentAcceptedPickupRequestsSerializer
+    serializer_class = ResidentAcceptedPickupRequestsSerializer  
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
 

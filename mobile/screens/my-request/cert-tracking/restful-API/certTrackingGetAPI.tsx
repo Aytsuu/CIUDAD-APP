@@ -34,8 +34,25 @@ export const getBusinessPermitRequests = async (residentId: string) => {
   return toList(res.data);
 };
 
+export const getServiceChargeRequests = async (residentId: string) => {
+  const res = await api.get(`clerk/service-charge-treasurer-list/`, { params: { rp: residentId, rp_id: residentId, sr_type: 'File Action' } });
+  return toList(res.data);
+};
+
 export const cancelCertificate = async (cr_id: string) => {
   const res = await api.post(`clerk/certificate/${cr_id}/cancel/`, {});
+  return res.data;
+};
+
+export const cancelBusinessPermit = async (bpr_id: string) => {
+  const res = await api.post(`clerk/business-permit/${bpr_id}/cancel/`, {});
+  return res.data;
+};
+
+export const cancelServiceCharge = async (pay_id: string) => {
+  const res = await api.put(`clerk/treasurer/service-charge-payment/${pay_id}/`, {
+    pay_req_status: 'Cancelled'
+  });
   return res.data;
 };
 

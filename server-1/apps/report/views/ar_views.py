@@ -5,6 +5,7 @@ from django.db.models import Q
 from ..models import AcknowledgementReport
 from ..serializers.ar_serializers import *
 from apps.pagination import StandardResultsPagination
+from utils.supabase_client import upload_to_storage, remove_from_storage
 
 class ARCreateView(generics.CreateAPIView):
   serializer_class = ARCreateSerializer
@@ -41,6 +42,7 @@ class ARFileCreateView(generics.CreateAPIView):
   def create(self, request, *args, **kwargs):
       files = request.data.get('files', [])
       ar_id = request.data.get('ar_id', None)
+      arf_is_supp = request.data.get('arf_is_supp', False)
 
       if ar_id:
         ar = AcknowledgementReport.objects.filter(ar_id=ar_id).first()
@@ -52,7 +54,8 @@ class ARFileCreateView(generics.CreateAPIView):
             ar=ar,
             arf_name=file_data['name'],
             arf_type=file_data['type'],
-          arf_path=f"ar/{file_data['name']}"
+            arf_path=f"ar/{file_data['name']}",
+            arf_is_supp=arf_is_supp
           )
           url = upload_to_storage(file_data, 'report-bucket', 'ar')
           file.arf_url = url
@@ -101,8 +104,35 @@ class ARUpdateView(generics.UpdateAPIView):
 
   def update(self, request, *args, **kwargs):
     instance = self.get_object()
+    files = request.data.pop('files', None)
     serializer = self.get_serializer(instance, data=request.data, partial=True)
     if serializer.is_valid():
       serializer.save()
-      return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    if files:
+      existing = instance.ar_files.all()
+      for file in existing:
+        remove_from_storage('report-bucket', file.arf_path)
+      existing.delete()
+
+      self.upload_files(instance, files)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+  def upload_files(self, instance, files):
+    ar_files = []
+    for file_data in files:
+      arf_file = ARFile(
+        ar=instance,
+        arf_name=file_data['name'],
+        arf_type=file_data['type'],
+        arf_path=f"ar/{file_data['name']}",
+      )
+
+      url = upload_to_storage(file_data, 'report-bucket', 'ar')
+      arf_file.arf_url = url
+      ar_files.append(arf_file)
+
+    if ar_files:
+        ARFile.objects.bulk_create(ar_files)

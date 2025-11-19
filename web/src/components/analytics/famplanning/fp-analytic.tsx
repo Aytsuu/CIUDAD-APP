@@ -254,7 +254,7 @@ export const FamilyPlanningAnalytics: React.FC<FamilyPlanningAnalyticsProps> = (
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          Analytics for {format(currentDate, "MMMM yyyy")}
+          {/* Analytics for {format(currentDate, "MMMM yyyy")} */}
         </div>
         <div className="flex items-center space-x-3">
           <Button

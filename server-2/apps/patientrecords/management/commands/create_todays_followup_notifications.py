@@ -6,7 +6,10 @@ from apps.administration.models import Staff
 from apps.healthProfiling.models import ResidentProfile
 from utils.create_notification import NotificationQueries
 import traceback
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Create notifications for today\'s follow-up visits and missed follow-ups'
@@ -53,7 +56,7 @@ class Command(BaseCommand):
         )
         
         # 🚨 FIXED: Use consistent days for query and notification
-        MAX_MISSED_NOTIFICATION_DAYS = 3  # Stop notifying after 3 days
+        MAX_MISSED_NOTIFICATION_DAYS = 2  # Stop notifying after 2 days
         missed_cutoff = today - timedelta(days=MAX_MISSED_NOTIFICATION_DAYS)
         
         missed_followups = FollowUpVisit.objects.filter(
@@ -72,7 +75,8 @@ class Command(BaseCommand):
         
         # Get staff who should receive notifications
         notification_staff = Staff.objects.filter(
-            pos__pos_title__in=["ADMIN", "BARANGAY HEALTH WORKER"]
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=["ADMIN", "BARANGAY HEALTH WORKERS"]
         ).select_related('rp', 'pos')
         
         if not notification_staff.exists():
@@ -195,7 +199,7 @@ class Command(BaseCommand):
                     message_staff = f"A follow-up visit is scheduled for {patient_name}{description_text}"
                     title_resident = "Your Follow-Up Visit Today"
                     message_resident = f"Your follow-up visit is scheduled for today{description_text}"
-                else:  # missed
+                elif followup_type == "missed":  # missed
                     days_missed = (timezone.now().date() - followup.followv_date).days
                     title_staff = "Missed Follow-Up Visit"
                     message_staff = f"Follow-up visit for {patient_name} was scheduled {days_missed} day(s) ago but is still pending{description_text}"
@@ -229,7 +233,7 @@ class Command(BaseCommand):
                         notif_type="REMINDER",
                         web_route="",
                         web_params="",
-                        mobile_route="",
+                        mobile_route="/(health)/my-schedules/my-schedules",
                         mobile_params="",
                     )
                     
@@ -242,6 +246,8 @@ class Command(BaseCommand):
                     notification_count += 1
                     # Mark as notified today
                     self.mark_as_notified_today(followup, followup_type)
+                
+                logger.info(f"NOTIFICATION CREATED: {title_staff} | Patient: {patient_name} | Type: {followup_type} | Job: todays_morning")
                 
             except Exception as e:
                 self.stdout.write(
@@ -258,8 +264,7 @@ class Command(BaseCommand):
         from django.utils import timezone
         
         today = timezone.now().date().isoformat()
-        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}"
-        
+        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}
         return cache.get(cache_key, False)
     
     def mark_as_notified_today(self, followup, followup_type):

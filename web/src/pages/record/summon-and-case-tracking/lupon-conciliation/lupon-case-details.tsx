@@ -6,7 +6,7 @@
 // import { Button } from "@/components/ui/button/button"
 // import { DataTable } from "@/components/ui/table/data-table"
 // import type { ColumnDef } from "@tanstack/react-table"
-// import { ChevronLeft, Check, CircleAlert, AlertTriangle  } from "lucide-react"
+// import { ChevronLeft, Check, CircleAlert, AlertTriangle, Calendar } from "lucide-react"
 // import { Spinner } from "@/components/ui/spinner"
 // import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 // import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
@@ -27,6 +27,7 @@
 // import SummonRemarksView from "../summon-remarks-view"
 // import { useEscalateCase } from "../queries/summonUpdateQueries"
 // import LuponPreview from "./conciliation-preview"
+// import { useAuth } from "@/context/AuthContext"
 
 // function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
 //   return (
@@ -43,6 +44,7 @@
 // }
 
 // export default function LuponCaseDetails() {
+//   const {user} = useAuth()
 //   const navigate = useNavigate()
 //   const location = useLocation()
 //   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -88,6 +90,7 @@
 //     sc_date_marked,
 //     sc_reason,
 //     comp_id,
+//     staff_name,
 //     hearing_schedules = [],
 //   } = caseDetails || {}
 
@@ -101,8 +104,21 @@
 
 //   // Check if current mediation is 3rd level and closed
 //   const isThirdMediation = hearing_schedules.some(schedule => 
-//     schedule.hs_level === "3rd Conciliation Proceedings" && schedule.hs_is_closed
+//     schedule.hs_level === "3rd Conciliation Proceedings" 
 //   )
+
+//   // Check if all hearing schedules have remarks
+//   const allSchedulesHaveRemarks = hearing_schedules.length > 0 && 
+//     hearing_schedules.every(schedule => 
+//       schedule.remark && schedule.remark.rem_id
+//     )
+
+//   // Check if all hearing schedules are closed
+//   const allSchedulesAreClosed = hearing_schedules.length > 0 && 
+//     hearing_schedules.every(schedule => schedule.hs_is_closed)
+
+//   // Check if buttons should be disabled
+//   const shouldDisableButtons = !allSchedulesHaveRemarks || !allSchedulesAreClosed
 
 //   // Determine if Create button should be shown
 //   const shouldShowCreateButton = !isCaseClosed && 
@@ -117,13 +133,16 @@
 //   const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
 //   const handleResolve = () => {
+//     const staff_id = user?.staff?.staff_id
 //     const status_type = "Lupon"
-//     resolve({status_type, sc_id})
+//     resolve({status_type, sc_id, staff_id})
 //   }
 
 //   const handleEscalate = () => {
+//     const staff_id = user?.staff?.staff_id
+
 //     if (caseDetails?.comp_id) {
-//       escalate({sc_id, comp_id});
+//       escalate({sc_id, comp_id, staff_id});
 //     } else {
 //       console.error("Cannot escalate: comp_id is undefined");
 //     }
@@ -186,6 +205,7 @@
 //                     rem_remarks={remark.rem_remarks}
 //                     rem_date={remark.rem_date}
 //                     supp_docs={remark.supp_docs}
+//                     staff_name = {remark.staff_name}
 //                   />
 //                 }
 //                 title="Remarks"
@@ -285,21 +305,19 @@
 //       header: " ",
 //       cell: ({ row }) => {
 //         const schedule = row.original
-//         const showPreview = !schedule.hs_is_closed
 
 //         return (
 //           <div className="flex justify-center gap-2">
 //             {/* Preview Summon */}
-//             {showPreview && (
 //               <TooltipLayout
 //                 trigger={
 //                   <DialogLayout
 //                     trigger={
-//                       <div className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">
-//                         <div className='text-12px'>Generate File</div>
-//                       </div>
+//                       <Button disabled={row.original.hs_is_closed} className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">       
+//                           <div className='text-12px'>Generate File</div>
+//                       </Button>
 //                     }
-//                     title="Schedule Details"
+//                     title="Generate Document"
 //                     description={`Details for ${schedule.hs_level} on ${formatDate(schedule.summon_date.sd_date, "long")}`}
 //                     className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
 //                     mainContent={
@@ -325,7 +343,6 @@
 //                 }
 //                 content="Preview"
 //               />
-//             )}
 //           </div>
 //         )
 //       },
@@ -376,6 +393,18 @@
 //           </Alert>
 //         )}
 
+//         {/* Resident Notice for Date and Time Selection */}
+//         {hasResident && !isCaseClosed && (
+//           <Alert className="bg-blue-50 border-blue-200 mb-6">
+//             <div className="flex items-start gap-2">
+//               <Calendar className="h-4 w-4 text-blue-600 mt-0.5" />
+//               <AlertDescription className="text-blue-800">
+//                 <strong>Resident Case:</strong> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule. Please coordinate with the complainant to determine their availability.
+//               </AlertDescription>
+//             </div>
+//           </Alert>
+//         )}
+
 //         <Card className="w-full bg-white p-6 shadow-sm mb-8">
 //           <div className="flex justify-between items-start mb-6">
 //             <div className="flex-1">
@@ -398,7 +427,7 @@
 //                       ) : (
 //                         <span className="text-lg font-medium text-gray-800">N/A</span>
 //                       )}
-//                     </div>
+//                     </div>                
 //                   </div>
 //                   <div>
 //                     <Label className="text-sm text-gray-500 font-normal mb-2 block">Accused</Label>
@@ -484,29 +513,65 @@
 //             {!isCaseClosed ? (
 //               <div className="flex gap-3">
 //                 {shouldShowResolveButton && (
-//                   <ConfirmationModal
-//                     trigger={
-//                       <Button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 flex items-center gap-2">
-//                         <Check className="w-4 h-4" /> Mark as Resolved
-//                       </Button>
+//                   <TooltipLayout
+//                     content={
+//                       !allSchedulesHaveRemarks && !allSchedulesAreClosed 
+//                         ? "All hearing schedules must have remarks and be closed before resolving" 
+//                         : !allSchedulesHaveRemarks 
+//                         ? "All hearing schedules must have remarks before resolving"
+//                         : !allSchedulesAreClosed
+//                         ? "All hearing schedules must be closed before resolving"
+//                         : "Mark case as resolved"
 //                     }
-//                     title="Confirm Resolution"
-//                     description="Are you sure you want to mark this case as resolved?"
-//                     actionLabel="Confirm"
-//                     onClick={handleResolve}
+//                     trigger={
+//                       <div>
+//                         <ConfirmationModal
+//                           trigger={
+//                             <Button 
+//                               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 flex items-center gap-2"
+//                               disabled={shouldDisableButtons}
+//                             >
+//                               <Check className="w-4 h-4" /> Mark as Resolved
+//                             </Button>
+//                           }
+//                           title="Confirm Resolution"
+//                           description="Are you sure you want to mark this case as resolved?"
+//                           actionLabel="Confirm"
+//                           onClick={handleResolve}
+//                         />
+//                       </div>
+//                     }
 //                   />
 //                 )}
 //                 {shouldShowEscalateButton && (
-//                   <ConfirmationModal
-//                     trigger={
-//                       <Button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 flex items-center gap-2">
-//                         <AlertTriangle className="w-4 h-4" /> Escalate
-//                       </Button>
+//                   <TooltipLayout
+//                     content={
+//                       !allSchedulesHaveRemarks && !allSchedulesAreClosed 
+//                         ? "All hearing schedules must have remarks and be closed before escalating" 
+//                         : !allSchedulesHaveRemarks 
+//                         ? "All hearing schedules must have remarks before escalating"
+//                         : !allSchedulesAreClosed
+//                         ? "All hearing schedules must be closed before escalating"
+//                         : "Escalate case for further action"
 //                     }
-//                     title="Confirm Escalation"
-//                     description="Are you sure you want to escalate this case?"
-//                     actionLabel="Confirm"
-//                     onClick={handleEscalate}
+//                     trigger={
+//                       <div>
+//                         <ConfirmationModal
+//                           trigger={
+//                             <Button 
+//                               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 flex items-center gap-2"
+//                               disabled={shouldDisableButtons}
+//                             >
+//                               <AlertTriangle className="w-4 h-4" /> Escalate Case
+//                             </Button>
+//                           }
+//                           title="Confirm Escalation"
+//                           description="Are you sure you want to escalate this case? If escalated, a request for file action will automatically be made."
+//                           actionLabel="Confirm"
+//                           onClick={handleEscalate}
+//                         />
+//                       </div>
+//                     }
 //                   />
 //                 )}
 //               </div>
@@ -514,8 +579,10 @@
 //               // Only show date marked if not null and case is closed
 //               sc_date_marked && (
 //                 <p className="text-sm text-gray-500">
-//                   Marked on{" "}
-//                   {formatTimestamp(new Date(sc_date_marked))}
+//                   Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
+//                   {staff_name && (
+//                     <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
+//                   )}
 //                 </p>
 //               )
 //             )}
@@ -578,6 +645,7 @@ import { InfoIcon } from "lucide-react"
 import SummonRemarksView from "../summon-remarks-view"
 import { useEscalateCase } from "../queries/summonUpdateQueries"
 import LuponPreview from "./conciliation-preview"
+import { useAuth } from "@/context/AuthContext"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -594,6 +662,7 @@ function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
 }
 
 export default function LuponCaseDetails() {
+  const {user} = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -639,6 +708,7 @@ export default function LuponCaseDetails() {
     sc_date_marked,
     sc_reason,
     comp_id,
+    staff_name,
     hearing_schedules = [],
   } = caseDetails || {}
 
@@ -650,9 +720,9 @@ export default function LuponCaseDetails() {
     ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
     : false
 
-  // Check if current mediation is 3rd level and closed
-  const isThirdMediation = hearing_schedules.some(schedule => 
-    schedule.hs_level === "3rd Conciliation Proceedings" && schedule.hs_is_closed
+  // Check if current conciliation is 3rd level
+  const isThirdConciliation = hearing_schedules.some(schedule => 
+    schedule.hs_level === "3rd Conciliation Proceedings" 
   )
 
   // Check if all hearing schedules have remarks
@@ -672,22 +742,25 @@ export default function LuponCaseDetails() {
   const shouldShowCreateButton = !isCaseClosed && 
                                 !hasResident && 
                                 (hearing_schedules.length === 0 || lastScheduleIsRescheduled) &&
-                                !isThirdMediation // Hide if it's 3rd mediation and closed
+                                !isThirdConciliation // Hide if it's 3rd conciliation
 
   // Determine if Resolve button should be shown
   const shouldShowResolveButton = !isCaseClosed
 
   // Determine if Escalate button should be shown - only in 3rd Conciliation Proceedings
-  const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
+  const shouldShowEscalateButton = isThirdConciliation && !isCaseClosed
 
   const handleResolve = () => {
+    const staff_id = user?.staff?.staff_id
     const status_type = "Lupon"
-    resolve({status_type, sc_id})
+    resolve({status_type, sc_id, staff_id})
   }
 
   const handleEscalate = () => {
+    const staff_id = user?.staff?.staff_id
+
     if (caseDetails?.comp_id) {
-      escalate({sc_id, comp_id});
+      escalate({sc_id, comp_id, staff_id});
     } else {
       console.error("Cannot escalate: comp_id is undefined");
     }
@@ -723,7 +796,7 @@ export default function LuponCaseDetails() {
     },
     {
       accessorKey: "hs_level",
-      header: "Mediation Level",
+      header: "Level",
       cell: ({ row }) => (
         <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
           {row.original.hs_level}
@@ -750,6 +823,7 @@ export default function LuponCaseDetails() {
                     rem_remarks={remark.rem_remarks}
                     rem_date={remark.rem_date}
                     supp_docs={remark.supp_docs}
+                    staff_name = {remark.staff_name}
                   />
                 }
                 title="Remarks"
@@ -849,21 +923,19 @@ export default function LuponCaseDetails() {
       header: " ",
       cell: ({ row }) => {
         const schedule = row.original
-        const showPreview = !schedule.hs_is_closed
 
         return (
           <div className="flex justify-center gap-2">
             {/* Preview Summon */}
-            {showPreview && (
               <TooltipLayout
                 trigger={
                   <DialogLayout
                     trigger={
-                      <div className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">
-                        <div className='text-12px'>Generate File</div>
-                      </div>
+                      <Button disabled={row.original.hs_is_closed} className="px-4 py-2 rounded-md text-sm border bg-blue-100 text-blue-800 border-blue-500 hover:bg-blue-200 hover:text-blue-900 cursor-pointer">       
+                          <div className='text-12px'>Generate File</div>
+                      </Button>
                     }
-                    title="Schedule Details"
+                    title="Generate Document"
                     description={`Details for ${schedule.hs_level} on ${formatDate(schedule.summon_date.sd_date, "long")}`}
                     className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
                     mainContent={
@@ -889,7 +961,6 @@ export default function LuponCaseDetails() {
                 }
                 content="Preview"
               />
-            )}
           </div>
         )
       },
@@ -952,20 +1023,19 @@ export default function LuponCaseDetails() {
           </Alert>
         )}
 
-        {/* Warning Alert for Missing Remarks or Open Schedules */}
-        {shouldDisableButtons && hearing_schedules.length > 0 && (
-          <Alert className="bg-yellow-50 border-yellow-200 mb-6">
-            <div className="flex items-center gap-2">
-              <CircleAlert className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                <strong>Action Required:</strong> 
-                {!allSchedulesHaveRemarks || !allSchedulesAreClosed && " All hearing schedules must have remarks and be closed before you can resolve or escalate this case."}
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-
         <Card className="w-full bg-white p-6 shadow-sm mb-8">
+          {/* 3rd Conciliation Proceedings Action Notice - Inside the card */}
+          {isThirdConciliation && !isCaseClosed && (
+            <Alert className="bg-red-50 border-red-200 mb-6">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  <strong>3rd Conciliation Proceedings Reached:</strong> This case has reached the final conciliation level. You can either mark the case as resolved or escalate it for further legal action.
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
+
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1122,11 +1192,11 @@ export default function LuponCaseDetails() {
                               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 flex items-center gap-2"
                               disabled={shouldDisableButtons}
                             >
-                              <AlertTriangle className="w-4 h-4" /> Escalate
+                              <AlertTriangle className="w-4 h-4" /> Escalate Case
                             </Button>
                           }
                           title="Confirm Escalation"
-                          description="Are you sure you want to escalate this case?"
+                          description="Are you sure you want to escalate this case? If escalated, a request for file action will automatically be made."
                           actionLabel="Confirm"
                           onClick={handleEscalate}
                         />
@@ -1139,15 +1209,17 @@ export default function LuponCaseDetails() {
               // Only show date marked if not null and case is closed
               sc_date_marked && (
                 <p className="text-sm text-gray-500">
-                  Marked on{" "}
-                  {formatTimestamp(new Date(sc_date_marked))}
+                  Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
+                  {staff_name && (
+                    <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
+                  )}
                 </p>
               )
             )}
           </div>
         </Card>
 
-        {/* Only show Create New Schedule button if conditions are met AND not in 3rd mediation */}
+        {/* Only show Create New Schedule button if conditions are met AND not in 3rd conciliation */}
         {shouldShowCreateButton && (
           <div className='w-full py-2 flex flex-end justify-end'>
             <DialogLayout

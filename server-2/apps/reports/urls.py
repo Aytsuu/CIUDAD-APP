@@ -7,13 +7,16 @@ from .views.chopt_formplus_views import MonthlyOPTChildHealthSummariesAPIView, M
 from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIView,SemiAnnualOPTChildHealthReportAPIView
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
-from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsRCPDetailAPIView, MonthlyMedicineChart
-from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
+from .views.medicines_views import *
+from .views.deworming_report import *
+from .views.inv_medicine_views import *
 from .views.counts import ReportsCount
-from .views.monthly_illnesschart import MedicalHistoryMonthlyChart
-from .views.recipeint_report_views import UpdateMonthlyRCPReportDetailView
-from .views.fhis_report import FHISMonthlyView  
-from .views.vaccination_views import MonthlyVaccinationChart
+from .views.monthly_illnesschart import *
+from .views.recipeint_report_views import *
+from .views.fhis_report import *  
+from .views.vaccination_views import *
+from .views.chreport_part1 import  MonthlyVaccinationStatisticsAPIView, MonthlyNutritionStatisticsAPIView
+from .views.fhisdeworming import DewormingMonthlyStatisticsAPIView
 from.views.doctor_report_assessed import  *
 from .views.morbidity_report import *
 
@@ -21,6 +24,7 @@ from .views.morbidity_report import *
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
         path('update/monthly_recipient_list_report/<int:monthlyrcplist_id>/', UpdateMonthlyRCPReportDetailView.as_view(), name='healthstaff-detail'),
+        path('update-headerreport/<int:rcpheader_id>/',UpdateHeaderReport.as_view(),name="update-header-report"),
     
         
         # CHILD HEALTH REPORTS
@@ -50,7 +54,12 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsRCPDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
+        path('deworming-statistics/monthly/<str:month>/', DewormingMonthlyStatisticsAPIView.as_view(), name='deworming-statistics-monthly'),
         
+
+        # DEWORMING REPORTS (Round-based: Round 1 Jan-June, Round 2 July-Dec)
+        path('deworming-records/yearly/', DewormingMonthlyReportAPIView.as_view(), name='yearly_deworming_records'),
+        path('deworming-reports/<str:year>/', DewormingMonthlyDetailAPIView.as_view(), name='deworming-reports'),  # Accepts YYYY format, supports ?round=1 or ?round=2
         
         # INVENTORY MEDICINE REPORTS
        path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
@@ -67,6 +76,12 @@ urlpatterns=[
         
         # Vaccination Reports
         path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
+        path('vaccination-resident-counts/<str:year>/', VaccineResidentCountView.as_view(), name='vaccination-resident-counts'),
+        path('fhischildhealth-page4/monthly/<str:month>/', MonthlyVaccinationStatisticsAPIView.as_view(), name='vaccination-statistics-monthly'),
+        
+        # Child Health Nutrition Reports
+        path('fhischildhealth-page5/monthly/<str:month>/', MonthlyNutritionStatisticsAPIView.as_view(), name='nutrition-statistics-monthly'),
+
 
         # doctor assessed reports
         path('doctor-assessed/monthly-summaries/', MonthlyConsultedSummariesAPIView.as_view(), name='monthly-doctor-assessed-summaries'),
@@ -76,4 +91,4 @@ urlpatterns=[
         path('morbidity/monthly-details/<str:month>/', MonthlyMorbidityView.as_view(), name='monthly-morbidity'),
         path('morbidity/monthly-summaries/', MonthlyMorbiditySummaryAPIView.as_view(), name='yearly-morbidity'),
  
-]
+] 

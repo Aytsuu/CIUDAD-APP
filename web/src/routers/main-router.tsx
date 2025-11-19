@@ -224,6 +224,7 @@ export const main_router: RouteObject[] = [
       ...medicalConsultation,
       ...NotificationRouter,
       ...bhw_daily_notes_router,
+      ...NotificationRouter,
       ])
     }
 ]

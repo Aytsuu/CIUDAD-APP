@@ -18,7 +18,7 @@ import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFil
 import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");

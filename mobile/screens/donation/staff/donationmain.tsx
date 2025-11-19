@@ -20,8 +20,11 @@ import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DonationTracker = () => {
+  const { user } = useAuth(); 
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";  
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -243,13 +246,15 @@ const DonationTracker = () => {
             </View>
           {/* </View> */}
 
-          {/* Add Button */}
-          <Button 
-            onPress={handleAddDonation} 
-            className="bg-primaryBlue rounded-xl"
-          >
-            <Text className="text-white text-[13px] font-bold">Add Donation</Text>
-          </Button>
+          {/* Add Button - Only show if user is secretary */}
+          {isSecretary && (
+            <Button 
+              onPress={handleAddDonation} 
+              className="bg-primaryBlue rounded-xl"
+            >
+              <Text className="text-white text-[13px] font-bold">Add Donation</Text>
+            </Button>
+          )}
 
           {/* Content Area */}
           <View className="flex-1 mt-4">

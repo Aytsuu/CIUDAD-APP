@@ -46,7 +46,6 @@ export default function IndividualScan() {
         },
         {
           onSuccess: (data) => {
-            console.log(data)
             dispatch(setAuthData({ 
               accessToken: data.access_token, 
               user: data.user,

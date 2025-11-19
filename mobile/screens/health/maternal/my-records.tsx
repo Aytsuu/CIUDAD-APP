@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react"
 import { View, TouchableOpacity, TextInput, ScrollView, RefreshControl } from "react-native"
-import { router } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
 import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, ChevronLeft, Package } from "lucide-react-native"
 
 import { Text } from "@/components/ui/text"
@@ -16,6 +16,7 @@ import { PregnancyAccordion } from "../admin/admin-maternal/prenatal/pregnancy-a
 import { usePregnancyDetails } from "../admin/admin-maternal/queries/maternalFETCH"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePatientByResidentId } from "../patientchecker/queries"
+import { getPatientById } from "../animalbites/api/get-api"
 
 interface Patient {
   pat_id: string
@@ -193,16 +194,45 @@ const FilterPicker = React.memo<{
 
 export default function MyMaternalRecordScreen() {
   const { user } = useAuth()
+  const { pat_id: authPatId } = useAuth()
+  const params = useLocalSearchParams<{ pat_id?: string; mode?: string }>()
+  
+  // Determine which patient ID to use: admin-passed pat_id or current user's pat_id
+  const patId = params.pat_id || authPatId
+  const mode = params.mode || "user"
+  const isAdminMode = mode === "admin"
+  
   const rp_id = user?.rp
-  const { pat_id } = useAuth()
-  const patId  = pat_id
-  console.log("Patient ID in My Records Screen:", patId)
 
   const [selectedFilter, setSelectedFilter] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
+  const [selectedPatientData, setSelectedPatientData] = useState<any>(null)
+  const [isLoadingSelectedPatient, setIsLoadingSelectedPatient] = useState(false)
 
+  // Fetch patient data using patId (not just rp_id) to show the correct patient info in admin mode
   const { data: patientData, isLoading: isPatientLoading } = usePatientByResidentId(rp_id || "")
+
+  // Fetch selected patient data in admin mode using patient ID directly
+  React.useEffect(() => {
+    if (isAdminMode && patId && patId !== authPatId) {
+      setIsLoadingSelectedPatient(true)
+      getPatientById(patId)
+        .then((data) => {
+          setSelectedPatientData(data)
+          setIsLoadingSelectedPatient(false)
+        })
+        .catch((error) => {
+          console.error("Error fetching selected patient:", error)
+          setIsLoadingSelectedPatient(false)
+        })
+    } else {
+      setSelectedPatientData(null)
+    }
+  }, [isAdminMode, patId, authPatId])
+
+  // Use selected patient data in admin mode, otherwise use current user's data
+  const displayPatientData = isAdminMode && selectedPatientData ? selectedPatientData : patientData
 
   const {
     data: pregnancyData,
@@ -360,7 +390,7 @@ export default function MyMaternalRecordScreen() {
   }
 
   const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
-    if (pregnancyData && patientData) {
+    if (pregnancyData && displayPatientData) {
       let pregnanciesArray: PregnancyDataDetails[] = []
 
       if (pregnancyData && typeof pregnancyData === "object" && "results" in pregnancyData) {
@@ -374,11 +404,11 @@ export default function MyMaternalRecordScreen() {
         pregnanciesArray = [pregnancyData as PregnancyDataDetails]
       }
 
-      const grouped = groupPregnancies(pregnanciesArray, patientData.pat_type, patientData.address)
+      const grouped = groupPregnancies(pregnanciesArray, displayPatientData.pat_type, displayPatientData.address)
       return grouped
     }
     return []
-  }, [pregnancyData, patientData])
+  }, [pregnancyData, displayPatientData])
 
   const filteredGroups = pregnancyGroups.filter((group) => {
     switch (selectedFilter) {
@@ -418,7 +448,7 @@ export default function MyMaternalRecordScreen() {
     )
   }
 
-  if (isPatientLoading) {
+  if (isPatientLoading || isLoadingSelectedPatient) {
     return <LoadingState />
   }
 
@@ -458,7 +488,9 @@ export default function MyMaternalRecordScreen() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Maternal Records</Text>}
+      headerTitle={
+          <Text className="text-gray-900 text-lg font-semibold">Maternal Records</Text>
+      }
       rightAction={<View className="w-10 h-10" />}
     >
       <ScrollView
@@ -466,13 +498,13 @@ export default function MyMaternalRecordScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View className="p-4">
-          {patientData ? (
+          {displayPatientData ? (
             <View className="mb-5">
               <View className="mb-4">
                 <Card className="bg-white border-gray-200">
                   <CardContent className="p-4">
                     <Text className="text-lg font-semibold text-gray-900 mb-2">
-                      {patientData.personal_info?.per_fname} {patientData.personal_info?.per_lname}
+                      {displayPatientData.personal_info?.per_fname} {displayPatientData.personal_info?.per_lname}
                     </Text>
                     <Text className="text-gray-600 text-sm">ID: {patId}</Text>
                   </CardContent>
@@ -557,7 +589,7 @@ export default function MyMaternalRecordScreen() {
             ) : (
               <PregnancyAccordion
                 pregnancyGroups={filteredGroups}
-                selectedPatient={patientData}
+                selectedPatient={displayPatientData}
                 getStatusBadge={(status) => <StatusBadge status={status} />}
                 getRecordTypeBadge={(recordType) => <RecordTypeBadge recordType={recordType} />}
               />

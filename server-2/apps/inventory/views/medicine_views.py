@@ -115,7 +115,12 @@ class MedicineListAvailableTable(APIView):
                 
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': medicine.med_name,
+                    'med_name': ' '.join(filter(None, [
+                        medicine.med_name,
+                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
+                        medicine.med_dsg_unit,
+                        medicine.med_form
+                    ])).strip(),
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -126,7 +131,12 @@ class MedicineListAvailableTable(APIView):
             else:
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': medicine.med_name,
+                    'med_name': ' '.join(filter(None, [
+                        medicine.med_name,
+                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
+                        medicine.med_dsg_unit,
+                        medicine.med_form
+                    ])).strip(),
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -212,8 +222,8 @@ class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
        med_id = self.kwargs.get('med_id')
        obj = get_object_or_404(Medicinelist, med_id = med_id)
        return obj
-       
-       
+     
+
 # ===========================MEDICINE STOCK TABLE==============================
 class MedicineStockTableView(APIView):
     """
@@ -277,23 +287,25 @@ class MedicineStockTableView(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                if stock.minv_qty_unit.lower() == "boxes":
-                    # For boxes, low stock threshold is 2 boxes
-                    is_low_stock = available_stock <= 2
-                else:
-                    # For pieces, low stock threshold is 20 pcs
-                    is_low_stock = available_stock <= 20
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    if stock.minv_qty_unit.lower() == "boxes":
+                        # For boxes, low stock threshold is 2 boxes
+                        is_low_stock = available_stock <= 2
+                    else:
+                        # For pieces, low stock threshold is 20 pcs
+                        is_low_stock = available_stock <= 20
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1
@@ -314,10 +326,10 @@ class MedicineStockTableView(APIView):
                 # Calculate used quantity
                 if stock.minv_qty_unit.lower() == "boxes":
                     used_qty = total_pcs - available_stock
-                    used_display = f"{used_qty} pcs"
+                    used_display = f"{used_qty-stock.wasted} pcs"
                 else:
                     used_qty = stock.minv_qty - available_stock
-                    used_display = f"{used_qty} {stock.minv_qty_unit}"
+                    used_display = f"{used_qty-stock.wasted} {stock.minv_qty_unit}"
                 
                 item_data = {
                     'type': 'medicine',
@@ -335,8 +347,8 @@ class MedicineStockTableView(APIView):
                         'pcs': stock.minv_pcs,
                     },
                     'minv_qty_unit': stock.minv_qty_unit,
-                    'administered': used_display,
-                    'wasted': "0",  # Add if you have wasted medicine tracking
+                    'qty_used': used_display,
+                    'wasted': f"{stock.wasted} {'pcs' if stock.minv_qty_unit and stock.minv_qty_unit.lower() == 'boxes' else stock.minv_qty_unit}",  # Adjusted for boxes
                     'availableStock': available_stock,
                     'expiryDate': expiry_date.isoformat() if expiry_date else None,
                     'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
@@ -380,7 +392,6 @@ class MedicineStockTableView(APIView):
                 'success': False,
                 'error': f'Error fetching medicine stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     # def auto_archive_expired_medicines(self):
     #     """Auto-archive medicines that expired more than 10 days ago and log transactions"""
     #     from datetime import timedelta
@@ -682,12 +693,11 @@ class TableMedicineTransactionView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 # ===========================MEDICINE ARCHIVE==============================
 class MedicineArchiveInventoryView(APIView):
     def patch(self, request, inv_id):
         """
-        Archive medicine inventory item and create expired transaction only if expired AND has available stock
+        Archive medicine inventory item.
         """
         try:
             # Get inventory item
@@ -698,28 +708,10 @@ class MedicineArchiveInventoryView(APIView):
             inventory.updated_at = timezone.now()
             inventory.save()
             
-            # Check if item is expired and has available stock to create transaction
-            is_expired = request.data.get('is_expired', False)
-            has_available_stock = request.data.get('has_available_stock', False)
-            
-            transaction_created = False
-            if is_expired and has_available_stock:
-                try:
-                    self._create_expired_transaction(inventory)
-                    transaction_created = True
-                except Exception as e:
-                    # Roll back the archive operation if transaction creation fails
-                    inventory.is_Archived = False
-                    inventory.save()
-                    return Response(
-                        {"error": f"Failed to create transaction for expired medicine: {str(e)}"}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
             return Response(
                 {
                     "message": "Medicine inventory archived successfully", 
-                    "inv_id": inv_id,
-                    "transaction_created": transaction_created
+                    "inv_id": inv_id
                 },
                 status=status.HTTP_200_OK
             )
@@ -729,29 +721,29 @@ class MedicineArchiveInventoryView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
-    def _create_expired_transaction(self, inventory):
-        """
-        Create expired transaction for medicine items with available stock
-        """
-        if not hasattr(inventory, 'medicine_inventory'):
-            raise Exception("No medicine inventory found for this inventory item")
+    # def _create_expired_transaction(self, inventory):
+    #     """
+    #     Create expired transaction for medicine items with available stock
+    #     """
+    #     if not hasattr(inventory, 'medicine_inventory'):
+    #         raise Exception("No medicine inventory found for this inventory item")
         
-        medicine_inventory = inventory.medicine_inventory
-        current_qty = medicine_inventory.minv_qty_avail or 0
-        unit = medicine_inventory.minv_qty_unit or "pcs"
+    #     medicine_inventory = inventory.medicine_inventory
+    #     current_qty = medicine_inventory.minv_qty_avail or 0
+    #     unit = medicine_inventory.minv_qty_unit or "pcs"
         
-        if unit.lower() == "boxes":
-            qty_with_unit = f"{current_qty} pcs"
-        else:
-            qty_with_unit = f"{current_qty} {unit}"
+    #     if unit.lower() == "boxes":
+    #         qty_with_unit = f"{current_qty} pcs"
+    #     else:
+    #         qty_with_unit = f"{current_qty} {unit}"
         
-        # Create the medicine transaction
-        MedicineTransactions.objects.create(
-            mdt_qty=qty_with_unit,
-            mdt_action="Expired",
-            minv_id=medicine_inventory,
-            staff=None  # None for system action
-        )
+    #     # Create the medicine transaction
+    #     MedicineTransactions.objects.create(
+    #         mdt_qty=qty_with_unit,
+    #         mdt_action="Expired",
+    #         minv_id=medicine_inventory,
+    #         staff=None  # None for system action
+    #     )
            
 # ===========================MEDICINE ARCHIVED TABLE==============================
 class ArchivedMedicineTable(APIView):
@@ -775,7 +767,7 @@ class ArchivedMedicineTable(APIView):
                 medicine_inventories = medicine_inventories.filter(
                     Q(med_id__med_name__icontains=search_query) |
                     Q(inv_id__inv_id__icontains=search_query) |
-                    Q(minv_form__icontains=search_query)
+                    Q(med_id__med_form__icontains=search_query)  # Changed from minv_form to med_id__med_form
                 )
             
             # Calculate today's date for expiry comparisons
@@ -804,7 +796,7 @@ class ArchivedMedicineTable(APIView):
                 minv_qty_avail = inventory.minv_qty_avail or 0
                 wasted = inventory.wasted or 0
                 minv_pcs = inventory.minv_pcs or 0
-                minv_dsg = inventory.minv_dsg or 0
+                minv_dsg = inventory.med_id.med_dsg or 0
                 
                 # Calculate total pieces (for boxes)
                 total_pcs = minv_qty * minv_pcs if inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == "boxes" else minv_qty
@@ -821,14 +813,8 @@ class ArchivedMedicineTable(APIView):
                 
                 # Determine archive reason
                 archive_reason = 'Expired' if is_expired else 'Out of Stock'
-                
-                # Calculate actual used quantity
-                # If available stock is 0, then quantity used should be 0
-                if minv_qty_avail == 0:
-                    actual_used = 0
-                else:
-                    # Otherwise, calculate as Total Qty - Available Stock - Wasted
-                    actual_used = total_pcs - minv_qty_avail - wasted
+                unit_type = 'pcs' if (inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == 'boxes') else (inventory.minv_qty_unit or 'units')
+
                 
                 item_data = {
                     'type': 'medicine',
@@ -836,15 +822,15 @@ class ArchivedMedicineTable(APIView):
                     'category': 'Medicine',
                     'item': {
                         'med_name': inventory.med_id.med_name if inventory.med_id else "Unknown Medicine",
-                        'form': inventory.minv_form or 'N/A',
-                        'dosage': f"{minv_dsg} {inventory.minv_dsg_unit or 'N/A'}",
-                        'unit': inventory.minv_qty_unit or 'units',
+                        'form': inventory.med_id.med_form or 'N/A',
+                        'dosage': f"{minv_dsg} {inventory.med_id.med_dsg_unit or 'N/A'}",
+                        'unit': unit_type,
                     },
                     'qty': {
                         'minv_qty': minv_qty,
-                        'minv_pcs': total_pcs  # Total pieces for boxes, otherwise same as minv_qty
+                        'minv_pcs': total_pcs
                     },
-                    'administered': actual_used,
+                    'qty_used': total_pcs - wasted,
                     'wasted': wasted,
                     'availableStock': minv_qty_avail,
                     'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
@@ -853,8 +839,7 @@ class ArchivedMedicineTable(APIView):
                     'inv_id': inv_record.inv_id if inv_record else None,
                     'med_id': inventory.med_id.med_id if inventory.med_id else None,
                     'minv_id': inventory.minv_id,
-                    'minv_qty_unit': inventory.minv_qty_unit or 'units',
-                    'minv_pcs': minv_pcs,
+                    'minv_qty_unit': unit_type,
                     'isArchived': inv_record.is_Archived if inv_record else False,
                     'created_at': inventory.created_at.isoformat() if inventory.created_at else None,
                 }
@@ -888,7 +873,6 @@ class ArchivedMedicineTable(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             
-            
 class MedicineDeduct(APIView):
     def post(self,request,*args, **kwargs):
         try:
@@ -896,7 +880,7 @@ class MedicineDeduct(APIView):
             record = request.data.get('record', {})
             minv_id = record.get('id')
             deduct_qty = int(data.get('wastedAmount', 0))
-            action = "Deducted"
+            action = "Wasted"
             staff_id = data.get('staff_id')
             print("Deducting quantity:", deduct_qty)     
             print("From inventory ID:", minv_id)
@@ -916,6 +900,7 @@ class MedicineDeduct(APIView):
             
             # Deduct the quantity
             medicine_inventory.minv_qty_avail -= deduct_qty
+            medicine_inventory.wasted += deduct_qty
             medicine_inventory.updated_at = timezone.now()
             medicine_inventory.save()
             

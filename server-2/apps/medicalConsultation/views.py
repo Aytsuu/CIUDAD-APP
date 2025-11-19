@@ -704,7 +704,7 @@ class CreateMedicalConsultationView(APIView):
                     obs_instance = Obstetrical_History.objects.create(**obs_data)
                     print(f"DEBUG: Created Obstetrical_History with ID: {obs_instance.obs_id}")
 
-            # 🔹 FIX: REMOVED THE DUPLICATE CREATION - CREATE MedicalConsultation_Record ONLY ONCE
+            # 🔹 FIX: CREATE MedicalConsultation_Record ONLY ONCE - REMOVED DUPLICATE
             medrec = MedicalConsultation_Record.objects.create(
                 patrec=patrec,
                 vital=vital,
@@ -715,40 +715,6 @@ class CreateMedicalConsultationView(APIView):
                 assigned_to=assigned_staff,
                 is_phrecord=is_phrecord,
                 app_id=appointment,  # Link the appointment if exists
-            )
-
-            # Create or update PhilHealthLaboratory instance
-            lab_data = {
-                'is_cbc': data.get('is_cbc', False),
-                'is_urinalysis': data.get('is_urinalysis', False),
-                'is_fecalysis': data.get('is_fecalysis', False),
-                'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
-                'is_creatine': data.get('is_creatine', False),
-                'is_hba1c': data.get('is_hba1c', False),
-                'is_chestxray': data.get('is_chestxray', False),
-                'is_papsmear': data.get('is_papsmear', False),
-                'is_fbs': data.get('is_fbs', False),
-                'is_oralglucose': data.get('is_oralglucose', False),
-                'is_lipidprofile': data.get('is_lipidprofile', False),
-                'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
-                'is_ecg': data.get('is_ecg', False),
-                'others': data.get('others', ''),
-            }
-
-            lab_instance = PhilHealthLaboratory.objects.create(**lab_data)
-
-            # Create MedicalConsultation_Record and link the lab instance
-            medrec = MedicalConsultation_Record.objects.create(
-                patrec=patrec,
-                vital=vital,
-                bm=bm,
-                find=None,
-                medrec_chief_complaint=data["medrec_chief_complaint"],
-                staff=staff,
-                assigned_to=assigned_staff,
-                is_phrecord=is_phrecord,
-                app_id=appointment,
-                lab=lab_instance  # Link the lab instance here
             )
 
             # 🔹 Update appointment status if appointment exists
@@ -817,7 +783,6 @@ class CreateMedicalConsultationView(APIView):
                     'alcohol_bottles_per_day': data.get('alcohol_bottles_per_day'),
                     'tts': tts_instance,  # ✅ This will be the FK - either existing or newly created
                     'obs': obs_instance,
-                    'lab': None,  
                 }
                 
                 print(f"DEBUG: PhilhealthDetails data - tts: {tts_instance}, obs: {obs_instance}")
@@ -857,7 +822,6 @@ class CreateMedicalConsultationView(APIView):
                 "is_phrecord": is_phrecord,
                 "family_illnesses_count": len(famselected_illnesses),
                 "personal_illnesses_count": len(myselected_illnesses),
-                "lab_id": lab_instance.lab_id  # Include lab ID in the response
             }
 
             # Add appointment info if appointment was linked
@@ -880,50 +844,74 @@ class CreateMedicalConsultationView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        
 
 # ========MEDICAL CONSULTATION END SOAP FORM
+import logging
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import date
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
+        logger.info("=== SOAP FORM SUBMISSION STARTED ===")
         try:
             data = request.data
+            logger.info(f"Received data keys: {list(data.keys())}")
+            
             staff_id = data.get('staff_id')
             staff = None
             if staff_id:
                 try:
                     staff = Staff.objects.get(staff_id=staff_id)
+                    logger.info(f"Staff found: {staff_id}")
                 except Staff.DoesNotExist:
+                    logger.error(f"Staff with ID {staff_id} not found")
                     return Response({"error": f"Staff with ID {staff_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
+            
             medrec_id = data.get('medrec_id')
             patrec_id = data.get('patrec_id')
             app_id = data.get('app_id')
             appointment = None
-            # phil_id = data.get('phil_id')
             pat_id = data.get('pat_id')
 
+            logger.info(f"medrec_id: {medrec_id}, patrec_id: {patrec_id}, app_id: {app_id}, pat_id: {pat_id}")
+
             if not all([medrec_id, patrec_id]):
+                logger.error("Missing required fields: medrec_id and patrec_id")
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
 
+            # Laboratory Data
             lab_data = {
-                        'is_cbc': data.get('is_cbc', False),
-                        'is_urinalysis': data.get('is_urinalysis', False),
-                        'is_fecalysis': data.get('is_fecalysis', False),
-                        'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
-                        'is_creatine': data.get('is_creatine', False),
-                        'is_hba1c': data.get('is_hba1c', False),
-                        'is_chestxray': data.get('is_chestxray', False),
-                        'is_papsmear': data.get('is_papsmear', False),
-                        'is_fbs': data.get('is_fbs', False),
-                        'is_oralglucose': data.get('is_oralglucose', False),
-                        'is_lipidprofile': data.get('is_lipidprofile', False),
-                        'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
-                        'is_ecg': data.get('is_ecg', False),
-                        'others': data.get('others', ''),
-                    }
+                'is_cbc': data.get('is_cbc', False),
+                'is_urinalysis': data.get('is_urinalysis', False),
+                'is_fecalysis': data.get('is_fecalysis', False),
+                'is_sputum_microscopy': data.get('is_sputum_microscopy', False),
+                'is_creatine': data.get('is_creatine', False),
+                'is_hba1c': data.get('is_hba1c', False),
+                'is_chestxray': data.get('is_chestxray', False),
+                'is_papsmear': data.get('is_papsmear', False),
+                'is_fbs': data.get('is_fbs', False),
+                'is_oralglucose': data.get('is_oralglucose', False),
+                'is_lipidprofile': data.get('is_lipidprofile', False),
+                'is_fecal_occult_blood': data.get('is_fecal_occult_blood', False),
+                'is_ecg': data.get('is_ecg', False),
+                'others': data.get('others', ''),
+            }
+            logger.info(f"Laboratory data: {lab_data}")
+            
             lab_serializer = LaboratorySerializer(data=lab_data)
             lab_serializer.is_valid(raise_exception=True)
             lab = lab_serializer.save()
+            logger.info(f"Laboratory created with ID: {lab.lab_id}")
 
             # 1. Create Findings
             finding_data = {
@@ -934,14 +922,19 @@ class SoapFormSubmissionView(APIView):
                 'staff': staff_id,
                 'lab': lab.lab_id
             }
+            logger.info(f"Finding data prepared")
+            
             finding_serializer = FindingSerializer(data=finding_data)
             finding_serializer.is_valid(raise_exception=True)
             finding = finding_serializer.save()
+            logger.info(f"Finding created with ID: {finding.find_id}")
 
             # 2. Medicine Request (only if medicines exist)
             med_request_id = None
             medicine_request_data = data.get('medicineRequest')
             if medicine_request_data and medicine_request_data.get('medicines'):
+                logger.info("Processing medicine request")
+                
                 # Get rp_id or trans_id from Patient
                 pat_id = medicine_request_data.get('pat_id')
                 rp_id = None
@@ -950,40 +943,43 @@ class SoapFormSubmissionView(APIView):
                     patient = Patient.objects.get(pat_id=pat_id)
                     rp_id = getattr(patient, 'rp_id', None)
                     trans_id = getattr(patient, 'trans_id', None)
+                    logger.info(f"Patient found: {pat_id}, rp_id: {rp_id}, trans_id: {trans_id}")
                 except Patient.DoesNotExist:
+                    logger.error(f"Patient with ID {pat_id} not found")
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-                # # Create PatientRecord for Medicine Record
-                # medicine_patrec = PatientRecord.objects.create(
-                #     pat_id=patient,
-                #     patrec_type="Medicine Record"
-                # )
-
-                # Create MedicineRequest and link to PatientRecord
+                # Create MedicineRequest
                 med_request_payload = {
                     'rp_id': rp_id.rp_id if rp_id else None,
                     'trans_id': trans_id.trans_id if trans_id else None,
-                    # 'patrec': medicine_patrec.patrec_id,  # Link to new PatientRecord
                     'status': 'confirmed',
                     'mode': 'walk-in',
                     'requested_at': timezone.now(),
                 }
+                logger.info(f"Medicine request payload: {med_request_payload}")
+                
                 med_request_serializer = MedicineRequestSerializer(data=med_request_payload)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
+                logger.info(f"Medicine request created with ID: {med_request_id}")
 
                 # Group medicines by med_id (from MedicineInventory FK)
                 medicines = medicine_request_data['medicines']
+                logger.info(f"Processing {len(medicines)} medicines")
+                
                 medid_to_allocations = {}
                 for med in medicines:
                     minv_id = med.get('minv_id')
                     if not minv_id:
+                        logger.warning(f"Medicine missing minv_id: {med}")
                         continue
                     try:
                         minv = MedicineInventory.objects.get(minv_id=minv_id)
                         med_id = str(minv.med_id.med_id)
+                        logger.debug(f"Medicine inventory found: minv_id={minv_id}, med_id={med_id}")
                     except MedicineInventory.DoesNotExist:
+                        logger.error(f"Medicine inventory with ID {minv_id} not found")
                         return Response(
                             {"error": f"Medicine inventory with ID {minv_id} not found"},
                             status=status.HTTP_400_BAD_REQUEST
@@ -997,9 +993,9 @@ class SoapFormSubmissionView(APIView):
                     })
 
                 # Create MedicineRequestItem and MedicineAllocation
+                logger.info(f"Creating medicine allocations for {len(medid_to_allocations)} medicine types")
                 for med_id, allocations in medid_to_allocations.items():
                     reason = allocations[0]['reason']
-                    signature = allocations[0].get('signature', '')
                     medicine_item_data = {
                         'reason': reason,
                         'med': med_id,
@@ -1007,10 +1003,14 @@ class SoapFormSubmissionView(APIView):
                         'status': 'confirmed',
                         'created_at': timezone.now(),
                         'action_by': staff,
+                        'confirmed_at': timezone.now()
                     }
+                    logger.debug(f"Medicine item data: {medicine_item_data}")
+                    
                     medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
                     medicine_item_serializer.is_valid(raise_exception=True)
                     medicine_item = medicine_item_serializer.save()
+                    logger.info(f"Medicine request item created for med_id: {med_id}")
 
                     for alloc in allocations:
                         minv_id = alloc['minv_id']
@@ -1020,7 +1020,9 @@ class SoapFormSubmissionView(APIView):
                                 medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
                                 medicine_inventory.temporary_deduction += allocated_qty
                                 medicine_inventory.save()
+                                logger.debug(f"Updated inventory minv_id {minv_id}, temporary_deduction: {medicine_inventory.temporary_deduction}")
                             except MedicineInventory.DoesNotExist:
+                                logger.error(f"Medicine inventory with ID {minv_id} not found during allocation")
                                 return Response(
                                     {"error": f"Medicine inventory with ID {minv_id} not found"},
                                     status=status.HTTP_400_BAD_REQUEST
@@ -1030,16 +1032,19 @@ class SoapFormSubmissionView(APIView):
                                 minv=medicine_inventory,
                                 allocated_qty=allocated_qty
                             )
+                            logger.info(f"Medicine allocation created: minv_id={minv_id}, qty={allocated_qty}")
 
                 # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
                     find=finding
                 )
+                logger.info(f"Linked medicine request {med_request_id} to finding {finding.find_id}")
 
             # 3. Physical Exam Results
             physical_exam_results = data.get('physicalExamResults')
             if physical_exam_results:
+                logger.info(f"Processing {len(physical_exam_results)} physical exam results")
                 per_data = [
                     {'pe_option': pe, 'find': finding.find_id}
                     for pe in physical_exam_results
@@ -1047,65 +1052,113 @@ class SoapFormSubmissionView(APIView):
                 per_serializer = PEResultSerializer(data=per_data, many=True)
                 per_serializer.is_valid(raise_exception=True)
                 per_serializer.save()
+                logger.info("Physical exam results saved successfully")
 
-            # 4. Medical History
+            # 4. Medical History with Enhanced Validation and Logging
             selected_illnesses = data.get('selectedIllnesses')
             if selected_illnesses:
-                medical_history_data = [
-                    {
-                        'patrec_id': patrec_id,
-                        'ill_id': ill_id,
-                        'ill_date': date.today().strftime('%Y-%m-%d'),
-                        'is_for_surveillance': True
-                    }
-                    for ill_id in selected_illnesses
-                ]
-                MedicalHistory.objects.bulk_create([
-                    MedicalHistory(**item) for item in medical_history_data
-                ])
+                logger.info(f"Processing medical history with illnesses: {selected_illnesses}")
+                logger.info(f"Types of illness IDs: {[type(ill_id) for ill_id in selected_illnesses]}")
+                
+                medical_history_data = []
+                valid_illnesses = []
+                invalid_illnesses = []
+                
+                for ill_id in selected_illnesses:
+                    try:
+                        # Convert to integer if it's a numeric string
+                        original_ill_id = ill_id
+                        if isinstance(ill_id, str) and ill_id.isdigit():
+                            ill_id = int(ill_id)
+                            logger.debug(f"Converted illness ID from string to int: {original_ill_id} -> {ill_id}")
+                        
+                        # Verify the illness exists
+                        illness = Illness.objects.get(ill_id=ill_id)
+                        logger.debug(f"Illness validation passed: {ill_id} - {illness}")
+                        
+                        medical_history_data.append({
+                            'patrec_id': patrec_id,
+                            'ill_id': ill_id,
+                            'ill_date': date.today().strftime('%Y-%m-%d'),
+                            'is_for_surveillance': True
+                        })
+                        valid_illnesses.append(ill_id)
+                        
+                    except Illness.DoesNotExist:
+                        logger.error(f"Illness with ID {ill_id} not found in database")
+                        invalid_illnesses.append(ill_id)
+                        return Response(
+                            {'error': f'Illness with ID {ill_id} not found. Please refresh the illness list and try again.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    except ValueError as e:
+                        logger.error(f"Invalid illness ID format: {ill_id} - Error: {str(e)}")
+                        invalid_illnesses.append(ill_id)
+                        return Response(
+                            {'error': f'Invalid illness ID format: {ill_id}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                # Create all medical history records
+                if medical_history_data:
+                    MedicalHistory.objects.bulk_create([
+                        MedicalHistory(**item) for item in medical_history_data
+                    ])
+                    logger.info(f"Medical history created for {len(valid_illnesses)} illnesses: {valid_illnesses}")
+                
+                if invalid_illnesses:
+                    logger.warning(f"Invalid illness IDs skipped: {invalid_illnesses}")
+            else:
+                logger.info("No medical history data to process")
 
-          
-            # 6. Update Medical Consultation Record
-            MedicalConsultation_Record.objects.filter(medrec_id=medrec_id).update(
+            # 5. Update Medical Consultation Record
+            logger.info(f"Updating medical consultation record: {medrec_id}")
+            updated_count = MedicalConsultation_Record.objects.filter(medrec_id=medrec_id).update(
                 medrec_status='completed',
                 find=finding,
                 medreq_id=med_request_id,
             )
+            logger.info(f"Medical consultation record updated. Rows affected: {updated_count}")
 
-            # 🔹 Update appointment status to "completed" if appointment exists
+            # Update appointment status to "completed" if appointment exists
             if app_id:
                 try:
                     appointment = MedConsultAppointment.objects.get(id=app_id)
                     appointment.status = "completed"
                     appointment.save()
+                    logger.info(f"Appointment {app_id} status updated to 'completed'")
                 except MedConsultAppointment.DoesNotExist:
-                    pass
+                    logger.warning(f"Appointment with ID {app_id} not found")
 
             response_data = {
                 'success': True,
+                'finding_id': finding.find_id,
+                'laboratory_id': lab.lab_id,
             }
             if app_id:
                 response_data["appointment_id"] = app_id
                 response_data["appointment_status_updated"] = "completed"
+            if med_request_id:
+                response_data["medicine_request_id"] = med_request_id
 
+            logger.info("=== SOAP FORM SUBMISSION COMPLETED SUCCESSFULLY ===")
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
+            logger.error(f"Validation error in SOAP form: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except MedicalConsultation_Record.DoesNotExist:
+            logger.error(f"Medical consultation record with ID {medrec_id} not found")
             return Response(
                 {'error': f'Medical consultation record with ID {medrec_id} not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
+            logger.error(f"Unexpected error in SOAP form submission: {str(e)}", exc_info=True)
             return Response(
                 {'error': 'Internal server error', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            
-
-
-
 
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
@@ -1266,6 +1319,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                                 medreq_id=med_request,
                                 status="confirmed",
                                 action_by=staff,
+                                confirmed_at=timezone.now()
                             )
                             total_medicine_items += 1
                             print(f"✅ DEBUG: Created MedicineRequestItem with ID: {medicine_item.medreqitem_id} for med_id: {med_id}")
@@ -2249,5 +2303,3 @@ class MedicalUserAppointmentsView(generics.ListAPIView):
                 'success': False,
                 'error': f'Error fetching appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-

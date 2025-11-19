@@ -29,6 +29,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { removeLeadingZeros } from "./gad-btracker-types";
 import { useAuth } from "@/contexts/AuthContext";
 import { BudgetYear } from "./gad-btracker-types";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 function GADAddEntryForm() {
   const { user } = useAuth();
@@ -329,7 +330,7 @@ useEffect(() => {
               {isSubmitting ? "Saving..." : "Save Entry"}
             </Text>
             {isSubmitting && (
-              <ActivityIndicator size="small" color="white" className="ml-2" />
+               <LoadingModal visible={isSubmitting} />
             )}
           </View>
         </TouchableOpacity>

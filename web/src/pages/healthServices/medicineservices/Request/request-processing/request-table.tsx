@@ -10,7 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestColumns } from "./columns";
 import { useProcessingMedrequest } from "../queries/fetch";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function PickupTable() {

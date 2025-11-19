@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 interface ResidentData {
   rp_id: string;

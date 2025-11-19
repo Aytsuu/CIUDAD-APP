@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { PlusCircle, Search, Archive, X, ListFilterIcon } from "lucide-react";
+import { PlusCircle, Search, X, ListFilterIcon } from "lucide-react";
 import { Link } from "react-router";
 import { FaRegQuestionCircle } from "react-icons/fa";
 
@@ -11,7 +11,6 @@ type ButtonConfig = {
   newReport?: boolean;
   rejected?: boolean;
   requestCount?: number;
-  archivedCount?: number;
   rejectedCount?: number;
 };
 
@@ -33,7 +32,6 @@ export default function ComplaintFilterBar({
     newReport: true,
     rejected: false,
     requestCount: 0,
-    archivedCount: 0,
     rejectedCount: 0,
   }
 }: Props) {
@@ -82,7 +80,7 @@ export default function ComplaintFilterBar({
               >
                 <FaRegQuestionCircle size={16} className="text-gray-400" />
                 <span>Request</span>
-                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
+                <span className="flex items-center justify-center h-6 font-semibold w-7 rounded-md bg-orange-100 text-red-500">
                   {buttons.requestCount || 0}
                 </span>
               </Button>
@@ -99,21 +97,6 @@ export default function ComplaintFilterBar({
                 <span>Rejected</span>
                 <span className="h-5 w-5 rounded-full bg-red-500 text-white">
                   {buttons.rejectedCount || 0}
-                </span>
-              </Button>
-            </Link>
-          )}
-
-          {buttons.archived && (
-            <Link to="/complaint/archive">
-              <Button
-                variant="outline"
-                className="gap-2 text-darkGray hover:text-black"
-              >
-                <Archive size={16} className="text-gray-400" />
-                <span>Archived</span>
-                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
-                  {buttons.archivedCount || 0}
                 </span>
               </Button>
             </Link>

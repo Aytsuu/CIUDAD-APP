@@ -16,6 +16,7 @@ export default () => {
             <Stack.Screen name="annual-dev-plan/main-plan" options={{ headerShown: false }} />
             <Stack.Screen name="annual-dev-plan/view-plan" options={{ headerShown: false }} />
             <Stack.Screen name="activity/gad-activity" options={{ headerShown: false }} />
+            
         </Stack>
         </ToastProvider>
     );

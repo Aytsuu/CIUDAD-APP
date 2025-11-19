@@ -7,7 +7,7 @@ export const mapApi = axios.create({
 })
 
 // export const api = axios.create({
-//   baseURL: "http://192.168.1.52:8000",
+//   baseURL: "http://192.168.1.7:8000",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
@@ -16,7 +16,16 @@ export const mapApi = axios.create({
 // });
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.9:8000",
+  baseURL: "http://192.168.1.11:8000",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
+
+export const api2 = axios.create({
+  baseURL: "http://192.168.1.11:8001",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -25,18 +34,13 @@ export const api = axios.create({
 });
 
 // export const api2 = axios.create({
-//   baseURL: "http://172.31.225.66:8001",
-//   timeout: 10000,
+//   baseURL: Constants.expoConfig?.extra?.apiUrl2,
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
 // });
-
-export const api2 = axios.create({
-  baseURL: "http://192.168.1.9:8001",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
 
 setupApiInterceptor(api)
 

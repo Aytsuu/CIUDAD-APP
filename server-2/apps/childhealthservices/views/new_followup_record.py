@@ -407,7 +407,7 @@ class UpdateChildHealthRecordAPIView(APIView):
                 raise ValueError(f"Staff with ID {selected_staff_id} does not exist")
             
           # Set assigned_doc or assigned_to to None based on status
-        status_val = submitted_data.get('status', '').lower()
+        status_val = submitted_data.get('status', 'recorded').lower()
        
         if status_val == 'immunization':
              # Create new child health history
@@ -427,6 +427,15 @@ class UpdateChildHealthRecordAPIView(APIView):
                 status=status_val,
                 tt_status=submitted_data.get('tt_status'),
                 assigned_doc=assigned_staff,
+                created_by=staff_instance
+            )
+        else:
+            # Default case for 'recorded' or any other status
+            new_chhist = ChildHealth_History.objects.create(
+                created_at=timezone.now(),
+                chrec_id=chrec_id,
+                status=status_val,
+                tt_status=submitted_data.get('tt_status'),
                 created_by=staff_instance
             )
             
@@ -632,7 +641,6 @@ class UpdateChildHealthRecordAPIView(APIView):
             mode='walk-in',
             signature=None,
             requested_at=timezone.now(),
-            fulfilled_at=timezone.now(),
             patrec=patient_record,
             rp_id=rp_id,
             trans_id=trans_id,
@@ -666,8 +674,10 @@ class UpdateChildHealthRecordAPIView(APIView):
                 med=med_obj,
                 medreq_id=med_request,
                 status='completed',
+                fulfilled_at=timezone.now(),
                 action_by=staff_instance,
                 completed_by=staff_instance,
+                 confirmed_at=timezone.now()
             )
             for alloc in allocations:
                 minv = alloc['minv']

@@ -7,12 +7,6 @@ Handles sending push notifications using Firebase Cloud Messaging (FCM).
 This is called by create_notification() in utils.py.
 """
 
-# Initialize Firebase Admin SDK once
-if not firebase_admin._apps:
-    cred_path = os.path.join(os.path.dirname(__file__), "firebase-key.json")
-    cred = credentials.Certificate(cred_path)
-    firebase_admin.initialize_app(cred)
-
 def send_push_notification(token: str, title: str, message: str, data: dict = None):
     """
     Sends a push notification to a single device using Firebase Cloud Messaging (FCM).
@@ -36,8 +30,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
             priority='high',
             notification=messaging.AndroidNotification(
                 sound='default',
-                channel_id='default',  # Must match the one created in your React Native app
-                default_sound=True,
+                channel_id='default', 
             ),
         ),
         apns=messaging.APNSConfig(
@@ -53,7 +46,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
 
     # Try sending the message
     try:
-        response = messaging.send(message)
+        response = messaging.send(fcm_message)
         print("Successfully sent message:", response)
         return response
 
@@ -61,7 +54,7 @@ def send_push_notification(token: str, title: str, message: str, data: dict = No
         print(f"❌ Invalid argument error: {e}")
         return None
 
-    except exceptions.UnregisteredError as e:
+    except firebase_admin.exceptions.FirebaseError as e:
         print(f"❌ Token unregistered or invalid: {e}")
         return None
 

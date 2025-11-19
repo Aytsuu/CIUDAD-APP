@@ -10,6 +10,7 @@ from apps.maternal.models import *
 from apps.vaccination.models import *
 from apps.familyplanning.models import *
 from apps.animalbites.models import *
+from apps.inventory.models import *
 from django.db.models import Count
 
 class ReportsCount(APIView):
@@ -27,11 +28,11 @@ class ReportsCount(APIView):
             firstaidrecord_count = FirstAidRecord.objects.count()
             medicalcon_count = MedicalConsultation_Record.objects.filter(medrec_status='completed').count()
             vaccnerecord_count = VaccinationHistory.objects.filter(vachist_status='completed').count()
-            inv_medicine_count = MedicineInventory.objects.count()
-            inv_vaccination = VaccineStock.objects.count()
-            inv_immunization = ImmunizationStock.objects.count()
-            inv_firstaid_count = FirstAidInventory.objects.count()
-            inv_commodity_count = CommodityInventory.objects.count()
+            inv_medicine_count = MedicineInventory.objects.filter(inv_id__is_Archived=False).count()
+            inv_vaccination = VaccineStock.objects.filter(inv_id__is_Archived=False).count()
+            inv_immunization = ImmunizationStock.objects.filter(inv_id__is_Archived=False).count()
+            inv_firstaid_count = FirstAidInventory.objects.filter(inv_id__is_Archived=False).count()
+            inv_commodity_count = CommodityInventory.objects.filter(inv_id__is_Archived=False).count()
             pregnancy_count = Pregnancy.objects.distinct().count()
             family_planning_count = FP_Record.objects.filter(patrec__patrec_type='Family Planning').values('pat').distinct().count()
             animabites_count = AnimalBite_Referral.objects.count()
@@ -42,6 +43,14 @@ class ReportsCount(APIView):
             confirmed_appointments_count = MedConsultAppointment.objects.filter(status='confirmed').count()
             total_appointments_count = pending_appointments_count + confirmed_appointments_count
             total_medicine_requests =  medrequest_count + apprequest_count
+            medicinelist_count =  Medicinelist.objects.count()
+            commoditylist_count = CommodityList.objects.count()
+            firstaidlist_count = FirstAidList.objects.count(),
+            vaccinelist_count = VaccineList.objects.count(),
+            immunizationlist_count = ImmunizationSupplies.objects.count(),
+
+            antigenlist_count = vaccinelist_count + immunizationlist_count
+
             
         
             # Total count
@@ -85,7 +94,13 @@ class ReportsCount(APIView):
                     'total_appointments_count': total_appointments_count,
                     'completed_consultations_by_doctor': completed_consultations_by_doctor,
                     'completed_childconsultations_by_doctor': completed_childconsultations_by_doctor,
-                    'vaccnerecord_count': vaccnerecord_count
+                    'vaccnerecord_count': vaccnerecord_count,
+                    'medinelist_count': medicinelist_count,
+                    'commoditylist_count':commoditylist_count,
+                    'firstaidlist_count': firstaidlist_count,
+                    'antigenlist_count': antigenlist_count
+
+
                 }
             }, status=status.HTTP_200_OK)
             

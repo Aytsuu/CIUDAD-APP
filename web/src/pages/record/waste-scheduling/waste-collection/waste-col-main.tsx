@@ -297,6 +297,17 @@ function WasteCollectionMain() {
 
     return (
         <div className="w-full h-full">
+
+        <div className="flex-col items-center mb-4">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                Waste Collection
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+                Manage waste collection record
+            </p>
+        </div>
+        <hr className="border-gray mb-6 sm:mb-10" />      
+
           <div className="mt-[25px] flex justify-end">
               <DialogLayout
                   isOpen={isDialogOpen}
@@ -330,6 +341,7 @@ function WasteCollectionMain() {
                         placeholder="Filter by Day"
                         options={dayOptions}
                         value={selectedDay}
+                        valueLabel="Day"
                         label=""
                         onChange={handleDayChange}
                     />

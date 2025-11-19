@@ -2,8 +2,8 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
 import PageLayout from '@/screens/_PageLayout';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const CertChoices = () => {
   const router = useRouter();
@@ -11,15 +11,15 @@ const CertChoices = () => {
   const menuItem = [
     {
       title: "Personal",
-      description: "Request personal certification documents for individual use.",
       route: "/(request)/certification-request/cert-personal",
-      icon: "person-outline"
+      icon: "person-outline",
+      gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Business Permit and Business Clearance",
-      description: "Request permit certification documents for business or activities.",
       route: "/(request)/certification-request/cert-business-request",
-      icon: "document-text-outline"
+      icon: "document-text-outline",
+      gradient: ['#60a5fa', '#3b82f6'],
     },
   ];
 
@@ -36,37 +36,48 @@ const CertChoices = () => {
       headerTitle={<Text className="text-[13px]">Certification Requests</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 p-6">
-        {menuItem.map((item: any, index: number) => (
-          <TouchableOpacity
-            key={index}
-            className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-            activeOpacity={0.7}
-            onPress={() => router.push(item.route)}
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
-                <View className="bg-gray-50 rounded-lg p-3 mr-4">
-                  <Ionicons name={item.icon} size={24} color="#22314A" />
+      <View className="flex-1 px-6 py-4">
+        <View className="flex-row flex-wrap gap-3">
+          {menuItem.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              className="rounded-2xl overflow-hidden"
+              style={{ 
+                width: '48%', 
+                aspectRatio: 1,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+              activeOpacity={0.8}
+              onPress={() => router.push(item.route)}
+            >
+              <LinearGradient
+                colors={item.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="flex-1 p-5"
+              >
+                <View className="flex-1 justify-between">
+                  <View className="items-start">
+                    <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center">
+                      <Ionicons name={item.icon} size={24} color="white" />
+                    </View>
+                  </View>
+                  
+                  <View>
+                    <Text className="text-white font-bold text-base leading-tight">
+                      {item.title}
+                    </Text>
+                    
+                  </View>
                 </View>
-
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base">
-                    {item.title}
-                  </Text>
-
-                  <Text className="text-gray-500 text-sm mt-1">
-                    {item.description}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="ml-2">
-                <ChevronRight color="#9ca3af" size={20} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </PageLayout>
   );

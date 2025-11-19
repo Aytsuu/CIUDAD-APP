@@ -67,41 +67,41 @@ export const accountFormSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
-  password: z.string()
-    .superRefine((val, ctx) => {
-      const errors = [];
+  // password: z.string()
+  //   .superRefine((val, ctx) => {
+  //     const errors = [];
       
-      if (val.length < 6) {
-        errors.push("Password must be at least 6 characters long");
-      }
+  //     if (val.length < 6) {
+  //       errors.push("Password must be at least 6 characters long");
+  //     }
       
-      if (!/[a-z]/.test(val)) {
-        errors.push("Password must contain at least one lowercase letter");
-      }
+  //     if (!/[a-z]/.test(val)) {
+  //       errors.push("Password must contain at least one lowercase letter");
+  //     }
       
-      if (!/[A-Z]/.test(val)) {
-        errors.push("Password must contain at least one uppercase letter");
-      }
+  //     if (!/[A-Z]/.test(val)) {
+  //       errors.push("Password must contain at least one uppercase letter");
+  //     }
       
-      if (!/\d/.test(val)) {
-        errors.push("Password must contain at least one number");
-      }
+  //     if (!/\d/.test(val)) {
+  //       errors.push("Password must contain at least one number");
+  //     }
       
-      if (errors.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: errors.join("\n"),
-        });
-      }
-    }),
+  //     if (errors.length > 0) {
+  //       ctx.addIssue({
+  //         code: z.ZodIssueCode.custom,
+  //         message: errors.join("\n"),
+  //       });
+  //     }
+  //   }),
 
-  confirmPassword: z.string()
-    .min(1, "Confirm Password is required")
+  // confirmPassword: z.string()
+  //   .min(1, "Confirm Password is required")
 })
-.refine((data) => data.password === data.confirmPassword, {
-  message: "Password does not match",
-  path: ["confirmPassword"]
-});
+// .refine((data) => data.password === data.confirmPassword, {
+//   message: "Password does not match",
+//   path: ["confirmPassword"]
+// });
 
 // Household Schema
 export const householdFormSchema = z.object({

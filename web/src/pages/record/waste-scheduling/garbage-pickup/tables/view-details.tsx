@@ -312,8 +312,8 @@ export default function ViewGarbageRequestDetails({
           {(assignment_info?.driver || assignment_info?.truck || assignment_info?.pick_date) && (
             <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
-                <CardTitle className="flex items-center justify-between text-purple-900">
-                  <div className="flex items-center gap-2 pb-4">
+                <CardTitle className="flex items-center justify-between text-purple-900 pb-4">
+                  <div className="flex items-center gap-2">
                     <CalendarDays className="w-5 h-5 text-purple-600" />
                     Pickup Assignment
                   </div>

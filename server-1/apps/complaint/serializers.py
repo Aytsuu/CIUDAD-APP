@@ -1,18 +1,18 @@
-from utils.supabase_client import upload_to_storage
+# Imports
+
+# rest_framework
 from rest_framework import serializers
+
+# local
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
-from .models import (
-    Accused,
-    Complainant,
-    Complaint,
-    ComplaintComplainant,
-    ComplaintAccused,
-    Complaint_File,
-    ComplaintRecipient
-)
+from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, ComplaintRecipient)
+
+# utility
+from utils.supabase_client import upload_to_storage
+
+# python
 import json
-# from django.utils import timezone
 
 class AccusedSerializer(serializers.ModelSerializer):
     res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True)  
@@ -113,7 +113,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_datetime',
             'comp_allegation',
             'comp_created_at',
-            'comp_is_archive',
+            'comp_rejection_reason',
             'complainant', 
             'accused',      
             'complaint_files',
@@ -145,3 +145,85 @@ class ComplaintSerializer(serializers.ModelSerializer):
         if obj.staff:
             return StaffMinimalSerializer(obj.staff).data
         return None
+    
+# class ComplaintUpdateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Complaint
+#         fields = [
+#             'comp_status',
+#             'comp_rejection_reason',
+#         ]
+#         extra_kwargs = {
+#             'comp_rejection_reason': {'required': False, 'allow_blank': True}
+#         }
+    
+#     def validate(self, data):
+#         """Validate that rejection reason is provided when status is Rejected"""
+#         if data.get('comp_status') == 'Rejected':
+#             raise serializers.ValidationError({
+#                 'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
+#             })
+#         return data
+    
+class ComplaintUpdateSerializer(serializers.ModelSerializer):
+    staff_id = serializers.IntegerField(required=False, allow_null=True)
+    
+    class Meta:
+        model = Complaint
+        fields = [
+            'comp_status',
+            'comp_rejection_reason',
+            'staff_id',
+        ]
+        extra_kwargs = {
+            'comp_rejection_reason': {'required': False, 'allow_blank': True},
+            'staff_id': {'required': False, 'allow_null': True}
+        }
+    
+    def validate(self, data):
+        """Validate status transitions and required fields"""
+        comp_status = data.get('comp_status')
+        comp_rejection_reason = data.get('comp_rejection_reason', '').strip()
+        staff_id = data.get('staff_id')
+        
+        # Rejection requires a reason
+        if comp_status == 'Rejected':
+            if not comp_rejection_reason:
+                raise serializers.ValidationError({
+                    'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
+                })
+        
+        # Accepted status requires staff_id
+        # if comp_status == 'Accepted':
+        #     if not staff_id:
+        #         raise serializers.ValidationError({
+        #             'staff_id': 'Staff ID is required when accepting a complaint.'
+        #         })
+        
+        # Raised status requires staff_id
+        # if comp_status == 'Raised':
+        #     if not staff_id:
+        #         raise serializers.ValidationError({
+        #             'staff_id': 'Staff ID is required when raising a complaint.'
+        #         })
+        
+        return data
+    
+    def update(self, instance, validated_data):
+        staff_id = validated_data.pop('staff_id', None)
+
+        # Update main fields
+        instance.comp_status = validated_data.get('comp_status', instance.comp_status)
+        instance.comp_rejection_reason = validated_data.get('comp_rejection_reason', instance.comp_rejection_reason)
+
+        # ✅ Properly set staff instance if provided
+        if staff_id is not None:
+            from apps.administration.models import Staff
+            try:
+                staff_instance = Staff.objects.get(staff_id=staff_id)
+                instance.staff = staff_instance
+            except Staff.DoesNotExist:
+                raise serializers.ValidationError({'staff_id': 'Invalid staff ID'})
+
+        instance.save()
+        return instance

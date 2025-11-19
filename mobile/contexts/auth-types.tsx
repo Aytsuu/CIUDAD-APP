@@ -53,7 +53,7 @@ export interface Notification {
   title: string;
   message: string;
   created_at: string;
-  sender_id?: Record<string, any>;
+  // sender_id?: Record<string, any>;
   is_read?: boolean;
   metadata?: Record<string, any>;
 }

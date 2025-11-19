@@ -19,7 +19,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { useChildHealthHistory } from "../queries/fetchQueries";
 import { isToday } from "@/helpers/isToday";
 import StepIndicator from "./StepsIndicator";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 import { useLocalStorage } from "@/helpers/useLocalStorage"; // <-- import
 import { toTitleCase } from "@/helpers/ToTitleCase";
 

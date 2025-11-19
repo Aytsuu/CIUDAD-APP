@@ -90,19 +90,15 @@ export const medicineRequestCancelledColumns: ColumnDef<any>[] = [
   //   )
   // },
   {
-    accessorKey: "requested_at",
-    header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Requested On <ArrowUpDown size={15} />
-      </div>
-    ),
+    accessorKey: "cancelled_rejected_reffered_at",
+    header:"Date Cancelled",
     size: 140,
     cell: ({ row }) => {
-      const { date, time } = formatDateTime(row.original.requested_at);
+      const { date } = formatDateTime(row.original.cancelled_rejected_reffered_at);
       return (
         <div className="text-center py-2">
           <div className="font-medium text-gray-900 text-sm">{date}</div>
-          {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+          {/* {time && <div className="text-xs text-gray-500 mt-1">{time}</div>} */}
         </div>
       );
     }
@@ -256,24 +252,24 @@ export const cancelledDetailsIColumns: ColumnDef<any>[] = [
  
    
    
-    {
-        accessorKey: "fulfilled_at",
-        header: ({ column }) => (
-          <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Cancelled Date <ArrowUpDown size={15} />
-          </div>
-        ),
-        size: 140,
-        cell: ({ row }) => {
-          const { date, time } = formatDateTime(row.original.fulfilled_at);
-          return (
-          <div className="text-center py-2">
-            <div className="font-medium text-gray-900 text-sm">{date}</div>
-            {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
-          </div>
-          );
-        }
-      }, 
+    // {
+    //     accessorKey: "fulfilled_at",
+    //     header: ({ column }) => (
+    //       <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+    //         Cancelled Date <ArrowUpDown size={15} />
+    //       </div>
+    //     ),
+    //     size: 140,
+    //     cell: ({ row }) => {
+    //       const { date, time } = formatDateTime(row.original.fulfilled_at);
+    //       return (
+    //       <div className="text-center py-2">
+    //         <div className="font-medium text-gray-900 text-sm">{date}</div>
+    //         {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
+    //       </div>
+    //       );
+    //     }
+    //   }, 
    
       {
         accessorKey: "archive_reason",

@@ -14,7 +14,7 @@ import { FirstAidRecord } from "../types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { firstAidColumns } from "./columns/indiv-records-col";
 import { ProtectedComponent } from "@/ProtectedComponent";
-import TableLoading from "../../table-loading";
+import TableLoading from "../../../../components/ui/table-loading";
 import { serializePatientData } from "@/helpers/serializePatientData";
 
 export default function IndivFirstAidRecords() {

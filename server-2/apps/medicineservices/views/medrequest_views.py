@@ -7,7 +7,128 @@ from pagination import *
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q, Count, Sum, Prefetch
 from rest_framework.exceptions import ValidationError
+from utils.create_notification import NotificationQueries 
+from apps.administration.models import Staff, Position 
+import logging                                    
+from django.utils import timezone
 
+logger = logging.getLogger(__name__)
+
+def send_cancellation_notification_to_staff(medicine_request_item, reason):
+    try:
+        notifier = NotificationQueries()
+        
+        # Get the main request from the item
+        medicine_request = medicine_request_item.medreq_id
+        
+        # --- Get Resident's Name ---
+        resident_name = "Resident"
+        if medicine_request.rp_id and medicine_request.rp_id.per:
+            resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+        elif medicine_request.patrec and medicine_request.patrec.pat_id and medicine_request.patrec.pat_id.rp_id and medicine_request.patrec.pat_id.rp_id.per:
+            per = medicine_request.patrec.pat_id.rp_id.per
+            resident_name = f"{per.per_fname} {per.per_lname}"
+        
+        # Get Medicine Name
+        medicine_name = medicine_request_item.med.med_name
+            
+        # --- Get Staff Recipients (Admin & BHW) ---
+        staff_to_notify = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
+        ).select_related('rp')
+        
+        staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]
+        logger.info(f"Staff recipients for cancelled medicine request: {staff_recipients}")
+
+        if staff_recipients:
+            title = 'Medicine Request Cancelled'
+            message = f'{resident_name} has cancelled their request for {medicine_name}. Reason: {reason}'
+            
+            success = notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=staff_recipients,
+                notif_type="MEDICINE_STAFF_CANCELLED", # Custom type
+                web_route="/services/medicine/requests/cancelled", # Or your admin-facing route
+                web_params={},
+                mobile_route="", 
+                mobile_params={},
+            )
+            
+            if success:
+                logger.info(f"Cancellation notification sent to staff for item {medicine_request_item.medreqitem_id}")
+            else:
+                logger.error(f"Failed to send cancellation notification to staff for item {medicine_request_item.medreqitem_id}")
+            
+            return success
+        
+        else:
+            logger.warning("No staff recipients found for medicine cancellation notification.")
+            return False
+
+    except Exception as e:
+        logger.error(f"Error sending medicine cancellation notification to staff: {str(e)}")
+        return False
+    
+    
+def send_new_medicine_request_notification_to_staff(medicine_request):
+    """
+    Notifies staff (Admin, BHW) about a new pending medicine request.
+    Returns True if the notification was sent, False otherwise.
+    """
+    try:
+        notifier = NotificationQueries()
+        
+        # --- Get Resident's Name ---
+        resident_name = "Resident"
+        if medicine_request.rp_id and medicine_request.rp_id.per:
+            # Direct resident request
+            resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+        elif medicine_request.patrec and medicine_request.patrec.pat_id and medicine_request.patrec.pat_id.rp_id and medicine_request.patrec.pat_id.rp_id.per:
+            # Get from Patient Record -> Patient -> Resident Profile
+            per = medicine_request.patrec.pat_id.rp_id.per
+            resident_name = f"{per.per_fname} {per.per_lname}"
+        
+        # --- Get Staff Recipients (Admin & BHW) ---
+        staff_to_notify = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
+        ).select_related('rp')
+        
+        staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]
+        logger.info(f"Staff recipients for new medicine request: {staff_recipients}")
+
+        if staff_recipients:
+            title = 'New Medicine Request'
+            message = f'{resident_name} has submitted a new medicine request. Please review.'
+            
+            success = notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=staff_recipients,
+                notif_type="MEDICINE_STAFF_PENDING", # Custom type for staff
+                web_route="/services/medicine/requests/pending",
+                web_params={},
+                mobile_route="", # Assumed admin mobile route
+                mobile_params={},
+            )
+            
+            if success:
+                logger.info(f"New medicine request notification sent to staff for request {medicine_request.medreq_id}")
+            else:
+                logger.error(f"Failed to send new medicine request notification to staff for request {medicine_request.medreq_id}")
+            
+            return success  
+        
+        else:
+            logger.warning("No staff recipients found for medicine request notification.")
+            return False 
+
+    except Exception as e:
+        logger.error(f"Error sending new medicine request notification to staff: {str(e)}")
+        return False
+        
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination
@@ -43,7 +164,7 @@ class CheckPendingMedicineRequestView(APIView):
         try:
             # Check for pending medicine requests for this resident and medicine
             pending_items = MedicineRequestItem.objects.filter(
-                medreq_id__rp_id__rp_id=rp_id,  # FIX: Use string rp_id value
+                medreq_id__rp_id__rp_id=rp_id, 
                 med_id=med_id,
                 status='pending',
                 is_archived=False
@@ -136,7 +257,14 @@ class MedicineRequestItemCancel(APIView):
             item.status = 'cancelled'
             item.is_archived = True
             item.archive_reason = archive_reason
+            item.cancelled_rejected_reffered_at = timezone.now()
             item.save()
+            
+            try:
+                send_cancellation_notification_to_staff(item, archive_reason)
+            except Exception as e:
+                logger.error(f"Failed to send staff cancellation notification for item {item.medreqitem_id}: {str(e)}")
+                
             
             return Response({"success": True, "message": "Item cancelled successfully"}, status=status.HTTP_200_OK)
         except MedicineRequestItem.DoesNotExist:
@@ -177,6 +305,8 @@ class SubmitMedicineRequestView(APIView):
             
             data = request.data
             medicines_data = data.get('medicines', '[]')
+            
+            print(f"✅ DEBUG: Created {len(medicines_data)} MedicineRequestItems and MedicineAllocations")
             print(f"🔍 DEBUG: medicines_data type: {type(medicines_data)}, value: {medicines_data}")
             
             if isinstance(medicines_data, list):
@@ -261,7 +391,6 @@ class SubmitMedicineRequestView(APIView):
                 trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
                 mode='app',
                 requested_at=timezone.now(),
-                fulfilled_at=None,
                 signature=data.get('signature', ''),
                 patrec=patient_record
             )
@@ -321,6 +450,17 @@ class SubmitMedicineRequestView(APIView):
                     print(f"❌ ERROR: File upload failed: {str(e)}")
                     # Don't raise exception here, just log it
             
+            
+            notif_sent = False # Default to false
+            try:
+                notif_sent = send_new_medicine_request_notification_to_staff(medicine_request)
+                
+                # 2. This is your new debug log
+                print(f"✅ DEBUG: Staff notification send attempt result: {notif_sent}")
+                
+            except Exception as e:
+                print(f"❌ ERROR: Failed to send staff notification: {str(e)}")
+                
             return Response({
                 "success": True,
                 "medreq_id": medicine_request.medreq_id,

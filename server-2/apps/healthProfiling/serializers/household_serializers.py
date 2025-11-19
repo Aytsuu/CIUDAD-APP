@@ -37,9 +37,10 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class HouseholdTableSerializer(serializers.ModelSerializer):
   total_families = serializers.SerializerMethodField()
@@ -49,20 +50,33 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   head = serializers.SerializerMethodField()
   head_id = serializers.CharField(source='rp.rp_id')
   date_registered = serializers.DateField(source='hh_date_registered')
+  registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 'head_id',
-              'date_registered']
+              'date_registered', "registered_by"]
     
   def get_total_families(self, obj):
-    return Family.objects.filter(hh=obj).count()
+    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
   
   def get_head(self, obj):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
 
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+  
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
   class Meta:

@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronRight, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PatientSummarySection } from "../viewrecords/CurrentHistoryView";
-import { History } from "lucide-react";
 import { Link } from "react-router";
 
 interface PendingDisplayMedicalConsultationProps {
@@ -30,17 +29,7 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
 
       <div className="space-y-6 p-6">
         <div className="flex justify-end gap-4 mb-4">
-          <Link
-            to={`/services/childhealthrecords/records`}
-            state={{
-              ChildHealthRecord: ChildHealthRecord
-            }}
-          >
-            <Button>
-              <History className="h-4 w-4" />
-              View History
-            </Button>
-          </Link>
+          
 
           <Link
             to={`/services/childhealthrecords/form`}

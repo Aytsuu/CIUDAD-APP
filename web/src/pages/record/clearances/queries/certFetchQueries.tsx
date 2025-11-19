@@ -7,9 +7,18 @@ export type Certificate = {
   cr_id: string;
   resident_details: {
     per_fname: string;
+    per_mname?: string;
     per_lname: string;
     per_dob?: string;
     per_address?: string;
+    per_addresses?: Array<{
+      add_street?: string;
+      add_external_sitio?: string;
+      add_barangay?: string;
+      add_city?: string;
+      add_province?: string;
+    }>;
+    per_is_deceased?: boolean;
   } | null;
   req_pay_method: string;
   req_request_date: string;
@@ -20,7 +29,9 @@ export type Certificate = {
   req_transac_id: string;
   is_nonresident?: boolean;
   nrc_id?: string; // For non-resident certificates
-  nrc_requester?: string; // Non-resident requester name
+  nrc_lname?: string; // Non-resident last name
+  nrc_fname?: string; // Non-resident first name
+  nrc_mname?: string; // Non-resident middle name
   nrc_address?: string; // Non-resident address
   nrc_birthdate?: string; // Non-resident birthdate
   invoice?: {
@@ -32,65 +43,6 @@ export type Certificate = {
   };
 };
 
-export type ServiceCharge = {
-  sr_id: string;
-  sr_code: string;
-  sr_req_date: string;
-  req_payment_status: string;
-  complainant_name?: string;
-  invoice?: {
-    inv_num: string;
-    inv_serial_num: string;
-    inv_date: string;
-    inv_amount: string;
-    inv_nat_of_collection: string;
-  };
-  complainant_names?: string[];
-  complainant_addresses?: string[];
-  accused_names?: string[];
-  accused_addresses?: string[];
-};
-
-export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
-  try {
-    // Fetch directly from the Paid list endpoint (includes sr_code and names/addresses)
-    const res = await api.get('/clerk/summon-case-list/');
-    const payload = res.data as any;
-    const list = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.results)
-      ? payload.results
-      : Array.isArray(payload?.data)
-      ? payload.data
-      : [];
-
-    const merged: ServiceCharge[] = list
-      .map((sr: any) => ({
-        sr_id: String(sr.sr_id),
-        sr_code: sr.sr_code ?? null,
-        sr_req_date: sr.sr_req_date ?? '',
-        req_payment_status: sr.payment_status ?? 'Paid',
-        complainant_name: Array.isArray(sr.complainant_names) && sr.complainant_names.length ? sr.complainant_names[0] : undefined,
-        complainant_names: sr.complainant_names ?? [],
-        complainant_addresses: sr.complainant_addresses ?? [],
-        accused_names: sr.accused_names ?? [],
-        accused_addresses: sr.accused_addresses ?? [],
-        invoice: undefined,
-      }));
-
-    merged.sort((a, b) => new Date(b.sr_req_date).getTime() - new Date(a.sr_req_date).getTime());
-
-    return merged;
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error fetching service charges:', error.response?.data || error.message);
-    // For 500s, return empty to avoid crashing React Query retry logic
-    if (error.response?.status === 500) {
-      return [];
-    }
-    throw error;
-  }
-};
 
 export type NonResidentCertificate = {
   nrc_id: string;
@@ -98,10 +50,11 @@ export type NonResidentCertificate = {
   nrc_req_status: string;
   nrc_req_payment_status: string;
   nrc_pay_date: string | null;
-  nrc_requester: string;
+  nrc_lname: string;
+  nrc_fname: string;
+  nrc_mname: string;
   nrc_address: string;
   nrc_birthdate: string;
-  pr_id: number;
   purpose: {
     pr_purpose: string;
     pr_rate: string;
@@ -109,68 +62,33 @@ export type NonResidentCertificate = {
   amount: string;
 };
 
-export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
+export type MarkCertificateVariables = {
+  cr_id: string;
+  file_url?: string;
+  staff_id?: string;
+  is_nonresident?: boolean;
+  nrc_id?: string;
+};
+
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
-    // Build query parameters
+    // Build query parameters for the combined endpoint
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (page) params.append('page', page.toString());
     if (pageSize) params.append('page_size', pageSize.toString());
     if (status) params.append('status', status);
+    if (purpose) params.append('purpose', purpose);
     if (paymentStatus) params.append('payment_status', paymentStatus);
     
     const queryString = params.toString();
-    const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+    const url = `/clerk/certificate-all/${queryString ? '?' + queryString : ''}`;
     
-    // Fetch resident certificates with pagination
-    const residentRes = await api.get(url);
-    const residentData = residentRes.data;
+    // Fetch from the combined endpoint
+    const response = await api.get(url);
     
-    // Handle both paginated and non-paginated responses
-    const residentRaw = residentData.results || residentData;
-    const residentCount = residentData.count || residentRaw.length;
-    const residentNext = residentData.next || null;
-    const residentPrevious = residentData.previous || null;
-    
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
-    const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
-      
-      return {
-        cr_id: item.cr_id,
-        resident_details: item.resident_details ? {
-          per_fname: item.resident_details.per_fname,
-          per_lname: item.resident_details.per_lname,
-          per_dob: item.resident_details.per_dob,
-          per_address: item.resident_details.per_address,
-        } : null,
-        req_pay_method: item.req_pay_method || 'Walk-in',
-        req_request_date: item.cr_req_request_date,
-        req_type: item.purpose?.pr_purpose || item.req_type || '',
-        req_purpose: item.purpose?.pr_purpose || '',
-        req_payment_status: item.cr_req_payment_status,
-        req_transac_id: item.req_transac_id || '',
-        is_nonresident: false,
-        invoice: item.invoice
-          ? {
-              inv_num: item.invoice.inv_num,
-              inv_serial_num: item.invoice.inv_serial_num,
-              inv_date: item.invoice.inv_date,
-              inv_amount: item.invoice.inv_amount,
-              inv_nat_of_collection: item.invoice.inv_nat_of_collection,
-            }
-          : undefined,
-      } as Certificate;
-    });
-
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
-    return {
-      results: residentCertificates,
-      count: residentCount,
-      next: residentNext,
-      previous: residentPrevious
-    };
+    // The combined endpoint already returns the properly formatted data
+    return response.data;
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error fetching certificates:', error.response?.data || error.message);
@@ -178,42 +96,17 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
   }
 };
 
-export type MarkCertificateVariables = {
+// Mark certificate as issued/printed
+export const markCertificateAsIssued = async (certificateData: {
   cr_id: string;
-  nrc_id?: string;
   file_url?: string;
   staff_id?: string;
   is_nonresident?: boolean;
-};
-
-export const markCertificateAsIssued = async (certificateData: MarkCertificateVariables) => {
+  nrc_id?: string;
+}): Promise<any> => {
   try {
-    // Use different endpoint for non-resident certificates if needed
-    if (certificateData.is_nonresident && certificateData.nrc_id) {
-      // For now, using the same endpoint, but you might need different logic
-      // You may need to create a separate endpoint for non-resident certificates
-      // Update the non-resident certificate status first
-      await api.patch(`/clerk/update-personal-req-status/${certificateData.nrc_id}/`, {
-        nrc_req_status: 'Completed'
-      });
-      
-      return { success: true, message: "Non-resident certificate marked as issued" };
-    } else {
-      // Always omit staff_id to avoid backend staff creation with null pos_id
-      const payload = { cr_id: certificateData.cr_id };
-      console.log('Mark issued payload (resident):', payload);
-      const res = await api.post('/clerk/mark-certificate-issued/', payload);
-      // Also update resident certificate status to Issued
-      try {
-        await api.put(`/clerk/certificate-update-status/${certificateData.cr_id}/`, {
-          cr_req_status: 'Completed',
-          cr_date_completed: new Date().toISOString(),
-        });
-      } catch (err) {
-        console.warn('Failed to set resident certificate status to Issued (non-fatal):', (err as any)?.response?.data || (err as any)?.message);
-      }
-      return res.data;
-    }
+    const response = await api.post('/clerk/mark-certificate-issued/', certificateData);
+    return response.data;
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error marking certificate as issued:', error.response?.data || error.message);
@@ -221,33 +114,10 @@ export const markCertificateAsIssued = async (certificateData: MarkCertificateVa
   }
 };
 
-// Mark service charge as issued/printed
-export const markServiceChargeAsIssued = async (serviceChargeData: { sr_id: string }) => {
-  try {
-    console.log('Marking service charge as issued:', serviceChargeData);
-    // Use the proper service charge endpoint
-    const res = await api.patch(`/clerk/update-service-charge-request/${serviceChargeData.sr_id}/`, {
-      sr_req_status: 'Completed',
-      sr_date_marked: new Date().toISOString(),
-    });
-    return res.data;
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error marking service charge as issued:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-
-export type Staff = {
-  staff_id: string;
-  full_name: string;
-  position_title: string;
-};
-
-export const useGetStaffList = () =>
-  useQuery<Staff[], Error>({
-    queryKey: ["staffList"],
+// Get staff list for dropdowns
+export const useGetStaffList = () => {
+  return useQuery({
+    queryKey: ['staff-list'],
     queryFn: getStaffList,
   });
-
+};

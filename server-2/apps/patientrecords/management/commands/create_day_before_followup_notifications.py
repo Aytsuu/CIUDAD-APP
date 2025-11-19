@@ -51,7 +51,8 @@ class Command(BaseCommand):
         
         # Get staff who should receive notifications
         notification_staff = Staff.objects.filter(
-            pos__pos_title__in=["ADMIN", "BARANGAY HEALTH WORKER"]
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=["ADMIN", "BARANGAY HEALTH WORKERS"]
         ).select_related('rp', 'pos')
         
         if not notification_staff.exists():
@@ -114,7 +115,7 @@ class Command(BaseCommand):
                     message=f"{description_text} is scheduled for tomorrow for {patient_name}",
                     recipients=staff_recipient_rp_ids,
                     notif_type="REMINDER",
-                    web_route="/notification",
+                    web_route="",
                     web_params="",
                     mobile_route="",
                     mobile_params="",
@@ -134,7 +135,7 @@ class Command(BaseCommand):
                         notif_type="REMINDER",
                         web_route="",
                         web_params="",
-                        mobile_route="",
+                        mobile_route="/(health)/my-schedules/my-schedules",
                         mobile_params="",
                     )
                     

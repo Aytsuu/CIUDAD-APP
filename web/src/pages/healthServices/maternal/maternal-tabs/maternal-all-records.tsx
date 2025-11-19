@@ -20,7 +20,8 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { ExportButton } from "@/components/ui/export";import TableLoading from "../../table-loading";
+import { ExportButton } from "@/components/ui/export";
+import TableLoading from "@/components/ui/table-loading";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";

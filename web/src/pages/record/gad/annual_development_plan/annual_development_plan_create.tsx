@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useCreateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
@@ -11,6 +11,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+
+const toDisplayDate = (dateStr: string): string => {
+  if (!dateStr) return "";
+  const [year, month, day] = dateStr.split("-");
+  return month && day && year ? `${month}/${day}/${year}` : "";
+};
 
 const clientOptions = [
   { value: "Women", label: "Women" },
@@ -30,6 +42,12 @@ const getClientOptions = () => (
   </>
 );
 
+const announcementOptions = clientOptions.map(option => ({
+    id: option.value.toLowerCase().replace(/\s+/g, ''),
+    label: option.label,
+    checked: false
+}));
+
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +57,7 @@ export default function AnnualDevelopmentPlanCreate() {
   const form = useForm<GADAnnualDevPlanCreateInput>({
     resolver: zodResolver(GADAnnualDevPlanCreateSchema),
     defaultValues: {
-      dev_date: "",
+      dev_date: "", // Default to today's date
       dev_client: "",
       dev_issue: "",
       dev_project: "",
@@ -50,13 +68,15 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_gad_budget: "0",
       dev_mandated: false,
       staff: staffId || "",
+      selectedAnnouncements: [],
+      eventSubject: "",
     }
   });
-  const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_amount: string}[]>([]);
+  const [budgetItems, setBudgetItems] = useState<{name: string, quantity: string, price: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
-    gdb_name: "",
-    gdb_pax: "",
-    gdb_amount: "",
+    name: "",
+    quantity: "",
+    price: "",
   });
 
   const [staffOptions, setStaffOptions] = useState<{ staff_id: string; full_name: string; position: string }[]>([]);
@@ -96,21 +116,22 @@ export default function AnnualDevelopmentPlanCreate() {
   };
 
   const addBudgetItem = () => {
-    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_amount) {
+    if (currentBudgetItem.name && currentBudgetItem.name.trim() !== "" && 
+        currentBudgetItem.quantity !== "" && currentBudgetItem.price !== "") {
       setBudgetItems(prev => [...prev, currentBudgetItem]);
-      // Calculate total budget: sum of (pax * price) for all items
+      // Calculate total budget: sum of (quantity * price) for all items
       const totalBudget = budgetItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
-      }, 0) + (parseFloat(currentBudgetItem.gdb_pax) || 0) * (parseFloat(currentBudgetItem.gdb_amount) || 0);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
+      }, 0) + (parseFloat(currentBudgetItem.quantity) || 0) * (parseFloat(currentBudgetItem.price) || 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
-      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+      setCurrentBudgetItem({ name: "", quantity: "", price: "" });
     }
   };
 
   const clearBudgetItem = () => {
-    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+    setCurrentBudgetItem({ name: "", quantity: "", price: "" });
   };
 
   const removeBudgetItem = (index: number) => {
@@ -118,9 +139,9 @@ export default function AnnualDevelopmentPlanCreate() {
       const newItems = prev.filter((_, i) => i !== index);
       // Recalculate total budget after removal
       const totalBudget = newItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
       }, 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
       return newItems;
@@ -187,12 +208,21 @@ export default function AnnualDevelopmentPlanCreate() {
     try {
       const resPersonsArray = selectedStaff.map(s => s.position);
       const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
-      await createMutation.mutateAsync({ 
+      
+      const response = await createMutation.mutateAsync({ 
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
         budgetItems: budgetItems as BudgetItemType[], 
-        resPersons: resPersonsArray 
+        resPersons: resPersonsArray,
+        selectedAnnouncements: data.selectedAnnouncements || [],
+        eventSubject: data.eventSubject || ""
       });
-      showSuccessToast("Annual development plan created successfully!");
+      
+      // Show appropriate success message based on announcement status
+      if (response?.announcement_created) {
+        showSuccessToast("Annual development plan created and announcement sent successfully!");
+      } else {
+        showSuccessToast("Annual development plan created successfully!");
+      }
       navigate(-1);
     } catch (error) {
       console.error("Error creating annual development plan:", error);
@@ -214,7 +244,7 @@ export default function AnnualDevelopmentPlanCreate() {
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-3xl text-darkBlue2">Annual Development Plan 2024</h1>
+          <h1 className="font-semibold text-3xl text-darkBlue2">Annual Development Plan </h1>
         </div>
         <p className="text-sm text-gray-600 ml-12">Create a comprehensive annual development plan for gender and development initiatives</p>
       </div>
@@ -226,11 +256,37 @@ export default function AnnualDevelopmentPlanCreate() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Date</label>
-              <input 
-                type="date" 
-                {...form.register("dev_date")}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={toDisplayDate(form.watch("dev_date"))}
+                      readOnly
+                      placeholder="MM/DD/YYYY"
+                      className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                    />
+                    <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.watch("dev_date") ? new Date(form.watch("dev_date") + "T00:00:00") : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateStr = format(date, "yyyy-MM-dd");
+                        form.setValue("dev_date", dateStr, { shouldValidate: true });
+                      }
+                    }}
+                    disabled={(date) => {
+                      const currentYear = new Date().getFullYear();
+                      return date.getFullYear() < currentYear;
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {form.formState.errors.dev_date && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_date.message}</p>
               )}
@@ -492,8 +548,8 @@ export default function AnnualDevelopmentPlanCreate() {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Item Name</label>
                   <input
                     type="text"
-                    name="gdb_name"
-                    value={currentBudgetItem.gdb_name}
+                    name="name"
+                    value={currentBudgetItem.name}
                     onChange={handleBudgetItemChange}
                     placeholder="e.g., AM Snacks, Materials, etc."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -501,11 +557,11 @@ export default function AnnualDevelopmentPlanCreate() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity/Pax</label>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity</label>
                     <input
                       type="number"
-                      name="gdb_pax"
-                      value={currentBudgetItem.gdb_pax}
+                      name="quantity"
+                      value={currentBudgetItem.quantity}
                       onChange={handleBudgetItemChange}
                       placeholder="e.g., 50"
                       min="0"
@@ -517,8 +573,8 @@ export default function AnnualDevelopmentPlanCreate() {
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>
                     <input
                       type="number"
-                      name="gdb_amount"
-                      value={currentBudgetItem.gdb_amount}
+                      name="price"
+                      value={currentBudgetItem.price}
                       onChange={handleBudgetItemChange}
                       placeholder="0.00"
                       min="0"
@@ -568,13 +624,13 @@ export default function AnnualDevelopmentPlanCreate() {
                 ) : (
                   <div className="space-y-3">
                     {budgetItems.map((item, index) => {
-                      const pax = parseFloat(item.gdb_pax) || 0;
-                      const amount = parseFloat(item.gdb_amount) || 0;
-                      const total = pax * amount;
+                      const quantity = parseFloat(item.quantity) || 0;
+                      const price = parseFloat(item.price) || 0;
+                      const total = quantity * price;
                       return (
                         <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-medium text-gray-800">{item.gdb_name}</h4>
+                            <h4 className="font-medium text-gray-800">{item.name}</h4>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-semibold text-green-600">₱{total.toFixed(2)}</span>
                               <button
@@ -588,7 +644,7 @@ export default function AnnualDevelopmentPlanCreate() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} | Price: ₱{amount.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.quantity} | Price: ₱{price.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -597,9 +653,9 @@ export default function AnnualDevelopmentPlanCreate() {
                         <span className="text-lg font-semibold text-gray-800">Total Budget:</span>
                         <span className="text-2xl font-bold text-green-600">
                           ₱{budgetItems.reduce((sum, item) => {
-                            const pax = parseFloat(item.gdb_pax) || 0;
-                            const amount = parseFloat(item.gdb_amount) || 0;
-                            return sum + (pax * amount);
+                            const quantity = parseFloat(item.quantity) || 0;
+                            const price = parseFloat(item.price) || 0;
+                            return sum + (quantity * price);
                           }, 0).toFixed(2)}
                         </span>
                       </div>
@@ -611,6 +667,54 @@ export default function AnnualDevelopmentPlanCreate() {
           </div>
         </div>
 
+        {/* Announcement Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Announcement Settings</h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Select audience for mobile app announcement:
+              </Label>
+              <Card className="border border-gray-200">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {announcementOptions.map((option) => (
+                      <div key={option.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                        <Checkbox
+                          id={option.id}
+                          checked={form.watch("selectedAnnouncements")?.includes(option.id) || false}
+                          onCheckedChange={(checked) => {
+                            const currentValue = form.watch("selectedAnnouncements") || [];
+                            let newSelected;
+                            if (checked) {
+                              newSelected = [...currentValue, option.id];
+                            } else {
+                              newSelected = currentValue.filter((id) => id !== option.id);
+                            }
+                            form.setValue("selectedAnnouncements", newSelected);
+                          }}
+                        />
+                        <Label htmlFor={option.id} className="text-sm cursor-pointer">{option.label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {(form.watch("selectedAnnouncements") || []).length > 0 && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Event Subject</Label>
+                <Textarea 
+                  {...form.register("eventSubject")}
+                  placeholder="Enter event subject for announcement (participant information from Performance Indicator will be automatically included)" 
+                  className="w-full" 
+                  rows={4}
+                />
+              </div>
+            )}
+          </div>
+        </div>
         
         <div className="flex justify-end gap-4 pt-6">
           <Button 

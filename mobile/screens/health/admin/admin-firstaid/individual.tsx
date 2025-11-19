@@ -53,7 +53,7 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
         
         <View className="flex-row items-center mb-2">
           <Text className="text-slate-600 text-sm">
-            Age: <Text className="text-slate-900 font-medium">{calculatePatientAge()}</Text> • {" "}
+            Age: <Text className="text-slate-900 font-medium">{calculatePatientAge()}</Text> â€¢ {" "}
             {patientData?.patient_details?.personal_info?.per_sex || "N/A"}
           </Text>
         </View>

@@ -15,7 +15,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
 import { ProtectedComponent } from "@/ProtectedComponent";
-import TableLoading from "@/pages/healthServices/table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();

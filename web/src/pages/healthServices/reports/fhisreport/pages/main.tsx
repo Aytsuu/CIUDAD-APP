@@ -14,12 +14,19 @@ import Page7 from "./page7";
 import Page8 from "./page8";
 import Page9 from "./page9";
 import Page10 from "./page10";
+import Page11 from "./page11";
+import Page12 from "./page12";
+import Page13 from "./page13";
+import Page14 from "./page14";
+import Page15 from "./page15";
+import Page16 from "./page16";
+import Page17 from "./page17";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MultiPageFormFHIS() {
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10;
+  const totalPages = 17;
 
   // Get the state from location
   const state = location.state as {
@@ -64,7 +71,16 @@ export default function MultiPageFormFHIS() {
         {currentPage === 7 && <Page7 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 8 && <Page8 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 9 && <Page9 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 10 && <Page10 state={state} onBack={prevPage} />}
+        {currentPage === 10 && <Page10 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 11 && <Page11 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 12 && <Page12 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 13 && <Page13 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 14 && <Page14 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 15 && <Page15 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 16 && <Page16 state={state} onBack={prevPage} onNext={nextPage} />}
+        {currentPage === 17 && <Page17 state={state} onBack={prevPage} />}
+
+
       </Card>
     </LayoutWithBack>
   );

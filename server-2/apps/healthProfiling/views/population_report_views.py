@@ -13,7 +13,7 @@ from ..models import (
     Dependents_Under_Five, MotherHealthInfo, NonCommunicableDisease
 )
 from apps.patientrecords.models import BodyMeasurement
-# from apps.childhealthservices.models import NutritionalStatus
+
 
 logger = logging.getLogger(__name__)
 

@@ -32,16 +32,18 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
 
     def get_latest_medicine_date(self, obj):
         """
-        Get the most recent medicine record date for this patient based on fulfilled_at.
+        Get the most recent fulfilled_at date for this patient's medicine request items.
+        Returns only the date part if fulfilled_at exists.
         """
-        latest_medicine = MedicineRequest.objects.filter(
-            patrec_id__pat_id=obj.pat_id
+        latest_item = MedicineRequestItem.objects.filter(
+            medreq_id__patrec__pat_id=obj.pat_id,
+            fulfilled_at__isnull=False
         ).order_by('-fulfilled_at').first()
-
-        if latest_medicine and latest_medicine.fulfilled_at:
-            return latest_medicine.fulfilled_at
+        if latest_item and latest_item.fulfilled_at:
+            return latest_item.fulfilled_at.date()
         return None
-    
+
+        return latest_item.fulfilled_at if latest_item else None
 
 class MedicineAllocationSerializer(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv', read_only=True)
@@ -95,6 +97,48 @@ class MedicineRecordMinimalSerialzer(serializers.ModelSerializer):
             return str(patrec.pat_id.pat_id)
         return None
     
+    class Meta:
+        model = MedicineRequestItem
+        fields = '__all__'
+
+class MedicineRecordBaseSerialzer(serializers.ModelSerializer): 
+    med_details = MedicineListSerializers(source='med', read_only=True)
+    total_allocated_qty = serializers.SerializerMethodField()
+    pat_details = serializers.SerializerMethodField()
+    unit= serializers.SerializerMethodField()
+    
+    def get_total_allocated_qty(self, obj):
+        # obj is a MedicineRequestItem instance
+        total_qty = MedicineAllocation.objects.filter(
+            medreqitem=obj
+        ).aggregate(total=models.Sum('allocated_qty'))['total'] or 0
+        return total_qty
+
+    def get_unit(self, obj):
+        # Get unit from the first allocation's minv_id if exists, else fallback to obj.minv_id
+        allocation = MedicineAllocation.objects.filter(medreqitem=obj).first()
+        if allocation and allocation.minv and allocation.minv.minv_qty_unit:
+            return allocation.minv.minv_qty_unit
+        if obj.minv_id and obj.minv_id.minv_qty_unit:
+            return obj.minv_id.minv_qty_unit
+        return None
+
+    def get_pat_details(self, obj):
+        patrec = getattr(obj.medreq_id, 'patrec', None)
+        if patrec and hasattr(patrec, 'pat_id') and patrec.pat_id:
+            info = extract_personal_info(patrec.pat_id)
+            addr = extract_address(patrec.pat_id)
+            return {
+                'personal_info': info if info is not None else {},
+                'address': addr if addr is not None else {},
+                'pat_id': patrec.pat_id.pat_id if hasattr(patrec.pat_id, 'pat_id') else None
+            }
+        return {
+            'personal_info': {},
+            'address': {},
+            'pat_id': None
+        }
+
     class Meta:
         model = MedicineRequestItem
         fields = '__all__'

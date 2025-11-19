@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {  useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import { Search, Loader2,AlertTriangle } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -12,12 +12,15 @@ import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyVaccineRecords } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useNavigate } from "react-router-dom";
 
 export default function MonthlyInventoryAntigenDetails() {
   const location = useLocation();
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
   const { showLoading, hideLoading } = useLoading();
+
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -57,49 +60,30 @@ export default function MonthlyInventoryAntigenDetails() {
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
       Name: item.name,
-      "Batch Number": item.batch_number,
-      "Opening Stock": item.opening,
-      "Wasted Items": item.wasted,
-      "Administered Items": item.administered,
-      "Closing Stock": item.closing,
-      "Expiry Date": new Date(item.expiry).toLocaleDateString(),
-      "Expired This Month": item.expired_this_month ? "Yes" : "No"
+      "BATCH NUMBER": item.batch_number,
+      "BEGIINING BAL. VIAL DOSE": item.opening,
+      "WASTED DOSE": item.wasted,
+      "ADMINISTERED VIAL DOSE": item.administered,
+      "BEGINNING BAL. VIAL DOSE": item.closing,
+      "EXPIRY DATES": new Date(item.expiry).toLocaleDateString(),
     }));
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `vaccine_inventory_${monthName.replace(" ", "_")}`);
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `vaccine_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(`vaccine_inventory_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF('portrait');
 
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
 
   const tableHeader = [
     "ANTIGEN",
-    <div className="flex  flex-col">
-      <span>LOT OR</span>
-      <span>BATCH NO.</span>
-    </div>,
-    ,
-    <div className="flex  flex-col">
-      <span>BEGINNING</span>
-      <span>BALANCE</span>
-      <span>DOSE</span>
-    </div>,
-    "Received during the month vial dose",
-    "Wasted",
-    "Administered",
-    "Closing Stock",
-    "Expiry Date",
-    "Expired?"
+    "BATCH NUMBER",
+    "BEGINNING BALANCE DOSE",
+    "RECEIVED DURING THE MONTH VIAL DOSE",
+    "WASTED DOSE",
+    "ADMINISTERED VIAL DOSE",
+    "TOTAL AVAIL. VIAL DOSE",
+    "EXPIRY DATES",
   ];
 
   return (
@@ -112,12 +96,28 @@ export default function MonthlyInventoryAntigenDetails() {
 
         <div className="flex gap-2 items-center">
           <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-          <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4" />
-            <span>Print</span>
-          </Button>
+         
         </div>
       </div>
+
+       <div className="flex justify-end pt-4 bg-white">
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  navigate("/antigen-expired-out-of-stock-summary/details", {
+                    state: {
+                      month,
+                      monthName,
+                    },
+                  })
+                }
+                className="gap-2 italic text-red-500 underline hover:text-red-400 hover:bg-transparent"
+              >
+                View Antigen that Need Restocks
+                <AlertTriangle className="h-4 w-4" />
+              </Button>
+            </div>
+      
 
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 rounded-t-lg">
         <div className="flex items-center gap-2">
@@ -151,38 +151,56 @@ export default function MonthlyInventoryAntigenDetails() {
         </div>
       </div>
 
-      <div className="bg-white rounded-b-lg overflow-hidden">
+      <div className="bg-white overflow-x-auto">
         <div
-          id="printable-area"
-          className="p-4"
           style={{
-            minHeight: "11in",
+            minHeight: "19in",
+            width: "13in",
+            position: "relative",
             margin: "0 auto",
-            fontSize: "12px"
+            padding: "0.5in",
+            backgroundColor: "white",
+            display: "flex",
+            flexDirection: "column",
+            height: "19in",
           }}
         >
-          <div className="text-center mb-6 print-only">
-            <h2 className="font-bold text-lg">Vaccine Inventory Report</h2>
-            <p className="text-sm">Month: {monthName}</p>
-            <p className="text-sm">
-              Vaccines: {apiResponse?.data?.vaccine_items || 0} | Immunization Items: {apiResponse?.data?.immunization_items || 0}
-            </p>
-          </div>
-
-          {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading inventory...</span>
+          <div className="bg-white p-4 print-area" id="printable-area">
+            <div className="text-center mb-6 print-only">
+              <h2 className="font-bold text-lg">EPI INVENTORY AND UTILIZATION REPORT</h2>
+              <p className="text-sm">Month: {monthName}</p>
+           
             </div>
-          ) : (
-            <TableLayout
-              header={tableHeader}
-              rows={paginatedRecords.map((item) => [item.name, item.batch_number, item.opening.toString(), item.received.toString(), item.wasted.toString(), item.administered.toString(), item.closing.toString(), new Date(item.expiry).toLocaleDateString(), item.expired_this_month ? "Yes" : "No"])}
-              tableClassName="w-full border"
-              headerCellClassName="font-medium  text-xs text-black p-2 border text-center"
-              bodyCellClassName="p-2 border text-xs text-center"
-            />
-          )}
+
+            {isLoading ? (
+              <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading inventory...</span>
+              </div>
+            ) : filteredRecords.length > 0 ? (
+              <TableLayout
+                header={tableHeader}
+                rows={paginatedRecords.map((item) => [
+                  item.name, 
+                  item.batch_number, 
+                  item.opening.toString(), 
+                  item.received.toString(), 
+                  item.wasted.toString(), 
+                  item.administered.toString(), 
+                  item.closing.toString(), 
+                  new Date(item.expiry).toLocaleDateString()
+                ])}
+                tableClassName="w-full border rounded-lg"
+                headerCellClassName="font-bold text-sm border border-gray-600 text-black text-center p-2"
+                bodyCellClassName="border border-gray-600 text-center text-sm p-2"
+                defaultRowCount={40}
+              />
+            ) : (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <p>No vaccine records found for {monthName}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </LayoutWithBack>

@@ -2,7 +2,7 @@ import '@/global.css';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/button';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { EditAcceptPickupRequestSchema } from '@/form-schema/waste/garbage-pickup-schema-staff';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,19 +56,22 @@ export default function EditAssignmentForm() {
 
     if(pendingTrucks || pendingDrivers || pendingCollectors){
         return(
-        <_ScreenLayout
-            customLeftAction={
-                <TouchableOpacity onPress={() => router.back()}>
-                <ChevronLeft size={30} className="text-black" />
+        <PageLayout
+            leftAction={
+                <TouchableOpacity 
+                    onPress={() => router.back()} 
+                    className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+                >
+                    <ChevronLeft size={24} className="text-gray-700" />
                 </TouchableOpacity>
             }
-            headerBetweenAction={<Text className="text-[13px]">Accept Garbage Pickup Request</Text>}
-            showExitButton={false}
+            headerTitle={<Text className="text-gray-900 text-[13px]">Edit Assignment</Text>}
+            wrapScroll={false}
         >
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
             </View>
-        </_ScreenLayout>
+        </PageLayout>
         )
     }
     
@@ -87,71 +90,74 @@ export default function EditAssignmentForm() {
     };
 
     return (
-        <_ScreenLayout
-        customLeftAction={
-            <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} className="text-black" />
-            </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Accept Garbage Pickup Request</Text>}
-        showExitButton={false}
-        >
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            <View className="mb-8">
-            <View className="space-y-4 p-6">
-
-                <FormSelect
-                    control = {control}
-                    name="driver"
-                    label="Driver"
-                    placeholder="Select a driver"
-                    options={driverOptions}
-                />
-
-                <FormSelect
-                    control={control}
-                    name="truck"
-                    label="Truck"
-                    placeholder='Select a truck'
-                    options={truckOptions}
-                />
-
-                <FormComboCheckbox
-                    control={control}
-                    name="collectors"
-                    label="Collector(s)"
-                    placeholder="Select collectors"
-                    options={collectorOptions}
-                />
-
-                <FormDateTimeInput
-                    control = {control}
-                    name="date"
-                    label="Date"
-                    type = "date"
-                />
-
-                <FormDateTimeInput
-                    control = {control}
-                    name="time"
-                    label="Time"
-                    type = "time"
-                />
-
-                <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
-                <Button
-                    onPress={handleSubmit(onSubmit)}
-                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+        <PageLayout
+            leftAction={
+                <TouchableOpacity 
+                    onPress={() => router.back()} 
+                    className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
                 >
-                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-                </Button>
-                </View>
-            </View>
-            </View>
-        </ScrollView>
+                    <ChevronLeft size={24} className="text-gray-700" />
+                </TouchableOpacity>
+            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">Edit Assignment</Text>}
+            wrapScroll={false}
+        >
+            <View className="flex-1 bg-gray-50">
+                <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                    <View className="mb-8">
+                        <View className="space-y-4 p-6">
+                            <FormSelect
+                                control = {control}
+                                name="driver"
+                                label="Driver Loader"
+                                placeholder="Select a driver"
+                                options={driverOptions}
+                            />
 
-        <LoadingModal visible={isPending} />
-        
-        </_ScreenLayout>
+                            <FormSelect
+                                control={control}
+                                name="truck"
+                                label="Truck"
+                                placeholder='Select a truck'
+                                options={truckOptions}
+                            />
+
+                            <FormComboCheckbox
+                                control={control}
+                                name="collectors"
+                                label="Loader(s)"
+                                placeholder="Select collectors"
+                                options={collectorOptions}
+                            />
+
+                            <FormDateTimeInput
+                                control = {control}
+                                name="date"
+                                label="Date"
+                                type = "date"
+                            />
+
+                            <FormDateTimeInput
+                                control = {control}
+                                name="time"
+                                label="Time"
+                                type = "time"
+                            />
+
+                            <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
+                                <Button
+                                    onPress={handleSubmit(onSubmit)}
+                                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
+                                >
+                                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
+                                </Button>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+
+                <LoadingModal visible={isPending} />
+            </View>
+        </PageLayout>
     );
 }

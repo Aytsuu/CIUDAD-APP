@@ -7,6 +7,10 @@ from datetime import datetime, date, timedelta
 from django.utils import timezone
 from apps.patientrecords.models import MedicalHistory, Illness
 from pagination import *
+from rest_framework import serializers
+from ..models import *
+from ..serializers import *
+from apps.healthProfiling.models import ResidentProfile
 
 
 
@@ -116,6 +120,7 @@ class MonthlyMorbiditySummaryAPIView(APIView):
 
 
 class MonthlyMorbidityView(APIView):
+    pagination_class = StandardResultsPagination
     def get(self, request, *args, **kwargs):
         try:
             month = kwargs.get('month')
@@ -144,27 +149,57 @@ class MonthlyMorbidityView(APIView):
             
             print(f"DEBUG: Looking for records between {start_date} and {end_date}")
             
-            # ICD-10 age groups
+            # ICD-10 age groups - Define this first to always be available
             age_groups = [
                 (0, 6, "0-6 days"),
                 (7, 28, "7-28 days"),
-                (29, 364, "29 days - 11 months"),
+                (29, 364, "29 days - 11 mos"),
                 (365, 365 * 4, "1-4 yrs"),
                 (365 * 5, 365 * 9, "5-9 yrs"),
-                (365 * 10, 365 * 14, "10-14 yrs"),
-                (365 * 15, 365 * 19, "15-19 yrs"),
-                (365 * 20, 365 * 24, "20-24 yrs"),
-                (365 * 25, 365 * 29, "25-29 yrs"),
-                (365 * 30, 365 * 34, "30-34 yrs"),
-                (365 * 35, 365 * 39, "35-39 yrs"),
-                (365 * 40, 365 * 44, "40-44 yrs"),
-                (365 * 45, 365 * 49, "45-49 yrs"),
-                (365 * 50, 365 * 54, "50-54 yrs"),
-                (365 * 55, 365 * 59, "55-59 yrs"),
-                (365 * 60, 365 * 64, "60-64 yrs"),
-                (365 * 65, 365 * 69, "65-69 yrs"),
-                (365 * 70, None, "70+ yrs"),
+                (365 * 10, 365 * 14, "10-14"),
+                (365 * 15, 365 * 19, "15-19"),
+                (365 * 20, 365 * 24, "20-24"),
+                (365 * 25, 365 * 29, "25-29"),
+                (365 * 30, 365 * 34, "30-34"),
+                (365 * 35, 365 * 39, "35-39"),
+                (365 * 40, 365 * 44, "40-44"),
+                (365 * 45, 365 * 49, "45-49"),
+                (365 * 50, 365 * 54, "50-54"),
+                (365 * 55, 365 * 59, "55-59"),
+                (365 * 60, 365 * 64, "60-64"),
+                (365 * 65, 365 * 69, "65-69"),
+                (365 * 70, None, "70+"),
             ]
+            
+            # Initialize results structure early with age groups
+            results = {
+                'success': True,
+                'month': month,
+                'period': {
+                    'start': start_date.date().isoformat(),
+                    'end': (end_date - timedelta(days=1)).date().isoformat()
+                },
+                'morbidity_data': [],
+                'summary': {
+                    'total_cases': 0,
+                    'total_illnesses': 0,
+                    'grand_totals': {
+                        'M': 0,
+                        'F': 0,
+                        'Both': 0
+                    }
+                }
+            }
+            
+            # Get header data first (always return this)
+            header_instance = HeaderRecipientListReporTemplate.objects.first()
+            if header_instance:
+                header_data = HeaderRecipientListReportTemplateSerializer(header_instance).data
+                # Add total_resident count from ResidentProfile
+                header_data['total_resident'] = ResidentProfile.objects.count()
+                results['header_recipient_list'] = header_data
+            else:
+                results['header_recipient_list'] = None
 
             # Get surveillance histories with all related data
             surveillance_histories = MedicalHistory.objects.filter(
@@ -195,27 +230,7 @@ class MonthlyMorbidityView(APIView):
             
             print(f"DEBUG: Illnesses with surveillance cases: {[ill.illname for ill in illnesses]}")
             
-            # Initialize results structure
-            results = {
-                'success': True,
-                'month': month,
-                'period': {
-                    'start': start_date.date().isoformat(),
-                    'end': (end_date - timedelta(days=1)).date().isoformat()
-                },
-                'morbidity_data': [],
-                'summary': {
-                    'total_cases': 0,
-                    'total_illnesses': 0,
-                    'grand_totals': {
-                        'M': 0,
-                        'F': 0,
-                        'Both': 0
-                    }
-                }
-            }
-            
-            # Process each illness that has surveillance cases
+            # Process each illness that has surveillance cases (or create empty structure if no data)
             for illness in illnesses:
                 # Get medical histories for this specific illness
                 illness_histories = surveillance_histories.filter(ill=illness)
@@ -294,6 +309,30 @@ class MonthlyMorbidityView(APIView):
             results['summary']['total_cases'] = results['summary']['grand_totals']['Both']
             results['summary']['total_illnesses'] = len(results['morbidity_data'])
             
+            # If no illness data, create a single entry with empty age groups to maintain structure
+            if len(results['morbidity_data']) == 0:
+                empty_illness = {
+                    'illness_id': None,
+                    'illness_name': '',
+                    'illness_code': '',
+                    'illness_description': '',
+                    'age_groups': [],
+                    'totals': {
+                        'M': "",
+                        'F': "",
+                        'Both': ""
+                    }
+                }
+                # Add all age groups with 0 counts
+                for min_days, max_days, age_range in age_groups:
+                    empty_illness['age_groups'].append({
+                        'age_range': age_range,
+                        'M': "",
+                        'F': "",
+                        'Both': ""
+                    })
+                results['morbidity_data'].append(empty_illness)
+
             print(f"DEBUG: Final result - {results['summary']['total_illnesses']} illnesses, {results['summary']['total_cases']} total cases (M: {results['summary']['grand_totals']['M']}, F: {results['summary']['grand_totals']['F']})")
             
             return Response(results)
@@ -336,3 +375,5 @@ class MonthlyMorbidityView(APIView):
             return min_days <= age_days <= max_days
         else:  # Unbounded range (70+ years)
             return age_days >= min_days
+
+

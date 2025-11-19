@@ -28,6 +28,9 @@ export default () => {
                 <Stack.Screen name="budgetPlan/budget-plan-suppdoc-create" options={{ headerShown: false, animation: 'fade' }} />
 
                 <Stack.Screen name="clearance-request/clearance-request" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="clearance-request/certificate-list" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="clearance-request/business-list" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="clearance-request/service-charge-list" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
         </ToastProvider>
     );

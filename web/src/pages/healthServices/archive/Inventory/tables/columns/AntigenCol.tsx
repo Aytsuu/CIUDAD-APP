@@ -65,7 +65,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
             <span>
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
             </span>
-            <span className="text-blue-500">
+            <span className="">
               ({availableDoses} dose{availableDoses !== 1 ? "s" : ""})
             </span>
           </div>
@@ -110,7 +110,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     header: "Qty Used",
     cell: ({ row }) => {
       return (
-        <div className="text-center text-red-600">
+        <div className="text-center ">
           {row.original.administered}
         </div>
       );

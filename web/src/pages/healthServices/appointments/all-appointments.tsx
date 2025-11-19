@@ -22,7 +22,7 @@ import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries
 import { useDebounce } from "@/hooks/use-debounce";
 import { capitalize } from "@/helpers/capitalize";
 
-import TableLoading from "../table-loading";
+import TableLoading from "../../../components/ui/table-loading";
 
 // main component           
 export default function ScheduleRecords() {

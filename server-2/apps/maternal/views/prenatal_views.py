@@ -79,8 +79,9 @@ def send_prenatal_status_notification(appointment, new_status, reason=None, noti
         if notify_staff:
             from apps.administration.models import Staff, Position  # Assuming you have Staff and Position models
             prenatal_staff = Staff.objects.filter(
-                pos__pos_title__in=['ADMIN','MIDWIFE', 'BARANGAY HEALTH WORKER']
-            ).select_related('rp')
+                staff_type="HEALTH STAFF",
+                pos__pos_title__in=['ADMIN','MIDWIFE', 'BARANGAY HEALTH WORKERS']
+            ).select_related('rp','pos')
 
             staff_recipients = [str(staff.rp.rp_id) for staff in prenatal_staff if staff.rp and staff.rp.rp_id]
             print("STAFF RECIPIENTS: ",staff_recipients)
@@ -90,11 +91,11 @@ def send_prenatal_status_notification(appointment, new_status, reason=None, noti
                 status_messages_staff = {
                     'pending': { 
                         'title': 'New Prenatal Appointment Request',
-                        'message': f'Resident {resident_name} has requested a new prenatal appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "an unspecified date"}. Please review and approve/reject.'
+                        'message': f'{resident_name} has requested a new prenatal appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "an unspecified date"}. Please review and approve/reject.'
                     },
                     'missed': {
-                        'title': 'Resident Missed Prenatal Appointment',
-                        'message': f'Resident {resident_name} missed their prenatal appointment on {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the scheduled date"}. Reason: {reason or "No reason provided."}'
+                        'title': 'Missed Prenatal Appointment',
+                        'message': f'{resident_name} missed their prenatal appointment on {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "the scheduled date"}. Reason: {reason or "No reason provided."}'
                     },
                     'cancelled': {
                         'title': 'Prenatal Appointment Cancelled',

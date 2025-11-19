@@ -63,18 +63,7 @@ export default function MedicineRequestMain() {
         <Tabs value={selectedView} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 pt-4">
             <TabsList className="w-full grid grid-cols-6 gap-2 h-auto p-1">
-              {/* For Pick Up Tab */}
-              <TabsTrigger value="pickup" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                <ClipboardList className="h-4 w-4" />
-                <span>For Pick Up</span>
-                {isLoading ? (
-                  <span className="ml-2 text-xs font-semibold text-gray-500">...</span>
-                ) : data?.data?.medrequest_count > 0 && (
-                  <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center">
-                    {data.data?.medrequest_count}
-                  </span>
-                )}
-              </TabsTrigger>
+            
               
               {/* Pending Confirmation Tab */}
               <TabsTrigger value="pending" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
@@ -85,6 +74,19 @@ export default function MedicineRequestMain() {
                 ) : data?.data?.apprequest_count > 0 && (
                   <span className="ml-2 text-xs font-semibold text-white bg-yellow-500 rounded-full px-2 h-5 w-5 flex items-center justify-center">
                     {data.data?.apprequest_count}
+                  </span>
+                )}
+              </TabsTrigger>
+
+                {/* For Pick Up Tab */}
+                <TabsTrigger value="pickup" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                <ClipboardList className="h-4 w-4" />
+                <span>For Pick Up</span>
+                {isLoading ? (
+                  <span className="ml-2 text-xs font-semibold text-gray-500">...</span>
+                ) : data?.data?.medrequest_count > 0 && (
+                  <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center">
+                    {data.data?.medrequest_count}
                   </span>
                 )}
               </TabsTrigger>

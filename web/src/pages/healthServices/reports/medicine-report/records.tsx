@@ -13,8 +13,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useMedicineDetailedReports } from "./queries/fetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
-import { MonthlyMedicineRecord } from "./types";
-import { MedicineRecord } from "./types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
@@ -25,7 +23,7 @@ export default function MonthlyMedicineDetails() {
     month: string;
     monthName: string;
     recordCount: number;
-    records: MedicineRecord[];
+    records: any[];
     report: any;
     medicineName?: string;
   };
@@ -43,11 +41,26 @@ export default function MonthlyMedicineDetails() {
     }
   }, [medicineName]);
 
-  const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(month);
-  const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;
+  // Use the hook with pagination parameters
+  const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(
+    month, 
+    currentPage, 
+    pageSize, 
+    searchTerm
+  );
 
-  const records = useMemo(() => monthlyData?.records || [], [monthlyData]);
-  const report = monthlyData?.report || {};
+  // Extract data from the new response structure
+  const responseData = apiResponse?.data || apiResponse?.results?.data;
+  const records = useMemo(() => responseData?.records || [], [responseData]);
+  const report = useMemo(() => responseData?.report || {}, [responseData]);
+  
+  // Get pagination info from API response
+  const totalItems = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  // Calculate display range
+  const startIndex = totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   const staffDetails = report?.staff_details?.rp?.per;
   const signatureBase64 = report?.signature;
@@ -65,57 +78,26 @@ export default function MonthlyMedicineDetails() {
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch report");
-      toast("Retrying to fetch report...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
     }
   }, [error]);
-
-  const filteredRecords = useMemo(() => {
-    if (!searchTerm) return records;
-
-    const searchLower = searchTerm.toLowerCase();
-    return records.filter((record: any) => {
-      const patient = record.patrec_details;
-      const personalInfo = patient?.pat_details?.personal_info;
-      const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ").toLowerCase();
-
-      const recordMedicineName = record?.med_details?.med_name?.toLowerCase() || "";
-      const reason = record.reason?.toLowerCase() || "";
-      const date = record.requested_at ? new Date(record.requested_at).toLocaleDateString().toLowerCase() : "";
-      const patientId = patient?.pat_details?.pat_id?.toLowerCase() || "";
-
-      return fullName.includes(searchLower) || recordMedicineName.includes(searchLower) || reason.includes(searchLower) || date.includes(searchLower) || patientId.includes(searchLower);
-    });
-  }, [records, searchTerm]);
-
-  const totalPages = Math.ceil(filteredRecords.length / pageSize);
-  const paginatedRecords = useMemo(() => {
-    return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  }, [filteredRecords, currentPage, pageSize]);
-
-  // Calculate pagination info
-  const totalItems = filteredRecords.length;
-  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   // Get the current search medicine for display
   const currentSearchMedicine = searchTerm || "All Medicines";
 
   const prepareExportData = () => {
-    return filteredRecords.map((record: any) => {
-      const patient = record.patrec_details;
-      const personalInfo = patient?.pat_details?.personal_info;
+    return records.map((record: any) => {
+      const personalInfo = record?.pat_details?.personal_info;
       const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
-      const address = patient?.pat_details?.address;
+      const address = record?.pat_details?.address;
 
       return {
-        "Date Requested": record.requested_at ? new Date(record.requested_at).toLocaleDateString() : "N/A",
+        "Date Requested": record.created_at ? new Date(record.created_at).toLocaleDateString() : "N/A",
         Name: toTitleCase(fullName) || "N/A",
-        Address: address ? toTitleCase(`${address.full_address}${address.add_sitio ? " Sitio " + address.add_sitio : ""}`) : "N/A",
+        Address: address ? toTitleCase(`${address.full_address}`) : "N/A",
         "Medicine Name": record.med_details?.med_name ?? "N/A",
+        "Medicine Details": `${record.med_details?.med_name || ''} ${record.med_details?.med_dsg || ''} ${record.med_details?.med_dsg_unit || ''} ${record.med_details?.med_form || ''}`.trim(),
         Quantity: record.total_allocated_qty ?? "N/A",
+        Unit: record.unit || "N/A",
         Reason: record.reason || "No reason provided",
       };
     });
@@ -141,22 +123,34 @@ export default function MonthlyMedicineDetails() {
     exportToPDF();
   };
 
-  const tableHeader = ["Date", "Name", "Address", "Name", "Quantity", "Reason"];
+  const tableHeader = ["Date", "Name", "Address", "Medicine", "Quantity", "Reason"];
 
-  const tableRows = paginatedRecords.map((record: any) => {
+  const tableRows = records.map((record: any) => {
     const personalInfo = record?.pat_details?.personal_info;
     const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
     const address = record?.pat_details?.address;
 
-    return [
-      record.medreq_details?.fulfilled_at ? new Date(record.medreq_details?.fulfilled_at).toLocaleDateString() : "N/A",
-      <div className="items-center">{toTitleCase(fullName) || "N/A"}</div>,
-      <div className="items-center">{address ? toTitleCase(`${address.full_address}${address.add_sitio ? " Sitio " + address.add_sitio : ""}`) : "N/A"}</div>,
-      // Combine med_dsg, med_form, med_dsg_unit
-      [record.med_details?.med_name ?? "N/A", record.med_details?.med_dsg ?? "N/A", record.med_details?.med_form ?? "N/A", record.med_details?.med_dsg_unit ?? "N/A"].filter(Boolean).join(" "),
+    // Combine medicine details into one string
+    const medicineDetails = [
+      record.med_details?.med_name,
+      record.med_details?.med_dsg,
+      record.med_details?.med_dsg_unit,
+      record.med_details?.med_form
+    ].filter(Boolean).join(" ");
 
-      record.total_allocated_qty ?? "N/A",
-      record.reason || "No reason provided",
+    return [
+      record.created_at ? new Date(record.created_at).toLocaleDateString() : "N/A",
+      <div key={`${record.medreqitem_id}-name`} className="items-center">{toTitleCase(fullName) || "N/A"}</div>,
+      <div key={`${record.medreqitem_id}-address`} className="items-center">
+        {address ? toTitleCase(address.full_address) : "N/A"}
+      </div>,
+      <div key={`${record.medreqitem_id}-medicine`} className="items-center">
+        {medicineDetails || "N/A"}
+      </div>,
+      <div key={`${record.medreqitem_id}-quantity`}>
+        {record.total_allocated_qty ?? "N/A"} {record.unit ? `(${record.unit})` : ""}
+      </div>,
+      <div key={`${record.medreqitem_id}-reason`}>{record.reason || "No reason provided"}</div>,
     ];
   });
 
@@ -173,7 +167,7 @@ export default function MonthlyMedicineDetails() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search records..."
+                  placeholder="Search by patient name, medicine, reason..."
                   className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => {
@@ -249,7 +243,7 @@ export default function MonthlyMedicineDetails() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[30].map((size) => (
+                {[10, 30, 50, 100].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}
                   </SelectItem>
@@ -265,28 +259,30 @@ export default function MonthlyMedicineDetails() {
               Showing {startIndex} to {endIndex} of {totalItems} entries
               {searchTerm && ` for "${searchTerm}"`}
             </span>
-            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
+            {!isLoading && totalPages > 1 && (
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
+            )}
           </div>
         </div>
 
         {/* Report Display Section */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8 flex justify-center">
           <div
-          className="border border-black"
             style={{
               minHeight: "19in",
-              width: "13in",
-              position: "relative",
               margin: "0 auto",
               padding: "0.5in",
               backgroundColor: "white",
-              display: "flex",
-              flexDirection: "column",
-              height: "19in",
+              height: "20in",
             }}
           >
-            <div className="p-4 print-area  " id="printable-area">
-              {" "}
+            <div className="p-4 print-area" id="printable-area"
+            
+            
+            style={{
+              width: "13in",
+           
+            }}>
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="p-2 border-black flex items-center">
@@ -306,10 +302,10 @@ export default function MonthlyMedicineDetails() {
                   </div>
                 </div>
                 <div className="flex-1 text-center mx-4">
-                  <Label className="text-xs font-bold uppercase block text-gray-700">Republic of the Philippines</Label>
-                  <Label className="text-sm font-bold uppercase block">Cebu City Health Department</Label>
-                  <Label className="text-xs block text-gray-600">General Maxilom Extension, Carreta, Cebu City</Label>
-                  <Label className="text-xs block text-gray-600">(032) 232-6820; 232-6863</Label>
+                     <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
+                   <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
+                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label> 
                 </div>
                 <div className="w-24"></div>
               </div>
@@ -339,7 +335,7 @@ export default function MonthlyMedicineDetails() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[100px]">Total Records:</Label>
-                    <div className="text-sm border-b border-black flex-1 pb-1">{filteredRecords.length}</div>
+                    <div className="text-sm border-b border-black flex-1 pb-1">{totalItems}</div>
                   </div>
                 </div>
               </div>
@@ -385,9 +381,6 @@ export default function MonthlyMedicineDetails() {
                   </div>
                 </div>
               </div>
-
-
-              
             </div>
           </div>
         </div>

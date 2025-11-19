@@ -10,7 +10,7 @@ from .serializers import *
 from django.db.models import Count, Q
 from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
-from datetime import date
+from datetime import date, timedelta
 
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
@@ -33,8 +33,75 @@ def get_unvaccinated_vaccines_for_patient(pat_id):
 
     print(f"Completed vaccine IDs: {completed_vaccines}")
 
-    # Return vaccines that are NOT in the completed list
-    return VaccineList.objects.exclude(vac_id__in=completed_vaccines)
+    # Get all vaccines
+    all_vaccines = VaccineList.objects.all()
+    unvaccinated_vaccines = []
+    
+    for vaccine in all_vaccines:
+        # For non-routine vaccines, use simple completion check
+        if vaccine.vac_type_choices != 'routine':
+            if vaccine.vac_id not in completed_vaccines:
+                unvaccinated_vaccines.append(vaccine)
+        else:
+            # For routine vaccines, check frequency intervals
+            is_unvaccinated = check_routine_vaccine_status(pat_id, vaccine)
+            if is_unvaccinated:
+                unvaccinated_vaccines.append(vaccine)
+    
+    return unvaccinated_vaccines
+
+def check_routine_vaccine_status(pat_id, vaccine):
+    """
+    Check if a routine vaccine should be considered unvaccinated based on frequency
+    """
+    try:
+        # Get the routine frequency for this vaccine
+        routine_freq = RoutineFrequency.objects.get(vac_id=vaccine.vac_id)
+    except RoutineFrequency.DoesNotExist:
+        # If no frequency defined, use simple completion check
+        completed_vaccines = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=pat_id,
+            vachist_status="completed"
+        ).filter(
+            Q(vacStck_id__vac_id=vaccine.vac_id) | 
+            Q(vac__vac_id=vaccine.vac_id)
+        )
+        return not completed_vaccines.exists()
+    
+    # Get the most recent completed vaccination for this routine vaccine
+    latest_vaccination = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        vachist_status="completed"
+    ).filter(
+        Q(vacStck_id__vac_id=vaccine.vac_id) | 
+        Q(vac__vac_id=vaccine.vac_id)
+    ).order_by('-date_administered').first()
+    
+    # If never vaccinated, mark as unvaccinated
+    if not latest_vaccination:
+        return True
+    
+    # Calculate the next due date based on frequency
+    last_administered = latest_vaccination.date_administered
+    today = timezone.now().date()
+    
+    # Calculate time delta based on frequency
+    if routine_freq.time_unit == 'days':
+        next_due_date = last_administered + timedelta(days=routine_freq.interval)
+    elif routine_freq.time_unit == 'weeks':
+        next_due_date = last_administered + timedelta(weeks=routine_freq.interval)
+    elif routine_freq.time_unit == 'months':
+        # Approximate months as 30 days
+        next_due_date = last_administered + timedelta(days=routine_freq.interval * 30)
+    elif routine_freq.time_unit == 'years':
+        # Approximate years as 365 days
+        next_due_date = last_administered + timedelta(days=routine_freq.interval * 365)
+    else:
+        # Default to days if unknown unit
+        next_due_date = last_administered + timedelta(days=routine_freq.interval)
+    
+    # If today is past the next due date, mark as unvaccinated
+    return today >= next_due_date
 
 def has_existing_vaccine_history(pat_id, vac_id):
     return VaccinationHistory.objects.filter(

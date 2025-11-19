@@ -1,6 +1,7 @@
 from .models import *
 from apps.healthProfiling.models import *
 from apps.healthProfiling.serializers.base import PersonalSerializer
+from apps.maternal.models import *
 from django.utils import timezone
 import logging
 
@@ -568,4 +569,266 @@ def get_family(obj):
         except Exception as e:
             print(f'Error fetching fam_id for resident {obj.rp_id.rp_id}: {str(e)}')
             return None
-    return None
+    return 
+
+
+
+# utils/patient_additional_info.py
+
+def get_additional_info(obj):
+    """
+    Reusable function to get additional patient information for both Resident and Transient patients.
+    """
+    try:
+        additional_info = {}
+
+        # Case 1: Resident patient with rp_id
+        if getattr(obj, 'pat_id', None) and getattr(obj, 'rp_id', None):
+            # Philhealth from HealthRelatedDetails (resident)
+            per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
+            if per_ph_id:
+                additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
+
+            # Try to find latest family composition for this resident
+            current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered','-fc_id').first()
+            if current_composition:
+                try:
+                    current_role = (current_composition.fc_role or '').strip().lower()
+                except Exception:
+                    current_role = ''
+
+                # Get total children count (DEPENDENT + INDEPENDENT)
+                fam_id = current_composition.fam_id
+                total_children = FamilyComposition.objects.filter(
+                    fam_id=fam_id,
+                    fc_role__in=['DEPENDENT', 'INDEPENDENT', 'Dependent', 'Independent', 'dependent', 'independent']
+                ).count()
+                
+                if total_children > 0:
+                    additional_info['total_children'] = total_children
+
+                # If current patient is MOTHER, get child dependents
+                if current_role == 'mother':
+                    child_dependents = _get_child_dependents(obj, current_composition)
+                    if child_dependents:
+                        additional_info['child_dependents'] = child_dependents
+
+                # If not father role, fetch mother TT status
+                if current_role != 'father':
+                    all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
+                    mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
+                    if mother_comp:
+                        try:
+                            tt_status = TT_Status.objects.filter(
+                                pat_id__rp_id=mother_comp.rp.rp_id
+                            ).order_by('-tts_date_given', '-tts_id').first()
+                            if tt_status:
+                                additional_info['mother_tt_status'] = {
+                                    'status': tt_status.tts_status,
+                                    'date_given': tt_status.tts_date_given
+                                }
+                            else:
+                                additional_info['mother_tt_status'] = None
+                        except Exception as e:
+                            additional_info['mother_tt_status'] = None
+
+            # Check for latest pregnancy and AOG data
+            try:
+                latest_pregnancy = Pregnancy.objects.filter(
+                    pat_id=obj,
+                    status='active'
+                ).order_by('-created_at').first()
+                
+                if latest_pregnancy:
+                    latest_prenatal = Prenatal_Form.objects.filter(
+                        pregnancy_id=latest_pregnancy
+                    ).order_by('-created_at').first()
+
+                    if latest_prenatal:
+                        # Build latest_pregnancy structure with pregnancy_id, pf_id, and ppr_id
+                        pregnancy_data = {
+                            'pregnancy_id': latest_pregnancy.pregnancy_id,
+                            'pf_id': latest_prenatal.pf_id,
+                        }
+                        
+                        # Fetch ppr_id from PostpartumRecord if exists
+                        postpartum_record = PostpartumRecord.objects.filter(
+                            pregnancy_id=latest_pregnancy
+                        ).order_by('-created_at').first()
+                        if postpartum_record:
+                            pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                        
+                        additional_info['latest_pregnancy'] = pregnancy_data
+                        
+                        latest_prenatal_care = PrenatalCare.objects.filter(
+                            pf_id=latest_prenatal,
+                            pfpc_aog_wks__isnull=False
+                        ).order_by('-pfpc_date', '-created_at').first()
+                        
+                        if latest_prenatal_care:
+                            additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
+                            additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+                else:
+                    # Get mother's AOG data if current patient is a child
+                    current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+                    if current_composition:
+                        current_role = (current_composition.fc_role or '').strip().lower()
+                        print(f"🔍 Patient {obj.pat_id} role: {current_role}")
+                        if current_role not in ['mother', 'father']:
+                            fam_id = current_composition.fam_id
+                            all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
+                            mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
+                            print(f"🔍 Found mother composition: {mother_comp}")
+                            
+                            if mother_comp and mother_comp.rp:
+                                mother_patient = Patient.objects.filter(rp_id=mother_comp.rp).first()
+                                print(f"🔍 Found mother patient: {mother_patient}")
+                                if mother_patient:
+                                    mother_pregnancy = Pregnancy.objects.filter(
+                                        pat_id=mother_patient,
+                                        status='active'
+                                    ).order_by('-created_at').first()
+                                    print(f"🔍 Found mother pregnancy: {mother_pregnancy}")
+                                    
+                                    if mother_pregnancy:
+                                        mother_prenatal = Prenatal_Form.objects.filter(
+                                            pregnancy_id=mother_pregnancy
+                                        ).order_by('-created_at').first()
+                                        print(f"🔍 Found mother prenatal: {mother_prenatal}")
+                                        
+                                        if mother_prenatal:
+                                            pregnancy_data = {
+                                                'pregnancy_id': mother_pregnancy.pregnancy_id,
+                                                'pf_id': mother_prenatal.pf_id,
+                                                'mother_pat_id': mother_patient.pat_id,  # Add mother's patient ID
+                                            }
+                                            
+                                            # fetch ppr_id from PostpartumRecord if exists
+                                            postpartum_record = PostpartumRecord.objects.filter(
+                                                pregnancy_id=mother_pregnancy
+                                            ).order_by('-created_at').first()
+                                            if postpartum_record:
+                                                pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                                            
+                                            additional_info['mother_latest_pregnancy'] = pregnancy_data
+                                            print(f"✅ Added mother_latest_pregnancy: {pregnancy_data}")
+
+                                            
+                                            mother_prenatal_care = PrenatalCare.objects.filter(
+                                                pf_id=mother_prenatal,
+                                                pfpc_aog_wks__isnull=False
+                                            ).order_by('-pfpc_date', '-created_at').first()
+                                            
+                                            if mother_prenatal_care:
+                                                additional_info['mother_latest_aog_weeks'] = mother_prenatal_care.pfpc_aog_wks
+                                                additional_info['mother_latest_aog_days'] = mother_prenatal_care.pfpc_aog_days
+                                        else:
+                                            print("❌ No prenatal form found for mother pregnancy")
+                                    else:
+                                        print("❌ No active pregnancy found for mother")
+                                else:
+                                    print("❌ No patient record found for mother")
+                            else:
+                                print("❌ No mother composition found in family")
+                        else:
+                            print(f"❌ Patient role '{current_role}' is mother/father, skipping mother pregnancy lookup")
+                    else:
+                        print("❌ No current composition found for patient")
+            except Exception as e:
+                print(f"Error fetching AOG data for resident: {str(e)}")
+
+            print(f"🔍 Final additional_info for resident {obj.pat_id}: {additional_info}")
+            return additional_info if additional_info else None
+
+        # Case 2: Transient patient
+        if getattr(obj, 'pat_id', None) and getattr(obj, 'trans_id', None):
+            trans = obj.trans_id
+            if getattr(trans, 'philhealth_id', None):
+                additional_info['philhealth_id'] = trans.philhealth_id
+
+            try:
+                tt_qs = TT_Status.objects.filter(
+                    pat_id=obj
+                ).select_related('pat_id').order_by('-tts_date_given', '-tts_id')
+                if tt_qs.exists():
+                    latest_tt_status = tt_qs.first()
+                    additional_info['mother_tt_status'] = {
+                        'status': latest_tt_status.tts_status,
+                        'date_given': latest_tt_status.tts_date_given
+                    }
+                else:
+                    additional_info['mother_tt_status'] = None
+            except Exception:
+                additional_info['mother_tt_status'] = None
+
+            # Check for latest pregnancy and AOG data
+            try:
+                latest_pregnancy = Pregnancy.objects.filter(
+                    pat_id=obj,
+                    status='active'
+                ).order_by('-created_at').first()
+                
+                if latest_pregnancy:
+                    latest_prenatal = Prenatal_Form.objects.filter(
+                        pregnancy_id=latest_pregnancy
+                    ).order_by('-created_at').first()
+
+                    if latest_prenatal:
+                        pregnancy_data = {
+                            'pregnancy_id': latest_pregnancy.pregnancy_id,
+                            'pf_id': latest_prenatal.pf_id,
+                        }
+                        
+                        # fetch ppr_id from PostpartumRecord if exists
+                        postpartum_record = PostpartumRecord.objects.filter(
+                            pregnancy_id=latest_pregnancy
+                        ).order_by('-created_at').first()
+                        if postpartum_record:
+                            pregnancy_data['ppr_id'] = postpartum_record.ppr_id
+                        
+                        additional_info['latest_pregnancy'] = pregnancy_data
+                        
+                        latest_prenatal_care = PrenatalCare.objects.filter(
+                            pf_id=latest_prenatal,
+                            pfpc_aog_wks__isnull=False
+                        ).order_by('-pfpc_date', '-created_at').first()
+                        
+                        if latest_prenatal_care:
+                            additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
+                            additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+            except Exception as e:
+                print(f"Error fetching AOG data for transient: {str(e)}")
+
+            return additional_info if additional_info else None
+
+        return None
+    except Exception as e:
+        print(f"Error in get_additional_info: {str(e)}")
+        return None
+
+
+def _get_child_dependents(obj, current_composition):
+    """Helper function to get child dependents for mother role"""
+    try:
+        fam_id = current_composition.fam_id
+        child_dependents = FamilyComposition.objects.filter(
+            fam_id=fam_id,
+            fc_role__in=['DEPENDENT', 'INDEPENDENT', 'Dependent', 'Independent', 'dependent', 'independent']
+        ).select_related('rp', 'rp__per').order_by('fc_dob')
+
+        dependent_list = []
+        for child in child_dependents:
+            if child.rp and child.rp.per:
+                dependent_info = {
+                    'fc_id': child.fc_id,
+                    'name': f"{child.rp.per.per_fname or ''} {child.rp.per.per_lname or ''}".strip(),
+                    'dob': child.fc_dob,
+                    'sex': getattr(child.rp.per, 'per_sex', None),
+                    'role': child.fc_role
+                }
+                dependent_list.append(dependent_info)
+
+        return dependent_list if dependent_list else None
+    except Exception as e:
+        print(f"Error fetching child dependents: {str(e)}")
+        return None
