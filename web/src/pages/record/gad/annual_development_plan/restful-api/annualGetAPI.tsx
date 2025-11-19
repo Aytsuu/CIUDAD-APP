@@ -85,19 +85,21 @@ export const getArchivedAnnualDevPlans = async (search?: string, page?: number, 
 };
 
 // Archive plans (bulk operation)
-export const archiveAnnualDevPlans = async (devIds: number[]) => {
+export const archiveAnnualDevPlans = async (devIds: number[], staffId?: string) => {
   const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
     dev_ids: devIds,
-    dev_archived: true
+    dev_archived: true,
+    staff_id: staffId
   });
   return res.data;
 };
 
 // Restore archived plans (bulk operation)
-export const restoreAnnualDevPlans = async (devIds: number[]) => {
+export const restoreAnnualDevPlans = async (devIds: number[], staffId?: string) => {
   const res = await api.patch(`/gad/gad-annual-development-plan/bulk-update/`, {
     dev_ids: devIds,
-    dev_archived: false
+    dev_archived: false,
+    staff_id: staffId
   });
   return res.data;
 };

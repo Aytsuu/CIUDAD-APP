@@ -1266,7 +1266,8 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(cr_id__rp_id__per__per_lname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
-                Q(nrc_id__nrc_requester__icontains=search_query) |
+                Q(nrc_id__nrc_lname__icontains=search_query) |
+                Q(nrc_id__nrc_fname__icontains=search_query) |                
                 Q(pay_id__comp_id__complainant__cpnt_name__icontains=search_query)
             ).distinct()
         

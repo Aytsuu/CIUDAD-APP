@@ -762,7 +762,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             'pr_id',
             'purpose',
             'sr_id',
-            'sr_code',  # This will now read from database
+            'sr_code',  
             'sr_type',
             'sr_req_date',
             'sr_req_status',

@@ -10,6 +10,7 @@ export type ServiceCharge = {
   comp_id: number;
   staff_id: number | null;
   complainant_name: string | null;
+  pay_reason?: string | null;
   payment_request: {
     spay_id: number;
     spay_status: string;
@@ -29,14 +30,14 @@ export type ServiceChargeResponse = {
 export async function getTreasurerServiceCharges(
   search?: string,
   page?: number,
-  pageSize?: number
+  pageSize?: number,
+  tab?: "unpaid" | "paid" | "declined"
 ): Promise<ServiceChargeResponse> {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (page) params.append('page', page.toString());
   if (pageSize) params.append('page_size', pageSize.toString());
-  
-  // Don't filter by payment_status here - let the frontend tabs handle filtering
+  if (tab) params.append('tab', tab);
   
   const { data } = await api.get<ServiceChargeResponse>(`/clerk/treasurer/service-charges/?${params.toString()}`);
   return data ?? { results: [], count: 0, next: null, previous: null };

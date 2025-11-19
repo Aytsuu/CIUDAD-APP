@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
@@ -43,10 +42,9 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     const { user } = useAuth();
 
     //ADD QUERY MUTATIONS
-    const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors } = useAssignCollectors();
+    const { mutate: createSchedule, isPending: isPendingSchedule } = useCreateWasteSchedule();
+    const { mutate: assignCollectors, isPending } = useAssignCollectors();
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     //FETCH QUERY MUTATIONS
     const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
@@ -99,7 +97,6 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     });
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
-        setIsSubmitting(true);
 
         const [hour, minute] = values.time.split(":");
         const formattedTime = `${hour}:${minute}:00`;
@@ -250,8 +247,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isSubmitting}>
-                        {isSubmitting ? (
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending || isPendingSchedule}>
+                        {isPending || isPendingSchedule ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Submitting...

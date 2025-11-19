@@ -14,9 +14,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 
 const toDisplayDate = (dateStr: string): string => {
   if (!dateStr) return "";
@@ -42,11 +39,6 @@ const getClientOptions = () => (
   </>
 );
 
-const announcementOptions = clientOptions.map(option => ({
-    id: option.value.toLowerCase().replace(/\s+/g, ''),
-    label: option.label,
-    checked: false
-}));
 
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
@@ -68,8 +60,6 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_gad_budget: "0",
       dev_mandated: false,
       staff: staffId || "",
-      selectedAnnouncements: [],
-      eventSubject: "",
     }
   });
   const [budgetItems, setBudgetItems] = useState<{name: string, quantity: string, price: string}[]>([]);
@@ -209,20 +199,13 @@ export default function AnnualDevelopmentPlanCreate() {
       const resPersonsArray = selectedStaff.map(s => s.position);
       const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
       
-      const response = await createMutation.mutateAsync({ 
+      await createMutation.mutateAsync({ 
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
         budgetItems: budgetItems as BudgetItemType[], 
         resPersons: resPersonsArray,
-        selectedAnnouncements: data.selectedAnnouncements || [],
-        eventSubject: data.eventSubject || ""
       });
       
-      // Show appropriate success message based on announcement status
-      if (response?.announcement_created) {
-        showSuccessToast("Annual development plan created and announcement sent successfully!");
-      } else {
-        showSuccessToast("Annual development plan created successfully!");
-      }
+      showSuccessToast("Annual development plan created successfully!");
       navigate(-1);
     } catch (error) {
       console.error("Error creating annual development plan:", error);
@@ -664,55 +647,6 @@ export default function AnnualDevelopmentPlanCreate() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Announcement Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Announcement Settings</h2>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                Select audience for mobile app announcement:
-              </Label>
-              <Card className="border border-gray-200">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {announcementOptions.map((option) => (
-                      <div key={option.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
-                        <Checkbox
-                          id={option.id}
-                          checked={form.watch("selectedAnnouncements")?.includes(option.id) || false}
-                          onCheckedChange={(checked) => {
-                            const currentValue = form.watch("selectedAnnouncements") || [];
-                            let newSelected;
-                            if (checked) {
-                              newSelected = [...currentValue, option.id];
-                            } else {
-                              newSelected = currentValue.filter((id) => id !== option.id);
-                            }
-                            form.setValue("selectedAnnouncements", newSelected);
-                          }}
-                        />
-                        <Label htmlFor={option.id} className="text-sm cursor-pointer">{option.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {(form.watch("selectedAnnouncements") || []).length > 0 && (
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Event Subject</Label>
-                <Textarea 
-                  {...form.register("eventSubject")}
-                  placeholder="Enter event subject for announcement (participant information from Performance Indicator will be automatically included)" 
-                  className="w-full" 
-                  rows={4}
-                />
-              </div>
-            )}
           </div>
         </div>
         

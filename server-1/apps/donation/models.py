@@ -3,11 +3,31 @@ from datetime import date
 import uuid
 
 class Donation(models.Model):
-    don_num = models.CharField(primary_key=True, unique=True)
+    don_num = models.CharField(primary_key=True, unique=True, max_length=50)
+    
+    # Category acronym mapping
+    CATEGORY_ACRONYMS = {
+        "Monetary Donations": "MON",
+        "Essential Goods": "ESS",
+        "Medical Supplies": "MED",
+        "Household Items": "HOU",
+        "Educational Supplies": "EDU",
+        "Baby & Childcare Items": "BAB",
+        "Animal Welfare Items": "ANI",
+        "Shelter & Homeless Aid": "SHE",
+        "Disaster Relief Supplies": "DIS",
+    }
     
     def save(self, *args, **kwargs):
-        if not self.don_num:  # If no ID provided
-            self.don_num = f"DON-{uuid.uuid4().hex[:10].upper()}"
+        if not self.don_num:
+            # Get acronym for the category, default to "GEN" if not found
+            acronym = self.CATEGORY_ACRONYMS.get(self.don_category, "GEN")
+            
+            # Format: DON-YYYYMMDD-ACRONYM-UNIQUE_SUFFIX
+            date_part = self.don_date.strftime("%Y%m%d")
+            unique_suffix = uuid.uuid4().hex[:6].upper()  # Shorter unique part
+            
+            self.don_num = f"DON-{date_part}-{acronym}-{unique_suffix}"
         
         # Automatically set status to "Allotted" if distribution date is set
         if self.don_dist_date and not self.don_status == "Allotted":

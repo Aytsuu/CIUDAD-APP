@@ -26,8 +26,8 @@ export const useCreateAnnualDevPlan = () => {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[]; selectedAnnouncements?: string[]; eventSubject?: string }) => {
-            const { formData, budgetItems, resPersons, selectedAnnouncements, eventSubject } = args;
+        mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[] }) => {
+            const { formData, budgetItems, resPersons } = args;
             const { staff, ...restFormData } = formData;
 
             const payload: any = {
@@ -47,14 +47,6 @@ export const useCreateAnnualDevPlan = () => {
                 ),
                 staff: staff || null,
             };
-            
-            // Add announcement fields if provided
-            if (selectedAnnouncements && selectedAnnouncements.length > 0) {
-                payload.selectedAnnouncements = selectedAnnouncements;
-            }
-            if (eventSubject) {
-                payload.eventSubject = eventSubject;
-            }
             
             return await createAnnualDevPlan(payload);
         },
@@ -131,8 +123,8 @@ export const useArchiveAnnualDevPlans = () => {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async (devIds: number[]) => {
-            return await archiveAnnualDevPlans(devIds);
+        mutationFn: async ({ devIds, staffId }: { devIds: number[]; staffId?: string }) => {
+            return await archiveAnnualDevPlans(devIds, staffId);
         },
         onSuccess: () => {
             // Invalidate and refetch queries to update the data
@@ -146,8 +138,8 @@ export const useRestoreAnnualDevPlans = () => {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: async (devIds: number[]) => {
-            return await restoreAnnualDevPlans(devIds);
+        mutationFn: async ({ devIds, staffId }: { devIds: number[]; staffId?: string }) => {
+            return await restoreAnnualDevPlans(devIds, staffId);
         },
         onSuccess: () => {
             // Invalidate and refetch queries to update the data

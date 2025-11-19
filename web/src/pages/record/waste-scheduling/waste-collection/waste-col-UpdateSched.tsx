@@ -1,6 +1,4 @@
 
-
-import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
 import { Loader2 } from "lucide-react";
@@ -69,8 +67,8 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
     const wasteSchedules = wasteCollectionData.results || [];    
 
     //UPDATE QUERY MUTATIONS
-    const { mutate: updateSchedule } = useUpdateWasteSchedule();
-    const { mutate: updateCollectors } = useUpdateCollectors();
+    const { mutate: updateSchedule, isPending: isPendingSchedule } = useUpdateWasteSchedule();
+    const { mutate: updateCollectors, isPending } = useUpdateCollectors();
 
 
     const collectorOptions = collectors.map(collector => ({
@@ -109,10 +107,9 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
         },
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const onSubmit = async (values: z.infer<typeof WasteColSchedSchema>) => {
-        setIsSubmitting(true);
+
         try {
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
@@ -196,9 +193,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             });
         } catch (error) {
             console.error("Update failed:", error);
-        } finally {
-            setIsSubmitting(false);
-        }
+        } 
     };
 
 
@@ -294,9 +289,9 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                         trigger={
                             <Button 
                                 type="button"
-                                disabled={isSubmitting}
+                                disabled={isPendingSchedule || isPending}
                             >
-                                {isSubmitting ? (
+                                {isPendingSchedule || isPending ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Updating...
@@ -308,7 +303,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                         }
                         title="Confirm Update"
                         description="Are you sure you want to update this waste collection schedule?"
-                        actionLabel={isSubmitting ? "Updating..." : "Confirm"}
+                        actionLabel={isPendingSchedule || isPending ? "Updating..." : "Confirm"}
                         onClick={() => form.handleSubmit(onSubmit)()}
                     />
                 </div>

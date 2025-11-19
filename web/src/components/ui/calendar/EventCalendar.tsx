@@ -46,7 +46,17 @@ export interface IEventInfo<T = any> extends Event {
   end: Date;
 }
 
-export const generateId = () => (Math.floor(Math.random() * 10000) + 1).toString();
+export const generateId = (item: any, sourceName: string, index: number) => {
+  // Create a stable hash from the event data
+  const dataString = JSON.stringify(item);
+  let hash = 0;
+  for (let i = 0; i < dataString.length; i++) {
+    const char = dataString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return `${sourceName}-${Math.abs(hash)}-${index}`;
+};
 
 const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -80,7 +90,7 @@ const EventCalendar = ({
         name: sourceName = `Source ${index + 1}`,
       } = source;
 
-      const convertedEvents = data.map((item) => {
+      const convertedEvents = data.map((item, itemIndex) => {
         const dateStr = String(item[dateAccessor]);
         const timeStr = String(item[timeAccessor]);
         
@@ -119,7 +129,7 @@ const EventCalendar = ({
           }
 
           return {
-            _id: generateId(),
+            _id: generateId(item, sourceName, itemIndex),
             title: String(item[titleAccessor] || 'Untitled Event'),
             start,
             end,

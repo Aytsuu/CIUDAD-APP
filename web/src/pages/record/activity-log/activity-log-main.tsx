@@ -32,6 +32,10 @@ const ActivityLogMain = () => {
   const { data: activityLogsData, isLoading, error } = useQuery<ActivityLogResponse>({
     queryKey: ["activityLogs", currentPage, debouncedQuery, filterType],
     queryFn: () => getActivityLogs(debouncedQuery, currentPage, 10, filterType === "all" ? undefined : filterType),
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
   });
 
   // Handle loading state

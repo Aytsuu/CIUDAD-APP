@@ -20,6 +20,7 @@ import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queri
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -89,6 +90,8 @@ function ResolutionPage() {
 
     // Archive / Restore mutation
     const { mutate: archiveRestore } = useArchiveOrRestoreResolution();
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id as string | undefined;
 
     // Extract data from paginated response
     const fetchedData = resolutionData.results || [];
@@ -176,20 +179,22 @@ function ResolutionPage() {
     };        
 
     const handleDelete = (res_num: number) => {
-        deleteRes(String(res_num));
+        deleteRes({ res_num: String(res_num), staffId: staffId });
     };
 
     const handleArchive = (res_num: number) => {
         archiveRestore({
             res_num: String(res_num),
-            res_is_archive: true
+            res_is_archive: true,
+            staffId: staffId
         });
     };
 
     const handleRestore = (res_num: number) => {
         archiveRestore({
             res_num: String(res_num),
-            res_is_archive: false
+            res_is_archive: false,
+            staffId: staffId
         });
     };
 

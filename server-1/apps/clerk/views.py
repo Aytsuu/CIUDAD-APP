@@ -251,12 +251,68 @@ class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         old_payment_status = instance.nrc_req_payment_status
+        old_status = instance.nrc_req_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # Check if payment status changed to "Paid" and create automatic income entry
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
         new_payment_status = instance.nrc_req_payment_status
+        new_status = instance.nrc_req_status
+        
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from instance
+                if not staff and hasattr(instance, 'staff_id') and instance.staff_id:
+                    staff_id = getattr(instance.staff_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get non-resident name
+                    resident_name = f"{instance.nrc_fname} {instance.nrc_lname}".strip()
+                    if not resident_name:
+                        resident_name = "Unknown"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.nrc_reason if hasattr(instance, 'nrc_reason') and instance.nrc_reason and instance.nrc_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for non-resident certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Non-resident certificate {instance.nrc_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.nrc_id
+                    )
+                    logger.info(f"Activity logged for non-resident certificate status decline: {instance.nrc_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for non-resident certificate status decline logging: {instance.nrc_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log non-resident certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
         if old_payment_status != "Paid" and new_payment_status == "Paid":
             try:
                 from apps.treasurer.utils import create_automatic_income_entry
@@ -328,6 +384,58 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
         # Debug logging
         logger.info(f"CertificateStatusUpdateView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_payment_status={new_payment_status}, old_status={old_status}, new_status={new_status}")
         
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.cr_reason if hasattr(instance, 'cr_reason') and instance.cr_reason and instance.cr_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Certificate {instance.cr_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status decline: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate status decline logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
         # Log payment status change activity if it changed
         if old_payment_status != new_payment_status:
             try:
@@ -351,11 +459,8 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
                         staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                 
-                # Final fallback: use any available staff
-                if not staff:
-                    staff = Staff.objects.first()
-                
-                if staff:
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                     # Get resident name for better description
                     resident_name = "Unknown"
                     if instance.rp_id and instance.rp_id.per:
@@ -374,7 +479,7 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
                     )
                     logger.info(f"Activity logged for certificate status update payment change: {instance.cr_id}")
                 else:
-                    logger.warning(f"No staff found for certificate status update payment change logging: {instance.cr_id}")
+                    logger.warning(f"No valid staff with staff_id found for certificate status update payment change logging: {instance.cr_id}")
                     
             except Exception as log_error:
                 logger.error(f"Failed to log certificate status update payment change activity: {str(log_error)}")
@@ -445,11 +550,66 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
         # Debug logging
         logger.info(f"CertificateDetailView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_data={request.data}")
         
+        old_status = instance.cr_req_status
+        
         self.perform_update(serializer)
         
         # Get updated instance to check for changes
         instance.refresh_from_db()
         new_payment_status = instance.cr_req_payment_status
+        new_status = instance.cr_req_status
+        
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.cr_reason if hasattr(instance, 'cr_reason') and instance.cr_reason and instance.cr_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Certificate {instance.cr_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status decline: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate status decline logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
         
         # Log payment status change activity if it changed
         if old_payment_status != new_payment_status:
@@ -474,11 +634,8 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
                         staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                 
-                # Final fallback: use any available staff
-                if not staff:
-                    staff = Staff.objects.first()
-                
-                if staff:
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                     # Get resident name for better description
                     resident_name = "Unknown"
                     if instance.rp_id and instance.rp_id.per:
@@ -497,7 +654,7 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
                     )
                     logger.info(f"Activity logged for certificate payment status change: {instance.cr_id}")
                 else:
-                    logger.warning(f"No staff found for certificate payment status change logging: {instance.cr_id}")
+                    logger.warning(f"No valid staff with staff_id found for certificate payment status change logging: {instance.cr_id}")
                     
             except Exception as log_error:
                 logger.error(f"Failed to log certificate payment status change activity: {str(log_error)}")
@@ -577,6 +734,7 @@ class CancelBusinessPermitView(APIView):
     def post(self, request, bpr_id):
         try:
             permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
+            old_status = permit.req_status
             # Accept req_status from request, default to 'Cancelled' if not provided
             permit.req_status = request.data.get('req_status', 'Cancelled')
             # Set cancellation date for cancelled requests
@@ -584,6 +742,60 @@ class CancelBusinessPermitView(APIView):
             # Save the decline/cancel reason
             permit.bus_reason = request.data.get('bus_reason')
             permit.save(update_fields=['req_status', 'req_date_completed', 'bus_reason'])
+            
+            # Log activity if status changed to Declined
+            if old_status != permit.req_status and permit.req_status == "Declined":
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff member
+                    staff = None
+                    staff_id = request.data.get('staff_id')
+                    
+                    if staff_id:
+                        # Format staff_id properly (pad with leading zeros if needed)
+                        if len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    # Fallback: try to get staff from instance
+                    if not staff and hasattr(permit, 'staff_id') and permit.staff_id:
+                        staff_id = getattr(permit.staff_id, 'staff_id', None)
+                        if staff_id and len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        # Get business name and owner
+                        business_name = permit.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if permit.rp_id and permit.rp_id.per:
+                            per = permit.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        
+                        # Get purpose
+                        purpose = permit.pr_id.pr_purpose if permit.pr_id else 'N/A'
+                        
+                        # Get decline reason
+                        decline_reason = permit.bus_reason if hasattr(permit, 'bus_reason') and permit.bus_reason else 'No reason provided'
+                        
+                        # Create activity log for business permit decline
+                        create_activity_log(
+                            act_type="Business Permit Status Updated",
+                            act_description=f"Business permit {permit.bpr_id} request status changed from '{old_status}' to '{permit.req_status}' for '{business_name}' (Owner: {owner_name}) - {purpose}. Reason: {decline_reason}",
+                            staff=staff,
+                            record_id=permit.bpr_id
+                        )
+                        logger.info(f"Activity logged for business permit status decline: {permit.bpr_id}")
+                    else:
+                        logger.warning(f"No valid staff with staff_id found for business permit status decline logging: {permit.bpr_id}")
+                        
+                except Exception as log_error:
+                    logger.error(f"Failed to log business permit status decline activity: {str(log_error)}")
+                    # Don't fail the request if logging fails
+            
             return Response({
                 'message': permit.req_status,
                 'bpr_id': permit.bpr_id,
@@ -1516,11 +1728,8 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                         staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                 
-                # Final fallback: use any available staff
-                if not staff:
-                    staff = Staff.objects.first()
-                
-                if staff:
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                     # Get business name and owner for better description
                     business_name = instance.bus_permit_name or "Unknown Business"
                     owner_name = "Unknown Owner"
@@ -1540,7 +1749,7 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     )
                     logger.info(f"Activity logged for business permit payment status change: {instance.bpr_id}")
                 else:
-                    logger.warning(f"No staff found for business permit payment status change logging: {instance.bpr_id}")
+                    logger.warning(f"No valid staff with staff_id found for business permit payment status change logging: {instance.bpr_id}")
                     
             except Exception as log_error:
                 logger.error(f"Failed to log business permit payment status change activity: {str(log_error)}")
@@ -1658,9 +1867,25 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
                 Q(comp_id__comp_location__icontains=search_query)
             ).distinct()
 
-        # Add status filtering
+        # Add tab-based filtering (unpaid/paid/declined)
+        tab_filter = self.request.GET.get('tab', None)
+        if tab_filter:
+            if tab_filter == 'unpaid':
+                # Unpaid: pay_status is Unpaid AND pay_req_status is NOT Declined
+                queryset = queryset.filter(
+                    pay_status='Unpaid',
+                    pay_req_status__in=['Pending', 'Completed']
+                )
+            elif tab_filter == 'paid':
+                # Paid: pay_status is Paid
+                queryset = queryset.filter(pay_status='Paid')
+            elif tab_filter == 'declined':
+                # Declined: pay_req_status is Declined
+                queryset = queryset.filter(pay_req_status='Declined')
+        
+        # Legacy status filtering (for backward compatibility)
         status_filter = self.request.GET.get('status', None)
-        if status_filter and status_filter != 'all':
+        if status_filter and status_filter != 'all' and not tab_filter:
             if status_filter == 'pending':
                 queryset = queryset.filter(pay_req_status='Pending')
             elif status_filter == 'completed':
@@ -1668,9 +1893,9 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             elif status_filter == 'declined':
                 queryset = queryset.filter(pay_req_status='Declined')
 
-        # Add payment status filtering
+        # Legacy payment status filtering (for backward compatibility)
         payment_status_filter = self.request.GET.get('payment_status', None)
-        if payment_status_filter:
+        if payment_status_filter and not tab_filter:
             queryset = queryset.filter(pay_status=payment_status_filter)
 
         return queryset.order_by('-pay_date_req')
@@ -1870,20 +2095,47 @@ class UpdateServiceChargePaymentStatusView(APIView):
                             staff_id = str(staff_id).zfill(11)
                         staff = Staff.objects.filter(staff_id=staff_id).first()
                 
-                # Final fallback: use any available staff
-                if not staff:
-                    staff = Staff.objects.first()
-                
-                if staff:
-                    # Get service charge details for better description
-                    service_charge_info = "Unknown Service Charge"
-                    if hasattr(payment_request, 'sr_id') and payment_request.sr_id:
-                        service_charge_info = f"Service Charge {payment_request.sr_id.sr_id}"
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name(s) from the complaint's complainants
+                    resident_names = []
+                    if payment_request.comp_id:
+                        try:
+                            # Get complainants from the complaint
+                            complainants = payment_request.comp_id.complainant.all().select_related('rp_id__per')
+                            
+                            for complainant in complainants:
+                                if complainant.rp_id and complainant.rp_id.per:
+                                    per = complainant.rp_id.per
+                                    name = f"{per.per_fname} {per.per_lname}".strip()
+                                    if name:
+                                        resident_names.append(name)
+                            
+                            # If no resident profiles found, try using complainant name directly
+                            if not resident_names:
+                                for complainant in complainants:
+                                    if complainant.cpnt_name:
+                                        resident_names.append(complainant.cpnt_name)
+                        except Exception as e:
+                            logger.warning(f"Error fetching resident names from complaint: {str(e)}")
+                    
+                    # Build service charge info with resident name(s)
+                    if resident_names:
+                        resident_info = ", ".join(resident_names)
+                        service_charge_info = f"Service Charge for {resident_info}"
+                    else:
+                        # Fallback to payment ID if no resident names found
+                        service_charge_info = f"Service Charge {payment_request.pay_id}"
                     
                     # Get purpose
                     purpose = "N/A"
                     if hasattr(payment_request, 'pr_id') and payment_request.pr_id:
                         purpose = payment_request.pr_id.pr_purpose
+                    
+                    # Get decline reason if declining
+                    decline_reason = ""
+                    if old_pay_req_status != payment_request.pay_req_status and payment_request.pay_req_status == "Declined":
+                        decline_reason = payment_request.pay_reason if hasattr(payment_request, 'pay_reason') and payment_request.pay_reason else 'No reason provided'
                     
                     # Create activity log for status changes
                     changes = []
@@ -1893,9 +2145,14 @@ class UpdateServiceChargePaymentStatusView(APIView):
                         changes.append(f"request status: '{old_pay_req_status}' → '{payment_request.pay_req_status}'")
                     
                     if changes:
+                        # Build description with decline reason if applicable
+                        description = f"Service charge payment {payment_request.pay_id} status updated: {', '.join(changes)} for {service_charge_info} ({purpose})"
+                        if decline_reason:
+                            description += f". Reason: {decline_reason}"
+                        
                         create_activity_log(
                             act_type="Service Charge Payment Status Updated",
-                            act_description=f"Service charge payment {payment_request.pay_id} status updated: {', '.join(changes)} for {service_charge_info} ({purpose})",
+                            act_description=description,
                             staff=staff,
                             record_id=str(payment_request.pay_id)
                         )
