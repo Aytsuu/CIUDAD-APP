@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'rea
 import { UseFormReturn, Controller } from 'react-hook-form';
 import { HealthFamilyProfilingFormData } from '@/form-schema/health-family-profiling-schema';
 import { SignatureCanvasComponent } from '@/components/ui/signature-canvas';
-import { Calendar, Info, UserCheck, Users, ClipboardCheck } from 'lucide-react-native';
+import { Calendar, Info, UserCheck, Users, ClipboardCheck, AlertCircle } from 'lucide-react-native';
 import { useHealthStaffList, useGetFamilyMembers } from '../../queries/healthProfilingQueries';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
 import { ResponsiveFormContainer, useResponsiveForm } from '@/components/healthcomponents/ResponsiveFormContainer';
+import { MobileModal } from '@/components/healthcomponents/mobile-modal';
 
 interface SurveyStepProps {
   form: UseFormReturn<HealthFamilyProfilingFormData>;
@@ -23,6 +24,7 @@ interface SurveyStepProps {
 
 export const SurveyStep: React.FC<SurveyStepProps> = ({ form, onNext, onBack, famId, respondentInfo }) => {
   const responsive = useResponsiveForm();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Set current date on mount
   React.useEffect(() => {
@@ -36,12 +38,12 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({ form, onNext, onBack, fa
   const { data: healthStaffData, isLoading: isLoadingStaff } = useHealthStaffList();
   const { data: familyMembersData, isLoading: isLoadingMembers } = useGetFamilyMembers(famId || '');
 
-  // Format health staff for dropdown
+  // Format health staff for dropdown - only show name, not ID (like web version)
   const healthStaffOptions = useMemo(() => {
     if (!healthStaffData) return [];
     return healthStaffData.map((staff: any) => ({
-      label: `${staff.staff_id} ${staff.fname} ${staff.lname}`,
-      value: `${staff.staff_id} ${staff.fname} ${staff.lname}`,
+      label: `${staff.fname} ${staff.lname}`,
+      value: `${staff.fname} ${staff.lname}`,
     }));
   }, [healthStaffData]);
 
@@ -99,6 +101,19 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({ form, onNext, onBack, fa
       form.setValue('surveyForm.informant', informantValue);
     }
   }, [respondentInfo, form]);
+
+  const handleSubmit = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    onNext?.();
+  };
+
+  const handleCancelSubmit = () => {
+    setShowConfirmModal(false);
+  };
 
   if (isLoadingStaff || isLoadingMembers) {
     return (
@@ -329,18 +344,41 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({ form, onNext, onBack, fa
       {onNext && (
         <View style={{ marginTop: responsive.sectionMargin }}>
           <TouchableOpacity
-            onPress={onNext}
+            onPress={handleSubmit}
             style={[styles.submitButton, { 
               minHeight: responsive.minButtonHeight,
               paddingVertical: responsive.buttonPadding 
             }]}
           >
             <Text style={[styles.submitButtonText, { fontSize: responsive.fontSize }]}>
-              Submit Survey
+              Submit
             </Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Confirmation Modal */}
+      <MobileModal
+        isOpen={showConfirmModal}
+        onClose={handleCancelSubmit}
+        title="Confirm Submission"
+        description="Are you sure you want to submit the health family profiling? Please review all information before submitting."
+        type="confirmation"
+        size="sm"
+        icon={<AlertCircle size={48} color="#F59E0B" />}
+        actions={[
+          {
+            label: 'Cancel',
+            onClick: handleCancelSubmit,
+            variant: 'secondary',
+          },
+          {
+            label: 'Confirm',
+            onClick: handleConfirmSubmit,
+            variant: 'default',
+          },
+        ]}
+      />
     </ResponsiveFormContainer>
   );
 };

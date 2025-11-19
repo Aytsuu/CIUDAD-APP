@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
@@ -23,11 +23,15 @@ import {
   UsersRound, 
   Leaf, 
   Heart, 
-  ClipboardCheck 
+  ClipboardCheck,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import PageLayout from '@/screens/_PageLayout';
 import { MultiStepProgressBar } from '@/components/healthcomponents/multi-step-progress-bar';
+import { MobileModal } from '@/components/healthcomponents/mobile-modal';
 
 const STEPS = [
   { id: 1, title: 'Demographics', label: 'Demographics', icon: Home },
@@ -49,6 +53,10 @@ export default function HealthFamilyProfiling() {
   const [currentStep, setCurrentStep] = useState(0); // 0-based indexing: 0=Demographics, 1=Parents, 2=Dependents, 3=Env&Health, 4=Survey
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Mutation hooks
   const submitEnvironmentalMut = useSubmitEnvironmentalForm();
@@ -212,16 +220,7 @@ export default function HealthFamilyProfiling() {
       console.log('Submitting survey:', payload);
       const result = await submitSurveyMut.mutateAsync(payload);
       
-      Alert.alert(
-        'Success',
-        'Health Family Profiling completed successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      setShowSuccessModal(true);
       
       return result;
     } catch (error) {
@@ -287,14 +286,15 @@ export default function HealthFamilyProfiling() {
             return;
           } catch (error) {
             console.error('Error submitting data:', error);
-            Alert.alert('Error', 'Failed to submit data. Please try again.');
+            setErrorMessage('Failed to submit data. Please try again.');
+            setShowErrorModal(true);
           }
         }
         break;
     }
 
     if (!isValid) {
-      Alert.alert('Validation Error', 'Please fill in all required fields');
+      setShowValidationModal(true);
     }
   };
 
@@ -418,6 +418,66 @@ export default function HealthFamilyProfiling() {
           {renderCurrentForm()}
         </View>
       </View>
+
+      {/* Success Modal */}
+      <MobileModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.back();
+        }}
+        title="Success!"
+        description="Health Family Profiling completed successfully!"
+        type="alert"
+        size="sm"
+        icon={<CheckCircle size={48} color="#10B981" />}
+        actions={[
+          {
+            label: 'Done',
+            onClick: () => {
+              setShowSuccessModal(false);
+              router.back();
+            },
+            variant: 'default',
+          },
+        ]}
+      />
+
+      {/* Error Modal */}
+      <MobileModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="Error"
+        description={errorMessage || 'An error occurred. Please try again.'}
+        type="alert"
+        size="sm"
+        icon={<XCircle size={48} color="#EF4444" />}
+        actions={[
+          {
+            label: 'OK',
+            onClick: () => setShowErrorModal(false),
+            variant: 'destructive',
+          },
+        ]}
+      />
+
+      {/* Validation Error Modal */}
+      <MobileModal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        title="Validation Error"
+        description="Please fill in all required fields before proceeding."
+        type="alert"
+        size="sm"
+        icon={<AlertCircle size={48} color="#F59E0B" />}
+        actions={[
+          {
+            label: 'OK',
+            onClick: () => setShowValidationModal(false),
+            variant: 'secondary',
+          },
+        ]}
+      />
     </PageLayout>
   );
 }

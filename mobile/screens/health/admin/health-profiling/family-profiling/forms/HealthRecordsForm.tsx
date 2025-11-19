@@ -1348,31 +1348,17 @@ export const HealthRecordsStep: React.FC<HealthRecordsStepProps> = ({ form, fami
             </View>
           )}
 
-          {/* Navigation Buttons - Only show if handlers are provided */}
-          {(onNext || onBack) && (
+          {/* Navigation Buttons - Only show Next button */}
+          {onNext && (
             <View style={{ marginTop: sectionMargin, paddingBottom: marginBottom }}>
-              <View className="flex-row gap-3">
-                {onBack && (
-                  <TouchableOpacity
-                    onPress={onBack}
-                    className="flex-1 bg-gray-100 rounded-lg h-12 items-center justify-center border border-gray-300"
-                  >
-                    <Text style={{ fontSize: bodyTextSize }} className="text-gray-700 font-semibold">
-                      Back
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {onNext && (
-                  <TouchableOpacity
-                    onPress={onNext}
-                    className="flex-1 bg-blue-600 rounded-lg h-12 items-center justify-center shadow-sm"
-                  >
-                    <Text style={{ fontSize: bodyTextSize }} className="text-white font-semibold">
-                      Next
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <TouchableOpacity
+                onPress={onNext}
+                className="bg-blue-600 rounded-lg h-12 items-center justify-center shadow-sm"
+              >
+                <Text style={{ fontSize: bodyTextSize }} className="text-white font-semibold">
+                  Next
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>

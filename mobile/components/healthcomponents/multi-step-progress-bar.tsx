@@ -1,5 +1,5 @@
-"use client"
-
+import React from "react"
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { cn } from "@/lib/utils"
 
 interface Step {
@@ -28,28 +28,28 @@ export function MultiStepProgressBar({
   const isCompleted = (index: number) => index < currentStep
   const isCurrent = (index: number) => index === currentStep
 
-  // Size configurations
+  // Size configurations - using numeric values for React Native
   const sizeConfig = {
     sm: {
-      dotSize: "h-6 w-6 text-xs",
-      lineHeight: "h-1",
-      gap: "gap-1",
-      textSize: "text-xs",
-      numberSize: "h-5 w-5 text-xs",
+      dotSize: 24,
+      fontSize: 12,
+      lineHeight: 4,
+      gap: 4,
+      numberSize: 20,
     },
     md: {
-      dotSize: "h-10 w-10 text-sm",
-      lineHeight: "h-2",
-      gap: "gap-2",
-      textSize: "text-sm",
-      numberSize: "h-8 w-8 text-sm",
+      dotSize: 40,
+      fontSize: 14,
+      lineHeight: 8,
+      gap: 8,
+      numberSize: 32,
     },
     lg: {
-      dotSize: "h-14 w-14 text-base",
-      lineHeight: "h-2.5",
-      gap: "gap-3",
-      textSize: "text-base",
-      numberSize: "h-10 w-10 text-base",
+      dotSize: 56,
+      fontSize: 16,
+      lineHeight: 10,
+      gap: 12,
+      numberSize: 40,
     },
   }
 
@@ -57,129 +57,336 @@ export function MultiStepProgressBar({
 
   if (variant === "dots") {
     return (
-      <div className={cn("w-full", className)}>
-        <div className={cn("flex items-center justify-center", config.gap)}>
+      <View style={styles.container}>
+        <View style={[styles.dotsContainer, { gap: config.gap }]}>
           {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center">
-              <button
-                onClick={() => onStepClick?.(index)}
-                className={cn(
-                  "flex items-center justify-center rounded-full transition-all duration-300",
-                  config.dotSize,
-                  isCompleted(index)
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : isCurrent(index)
-                      ? "bg-blue-600 text-white ring-4 ring-blue-200 shadow-lg"
-                      : "bg-gray-200 text-gray-500 hover:bg-gray-300",
-                )}
+            <View key={step.id} style={styles.dotStep}>
+              <TouchableOpacity
+                onPress={() => onStepClick?.(index)}
+                style={[
+                  styles.dot,
+                  {
+                    height: config.dotSize,
+                    width: config.dotSize,
+                    borderRadius: config.dotSize / 2,
+                  },
+                  isCompleted(index) && styles.completedDot,
+                  isCurrent(index) && styles.currentDot,
+                  !isCompleted(index) && !isCurrent(index) && styles.inactiveDot,
+                ]}
               >
-                {isCompleted(index) ? "✓" : index + 1}
-              </button>
+                <Text style={[
+                  styles.dotText,
+                  { fontSize: config.fontSize },
+                  (isCompleted(index) || isCurrent(index)) && styles.activeDotText,
+                ]}>
+                  {isCompleted(index) ? "✓" : index + 1}
+                </Text>
+              </TouchableOpacity>
               {step.label && (
-                <label
-                  className={cn(
-                    "mt-2 text-center font-medium transition-colors",
-                    config.textSize,
-                    isCurrent(index) ? "text-blue-600" : "text-gray-600",
-                  )}
-                >
+                <Text style={[
+                  styles.label,
+                  { fontSize: config.fontSize, marginTop: 8 },
+                  isCurrent(index) && styles.currentLabel,
+                ]}>
                   {step.label}
-                </label>
+                </Text>
               )}
-            </div>
+            </View>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
     )
   }
 
   if (variant === "numbers") {
     return (
-      <div className={cn("w-full px-4", className)}>
-        <div className="flex items-start justify-between">
+      <View style={[styles.container, styles.paddedContainer]}>
+        <View style={styles.numbersContainer}>
           {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center flex-1">
-              <div className="flex items-center w-full justify-center">
-                <button
-                  onClick={() => onStepClick?.(index)}
-                  className={cn(
-                    "flex items-center justify-center rounded-full font-semibold transition-all duration-300 flex-shrink-0",
-                    config.numberSize,
-                    isCompleted(index)
-                      ? "bg-green-600 text-white shadow-md"
-                      : isCurrent(index)
-                        ? "bg-blue-600 text-white ring-4 ring-blue-200 shadow-lg"
-                        : "bg-gray-300 text-gray-600",
-                  )}
+            <View key={step.id} style={styles.numberStep}>
+              <View style={styles.numberStepRow}>
+                <TouchableOpacity
+                  onPress={() => onStepClick?.(index)}
+                  style={[
+                    styles.numberCircle,
+                    {
+                      height: config.numberSize,
+                      width: config.numberSize,
+                      borderRadius: config.numberSize / 2,
+                    },
+                    isCompleted(index) && styles.completedNumber,
+                    isCurrent(index) && styles.currentNumber,
+                    !isCompleted(index) && !isCurrent(index) && styles.inactiveNumber,
+                  ]}
                 >
-                  {isCompleted(index) ? "✓" : index + 1}
-                </button>
+                  <Text style={[
+                    styles.numberText,
+                    { fontSize: config.fontSize },
+                    (isCompleted(index) || isCurrent(index)) && styles.activeNumberText,
+                  ]}>
+                    {isCompleted(index) ? "✓" : index + 1}
+                  </Text>
+                </TouchableOpacity>
                 {index < steps.length - 1 && (
-                  <div
-                    className={cn(
-                      "flex-1 ml-2 transition-colors duration-300",
-                      config.lineHeight,
-                      index < currentStep ? "bg-green-600" : "bg-gray-300",
-                    )}
+                  <View 
+                    style={[
+                      styles.line,
+                      { height: config.lineHeight, marginLeft: 8 },
+                      index < currentStep && styles.completedLine,
+                      index >= currentStep && styles.inactiveLine,
+                    ]}
                   />
                 )}
-              </div>
+              </View>
               {step.label && (
-                <label className={cn("mt-3 font-medium text-center", config.textSize, "text-gray-700")}>
+                <Text style={[styles.numberLabel, { fontSize: config.fontSize, marginTop: 12 }]}>
                   {step.label}
-                </label>
+                </Text>
               )}
               {step.description && (
-                <p className={cn("mt-1 text-center text-gray-500 text-xs max-w-24")}>{step.description}</p>
+                <Text style={[styles.description, { marginTop: 4 }]}>
+                  {step.description}
+                </Text>
               )}
-            </div>
+            </View>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
     )
   }
 
   // Default: Linear variant
   return (
-    <div className={cn("w-full", className)}>
+    <View style={styles.container}>
       {/* Progress bar background */}
-      <div className={cn("w-full bg-gray-200 rounded-full overflow-hidden mb-6", config.lineHeight)}>
-        <div
-          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out rounded-full"
-          style={{
-            width: `${((currentStep + 1) / steps.length) * 100}%`,
-          }}
+      <View style={[styles.progressBarBg, { height: config.lineHeight, marginBottom: 24 }]}>
+        <View
+          style={[
+            styles.progressBarFill,
+            {
+              width: `${((currentStep + 1) / steps.length) * 100}%`,
+              height: config.lineHeight,
+            },
+          ]}
         />
-      </div>
+      </View>
 
       {/* Step labels */}
-      <div className="flex justify-between items-start">
+      <View style={styles.stepsContainer}>
         {steps.map((step, index) => (
-          <div key={step.id} className="flex flex-col items-center flex-1">
-            <div className="flex items-center mb-2">
-              <div
-                className={cn(
-                  "flex items-center justify-center rounded-full font-semibold transition-all duration-300",
-                  config.numberSize,
-                  isCompleted(index)
-                    ? "bg-blue-600 text-white"
-                    : isCurrent(index)
-                      ? "bg-blue-600 text-white ring-4 ring-blue-200"
-                      : "bg-gray-300 text-gray-600",
-                )}
+          <View key={step.id} style={styles.step}>
+            <View style={[styles.stepCircleContainer, { marginBottom: 8 }]}>
+              <View
+                style={[
+                  styles.stepCircle,
+                  {
+                    height: config.numberSize,
+                    width: config.numberSize,
+                    borderRadius: config.numberSize / 2,
+                  },
+                  isCompleted(index) && styles.completedStep,
+                  isCurrent(index) && styles.currentStep,
+                  !isCompleted(index) && !isCurrent(index) && styles.inactiveStep,
+                ]}
               >
-                {isCompleted(index) ? "✓" : index + 1}
-              </div>
-            </div>
+                <Text style={[
+                  styles.stepText,
+                  { fontSize: config.fontSize },
+                  (isCompleted(index) || isCurrent(index)) && styles.activeStepText,
+                ]}>
+                  {isCompleted(index) ? "✓" : index + 1}
+                </Text>
+              </View>
+            </View>
             {step.label && (
-              <label className={cn("font-medium text-center text-gray-700", config.textSize)}>{step.label}</label>
+              <Text style={[styles.stepLabel, { fontSize: config.fontSize }]}>
+                {step.label}
+              </Text>
             )}
             {step.description && (
-              <p className={cn("mt-1 text-gray-500 text-xs text-center max-w-24")}>{step.description}</p>
+              <Text style={[styles.stepDescription, { marginTop: 4 }]}>
+                {step.description}
+              </Text>
             )}
-          </div>
+          </View>
         ))}
-      </div>
-    </div>
+      </View>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
+  paddedContainer: {
+    paddingHorizontal: 16,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotStep: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  dot: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  completedDot: {
+    backgroundColor: '#2563EB',
+  },
+  currentDot: {
+    backgroundColor: '#2563EB',
+    borderWidth: 4,
+    borderColor: '#BFDBFE',
+  },
+  inactiveDot: {
+    backgroundColor: '#E5E7EB',
+  },
+  dotText: {
+    fontWeight: '600',
+  },
+  activeDotText: {
+    color: '#FFFFFF',
+  },
+  label: {
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  currentLabel: {
+    color: '#2563EB',
+  },
+  numbersContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  numberStep: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  numberStepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'center',
+  },
+  numberCircle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  completedNumber: {
+    backgroundColor: '#16A34A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  currentNumber: {
+    backgroundColor: '#2563EB',
+    borderWidth: 4,
+    borderColor: '#BFDBFE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  inactiveNumber: {
+    backgroundColor: '#D1D5DB',
+  },
+  numberText: {
+    fontWeight: '600',
+  },
+  activeNumberText: {
+    color: '#FFFFFF',
+  },
+  numberLabel: {
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#374151',
+  },
+  description: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 12,
+    maxWidth: 96,
+  },
+  line: {
+    flex: 1,
+  },
+  completedLine: {
+    backgroundColor: '#16A34A',
+  },
+  inactiveLine: {
+    backgroundColor: '#D1D5DB',
+  },
+  progressBarBg: {
+    width: '100%',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 9999,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    backgroundColor: '#2563EB',
+    borderRadius: 9999,
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  step: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  stepCircleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepCircle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  completedStep: {
+    backgroundColor: '#2563EB',
+  },
+  currentStep: {
+    backgroundColor: '#2563EB',
+    borderWidth: 4,
+    borderColor: '#BFDBFE',
+  },
+  inactiveStep: {
+    backgroundColor: '#D1D5DB',
+  },
+  stepText: {
+    fontWeight: '600',
+  },
+  activeStepText: {
+    color: '#FFFFFF',
+  },
+  stepLabel: {
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#374151',
+  },
+  stepDescription: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 12,
+    maxWidth: 96,
+  },
+})

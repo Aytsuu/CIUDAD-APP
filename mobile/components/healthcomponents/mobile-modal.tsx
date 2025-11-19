@@ -57,7 +57,7 @@ export function MobileModal({
   const getModalHeight = () => {
     switch (size) {
       case 'sm':
-        return SCREEN_HEIGHT * 0.4;
+        return 'auto'; // Auto height for small modals
       case 'md':
         return SCREEN_HEIGHT * 0.6;
       case 'lg':
@@ -148,6 +148,7 @@ export function MobileModal({
   const isBottomSheet = type === 'bottom-sheet';
   const modalHeight = getModalHeight();
   const modalWidth = getModalWidth();
+  const isSmallModal = size === 'sm';
 
   return (
     <Modal
@@ -166,9 +167,9 @@ export function MobileModal({
             styles.modalContainer,
             isBottomSheet ? styles.bottomSheet : styles.centered,
             {
-              height: isBottomSheet ? 'auto' : modalHeight,
+              height: isBottomSheet || isSmallModal ? 'auto' : modalHeight,
               width: isBottomSheet ? SCREEN_WIDTH : modalWidth,
-              maxHeight: isBottomSheet ? SCREEN_HEIGHT * 0.9 : modalHeight,
+              maxHeight: isBottomSheet ? SCREEN_HEIGHT * 0.9 : undefined,
             },
           ]}
           onPress={(e) => e.stopPropagation()}
@@ -319,7 +320,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
     backgroundColor: '#F9FAFB',
   },
   actionsWrapper: {

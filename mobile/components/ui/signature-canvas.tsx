@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, PanResponder } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Trash2 } from 'lucide-react-native';
-import ViewShot from 'react-native-view-shot';
 
 interface Point {
   x: number;
@@ -21,7 +20,6 @@ export const SignatureCanvasComponent: React.FC<SignatureCanvasComponentProps> =
   const [paths, setPaths] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [hasSigned, setHasSigned] = useState(false);
-  const viewShotRef = useRef<ViewShot>(null);
   
   // Use refs to avoid stale closure in PanResponder
   const currentPathRef = useRef<Point[]>([]);
@@ -31,6 +29,17 @@ export const SignatureCanvasComponent: React.FC<SignatureCanvasComponentProps> =
   React.useEffect(() => {
     if (value && value !== '') {
       setHasSigned(true);
+      // If value contains SVG paths, restore them
+      if (value.startsWith('data:image/svg+xml')) {
+        try {
+          // Extract paths from SVG data URL
+          const svgData = decodeURIComponent(value.split(',')[1]);
+          // Parse and restore paths (simplified - just mark as signed)
+          setHasSigned(true);
+        } catch (e) {
+          console.log('Could not parse SVG value');
+        }
+      }
     }
   }, [value]);
 
@@ -43,21 +52,22 @@ export const SignatureCanvasComponent: React.FC<SignatureCanvasComponentProps> =
     pathsRef.current = paths;
   }, [paths]);
 
-  // Capture signature as base64 PNG (like web version)
-  const captureSignature = async () => {
-    try {
-      if (viewShotRef.current) {
-        const uri = await viewShotRef.current.capture();
-        console.log('SignatureCanvas - Captured signature URI:', uri?.substring(0, 50) + '...');
-        
-        // Convert to base64 data URL format like web (data:image/png;base64,...)
-        if (uri) {
-          onSignatureChange(uri);
-        }
-      }
-    } catch (error) {
-      console.error('SignatureCanvas - Error capturing signature:', error);
+  // Generate SVG data URL from paths
+  const generateSignatureData = () => {
+    if (pathsRef.current.length === 0) {
+      return '';
     }
+
+    // Create SVG string
+    const svgPaths = pathsRef.current.map(path => 
+      `<path d="${path}" stroke="black" stroke-width="2" fill="none"/>`
+    ).join('');
+    
+    const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">${svgPaths}</svg>`;
+    const dataUrl = `data:image/svg+xml,${encodeURIComponent(svgString)}`;
+    
+    console.log('SignatureCanvas - Generated SVG data URL');
+    return dataUrl;
   };
 
   const panResponder = useRef(
@@ -93,9 +103,12 @@ export const SignatureCanvasComponent: React.FC<SignatureCanvasComponentProps> =
           currentPathRef.current = [];
           setHasSigned(true);
           
-          // Capture the signature as base64 PNG after a small delay to ensure rendering
+          // Generate signature data after a small delay to ensure state is updated
           setTimeout(() => {
-            captureSignature();
+            const signatureData = generateSignatureData();
+            if (signatureData) {
+              onSignatureChange(signatureData);
+            }
           }, 100);
         } else {
           console.log('SignatureCanvas - No path drawn, currentPathRef length:', currentPathRef.current.length);
@@ -126,29 +139,27 @@ export const SignatureCanvasComponent: React.FC<SignatureCanvasComponentProps> =
     <View style={styles.container}>
       <Text style={styles.label}>Signature (Draw your signature below)</Text>
       
-      <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0, result: 'data-uri' }}>
-        <View style={styles.canvasContainer} {...panResponder.panHandlers}>
-          <Svg width="100%" height={200}>
-            {paths.map((path, index) => (
-              <Path
-                key={index}
-                d={path}
-                stroke="black"
-                strokeWidth={2}
-                fill="none"
-              />
-            ))}
-            {currentPath.length > 0 && (
-              <Path
-                d={pointsToSvgPath(currentPath)}
-                stroke="black"
-                strokeWidth={2}
-                fill="none"
-              />
-            )}
-          </Svg>
-        </View>
-      </ViewShot>
+      <View style={styles.canvasContainer} {...panResponder.panHandlers}>
+        <Svg width="100%" height={200}>
+          {paths.map((path, index) => (
+            <Path
+              key={index}
+              d={path}
+              stroke="black"
+              strokeWidth={2}
+              fill="none"
+            />
+          ))}
+          {currentPath.length > 0 && (
+            <Path
+              d={pointsToSvgPath(currentPath)}
+              stroke="black"
+              strokeWidth={2}
+              fill="none"
+            />
+          )}
+        </Svg>
+      </View>
 
       <View style={styles.instructionContainer}>
         <Text style={styles.instructionText}>

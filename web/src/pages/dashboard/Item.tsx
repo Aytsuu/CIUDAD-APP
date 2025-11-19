@@ -13,6 +13,9 @@ import { FirstAidDistributionSidebar } from "@/components/analytics/health/first
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
+import { PopulationAgePyramidChart } from "@/components/analytics/health/health-profiling/population-age-pyramid-chart";
+import { HouseholdInfrastructureChart } from "@/components/analytics/health/health-profiling/household-infrastructure-chart";
+import { NutritionalStatusSummaryChart } from "@/components/analytics/health/health-profiling/nutritional-status-summary-chart";
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
@@ -137,6 +140,18 @@ export const getItemsConfig = (
         {
           title: "Maternal",
           element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
+        },
+        {
+          title: "Population Structure",
+          element: <PopulationAgePyramidChart />
+        },
+        {
+          title: "Health Profiling Summary",
+          element: <NutritionalStatusSummaryChart />
+        },
+        {
+          title: "Household Infrastructure",
+          element: <HouseholdInfrastructureChart />
         },
         ],
       },

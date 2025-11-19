@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { ResponsiveFormContainer, useResponsiveForm } from '@/components/healthcomponents/ResponsiveFormContainer';
+import { MobileModal } from '@/components/healthcomponents/mobile-modal';
 import { 
   useGetResidents, 
   useCreateFamily, 
@@ -15,7 +16,7 @@ import {
   useCreateDependentUnderFive 
 } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData, DependentData } from '@/form-schema/health-family-profiling-schema';
-import { Plus, Trash2, UserPlus, ChevronDown, ChevronUp, User } from 'lucide-react-native';
+import { Plus, Trash2, UserPlus, ChevronDown, ChevronUp, User, AlertCircle, CheckCircle } from 'lucide-react-native';
 
 interface DependentsStepProps {
   form: UseFormReturn<HealthFamilyProfilingFormData>;
@@ -66,6 +67,9 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
   const [showDOBPicker, setShowDOBPicker] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [expandedDependents, setExpandedDependents] = useState<number[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdFamilyId, setCreatedFamilyId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -254,8 +258,29 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
+  // Handler functions for modals
+  const handleSubmit = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    handleCreateFamilyInternal();
+  };
+
+  const handleCancelSubmit = () => {
+    setShowConfirmModal(false);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    if (createdFamilyId) {
+      onFamilyCreated(createdFamilyId);
+    }
+  };
+
   // Handle family creation - matches web DependentsInfoLayout exactly
-  const handleCreateFamily = async () => {
+  const handleCreateFamilyInternal = async () => {
     try {
       const formData = form.getValues();
       const householdId = formData.demographicInfo.householdNo;
@@ -430,8 +455,8 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
 
       console.log('Family profiling Step 3 completed successfully, family ID:', famId);
       queryClient.invalidateQueries({ queryKey: ['healthFamilyList'] });
-      Alert.alert('Success', 'Family and members registered successfully!');
-      onFamilyCreated(famId);
+      setCreatedFamilyId(famId);
+      setShowSuccessModal(true);
       return famId;
     } catch (error: any) {
       console.error('Family creation error:', error);
@@ -838,7 +863,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       {/* Create Family Button */}
       {!showAddForm && (
         <TouchableOpacity
-          onPress={handleCreateFamily}
+          onPress={handleSubmit}
           disabled={isCreatingFamily}
           className={`rounded-lg h-12 flex-row items-center justify-center shadow-sm ${
             isCreatingFamily ? 'bg-green-400' : 'bg-green-600'
@@ -850,6 +875,47 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* Confirmation Modal */}
+      <MobileModal
+        isOpen={showConfirmModal}
+        onClose={handleCancelSubmit}
+        title="Confirm Family Registration"
+        description="Are you sure you want to register this family? Please review all information before submitting."
+        type="confirmation"
+        size="sm"
+        icon={<AlertCircle size={48} color="#F59E0B" />}
+        actions={[
+          {
+            label: 'Cancel',
+            onClick: handleCancelSubmit,
+            variant: 'secondary',
+          },
+          {
+            label: 'Confirm',
+            onClick: handleConfirmSubmit,
+            variant: 'default',
+          },
+        ]}
+      />
+
+      {/* Success Modal */}
+      <MobileModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title="Success!"
+        description="Family and members registered successfully! You can now proceed to the next step."
+        type="alert"
+        size="sm"
+        icon={<CheckCircle size={48} color="#10B981" />}
+        actions={[
+          {
+            label: 'Continue',
+            onClick: handleSuccessClose,
+            variant: 'default',
+          },
+        ]}
+      />
     </ResponsiveFormContainer>
   );
 };
