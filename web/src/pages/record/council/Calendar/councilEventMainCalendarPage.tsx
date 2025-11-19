@@ -586,7 +586,7 @@ import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/council
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { councilEventColumns, summonColumns } from "./event-cols.tsx";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
 import { CouncilEvent } from "./councilEventTypes";
@@ -600,6 +600,7 @@ import WasteEventView from "../../waste-scheduling/waste-event/waste-event-view"
 import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans, useDeleteAnnualDevPlans } from "../../gad/annual_development_plan/queries/annualDevPlanFetchQueries";
 import { useGetMediationSchedules, useGetConciliationSchedules } from "./queries/summonFetchQueries.tsx";
 import { transformToEvents } from "./event-transform.tsx";
+import Legend from "@/components/ui/calendar/Legend.tsx";
 
 function CalendarPage() {
   const { user } = useAuth();
@@ -608,18 +609,19 @@ function CalendarPage() {
   const [viewEvent, setViewEvent] = useState<CouncilEvent | null>(null);
   const [viewWasteEvent, setViewWasteEvent] = useState<WasteEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary";
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "admin";
   const isWaste = user?.staff?.pos?.toLowerCase() === "waste";
   const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase() === "lupon tagapamayapa";
   const isClerk = user?.staff?.pos?.toLowerCase() === "clerk";
   const showMediation = isSecretary || isClerk;
+  const isGADRole = user?.staff?.pos?.toLowerCase() === "gad";
   
-  // Fetch mediation schedules (only if Secretary or Clerk)
+  // Fetch mediation schedules (ONLY if Secretary or Clerk)
   const { data: mediationSchedules = [], isLoading: isMediationLoading, isRefetching: isMediationRefetching } = useGetMediationSchedules();
-  const mediationEvents = transformToEvents(mediationSchedules || []);
+  const mediationEvents = showMediation ? transformToEvents(mediationSchedules || []) : [];
 
   const { data: conciliationSchedules = [], isLoading: isConciliationLoading, isRefetching: isConciliationRefetching } = useGetConciliationSchedules();
-  const conciliationEvents = transformToEvents(conciliationSchedules || []);
+  const conciliationEvents = isLuponTagapamayapa ? transformToEvents(conciliationSchedules || []) : [];
 
   // Fetch NON-archived events for calendar tab
   const { data: activeEventsData, isLoading: isActiveEventsLoading } = useGetCouncilEvents( 1,  1000,  undefined,  "all",  false  );
@@ -688,30 +690,58 @@ function CalendarPage() {
       });
     }
     
-    if (gadCalendarSource) {
-      sources.unshift(gadCalendarSource);
-    }
-    
-    if (wasteCalendarSource) {
-      sources.push(wasteCalendarSource);
-    }
+  // Only show GAD calendar source for GAD role users
+  if (isGADRole && gadCalendarSource) {
+    sources.unshift(gadCalendarSource);
+  }
+  
+  // Only show Waste calendar source for Waste role users
+  if (isWaste && wasteCalendarSource) {
+    sources.push(wasteCalendarSource);
+  }
     
     return sources;
-  }, [calendarEvents, mediationEvents, conciliationEvents, gadCalendarSource, wasteCalendarSource, showMediation, isLuponTagapamayapa]);
+  }, [calendarEvents, mediationEvents, conciliationEvents, gadCalendarSource, wasteCalendarSource, showMediation, isLuponTagapamayapa, isGADRole, isWaste]);
   
   const legendItems = useMemo(() => {
-    const items: any[] = [];
-      items.push(gadLegendItem);
-      items.push({ label: "Council Events", color: "#191970" });
-      if (showMediation) {
-        items.push({ label: "Mediation", color: "#f97316" });
-      }
-      if (isLuponTagapamayapa) {
-        items.push({ label: "Conciliation Proceedings", color: "#ef4444" });
-      }
-      items.push(wasteLegendItem);
-    return items;
-  }, [showMediation, isLuponTagapamayapa]);
+  const items: any[] = [];
+  
+  // Count how many event types this user can see
+  let eventTypeCount = 1; // Council Events is always 1
+  
+  if (isGADRole) {
+    items.push(gadLegendItem);
+    eventTypeCount++;
+  }
+  
+  items.push({ label: "Council Events", color: "#191970" });
+  
+  if (showMediation) {
+    items.push({ label: "Mediation", color: "#f97316" });
+    eventTypeCount++;
+  }
+  
+  if (isLuponTagapamayapa) {
+    items.push({ label: "Conciliation Proceedings", color: "#ef4444" });
+    eventTypeCount++;
+  }
+  
+  if (isWaste) {
+    items.push(wasteLegendItem);
+    eventTypeCount++;
+  }
+  
+  // Only return items if user sees more than one event type
+  return eventTypeCount > 1 ? items : [];
+}, [showMediation, isLuponTagapamayapa, isGADRole, isWaste]);
+
+// Simple rendering - no need for extra condition
+{legendItems.length > 0 && (
+  <>
+    <Legend legendItems={legendItems} onColorChange={() => {}} />
+    <br />
+  </>
+)}
 
   const filteredEvents = councilEvents.filter((event: CouncilEvent) => {
     if (activeTab === "archive") {
@@ -781,32 +811,55 @@ function CalendarPage() {
   };
 
   const isLoading = activeTab === "calendar" 
-    ? (isActiveEventsLoading || (showMediation && isMediationLoading) || isMediationRefetching || isConciliationLoading || isConciliationRefetching)
-    : (isArchivedEventsLoading || isArchivedWasteEventsLoading || isArchivedGADLoading);
+  ? (isActiveEventsLoading || 
+     (showMediation && isMediationLoading) || // Only include if showMediation
+     (showMediation && isMediationRefetching) || // Only include if showMediation
+     (isLuponTagapamayapa && isConciliationLoading) || // Only include if Lupon
+     (isLuponTagapamayapa && isConciliationRefetching)) // Only include if Lupon
+  : (
+    (isSecretary && isArchivedEventsLoading) || 
+    (isWaste && isArchivedWasteEventsLoading) || 
+    (isGADRole && isArchivedGADLoading)
+  );
   
   useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
+  if (isLoading) {
+    showLoading();
+  } else {
+    const timer = setTimeout(() => {
       hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+    }, 300);
+    return () => clearTimeout(timer);
+  }
+}, [isLoading, showLoading, hideLoading]);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
+    <div className="w-full min-h-screen p-4">
       {/* Header controls for creating events */}
       {(isSecretary || isWaste) && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 flex items-center justify-between">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="calendar">Calendar</TabsTrigger>
-              <TabsTrigger value="archive">
-                <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
-                </div>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 flex items-center justify-between"> 
+        <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "calendar" 
+                ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm" 
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Calendar
+          </button>
+          <button
+            onClick={() => setActiveTab("archive")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+              activeTab === "archive" 
+                ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm" 
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            <Archive size={16} /> Archive
+          </button>
+        </div>
           {activeTab === "calendar" && (
             <div className="flex items-center gap-2">
               {isSecretary && (
@@ -859,7 +912,7 @@ function CalendarPage() {
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">
                 {/* Council Events */}
-                {filteredEvents.length > 0 && (
+                {(isSecretary && filteredEvents.length > 0) && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Council Events</h3>
                     {filteredEvents.map((event: CouncilEvent) => (
@@ -955,7 +1008,7 @@ function CalendarPage() {
                 )}
                 
                 {/* Waste Events */}
-                {archivedWasteEvents.length > 0 && (
+                {isWaste && archivedWasteEvents.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Waste Events</h3>
                     {archivedWasteEvents.map((event: WasteEvent) => (
@@ -1059,7 +1112,7 @@ function CalendarPage() {
                 )}
                 
                 {/* GAD Activities */}
-                {archivedGADActivities.length > 0 && (
+                {(isGADRole && archivedGADActivities.length > 0) && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">GAD Activities</h3>
                     {archivedGADActivities.map((activity: any) => (
@@ -1154,11 +1207,14 @@ function CalendarPage() {
                   </div>
                 )}
                 
-                {filteredEvents.length === 0 && archivedWasteEvents.length === 0 && archivedGADActivities.length === 0 && (
-                  <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    No archived events found.
-                  </div>
-                )}
+                {/* Empty state that considers user roles */}
+                  {(isSecretary && filteredEvents.length === 0) && 
+                  (isWaste && archivedWasteEvents.length === 0) && 
+                  (isGADRole && archivedGADActivities.length === 0) && (
+                    <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                      No archived events found.
+                    </div>
+                  )}
               </div>
             )}
           </TabsContent>
