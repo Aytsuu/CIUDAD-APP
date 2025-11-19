@@ -73,11 +73,6 @@ export default function Dashboard() {
       }))
     );
     
-    // Debug logging
-    console.log('Dashboard - instance:', instance);
-    console.log('Dashboard - chartsWithAccess:', charts);
-    console.log('Dashboard - itemsWithCharts:', itemsWithCharts);
-    
     return charts;
   }, [instance, user]);
 
@@ -143,14 +138,14 @@ export default function Dashboard() {
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
             {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+              <div className="w-2/3 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
               </div>
             )}
             {cardsWithAccess.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-2/3">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-full">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Analytics Overview
@@ -276,9 +271,6 @@ export default function Dashboard() {
                           Latest updates and activity
                         </p>
                       </div>
-                      {/* <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Clock className="w-5 h-5 text-orange-600" />
-                      </div> */}
                     </div>
                   </div>
 
