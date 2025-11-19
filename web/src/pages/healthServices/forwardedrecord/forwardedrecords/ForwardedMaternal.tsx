@@ -3,7 +3,7 @@ import { Search } from "lucide-react"
 
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { DataTable } from "@/components/ui/table/data-table"
-import TableLoading from "@/pages/healthServices/table-loading"
+import TableLoading from "@/components/ui/table-loading"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Input } from "@/components/ui/input"
 

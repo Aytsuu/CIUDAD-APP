@@ -18,7 +18,7 @@ import PregnancyVisitTracker from "../maternal-components/8anc-visit-chart";
 import { formatDate } from "./appointments/columns";
 
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TableLoading from "../../table-loading";
+import TableLoading from "@/components/ui/table-loading";
 
 import { usePregnancyDetails } from "../queries/maternalFetchQueries";
 import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries";
