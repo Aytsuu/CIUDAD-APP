@@ -15,7 +15,7 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
   );
 
   return (
-    <div className="relative w-full h-full bg-[#17294A] overflow-hidden">
+    <div className="relative w-full h-screen bg-[#17294A] overflow-hidden">
       {/* Background Carousel */}
       <div className="absolute inset-0 w-full h-full">
         <Carousel
