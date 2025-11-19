@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -7,7 +7,18 @@ from django.db.models import Q
 from django.db import transaction
 from pagination import StandardResultsPagination
 from apps.profiling.serializers.all_record_serializers import *
-from apps.profiling.models import ResidentProfile, BusinessRespondent
+from apps.profiling.models import (
+    ResidentProfile, 
+    BusinessRespondent, 
+    Address, 
+    Sitio, 
+    Personal, 
+    PersonalAddress, 
+    PersonalAddressHistory,
+    Household, 
+    Family,
+    BusinessFile
+)
 from apps.profiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
 from apps.account.models import Account

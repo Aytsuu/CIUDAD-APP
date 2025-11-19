@@ -1,12 +1,13 @@
 import "@/global.css";
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from "react-native";
 import { UseFormReturn } from "react-hook-form";
 import { UsersRound, ArrowDownUp, Search } from "lucide-react-native";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/api/api";
+import { api2 } from "@/api/api";
+import { ResponsiveFormContainer, useResponsiveForm, FormContentWrapper } from "../../../../../../components/healthcomponents/ResponsiveFormContainer";
 
 interface FamilyFormProps {
   form: UseFormReturn<any>;
@@ -22,6 +23,17 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
   const [showHouseholdDropdown, setShowHouseholdDropdown] = React.useState<boolean>(false);
   const [showFamilyDropdown, setShowFamilyDropdown] = React.useState<boolean>(false);
 
+  const {
+    headingSize,
+    bodyTextSize,
+    smallTextSize,
+    sectionMargin,
+    cardPadding,
+    iconSize,
+    minButtonHeight,
+    buttonPadding
+  } = useResponsiveForm();
+
   const { control, setValue, watch, trigger, getValues } = form;
 
   const livingSoloValues = watch("livingSoloSchema");
@@ -33,8 +45,12 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
     queryKey: ["householdsList", householdSearch],
     queryFn: async () => {
       try {
-        const params = householdSearch ? `?search=${householdSearch}` : "";
-        const res = await api.get(`profiling/household/list/${params}`);
+        const res = await api2.get("health-profiling/household/list/", {
+          params: {
+            is_search: 'true',
+            search: householdSearch || ""
+          }
+        });
         return res.data;
       } catch (err) {
         console.error("Error fetching households:", err);
@@ -50,9 +66,15 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
     queryKey: ["familiesList", familySearch],
     queryFn: async () => {
       try {
-        const params = familySearch ? `?search=${familySearch}` : "";
-        const res = await api.get(`profiling/family/list/${params}`);
-        return res.data;
+        const res = await api2.get("health-profiling/family/list/table/", {
+          params: {
+            search: familySearch || "",
+            page: 1,
+            page_size: 50
+          }
+        });
+        // The table endpoint returns { results: [...], count: number }
+        return res.data.results || res.data;
       } catch (err) {
         console.error("Error fetching families:", err);
         return [];
@@ -120,19 +142,8 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
     onNext(4, isComplete);
   };
 
-  const validateSkip = () => {
-    setValue("livingSoloSchema", {
-      id: "",
-      building: "",
-      householdNo: "",
-      indigenous: ""
-    });
-    setValue("familySchema", {
-      familyId: "",
-      role: ""
-    });
-    
-    onNext(4, false);
+  const handleBack = () => {
+    onNext(2, true); // Go back to HouseholdForm (step 3, index 2)
   };
 
   const handleTypeChange = (type: "solo" | "family") => {
@@ -165,63 +176,72 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
   };
 
   return (
-    <ScrollView 
-      className="flex-1" 
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 24 }}
-    >
-      <View className="px-5">
-        {/* Header Section */}
-        <View className="mb-6">
-          <View className="flex-row items-center mb-3">
-            <View className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-              <UsersRound size={28} color="#2563EB" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xl font-PoppinsSemiBold text-gray-900">Family Information</Text>
-              <Text className="text-sm text-gray-600 font-PoppinsRegular">Family composition</Text>
-            </View>
-          </View>
-        </View>
+    <ResponsiveFormContainer>
+      <FormContentWrapper>
+        
 
         {/* Info Card */}
-        <View className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-          <Text className="text-blue-900 font-PoppinsSemiBold mb-1">Independent Living Registration</Text>
-          <Text className="text-sm text-blue-700 font-PoppinsRegular leading-5">
+        <View 
+          className="bg-blue-50 border border-blue-200 rounded-xl mb-6" 
+          style={{ padding: cardPadding }}
+        >
+          <Text 
+            className="text-blue-900 font-PoppinsSemiBold mb-1" 
+            style={{ fontSize: headingSize }}
+          >
+            Independent Living Registration
+          </Text>
+          <Text 
+            className="text-blue-700 font-PoppinsRegular leading-5" 
+            style={{ fontSize: bodyTextSize }}
+          >
             Register individuals who live independently within a household. This creates a family record for residents who maintain their own living arrangements.
           </Text>
         </View>
 
         {/* Registration Type Selection */}
-        <View className="mb-6">
-          <Text className="text-base font-PoppinsSemiBold text-gray-800 mb-3">Registration Type</Text>
+        <View style={{ marginBottom: sectionMargin }}>
+          <Text 
+            className="text-gray-800 font-PoppinsSemiBold mb-3" 
+            style={{ fontSize: headingSize }}
+          >
+            Registration Type
+          </Text>
           <View className="flex-row gap-3">
             <TouchableOpacity
               onPress={() => handleTypeChange("solo")}
-              className={`flex-1 p-4 rounded-xl border-2 ${
+              className={`flex-1 rounded-xl border-2 ${
                 registrationType === "solo" 
                   ? "border-blue-600 bg-blue-50" 
                   : "border-gray-300 bg-white"
               }`}
+              style={{ padding: cardPadding }}
             >
-              <Text className={`text-center font-PoppinsSemiBold ${
-                registrationType === "solo" ? "text-blue-600" : "text-gray-700"
-              }`}>
+              <Text 
+                className={`text-center font-PoppinsSemiBold ${
+                  registrationType === "solo" ? "text-blue-600" : "text-gray-700"
+                }`}
+                style={{ fontSize: headingSize }}
+              >
                 Living Solo
               </Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               onPress={() => handleTypeChange("family")}
-              className={`flex-1 p-4 rounded-xl border-2 ${
+              className={`flex-1 rounded-xl border-2 ${
                 registrationType === "family" 
                   ? "border-blue-600 bg-blue-50" 
                   : "border-gray-300 bg-white"
               }`}
+              style={{ padding: cardPadding }}
             >
-              <Text className={`text-center font-PoppinsSemibold ${
-                registrationType === "family" ? "text-blue-600" : "text-gray-700"
-              }`}>
+              <Text 
+                className={`text-center font-PoppinsSemibold ${
+                  registrationType === "family" ? "text-blue-600" : "text-gray-700"
+                }`}
+                style={{ fontSize: headingSize }}
+              >
                 Existing Family
               </Text>
             </TouchableOpacity>
@@ -230,19 +250,38 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
 
         {/* Living Solo Form */}
         {registrationType === "solo" && (
-          <View className="border border-gray-200 rounded-xl p-5 mb-6 bg-white">
+          <View 
+            className="border border-gray-200 rounded-xl mb-6 bg-white" 
+            style={{ padding: cardPadding + 4 }}
+          >
             <View className="mb-5 pb-3 border-b border-gray-100">
-              <Text className="text-base font-PoppinsSemiBold text-gray-800">Independent Living Details</Text>
-              <Text className="text-sm text-gray-600 font-PoppinsRegular">Fill all required fields</Text>
+              <Text 
+                className="text-gray-800 font-PoppinsSemiBold" 
+                style={{ fontSize: headingSize }}
+              >
+                Independent Living Details
+              </Text>
+              <Text 
+                className="text-gray-600 font-PoppinsRegular" 
+                style={{ fontSize: bodyTextSize }}
+              >
+                Fill all required fields
+              </Text>
             </View>
 
             <View className="space-y-4">
               {/* Household Selection Toggle */}
               <View>
                 <View className="flex-row justify-between items-center mb-2">
-                  <Text className="text-sm font-PoppinsMedium text-gray-700">
+                  <Text 
+                    className="font-PoppinsMedium text-gray-700" 
+                    style={{ fontSize: bodyTextSize }}
+                  >
                     Household{" "}
-                    <Text className="text-gray-500 font-PoppinsRegular">
+                    <Text 
+                      className="text-gray-500 font-PoppinsRegular" 
+                      style={{ fontSize: smallTextSize }}
+                    >
                       ({selectOwnedHouses ? "Owned" : "Existing"})
                     </Text>
                   </Text>
@@ -250,9 +289,13 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                     <TouchableOpacity
                       onPress={handleToggleHouseSelection}
                       className="flex-row items-center"
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <ArrowDownUp size={16} color="#6B7280" />
-                      <Text className="text-xs text-gray-600 font-PoppinsRegular ml-1">
+                      <ArrowDownUp size={iconSize - 2} color="#6B7280" />
+                      <Text 
+                        className="text-gray-600 font-PoppinsRegular ml-1" 
+                        style={{ fontSize: smallTextSize }}
+                      >
                         {!selectOwnedHouses ? "Use owned house" : "Use existing"}
                       </Text>
                     </TouchableOpacity>
@@ -268,7 +311,10 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                       placeholder="Select a household"
                       options={formattedOwnedHouses}
                     />
-                    <Text className="text-xs text-gray-500 font-PoppinsRegular mt-1 ml-1">
+                    <Text 
+                      className="text-gray-500 font-PoppinsRegular mt-1 ml-1" 
+                      style={{ fontSize: smallTextSize }}
+                    >
                       Select from houses registered in step 3
                     </Text>
                   </View>
@@ -277,9 +323,13 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                     {/* Household Search Input */}
                     <TouchableOpacity
                       onPress={() => setShowHouseholdDropdown(true)}
-                      className="border border-gray-300 rounded-xl px-4 py-3 bg-white"
+                      className="border border-gray-300 rounded-xl bg-white"
+                      style={{ paddingHorizontal: cardPadding, paddingVertical: cardPadding - 4 }}
                     >
-                      <Text className={livingSoloValues?.householdNo ? "text-gray-900 font-PoppinsRegular" : "text-gray-400 font-PoppinsRegular"}>
+                      <Text 
+                        className={livingSoloValues?.householdNo ? "font-PoppinsRegular text-gray-900" : "font-PoppinsRegular text-gray-400"} 
+                        style={{ fontSize: bodyTextSize }}
+                      >
                         {livingSoloValues?.householdNo || "Select a household"}
                       </Text>
                     </TouchableOpacity>
@@ -300,7 +350,11 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                         </View>
 
                         {/* Household List */}
-                        <ScrollView className="max-h-64">
+                        <ScrollView 
+                          className="max-h-64"
+                          nestedScrollEnabled={true}
+                          showsVerticalScrollIndicator={true}
+                        >
                           {isLoadingHouseholds ? (
                             <View className="py-8 items-center">
                               <ActivityIndicator size="small" color="#3B82F6" />
@@ -321,7 +375,10 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                                   </View>
                                   <View className="flex-1">
                                     <Text className="text-gray-900 font-PoppinsMedium">
-                                      Owner: {household.head?.split("-")[1] || "N/A"}
+                                      {household.head?.split("-")[1] || "N/A"}
+                                    </Text>
+                                    <Text className="text-gray-500 font-PoppinsRegular text-xs mt-0.5">
+                                      {household.sitio}, {household.street}
                                     </Text>
                                   </View>
                                 </View>
@@ -329,7 +386,9 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                             ))
                           ) : (
                             <View className="py-8 items-center">
-                              <Text className="text-gray-400 text-sm font-PoppinsRegular">No households found</Text>
+                              <Text className="text-gray-400 text-sm font-PoppinsRegular">
+                                {householdSearch ? "No households found matching your search" : "No households found"}
+                              </Text>
                             </View>
                           )}
                         </ScrollView>
@@ -424,36 +483,53 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                     </View>
 
                     {/* Family List */}
-                    <ScrollView className="max-h-64">
+                    <ScrollView 
+                      className="max-h-64"
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={true}
+                    >
                       {isLoadingFamilies ? (
                         <View className="py-8 items-center">
                           <ActivityIndicator size="small" color="#3B82F6" />
                           <Text className="text-gray-500 text-sm font-PoppinsRegular mt-2">Loading families...</Text>
                         </View>
                       ) : familiesData && familiesData.length > 0 ? (
-                        familiesData.map((family: any) => (
-                          <TouchableOpacity
-                            key={family.fam_id}
-                            onPress={() => handleSelectFamily(family)}
-                            className="px-4 py-3 border-b border-gray-100"
-                          >
-                            <View className="flex-row items-center">
-                              <View className="bg-blue-100 px-3 py-1 rounded-full mr-3">
-                                <Text className="text-blue-700 font-PoppinsSemiBold text-xs">
-                                  {family.fam_id}
-                                </Text>
+                        familiesData.map((family: any) => {
+                          // Determine family head (priority: father > mother > guardian > independent)
+                          const headName = family.father || family.mother || family.guardian || family.independent || "N/A";
+                          const headRole = family.father ? "Father" : family.mother ? "Mother" : family.guardian ? "Guardian" : family.independent ? "Independent" : "";
+                          
+                          return (
+                            <TouchableOpacity
+                              key={family.fam_id}
+                              onPress={() => handleSelectFamily(family)}
+                              className="px-4 py-3 border-b border-gray-100"
+                            >
+                              <View className="flex-row items-center">
+                                <View className="bg-blue-100 px-3 py-1 rounded-full mr-3">
+                                  <Text className="text-blue-700 font-PoppinsSemiBold text-xs">
+                                    {family.fam_id}
+                                  </Text>
+                                </View>
+                                <View className="flex-1">
+                                  <Text className="text-gray-900 font-PoppinsMedium">
+                                    {headName}
+                                  </Text>
+                                  {headRole && (
+                                    <Text className="text-gray-500 font-PoppinsRegular text-xs mt-0.5">
+                                      {headRole} • {family.sitio}
+                                    </Text>
+                                  )}
+                                </View>
                               </View>
-                              <View className="flex-1">
-                                <Text className="text-gray-900 font-PoppinsMedium">
-                                  Head: {family.head_name || "N/A"}
-                                </Text>
-                              </View>
-                            </View>
-                          </TouchableOpacity>
-                        ))
+                            </TouchableOpacity>
+                          );
+                        })
                       ) : (
                         <View className="py-8 items-center">
-                          <Text className="text-gray-400 text-sm font-PoppinsRegular">No families found</Text>
+                          <Text className="text-gray-400 text-sm font-PoppinsRegular">
+                            {familySearch ? "No families found matching your search" : "No families found"}
+                          </Text>
                         </View>
                       )}
                     </ScrollView>
@@ -503,27 +579,44 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
         )}
 
         {/* Action Buttons */}
-        <View className="space-y-3 mb-6">
-          <SubmitButton
-            handleSubmit={validateAndNext}
-            buttonLabel="Continue"
-          />
-          
+        <View className="flex-row gap-3 mb-6">
           <TouchableOpacity
-            onPress={validateSkip}
-            className="py-3.5 items-center bg-gray-100 rounded-xl"
+            onPress={handleBack}
+            className="flex-1 items-center justify-center bg-gray-100 rounded-xl"
+            style={{ paddingVertical: buttonPadding, minHeight: minButtonHeight }}
           >
-            <Text className="text-gray-700 font-PoppinsSemiBold">Skip for Now</Text>
+            <Text 
+              className="text-gray-700 font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              Back
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={validateAndNext}
+            className="flex-1 items-center justify-center bg-blue-600 rounded-xl"
+            style={{ paddingVertical: buttonPadding, minHeight: minButtonHeight }}
+          >
+            <Text 
+              className="text-white font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              Continue
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Help Text */}
         <View className="pt-4 border-t border-gray-200">
-          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular leading-5">
+          <Text 
+            className="text-center text-gray-500 font-PoppinsRegular leading-5" 
+            style={{ fontSize: smallTextSize }}
+          >
             Need assistance with this form? Contact your administrator for help.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </FormContentWrapper>
+    </ResponsiveFormContainer>
   );
 }

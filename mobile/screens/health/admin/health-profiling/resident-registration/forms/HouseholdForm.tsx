@@ -1,12 +1,13 @@
 import "@/global.css";
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { UseFormReturn } from "react-hook-form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 import { Plus } from "@/lib/icons/Plus";
 import { X } from "@/lib/icons/X";
 import { HousePlus } from "lucide-react-native";
+import { ResponsiveFormContainer, useResponsiveForm, FormContentWrapper } from "../../../../../../components/healthcomponents/ResponsiveFormContainer";
 
 interface HouseholdFormProps {
   form: UseFormReturn<any>;
@@ -16,6 +17,17 @@ interface HouseholdFormProps {
 export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
   const { control, trigger, watch, getValues, setValue, resetField } = form;
   const [houseList, setHouseList] = React.useState<any[]>([]);
+
+  const {
+    headingSize,
+    bodyTextSize,
+    smallTextSize,
+    sectionMargin,
+    cardPadding,
+    iconSize,
+    minButtonHeight,
+    buttonPadding
+  } = useResponsiveForm();
 
   const houseInfo = watch("houseSchema.info");
   const personalAddresses = watch("personalSchema.per_addresses.list") || [];
@@ -85,38 +97,47 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
   };
 
   return (
-    <ScrollView 
-      className="flex-1" 
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 24 }}
-    >
-      <View className="px-5">
-        {/* Header Section */}
-        <View className="mb-6">
-          <View className="flex-row items-center mb-3">
-            <View className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-              <HousePlus size={28} color="#2563EB" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xl font-PoppinsSemiBold text-gray-900">Household Details</Text>
-              <Text className="text-sm text-gray-600 font-PoppinsRegular">Housing information</Text>
-            </View>
-          </View>
-        </View>
+    <ResponsiveFormContainer>
+      <FormContentWrapper>
+        
 
         {/* Info Card */}
-        <View className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-          <Text className="text-blue-900 font-PoppinsSemiBold mb-1">House Registration</Text>
-          <Text className="text-sm text-blue-700 font-PoppinsRegular leading-5">
+        <View 
+          className="bg-blue-50 border border-blue-200 rounded-xl mb-6" 
+          style={{ padding: cardPadding }}
+        >
+          <Text 
+            className="text-blue-900 font-PoppinsSemiBold mb-1" 
+            style={{ fontSize: headingSize }}
+          >
+            House Registration
+          </Text>
+          <Text 
+            className="text-blue-700 font-PoppinsRegular leading-5" 
+            style={{ fontSize: bodyTextSize }}
+          >
             Is this resident a house owner? If yes, please add the house information below to proceed.
           </Text>
         </View>
 
         {/* House Form Section */}
-        <View className="border border-gray-200 rounded-xl p-5 mb-6 bg-white">
+        <View 
+          className="border border-gray-200 rounded-xl mb-6 bg-white" 
+          style={{ padding: cardPadding + 4 }}
+        >
           <View className="mb-5 pb-3 border-b border-gray-100">
-            <Text className="text-base font-PoppinsSemiBold text-gray-800">House Information</Text>
-            <Text className="text-sm text-gray-600 font-PoppinsRegular">Fill all required fields</Text>
+            <Text 
+              className="text-gray-800 font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              House Information
+            </Text>
+            <Text 
+              className="text-gray-600 font-PoppinsRegular" 
+              style={{ fontSize: bodyTextSize }}
+            >
+              Fill all required fields
+            </Text>
           </View>
 
           <View className="space-y-4">
@@ -131,7 +152,10 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
                   { label: "YES", value: "yes" },
                 ]}
               />
-              <Text className="text-xs text-gray-500 font-PoppinsRegular mt-1 ml-1">
+              <Text 
+                className="text-gray-500 font-PoppinsRegular mt-1 ml-1" 
+                style={{ fontSize: smallTextSize }}
+              >
                 NHTS (National Household Targeting System)
               </Text>
             </View>
@@ -144,7 +168,10 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
                 label="Select household address"
                 options={formattedAddresses}
               />
-              <Text className="text-xs text-gray-500 font-PoppinsRegular mt-1 ml-1">
+              <Text 
+                className="text-gray-500 font-PoppinsRegular mt-1 ml-1" 
+                style={{ fontSize: smallTextSize }}
+              >
                 This reflects the addresses entered in the resident personal information.
               </Text>
             </View>
@@ -154,19 +181,36 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
           <View className="mt-6">
             <TouchableOpacity
               onPress={handleAddHouse}
-              className="bg-blue-600 rounded-xl py-3.5 flex-row items-center justify-center"
+              className="bg-blue-600 rounded-xl flex-row items-center justify-center"
+              style={{ paddingVertical: buttonPadding, minHeight: minButtonHeight }}
             >
-              <Plus size={20} className="text-white mr-2" />
-              <Text className="text-white font-PoppinsSemiBold text-base">Add Household</Text>
+              <Plus size={iconSize} className="text-white mr-2" />
+              <Text 
+                className="text-white font-PoppinsSemiBold" 
+                style={{ fontSize: headingSize }}
+              >
+                Add Household
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* House List Section */}
-        <View className="border border-gray-200 rounded-xl p-5 mb-6 bg-white">
+        <View 
+          className="border border-gray-200 rounded-xl mb-6 bg-white" 
+          style={{ padding: cardPadding + 4 }}
+        >
           <View className="mb-4 pb-3 border-b border-gray-100">
-            <Text className="text-base font-PoppinsSemiBold text-gray-800">Owned Houses</Text>
-            <Text className="text-sm text-gray-600 font-PoppinsRegular">
+            <Text 
+              className="text-gray-800 font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              Owned Houses
+            </Text>
+            <Text 
+              className="text-gray-600 font-PoppinsRegular" 
+              style={{ fontSize: bodyTextSize }}
+            >
               {houseList.length === 0 ? "No houses added yet" : `${houseList.length} house(s) registered`}
             </Text>
           </View>
@@ -177,8 +221,18 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
                 <View className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <HousePlus size={32} color="#9CA3AF" />
                 </View>
-                <Text className="text-gray-400 text-sm font-PoppinsRegular">No houses added yet</Text>
-                <Text className="text-gray-400 text-xs font-PoppinsRegular mt-1">Add a house using the form above</Text>
+                <Text 
+                  className="text-gray-400 font-PoppinsRegular" 
+                  style={{ fontSize: bodyTextSize }}
+                >
+                  No houses added yet
+                </Text>
+                <Text 
+                  className="text-gray-400 font-PoppinsRegular mt-1" 
+                  style={{ fontSize: smallTextSize }}
+                >
+                  Add a house using the form above
+                </Text>
               </View>
             ) : (
               houseList.map((house: any, index: number) => {
@@ -188,30 +242,44 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
                 return (
                   <View
                     key={index}
-                    className="bg-gray-50 border border-gray-200 rounded-xl p-4"
+                    className="bg-gray-50 border border-gray-200 rounded-xl"
+                    style={{ padding: cardPadding }}
                   >
                     <View className="flex-row justify-between items-start mb-2">
                       <View className="flex-1">
-                        <Text className="font-PoppinsSemiBold text-base text-gray-900 mb-1">
+                        <Text 
+                          className="font-PoppinsSemiBold text-gray-900 mb-1" 
+                          style={{ fontSize: headingSize }}
+                        >
                           HOUSE {index + 1}
                         </Text>
-                        <Text className="text-gray-700 font-PoppinsRegular text-sm leading-5">
+                        <Text 
+                          className="text-gray-700 font-PoppinsRegular leading-5" 
+                          style={{ fontSize: bodyTextSize }}
+                        >
                           SITIO {sitio}
                         </Text>
-                        <Text className="text-gray-600 font-PoppinsRegular text-sm">
+                        <Text 
+                          className="text-gray-600 font-PoppinsRegular" 
+                          style={{ fontSize: bodyTextSize }}
+                        >
                           {street}
                         </Text>
                       </View>
                       <TouchableOpacity 
                         onPress={() => handleRemoveHouse(index)} 
                         className="bg-red-50 p-2 rounded-lg ml-3"
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <X size={18} className="text-red-500" />
+                        <X size={iconSize - 2} className="text-red-500" />
                       </TouchableOpacity>
                     </View>
                     <View className="mt-2">
                       <View className={`self-start px-3 py-1.5 rounded-full ${house.nhts === "yes" ? "bg-green-100" : "bg-gray-200"}`}>
-                        <Text className={`text-xs font-PoppinsSemiBold ${house.nhts === "yes" ? "text-green-700" : "text-gray-600"}`}>
+                        <Text 
+                          className={`font-PoppinsSemiBold ${house.nhts === "yes" ? "text-green-700" : "text-gray-600"}`}
+                          style={{ fontSize: smallTextSize }}
+                        >
                           {house.nhts === "yes" ? "NHTS Household" : "Not an NHTS Household"}
                         </Text>
                       </View>
@@ -224,27 +292,58 @@ export default function HouseholdForm({ form, onNext }: HouseholdFormProps) {
         </View>
 
         {/* Action Buttons */}
-        <View className="space-y-3 mb-6">
-          <SubmitButton
-            handleSubmit={handleContinue}
-            buttonLabel="Next"
-          />
-          
+        <View 
+          style={{ 
+            flexDirection: 'row',
+            gap: 12,
+            marginBottom: 24,
+          }}
+        >
           <TouchableOpacity
             onPress={handleSkip}
-            className="py-3.5 items-center bg-gray-100 rounded-xl"
+            className="items-center bg-gray-100 rounded-xl"
+            style={{ 
+              flex: 1,
+              paddingVertical: buttonPadding, 
+              minHeight: minButtonHeight 
+            }}
           >
-            <Text className="text-gray-700 font-PoppinsSemiBold">Skip for Now</Text>
+            <Text 
+              className="text-gray-700 font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              Skip for Now
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleContinue}
+            className="items-center bg-blue-600 rounded-xl"
+            style={{ 
+              flex: 1,
+              paddingVertical: buttonPadding, 
+              minHeight: minButtonHeight 
+            }}
+          >
+            <Text 
+              className="text-white font-PoppinsSemiBold" 
+              style={{ fontSize: headingSize }}
+            >
+              Next
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Help Text */}
         <View className="pt-4 border-t border-gray-200">
-          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular leading-5">
+          <Text 
+            className="text-center text-gray-500 font-PoppinsRegular leading-5" 
+            style={{ fontSize: smallTextSize }}
+          >
             Need help? Contact your administrator or skip this step and register the household later.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </FormContentWrapper>
+    </ResponsiveFormContainer>
   );
 }

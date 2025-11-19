@@ -188,7 +188,7 @@ export default function HouseholdDetails() {
           </Text>
         </View>
         <InfoRow
-          label="Household Head"
+          label="Household Owner"
           value={household.head || "Not specified"}
         />
         <View className="h-px bg-gray-100 my-1" />
@@ -196,7 +196,23 @@ export default function HouseholdDetails() {
         {registeredBy !== "N/A" && (
           <>
             <View className="h-px bg-gray-100 my-1" />
-            <InfoRow label="Registered By" value={registeredBy} />
+            <View className="flex-row items-center justify-between py-3.5">
+              <Text className="text-gray-600 text-xs font-medium uppercase tracking-wide flex-1">
+                Registered By
+              </Text>
+              <View className="flex-[2] items-end">
+                <Text className="text-gray-900 text-sm font-semibold text-right mb-1">
+                  {registeredBy.split("-")[1] || registeredBy}
+                </Text>
+                {registeredBy.split("-")[2] && (
+                  <View className="bg-green-100 border border-green-200 rounded-full px-3 py-1">
+                    <Text className="text-green-700 text-xs font-medium">
+                      {registeredBy.split("-")[2]}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
           </>
         )}
       </View>

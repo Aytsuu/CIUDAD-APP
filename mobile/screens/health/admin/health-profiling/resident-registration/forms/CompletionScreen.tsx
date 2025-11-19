@@ -26,10 +26,10 @@ interface CompletionScreenProps {
 }
 
 const stepDetails = [
-  { id: 1, label: "Account Setup", icon: CircleUserRound, required: true },
+  { id: 1, label: "Account Setup", icon: CircleUserRound, required: false },
   { id: 2, label: "Personal Information", icon: UserRoundPlus, required: true },
   { id: 3, label: "Household Details", icon: HousePlus, required: false },
-  { id: 4, label: "Family Information", icon: UsersRound, required: false },
+  { id: 4, label: "Family Information", icon: UsersRound, required: true },
 ];
 
 export default function CompletionScreen({ 
@@ -118,9 +118,9 @@ export default function CompletionScreen({
             canSubmit ? "bg-green-100" : "bg-blue-100"
           }`}>
             {canSubmit ? (
-              <CheckCircle size={48} color="#10B981" />
+              <CheckCircle size={24} color="#10B981" />
             ) : (
-              <AlertCircle size={48} color="#3B82F6" />
+              <AlertCircle size={24} color="#3B82F6" />
             )}
           </View>
           
@@ -163,8 +163,7 @@ export default function CompletionScreen({
                   Missing Required Information
                 </Text>
                 <Text className="text-amber-700 text-sm">
-                  Please complete at least the Account and Personal Information sections. 
-                  You must also provide either Household or Family information.
+                  Please complete both the Personal Information and Family Information sections to proceed with registration.
                 </Text>
               </View>
             </View>

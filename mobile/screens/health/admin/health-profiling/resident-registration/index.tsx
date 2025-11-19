@@ -84,6 +84,8 @@ export default function ResidentRegistration() {
   });
 
   const handleNext = React.useCallback((stepId: number, isComplete: boolean) => {
+    console.log('handleNext called with:', { stepId, isComplete });
+    
     if (isComplete) {
       setCompletedSteps((prev) => new Set([...prev, stepId]));
     } else {
@@ -110,12 +112,18 @@ export default function ResidentRegistration() {
   }, [currentStep]);
 
   const canSubmit = React.useMemo(() => {
-    // At minimum: Account, Resident, and either House or Family must be completed
-    const hasAccount = completedSteps.has(1);
-    const hasResident = completedSteps.has(2);
-    const hasHouseOrFamily = completedSteps.has(3) || completedSteps.has(4);
+    // Only Personal Information (step 2) and Family Information (step 4) are required
+    const hasPersonalInfo = completedSteps.has(2);
+    const hasFamilyInfo = completedSteps.has(4);
     
-    return hasAccount && hasResident && hasHouseOrFamily;
+    console.log('Checking canSubmit:', {
+      completedStepsArray: Array.from(completedSteps),
+      hasPersonalInfo,
+      hasFamilyInfo,
+      result: hasPersonalInfo && hasFamilyInfo
+    });
+    
+    return hasPersonalInfo && hasFamilyInfo;
   }, [completedSteps]);
 
   const handleSubmit = async () => {
@@ -197,6 +205,7 @@ export default function ResidentRegistration() {
             canSubmit={canSubmit}
             isSubmitting={isSubmitting}
             onSubmit={handleSubmit}
+            onNavigateToStep={handleStepPress}
           />
         );
       default:

@@ -18,11 +18,12 @@ class FamilyTableSerializer(serializers.ModelSerializer):
   father = serializers.SerializerMethodField()
   mother = serializers.SerializerMethodField()
   guardian = serializers.SerializerMethodField()
+  independent = serializers.SerializerMethodField()
   registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
     fields = ['fam_id', 'household_no', 'sitio', 'street', 'fam_building', 'fam_indigenous', 'mother', 
-              'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
+              'father', 'guardian', 'independent', 'fam_date_registered', 'members', 'registered_by']
     
   def get_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
@@ -31,7 +32,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
     if father: 
       info = father.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
   
@@ -39,7 +40,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
     if mother: 
       info = mother.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
   
@@ -47,7 +48,15 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
     if guardian: 
       info = guardian.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
+    
+    return ""
+  
+  def get_independent(self, obj):
+    independent = FamilyComposition.objects.filter(fam=obj, fc_role='INDEPENDENT').first()
+    if independent: 
+      info = independent.rp.per
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
 

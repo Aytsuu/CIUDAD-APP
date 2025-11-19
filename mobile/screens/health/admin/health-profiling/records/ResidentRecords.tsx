@@ -5,6 +5,7 @@ import {
   Text, 
   RefreshControl,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
@@ -14,27 +15,32 @@ import { useResidentsTable } from "../../../../profiling/queries/profilingGetQue
 import { Card } from "@/components/ui/card";
 import { UserRound } from "@/lib/icons/UserRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
-import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "../../../../_PageLayout";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function ResidentRecords() {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [pageSize, setPageSize] = React.useState<number>(20);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
-  const [showSearch, setShowSearch] = React.useState<boolean>(false);
+
+  const debouncedSearchQuery = useDebounce(searchInputVal, 500);
 
   const { data: residentsTableData, isLoading, refetch } = useResidentsTable(
     currentPage,
     pageSize,
-    searchQuery
+    debouncedSearchQuery
   );
 
   const residents = residentsTableData?.results || [];
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -42,10 +48,15 @@ export default function ResidentRecords() {
     setIsRefreshing(false);
   };
 
-  const handleSearch = React.useCallback(() => {
-    setSearchQuery(searchInputVal);
-    setCurrentPage(1);
-  }, [searchInputVal]);
+  const handleSearchChange = React.useCallback((text: string) => {
+    setSearchInputVal(text);
+  }, []);
+
+  const handlePageChange = React.useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }, [totalPages]);
 
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
     const fullName = `${item.fname} ${item.mname ? item.mname + ' ' : ''}${item.lname}`;
@@ -54,40 +65,47 @@ export default function ResidentRecords() {
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: '/(health)/admin/health-profiling/resident/details', // or '/resident-details' depending on your structure
+            pathname: '/(health)/admin/health-profiling/resident/details',
             params: {
               resident: JSON.stringify(item)
             }
           });
         }}
-        className="mb-3 mx-5"
+        className="mb-3"
         activeOpacity={0.7}
       >
         <Card className="p-4 bg-white shadow-sm border border-gray-100">
           <View className="flex-row items-center justify-between">
+            {/* Avatar */}
+            <View className="w-12 h-12 rounded-full bg-blue-500 items-center justify-center mr-3">
+              <UserRound size={24} className="text-white" />
+            </View>
+            
             <View className="flex-1">
-              <View className="flex-row items-center mb-2">
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                    {fullName}
-                  </Text>
-                  <Text className="text-gray-500 text-sm">
-                    ID: {item.rp_id}
+              <Text className="text-gray-900 font-semibold text-base mb-1" numberOfLines={1}>
+                {fullName}
+              </Text>
+              <Text className="text-gray-500 text-sm mb-2">
+                ID: {item.rp_id}
+              </Text>
+
+              {/* Badges */}
+              <View className="flex-row items-center flex-wrap gap-2">
+                <View className="bg-green-100 px-3 py-1 rounded-full">
+                  <Text className="text-green-700 text-xs font-medium">
+                    Resident
                   </Text>
                 </View>
-              </View>
-
-              <View className="flex-row items-center mt-2">
-                  <View className="bg-gray-100 px-2 py-1 rounded-full mr-2">
-                    <Text className="text-gray-700 text-xs">
-                      Age: {item.age}
-                    </Text>
-                  </View>
-                  <View className="bg-gray-100 px-2 py-1 rounded-full">
-                    <Text className="text-gray-700 text-xs">
-                      {item.sex}
-                    </Text>
-                  </View>
+                <View className="bg-gray-100 px-2 py-1 rounded-full">
+                  <Text className="text-gray-700 text-xs">
+                    Age: {item.age}
+                  </Text>
+                </View>
+                <View className="bg-gray-100 px-2 py-1 rounded-full">
+                  <Text className="text-gray-700 text-xs">
+                    {item.sex}
+                  </Text>
+                </View>
               </View>
             </View>
             
@@ -104,10 +122,10 @@ export default function ResidentRecords() {
         <UserRound size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No residents found' : 'No residents yet'}
+        {debouncedSearchQuery ? 'No residents found' : 'No residents yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
-        {searchQuery 
+        {debouncedSearchQuery 
           ? 'Try adjusting your search terms' 
           : 'Resident records will appear here once added'
         }
@@ -173,81 +191,76 @@ export default function ResidentRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">
+        <Text className="text-gray-900 text-lg font-semibold">
           Resident Records
         </Text>
       }
-      rightAction={
-        <TouchableOpacity
-          onPress={() => setShowSearch(!showSearch)}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <Search size={22} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+      rightAction={<View className="w-10 h-10" />}
       wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
-        {showSearch && (
-          <SearchInput 
-            value={searchInputVal}
-            onChange={setSearchInputVal}
-            onSubmit={handleSearch} 
-          />
-        )}
-
-        <View className="flex-1 py-4">
-          {/* Stats Card */}
-          <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
-            <View className="p-3 bg-white/20 rounded-full mr-4">
-              <UserRound size={24} className="text-white" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-white/80 text-sm font-medium">
-                Total Residents
-              </Text>
-              <Text className="text-white text-2xl font-bold">
-                {totalCount}
-              </Text>
-              {searchQuery && (
-                <Text className="text-white/80 text-xs">
-                  Showing {totalCount} results
-                </Text>
-              )}
-            </View>
-          </Card>
-
-          {/* Residents List */}
-          <View className="flex-1">
-            {isLoading && !isRefreshing ? (
-              renderLoadingState()
-            ) : totalCount === 0 ? (
-              renderEmptyState()
-            ) : (
-              <>
-                <FlatList
-                  maxToRenderPerBatch={1}
-                  overScrollMode="never"
-                  data={residents}
-                  renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                  keyExtractor={(item) => item.rp_id}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                  windowSize={5}
-                  removeClippedSubviews={true} 
-                />
-                {renderPagination()}
-              </>
-            )}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center border border-gray-200 bg-gray-50 rounded-xl">
+            <Search size={16} className="text-gray-500" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search..."
+              placeholderTextColor="#9CA3AF"
+              value={searchInputVal}
+              onChangeText={handleSearchChange}
+            />
           </View>
+        </View>
+
+        {/* Stats and Pagination Info */}
+        <View className="px-4 flex-row items-center justify-between mt-4">
+          <View className="flex-row items-center">
+            <Text className="text-sm text-gray-600">
+              Showing {residents.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+            </Text>
+          </View>
+          {totalPages > 1 && (
+            <View className="flex-row items-center">
+              <Text className="text-sm font-medium text-gray-800">
+                Page {currentPage} of {totalPages}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View className="flex-1">
+          {/* Residents List */}
+          {isLoading && !isRefreshing ? (
+            renderLoadingState()
+          ) : totalCount === 0 ? (
+            renderEmptyState()
+          ) : (
+            <>
+              <FlatList
+                maxToRenderPerBatch={10}
+                overScrollMode="never"
+                data={residents}
+                renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
+                keyExtractor={(item) => item.rp_id}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#3B82F6']}
+                  />
+                }
+                contentContainerStyle={{ 
+                  padding: 16,
+                  paddingBottom: totalPages > 1 ? 80 : 20
+                }}
+                windowSize={5}
+                removeClippedSubviews={true} 
+              />
+              {renderPagination()}
+            </>
+          )}
         </View>
       </View>
     </PageLayout>

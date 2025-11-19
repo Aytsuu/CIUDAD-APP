@@ -1,27 +1,27 @@
-import { Text, View, TouchableOpacity, ScrollView } from "react-native"
+import { Text, View, TouchableOpacity } from "react-native"
 import PageLayout from "@/screens/_PageLayout"
 import { useRouter } from "expo-router"
 import { 
   UserRoundPlus, 
   UsersRound, 
   Building, 
-  Plus, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  Plus
 } from "lucide-react-native"
 import React from "react"
+import { ResponsiveFormContainer } from "../../../../components/healthcomponents/ResponsiveFormContainer"
 
 function HealthProfilingHome() {
   const router = useRouter();
 
-  const menuItems = [
+  const quickActions = [
     {
       id: 'register',
       title: 'Register New Resident',
       description: 'Complete resident profiling',
       icon: UserRoundPlus,
       route: '/(health)/admin/health-profiling/resident-registration',
-      color: '#3B82F6'
     },
     {
       id: 'household-register',
@@ -29,39 +29,30 @@ function HealthProfilingHome() {
       description: 'Register household information',
       icon: Building,
       route: '/(health)/admin/health-profiling/household-registration',
-      color: '#10B981'
     },
     {
       id: 'family-profiling',
-      title: 'Health Family Profiling',
+      title: 'Register New Family',
       description: 'Complete family health profiling',
       icon: UsersRound,
       route: '/(health)/admin/health-profiling/family-profiling',
-      color: '#8B5CF6'
     },
-    // {
-    //   id: 'family-records',
-    //   title: 'Family Health Records',
-    //   description: 'View family health profiles',
-    //   icon: UsersRound,
-    //   route: '/(health)/admin/health-profiling/family-records',
-    //   color: '#8B5CF6'
-    // },
+  ]
+
+  const browseRecords = [
     {
       id: 'resident',
       title: 'Residents',
       description: 'View individual records',
       icon: UserRoundPlus,
       route: '/(health)/admin/health-profiling/resident/records',
-      color: '#10B981'
     },
     {
       id: 'family',
       title: 'Families',
       description: 'View family compositions',
       icon: UsersRound,
-      route: '/(profiling)/family/records',
-      color: '#8B5CF6'
+      route: '/(health)/admin/health-profiling/family-records',
     },
     {
       id: 'household',
@@ -69,108 +60,147 @@ function HealthProfilingHome() {
       description: 'View housing information',
       icon: Building,
       route: '/(health)/admin/health-profiling/household/records',
-      color: '#F59E0B'
     },
-   
   ]
 
-  const MenuCard = ({ item }: { item: any }) => {
+  const ActionCard = ({ item }: { item: any }) => {
     const IconComponent = item.icon
-    const isRegister = item.id === 'register'
-    const isHouseholdRegister = item.id === 'household-register'
-    const isFamilyProfiling = item.id === 'family-profiling'
 
     return (
       <TouchableOpacity
         onPress={() => router.push(item.route as any)}
-        className={`rounded-2xl p-5 mb-4 shadow-sm ${
-          isRegister ? 'bg-blue-600' : isHouseholdRegister ? 'bg-green-600' : isFamilyProfiling ? 'bg-purple-600' : 'bg-white border border-gray-200'
-        }`}
+        className="bg-white rounded-xl p-4 mb-3 border border-slate-200 active:opacity-75"
         activeOpacity={0.7}
       >
         <View className="flex-row items-center">
           {/* Icon Container */}
-          <View className={`w-16 h-16 rounded-2xl items-center justify-center ${
-            isRegister || isHouseholdRegister || isFamilyProfiling ? 'bg-white/20' : 'bg-gray-100'
-          }`} style={!isRegister && !isHouseholdRegister && !isFamilyProfiling ? { backgroundColor: `${item.color}15` } : {}}>
+          <View className="w-12 h-12 rounded-lg bg-slate-50 items-center justify-center">
             <IconComponent 
-              size={28} 
-              className={isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white' : ''} 
-              color={isRegister || isHouseholdRegister || isFamilyProfiling ? 'white' : item.color}
+              size={24} 
+              color="#0F172A"
             />
           </View>
 
           {/* Content */}
-          <View className="flex-1 ml-4">
-            <Text className={`text-lg font-semibold ${
-              isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white' : 'text-gray-900'
-            }`}>
+          <View className="flex-1 ml-3">
+            <Text className="text-base font-semibold text-slate-900">
               {item.title}
             </Text>
-            <Text className={`text-sm mt-1 ${
-              isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white/90' : 'text-gray-500'
-            }`}>
+            <Text className="text-xs mt-1 text-slate-500">
               {item.description}
             </Text>
           </View>
 
-          {/* Arrow or Plus Icon */}
+          {/* Arrow Icon */}
           <View className="ml-2">
-            {isRegister || isHouseholdRegister || isFamilyProfiling ? (
-              <Plus size={24} className="text-white" color="white" />
-            ) : (
-              <ChevronRight size={24} className="text-gray-400" color="#9CA3AF" />
-            )}
+            <Plus size={20} color="#64748B" />
           </View>
         </View>
       </TouchableOpacity>
     )
   }
 
+  const NavigationCard = ({ item }: { item: any }) => {
+    const IconComponent = item.icon
+
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(item.route as any)}
+        className="bg-white rounded-xl p-4 mb-3 border border-slate-200 active:opacity-75"
+        activeOpacity={0.7}
+      >
+        <View className="flex-row items-center">
+          {/* Icon Container */}
+          <View className="w-12 h-12 rounded-lg bg-slate-50 items-center justify-center">
+            <IconComponent 
+              size={24} 
+              color="#0F172A"
+            />
+          </View>
+
+          {/* Content */}
+          <View className="flex-1 ml-3">
+            <Text className="text-base font-semibold text-slate-900">
+              {item.title}
+            </Text>
+            <Text className="text-xs mt-1 text-slate-500">
+              {item.description}
+            </Text>
+          </View>
+
+          {/* Chevron Icon */}
+          <View className="ml-2">
+            <ChevronRight size={20} color="#94A3B8" />
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  const SectionHeader = ({ title }: { title: string }) => (
+    <View className="mt-6 mb-3">
+      <Text className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+        {title}
+      </Text>
+      <View className="h-px bg-slate-200 mt-2" />
+    </View>
+  )
+
   return (
     <PageLayout
       leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center active:bg-slate-200"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={24} className="text-slate-700" />
         </TouchableOpacity>
       }
       headerTitle={
         <View className="items-center">
-          <Text className="text-gray-900 text-base font-semibold">
+          <Text className="text-slate-900 text-base font-semibold">
             Health Profiling
           </Text>
         </View>
       }
       rightAction={<View className="w-10 h-10"/>}
     >
-      <ScrollView 
-        className="flex-1 px-5" 
+      <ResponsiveFormContainer
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         {/* Header Section */}
-        <View className="mt-2 mb-4">
-          <Text className="text-2xl font-bold text-gray-900 mb-2">
+        <View className="mb-2">
+          <Text className="text-2xl font-bold text-slate-900 mb-2">
             Health Profiling Management
           </Text>
-          <Text className="text-sm text-gray-600 leading-5">
+          <Text className="text-sm text-slate-600 leading-5">
             Register households, residents, and families. Manage health profiling records and view comprehensive health information.
           </Text> 
         </View>
 
-        {/* Menu Items */}
+        {/* Quick Actions Section */}
+        <SectionHeader title="Quick Actions" />
         <View>
-          {menuItems.map((item) => (
-            <MenuCard 
+          {quickActions.map((item) => (
+            <ActionCard 
               key={item.id}
               item={item}
             />
           ))}
         </View>
-      </ScrollView>
+
+        {/* Browse Records Section */}
+        <SectionHeader title="Browse Records" />
+        <View>
+          {browseRecords.map((item) => (
+            <NavigationCard 
+              key={item.id}
+              item={item}
+            />
+          ))}
+        </View>
+      </ResponsiveFormContainer>
     </PageLayout>
   )
 }

@@ -1,8 +1,8 @@
-import { 
-  FlatList, 
-  TouchableOpacity, 
-  View, 
-  Text, 
+import {
+  FlatList,
+  TouchableOpacity,
+  View,
+  Text,
   RefreshControl,
   ActivityIndicator,
   TextInput,
@@ -11,31 +11,34 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useHouseholdTable } from "../../../../profiling/queries/profilingGetQueries";
+import { useGetFamilyList } from "../queries/healthProfilingQueries";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import PageLayout from "@/screens/_PageLayout";
-import { Home } from "@/lib/icons/Home";
+import { LoadingState } from "@/components/ui/loading-state";
+import { capitalize } from "@/helpers/capitalize";
+import { UsersRound } from "@/lib/icons/UsersRound";
+import { UserRound } from "@/lib/icons/UserRound";
 import { useDebounce } from "@/hooks/use-debounce";
 
-export default function HouseholdRecords() {
+export default function FamilyRecords() {
+  // ============ STATE INITIALIZATION ============
   const router = useRouter();
-  const [searchInputVal, setSearchInputVal] = React.useState<string>('');
+  const [searchInputVal, setSearchInputVal] = React.useState<string>("");
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [pageSize, setPageSize] = React.useState<number>(20);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
 
   const debouncedSearchQuery = useDebounce(searchInputVal, 500);
 
-  const { data: householdTableData, isLoading, refetch } = useHouseholdTable(
-    currentPage,
-    pageSize,
-    debouncedSearchQuery
-  );
+  const {
+    data: familiesTableData,
+    isLoading,
+    refetch,
+  } = useGetFamilyList(currentPage, pageSize, debouncedSearchQuery);
 
-  const households = householdTableData?.results || [];
-  const totalCount = householdTableData?.count || 0;
+  const families = familiesTableData?.results || [];
+  const totalCount = familiesTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // Reset to page 1 when search changes
@@ -43,6 +46,7 @@ export default function HouseholdRecords() {
     setCurrentPage(1);
   }, [debouncedSearchQuery]);
 
+  // ============ HANDLERS ============
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -59,29 +63,23 @@ export default function HouseholdRecords() {
     }
   }, [totalPages]);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  // ============ RENDER HELPERS ============
+  const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => {
+    const membersCount = item.members || 0;
+    const sitio = item.sitio || "N/A";
+    const street = item.street || "N/A";
+    const building = item.fam_building || "N/A";
 
-  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const fullAddress = [item.street, item.sitio].filter(Boolean).join(', ') || 'Address not specified';
-    const isNHTS = item.nhts && (item.nhts.toUpperCase() === 'YES' || item.nhts.toUpperCase() === 'Y');
-    const ownerName = item.head || 'Not specified';
-    
+    const location = building !== "N/A" ? `${sitio}, ${street}` : sitio;
+
     return (
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: '/(health)/admin/health-profiling/household/details',
+            pathname: "/(health)/admin/health-profiling/family/details",
             params: {
-              household: JSON.stringify(item)
-            }
+              family: JSON.stringify(item),
+            },
           });
         }}
         className="mb-3"
@@ -91,42 +89,38 @@ export default function HouseholdRecords() {
           <View className="flex-row items-center justify-between">
             {/* Avatar */}
             <View className="w-12 h-12 rounded-full bg-blue-500 items-center justify-center mr-3">
-              <Home size={24} className="text-white" />
+              {membersCount > 1 ? (
+                <UsersRound size={24} className="text-white" />
+              ) : (
+                <UserRound size={24} className="text-white" />
+              )}
             </View>
             
             <View className="flex-1">
               <Text className="text-gray-900 font-semibold text-base mb-1" numberOfLines={1}>
-                Household {item.hh_id}
+                {item.fam_id}
               </Text>
-              <Text className="text-gray-500 text-sm mb-1" numberOfLines={1}>
-                Owned by {ownerName}
-              </Text>
-              <Text className="text-gray-400 text-xs mb-2" numberOfLines={1}>
-                {fullAddress}
+              <Text className="text-gray-500 text-sm mb-2" numberOfLines={1}>
+                {capitalize(location)}
               </Text>
 
               {/* Badges */}
               <View className="flex-row items-center flex-wrap gap-2">
-                <View className="bg-indigo-100 px-3 py-1 rounded-full">
-                  <Text className="text-indigo-700 text-xs font-medium">
-                    Household
+                <View className="bg-purple-100 px-3 py-1 rounded-full">
+                  <Text className="text-purple-700 text-xs font-medium">
+                    Family
                   </Text>
                 </View>
                 <View className="bg-gray-100 px-2 py-1 rounded-full flex-row items-center gap-1">
-                  <UsersRound size={12} className="text-gray-700" />
+                  {membersCount > 1 ? (
+                    <UsersRound size={12} className="text-gray-700" />
+                  ) : (
+                    <UserRound size={12} className="text-gray-700" />
+                  )}
                   <Text className="text-gray-700 text-xs">
-                    {item.total_families} {item.total_families === 1 ? 'Family' : 'Families'}
+                    {membersCount} {membersCount === 1 ? 'Member' : 'Members'}
                   </Text>
                 </View>
-                {isNHTS ? (
-                  <View className="bg-green-100 px-2 py-1 rounded-full">
-                    <Text className="text-green-700 text-xs font-medium">NHTS</Text>
-                  </View>
-                ) : (
-                  <View className="bg-gray-100 px-2 py-1 rounded-full">
-                    <Text className="text-gray-600 text-xs font-medium">NON-NHTS</Text>
-                  </View>
-                )}
               </View>
             </View>
             
@@ -137,18 +131,23 @@ export default function HouseholdRecords() {
     );
   });
 
+  const renderItem = React.useCallback(
+    ({ item }: { item: Record<string, any> }) => <ItemCard item={item} />,
+    []
+  );
+
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <Home size={32} className="text-gray-400" />
+        <UsersRound size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {debouncedSearchQuery ? 'No households found' : 'No households yet'}
+        {debouncedSearchQuery ? 'No families found' : 'No families yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
         {debouncedSearchQuery 
           ? 'Try adjusting your search terms' 
-          : 'Household records will appear here once added'
+          : 'Family records will appear here once added'
         }
       </Text>
     </View>
@@ -157,7 +156,7 @@ export default function HouseholdRecords() {
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading households...</Text>
+      <Text className="text-gray-500 mt-4">Loading families...</Text>
     </View>
   );
 
@@ -201,6 +200,11 @@ export default function HouseholdRecords() {
     );
   };
 
+  if (isLoading && currentPage === 1) {
+    return <LoadingState />;
+  }
+
+  // ============ MAIN RENDER ============
   return (
     <PageLayout
       leftAction={
@@ -213,7 +217,7 @@ export default function HouseholdRecords() {
       }
       headerTitle={
         <Text className="text-gray-900 text-lg font-semibold">
-          Household Records
+          Family Records
         </Text>
       }
       rightAction={<View className="w-10 h-10" />}
@@ -238,7 +242,7 @@ export default function HouseholdRecords() {
         <View className="px-4 flex-row items-center justify-between mt-4">
           <View className="flex-row items-center">
             <Text className="text-sm text-gray-600">
-              Showing {households.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+              Showing {families.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
             </Text>
           </View>
           {totalPages > 1 && (
@@ -251,7 +255,7 @@ export default function HouseholdRecords() {
         </View>
 
         <View className="flex-1">
-          {/* Households List */}
+          {/* Families List */}
           {isLoading && !isRefreshing ? (
             renderLoadingState()
           ) : totalCount === 0 ? (
@@ -261,9 +265,9 @@ export default function HouseholdRecords() {
               <FlatList
                 maxToRenderPerBatch={10}
                 overScrollMode="never"
-                data={households}
-                renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                keyExtractor={(item) => item.hh_id}
+                data={families}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.fam_id.toString()}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                   <RefreshControl

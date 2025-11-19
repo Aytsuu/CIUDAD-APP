@@ -7,7 +7,15 @@ from django.db.models import Q
 from django.db import transaction
 from pagination import StandardResultsPagination
 from apps.healthProfiling.serializers.all_record_serializers import *
-from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.models import  (ResidentProfile, 
+    Address, 
+    Sitio, 
+    Personal, 
+    PersonalAddress, 
+    PersonalAddressHistory,
+    Household, 
+    Family,
+    )
 from apps.healthProfiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
 from ..models import FamilyComposition
