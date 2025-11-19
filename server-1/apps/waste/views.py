@@ -337,7 +337,7 @@ class CreateCollectionRemindersView(APIView):
             # Check if announcement already exists for today
             existing_announcement = Announcement.objects.filter(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day.upper()} AT {time_str}\nLOCATION: SITIO {sitio_name.upper()}",
                 ann_created_at__date=today,
                 ann_type="GENERAL"
             ).first()
@@ -348,7 +348,7 @@ class CreateCollectionRemindersView(APIView):
             # Create announcement
             announcement = Announcement.objects.create(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day} AT {time_str}\nLOCATION: SITIO {sitio_name}",
                 ann_created_at=timezone.now(),
                 ann_start_at=timezone.now(),
                 ann_end_at=timezone.now() + timedelta(days=2),
