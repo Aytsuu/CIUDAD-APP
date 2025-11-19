@@ -39,7 +39,8 @@ export const getWasteReport = async (
     searchQuery?: string,
     reportMatter?: string,
     status?: string,
-    rp_id?: string
+    rp_id?: string,
+    rep_id?: string 
 ): Promise<{ results: WasteReport[]; count: number }> => {
     try {
         const params: any = { page, page_size: pageSize };
@@ -47,6 +48,7 @@ export const getWasteReport = async (
         if (reportMatter && reportMatter !== "0") params.report_matter = reportMatter;
         if (status) params.status = status;
         if (rp_id) params.rp_id = rp_id;
+        if (rep_id) params.rep_id = rep_id;
         
         const res = await api.get('waste/waste-report/', { params });
         

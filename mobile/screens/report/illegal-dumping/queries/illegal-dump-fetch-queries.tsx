@@ -60,11 +60,12 @@ export const useWasteReport = (
     searchQuery?: string,
     reportMatter?: string,
     status?: string,
-    rp_id?: string
+    rp_id?: string,
+    rep_id?: string 
 ) => {
     return useQuery<{ results: WasteReport[]; count: number }>({
-        queryKey: ["wastereport", page, pageSize, searchQuery, reportMatter, status, rp_id],
-        queryFn: () => getWasteReport(page, pageSize, searchQuery, reportMatter, status, rp_id),
+        queryKey: ["wastereport", page, pageSize, searchQuery, reportMatter, status, rp_id, rep_id],
+        queryFn: () => getWasteReport(page, pageSize, searchQuery, reportMatter, status, rp_id, rep_id),
         staleTime: 1000 * 60 * 30,
     });
 };

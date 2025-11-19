@@ -466,7 +466,7 @@ class CreateCollectionRemindersView(APIView):
             # Check if announcement already exists for today
             existing_announcement = Announcement.objects.filter(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day.upper()} AT {time_str}\nLOCATION: SITIO {sitio_name.upper()}",
                 ann_created_at__date=today,
                 ann_type="GENERAL"
             ).first()
@@ -477,7 +477,7 @@ class CreateCollectionRemindersView(APIView):
             # Create announcement
             announcement = Announcement.objects.create(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day} AT {time_str}\nLOCATION: SITIO {sitio_name}",
                 ann_created_at=timezone.now(),
                 ann_start_at=timezone.now(),
                 ann_end_at=timezone.now() + timedelta(days=2),
@@ -701,13 +701,14 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         ).prefetch_related(
             'waste_report_file',
             'waste_report_rslv_file'
-        ).all()
+        ).all()                                                                                                     
         
         # Get filter parameters from request
         search_query = self.request.query_params.get('search', '')
         report_matter = self.request.query_params.get('report_matter', '')
         status = self.request.query_params.get('status', '')
         rp_id = self.request.query_params.get('rp_id')
+        rep_id = self.request.query_params.get('rep_id')                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         
         # Apply status filter
         if status:
@@ -734,8 +735,12 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         # Apply resident profile filter if provided
         if rp_id:
             queryset = queryset.filter(rp_id=rp_id)
+
+        # Apply report ID filter if provided (for fetching specific report)
+        if rep_id:
+            queryset = queryset.filter(rep_id=rep_id)            
         
-        return queryset.order_by('-rep_date')  
+        return queryset.order_by('-rep_id')  
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):

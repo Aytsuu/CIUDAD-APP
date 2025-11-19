@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Pressable, FlatList, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
 import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
 import { SelectLayout } from '@/components/ui/select-layout';
@@ -17,6 +17,7 @@ export default function WasteIllegalDumpingResMain() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'resolved' | 'cancelled'>('pending');
+  const [isRefreshing, setIsRefreshing] = useState(false); 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const {user} = useAuth()  
 
@@ -38,7 +39,8 @@ export default function WasteIllegalDumpingResMain() {
     debouncedSearchQuery, 
     selectedFilterId,
     getStatusParam(activeTab),
-    rp_ide 
+    rp_ide,
+    undefined 
   );
 
   // Extract the actual data array from paginated response
@@ -67,32 +69,16 @@ export default function WasteIllegalDumpingResMain() {
   const handleView = async (item: any) => {
     router.push({
       pathname: '/(waste)/illegal-dumping/resident/illegal-dump-view-res',
-      params: {
-        rep_id: item.rep_id,
-        rep_matter: item.rep_matter,
-        rep_location: item.rep_location,
-        sitio_name: item.sitio_name,
-        sitio_id: item.sitio_id,
-        rep_violator: item.rep_violator,
-        rep_complainant: item.rep_complainant,
-        rep_contact: item.rep_contact,
-        rep_status: item.rep_status,
-        rep_cancel_reason: item.rep_cancel_reason,
-        rep_date: item.rep_date,
-        rep_date_resolved: item.rep_date_resolved,
-        rep_date_cancelled: item.rep_date_cancelled,
-        rep_anonymous: item.rep_anonymous,
-        rep_add_details: item.rep_add_details,
-        waste_report_file: JSON.stringify(item.waste_report_file || []),
-        waste_report_rslv_file: JSON.stringify(item.waste_report_rslv_file || []),
-      },
+      params: { rep_id: item.rep_id }
     });
   };
 
-  const handleRefresh = () => {
-    refetch();
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
-
 
   // Loading state component
   const renderLoadingState = () => (
@@ -108,7 +94,10 @@ export default function WasteIllegalDumpingResMain() {
       onPress={() => handleView(item)}
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
-      <View className="flex-row justify-end items-start mb-3">
+      <View className="flex-row justify-between items-start mb-3">
+
+        <Text className="font-semibold text-xl text-primaryBlue">Report No. {item.rep_id}</Text>       
+        
         <View className="flex-row items-center">
           {item.rep_status === 'resolved' ? (
             <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
@@ -289,6 +278,14 @@ export default function WasteIllegalDumpingResMain() {
               keyExtractor={(item) => item.rep_id.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}  // Android spinner color
+                  tintColor="#00a8f0"    // iOS spinner color
+                />
+              }              
               ListEmptyComponent={
                 <View className="py-8 items-center">
                   <Text className="text-gray-500 text-center">
