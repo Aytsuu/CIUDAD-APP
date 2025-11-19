@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Search, Loader2, AlertTriangle } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../export/export-report";
 import { ExportDropdown } from "../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";

@@ -6,7 +6,7 @@ import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentPendingColumns } from "../../tables/columns/pendng";
+import { medicalAppointmentPendingColumns } from "../columns/pendng";
 import { useAppointments } from "../../queries/fetch";
 
 export default function PendingMedicalAppointments() {

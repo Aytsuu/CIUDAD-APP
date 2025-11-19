@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import {  Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -24,7 +23,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 const periodOptions = [
   { value: "both", label: "Both Periods" },
   { value: "first", label: "First Semi-Annual Only" },
-  { value: "second", label: "Second Semi-Annual Only" }
+  { value: "second", label: "Second Semi-Annual Only" },
 ];
 
 export default function SemiAnnualOPTDetails() {
@@ -103,23 +102,13 @@ export default function SemiAnnualOPTDetails() {
       "2nd Semi LHFA Status": item.second_semi_annual?.nutritional_status?.lhfa || "N/A",
       "2nd Semi WFL Status": item.second_semi_annual?.nutritional_status?.wfl || "N/A",
       "2nd Semi MUAC (mm)": item.second_semi_annual?.nutritional_status?.muac || "N/A",
-      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A"
+      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A",
     }));
   }, [records]);
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
   const handleExportPDF = () => exportToPDF("landscape");
-
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -217,21 +206,38 @@ export default function SemiAnnualOPTDetails() {
             </Select>
           </div>
 
-          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
+          <FilterSitio
+            sitios={sitios}
+            isLoading={isLoadingSitios}
+            selectedSitios={selectedSitios}
+            onSitioSelection={handleSitioSelection}
+            onSelectAll={handleSelectAllSitios}
+            onManualSearch={handleManualSitioSearch}
+            manualSearchValue={sitioSearch}
+          />
 
-          <FilterStatus statusOptions={nutritionalStatusOptions} groupedStatuses={groupedNutritionalStatuses} selectedStatuses={selectedNutritionalStatuses} onStatusSelection={handleNutritionalStatusSelection} onSelectAll={handleSelectAllNutritionalStatuses} />
+          <FilterStatus
+            statusOptions={nutritionalStatusOptions}
+            groupedStatuses={groupedNutritionalStatuses}
+            selectedStatuses={selectedNutritionalStatuses}
+            onStatusSelection={handleNutritionalStatusSelection}
+            onSelectAll={handleSelectAllNutritionalStatuses}
+          />
         </div>
 
         <div className="flex gap-2 items-center">
           <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-          <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4 " />
-            <span>Print</span>
-          </Button>
         </div>
       </div>
 
-      <SelectedFiltersChips items={selectedSitios} onRemove={(sitio) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />
+      <SelectedFiltersChips
+        items={selectedSitios}
+        onRemove={(sitio) => handleSitioSelection(sitio, false)}
+        onClearAll={() => setSelectedSitios([])}
+        label="Filtered by sitios"
+        chipColor="bg-blue-100"
+        textColor="text-blue-800"
+      />
 
       <SelectedFiltersChips
         items={selectedNutritionalStatuses}
@@ -264,8 +270,7 @@ export default function SemiAnnualOPTDetails() {
           <span className="text-sm text-gray-700">
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading...
+                
               </span>
             ) : (
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
@@ -320,7 +325,11 @@ export default function SemiAnnualOPTDetails() {
                 <div style={{ width: "100%", height: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div className="text-center">
                     <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">{sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0 ? "No records found matching your filters" : "No records found for this year"}</p>
+                    <p className="text-gray-600">
+                      {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
+                        ? "No records found matching your filters"
+                        : "No records found for this year"}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -410,16 +419,16 @@ export default function SemiAnnualOPTDetails() {
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
 
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-50">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual ? item.age_in_months || "" : ""}
                           </td>
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-50">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual?.weight ? Number(item.second_semi_annual.weight).toFixed(1) : ""}
                           </td>
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-50">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual?.height ? Number(item.second_semi_annual.height).toFixed(1) : ""}
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-50">
+                          <td className="border border-black p-1 text-left">
                             WFA:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
@@ -430,7 +439,7 @@ export default function SemiAnnualOPTDetails() {
                             L/HFA:
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-50">
+                          <td className="border border-black p-1 text-left">
                             L/HFA:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
@@ -440,14 +449,14 @@ export default function SemiAnnualOPTDetails() {
                             WFL/Ht:
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-50">
+                          <td className="border border-black p-1 text-left">
                             WFL/Ht:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
                         </tr>
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">Remarks:</td>
-                          <td className="border border-black p-1 text-left bg-green-50">Remarks:</td>
+                          <td className="border border-black p-1 text-left">Remarks:</td>
                         </tr>
                       </>
                     ))}

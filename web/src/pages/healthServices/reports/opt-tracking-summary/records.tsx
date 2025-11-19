@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // Icons
-import { ChevronLeft, Printer, Loader2, Filter, Search } from "lucide-react";
+import { ChevronLeft, Loader2, Filter, Search } from "lucide-react";
 
 // Hooks
 import { useLoading } from "@/context/LoadingContext";
@@ -69,17 +69,6 @@ export default function OPTMonthlyDetails() {
       }, 2000);
     }
   }, [error]);
-
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
 
   const handleExportPDF = () => {
     exportToPDF("landscape");
@@ -267,206 +256,224 @@ export default function OPTMonthlyDetails() {
     const wfhTotals = calculateCategoryTotals(WFH);
 
     return (
-      <div className="overflow-x-auto border-2 border-black">
-        <table className="w-full border-collapse text-xs">
-          {/* Table Headers */}
-          <thead>
-            <tr className="">
-              <th rowSpan={3} className="border border-black p-2 min-w-20 text-center">
-                <div className="font-bold text-xs">AGE IN</div>
-                <div className="font-bold text-xs">MONTHS</div>
-              </th>
-              {/* Weight for Age - 10 columns */}
-              <th colSpan={10} className="border border-black px-1 py-3 text-center font-bold text-xs">
-                WEIGHT FOR AGE
-              </th>
-              {/* Height for Age - 10 columns */}
-              <th colSpan={10} className="border border-black px-1 py-3 text-center font-bold text-xs">
-                HEIGHT FOR AGE
-              </th>
-              {/* Weight for Height - 8 columns */}
-              <th colSpan={8} className="border border-black px-1 py-3 text-center font-bold text-xs">
-                WEIGHT FOR HEIGHT
-              </th>
-            </tr>
-            <tr className="">
-              {/* WFA sub-headers */}
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                NORMAL
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                SEVERELY
-                <br />
-                UNDERWEIGHT
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                UNDERWEIGHT
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                OVERWEIGHT
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center font-bold  text-xs">
-                TOTAL
-              </th>
-
-              {/* HFA sub-headers */}
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                NORMAL
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                TALL
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                SST
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                STUNTED
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center font-bold  text-xs">
-                TOTAL
-              </th>
-
-              {/* WFH sub-headers */}
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                NORMAL
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                WASTED
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center text-xs">
-                OVERWEIGHT
-              </th>
-              <th colSpan={2} className="border border-black px-1 py-3 text-center font-bold  text-xs">
-                TOTAL
-              </th>
-            </tr>
-            <tr className="">
-              {/* M F headers for all columns */}
-              {Array(28)
-                .fill(null)
-                .map((_, i) => (
-                  <th key={i} className="border border-black px-1 py-3 w-6 font-bold text-xs">
-                    {i % 2 === 0 ? "M" : "F"}
+      <div className="w-full">
+        <div className="pt-10">
+          <div className="border-2 border-black w-full relative overflow-x-auto">
+            <table 
+              className="border-collapse text-xs w-full" 
+              style={{ 
+                tableLayout: "fixed", 
+                fontSize: "10px",
+                minWidth: "1200px", // Fixed minimum width to prevent responsiveness
+                width: "auto" // Let table expand naturally
+              }}
+            >
+              {/* Table Headers */}
+              <thead>
+                <tr>
+                  <th rowSpan={3} className="border border-black p-1 w-28" style={{ width: '80px' }}>
+                    <div className="font-bold text-xs">AGE IN</div>
+                    <div className="font-bold text-xs">MONTHS</div>
                   </th>
+                  {/* Weight for Age - 10 columns */}
+                  <th colSpan={10} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '220px' }}>
+                    WEIGHT FOR AGE
+                  </th>
+                  {/* Height for Age - 10 columns */}
+                  <th colSpan={10} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '220px' }}>
+                    HEIGHT FOR AGE
+                  </th>
+                  {/* Weight for Height - 8 columns */}
+                  <th colSpan={8} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '176px' }}>
+                    WEIGHT FOR HEIGHT
+                  </th>
+                </tr>
+                <tr>
+                  {/* WFA sub-headers */}
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    NORMAL
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    SEVERELY
+                    <br />
+                    UNDERWEIGHT
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    UNDERWEIGHT
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    OVERWEIGHT
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '44px' }}>
+                    TOTAL
+                  </th>
+
+                  {/* HFA sub-headers */}
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    NORMAL
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    TALL
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    SST
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    STUNTED
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '44px' }}>
+                    TOTAL
+                  </th>
+
+                  {/* WFH sub-headers */}
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    NORMAL
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    WASTED
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center text-xs" style={{ width: '44px' }}>
+                    OVERWEIGHT
+                  </th>
+                  <th colSpan={2} className="border border-black px-1 py-6 text-center font-bold text-xs" style={{ width: '44px' }}>
+                    TOTAL
+                  </th>
+                </tr>
+                <tr>
+                  {/* M F headers for all columns */}
+                  {Array(28)
+                    .fill(null)
+                    .map((_, i) => (
+                      <th 
+                        key={i} 
+                        className="border border-black px-1 py-6 font-bold text-xs text-center" 
+                        style={{ width: '22px' }} // Fixed width for M/F columns
+                      >
+                        {i % 2 === 0 ? "M" : "F"}
+                      </th>
+                    ))}
+                </tr>
+              </thead>
+
+              {/* Table Body */}
+              <tbody>
+                {ageGroups.map((ageGroup) => (
+                  <tr key={ageGroup}>
+                    <td className="border border-black p-1 font-medium text-left text-xs" style={{ width: '80px' }}>
+                      {formatAgeGroup(ageGroup)}
+                    </td>
+
+                    {/* WFA Data */}
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.N?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.N?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.SUW?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.SUW?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.UW?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.UW?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.OW?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.OW?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.Total?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(WFA.age_groups[ageGroup]?.Total?.Female || 0)}</td>
+
+                    {/* HFA Data */}
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.N?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.N?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.T?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.T?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.SST?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.SST?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.ST?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.ST?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.Total?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(HFA.age_groups[ageGroup]?.Total?.Female || 0)}</td>
+
+                    {/* WFH Data */}
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFH.age_groups[ageGroup]?.N?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue(WFH.age_groups[ageGroup]?.N?.Female || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue((WFH.age_groups[ageGroup]?.W?.Male || 0) + (WFH.age_groups[ageGroup]?.SW?.Male || 0))}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue((WFH.age_groups[ageGroup]?.W?.Female || 0) + (WFH.age_groups[ageGroup]?.SW?.Female || 0))}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue((WFH.age_groups[ageGroup]?.OW?.Male || 0) + (WFH.age_groups[ageGroup]?.OB?.Male || 0))}</td>
+                    <td className="border border-black px-1 py-6 text-center text-xs" style={{ width: '22px' }}>{renderValue((WFH.age_groups[ageGroup]?.OW?.Female || 0) + (WFH.age_groups[ageGroup]?.OB?.Female || 0))}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(WFH.age_groups[ageGroup]?.Total?.Male || 0)}</td>
+                    <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(WFH.age_groups[ageGroup]?.Total?.Female || 0)}</td>
+                  </tr>
                 ))}
-            </tr>
-          </thead>
 
-          {/* Table Body */}
-          <tbody>
-            {ageGroups.map((ageGroup) => (
-              <tr key={ageGroup}>
-                <td className="border border-black p-2 font-medium text-left text-xs">{formatAgeGroup(ageGroup)}</td>
+                {/* Comprehensive Total Row */}
+                <tr className="font-bold">
+                  <td className="border border-black p-1 text-xs" style={{ width: '80px' }}>TOTAL</td>
 
-                {/* WFA Data */}
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.N?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.N?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.SUW?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.SUW?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.UW?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.UW?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.OW?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFA.age_groups[ageGroup]?.OW?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFA.age_groups[ageGroup]?.Total?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFA.age_groups[ageGroup]?.Total?.Female || 0)}</td>
+                  {/* WFA Totals */}
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.N.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.N.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.SUW.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.SUW.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.UW.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.UW.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.OW.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfaTotals.OW.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(wfaTotals.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(wfaTotals.Female)}</td>
 
-                {/* HFA Data */}
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.N?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.N?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.T?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.T?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.SST?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.SST?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.ST?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(HFA.age_groups[ageGroup]?.ST?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(HFA.age_groups[ageGroup]?.Total?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(HFA.age_groups[ageGroup]?.Total?.Female || 0)}</td>
+                  {/* HFA Totals */}
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.N.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.N.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.T.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.T.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.SST.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.SST.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.ST.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(hfaTotals.ST.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(hfaTotals.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(hfaTotals.Female)}</td>
 
-                {/* WFH Data */}
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFH.age_groups[ageGroup]?.N?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue(WFH.age_groups[ageGroup]?.N?.Female || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.W?.Male || 0) + (WFH.age_groups[ageGroup]?.SW?.Male || 0))}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.W?.Female || 0) + (WFH.age_groups[ageGroup]?.SW?.Female || 0))}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.OW?.Male || 0) + (WFH.age_groups[ageGroup]?.OB?.Male || 0))}</td>
-                <td className="border border-black px-1 py-3 text-center text-xs">{renderValue((WFH.age_groups[ageGroup]?.OW?.Female || 0) + (WFH.age_groups[ageGroup]?.OB?.Female || 0))}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFH.age_groups[ageGroup]?.Total?.Male || 0)}</td>
-                <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(WFH.age_groups[ageGroup]?.Total?.Female || 0)}</td>
-              </tr>
-            ))}
+                  {/* WFH Totals */}
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.N.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.N.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.W.Male + wfhTotals.SW.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.W.Female + wfhTotals.SW.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.OW.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center text-xs italic text-gray-500" style={{ width: '22px' }}>{renderValue(wfhTotals.OW.Female)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(wfhTotals.Male)}</td>
+                  <td className="border border-black px-1 py-6 text-center font-semibold text-xs" style={{ width: '22px' }}>{renderValue(wfhTotals.Female)}</td>
+                </tr>
 
-            {/* Comprehensive Total Row */}
-            <tr className="font-bold">
-              <td className="border border-black p-2 text-xs">TOTAL</td>
-
-              {/* WFA Totals */}
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.N.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.N.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.SUW.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.SUW.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.UW.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.UW.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.OW.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfaTotals.OW.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(wfaTotals.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(wfaTotals.Female)}</td>
-
-              {/* HFA Totals */}
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.N.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.N.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.T.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.T.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.SST.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.SST.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.ST.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(hfaTotals.ST.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(hfaTotals.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(hfaTotals.Female)}</td>
-
-              {/* WFH Totals */}
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.N.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.N.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.W.Male + wfhTotals.SW.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.W.Female + wfhTotals.SW.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.OW.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center text-xs italic text-gray-500">{renderValue(wfhTotals.OW.Female)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(wfhTotals.Male)}</td>
-              <td className="border border-black px-1 py-3 text-center font-semibold text-xs">{renderValue(wfhTotals.Female)}</td>
-            </tr>
-
-            {/* Grand Summary Row */}
-            <tr className="font-bold bg-gray-100">
-              <td className="border border-black p-2 text-xs">GRAND TOTAL</td>
-              <td colSpan={9} className="border border-black px-1 py-3 text-center text-xs">
-                <span className="font-bold">WFA: {wfaTotals.Male + wfaTotals.Female}</span>
-              </td>
-              <td colSpan={9} className="border border-black px-1 py-3 text-center text-xs">
-                <span className="font-bold">HFA: {hfaTotals.Male + hfaTotals.Female}</span>
-              </td>
-              <td colSpan={7} className="border border-black px-1 py-3 text-center text-xs">
-                <span className="font-bold">WFH: {wfhTotals.Male + wfhTotals.Female}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                {/* Grand Summary Row */}
+                <tr className="font-bold bg-gray-100">
+                  <td className="border border-black p-1 text-xs" style={{ width: '80px' }}>GRAND TOTAL</td>
+                  <td colSpan={9} className="border border-black px-1 py-6 text-center text-xs">
+                    <span className="font-bold">WFA: {wfaTotals.Male + wfaTotals.Female}</span>
+                  </td>
+                  <td colSpan={9} className="border border-black px-1 py-6 text-center text-xs">
+                    <span className="font-bold">HFA: {hfaTotals.Male + hfaTotals.Female}</span>
+                  </td>
+                  <td colSpan={7} className="border border-black px-1 py-6 text-center text-xs">
+                    <span className="font-bold">WFH: {wfhTotals.Male + wfhTotals.Female}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+    <div className="w-full min-h-screen flex flex-col">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4 pt-4">
         <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">OPT Tracking for {monthName}</h1>
-          <p className="text-xs sm:text-sm text-darkGray">Detailed nutritional status breakdown</p>
+          <p className="text-xs sm:text-xsm text-darkGray">Detailed nutritional status breakdown</p>
         </div>
       </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-      <div className="w-full bg-white flex-1 flex flex-col overflow-hidden">
+      <hr className="border-gray mb-5 sm:mb-8 mx-4" />
+      <div className="w-full bg-gray-50 flex-1 flex flex-col">
         {/* Filter Section */}
-        <div className="flex flex-col p-4 border bg-white py-4 w-full flex-shrink-0">
+        <div className="flex flex-col p-4 border-b bg-white w-full flex-shrink-0 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex flex-col sm:flex-row gap-4 w-full">
               <div className="relative flex-1 max-w-md">
@@ -490,7 +497,7 @@ export default function OPTMonthlyDetails() {
                 {showSitioFilter && (
                   <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
                     {isLoadingSitios ? (
-                      <div className="flex items-center justify-center py-2">
+                      <div className="flex items-center justify-center py-6">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Loading sitios...
                       </div>
@@ -504,7 +511,7 @@ export default function OPTMonthlyDetails() {
                           />
                           <label 
                             htmlFor="select-all-sitios" 
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-xsm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
                             Select All
                           </label>
@@ -519,7 +526,7 @@ export default function OPTMonthlyDetails() {
                             />
                             <label 
                               htmlFor={`sitio-${sitio.id}`} 
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              className="text-xsm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
                               {sitio.sitio_name}
                             </label>
@@ -545,7 +552,7 @@ export default function OPTMonthlyDetails() {
           {/* Display selected sitios as chips */}
           {selectedSitios.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="text-sm font-medium">Filtered by sitios:</span>
+              <span className="text-xsm font-medium">Filtered by sitios:</span>
               {selectedSitios.map((sitio) => (
                 <span key={sitio} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {sitio}
@@ -562,26 +569,25 @@ export default function OPTMonthlyDetails() {
         </div>
 
         {/* Printable area for PDF export */}
-        <div className="flex-1  flex justify-center p-4">
+        <div className="flex-1 w-full bg-white px-4">
           <div
             id="printable-area"
-            className="bg-white p-6 shadow-lg"
+            className="py-6 mt-6 px-1"
             style={{
-            height: "13in",
-              width: "15in",
-              fontSize: "12px"
+              margin: "0",
+              fontSize: "12px",
             }}
           >
-            <div className="text-center mb-6">
+            <div className="text-center">
               <h2 className="font-bold uppercase tracking-wide text-lg">OPT SUMMARY</h2>
-              <h3 className="text-lg font-bold">CEBU CITY HEALTH DEPARTMENT</h3>
-              <h4 className="text-base font-semibold mb-4">NUTRITION PROGRAM</h4>
-              <div className="text-sm mb-4">
-                <p>
+              <h3 className="text-lg font-bold m-0">CEBU CITY HEALTH DEPARTMENT</h3>
+              <h4 className="text-base font-semibold mb-1 m-0">NUTRITION PROGRAM</h4>
+              <div className="text-xsm" style={{ margin: "4px 0" }}>
+                <p style={{ margin: "2px 0" }}>
                   <strong>OPT Month:</strong> {monthName}
                 </p>
                 {selectedSitios.length > 0 && (
-                  <p>
+                  <p style={{ margin: "2px 0" }}>
                     <strong>Filtered by Sitio:</strong> {selectedSitios.join(", ")}
                   </p>
                 )}
@@ -594,7 +600,9 @@ export default function OPTMonthlyDetails() {
                 <span className="ml-2">Loading report...</span>
               </div>
             ) : reportData ? (
-              <>{renderOPTSummaryTable()}</>
+              <div style={{ width: "100%" }}>
+                {renderOPTSummaryTable()}
+              </div>
             ) : (
               <div className="text-center text-gray-500">No data available</div>
             )}

@@ -97,7 +97,7 @@ def send_medicine_expired_notification(medicine_request_item):
                 f"You can submit a new request if you still need the medicine."
             ),
             recipients=[str(resident_profile.rp_id)],
-            notif_type="Request Cancellation",
+            notif_type="CANCELLED",
             web_route="/services/medicine/requests/cancelled",
             web_params={"request_id": str(medicine_request.medreq_id), "status": "cancelled"},
             mobile_route="/(health)/medicine-request/my-requests",
@@ -147,7 +147,7 @@ def send_daily_pending_medicine_requests_notification():
                     title="Pending Medicine Requests Alert",
                     message=message,
                     recipients=recipients,
-                    notif_type="REMINDER",
+                    notif_type="PENDING",
                     web_route="/services/medicine/requests/pending",  # Route to medicine requests page
                     web_params={"status": "pending"},  # Filter to show pending requests
                     mobile_route=None,

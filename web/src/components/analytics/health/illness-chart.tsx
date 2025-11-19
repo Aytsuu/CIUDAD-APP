@@ -1,7 +1,7 @@
 // components/MedicalHistoryMonthlyChart.tsx
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, LineChart as LineChartIcon, Info, TrendingUp, Users, Activity, X, ArrowRight } from "lucide-react";
+import { AlertCircle, LineChart as LineChartIcon, TrendingUp, Users, Activity, X } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
@@ -10,7 +10,6 @@ import { CardTitle } from "@/components/ui/card";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useMedicalHistoryChart } from "./queries/chart";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { Link } from "react-router";
 
 interface MedicalHistoryChartProps {
   initialMonth: string;
@@ -153,7 +152,6 @@ export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChart
 
             {isLoading ? (
               <div className="flex items-center justify-center h-[300px]">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               </div>
             ) : !data || allIllnesses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">

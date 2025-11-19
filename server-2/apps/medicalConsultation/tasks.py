@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 from django.utils import timezone
 from apps.medicalConsultation.models import MedConsultAppointment
-from apps.inventory.signals import get_health_staff_recipients
 from utils.create_notification import NotificationQueries
 
 
@@ -68,7 +67,7 @@ def send_daily_pending_appointments_notification():
                     title="Pending Medical Appointments Alert",
                     message=message,
                     recipients=recipients,
-                    notif_type="REMINDER",
+                    notif_type="PENDING",
                     web_route="/services/medical-consultation/appointments/pending",  # Route to appointments page
                     web_params={"status": "pending"},  # Filter to show pending appointments
                     mobile_route=None,

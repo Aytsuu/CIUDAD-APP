@@ -30,7 +30,7 @@ export default function MonthlyMedicineDetails() {
 
   const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(30);
+  const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const { monthlyrcplist_id, month, monthName, medicineName } = state || {};
 
@@ -42,24 +42,19 @@ export default function MonthlyMedicineDetails() {
   }, [medicineName]);
 
   // Use the hook with pagination parameters
-  const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(
-    month, 
-    currentPage, 
-    pageSize, 
-    searchTerm
-  );
+  const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(month, currentPage, pageSize, searchTerm);
 
   // Extract data from the new response structure
   const responseData = apiResponse?.data || apiResponse?.results?.data;
   const records = useMemo(() => responseData?.records || [], [responseData]);
   const report = useMemo(() => responseData?.report || {}, [responseData]);
-  
+
   // Get pagination info from API response
   const totalItems = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalItems / pageSize);
 
   // Calculate display range
-  const startIndex = totalItems === 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   const staffDetails = report?.staff_details?.rp?.per;
@@ -95,7 +90,7 @@ export default function MonthlyMedicineDetails() {
         Name: toTitleCase(fullName) || "N/A",
         Address: address ? toTitleCase(`${address.full_address}`) : "N/A",
         "Medicine Name": record.med_details?.med_name ?? "N/A",
-        "Medicine Details": `${record.med_details?.med_name || ''} ${record.med_details?.med_dsg || ''} ${record.med_details?.med_dsg_unit || ''} ${record.med_details?.med_form || ''}`.trim(),
+        "Medicine Details": `${record.med_details?.med_name || ""} ${record.med_details?.med_dsg || ""} ${record.med_details?.med_dsg_unit || ""} ${record.med_details?.med_form || ""}`.trim(),
         Quantity: record.total_allocated_qty ?? "N/A",
         Unit: record.unit || "N/A",
         Reason: record.reason || "No reason provided",
@@ -120,7 +115,7 @@ export default function MonthlyMedicineDetails() {
   };
 
   const handleExportPDF = () => {
-    exportToPDF();
+    exportToPDF("portrait");
   };
 
   const tableHeader = ["Date", "Name", "Address", "Medicine", "Quantity", "Reason"];
@@ -131,16 +126,13 @@ export default function MonthlyMedicineDetails() {
     const address = record?.pat_details?.address;
 
     // Combine medicine details into one string
-    const medicineDetails = [
-      record.med_details?.med_name,
-      record.med_details?.med_dsg,
-      record.med_details?.med_dsg_unit,
-      record.med_details?.med_form
-    ].filter(Boolean).join(" ");
+    const medicineDetails = [record.med_details?.med_name, record.med_details?.med_dsg, record.med_details?.med_dsg_unit, record.med_details?.med_form].filter(Boolean).join(" ");
 
     return [
       record.created_at ? new Date(record.created_at).toLocaleDateString() : "N/A",
-      <div key={`${record.medreqitem_id}-name`} className="items-center">{toTitleCase(fullName) || "N/A"}</div>,
+      <div key={`${record.medreqitem_id}-name`} className="items-center">
+        {toTitleCase(fullName) || "N/A"}
+      </div>,
       <div key={`${record.medreqitem_id}-address`} className="items-center">
         {address ? toTitleCase(address.full_address) : "N/A"}
       </div>,
@@ -167,7 +159,7 @@ export default function MonthlyMedicineDetails() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search by patient name, medicine, reason..."
+                  placeholder="Search by patient name, medicine..."
                   className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => {
@@ -243,7 +235,7 @@ export default function MonthlyMedicineDetails() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 30, 50, 100].map((size) => (
+                {[23].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}
                   </SelectItem>
@@ -259,30 +251,20 @@ export default function MonthlyMedicineDetails() {
               Showing {startIndex} to {endIndex} of {totalItems} entries
               {searchTerm && ` for "${searchTerm}"`}
             </span>
-            {!isLoading && totalPages > 1 && (
-              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
-            )}
+            {!isLoading && totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
           </div>
         </div>
 
         {/* Report Display Section */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto py-8 flex justify-center">
-          <div
-            style={{
-              minHeight: "19in",
-              margin: "0 auto",
-              padding: "0.5in",
-              backgroundColor: "white",
-              height: "20in",
-            }}
-          >
-            <div className="p-4 print-area" id="printable-area"
-            
-            
-            style={{
-              width: "13in",
-           
-            }}>
+          <div>
+            <div
+              className="p-4 print-area"
+              id="printable-area"
+              style={{
+                width: "13in",
+              }}
+            >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="p-2 border-black flex items-center">
@@ -302,10 +284,10 @@ export default function MonthlyMedicineDetails() {
                   </div>
                 </div>
                 <div className="flex-1 text-center mx-4">
-                     <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
-                   <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
-                    <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
-                    <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label> 
+                  <Label className="text-sm font-bold uppercase block text-gray-700">{"Republic of the Philippines"}</Label>
+                  <Label className="text-md font-bold uppercase block">{report.department || "Cebu City Health Department"}</Label>
+                  <Label className="text-sm block text-gray-600">{report.location || "General Maxilom Extension, Carreta, Cebu City"}</Label>
+                  <Label className="text-sm block text-gray-600">{report.contact_number || "(032) 232-6820; 232-6863"}</Label>
                 </div>
                 <div className="w-24"></div>
               </div>
@@ -353,7 +335,7 @@ export default function MonthlyMedicineDetails() {
                     tableClassName="border border-black rounded w-full"
                     bodyCellClassName="border border-black text-center text-sm p-2"
                     headerCellClassName="font-bold text-sm border border-black text-gray-900 text-center p-2"
-                    defaultRowCount={30}
+                    defaultRowCount={23}
                   />
                 </div>
               )}

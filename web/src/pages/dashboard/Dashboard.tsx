@@ -237,7 +237,7 @@ export default function Dashboard() {
               item.sidebar.map((component: any, sidebarIndex: number) => (
                 <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>
                   {/* Conditionally render specific sidebar items */}
-                  {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.tittle =="To-Pickup Medicine Requests" ? (
+                  {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.title === "To-Pickup Medicine Requests" ? (
                     <ProtectedComponent exclude={["DOCTOR"]}>
                       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
                         {/* Sidebar Header */}
