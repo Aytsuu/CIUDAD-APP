@@ -39,7 +39,6 @@ export default function ResidentCreateForm({ params }: {
     form,
     defaultValues,
     populateFields,
-    checkDefaultValues,
   } = useResidentForm("", params?.origin);
    const [addresses, setAddresses] = React.useState<any[]>(DEFAULT_ADDRESS);
   const [isSubmitting] = React.useState<boolean>(false);
@@ -75,28 +74,15 @@ export default function ResidentCreateForm({ params }: {
 
   const isLoading = isLoadingResidents || isLoadingSitio
 
-  // ================== SIDE EFFECTS ==================
-  React.useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+  // ==================== CALLBACKS ====================
+  const validateForm = React.useCallback(async () => {
+    const isFormValid = await form.trigger();
+    const areAddressesValid = validateAddresses(addresses);
+    setIsAllowSubmit(isFormValid && areAddressesValid);
+    form.clearErrors();
+    setValidAddresses([true, true, true, true, true]);
+  }, [form, addresses]);
 
-  React.useEffect(() => {
-    const subscription = form.watch(async (value) => {
-      setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
-    });
-    return () => subscription.unsubscribe();
-  }, [form, defaultValues]);
-
-  React.useEffect(() => {
-    const per_addresses = params?.form?.getValues().personalSchema.per_addresses
-    if(per_addresses?.length > 0) setAddresses(per_addresses)
-  }, [params?.form])
-
-  // ==================== HANDLERS ====================
   const validateAddresses = React.useCallback(
     (addresses: any[]) => {
       const validity = addresses.map(
@@ -132,6 +118,32 @@ export default function ResidentCreateForm({ params }: {
     }
   }, [form, residentsList, populateFields, addresses]);
 
+  // ================== SIDE EFFECTS ==================
+  React.useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  React.useEffect(() => {
+    const subscription = form.watch(() => validateForm());
+    return () => subscription.unsubscribe();
+  }, [form, validateForm]);
+
+  // Also validate when addresses change
+  React.useEffect(() => {
+    validateForm();
+  }, [addresses, validateForm]);
+
+
+  React.useEffect(() => {
+    const per_addresses = params?.form?.getValues().personalSchema.per_addresses
+    if(per_addresses?.length > 0) setAddresses(per_addresses)
+  }, [params?.form])
+
+  // ==================== HANDLERS ====================
   // Continue for complete resident profiling
   const handleContinue = async () => {
     params?.form.setValue("personalSchema.per_addresses", addresses)
