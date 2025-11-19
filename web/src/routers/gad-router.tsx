@@ -47,8 +47,4 @@ export const gad_router = [
     path: '/gad-annual-development-plan/edit/:devId',
     element: <AnnualDevelopmentPlanEdit/>
   },
-  {
-    path: '/gad-activity',
-    element: <GADActivityCalendar/>
-  },
 ];

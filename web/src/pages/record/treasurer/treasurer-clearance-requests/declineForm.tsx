@@ -8,6 +8,7 @@ import {z} from "zod"
 import { useDeclineRequest, useDeclineNonReq } from "./queries/personalClearanceUpdateQueries";
 import { useDeclineServiceChargeRequest } from "./queries/serviceChargeQueries";
 import { useDeclinePermitClearance } from "./queries/permitClearanceFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 
 function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance, onSuccess}:{
     id: string;
@@ -16,6 +17,8 @@ function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance,
     isPermitClearance?: boolean;
     onSuccess?: () => void;
 }){
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id;
 
     const{mutate: declineResident, isPending: pendingResident} = useDeclineRequest(onSuccess)
     const{mutate: declineNonResident, isPending: pendingNonResident} = useDeclineNonReq(onSuccess)
@@ -28,7 +31,8 @@ function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance,
         if(isServiceCharge){
             declineServiceCharge({
                 pay_id: id,
-                reason: value.reason
+                reason: value.reason,
+                staff_id: staffId
             })
         } else if(isPermitClearance){
             declinePermitClearance({

@@ -5,6 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useGetArchivedAnnualDevPlans, useRestoreAnnualDevPlans, useDeleteAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
@@ -48,6 +49,8 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
 
   const restorePlansMutation = useRestoreAnnualDevPlans();
   const deletePlansMutation = useDeleteAnnualDevPlans();
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
 
   const archivedPlans = archivedPlansData?.results || [];
   const totalCount = archivedPlansData?.count || 0;
@@ -82,7 +85,7 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
   const handleConfirmRestore = async () => {
     setIsRestoring(true);
     try {
-      await restorePlansMutation.mutateAsync(selectedPlans);
+      await restorePlansMutation.mutateAsync({ devIds: selectedPlans, staffId });
       showSuccessToast(`Successfully restored ${selectedPlans.length} development plan(s)`);
       setSelectedPlans([]);
       setShowRestoreDialog(false);

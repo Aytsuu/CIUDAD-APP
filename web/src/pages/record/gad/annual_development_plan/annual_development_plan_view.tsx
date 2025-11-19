@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import { useArchiveAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const { data: proposals = [] } = useGetProjectProposals();
   const { data: resolutions = [] } = useResolution();
   const archivePlansMutation = useArchiveAnnualDevPlans();
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -215,7 +218,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         showErrorToast(`Cannot archive ${skippedCount} plan(s) with linked resolutions. Archiving remaining plans.`);
       }
       
-      await archivePlansMutation.mutateAsync(planIdsWithoutResolutions);
+      await archivePlansMutation.mutateAsync({ devIds: planIdsWithoutResolutions, staffId });
       showSuccessToast(`Successfully archived ${planIdsWithoutResolutions.length} development plan(s)`);
       setShowArchiveDialog(false);
       setShowArchiveButtons(false);
@@ -252,7 +255,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     
     setIsArchiving(true);
     try {
-      await archivePlansMutation.mutateAsync([archiveDialogPlanId]);
+      await archivePlansMutation.mutateAsync({ devIds: [archiveDialogPlanId], staffId });
       showSuccessToast("Successfully archived development plan");
       setShowArchiveDialog(false);
       const archivedId = archiveDialogPlanId;

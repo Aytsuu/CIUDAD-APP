@@ -117,8 +117,12 @@ export default function AnnualDevelopmentPlanEdit() {
   const fetchPlansForYear = async (year: string) => {
     try {
       setPlansLoading(true);
-      const list = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
-      const normalized = (Array.isArray(list) ? list : []).map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
+      const response = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
+      // Handle both array and paginated response formats
+      const plansData = Array.isArray(response) ? response : response?.results || [];
+      // Filter out archived plans just to be sure
+      const nonArchivedPlans = plansData.filter((p: any) => !p.dev_archived);
+      const normalized = nonArchivedPlans.map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
       setPlansForYear(normalized);
     } catch (e) {
       setPlansForYear([]);

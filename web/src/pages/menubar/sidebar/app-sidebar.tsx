@@ -243,7 +243,6 @@ export function AppSidebar() {
                 title: "Annual Development Plan",
                 url: "/gad-annual-development-plan",
               },
-              { title: "Activity", url: "/gad-activity" },
             ],
           },
         ]
