@@ -540,13 +540,14 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         ).prefetch_related(
             'waste_report_file',
             'waste_report_rslv_file'
-        ).all()
+        ).all()                                                                                                     
         
         # Get filter parameters from request
         search_query = self.request.query_params.get('search', '')
         report_matter = self.request.query_params.get('report_matter', '')
         status = self.request.query_params.get('status', '')
         rp_id = self.request.query_params.get('rp_id')
+        rep_id = self.request.query_params.get('rep_id')                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         
         # Apply status filter
         if status:
@@ -573,8 +574,12 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         # Apply resident profile filter if provided
         if rp_id:
             queryset = queryset.filter(rp_id=rp_id)
+
+        # Apply report ID filter if provided (for fetching specific report)
+        if rep_id:
+            queryset = queryset.filter(rep_id=rep_id)            
         
-        return queryset.order_by('-rep_date')  
+        return queryset.order_by('-rep_id')  
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):

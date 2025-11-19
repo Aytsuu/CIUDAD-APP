@@ -16,7 +16,7 @@ export const mapApi = axios.create({
 // });
 
 export const api = axios.create({
-  baseURL: "http://172.16.86.183:8000",
+  baseURL: "http://192.168.100.9:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
