@@ -1,19 +1,21 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentRefferedColumns } from "../columns/referred-appointment";
+import { refrecanmissed } from "../columns/refrecanmissed";
 import { useAppointments } from "../../queries/fetch";
-
 
 export default function RejectedMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [meridiemFilter, setMeridiemFilter] = useState<"all" | "AM" | "PM">("all");
 
   // Debounce search query
   useEffect(() => {
@@ -21,25 +23,105 @@ export default function RejectedMedicalAppointments() {
       setDebouncedSearch(searchQuery);
       setCurrentPage(1);
     }, 500);
-    return () => clearTimeout(handler);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [searchQuery]);
 
-  const { data: apiResponse, isLoading } = useAppointments(currentPage, pageSize, debouncedSearch, undefined, ["rejected"], undefined, true);
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch
+  } = useAppointments(
+    currentPage,
+    pageSize,
+    debouncedSearch,
+    dateFilter,
+    ["rejected"],
+    meridiemFilter === "all" ? undefined : [meridiemFilter],
+    true
+  );
 
   // Extract data from paginated response
   const appointments = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // Calculate stats based on created_at for rejected appointments
+  const today = new Date();
+  const todayString = today.toDateString();
+  
+  const todayCount = appointments.filter((apt: any) => {
+    const createdDate = new Date(apt.created_at).toDateString();
+    return createdDate === todayString;
+  }).length;
+
+  const thisWeekCount = appointments.filter((apt: any) => {
+    const createdDate = new Date(apt.created_at);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    return createdDate >= startOfWeek;
+  }).length;
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-8">
+        <div className="text-red-500 text-lg mb-4">Failed to load rejected appointments</div>
+        <Button onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Filters Section (no date/meridiem filters) */}
+      {/* Filters Section */}
       <div className="w-full flex flex-col sm:flex-row gap-3 mb-6">
         <div className="w-full flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-            <Input placeholder="Search by patient name, contact, appointment ID, or chief complaint..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <Input 
+              placeholder="Search by patient name, contact, appointment ID, or chief complaint..." 
+              className="pl-10 bg-white w-full" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
           </div>
+
+          <SelectLayout
+            placeholder="Filter by date"
+            label=""
+            className="bg-white w-full sm:w-48"
+            options={[
+              { id: "all", name: "All Dates" },
+              { id: "today", name: "Today" },
+              { id: "this-week", name: "This Week" },
+            ]}
+            value={dateFilter}
+            onChange={(value) => {
+              setDateFilter(value);
+              setCurrentPage(1);
+            }}
+          />
+
+          {/* Meridiem Filter */}
+          <SelectLayout
+            placeholder="Meridiem"
+            label=""
+            className="bg-white w-full sm:w-40"
+            options={[
+              { id: "all", name: "All" },
+              { id: "AM", name: "AM" },
+              { id: "PM", name: "PM" }
+            ]}
+            value={meridiemFilter}
+            onChange={(value) => {
+              setMeridiemFilter(value as "all" | "AM" | "PM");
+              setCurrentPage(1);
+            }}
+          />
         </div>
       </div>
 
@@ -53,6 +135,30 @@ export default function RejectedMedicalAppointments() {
             </div>
             <div className="p-2 bg-purple-100 rounded-lg">
               <Calendar className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">This Week</p>
+              <p className="text-2xl font-bold text-gray-900">{thisWeekCount}</p>
+            </div>
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Calendar className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Today</p>
+              <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
+            </div>
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Calendar className="h-6 w-6 text-orange-600" />
             </div>
           </div>
         </div>
@@ -99,16 +205,20 @@ export default function RejectedMedicalAppointments() {
           {isLoading ? (
             <div className="w-full h-32 flex flex-col items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <span className="text-gray-600">Loading referred appointments...</span>
+              <span className="text-gray-600">Loading rejected appointments...</span>
             </div>
           ) : appointments.length === 0 ? (
             <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500">
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
-              <p className="text-lg font-medium mb-1">No referred appointments found</p>
-              <p className="text-sm">{debouncedSearch ? "No referred appointments match your search criteria" : "No referred appointments at the moment"}</p>
+              <p className="text-lg font-medium mb-1">No rejected appointments found</p>
+              <p className="text-sm">
+                {debouncedSearch || dateFilter !== "all" || meridiemFilter !== "all" 
+                  ? "No rejected appointments match your search criteria" 
+                  : "No rejected appointments at the moment"}
+              </p>
             </div>
           ) : (
-            <DataTable columns={medicalAppointmentRefferedColumns} data={appointments} />
+            <DataTable columns={refrecanmissed} data={appointments} />
           )}
         </div>
 

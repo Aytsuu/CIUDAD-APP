@@ -49,7 +49,7 @@ def send_cancellation_notification_to_staff(medicine_request_item, reason):
                 title=title,
                 message=message,
                 recipients=staff_recipients,
-                notif_type="MEDICINE_STAFF_CANCELLED", # Custom type
+                notif_type="CANCELLED", # Custom type
                 web_route="/services/medicine/requests/cancelled", # Or your admin-facing route
                 web_params={},
                 mobile_route="", 
@@ -92,7 +92,6 @@ def send_new_medicine_request_notification_to_staff(medicine_request):
         
         # --- Get Staff Recipients (Admin & BHW) ---
         staff_to_notify = Staff.objects.filter(
-            staff_type="HEALTH STAFF",
             pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
         ).select_related('rp')
         
@@ -107,7 +106,7 @@ def send_new_medicine_request_notification_to_staff(medicine_request):
                 title=title,
                 message=message,
                 recipients=staff_recipients,
-                notif_type="MEDICINE_STAFF_PENDING", # Custom type for staff
+                notif_type="PENDING", # Custom type for staff
                 web_route="/services/medicine/requests/pending",
                 web_params={},
                 mobile_route="", # Assumed admin mobile route

@@ -2,11 +2,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate,formatDateTime } from "@/helpers/dateHelper";
-import { toTitleCase} from "@/helpers/ToTitleCase";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 
 
-export const medicalAppointmentMissedColumns: ColumnDef<any>[] = [
+export const refrecanmissed: ColumnDef<any>[] = [
   {
     id: "index",
     header: () => <div className="text-center">#</div>,
@@ -102,7 +102,7 @@ export const medicalAppointmentMissedColumns: ColumnDef<any>[] = [
                 : "text-gray-500 bg-gray-50 border-gray-400"
             }`}
           >
-            {(row.original.meridiem || "N/A")}
+            {toTitleCase(row.original.meridiem || "N/A")}
           </Badge>
         </div>
       );

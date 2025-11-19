@@ -74,24 +74,36 @@ class CommodityList(models.Model):
         
     def save(self, *args, **kwargs):
         if not self.com_id:
-            today = timezone.now()
-            prefix = f"COM{today.day:02d}{today.year % 100:02d}"
-            
-            # Get the maximum existing ID with this prefix
-            max_id = CommodityList.objects.filter(
-                com_id__startswith=prefix
-            ).order_by('-com_id').first()
-            
-            if max_id:
-                last_num = int(max_id.com_id[len(prefix):]) + 1
-            else:
-                last_num = 1
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
                 
-            self.com_id = f"{prefix}{last_num:03d}"
+                # Prefix: COM (Commodity)
+                prefix = "COM"
+                
+                # Format: COM + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = CommodityList.objects.filter(
+                    com_id__startswith=base_id
+                ).aggregate(Max('com_id'))['com_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique com_id with 4-digit number
+                self.com_id = f"{base_id}{last_num:04d}"
             
         if self.com_name:
             self.com_name = self.com_name.title()
-        
         
         super().save(*args, **kwargs)
             
@@ -194,16 +206,48 @@ class MedicineInventory(models.Model):
 
 
 class MedicineTransactions(models.Model):
-    mdt_id =models.BigAutoField(primary_key=True)
+    mdt_id = models.CharField(primary_key=True, max_length=20, editable=False)
     mdt_qty = models.CharField(max_length=100)
     mdt_action = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT, related_name='medicine_transaction', db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.mdt_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: TRNSMED
+                prefix = "TRNSMED"
+                
+                # Format: TRNSMED + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = MedicineTransactions.objects.filter(
+                    mdt_id__startswith=base_id
+                ).aggregate(Max('mdt_id'))['mdt_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique mdt_id with 4-digit number
+                self.mdt_id = f"{base_id}{last_num:04d}"
+        
+        super().save(*args, **kwargs)
 
 
         
@@ -242,19 +286,51 @@ class CommodityTransaction(models.Model):
 
 
 class FirstAidInventory(models.Model):
-    finv_id = models.BigAutoField(primary_key=True)
+    finv_id = models.CharField(primary_key=True, max_length=20, editable=False)
     finv_qty = models.PositiveIntegerField(default=0)
-    finv_qty_unit = models.CharField(max_length=100,default="N/A")
+    finv_qty_unit = models.CharField(max_length=100, default="N/A")
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE, db_column='inv_id', related_name='inventory_firstaid')
     fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
     wasted = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         db_table = 'firstaid_inventory'
+
+    def save(self, *args, **kwargs):
+        if not self.finv_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: FAINV (First Aid Inventory)
+                prefix = "FAINV"
+                
+                # Format: FAINV + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = FirstAidInventory.objects.filter(
+                    finv_id__startswith=base_id
+                ).aggregate(Max('finv_id'))['finv_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique finv_id with 4-digit number
+                self.finv_id = f"{base_id}{last_num:04d}"
         
+        super().save(*args, **kwargs)
   
 class FirstAidTransactions(models.Model):
     fat_id =models.BigAutoField(primary_key=True)

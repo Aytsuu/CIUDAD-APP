@@ -14,7 +14,6 @@ export default function CompleteddMedicalAppointments() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateFilter, setDateFilter] = useState<string>("all");
   const [meridiemFilter, setMeridiemFilter] = useState<"all" | "AM" | "PM">("all");
 
   // Debounce search query
@@ -38,7 +37,7 @@ export default function CompleteddMedicalAppointments() {
     currentPage,                                      
     pageSize,                                         
     debouncedSearch,                                 
-    dateFilter,                                      
+    "all",                                      
     ["completed"],                                  
     meridiemFilter === "all" ? undefined : [meridiemFilter],
     true                                             
@@ -64,7 +63,7 @@ export default function CompleteddMedicalAppointments() {
   if (error) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 text-lg mb-4">Failed to load confirmed appointments</div>
+        <div className="text-red-500 text-lg mb-4">Failed to load completed appointments</div>
         <Button onClick={() => refetch()}>Retry</Button>
       </div>
     );
@@ -85,39 +84,8 @@ export default function CompleteddMedicalAppointments() {
             />
           </div>
 
-          <SelectLayout
-            placeholder="Filter by date"
-            label=""
-            className="bg-white w-full sm:w-48"
-            options={[
-              { id: "all", name: "All Dates" },
-              { id: "today", name: "Today" },
-              { id: "this-week", name: "This Week" },
-              { id: "this-month", name: "This Month" },
-            ]}
-            value={dateFilter}
-            onChange={(value) => {
-              setDateFilter(value);
-              setCurrentPage(1);
-            }}
-          />
+          
 
-          {/* Meridiem Filter */}
-          <SelectLayout
-            placeholder="Meridiem"
-            label=""
-            className="bg-white w-full sm:w-40"
-            options={[
-              { id: "all", name: "All" },
-              { id: "AM", name: "AM" },
-              { id: "PM", name: "PM" }
-            ]}
-            value={meridiemFilter}
-            onChange={(value) => {
-              setMeridiemFilter(value as "all" | "AM" | "PM");
-              setCurrentPage(1);
-            }}
-          />
         </div>
       </div>
 
@@ -134,28 +102,7 @@ export default function CompleteddMedicalAppointments() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">This Week</p>
-              <p className="text-2xl font-bold text-gray-900">{thisWeekCount}</p>
-            </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Calendar className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Today</p>
-              <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
-            </div>
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Calendar className="h-6 w-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
+       
       </div>
 
       {/* Table Section */}
@@ -199,16 +146,16 @@ export default function CompleteddMedicalAppointments() {
           {isLoading ? (
             <div className="w-full h-32 flex flex-col items-center justify-center py-40">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <span className="text-gray-600">Loading confirmed appointments...</span>
+              <span className="text-gray-600">Loading completed appointments...</span>
             </div>
           ) : appointments.length === 0 ? (
             <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500 py-40">
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
-              <p className="text-lg font-medium mb-1">No confirmed appointments found</p>
+              <p className="text-lg font-medium mb-1">No completed appointments found</p>
               <p className="text-sm">
-                {debouncedSearch || dateFilter !== "all" || meridiemFilter !== "all"
-                  ? "No confirmed appointments match your search criteria"
-                  : "No confirmed appointments at the moment"}
+                {debouncedSearch || meridiemFilter !== "all"
+                  ? "No completed appointments match your search criteria"
+                  : "No completed appointments at the moment"}
               </p>
             </div>
           ) : (

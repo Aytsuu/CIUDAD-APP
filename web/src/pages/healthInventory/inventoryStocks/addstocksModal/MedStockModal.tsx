@@ -31,7 +31,7 @@ export default function AddMedicineStock() {
       // dsgUnit: "",
       // form: "",
       qty: undefined,
-      unit: "boxes",
+      unit: "pcs",
       pcs: undefined,
       expiry_date: "",
       staff: staff,

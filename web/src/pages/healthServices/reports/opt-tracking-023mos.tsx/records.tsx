@@ -4,7 +4,7 @@ import React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import {  Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -61,7 +61,7 @@ export default function QuarterlyOPTDetails() {
   const [selectedQuarter, setSelectedQuarter] = useState<Quarter>("Q1");
   const [sitioSearch, setSitioSearch] = useState("");
   const [nutritionalStatus, setNutritionalStatus] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([]);
@@ -143,17 +143,8 @@ export default function QuarterlyOPTDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(`opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF("landscape");
 
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
@@ -248,7 +239,7 @@ export default function QuarterlyOPTDetails() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search by Name or Sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
+            <Input placeholder="Search by Name ..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
           </div>
 
           <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
@@ -258,10 +249,7 @@ export default function QuarterlyOPTDetails() {
 
         <div className="flex gap-2 items-center">
           <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-          <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4" />
-            <span>Print</span>
-          </Button>
+         
         </div>
       </div>
 
@@ -299,8 +287,6 @@ export default function QuarterlyOPTDetails() {
           <span className="text-sm text-gray-700">
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                Loading...
               </span>
             ) : (
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
@@ -311,7 +297,7 @@ export default function QuarterlyOPTDetails() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white overflow-hidden">
+      <div className="bg-white overflow-x-auto">
         <div
           id="printable-area"
           className="p-4"
@@ -319,7 +305,6 @@ export default function QuarterlyOPTDetails() {
             minHeight: "11in",
             margin: "0 auto",
             fontSize: "10px",
-            lineHeight: "1.2"
           }}
         >
           <div className="w-full">
@@ -358,7 +343,7 @@ export default function QuarterlyOPTDetails() {
               </div>
             ) : (
               <div className="w-full overflow-x-auto">
-                <table className="w-full border-collapse border border-black text-xs">
+                <table className="w-full b border border-black text-xs">
                   <thead className="text-center">
                     <tr>
                       <th rowSpan={2} className="border border-black p-1 w-[18%] font-bold bg-gray-50">

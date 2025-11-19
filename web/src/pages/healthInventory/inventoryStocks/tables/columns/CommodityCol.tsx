@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button/button";
 import { Archive, Minus } from "lucide-react";
 
 export const CommodityStocksColumns = (handleArchiveInventory: (commodity: any) => void, onOpenWastedModal?: (record: any) => void): ColumnDef<any>[] => [
+  
+
   {
     accessorKey: "created_at",
     header: "Date",

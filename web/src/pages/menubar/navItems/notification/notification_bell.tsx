@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle  } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle,CircleAlertIcon,CalendarOff,LoaderCircle,Ban,Repeat,FileCheck } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
@@ -46,6 +46,8 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
         </div>
       );
     case "REMINDER":
+    case "NEAR_EXPIRY":
+    case "PENDING":
       return (
         <div className={`${baseClass} bg-amber-100 ${className}`}>
           <Clock className="w-5 h-5 text-amber-600" />
@@ -63,6 +65,48 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
           <AlertTriangle className="w-5 h-5 text-red-600" />
         </div>
       )
+    case "CANCELLED":
+    case "OUT_OF_STOCK":
+    case "REJECTED":
+      return (
+      <div className={`${baseClass} bg-red-100 ${className}`}>
+        <CircleAlertIcon className="w-5 h-5 text-red-600" />
+      </div>
+      );
+    case "EXPRIED":
+      return (
+      <div className={`${baseClass} bg-red-100 ${className}`}>
+        <CalendarOff className="w-5 h-5 text-red-600" />
+      </div>
+      );
+    case "LOW_STOCK":
+      return (
+      <div className={`${baseClass} bg-yellow-100 ${className}`}>
+        <LoaderCircle className="w-5 h-5 text-yellow-600" />
+      </div>
+      );
+    case "MISSED":
+      return (
+      <div className={`${baseClass} bg-red-100 ${className}`}>
+        <Ban className="w-5 h-5 text-red-600" />
+      </div>
+      );
+    case "REFERRED":
+      return (
+      <div className={`${baseClass} bg-yellow-100 ${className}`}>
+        <Repeat className="w-5 h-5 text-yellow-600" />
+      </div>
+      );
+    case "CONFIRMED":
+      return (
+      <div className={`${baseClass} bg-green-100 ${className}`}>
+        <FileCheck className="w-5 h-5 text-green-600" />
+      </div>
+      );
+  
+
+    
+      
     default:
       return (
         <div className={`${baseClass} bg-gray-100 ${className}`}>

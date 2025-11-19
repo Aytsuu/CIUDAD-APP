@@ -27,7 +27,7 @@ export default function MonthlyFirstAidDetails() {
   };
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(30);
+  const [pageSize, setPageSize] = useState(23);
   const [currentPage, setCurrentPage] = useState(1);
   const { monthlyrcplist_id, month, monthName, itemName } = state;
 
@@ -137,7 +137,7 @@ export default function MonthlyFirstAidDetails() {
   };
 
   const handleExportPDF = () => {
-    exportToPDF();
+    exportToPDF("portrait");
   };
 
   const tableHeader = ["Date", "Name", "Address", "Item Name", "Quantity Used", "Reason"];
@@ -206,7 +206,7 @@ export default function MonthlyFirstAidDetails() {
                   onExportCSV={handleExportCSV}
                   onExportExcel={handleExportExcel}
                   onExportPDF={handleExportPDF}
-                  className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+                  className="border-gray-200 hover:border-blue-230 hover:bg-blue-50/50 transition-all duration-200"
                 />
               </div>
 
@@ -248,7 +248,7 @@ export default function MonthlyFirstAidDetails() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[30].map((size) => (
+                {[23].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}
                   </SelectItem>
@@ -361,7 +361,7 @@ export default function MonthlyFirstAidDetails() {
                       tableClassName="border border-black rounded w-full"
                       bodyCellClassName="border border-black text-center text-sm p-2"
                       headerCellClassName="font-bold  text-sm border border-black text-gray-900 text-center p-2"
-                      defaultRowCount={30}
+                      defaultRowCount={23}
                     />
 
 

@@ -1,7 +1,7 @@
 // components/MonthlyConsultedDetails.tsx
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Loader2, Search, User, Stethoscope } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useMonthlyDetails } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Input } from "@/components/ui/input";
@@ -193,7 +193,7 @@ export default function MonthlyConsultedDetails() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-300">
-                {records.map((record, index) => (
+                {records.map((record:any, index:any) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="p-3 border border-gray-300 align-top">
                       <div className="flex items-center gap-2">

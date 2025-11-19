@@ -94,9 +94,6 @@ export default function ConfirmedMedicalAppointments() {
               { id: "today", name: "Today" },
               { id: "this-week", name: "This Week" },
               { id: "this-month", name: "This Month" },
-              { id: "tomorrow", name: "Tomorrow" },
-              { id: "upcoming", name: "Upcoming" },
-              { id: "past", name: "Past" }
             ]}
             value={dateFilter}
             onChange={(value) => {

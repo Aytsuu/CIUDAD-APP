@@ -564,10 +564,11 @@ class MedicineStockCreate(APIView):
         qty_unit = data.get('unit')
         qty = data.get('qty', 0)
         pcs = data.get('pcs', 0)
+        total_pcs =qty * pcs
         
         # Format quantity string based on unit
         if qty_unit == 'boxes':
-            mdt_qty = f"{qty} boxes ({pcs} pcs per box)"
+            mdt_qty = f"{qty} boxes ({total_pcs} pcs)"
         else:
             mdt_qty = f"{qty} {qty_unit}"
         
@@ -826,6 +827,7 @@ class ArchivedMedicineTable(APIView):
                         'dosage': f"{minv_dsg} {inventory.med_id.med_dsg_unit or 'N/A'}",
                         'unit': unit_type,
                     },
+                    'unit': inventory.minv_qty_unit,
                     'qty': {
                         'minv_qty': minv_qty,
                         'minv_pcs': total_pcs

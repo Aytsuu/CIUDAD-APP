@@ -183,12 +183,12 @@ export default function MonthlyInventoryAntigenDetails() {
                 rows={paginatedRecords.map((item) => [
                   item.name, 
                   item.batch_number, 
-                  item.opening.toString(), 
-                  item.received.toString(), 
-                  item.wasted.toString(), 
-                  item.administered.toString(), 
-                  item.closing.toString(), 
-                  new Date(item.expiry).toLocaleDateString()
+                  item.opening.toString() || "-", 
+                  item.received.toString()  || "-", 
+                  item.wasted.toString()  || "-", 
+                  item.administered.toString()  || "-", 
+                  item.closing.toString()  || "-", 
+                  new Date(item.expiry).toLocaleDateString()  || "-"
                 ])}
                 tableClassName="w-full border rounded-lg"
                 headerCellClassName="font-bold text-sm border border-gray-600 text-black text-center p-2"

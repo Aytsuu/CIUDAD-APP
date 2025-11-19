@@ -2,7 +2,18 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
- 
+  {
+    accessorKey: "archivedDate",
+    header: "Archived Date",
+    cell: ({ row }) => {
+      const archivedDate = row.original.archivedDate;
+      return (
+        <div className="text-center">
+          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "item",
     header: "Commodity Details",
@@ -112,9 +123,29 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
     accessorKey: "administered",
     header: "Qty Used",
     cell: ({ row }) => {
+      const unit = row.original.cinv_qty_unit;
+      const isBoxes = unit?.toLowerCase() === "boxes";
+      const displayUnit = isBoxes ? "pcs" : unit;
+
       return (
         <div className="text-center text-red-600">
-          {row.original.administered}
+          {row.original.administered}  {displayUnit}
+        </div>
+      );
+    },
+  },
+
+  {
+    accessorKey: "waste",
+    header: "Qty wasted",
+    cell: ({ row }) => {
+      const unit = row.original.cinv_qty_unit;
+      const isBoxes = unit?.toLowerCase() === "boxes";
+      const displayUnit = isBoxes ? "pcs" : unit;
+
+      return (
+        <div className="text-center text-red-600">
+          {row.original.wasted}  {displayUnit}
         </div>
       );
     },
@@ -142,18 +173,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       );
     },
   },
-  {
-    accessorKey: "archivedDate",
-    header: "Archived Date",
-    cell: ({ row }) => {
-      const archivedDate = row.original.archivedDate;
-      return (
-        <div className="text-center">
-          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "reason",
     header: "Reason",

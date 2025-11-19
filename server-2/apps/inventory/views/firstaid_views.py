@@ -416,10 +416,11 @@ class FirstAidStockCreate(APIView):
         qty_unit = data.get('finv_qty_unit')
         qty = data.get('finv_qty', 0)
         pcs = data.get('finv_pcs', 0)
+        total_pcs = qty * pcs
         
         # Format quantity string based on unit
         if qty_unit == 'boxes':
-            fat_qty = f"{qty} boxes ({pcs} pcs per box)"
+            fat_qty = f"{qty} boxes ({total_pcs} pcs)"
         else:
             fat_qty = f"{qty} {qty_unit}"
         
@@ -999,12 +1000,14 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
                 'finv_id': finv.finv_id,
                 'inv_id': finv.inv_id_id,
                 'date_received':finv.created_at,
+                'wasted':finv.wasted,
+                'pcs':finv.finv_pcs,
                 'fa_name': finv.fa_id.fa_name,
                 'opening': total_available,
                 'received': display_received,
                 'dispensed': dispensed_qty,
                 'closing': closing_qty,
-                'unit': "pcs",
+                'unit': finv.finv_qty_unit,
                 'expiry': finv.inv_id.expiry_date.strftime('%Y-%m-%d') if finv.inv_id.expiry_date else None,
                 'expired_this_month': expired_this_month,
             })
@@ -1272,11 +1275,13 @@ class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
                 'fa_name': f"{finv.fa_id.fa_name}",
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
                 'opening_stock': total_available,
+                'pcs':finv.finv_pcs,
+                'wasted':finv.wasted,
                 'received': display_received,
                 'dispensed': dispensed_qty,
                 'closing_stock': closing_qty,
                 'date_received': finv.created_at,
-                'unit': 'pcs',
+                'unit': finv.finv_qty_unit,
                 'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
             }
 

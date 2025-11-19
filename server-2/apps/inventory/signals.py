@@ -20,7 +20,6 @@ def get_health_staff_recipients():
     """Get all staff members in HEALTH STAFFS group or specific positions"""
     try:
         health_staffs = Staff.objects.filter(
-            models.Q(pos__pos_group='HEALTH STAFFS') |
             models.Q(pos__pos_title__in=['BARANGAY HEALTH WORKER', 'MIDWIFE', 'ADMIN'])
         ).select_related('rp', 'pos').distinct()
         recipient_ids = [str(staff.staff_id) for staff in health_staffs]
@@ -30,7 +29,7 @@ def get_health_staff_recipients():
         logger.error(f"Error getting health staff recipients: {e}")
         return []
 
-def send_inventory_notification(title, message, inventory_type, item_name, quantity=None):
+def send_inventory_notification(title, message, inventory_type, item_name, quantity=None, inventory_subtype=None):
     """Send inventory notification to all health staff"""
     try:
         notifier = NotificationQueries()
@@ -39,12 +38,25 @@ def send_inventory_notification(title, message, inventory_type, item_name, quant
             logger.warning("No health staff recipients found for inventory notification")
             return False
         
+        # Determine web route based on inventory subtype
+        web_route = ""
+        if inventory_subtype == "medicine":
+            web_route = "/inventory-stocks/list/stocks/medicine"
+        elif inventory_subtype == "firstaid":
+            web_route = "/inventory-stocks/list/stocks/firstaid"
+        elif inventory_subtype == "commodity":
+            web_route = "/inventory-stocks/list/stocks/commodity"
+        elif inventory_subtype == "vaccine":
+            web_route = "/inventory-stocks/list/stocks/commodity"  # Vaccines under commodity
+        elif inventory_subtype == "immunization":
+            web_route = "/inventory-stocks/list/stocks/commodity"  # Immunization under commodity
+        
         success = notifier.create_notification(
             title=title,
             message=message,
             recipients=recipients,
-            notif_type="REMINDER",
-            web_route="", 
+            notif_type=inventory_type,
+            web_route=web_route, 
             web_params="",
             mobile_route="", 
             mobile_params="",
@@ -148,6 +160,20 @@ def _is_archived(instance):
         pass
     return False
 
+def _get_inventory_subtype(instance):
+    """Determine inventory subtype for routing"""
+    if isinstance(instance, MedicineInventory):
+        return "medicine"
+    elif isinstance(instance, FirstAidInventory):
+        return "firstaid"
+    elif isinstance(instance, CommodityInventory):
+        return "commodity"
+    elif isinstance(instance, VaccineStock):
+        return "commodity"  # Vaccines route to commodity page
+    elif isinstance(instance, ImmunizationStock):
+        return "commodity"  # Immunization routes to commodity page
+    return None
+
 def _auto_archive_if_expired(instance):
     """Auto-archive items expired >10 days - but don't block notifications"""
     from datetime import timedelta
@@ -174,12 +200,14 @@ def _auto_archive_if_expired(instance):
                 instance.inv_id.is_Archived = True
                 instance.inv_id.save()
                 
+                inventory_subtype = _get_inventory_subtype(instance)
                 send_inventory_notification(
                     title=f"Item Auto-Archived - {display_name}",
                     message=f"{display_name} has been automatically archived (expired >10 days ago on {instance.inv_id.expiry_date}). Quantity: {available} {unit}.",
                     inventory_type="EXPIRED",
                     item_name=display_name,
-                    quantity=available
+                    quantity=available,
+                    inventory_subtype=inventory_subtype
                 )
                 logger.info(f"✅ Auto-archived {display_name} - Qty: {available} {unit}")
                 return True
@@ -202,6 +230,7 @@ def _notify_for_instance(instance):
     available, unit, item_id = _get_available_and_unit(instance)
     display_name = _get_item_display_name(instance)
     is_archived = _is_archived(instance)
+    inventory_subtype = _get_inventory_subtype(instance)
 
     # EXPIRED / NEAR_EXPIRY - Check even if archived
     try:
@@ -218,7 +247,8 @@ def _notify_for_instance(instance):
                         message=f"{display_name} has EXPIRED on {expiry_date}. Current stock: {available} {unit}. Please remove from inventory.",
                         inventory_type="EXPIRED",
                         item_name=display_name,
-                        quantity=available
+                        quantity=available,
+                        inventory_subtype=inventory_subtype
                     )
                     mark_as_notified(item_id, "EXPIRED")
                     logger.info(f"✅ Sent ONE-TIME EXPIRED notification for {display_name}")
@@ -234,7 +264,8 @@ def _notify_for_instance(instance):
                         message=f"{display_name} expires in {days_until_expiry} days on {expiry_date}. Current stock: {available} {unit}. Please use soonest.",
                         inventory_type="NEAR_EXPIRY",
                         item_name=display_name,
-                        quantity=available
+                        quantity=available,
+                        inventory_subtype=inventory_subtype
                     )
                     mark_as_notified(item_id, "NEAR_EXPIRY")
                     logger.info(f"✅ Sent ONE-TIME NEAR_EXPIRY notification for {display_name}")
@@ -256,8 +287,10 @@ def _notify_for_instance(instance):
             send_inventory_notification(
                 title=f"Out of Stock Alert - {display_name}",
                 message=f"{display_name} is OUT OF STOCK. Please restock.",
+                
                 inventory_type="OUT_OF_STOCK",
-                item_name=display_name
+                item_name=display_name,
+                inventory_subtype=inventory_subtype
             )
             mark_as_notified(item_id, "OUT_OF_STOCK")
             logger.info(f"✅ Sent ONE-TIME OUT_OF_STOCK notification for {display_name}")
@@ -273,7 +306,8 @@ def _notify_for_instance(instance):
                 message=f"{display_name} is running low. Current stock: {available} {unit}.",
                 inventory_type="LOW_STOCK",
                 item_name=display_name,
-                quantity=available
+                quantity=available,
+                inventory_subtype=inventory_subtype
             )
             mark_as_notified(item_id, "LOW_STOCK")
             logger.info(f"✅ Sent ONE-TIME LOW_STOCK notification for {display_name}")
