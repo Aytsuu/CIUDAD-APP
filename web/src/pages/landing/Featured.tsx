@@ -15,11 +15,12 @@ import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, Car
 import React from "react";
 
 export default function Featured() {
-
+  // ================ STATE INITIALIZATION ================
   const slide = [img1, img2, img3, img4, img5, img6, img7, img8, img9]
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
 
+  // ================ SIDE EFFECTS ================
   React.useEffect(() => {
     if (!api) {
       return
@@ -31,10 +32,12 @@ export default function Featured() {
     })
   }, [api])
 
+  // ================ HANDLERS ================
   const handleImageSelect = (index: number) => {
     api?.scrollTo(index, false)
   }
 
+  // ================ RENDER ================
   return (
     <div className="w-full h-screen bg-[#0F1F3A] overflow-hidden">
       <div className="container mx-auto h-full px-4 lg:px-8 py-8 lg:py-16">
