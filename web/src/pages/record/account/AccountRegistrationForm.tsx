@@ -26,7 +26,7 @@ export default function AccountRegistrationForm({
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-end">
+      <div className="relative">
         <FormInput
           control={form.control}
           name={`${prefix}email`}
@@ -35,29 +35,32 @@ export default function AccountRegistrationForm({
           className="w-full"
         />
         {!isVerifiedEmail && !isVerifyingEmail && (
-          <Button variant={"link"} className="shadow-none" disabled={!hasEmail}
+          <Button variant={"link"} disabled={!hasEmail}
             onClick={handleValidateEmail}
             type="button"
+            className="absolute shadow-none top-[-5px] left-[5.7rem]" 
           >
             Verify
           </Button>
         )}
         {isVerifyingEmail && (
-          <Button variant={"link"} className="shadow-none text-gray-600" disabled
+          <Button variant={"link"} disabled
             type="button"
+            className="absolute shadow-none text-gray-600 top-[-5px] left-[5.7rem]" 
           >
             Verify...
           </Button>
         )}
         {isVerifiedEmail && (
-          <Button variant={"link"} className="shadow-none text-green-500"
+          <Button variant={"link"}
             type="button"
+            className="absolute shadow-none text-green-500 top-[-5px] left-[5.7rem]"
           >
             Verified
           </Button>
         )}
       </div>
-      <div className="flex items-end">
+      <div className="relative">
         <FormInput
           control={form.control}
           name={`${prefix}phone`}
@@ -67,23 +70,26 @@ export default function AccountRegistrationForm({
           className="w-full"
         />
         {!isVerifiedPhone && !isVerifyingPhone && (
-          <Button variant={"link"} className="shadow-none" disabled={!hasPhone}
+          <Button variant={"link"} disabled={!hasPhone}
             onClick={handleValidatePhone}
             type="button"
+            className="absolute shadow-none top-[-5px] left-[5.5rem]" 
           >
             Verify
           </Button>
         )}
         {isVerifyingPhone && (
-          <Button variant={"link"} className="shadow-none text-gray-600" disabled
+          <Button variant={"link"} disabled
             type="button"
+            className="absolute shadow-none text-gray-600 top-[-5px] left-[5.5rem]" 
           >
             Verify...
           </Button>
         )}
         {isVerifiedPhone && (
-          <Button variant={"link"} className="shadow-none text-green-500"
+          <Button variant={"link"} 
             type="button"
+            className="absolute shadow-none text-green-500 top-[-5px] left-[5.5rem]"
           >
             Verified
           </Button>
