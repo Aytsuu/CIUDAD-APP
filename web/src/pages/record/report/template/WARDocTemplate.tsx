@@ -49,7 +49,7 @@ export const WARDocTemplate = ({
   //------------------- STATE INITIALIZATION ---------------------
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('WAR');  
-  const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
+  const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all', 'BARANGAY STAFF');
   const [pdfBlob, setPdfBlob] = React.useState<string>(''); 
   const [crew, setCrew] = React.useState<Record<string,any>[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
