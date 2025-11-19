@@ -796,7 +796,7 @@ function CalendarPage() {
 
   const handleRestoreGADActivity = (dev_id: number) => {
     setActionInProgress(true);
-    restoreGADActivities([dev_id], {
+    restoreGADActivities({ devIds: [dev_id], staffId: user?.staff?.staff_id as string | undefined }, {
       onSuccess: () => setActionInProgress(false),
       onError: () => setActionInProgress(false),
     });
