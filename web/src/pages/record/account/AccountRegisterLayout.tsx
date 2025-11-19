@@ -7,9 +7,7 @@ import { accountFormSchema } from "@/form-schema/account-schema";
 import AccountRegistrationForm from "./AccountRegistrationForm";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CircleUserRound } from "lucide-react";
-import {
-  useAddAccount,
-} from "./queries/accountAddQueries";
+import { useAddAccount } from "./queries/accountAddQueries";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { Button } from "@/components/ui/button/button";
 import { useLocation } from "react-router";
@@ -20,12 +18,14 @@ import { useSendOTP } from "@/pages/landing/queries/authPostQueries";
 import { useSendEmailOTPMutation } from "@/redux/auth-redux/useAuthMutation";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import RegVerification from "./RegVerification";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function AccountRegistrationLayout({
   tab_params,
 }: {
   tab_params?: Record<string, any>;
 }) {
+  // ==================== STATE INITIALIZATION ======================
   const sendOTPMutation = useSendOTP();
   const sendEmailOTP = useSendEmailOTPMutation();
   const location = useLocation();
@@ -46,7 +46,7 @@ export default function AccountRegistrationLayout({
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
-      email: undefined
+      email: undefined,
     },
   });
 
@@ -57,30 +57,42 @@ export default function AccountRegistrationLayout({
     ? tab_params?.form.watch("accountSchema.phone")?.length > 0
     : form.watch("phone")?.length > 0;
 
-  const watchEmail = tab_params ? tab_params?.form.watch("accountSchema.email") : form.watch("email")
-  const watchPhone = tab_params ? tab_params?.form.watch("accountSchema.phone") : form.watch("phone")
+  const watchEmail = tab_params
+    ? tab_params?.form.watch("accountSchema.email")
+    : form.watch("email");
+  const watchPhone = tab_params
+    ? tab_params?.form.watch("accountSchema.phone")
+    : form.watch("phone");
 
   // ==================== SIDE EFFECTS ======================
   React.useEffect(() => {
-    setIsVerifiedEmail(tab_params?.form.getValues("accountSchema.isVerifiedEmail"))
-    setIsVerifiedPhone(tab_params?.form.getValues("accountSchema.isVerifiedPhone"))
-  }, [tab_params])
+    setIsVerifiedEmail(
+      tab_params?.form.getValues("accountSchema.isVerifiedEmail")
+    );
+    setIsVerifiedPhone(
+      tab_params?.form.getValues("accountSchema.isVerifiedPhone")
+    );
+  }, [tab_params]);
 
   React.useEffect(() => {
-    if(isVerifiedEmail) {
-      setIsVerifiedEmail(false)
-      tab_params ? tab_params?.form.setValue("accountSchema.isVerifiedEmail", false) : form.setValue("isVerifiedEmail", false)
+    if (isVerifiedEmail) {
+      setIsVerifiedEmail(false);
+      tab_params
+        ? tab_params?.form.setValue("accountSchema.isVerifiedEmail", false)
+        : form.setValue("isVerifiedEmail", false);
     }
-    if(validEmail) setValidEmail(false)
-  }, [watchEmail])
+    if (validEmail) setValidEmail(false);
+  }, [watchEmail]);
 
   React.useEffect(() => {
-    if(isVerifiedPhone) {
-      setIsVerifiedPhone(false)
-      tab_params ? tab_params?.form.setValue("accountSchema.isVerifiedPhone", false) : form.setValue("isVerifiedPhone", false)
+    if (isVerifiedPhone) {
+      setIsVerifiedPhone(false);
+      tab_params
+        ? tab_params?.form.setValue("accountSchema.isVerifiedPhone", false)
+        : form.setValue("isVerifiedPhone", false);
     }
-    if(validPhone) setValidPhone(false)
-  }, [watchPhone])
+    if (validPhone) setValidPhone(false);
+  }, [watchPhone]);
 
   // ==================== HANDLERS ======================
   const handleValidateEmail = async () => {
@@ -94,31 +106,41 @@ export default function AccountRegistrationLayout({
         email: email,
         type: "signup",
       });
+
       setValidEmail(true);
+      tab_params
+        ? tab_params?.form.clearErrors("accountSchema.email")
+        : form.clearErrors("email");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         tab_params
           ? tab_params?.form.setError("accountSchema.email", {
               type: "server",
-              message: err.response.data.error,
+              message: err.response.data.email,
             })
           : form.setError("email", {
               type: "server",
-              message: err.response.data.error,
+              message: err.response.data.email,
             });
       }
+      setIsVerifyingEmail(false);
       setValidEmail(false);
     }
   };
 
   const emailOtpSucess = () => {
-    setIsVerifiedEmail(true)
-    setIsVerifyingEmail(false)
-    tab_params?.form.setValue("accountSchema.isVerifiedEmail", true)
+    setIsVerifiedEmail(true);
+    setIsVerifyingEmail(false);
+    tab_params?.form.setValue("accountSchema.isVerifiedEmail", true);
   };
 
   const handleValidatePhone = async () => {
-    if (!(await tab_params?.form.trigger(["accountSchema.phone"]))) return;
+    if (
+      !(tab_params
+        ? await tab_params?.form.trigger(["accountSchema.phone"])
+        : form.trigger(["phone"]))
+    )
+      return;
 
     const phone = tab_params
       ? tab_params.form.getValues("accountSchema.phone")
@@ -129,26 +151,33 @@ export default function AccountRegistrationLayout({
         pv_phone_num: phone,
         pv_type: "signup",
       });
+
       setValidPhone(true);
+      tab_params
+        ? tab_params?.form.clearErrors("accountSchema.phone")
+        : form.clearErrors("phone");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         tab_params
           ? tab_params?.form.setError("accountSchema.phone", {
               type: "server",
-              message: err.response.data.error,
+              message: err.response.data.phone,
             })
           : form.setError("phone", {
               type: "server",
-              message: err.response.data.error,
+              message: err.response.data.phone,
             });
+
+        setIsVerifyingPhone(false);
+        setValidPhone(false);
       }
     }
   };
 
   const phoneOtpSuccess = () => {
-    setIsVerifiedPhone(true)
-    setIsVerifyingPhone(false)
-    tab_params?.form.setValue("accountSchema.isVerifiedPhone", true)
+    setIsVerifiedPhone(true);
+    setIsVerifyingPhone(false);
+    tab_params?.form.setValue("accountSchema.isVerifiedPhone", true);
   };
 
   // const handleVerify = async () => {
@@ -222,7 +251,7 @@ export default function AccountRegistrationLayout({
     setIsSubmitting(true);
 
     try {
-      const formIsValid = await form.trigger();
+      const formIsValid = await form.trigger(["email", "phone"]);
 
       if (!formIsValid) {
         showErrorToast("Please fill out all required fields.");
@@ -234,30 +263,12 @@ export default function AccountRegistrationLayout({
 
       await addAccount({
         accountInfo: account,
-        residentId: tab_params?.isRegistrationTab
-          ? tab_params.residentId
-          : residentId,
+        residentId: residentId,
       });
 
       showSuccessToast("Account created successfully!");
       safeNavigate.back();
     } catch (error) {
-      console.error("Error creating account:", error);
-      if (axios.isAxiosError(error) && error.response) {
-        if (error.response.data.phone) {
-          form.setError("phone", {
-            type: "server",
-            message: error.response.data.phone,
-          });
-        }
-
-        if (error.response.data.email) {
-          form.setError("email", {
-            type: "server",
-            message: error.response.data.email,
-          });
-        }
-      }
       showErrorToast("Failed to create account. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -324,48 +335,58 @@ export default function AccountRegistrationLayout({
             >
               Skip for Now
             </Button>
-            <Button
-              onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
-              className="flex-1"
-              disabled={
-                hasEmail
-                  ? !(isVerifiedEmail && isVerifiedPhone)
-                  : !isVerifiedPhone
-              }
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating...
-                </>
-              ) : (
-                <>{tab_params?.isRegistrationTab ? "Next" : "Create Account"}</>
-              )}
-            </Button>
+            {tab_params && (
+              <Button
+                onClick={handleContinue}
+                className="flex-1"
+                disabled={
+                  hasEmail
+                    ? !(isVerifiedEmail && isVerifiedPhone)
+                    : !isVerifiedPhone
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    Next
+                  </>
+                )}
+              </Button>
+            )}
 
-            {/* <ConfirmationModal
-              trigger={
-                <Button
-                  className="flex-1"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      {tab_params?.isRegistrationTab ? "Next" : "Create Account"}
-                    </>
-                  )}
-                </Button>
-              }
-              title="Confirm Account Registration"
-              description="Are you sure you want to create this account? The resident will be able to use these credentials to access their information."
-              actionLabel="Yes, Create Account"
-              onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
-            /> */}
+            {!tab_params && (
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    className="flex-1"
+                    disabled={
+                      hasEmail
+                        ? !(isVerifiedEmail && isVerifiedPhone)
+                        : !isVerifiedPhone
+                    }
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Create Account
+                      </>
+                    )}
+                  </Button>
+                }
+                title="Confirm Account Registration"
+                description="Are you sure you want to create this account? The resident will be able to use these credentials to access their information."
+                actionLabel="Yes, Create Account"
+                onClick={submit}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
