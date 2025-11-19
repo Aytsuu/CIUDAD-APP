@@ -6,6 +6,8 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
 from apps.notification.utils import create_notification
+from apps.administration.models import Staff
+import json
 
 
 def archive_completed_hotspots():
@@ -55,6 +57,31 @@ def archive_passed_waste_events():
     
     return 0
 
+@receiver(post_save, sender=WasteReport)
+def create_waste_report_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        # Get all staff with ADMIN position
+        admin_staff = Staff.objects.filter(
+            pos__pos_title__iexact='ADMIN'
+        ).select_related('rp__account')
+        
+        # Get the account IDs of admin staff
+        admin_accounts = []
+        for staff in admin_staff:
+            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
+                admin_accounts.append(staff.rp.account)
+        
+        if admin_accounts:
+            create_notification(
+                title='New Waste Report Filed', 
+                message=f'Report {instance.rep_id} is waiting for your review.',
+                recipients=admin_accounts,
+                notif_type='REPORT',
+                mobile_route="/(waste)/illegal-dumping/staff/illegal-dump-view-staff",
+                mobile_params={'rep_id': instance.rep_id},
+                web_route="/waste-illegaldumping-report",
+            )
+
 @receiver(pre_save, sender=Garbage_Pickup_Request)
 def store_previous_status(sender, instance, **kwargs):
     if instance.pk:
@@ -67,7 +94,7 @@ def store_previous_status(sender, instance, **kwargs):
         instance._previous_status = None
 
 @receiver(post_save, sender=Garbage_Pickup_Request)
-def create_garbage_request_notification(sender, instance, created, **kwargs):
+def create_garbage_request_notification_on_update(sender, instance, created, **kwargs):
     if not created and hasattr(instance, '_previous_status'):
         previous_status = instance._previous_status
         current_status = instance.garb_req_status
@@ -122,7 +149,7 @@ def store_previous_waste_report_status(sender, instance, **kwargs):
         instance._previous_rep_status = None
 
 @receiver(post_save, sender=WasteReport)
-def create_waste_report_notification(sender, instance, created, **kwargs):
+def create_waste_report_notification_on_update(sender, instance, created, **kwargs):
     if not created and hasattr(instance, '_previous_rep_status'):
         previous_status = instance._previous_rep_status
         current_status = instance.rep_status
