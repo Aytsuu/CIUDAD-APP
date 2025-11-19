@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "@/components/ui/media-gallery";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAnnouncementList } from "../announcement/queries/announcementFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 function AnnouncementTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -276,6 +277,14 @@ function AnnouncementTracker() {
                         <ArrowLeft className="text-gray-700 w-5 h-5"/>
                       </div>
                       <p className="text-sm text-gray-400">
+                        {handleFormatDate(selected.ann_start_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-end gap-4">
+                      <Label className="text-lg text-primary">
+                        {capitalize(selected.staff.name)}
+                      </Label>
+                      <p className="text-sm text-gray-400 mb-1">
                         {handleFormatDate(selected.ann_start_at)}
                       </p>
                     </div>

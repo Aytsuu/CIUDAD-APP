@@ -61,14 +61,15 @@ export const usePositionGroups = () => {
   })
 }
 
-export const useGetStaffByTitle = (position: string) => {
+export const useGetStaffByTitle = (position: string, staff_type: string) => {
   return useQuery({
-    queryKey: ['staffByTitle', position]  ,
+    queryKey: ['staffByTitle', position, staff_type],
     queryFn: async () => {
       try {
         const res = await api.get('administration/staff/by-title/', {
           params: {
-            pos_title: position
+            pos_title: position,
+            staff_type
           }
         });
         return res.data;
