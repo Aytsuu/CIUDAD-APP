@@ -631,10 +631,7 @@ export default function PrenatalFormFirstPg({
     const currObs = obsHistoryData?.obstetrical_history;
 
     if (obsHistoryData && !obsLoading) {
-      setValue(
-        "obstetricHistory.noOfChBornAlive",
-        currObs?.obs_ch_born_alive || 0
-      );
+      setValue("obstetricHistory.noOfChBornAlive", currObs?.obs_ch_born_alive || 0);
       setValue("obstetricHistory.noOfLivingCh", currObs?.obs_living_ch || 0);
       setValue("obstetricHistory.noOfAbortion", currObs?.obs_abortion || 0);
       setValue("obstetricHistory.noOfStillBirths", currObs?.obs_still_birth || 0);

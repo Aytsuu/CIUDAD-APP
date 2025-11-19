@@ -128,11 +128,11 @@ export const PrenatalFormSchema = z.object({
 
     // obstetric history
     obstetricHistory: z.object({
-        noOfChBornAlive: positiveNumberSchema.optional(),
-        noOfLivingCh: positiveNumberSchema.optional(),
-        noOfAbortion: positiveNumberSchema.optional(),
-        noOfStillBirths: positiveNumberSchema.optional(),
-        historyOfLBabies: positiveNumberSchema.optional(),
+        noOfChBornAlive: positiveNumberSchema.default(0),
+        noOfLivingCh: positiveNumberSchema.default(0),
+        noOfAbortion: positiveNumberSchema.default(0),
+        noOfStillBirths: positiveNumberSchema.default(0),
+        historyOfLBabies: positiveNumberSchema.default(0),
         historyOfLBabiesStr: z.boolean().default(false),
         historyOfDiabetes: z.boolean().default(false),
     }).optional(),
