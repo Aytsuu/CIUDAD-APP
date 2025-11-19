@@ -7,8 +7,8 @@ import {
   Search,
   Users,
   Loader2,
-  Download,
   MoveLeft,
+  FileText,
 } from "lucide-react";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import {
@@ -22,11 +22,11 @@ import { Card } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useStaffs } from "../administration/queries/administrationFetchQueries";
 import { teamColumns } from "./TeamColumns";
 import { PlantillaDocTemplate } from "./template/PlantillaDocTemplate";
 import { CertDocTemplate } from "./template/CertDocTemplate";
+import { BsChevronLeft } from "react-icons/bs";
 
 export default function TeamRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -56,27 +56,24 @@ export default function TeamRecords() {
     else hideLoading();
   }, [isLoadingStaffs]);
 
-  // ----------------- HANDLERS --------------------
-  // const handleExport = (type: "csv" | "excel" | "pdf") => {
-  //   switch (type) {
-  //     case "csv":
-  //       // exportToCSV(residents)
-  //       break;
-  //     case "excel":
-  //       // exportToExcel(residents)
-  //       break;
-  //     case "pdf":
-  //       // exportToPDF(residents)
-  //       break;
-  //   }
-  // };
   // ----------------- RENDER --------------------
   if(view == "plantilla") {
     return (
-      <div className="space-y-2">
-        <Button onClick={() => setView("")} variant={"outline"} className="border-none shadow-none bg-transparent">
-          <MoveLeft /> Back
-        </Button>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button 
+              onClick={() => setView("")} 
+              className="text-black p-2 self-start"
+              variant={"outline"}>
+            <BsChevronLeft />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Plantilla
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">Generate the official Plantilla document for Barangay Base Responders, Barangay San Roque (Ciudad).</p>
+          </div>
+        </div>
         <PlantillaDocTemplate 
           staff={staffList}
         />
@@ -86,10 +83,21 @@ export default function TeamRecords() {
 
   if(view == "certification") {
     return (
-      <div className="space-y-2">
-        <Button onClick={() => setView("")} variant={"outline"} className="border-none shadow-none bg-transparent">
-          <MoveLeft /> Back
-        </Button>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button 
+              onClick={() => setView("")} 
+              className="text-black p-2 self-start"
+              variant={"outline"}>
+            <BsChevronLeft />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Certification
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">Generate the official Certification document for Barangay Base Responders, Barangay San Roque (Ciudad).</p>
+          </div>
+        </div>
         <CertDocTemplate 
           staff={staffList}
         />
@@ -121,22 +129,12 @@ export default function TeamRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2">
-              <DropdownLayout
-                trigger={
-                  <Button variant="outline" className="gap-2">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                }
-                options={[
-                  { id: "csv", name: "Export as CSV" },
-                  { id: "excel", name: "Export as Excel" },
-                  { id: "pdf", name: "Export as PDF" },
-                ]}
-              />
               <Button onClick={() => setView("plantilla")} variant="outline" className="gap-2">
+                <FileText className="mr-1"/>
                 Plantilla
               </Button>
               <Button onClick={() => setView("certification")}  variant="outline" className="gap-2">
+                <FileText className="mr-1"/>
                 Certification
               </Button>
             </div>

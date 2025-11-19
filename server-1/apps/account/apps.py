@@ -23,7 +23,7 @@ class AccountConfig(AppConfig):
             scheduler.add_job(
                 clean_otp,
                 'interval',
-                minutes=30,
+                minutes=1,
                 next_run_time=datetime.now(),
                 misfire_grace_time=900,
                 id='clean_expired_otp'
