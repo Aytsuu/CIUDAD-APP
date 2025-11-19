@@ -479,9 +479,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:
             try:
-                return obj.nrc_id.nrc_requester
-            except AttributeError:
-                return "Unknown Non-Resident"
+                return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+            except Exception:
+                try:
+                    return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+                except Exception:
+                    return "Unknown Non-Resident"
 
         #  If neither cr_id nor nrc_id exists
         return "Unknown"
