@@ -473,10 +473,10 @@ function OrdinancePage() {
         return baseMatches || amendmentMatches;
     })
     .sort((a, b) => {
-        // Sort by ord_num (extract number and year for proper sorting)
-        const aNum = a.baseOrdinance.ord_num || '';
-        const bNum = b.baseOrdinance.ord_num || '';
-        return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
+        // Sort by ord_date_created (newest first)
+        const aDate = a.baseOrdinance.ord_date_created ? new Date(a.baseOrdinance.ord_date_created).getTime() : 0;
+        const bDate = b.baseOrdinance.ord_date_created ? new Date(b.baseOrdinance.ord_date_created).getTime() : 0;
+        return bDate - aDate; // Descending order (newest first)
     });
 
     // Calculate pagination for filtered items (client-side pagination)

@@ -148,10 +148,34 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
         instance = self.get_object()
         if not instance:
             return Response(status=status.HTTP_404_NOT_FOUND)
-            
+        
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        staff, staff_identifier = resolve_staff_from_request(request)
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
         
         if permanent:
+            # Log before permanent delete
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                if instance.we_location:
+                    description_parts.append(f"Location: {instance.we_location}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                description_parts.append("Status: Deleted")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Event Deleted",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged: Waste event {instance.we_num} deleted")
+            
             # Permanent delete
             instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -159,6 +183,28 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
             # Soft delete (archive)
             instance.we_is_archive = True
             instance.save()
+            
+            # Log archive
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                if instance.we_location:
+                    description_parts.append(f"Location: {instance.we_location}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                description_parts.append("Status: Archived")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Event Archived",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged: Waste event {instance.we_num} archived")
+            
             serializer = self.get_serializer(instance)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -169,9 +215,34 @@ class WasteEventRestoreView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
         instance = self.get_object()
         instance.we_is_archive = False
         instance.save()
+        
+        # Log restore
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.we_name:
+                description_parts.append(f"Event: {instance.we_name}")
+            if instance.we_location:
+                description_parts.append(f"Location: {instance.we_location}")
+            if instance.we_date:
+                date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                description_parts.append(f"Date: {date_str}")
+            description_parts.append("Status: Restored")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Event Restored",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.we_num)
+            )
+            logger.info(f"Activity logged: Waste event {instance.we_num} restored")
+        
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -266,7 +337,35 @@ class WasteCollectorDeleteView(generics.DestroyAPIView):
 
     def get_object(self):
         wasc_id = self.kwargs.get('wasc_id')
-        return get_object_or_404(WasteCollector, wasc_id=wasc_id) 
+        return get_object_or_404(WasteCollector, wasc_id=wasc_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.wc_num:
+                description_parts.append(f"Collection Schedule: {instance.wc_num}")
+            if instance.wstp and instance.wstp.staff:
+                staff_name = f"{instance.wstp.staff.rp.per.per_fname} {instance.wstp.staff.rp.per.per_lname}" if instance.wstp.staff.rp and instance.wstp.staff.rp.per else "N/A"
+                description_parts.append(f"Collector: {staff_name}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Collector Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wasc_id)
+            )
+            logger.info(f"Activity logged: Waste collector {instance.wasc_id} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 # WASTE COLLECTION DELETE
 class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
@@ -276,7 +375,37 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 
     def get_object(self):
         wc_num = self.kwargs.get('wc_num')
-        return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
+        return get_object_or_404(WasteCollectionSched, wc_num=wc_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.sitio:
+                description_parts.append(f"Sitio: {instance.sitio.sitio_name}")
+            if instance.wc_day:
+                description_parts.append(f"Day: {instance.wc_day}")
+            if instance.wc_time:
+                time_str = instance.wc_time.strftime('%I:%M %p') if not isinstance(instance.wc_time, str) else instance.wc_time
+                description_parts.append(f"Time: {time_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Collection Schedule Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wc_num)
+            )
+            logger.info(f"Activity logged: Waste collection schedule {instance.wc_num} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
     def perform_create(self, serializer):
@@ -457,7 +586,39 @@ class DeleteHotspotView(generics.DestroyAPIView):
 
     def get_object(self):
         wh_num = self.kwargs.get('wh_num')
-        return get_object_or_404(WasteHotspot, wh_num=wh_num) 
+        return get_object_or_404(WasteHotspot, wh_num=wh_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.sitio_id:
+                description_parts.append(f"Sitio: {instance.sitio_id.sitio_name}")
+            if instance.wh_date:
+                date_str = instance.wh_date.strftime('%Y-%m-%d') if not isinstance(instance.wh_date, str) else instance.wh_date
+                description_parts.append(f"Date: {date_str}")
+            if instance.wh_start_time and instance.wh_end_time:
+                start_str = instance.wh_start_time.strftime('%I:%M %p') if not isinstance(instance.wh_start_time, str) else instance.wh_start_time
+                end_str = instance.wh_end_time.strftime('%I:%M %p') if not isinstance(instance.wh_end_time, str) else instance.wh_end_time
+                description_parts.append(f"Time: {start_str} - {end_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Hotspot Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wh_num)
+            )
+            logger.info(f"Activity logged: Waste hotspot {instance.wh_num} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
 # ============================ ILLEGAL DUMPING ================================
@@ -598,7 +759,39 @@ class DeleteWasteReportView(generics.DestroyAPIView):
 
     def get_object(self):
         rep_id = self.kwargs.get('rep_id')
-        return get_object_or_404(WasteReport, rep_id=rep_id) 
+        return get_object_or_404(WasteReport, rep_id=rep_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.rep_id:
+                description_parts.append(f"Report ID: {instance.rep_id}")
+            if instance.rep_matter:
+                description_parts.append(f"Matter: {instance.rep_matter}")
+            if instance.rep_location:
+                description_parts.append(f"Location: {instance.rep_location}")
+            if instance.rep_date:
+                date_str = instance.rep_date.strftime('%Y-%m-%d %I:%M %p') if not isinstance(instance.rep_date, str) else instance.rep_date
+                description_parts.append(f"Date: {date_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Illegal Dumping Report Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.rep_id)
+            )
+            logger.info(f"Activity logged: Illegal dumping report {instance.rep_id} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
 class WastePersonnelView(generics.ListAPIView):
@@ -738,9 +931,32 @@ class WasteTruckView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
         serializer = WasteTruckSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            
+            # Log create
+            staff, staff_identifier = resolve_staff_from_request(request)
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                if instance.truck_status:
+                    description_parts.append(f"Status: {instance.truck_status}")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Created",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} created")
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -797,16 +1013,56 @@ class WasteTruckDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
     #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     def destroy(self, request, pk):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
         instance = self.get_object(pk)
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
         
+        staff, staff_identifier = resolve_staff_from_request(request)
+        
         if permanent:
+            # Log before permanent delete
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                description_parts.append("Status: Deleted")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Deleted",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} deleted")
+            
             # Permanent delete
             instance.delete()
         else:
             # Soft delete (archive)
             instance.truck_is_archive = True
             instance.save()
+            
+            # Log archive
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                description_parts.append("Status: Archived")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Archived",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} archived")
             
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -899,7 +1155,7 @@ class GarbagePickupFileView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupFileSerializer
     queryset = GarbagePickupRequestFile.objects.all()
      
-class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
+class GarbagePickupRequestPendingView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
     pagination_class = StandardResultsPagination

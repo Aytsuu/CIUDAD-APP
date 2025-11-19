@@ -1038,7 +1038,7 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     serializer_class = PurposeRatesListViewSerializer
     
 # =================== MINUTES OF MEETING VIEWS ======================
-class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
+class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
     permission_classes = [AllowAny]  # Add appropriate permissions
@@ -1140,7 +1140,7 @@ class MOMFileView(generics.ListCreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
 
-class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+class UpdateMinutesOfMeetingView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
@@ -1148,9 +1148,72 @@ class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_is_archive = instance.mom_is_archive
+        
+        # Format area of focus for display
+        old_area_of_focus = instance.mom_area_of_focus
+        if isinstance(old_area_of_focus, list):
+            old_area_of_focus_display = ", ".join(old_area_of_focus).upper()
+        else:
+            old_area_of_focus_display = str(old_area_of_focus).upper() if old_area_of_focus else "N/A"
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Log activity (custom logging for archive/restore and updates)
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                staff_id = request.data.get('staff_id')
+                if not staff_id:
+                    staff_id = updated_instance.staff_id.staff_id if updated_instance.staff_id else None
+                
+                if staff_id:
+                    if isinstance(staff_id, str) and len(staff_id) < 11:
+                        staff_id = staff_id.zfill(11)
+                    elif isinstance(staff_id, int):
+                        staff_id = str(staff_id).zfill(11)
+                    
+                    staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                    
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        # Check if archive status changed
+                        new_is_archive = updated_instance.mom_is_archive
+                        new_area_of_focus = updated_instance.mom_area_of_focus
+                        if isinstance(new_area_of_focus, list):
+                            new_area_of_focus_display = ", ".join(new_area_of_focus).upper()
+                        else:
+                            new_area_of_focus_display = str(new_area_of_focus).upper() if new_area_of_focus else "N/A"
+                        
+                        description_parts = []
+                        
+                        # Check for archive status change
+                        if old_is_archive != new_is_archive:
+                            if new_is_archive:
+                                description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' archived")
+                            else:
+                                description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' restored")
+                        
+                        # Add update details
+                        if not description_parts:
+                            description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' updated")
+                        
+                        # Add details
+                        description_parts.append(f"Date: {updated_instance.mom_date}")
+                        description_parts.append(f"Area of Focus: {new_area_of_focus_display}")
+                        
+                        create_activity_log(
+                            act_type="Minutes of Meeting Updated" if old_is_archive == new_is_archive else ("Minutes of Meeting Archived" if new_is_archive else "Minutes of Meeting Restored"),
+                            act_description=". ".join(description_parts),
+                            staff=staff,
+                            record_id=str(updated_instance.mom_id)
+                        )
+                        logger.info(f"Activity logged for minutes of meeting update: {updated_instance.mom_id}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for minutes of meeting update: {str(log_error)}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1161,7 +1224,45 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
 
     def get_object(self):
         mom_id = self.kwargs.get('mom_id')
-        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
+        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Format area of focus for display
+        area_of_focus = instance.mom_area_of_focus
+        if isinstance(area_of_focus, list):
+            area_of_focus_display = ", ".join(area_of_focus).upper()
+        else:
+            area_of_focus_display = str(area_of_focus).upper() if area_of_focus else "N/A"
+        
+        # Log activity before deletion
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            staff_id = request.data.get('staff_id') or (instance.staff_id.staff_id if instance.staff_id else None)
+            
+            if staff_id:
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    create_activity_log(
+                        act_type="Minutes of Meeting Deleted",
+                        act_description=f"Minutes of Meeting '{instance.mom_title}' deleted. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                        staff=staff,
+                        record_id=str(instance.mom_id)
+                    )
+                    logger.info(f"Activity logged for minutes of meeting deletion: {instance.mom_id}")
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for minutes of meeting deletion: {str(log_error)}")
+        
+        return super().destroy(request, *args, **kwargs) 
     
 
 class DeleteMOMFileView(generics.DestroyAPIView):
@@ -1203,7 +1304,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Ordinance.objects.filter(
             ord_is_archive=False
-        )
+        ).order_by('-ord_date_created')
     
     def create(self, request, *args, **kwargs):
         # Extract of_id from request data
@@ -1245,10 +1346,15 @@ class OrdinanceListView(generics.ListCreateAPIView):
             
             # Only log if we have a valid staff with staff_id
             if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Format category for display (remove brackets if array)
+                category_display = ordinance.ord_category
+                if isinstance(category_display, list):
+                    category_display = ", ".join(category_display)
+                
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Created",
-                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {ordinance.ord_category}",
+                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {category_display}",
                     staff=staff,
                     record_id=ordinance.ord_num
                 )
