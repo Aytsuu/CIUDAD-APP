@@ -1475,6 +1475,94 @@ class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from .models import Assignment_Collector
+        
+        response = super().create(request, *args, **kwargs)
+        
+        if response.status_code in [200, 201]:
+            instance_data = response.data
+            pick_id = instance_data.get('pick_id')
+            
+            if pick_id:
+                try:
+                    instance = Pickup_Assignment.objects.select_related(
+                        'garb_id', 'garb_id__rp', 'garb_id__rp__per',
+                        'garb_id__sitio_id',
+                        'truck_id',
+                        'wstp_id', 'wstp_id__staff', 'wstp_id__staff__rp', 'wstp_id__staff__rp__per'
+                    ).prefetch_related(
+                        'collectors', 'collectors__wstp_id', 'collectors__wstp_id__staff',
+                        'collectors__wstp_id__staff__rp', 'collectors__wstp_id__staff__rp__per'
+                    ).get(pick_id=pick_id)
+                    
+                    staff, staff_identifier = resolve_staff_from_request(request)
+                    
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        description_parts = []
+                        
+                        # Garbage pickup request info
+                        if instance.garb_id:
+                            description_parts.append(f"Request ID: {instance.garb_id.garb_id}")
+                            if instance.garb_id.garb_location:
+                                description_parts.append(f"Location: {instance.garb_id.garb_location}")
+                            if instance.garb_id.garb_waste_type:
+                                description_parts.append(f"Waste Type: {instance.garb_id.garb_waste_type}")
+                            if instance.garb_id.rp and instance.garb_id.rp.per:
+                                requester_name = f"{instance.garb_id.rp.per.per_fname} {instance.garb_id.rp.per.per_lname}".strip()
+                                description_parts.append(f"Requester: {requester_name}")
+                            if instance.garb_id.sitio_id:
+                                description_parts.append(f"Sitio: {instance.garb_id.sitio_id.sitio_name}")
+                        
+                        # Truck info
+                        if instance.truck_id:
+                            description_parts.append(f"Truck: {instance.truck_id.truck_plate_num}")
+                        
+                        # Driver info
+                        if instance.wstp_id and instance.wstp_id.staff:
+                            driver_name = instance.wstp_id.get_staff_name()
+                            if driver_name:
+                                description_parts.append(f"Driver: {driver_name}")
+                        
+                        # Date and time
+                        if instance.pick_date:
+                            date_str = instance.pick_date.strftime('%Y-%m-%d') if not isinstance(instance.pick_date, str) else instance.pick_date
+                            description_parts.append(f"Scheduled Date: {date_str}")
+                        if instance.pick_time:
+                            time_str = instance.pick_time.strftime('%I:%M %p') if not isinstance(instance.pick_time, str) else instance.pick_time
+                            description_parts.append(f"Scheduled Time: {time_str}")
+                        
+                        # Collectors
+                        collectors = Assignment_Collector.objects.filter(pick_id=instance).select_related(
+                            'wstp_id__staff__rp__per'
+                        )
+                        if collectors.exists():
+                            collector_names = []
+                            for collector in collectors:
+                                if collector.wstp_id:
+                                    name = collector.wstp_id.get_staff_name()
+                                    if name:
+                                        collector_names.append(name)
+                            if collector_names:
+                                description_parts.append(f"Collectors: {', '.join(collector_names)}")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="Pickup_Assignment Created",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(instance.pick_id)
+                        )
+                        logger.info(f"Activity logged: Pickup assignment {instance.pick_id} created")
+                except Pickup_Assignment.DoesNotExist:
+                    logger.debug(f"Pickup assignment {pick_id} not found for logging")
+                except Exception as e:
+                    logger.debug(f"Error logging pickup assignment creation: {str(e)}")
+        
+        return response
 
 class AssignmentCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
