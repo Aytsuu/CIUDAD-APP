@@ -45,15 +45,18 @@ export const useAllAssignedFeatures = () => {
   });
 };
 
-export const usePositionGroups = () => {
+export const usePositionGroups = (category?: string) => {
   return useQuery({
-    queryKey: ['positionGroups'],
+    queryKey: ['positionGroups', category],
     queryFn: async () => {
       try {
-        const res = await api.get('administration/position/group/list/');
+        const res = await api.get('administration/position/group/list/', {
+          params: {
+            category
+          }
+        });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
@@ -74,7 +77,6 @@ export const useGetStaffByTitle = (position: string, staff_type: string) => {
         });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
