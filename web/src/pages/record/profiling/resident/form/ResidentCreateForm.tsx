@@ -90,7 +90,7 @@ export default function ResidentCreateForm({ params }: {
           address.add_province !== "" &&
           address.add_city !== "" &&
           address.add_barangay !== "" &&
-          (address.add_barangay !== ""
+          (address.add_barangay === "SAN ROQUE (CIUDAD)"
             ? address.sitio !== ""
             : address.add_external_sitio !== "")
       );

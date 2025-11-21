@@ -23,6 +23,7 @@ interface FormInputProps {
   maxLength?: number;
   upper?: boolean;
   noSpecialChars?: boolean;
+  required?: boolean;
 }
 
 export const FormInput = React.memo(
@@ -40,13 +41,17 @@ export const FormInput = React.memo(
     maxLength,
     upper = false,
     noSpecialChars = false,
+    required = false
   }: FormInputProps) => (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem className={className}>
-          {label && <FormLabel className="text-black/70">{label}</FormLabel>}
+          {label && <FormLabel className="text-black/70">
+            {label}
+            {required && <span className="ml-1 text-red-500">*</span>}
+          </FormLabel>}
           <FormControl>
             <Input
               className={cn("", className)}

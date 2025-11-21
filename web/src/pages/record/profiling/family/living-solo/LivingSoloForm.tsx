@@ -81,6 +81,7 @@ export default function LivingSoloForm({
               Household <span className="text-gray-500">
                 ({selectOwnedHouses ? "Owned" : "Existing"})
               </span>
+              <span className="ml-1 text-red-500">*</span>
             </Label>
             {isRegistrationTab && <Button 
               type="button"
@@ -127,6 +128,7 @@ export default function LivingSoloForm({
               placeholder="Select a household"
               options={ownedHouses}
               readOnly={false}
+              required
             />
           )} 
         </div>
@@ -140,6 +142,7 @@ export default function LivingSoloForm({
             { id: "sharer", name: "SHARER" },
           ]}
           readOnly={buildingReadOnly}
+          required
         />
         <FormSelect
           control={form.control}
@@ -150,6 +153,7 @@ export default function LivingSoloForm({
             { id: "yes", name: "YES" },
           ]}
           readOnly={false}
+          required
         />
       </div>
       {/* Submit Button */}
