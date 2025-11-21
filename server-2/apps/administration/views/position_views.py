@@ -67,3 +67,22 @@ class PositionGroupsListView(APIView):
         if queryset:
             return Response(queryset)
         return Response(status=status.HTTP_404_NOT_FOUND)
+    
+class PositionGroupUpdateView(APIView):
+    def patch(self, request, *args, **kwargs):
+        positions = request.data
+        
+        for pos in positions:
+            instance = Position.objects.filter(pos_id=pos['pos_id']).first()
+            for key, val in pos.items():
+                setattr(
+                    instance,
+                    key,
+                    val,
+                )
+            instance.save()
+
+        return Response(
+            PositionBaseSerializer(Position.objects.all(), many=True).data, 
+            status=status.HTTP_200_OK
+        )

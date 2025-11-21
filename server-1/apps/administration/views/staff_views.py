@@ -135,3 +135,4 @@ class StaffDataByTitleView(APIView):
     staff = Staff.objects.filter(pos=req_position.pos_id, staff_type__iexact=type)
     return Response(StaffTableSerializer(staff, many=True).data)
 
+
