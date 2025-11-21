@@ -3,8 +3,8 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { Search, Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -18,12 +18,13 @@ const IncomeExpenseMain = () => {
   const router = useRouter();
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [isRefreshing, setIsRefreshing] = useState(false); 
+  
   // Add debouncing for search
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const {
-    data: responseData = { results: [], count: 0 }, // Default to paginated structure
+    data: responseData = { results: [], count: 0 },
     isLoading,
     isError,
     refetch
@@ -45,8 +46,11 @@ const IncomeExpenseMain = () => {
     });
   };
 
-  const handleRefresh = () => {
-    refetch();
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   // Loading state component
@@ -55,7 +59,6 @@ const IncomeExpenseMain = () => {
       <LoadingState/>
     </View>
   );  
-
 
   if (isError) {
     return (
@@ -101,121 +104,135 @@ const IncomeExpenseMain = () => {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
-      {showSearch && (
-        <SearchInput 
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={() => {}} // Can leave empty since you're using debounce
-        />
-      )}      
+      <View className="flex-1">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}}
+          />
+        )}      
 
-      <View className="flex-1 px-2">
-
-        {/* Optional: Show total count - placeholder for future pagination */}
-        {fetchedData.length > 0 && (
-          <View className="px-4 mb-2 pt-2">
-            <Text className="text-xs text-gray-500">
-              Showing {fetchedData.length} of {responseData.count} records
-            </Text>
-          </View>
-        )}
-
-        {/* Budget Cards */}
-        <View className="px-4 space-y-4 pb-4">
-          {isLoading ? (
-            renderLoadingState() 
-          ) : (
-            <>
-              {[...fetchedData]
-                .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
-                .map((tracker: any) => {
-
-                const budget = Number(tracker.ie_main_tot_budget);
-                const income = Number(tracker.ie_main_inc);
-                const expense = Number(tracker.ie_main_exp);
-                const remainingBal = Number(tracker.ie_remaining_bal);
-                const progress = budget > 0 ? (expense / budget) * 100 : 0;
-
-                return (
-                  <TouchableOpacity
-                    key={tracker.ie_main_year}
-                    onPress={() => handleCardClick(
-                      tracker.ie_main_year,
-                      budget,
-                      expense,
-                      income
-                    )}
-                    activeOpacity={0.8}
-                  >
-                    <View className="bg-white rounded-lg p-4 border border-gray-200 mb-3">
-                      {/* Card Header */}
-                      <View className="flex-row justify-between items-center mb-4">
-                        <View className="flex-row items-center">
-                          <View className="rounded-full border-2 border-[#2a3a61] p-2 mr-3">
-                            <Calendar size={20} color="#2a3a61" />
-                          </View>
-                          <Text className="font-semibold text-lg text-[#2a3a61]">
-                            {tracker.ie_main_year} Budget Overview
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Card Content */}
-                      <View className="space-y-3">
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-600">Total Budget:</Text>
-                          <Text className="text-blue-600">
-                            Php {budget.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-600">Total Income:</Text>
-                          <Text className="text-green-600">
-                            Php {income.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-600">Total Expenses:</Text>
-                          <Text className="text-red-600">
-                            Php {expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-600">Remaining Balance:</Text>
-                          <Text className="text-yellow-600">
-                            Php {remainingBal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Progress Bar */}
-                      <View className="mt-4">
-                        <View className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <View
-                            className="h-full bg-[#2a3a61]"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </View>
-                        <Text className="text-xs text-gray-500 mt-1 text-center">
-                          {progress.toFixed(2)}% of budget spent
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-              {fetchedData.length === 0 && (
-                <Text className="text-center text-gray-500 text-sm mt-4">
-                  No matching records found
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+              tintColor="#00a8f0"
+            />
+          }
+        >
+          <View className="px-2">
+            {/* Optional: Show total count */}
+            {fetchedData.length > 0 && (
+              <View className="px-4 mb-2 pt-2">
+                <Text className="text-xs text-gray-500">
+                  Showing {fetchedData.length} of {responseData.count} records
                 </Text>
-              )}
-            </>
-          )}
-        </View>
-      </View>
+              </View>
+            )}
 
+            {/* Budget Cards */}
+            <View className="px-4 space-y-4 pb-4">
+              {isLoading && !isRefreshing ? (
+                renderLoadingState() 
+              ) : (
+                <>
+                  {[...fetchedData]
+                    .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
+                    .map((tracker: any) => {
+
+                    const budget = Number(tracker.ie_main_tot_budget);
+                    const income = Number(tracker.ie_main_inc);
+                    const expense = Number(tracker.ie_main_exp);
+                    const remainingBal = Number(tracker.ie_remaining_bal);
+                    const progress = budget > 0 ? (expense / budget) * 100 : 0;
+
+                    return (
+                      <TouchableOpacity
+                        key={tracker.ie_main_year}
+                        onPress={() => handleCardClick(
+                          tracker.ie_main_year,
+                          budget,
+                          expense,
+                          income
+                        )}
+                        activeOpacity={0.8}
+                      >
+                        <View className="bg-white rounded-lg p-4 border border-gray-200 mb-3">
+                          {/* Card Header */}
+                          <View className="flex-row justify-between items-center mb-4">
+                            <View className="flex-row items-center">
+                              <View className="rounded-full border-2 border-[#2a3a61] p-2 mr-3">
+                                <Calendar size={20} color="#2a3a61" />
+                              </View>
+                              <Text className="font-semibold text-lg text-[#2a3a61]">
+                                {tracker.ie_main_year} Budget Overview
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Card Content */}
+                          <View className="space-y-3">
+                            <View className="flex-row justify-between">
+                              <Text className="text-gray-600">Total Budget:</Text>
+                              <Text className="text-blue-600">
+                                Php {budget.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </Text>
+                            </View>
+                            <View className="flex-row justify-between">
+                              <Text className="text-gray-600">Total Income:</Text>
+                              <Text className="text-green-600">
+                                Php {income.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </Text>
+                            </View>
+                            <View className="flex-row justify-between">
+                              <Text className="text-gray-600">Total Expenses:</Text>
+                              <Text className="text-red-600">
+                                Php {expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </Text>
+                            </View>
+                            <View className="flex-row justify-between">
+                              <Text className="text-gray-600">Remaining Balance:</Text>
+                              <Text className="text-yellow-600">
+                                Php {remainingBal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Progress Bar */}
+                          <View className="mt-4">
+                            <View className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <View
+                                className="h-full bg-[#2a3a61]"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </View>
+                            <Text className="text-xs text-gray-500 mt-1 text-center">
+                              {progress.toFixed(2)}% of budget spent
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {fetchedData.length === 0 && (
+                    <Text className="text-center text-gray-500 text-sm mt-4">
+                      No matching records found
+                    </Text>
+                  )}
+                </>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     </PageLayout>
   );
 };

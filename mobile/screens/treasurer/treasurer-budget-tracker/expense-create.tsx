@@ -41,7 +41,6 @@ function ExpenseCreateForm() {
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
-  console.log("REMAIN BAL: ", totBud)
 
   const particularSelector = budgetItems.map(item => ({
     label: item.name,
@@ -80,9 +79,6 @@ function ExpenseCreateForm() {
     const dateStr = values.iet_datetime?.replace(' ', 'T').replace('+00', 'Z');
     const inputDate = new Date(dateStr);
     const inputYear = inputDate.getFullYear();
-
-    console.log("DATE: ", values.iet_datetime)
-    console.log("YEARRRR: ", inputYear)
 
     if (inputYear !== years) {
       form.setError('iet_datetime', {
@@ -138,7 +134,6 @@ function ExpenseCreateForm() {
     }
     else{
         if(amount){
-            console.log("HERRRRRRRRRRRRRREEEEEEEEEEEEEERRRRRRR ONLLLYY AMOUNTTT")
             totalBudget = totBUDGET - amount;
             totalExpense = totEXP + amount;
             proposedBud = propBudget - amount;                
@@ -163,7 +158,6 @@ function ExpenseCreateForm() {
     };
 
     createExpense(allValues);
-    // console.log("CREATE EXP: ", allValues)
   };
 
   const handleProceed = () => {

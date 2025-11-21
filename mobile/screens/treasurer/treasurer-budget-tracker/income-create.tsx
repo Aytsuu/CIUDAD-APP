@@ -57,8 +57,6 @@ function IncomeCreateForm() {
   const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
-  console.log("TOT INC HERE: ", totInc)
-
   const IncomeParticulars = IncomeParticularItems
     .filter(item => item.id && item.name)
     .map(item => ({
@@ -96,7 +94,6 @@ function IncomeCreateForm() {
       staff_id: user?.staff?.staff_id    
     }
 
-    // console.log("ALL INCOME: ", AllValues)
     createIncome(AllValues);
   };
 
