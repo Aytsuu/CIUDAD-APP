@@ -69,7 +69,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                     Q(per__personal_addresses__add__sitio__sitio_name__icontains=search_query)
                 ).distinct()
 
-        return queryset.order_by('rp_id')
+        return queryset.order_by('-rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]

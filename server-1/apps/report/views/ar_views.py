@@ -31,7 +31,7 @@ class ARTableView(generics.ListAPIView):
           Q(ar_status__icontains=search)
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-ar_id')
 
 
 class ARFileCreateView(generics.CreateAPIView):

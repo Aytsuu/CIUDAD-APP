@@ -187,9 +187,9 @@ export const ARColumns = (
       const status = row.original.status
 
       return (
-        <Badge className={`${status?.toLowerCase() === 'signed' ? 
-          "bg-green-100 text-green-700 hover:bg-green-100 shadow-none" : 
-          "bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none"}`}>
+        <Badge className={`rounded-full border ${status?.toLowerCase() === 'signed' ? 
+          "bg-green-100 text-green-700 border-green-400 hover:bg-green-100 shadow-none" : 
+          "bg-amber-100 text-amber-700 border-amber-400 hover:bg-amber-100 shadow-none"}`}>
           {status}
         </Badge>
       )

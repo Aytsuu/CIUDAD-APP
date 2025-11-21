@@ -95,8 +95,8 @@ function AnnouncementTracker() {
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-white lg:py-16 overflow-hidden">
-      <div className="container mx-auto px-4 lg:px-8">
+    <div className="relative w-full h-full bg-white overflow-hidden">
+      <div className="container mx-auto px-4 lg:px-8 lg:py-16">
         <div
           ref={headerRef}
           className={`w-full lg:w-4/5 mx-auto text-darkBlue1 mb-5 lg:mb-8 gap-3 transition-all duration-700 ${
