@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  ActivityIndicator
+  RefreshControl
 } from 'react-native';
 import { 
   ChevronLeft,
@@ -28,6 +28,7 @@ const ReceiptPage = () => {
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilterId, setSelectedFilterId] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false); 
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -126,8 +127,12 @@ const ReceiptPage = () => {
     return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-300' };
   };
 
-  const handleRefresh = () => {
-    refetch();
+
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   const handleSearchChange = (text: string) => {
@@ -290,6 +295,14 @@ const ReceiptPage = () => {
             keyExtractor={(item) => item.inv_num.toString()}
             contentContainerStyle={{ paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#00a8f0']}  // Android spinner color
+                tintColor="#00a8f0"    // iOS spinner color
+              />
+            }              
             ListEmptyComponent={
               <Text className="text-center text-gray-500 py-4">
                 No receipts found
