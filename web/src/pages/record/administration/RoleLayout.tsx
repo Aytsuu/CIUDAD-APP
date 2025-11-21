@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAllAssignedFeatures, useFeatures, usePositions } from "./queries/administrationFetchQueries"
 import { Users, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/context/AuthContext"
 import { Spinner } from "@/components/ui/spinner"
 

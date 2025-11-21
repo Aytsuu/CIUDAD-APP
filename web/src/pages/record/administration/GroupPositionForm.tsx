@@ -31,7 +31,6 @@ import {
   showSuccessToast,
 } from "@/components/ui/toast";
 import { Type } from "./AdministrationEnums";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { useUpdatePositionGroup } from "./queries/administrationUpdateQueries";
 import { Label } from "@/components/ui/label";
 
@@ -51,8 +50,6 @@ export default function GroupPositionForm() {
   const data = React.useMemo(() => params?.data, [params]);
   const { isPositionUnique } = useValidatePosition();
   const schema = groupPositionSchema(isPositionUnique);
-
-  const { safeNavigate } = useSafeNavigate();
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
