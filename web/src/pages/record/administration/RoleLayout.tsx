@@ -10,6 +10,7 @@ import { Users, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/context/AuthContext"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function RoleLayout() {
   const { user } = useAuth();
@@ -77,10 +78,9 @@ export default function RoleLayout() {
             </CardHeader>
             <CardContent className="p-0">
               {isLoadingPositions || isLoadingFeatures ? (
-                <div className="px-6 space-y-3 pb-6">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
+                <div className="px-6 flex flex-col gap-2 justify-center items-center py-6">
+                  <Spinner size="lg"/>
+                  <p className="text-sm">Loading Positions...</p>
                 </div>
               ) : (
                 <div className="px-6">
@@ -108,10 +108,9 @@ export default function RoleLayout() {
             <CardContent className="p-0">
               <div className="px-6">
                 {isLoadingAllAssignedFeatures || isLoadingFeatures ? (
-                  <div className="space-y-3 pb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
+                  <div className="px-6 flex flex-col gap-2 justify-center items-center py-6">
+                    <Spinner size="lg"/>
+                    <p className="text-sm">Loading Features...</p>
                   </div>
                 ) : !selectedPosition ? (
                   <div className="text-center py-12">

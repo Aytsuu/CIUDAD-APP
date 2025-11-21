@@ -57,20 +57,6 @@ export default function AdministrationRecords() {
     else hideLoading();
   }, [isLoadingStaffs]);
 
-  // ----------------- HANDLERS --------------------
-  // const handleExport = (type: "csv" | "excel" | "pdf") => {
-  //   switch (type) {
-  //     case "csv":
-  //       // exportToCSV(residents)
-  //       break;
-  //     case "excel":
-  //       // exportToExcel(residents)
-  //       break;
-  //     case "pdf":
-  //       // exportToPDF(residents)
-  //       break;
-  //   }
-  // };
 
   return (
     // ----------------- RENDER --------------------
@@ -97,20 +83,6 @@ export default function AdministrationRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              {/* <DropdownLayout
-                trigger={
-                  <Button variant="outline" className="gap-2">
-                    <FileDown className="h-4 w-4" />
-                    Export
-                  </Button>
-                }
-                options={[
-                  { id: "csv", name: "Export as CSV" },
-                  { id: "excel", name: "Export as Excel" },
-                  { id: "pdf", name: "Export as PDF" },
-                ]}
-              /> */}
-
               <DialogLayout 
                 trigger={<Button variant={"outline"}>
                   <MapPin  className="mr-1"/>
