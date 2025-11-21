@@ -42,7 +42,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
-                  'age', 'sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
+                   'age','sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else ''
