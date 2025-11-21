@@ -145,6 +145,7 @@ class CompleteRegistrationView(APIView):
     staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
     residentId = rp.rp_id
     familyId = new_fam.fam_id
+    rp.per.per_dob = datetime.strptime(rp.per.per_dob, '%Y-%m-%d').date()
     json_data = json.dumps(
        ResidentProfileTableSerializer(rp).data,
        default=str

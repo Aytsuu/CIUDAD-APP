@@ -199,6 +199,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                           { id: "yes", name: "YES" },
                         ]}
                         readOnly={false}
+                        required
                       />
                     </div>
                     <p className="text-xs text-gray-500">
@@ -214,6 +215,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                       label="Select household address"
                       options={formattedAddresses}
                       readOnly={false}
+                      required
                     />
                     <p className="text-xs text-gray-500">
                       This reflects the addresses entered in the resident personal information.
