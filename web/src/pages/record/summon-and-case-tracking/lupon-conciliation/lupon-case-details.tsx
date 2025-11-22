@@ -763,9 +763,7 @@ export default function LuponCaseDetails() {
 
     if (caseDetails?.comp_id) {
       escalate({sc_id, comp_id, staff_id});
-    } else {
-      console.error("Cannot escalate: comp_id is undefined");
-    }
+    } 
   }
 
   const handleReescalate = () => {        

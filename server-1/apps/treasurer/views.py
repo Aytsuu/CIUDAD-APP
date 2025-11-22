@@ -44,10 +44,17 @@ class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
             'staff_id__rp__per__per_mname',
         ).first()
         
-        if not budget_plan:
-            raise Http404("No budget plan found for the current year")
-            
-        return budget_plan
+        return budget_plan 
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            if instance is None:
+                return Response({})  
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except Exception as ex:
+            return Response({})  
 
 class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]

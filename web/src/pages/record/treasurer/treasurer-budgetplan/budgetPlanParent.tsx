@@ -400,7 +400,7 @@ export default function BudgetPlanParent() {
      {currentStep === "withLimits" && (
         <BudgetPlanMainForm
           headerData={headerForm.getValues()}
-          onBack={() => setCurrentStep("header")}
+          onBackToHeader={() => setCurrentStep("header")}
           onNext={handleWithLimitsNext}
           formData={{ formData1, formData2 }}
           updateFormData={updateFormData}
@@ -413,7 +413,8 @@ export default function BudgetPlanParent() {
       {currentStep === "withoutLimits" && (
         <BudgetPlanMainForm
           headerData={headerForm.getValues()}
-          onBack={() => setCurrentStep("withLimits")}
+          onBackToPrevious={() => setCurrentStep("withLimits")} 
+          onBackToHeader={() => setCurrentStep("header")} 
           formData={{ formData1, formData2 }}
           updateFormData={updateFormData}
           totalBudgetObli={totalBudgetObligations}

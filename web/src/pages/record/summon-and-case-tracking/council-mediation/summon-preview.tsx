@@ -84,7 +84,6 @@ function SummonPreview({
 
         setImagesLoaded(true);
       } catch (error) {
-        console.error("Error preloading images:", error);
         setImagesLoaded(true); // Continue even if images fail to load
       }
     };
@@ -167,7 +166,7 @@ function SummonPreview({
             doc.setGState(gStateReset);
           }
         } catch (e) {
-          console.error("Error adding faded background logo:", e);
+          throw e;
         }
       }
 
@@ -183,7 +182,7 @@ function SummonPreview({
         try {
           doc.addImage(barangayLogoData, "PNG", leftLogoX, headerY, logoWidth, logoHeight);
         } catch (e) {
-          console.error("Error adding barangay logo:", e);
+          throw e;
         }
       }
 
@@ -191,7 +190,7 @@ function SummonPreview({
         try {
           doc.addImage(cityLogoData, "PNG", rightLogoX, headerY, logoWidth, logoHeight);
         } catch (e) {
-          console.error("Error adding city logo:", e);
+          throw e;
         }
       }
 

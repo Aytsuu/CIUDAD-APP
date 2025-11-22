@@ -29,7 +29,6 @@ function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSucce
     const {mutate: editAnnualGrossSales, isPending} = useEditAnnualGrossSales(onSuccess)
 
     const onSubmit = (value: z.infer<typeof AnnualGrossSalesEditSchema>) => {
-        console.log("Values:", value); 
         editAnnualGrossSales({
             ...value, 
             ags_id: ags_id  

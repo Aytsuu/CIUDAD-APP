@@ -27,8 +27,6 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
     };
 }){
 
-    console.log('Assignment Collectors:', assignment?.collectors)
-    console.log('acl_ids', acl_id)
     const { mutate: updateAssignmentAndSchedule, isPending} = useUpdateAssignmentCollectorsAndSchedule()
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();

@@ -21,7 +21,6 @@ function RatesFormPage5({onSuccess}: {onSuccess?: () => void}){
     const {mutate: addPurposeRate} = useAddPurposeAndRate(onSuccess)
 
     const onSubmit = (value: z.infer<typeof PurposeAndRatesSchema> ) => {
-        console.log(value); 
         addPurposeRate(value)
     };
 

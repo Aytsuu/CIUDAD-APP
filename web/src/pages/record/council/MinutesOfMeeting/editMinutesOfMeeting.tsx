@@ -118,7 +118,7 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                         options={meetingAreaOfFocus}
                     />
                     <div className="flex items-center justify-end pt-4">
-                        <Button type="submit" onClick={() => console.log('clicked')} className="w-[100px]" disabled={isPending}>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
                             {isPending ? "Updating..." : "Update"}
                         </Button>
                     </div>

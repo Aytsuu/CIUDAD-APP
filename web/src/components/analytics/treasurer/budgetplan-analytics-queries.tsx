@@ -13,7 +13,7 @@
 
     export const useGetCurrentYearBudgetPlan = () => {
         return useQuery<CurrentYearPlan>({
-            queryKey: ["activeBudgetPlan"], 
+            queryKey: ["currentBudgetPlan"], 
             queryFn: async () => {
                 const response = await api.get('treasurer/budget-plan-analytics/');
                 return response.data;

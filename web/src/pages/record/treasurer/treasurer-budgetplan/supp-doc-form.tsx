@@ -44,7 +44,7 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
                 description: values.description
             })
         }catch(err){
-            console.error(err)
+            throw err;
         }
     };
 

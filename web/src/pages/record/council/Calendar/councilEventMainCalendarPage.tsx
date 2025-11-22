@@ -611,8 +611,8 @@ function CalendarPage() {
   const [_actionInProgress, setActionInProgress] = useState(false);
   const isSecretary = user?.staff?.pos?.toLowerCase() === "admin";
   const isWaste = user?.staff?.pos?.toLowerCase() === "waste";
-  const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase() === "lupon tagapamayapa";
-  const isClerk = user?.staff?.pos?.toLowerCase() === "clerk";
+  const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase().includes("lupon");
+  const isClerk = user?.staff?.pos?.toLowerCase().includes("clerk");
   const showMediation = isSecretary || isClerk;
   const isGADRole = user?.staff?.pos?.toLowerCase() === "gad";
   
@@ -621,7 +621,7 @@ function CalendarPage() {
   const mediationEvents = showMediation ? transformToEvents(mediationSchedules || []) : [];
 
   const { data: conciliationSchedules = [], isLoading: isConciliationLoading, isRefetching: isConciliationRefetching } = useGetConciliationSchedules();
-  const conciliationEvents = isLuponTagapamayapa ? transformToEvents(conciliationSchedules || []) : [];
+  const conciliationEvents = isLuponTagapamayapa || isSecretary? transformToEvents(conciliationSchedules || []) : [];
 
   // Fetch NON-archived events for calendar tab
   const { data: activeEventsData, isLoading: isActiveEventsLoading } = useGetCouncilEvents( 1,  1000,  undefined,  "all",  false  );
@@ -666,7 +666,7 @@ function CalendarPage() {
       }
     ];
 
-    if (isLuponTagapamayapa) {
+    if (isLuponTagapamayapa || isSecretary) {
       sources.push({
         name: "Conciliation Proceedings", 
         data: conciliationEvents,
@@ -721,7 +721,7 @@ function CalendarPage() {
     eventTypeCount++;
   }
   
-  if (isLuponTagapamayapa) {
+  if (isLuponTagapamayapa || isSecretary) {
     items.push({ label: "Conciliation Proceedings", color: "#ef4444" });
     eventTypeCount++;
   }
@@ -814,8 +814,8 @@ function CalendarPage() {
   ? (isActiveEventsLoading || 
      (showMediation && isMediationLoading) || // Only include if showMediation
      (showMediation && isMediationRefetching) || // Only include if showMediation
-     (isLuponTagapamayapa && isConciliationLoading) || // Only include if Lupon
-     (isLuponTagapamayapa && isConciliationRefetching)) // Only include if Lupon
+     ((isLuponTagapamayapa || isSecretary) && isConciliationLoading) || // Only include if Lupon
+     ((isLuponTagapamayapa || isSecretary) && isConciliationRefetching)) // Only include if Lupon
   : (
     (isSecretary && isArchivedEventsLoading) || 
     (isWaste && isArchivedWasteEventsLoading) || 
