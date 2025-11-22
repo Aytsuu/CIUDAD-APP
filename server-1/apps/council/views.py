@@ -486,7 +486,7 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         if year_filter and year_filter != "all":
             queryset = queryset.filter(res_date_approved__year=year_filter)
         
-        return queryset.order_by('-res_date_approved')  # Add ordering
+        return queryset.order_by('-res_num')  # Add ordering
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number

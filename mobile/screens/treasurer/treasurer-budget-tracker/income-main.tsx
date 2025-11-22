@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  ActivityIndicator
+  RefreshControl
 } from 'react-native';
 import {
   Trash,
@@ -58,7 +58,8 @@ const IncomeTracking = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [selectedTab, setSelectedTab] = useState('income');
-  
+  const [isRefreshing, setIsRefreshing] = useState(false); 
+
   // Add debouncing for search
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -177,8 +178,12 @@ const IncomeTracking = () => {
     });
   };
 
-  const handleRefresh = () => {
-    refetch();
+
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
 
@@ -426,6 +431,14 @@ const IncomeTracking = () => {
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
                 showsVerticalScrollIndicator={false} 
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                  />
+                }                
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No active entries found
@@ -454,6 +467,14 @@ const IncomeTracking = () => {
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
                 showsVerticalScrollIndicator={false} 
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                  />
+                }                  
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No archived entries found

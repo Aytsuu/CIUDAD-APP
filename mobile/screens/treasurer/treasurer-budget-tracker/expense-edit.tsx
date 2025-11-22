@@ -60,9 +60,6 @@ function ExpenseEdit() {
     }))
   );
 
-  console.log("PARTICULARRRR ID:", iet_particular_id)
-  console.log("PARTICULARRRR NAME:", iet_particulars_name)   
-
   const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
   const { data: budgetItems = [] } = useBudgetItems(years);
@@ -70,8 +67,6 @@ function ExpenseEdit() {
   const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
-
-  console.log("EDIT EXP: ", totBud )
 
 
   const entrytypeSelector = [
@@ -116,12 +111,6 @@ function ExpenseEdit() {
     // Current Expenses and Total Budget
     const totEXP = Number(totExp);
     const totBUDGET = Number(totBud);
-
-    console.log("TOTAL BUDGET: ", typeof totEXP)
-    console.log("TOTAL EXPENSE: ", typeof totBUDGET)
-
-    console.log("TOTAL BUDGET: ", totEXP)
-    console.log("TOTAL EXPENSE: ", totBUDGET)
 
     // Amount values
     const prevAmount = Number(iet_amount);
