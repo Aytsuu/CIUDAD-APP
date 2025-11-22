@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 // import { NoAccessScreen } from "@/components/ui/feedback-screen";
 import PageLayout from "../_PageLayout";
 import { LinearGradient } from 'expo-linear-gradient';
-import { Clipboard, Calendar, DollarSign, FileText } from 'lucide-react-native';
+// import { Clipboard, Calendar, DollarSign, FileText } from 'lucide-react-native';
 
 export default () => {
   // ============== STATE INITIALIZATION ==============
@@ -18,25 +18,25 @@ export default () => {
     {
       title: "Budget Tracker",
       route: "/(gad)/budget-tracker/budget-tracker-main",
-      icon: DollarSign,
+      icon: '',
       gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Project Proposal",
       route: "/(gad)/project-proposal/projprop-main",
-      icon: FileText,
+      icon: '',
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Annual Development Plan",
       route: "/(gad)/annual-dev-plan/main-plan",
-      icon: Clipboard,
+      icon: '',
       gradient: ['#2563eb', '#1e40af'],
     },
     {
       title: "Activity Calendar",
       route: "/(gad)/activity/gad-activity",
-      icon: Calendar,
+      icon: '',
       gradient: ['#93c5fd', '#60a5fa'],
     },
   ];

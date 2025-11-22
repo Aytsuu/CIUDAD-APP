@@ -25,7 +25,7 @@ class Donation(models.Model):
             
             # Format: DON-YYYYMMDD-ACRONYM-UNIQUE_SUFFIX
             date_part = self.don_date.strftime("%Y%m%d")
-            unique_suffix = uuid.uuid4().hex[:6].upper()  # Shorter unique part
+            unique_suffix = uuid.uuid4().hex[:3].upper()  # Shorter unique part
             
             self.don_num = f"DON-{date_part}-{acronym}-{unique_suffix}"
         
