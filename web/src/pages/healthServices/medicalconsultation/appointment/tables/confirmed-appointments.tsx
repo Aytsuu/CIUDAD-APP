@@ -8,6 +8,8 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicalAppointmentConfirmedColumns } from "../columns/confirmed-appointments";
 import { useAppointments } from "../../queries/fetch";
+import { Link } from "react-router-dom";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 export default function ConfirmedMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -158,6 +160,25 @@ export default function ConfirmedMedicalAppointments() {
         </div>
       </div>
 
+      <div className="flex justify-end mb-4">
+
+          <ProtectedComponent exclude={["DOCTOR"]}>
+              <Button className="flex items-center gap-2">
+                <Link
+                  to="/services/medical-consultation/form"
+                  state={{
+                    params: {
+                      mode: "fromappointment",
+                    },
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  New Record
+                </Link>
+              </Button>
+            </ProtectedComponent>
+      </div>
+
       {/* Table Section */}
       <div className="h-full w-full rounded-md border border-gray-200">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-3 sm:gap-0 border-b">
@@ -191,6 +212,7 @@ export default function ConfirmedMedicalAppointments() {
                 <DropdownMenuItem>Export as PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          
           </div>
         </div>
 

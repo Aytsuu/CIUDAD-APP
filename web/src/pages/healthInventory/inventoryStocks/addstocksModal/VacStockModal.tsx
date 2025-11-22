@@ -122,7 +122,9 @@ export default function AddVaccineStock() {
               ]}
               />
             </div>
-            <FormInput control={form.control} name="volume" label="Volume (ml)" type="number" />
+            {solvent !== "doses" && (
+              <FormInput control={form.control} name="volume" label="Volume (ml)" type="number" />
+            )}
             <FormInput
               control={form.control}
               name="qty"

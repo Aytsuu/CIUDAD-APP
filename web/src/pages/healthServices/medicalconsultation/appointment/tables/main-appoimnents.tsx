@@ -11,6 +11,8 @@ import RejectedMedicalAppointments from "./rejected-appointments";
 import MissedMedicalAppointments from "./missed-appointments";
 import CompletedMedicalAppointments from "./completed-appointments";
 import { useNavigate, useLocation } from "react-router-dom";
+import { BsChevronLeft } from "react-icons/bs";
+import { Button } from "@/components/ui/button/button";
 
 export default function MainAppointments() {
   const [selectedView, setSelectedView] = useState<string>("appointment");
@@ -73,7 +75,31 @@ export default function MainAppointments() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full over">
+      <div className="flex gap-2 justify-between pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Header - Stacks vertically on mobile */}
+          <Button
+            className="text-black p-2 self-start"
+            variant={"outline"}
+            onClick={() => {
+              navigate("/services/medical-consultation/records");
+            }}
+          >
+            <BsChevronLeft />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Medical Consultation Appointments
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">Manage medical consultation appointments efficiently.</p>
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      <div className="w-full">
       <Card className="border shadow-sm">
         <CardHeader className="p-0">
           <Tabs value={selectedView} onValueChange={handleTabChange} className="w-full">
@@ -168,6 +194,7 @@ export default function MainAppointments() {
           </Tabs>
         </CardHeader>
       </Card>
+      </div>
     </div>
   );
 }

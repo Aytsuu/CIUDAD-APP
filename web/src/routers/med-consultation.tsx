@@ -2,93 +2,82 @@ import AllMedicalConsRecord from "@/pages/healthServices/medicalconsultation/tab
 import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
 import DisplayMedicalConsultation from "@/pages/healthServices/medicalconsultation/medicalhistory/DisplayMedCon";
 import MedicalConsultationForm from "@/pages/healthServices/medicalconsultation/Forms/MedicalConForm";
-import MainMedicalConsultation from "@/pages/healthServices/medicalconsultation/tables/main-medicalconsultation";
 import AppointmentForm from "@/pages/healthServices/medicalconsultation/Forms/AppointmentForm";
 import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appointmentlayout";
 import MainAppointments from "@/pages/healthServices/medicalconsultation/appointment/tables/main-appoimnents";
-import Layout from "@/pages/healthServices/Layout";
+
 
 export const medicalConsultation = [
   {
+    path: "/services/medical-consultation/records",
+    element: <AllMedicalConsRecord />,
+  },
+
+  // {
+  //   path: "/services/medical-consultation/appointments",
+  //   element: <MainAppointments />,
+  // },
+  {
     path: "/services/medical-consultation",
-    element: <MainMedicalConsultation />,
+    element: <MainAppointments />,
     children: [
-      // Default route - redirect to records
-      {
-        index: true,
-        element: <AllMedicalConsRecord />
-      },
-      // RECORDS routes
-      {
-        path: "records",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <AllMedicalConsRecord />
-          },
-        ]
-      },
-      // APPOINTMENTS routes - Use MainAppointments as the main component
       {
         path: "appointments",
         element: <AppointmentsLayout />,
         children: [
           {
             index: true,
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "confirmed",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "pending",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "referred",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "rejected",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "cancelled",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "missed",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
           {
             path: "completed",
-            element: <MainAppointments />
+            element: <MainAppointments />,
           },
-        ]
-      }
-    ]
+        ],
+      },
+    ],
   },
   {
     path: "/services/medical-consultation/records/individual-records",
-    element: <InvMedicalConRecords />
+    element: <InvMedicalConRecords />,
   },
   {
     path: "/services/medical-consultation/records/history",
-    element: <DisplayMedicalConsultation />
+    element: <DisplayMedicalConsultation />,
   },
 
   {
     path: "/services/medical-consultation/form",
-    element: <MedicalConsultationForm />
+    element: <MedicalConsultationForm />,
   },
   {
     path: "/services/medical-consultation/appointments/form",
-    element: <AppointmentForm />
-
-    }
-
+    element: <AppointmentForm />,
+  },
 ];
 
 // {

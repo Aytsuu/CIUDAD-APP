@@ -5,6 +5,9 @@ import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowRightLeft, Ban } from
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useReportsCount } from "../../count-return/count";
+import { BsChevronLeft } from "react-icons/bs";
+import { Button } from "@/components/ui/button/button";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function MedicineRequestMain() {
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ export default function MedicineRequestMain() {
   const [selectedView, setSelectedView] = useState<string>("pickup");
   const [isMounted, setIsMounted] = useState(false);
   const { data, isLoading } = useReportsCount();
+  const { hideLoading } = useLoading();
 
   // Get current view from URL path
   const getCurrentViewFromPath = () => {
@@ -58,11 +62,37 @@ export default function MedicineRequestMain() {
   }
 
   return (
-    <Card className="border shadow-sm">
-      <CardHeader className="p-0">
-        <Tabs value={selectedView} onValueChange={handleTabChange} className="w-full">
-          <div className="px-4 pt-4">
-            <TabsList className="w-full grid grid-cols-6 gap-2 h-auto p-1">
+    <div className="w-full over">
+      <div className="flex gap-2 justify-between pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Header - Stacks vertically on mobile */}
+          <Button
+            className="text-black p-2 self-start"
+            variant={"outline"}
+            onClick={() => {
+              hideLoading();
+              navigate("/services/medicine/records");
+            }}
+          >
+            <BsChevronLeft />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Medicine Requests
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">Manage and process medicine requests efficiently.</p>
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      <div className="w-full">
+      <Card className="border shadow-sm">
+        <CardHeader className="p-0">
+          <Tabs value={selectedView} onValueChange={handleTabChange} className="w-full">
+            <div className="px-4 pt-4">
+              <TabsList className="w-full grid grid-cols-6 gap-2 h-auto p-1">
             
               
               {/* Pending Confirmation Tab */}
@@ -143,14 +173,16 @@ export default function MedicineRequestMain() {
                 )}
               </TabsTrigger>
             </TabsList>
-          </div>
+            </div>
 
-          <CardContent className="p-4 pt-6">
-            {/* Render nested route component */}
-            <Outlet />
-          </CardContent>
-        </Tabs>
-      </CardHeader>
-    </Card>
+            <CardContent className="p-4 pt-6">
+              {/* Render nested route component */}
+              <Outlet />
+            </CardContent>
+          </Tabs>
+        </CardHeader>
+      </Card>
+      </div>
+    </div>
   );
 }

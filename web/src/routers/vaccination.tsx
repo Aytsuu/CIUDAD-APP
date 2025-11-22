@@ -1,11 +1,12 @@
 import IndivVaccinationRecords from "@/pages/healthServices/vaccination/tables/individual/IndivVaccinationRecords";
 import PatNewVacRecForm from "@/pages/healthServices/vaccination/forms/NewVaccinationForm";
 import VaccinationView from "@/pages/healthServices/vaccination/viewhistory/ViewVaccineHistory";
-import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all/MainTable";
 // import AgeGroup from "@/pages/healthServices/agegroup/AgeGroup";
 import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
 import { ResidentListSection } from "@/pages/healthServices/vaccination/tables/all/ResidentListDialog";
-
+import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/all/AllVaccinationRecord";
+import UnvaccinatedResidents from "@/pages/healthServices/vaccination/tables/all/UnvaccineResidents";
+import path from "path";
 
 export const vaccination = [
   {
@@ -22,8 +23,13 @@ export const vaccination = [
   },
   {
     path: "/services/vaccination",
-    element: <VaccinationManagement />
+    element: <AllVaccinationRecords />
   },
+  {
+    path:"services/vaccination/resident-tracking",
+    element:<UnvaccinatedResidents/>
+  },
+
   // {
   //   path: "age-group",
   //   element: <AgeGroup />

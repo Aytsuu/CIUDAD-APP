@@ -120,10 +120,18 @@ def send_daily_pending_medicine_requests_notification():
     """
     Daily task that sends notification if there are pending medicine requests
     Counts unique medreq_id to avoid duplicate counting of the same request
+    Only sends ONE notification per day (using cache to prevent duplicates)
     """
     try:
+        from django.core.cache import cache
         from .models import MedicineRequestItem
         from apps.inventory.signals import get_health_staff_recipients
+        
+        # Check if notification was already sent today (prevent duplicates)
+        cache_key = "pending_medicine_notification_sent_today"
+        if cache.get(cache_key):
+            logger.info("⏭️ Pending medicine notification already sent today, skipping")
+            return 0
         
         # Count unique pending medicine requests (distinct medreq_id)
         pending_requests_count = MedicineRequestItem.objects.filter(
@@ -148,13 +156,15 @@ def send_daily_pending_medicine_requests_notification():
                     message=message,
                     recipients=recipients,
                     notif_type="PENDING",
-                    web_route="/services/medicine/requests/pending",  # Route to medicine requests page
-                    web_params={"status": "pending"},  # Filter to show pending requests
+                    web_route="/services/medicine/requests/pending",
+                    web_params={"status": "pending"},
                     mobile_route=None,
                     mobile_params=None
                 )
                 
                 if success:
+                    # Mark notification as sent for today (86400 seconds = 24 hours)
+                    cache.set(cache_key, True, 86400)
                     logger.info(f"✅ Daily pending medicine requests notification sent: {pending_requests_count} unique pending requests")
                 else:
                     logger.error("❌ Failed to send daily pending medicine requests notification")

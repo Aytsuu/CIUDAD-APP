@@ -51,8 +51,8 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
           timeUnits: vaccineData.doseDetails.filter((dose: any) => dose.doseNumber > 1).map((dose: any) => dose.unit || "months"),
           routineFrequency: {
             interval: (vaccineData.vaccineType === "Routine" && vaccineData.doseDetails[0]?.interval) || 1,
-            unit: (vaccineData.vaccineType === "Routine" && vaccineData.doseDetails[0]?.unit) || "years"
-          }
+            unit: (vaccineData.vaccineType === "Routine" && vaccineData.doseDetails[0]?.unit) || "years",
+          },
         }
       : {
           vaccineName: "",
@@ -63,14 +63,14 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
           type: "routine",
           routineFrequency: {
             interval: 1,
-            unit: "years"
-          }
+            unit: "years",
+          },
         };
 
   const form = useForm<VaccineType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: defaultFormData,
-    mode: "onChange"
+    mode: "onChange",
   });
 
   const {
@@ -79,7 +79,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
     control,
     handleSubmit,
     formState: { errors },
-    getValues
+    getValues,
   } = form;
 
   const [type, noOfDoses, ageGroup] = watch(["type", "noOfDoses", "ageGroup"]);
@@ -97,7 +97,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
           if (matchingGroup) {
             setSelectedAgeGroupId(ageGroupId);
             form.setValue("ageGroup", ageGroupId, {
-              shouldDirty: false
+              shouldDirty: false,
             });
           } else {
             console.log("Age group not found in formatted list:", ageGroupId);
@@ -186,7 +186,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
       if (isDuplicate) {
         form.setError("vaccineName", {
           type: "manual",
-          message: "This vaccine already exists"
+          message: "This vaccine already exists",
         });
         toast.error("This vaccine already exists");
         return;
@@ -199,12 +199,12 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
         await updateVaccine({
           formData: {
             ...dataToSubmit,
-            ageGroup: selectedAgeGroupId
+            ageGroup: selectedAgeGroupId,
           },
           vaccineData: {
             ...vaccineData,
-            agegrp_id: selectedAgeGroupId
-          }
+            agegrp_id: selectedAgeGroupId,
+          },
         });
       } else {
         console.log("Adding new vaccine...");
@@ -212,11 +212,12 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
       }
 
       console.log("Submission completed, closing modal...");
+      form.reset();
       onClose();
     } catch (error) {
       console.error("Error during submission:", error);
       toast.error("Failed to process vaccine", {
-        description: error instanceof Error ? error.message : "An unknown error occurred"
+        description: error instanceof Error ? error.message : "An unknown error occurred",
       });
     } finally {
       setIsCheckingDuplicate(false);
@@ -287,9 +288,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
           <div className="bg-white p-4 rounded-lg border">
             <div className="flex justify-between">
               <span className="text-sm font-medium">
-                {selectedAgeGroup
-                  ? `${selectedAgeGroup.agegroup_name} (${selectedAgeGroup.min_age}-${selectedAgeGroup.max_age} ${selectedAgeGroup.time_unit})`
-                  : "No age group selected"}
+                {selectedAgeGroup ? `${selectedAgeGroup.agegroup_name} (${selectedAgeGroup.min_age}-${selectedAgeGroup.max_age} ${selectedAgeGroup.time_unit})` : "No age group selected"}
               </span>
             </div>
           </div>
