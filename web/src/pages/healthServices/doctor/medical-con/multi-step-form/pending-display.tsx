@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
-import { Link } from "react-router-dom";
-import { History } from "lucide-react";
 
 interface PendingDisplayMedicalConsultationProps {
   patientData: any;

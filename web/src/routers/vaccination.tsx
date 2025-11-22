@@ -6,7 +6,6 @@ import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/Sch
 import { ResidentListSection } from "@/pages/healthServices/vaccination/tables/all/ResidentListDialog";
 import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/all/AllVaccinationRecord";
 import UnvaccinatedResidents from "@/pages/healthServices/vaccination/tables/all/UnvaccineResidents";
-import path from "path";
 
 export const vaccination = [
   {
