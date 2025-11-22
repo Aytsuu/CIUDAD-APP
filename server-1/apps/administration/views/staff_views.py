@@ -125,15 +125,14 @@ class StaffDeleteView(generics.DestroyAPIView):
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):
     title = request.query_params.get('pos_title', None)
+    type = request.query_params.get('staff_type', 'BARANGAY STAFF')
 
     if title == "all":
-      staff = Staff.objects.all()
+      staff = Staff.objects.filter(staff_type__iexact=type)
       return Response(StaffTableSerializer(staff, many=True).data)
     
     req_position = Position.objects.get(pos_title=title)
-    staff = Staff.objects.filter(pos=req_position.pos_id)
+    staff = Staff.objects.filter(pos=req_position.pos_id, staff_type__iexact=type)
     return Response(StaffTableSerializer(staff, many=True).data)
 
-class StaffLandingPageView(generics.ListAPIView):
-  serializer_class = StaffLandingPageSerializer
-  queryset = Staff.objects.filter(~Q(pos__pos_title='Admin') & Q(staff_type='Barangay Staff'))
+

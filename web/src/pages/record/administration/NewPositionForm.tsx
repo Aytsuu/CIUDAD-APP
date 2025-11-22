@@ -15,17 +15,19 @@ import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { formatPositionGroups } from "./AdministrationFormats";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 import { Combobox } from "@/components/ui/combobox";
 
 export default function NewPositionForm() {
+  // ================ STATE INITIALIZATION ================
   const { user } = useAuth(); 
   const { mutateAsync: addPosition, isPending: isAdding } = useAddPosition();
   const { mutateAsync: editPosition, isPending: isUpdating } = useUpdatePosition();
-  const { data: positionGroups } = usePositionGroups();
+  const { data: positionGroups } = usePositionGroups('BARANGAY POSITION');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params || {}, [location.state]);
+  const data = React.useMemo(() => params?.data, [params])
   const formType = React.useMemo(() => params?.type || '', [params]);
   const formattedPositionGroups = React.useMemo(() => formatPositionGroups(positionGroups) || [], [positionGroups])
   const { isPositionUnique } = useValidatePosition();
@@ -39,6 +41,10 @@ export default function NewPositionForm() {
     }
   });
 
+  // For editing
+  const hasChanges = form.formState.isDirty
+
+  // ================ SIDE EFFECTS ================
   React.useEffect(() => {
     if (isAdding || isUpdating) setIsSubmitting(true);
     else setIsSubmitting(false);
@@ -59,21 +65,25 @@ export default function NewPositionForm() {
     if (formType === Type.Edit) populateFields();
   }, [formType]);
 
+  // ================ HANDLERS AND CALLBACKS ================
   const populateFields = React.useCallback(() => {
-    const position = params.data;
-    form.setValue("pos_group", position.pos_group || '');
-    form.setValue("pos_title", position.pos_title);
-    form.setValue("pos_max", String(position.pos_max));
-  }, [params.data]);
+    form.reset({
+      'pos_group': data?.pos_group,
+      'pos_title': data?.pos_title,
+      'pos_max': String(data?.pos_max)
+    }, { keepDirty: false })
+  }, [data]);
 
   const create = async (values: Record<string, any>, staffId: string) => {
     try {
       // Add position (API handles dual database insertion)
       await addPosition({ data: values, staffId });
       // Reset form on success
-      form.setValue('pos_title', '');
-      form.setValue('pos_max', '1');
-      form.setValue('pos_group', '');
+      form.reset({
+        'pos_group': '',
+        'pos_title': '',
+        'pos_max': '1'
+      }, { keepDirty: false })
       
       showSuccessToast("Position created successfully");
     } catch (err) {
@@ -103,6 +113,11 @@ export default function NewPositionForm() {
       return;
     }
 
+    if (formType == Type.Edit && !hasChanges) {
+      showPlainToast('No changes made')
+      return;
+    } 
+
     const values = form.getValues();
     const staffId = user?.staff?.staff_id || "";
     const staffType = user?.staff?.staff_type;
@@ -122,6 +137,7 @@ export default function NewPositionForm() {
     }
   };
 
+  // ================ RENDER ================
   return (
     <main className="min-h-screen py-8">
       <div className="max-w-2xl mx-auto px-4">
@@ -218,7 +234,8 @@ export default function NewPositionForm() {
                       {renderActionButton({
                         formType,
                         isSubmitting,
-                        submit
+                        submit,
+                        update: submit
                       })}
                     </div>
                   </div>

@@ -36,7 +36,7 @@ export const ARDocTemplate = ({
   const { data: reportTemplate, isLoading: isLoadingTemplate } =
     useGetSpecificTemplate("AR");
   const { data: staffByTitle, isLoading: isLoadingStaffByTitle } =
-    useGetStaffByTitle("all");
+    useGetStaffByTitle("all", "BARANGAY STAFF");
   const [pdfBlob, setPdfBlob] = React.useState<string>("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const formattedStaffs = React.useMemo(

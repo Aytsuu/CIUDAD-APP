@@ -11,6 +11,7 @@ interface FormTextAreaProps {
   className?: string;
   rows?: number;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  required?: boolean;
 }
 
 export const FormTextArea = React.memo(({ 
@@ -21,14 +22,18 @@ export const FormTextArea = React.memo(({
   readOnly, 
   className,
   rows = 2,
-  onChange
+  onChange,
+  required = false
 }: FormTextAreaProps) => (
   <FormField
     control={control}
     name={name}
     render={({ field }) => (
       <FormItem className={className}>
-        <FormLabel className="text-black/70">{label}</FormLabel>
+        {label && <FormLabel className="text-black/70">
+          {label}
+          {required && <span className="ml-1 text-red-500">*</span>}
+        </FormLabel>}
         <FormControl>
           <Textarea 
             placeholder={placeholder} 
