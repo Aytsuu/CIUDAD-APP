@@ -9,6 +9,9 @@ export default () => {
                 <Stack.Screen name="garbage-pickup/garbage-cancel-req-form" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="garbage-pickup/view-accepted-details" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="garbage-pickup/view-completed-details" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="garbage-pickup/view-rejected-details" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="garbage-pickup/view-pending-details" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="garbage-pickup/view-cancelled-details" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="certification-tracking/certificate-request-tracker" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="complaint-tracking/compMain" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="complaint-tracking/compMainView" options={{ headerShown: false, animation: 'fade' }} />

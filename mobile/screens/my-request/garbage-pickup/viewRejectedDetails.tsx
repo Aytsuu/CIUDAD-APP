@@ -7,9 +7,9 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useState } from "react"
 import { formatDate } from "@/helpers/dateHelpers"
-import { useGetGarbageRejectRequestDetails } from "./queries/garbagePickupStaffFetchQueries"
+import { useGetGarbageRejectRequestDetailsResident } from "./queries/garbagePickupFetchQueries"
 
-export default function ViewRejectedRequestDetails() {
+export default function ResidentRejectedDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
@@ -18,7 +18,7 @@ export default function ViewRejectedRequestDetails() {
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{url: string, name: string} | null>(null);
 
-  const { data: requestDetails, isLoading, refetch } = useGetGarbageRejectRequestDetails(garb_id)
+  const { data: requestDetails, isLoading, refetch } = useGetGarbageRejectRequestDetailsResident(garb_id)
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -186,7 +186,7 @@ export default function ViewRejectedRequestDetails() {
               </View>
               
               <TouchableOpacity 
-                onPress={() => handleViewImage(requestDetails.file_url)}
+                onPress={() => handleViewImage(requestDetails?.file_url || '')}
                 className="bg-gray-50 rounded-lg p-2"
               >
                 <Image

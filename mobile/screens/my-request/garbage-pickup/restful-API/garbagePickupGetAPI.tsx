@@ -12,15 +12,21 @@ export const getGarbagePendingResident = async (rp_id: string) => {
             garb_pref_time: item.garb_pref_time,
             garb_created_at: item.garb_created_at,
             garb_additional_notes: item.garb_additional_notes,
-            file_url: item.file_url || '',
             sitio_name: item.sitio_name || ''
         }));
     }catch (err){
-        console.error('API Error:', err)
         throw err;
     }
 }
 
+export const getGarbagePendingRequestDetailsResident = async (garb_id: string) => {
+    try {
+        const res = await api.get(`waste/garbage-pickup-view-pending/${garb_id}/`)
+        return res.data
+    } catch (err) {
+        throw err;
+    }
+}
 
 export const getGarbageRejectedResident = async (rp_id: string) => {
     try{
@@ -38,12 +44,20 @@ export const getGarbageRejectedResident = async (rp_id: string) => {
             dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
             dec_reason: item.dec_reason || '',
-            file_url: item.file_url || '',
             sitio_name: item.sitio_name || '',
             staff_name: item.staff_name || ''
         }));
     }catch(err){
-        console.error('API Error:', err)
+        throw err;
+    }
+}
+
+export const getGarbageRejectedRequestDetailsResident = async (garb_id: string) => {
+    try {
+        const res = await api.get(`waste/garbage-pickup-view-rejected/${garb_id}/`)
+        return res.data
+    } catch (err) {
+        console.error('Failed to fetch garbage requests:', err);
         throw err;
     }
 }
@@ -58,6 +72,8 @@ export const getGarbageAcceptedResident = async (rp_id: string) => {
             garb_location: item.garb_location || '',
             garb_waste_type: item.garb_waste_type || '',
             garb_created_at: item.garb_created_at || '',
+            garb_pref_date: item.garb_pref_date,
+            garb_pref_time: item.garb_pref_time,
             garb_additional_notes: item.garb_additional_notes || '',
             garb_req_status: item.garb_req_status || '', 
             garb_requester: item.garb_requester || 'Unknown', 
@@ -129,11 +145,20 @@ export const getGarbageCancelledResident = async (rp_id: string) => {
             dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
             dec_reason: item.dec_reason || '',
-            file_url: item.file_url || '',
             sitio_name: item.sitio_name || ''
         }));
     }catch(err){
         console.error('API Error:', err)
+        throw err;
+    }
+}
+
+export const getGarbageCancelledDetailsResident = async (garb_id: string) => {
+    try{
+
+        const res = await api.get(`/waste/garbage-pickup-cancelled-detail/${garb_id}/`)
+        return res.data
+    }catch(err){
         throw err;
     }
 }
@@ -146,6 +171,8 @@ export const getAcceptedDetailsResident = async (garb_id: string) => {
             garb_location: data.garb_location || '',
             garb_waste_type: data.garb_waste_type || '',
             garb_created_at: data.garb_created_at || '',
+            garb_pref_date: data.garb_pref_date,
+            garb_pref_time: data.garb_pref_time,
             garb_additional_notes: data.garb_additional_notes || '',
             garb_req_status: data.garb_req_status || '',
             garb_requester: data.garb_requester || 'Unknown',
@@ -183,11 +210,14 @@ export const getCompletedDetailsResident = async (garb_id: string) => {
             garb_location: data.garb_location ?? '',
             garb_waste_type: data.garb_waste_type ?? '',
             garb_created_at: data.garb_created_at ?? '',
+            garb_pref_date: data.garb_pref_date,
+            garb_pref_time: data.garb_pref_time,
             garb_additional_notes: data.garb_additional_notes || '',
             conf_resident_conf_date: data.confirmation_info?.conf_resident_conf_date ?? null,
             conf_staff_conf_date: data.confirmation_info?.conf_staff_conf_date ?? null,
             conf_resident_conf: data.confirmation_info?.conf_resident_conf ?? null,
             conf_staff_conf: data.confirmation_info?.conf_staff_conf ?? null,
+            dec_date: data.dec_date || null,
             assignment_info: data.assignment_info ? {
                 driver: data.assignment_info.driver || '',
                 pick_time: data.assignment_info.pick_time || '',
@@ -204,3 +234,5 @@ export const getCompletedDetailsResident = async (garb_id: string) => {
         return null;
     }
 }
+
+

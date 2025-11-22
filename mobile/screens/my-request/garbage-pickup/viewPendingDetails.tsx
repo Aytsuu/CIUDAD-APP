@@ -1,15 +1,16 @@
 import PageLayout from "@/screens/_PageLayout"
 import { View, TouchableOpacity, Text, ScrollView, Image, Modal, RefreshControl } from "react-native"
-import { ChevronLeft, MapPin, Trash, Calendar, User, Camera, Info, X, UserCheck } from "lucide-react-native"
+import { ChevronLeft, MapPin, Trash, Calendar, User, Camera, Info, X, CheckCircle, XCircle } from "lucide-react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useState } from "react"
 import { formatDate } from "@/helpers/dateHelpers"
-import { useGetGarbageRejectRequestDetails } from "./queries/garbagePickupStaffFetchQueries"
+import { useGetGarbagePendingRequestDetailsResident } from "./queries/garbagePickupFetchQueries"
+import { Button } from "@/components/ui/button"
 
-export default function ViewRejectedRequestDetails() {
+export default function ResidentPendingDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
@@ -18,12 +19,20 @@ export default function ViewRejectedRequestDetails() {
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{url: string, name: string} | null>(null);
 
-  const { data: requestDetails, isLoading, refetch } = useGetGarbageRejectRequestDetails(garb_id)
+  const { data: requestDetails, isLoading, refetch } = useGetGarbagePendingRequestDetailsResident(garb_id)
+
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
     setIsRefreshing(false);
+  };
+
+  const handleCancelReq = (garb_id: string) => {
+    router.push({
+      pathname: "/(my-request)/garbage-pickup/garbage-cancel-req-form",
+      params: { garb_id },
+    });
   };
 
   const handleViewImage = (imageUrl: string, imageName: string = "") => {
@@ -33,6 +42,7 @@ export default function ViewRejectedRequestDetails() {
     })
     setViewImageModalVisible(true)
   }
+
 
   if(isLoading && !isRefreshing){
     return(
@@ -54,6 +64,16 @@ export default function ViewRejectedRequestDetails() {
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Details</Text>}
       wrapScroll={false}
+      footer={
+        <Button 
+          className="bg-[#ff2c2c] native:h-[56px] flex-1 rounded-xl shadow-lg"
+          onPress={() => handleCancelReq(garb_id)}
+        >
+          <View className="flex-row items-center gap-2">
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Cancel Request</Text>
+          </View>
+        </Button>
+      }
     >
       <View className="flex-1 bg-gray-50">
         <ScrollView 
@@ -81,7 +101,6 @@ export default function ViewRejectedRequestDetails() {
                 <User size={16} color="#6b7280" className="mr-2" />
                 <Text className="text-gray-600 font-PoppinsMedium">Requester:</Text>
               </View>
-              <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails?.garb_requester}</Text>
             </View>
 
             <View className="py-3 border-b border-gray-100">
@@ -135,7 +154,7 @@ export default function ViewRejectedRequestDetails() {
             </View>
 
             {requestDetails?.garb_additional_notes && (
-              <View className="py-3 border-b border-gray-100">
+              <View className="py-3">
                 <View className="flex-row items-center mb-2 gap-2">
                   <Info size={16} color="#6b7280" className="mr-2" />
                   <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
@@ -143,38 +162,6 @@ export default function ViewRejectedRequestDetails() {
                 <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails?.garb_additional_notes}</Text>
               </View>
             )}
-          </View>
-
-          {/* Rejection Details Card */}
-          <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
-            <View className="flex-row items-center mb-4 gap-2">
-              <UserCheck size={20} color="#dc2626" className="mr-2" />
-              <Text className="font-PoppinsBold text-lg text-gray-800 font-bold">Rejection Details</Text>
-            </View>
-
-            {/* Staff Name - Display if available */}
-            {(requestDetails?.staff_name || requestDetails?.dec_date) && (
-              <View className="py-3 border-b border-gray-100">
-                <View className="flex-row items-center mb-2 gap-2">
-                  <User size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Rejected By:</Text>
-                </View>
-                <Text className="font-PoppinsSemiBold text-gray-800 ml-6">
-                  {requestDetails?.staff_name || "Staff"} {requestDetails?.dec_date && `• ${formatTimestamp(requestDetails.dec_date)}`}
-                </Text>
-              </View>
-            )}
-
-            {/* Rejection Reason */}
-            <View className="py-3">
-              <View className="flex-row items-center mb-2 gap-2">
-                <Info size={16} color="#6b7280" className="mr-2" />
-                <Text className="text-gray-600 font-PoppinsMedium">Rejection Reason:</Text>
-              </View>
-              <View className="ml-6 bg-red-50 border border-red-200 rounded-lg p-3">
-                <Text className="font-PoppinsSemiBold text-red-800">{requestDetails?.dec_reason || "No reason provided"}</Text>
-              </View>
-            </View>
           </View>
 
           {/* Attached Image Section */}
@@ -186,7 +173,7 @@ export default function ViewRejectedRequestDetails() {
               </View>
               
               <TouchableOpacity 
-                onPress={() => handleViewImage(requestDetails.file_url)}
+                onPress={() => handleViewImage(requestDetails.file_url || '')}
                 className="bg-gray-50 rounded-lg p-2"
               >
                 <Image

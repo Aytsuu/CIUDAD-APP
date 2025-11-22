@@ -1,40 +1,42 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image, RefreshControl } from "react-native";
-import { X, Search, Info } from "lucide-react-native";
+import { X, Search, Info, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-import { formatTime } from "@/helpers/timeFormatter";
 import { useGetGarbageCancelledResident } from "../queries/garbagePickupFetchQueries";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useRouter } from "expo-router";
 
 export default function ResidentCancelled() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
   
-  // Add refetch to the query hook
   const { data: cancelledRequest = [], isLoading: isDataLoading, refetch } = useGetGarbageCancelledResident(String(user?.rp));
   
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
-  const [currentZoomScale, setCurrentZoomScale] = useState(1);
 
-  // Refresh function
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
     setIsRefreshing(false);
   };
 
+  const handleViewDetails = (garb_id: string) => {
+    router.push({
+      pathname: '/(my-request)/garbage-pickup/view-cancelled-details',
+      params: { garb_id }
+    });
+  };
+
   const filteredData = cancelledRequest.filter((request) => {
     const searchString = `
       ${request.garb_location} 
       ${request.garb_waste_type}
-      ${request.garb_pref_date} 
-      ${request.garb_pref_time} 
-      ${request.garb_additional_notes || ""}
       ${request.sitio_name || ""}
     `.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
@@ -43,32 +45,33 @@ export default function ResidentCancelled() {
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);
     setViewImageModalVisible(true);
-    setCurrentZoomScale(1);
   };
 
   return (
     <View className="flex-1 p-6">
       {/* Search Bar */}
-      {!isDataLoading && (
+      
         <View>
-        <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-2">
-          <Search size={18} color="#6b7280" />
-          <Input
-            className="flex-1 ml-2 bg-white text-black"
-            placeholder="Search cancelled requests..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={{ borderWidth: 0, shadowOpacity: 0 }}
-          />
+          <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-2">
+            <Search size={18} color="#6b7280" />
+            <Input
+              className="flex-1 ml-2 bg-white text-black"
+              placeholder="Search cancelled requests..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              style={{ borderWidth: 0, shadowOpacity: 0 }}
+            />
+          </View>
+          
+          {!isDataLoading && (
+            <View className="mb-4">
+              <Text className="text-sm text-gray-500">
+                {filteredData.length} request{filteredData.length !== 1 ? 's' : ''} found
+              </Text>
+            </View>
+          )}
         </View>
-        
-        <View className="mb-4">
-          <Text className="text-sm text-gray-500">
-            {filteredData.length} request{filteredData.length !== 1 ? 's' : ''} found
-          </Text>
-        </View>
-        </View>
-      )}
+     
 
       {/* Loading / Empty / List */}
       {isDataLoading && !isRefreshing ? (
@@ -112,23 +115,28 @@ export default function ResidentCancelled() {
                   key={request.garb_id}
                   className="border border-gray-200 rounded-lg bg-white shadow-sm"
                 >
-                  <CardHeader className="border-b border-gray-200 p-3">
-                    <View className="flex flex-row justify-between items-start">
+                  {/* Make header clickable */}
+                  <CardHeader className="border-b border-gray-200 p-4">
+                    <TouchableOpacity 
+                      onPress={() => handleViewDetails(request.garb_id)}
+                      className="flex flex-row justify-between items-center"
+                    >
                       <View className="flex-1">
-                        {/* Garb ID and Timestamp in one line */}
                         <View className='flex flex-row justify-between items-center mb-1'>
                           <View className="bg-blue-600 px-3 py-1 rounded-full">
-                            <Text className="text-white font-bold text-sm tracking-wide">{request.garb_id}</Text>
+                            <Text className="text-white font-bold text-sm tracking-wide" numberOfLines={1}>
+                              {request.garb_id}
+                            </Text>
                           </View>
-                          <Text className="text-xs text-gray-500">{formatTimestamp(request.garb_created_at)}</Text>
+                          <ChevronRight size={16} color="#6b7280" />
                         </View>
-                        
-                        {/* Location info */}
-                        <Text className="text-xs text-gray-500">
-                          Sitio: {request.sitio_name}, {request.garb_location}
-                        </Text>
+                        <View className='flex flex-row justify-between items-center gap-2'>
+                          <Text className="text-xs text-gray-500 flex-1" numberOfLines={1}>
+                            {request.sitio_name}, {request.garb_location}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </CardHeader>
 
                   <CardContent className="p-4">
@@ -136,55 +144,46 @@ export default function ResidentCancelled() {
                       {/* Waste Type */}
                       <View className="flex-row justify-between">
                         <Text className="text-sm text-gray-600">Waste Type:</Text>
-                        <Text className="text-sm font-semibold ">{request.garb_waste_type}</Text>
+                        <View className="bg-orange-100 px-2 py-1 rounded-full">
+                          <Text className="text-orange-700 font-medium text-xs">{request.garb_waste_type}</Text>
+                        </View>
                       </View>
 
-                      {/* Preferred Date */}
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
-                        <Text className="text-sm">
-                          {request.garb_pref_date}, {formatTime(request.garb_pref_time)}
-                        </Text>
-                      </View>
-
-                      {/* Additional Notes */}
-                      {request.garb_additional_notes && (
-                        <View className="mt-2">
-                          <Text className="text-sm text-gray-600">Notes:</Text>
-                          <Text className="text-sm text-gray-800">{request.garb_additional_notes}</Text>
-                        </View>
-                      )}
-
-                      {/* Attached File Link */}
-                      {request.file_url && (
-                        <View className="mt-3">
-                          <TouchableOpacity onPress={() => handleViewImage(request.file_url)}>
-                            <Text className="text-sm font-medium text-blue-600 underline">
-                              View Attached Image
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-
-                      {/* Cancellation Reason */}
-                      {request.dec_reason && (
-                        <View className="mt-3 pt-3 border-t border-gray-100">
-                          <Text className="text-sm font-medium text-gray-700 mb-1">
-                            Cancellation Reason:
+                      {/* Cancellation Date */}
+                      {request.dec_date && (
+                        <View className="flex-row justify-between">
+                          <Text className="text-sm text-gray-600">Cancelled:</Text>
+                          <Text className="text-sm text-gray-800 font-medium">
+                            {formatTimestamp(request.dec_date)}
                           </Text>
-                          <Text className="text-sm font-semibold text-red-700 ">
+                        </View>
+                      )}
+
+                      {/* Quick Preview of Cancellation Reason */}
+                      {request.dec_reason && (
+                        <View className="mt-2">
+                          <Text className="text-sm text-gray-600">Reason:</Text>
+                          <Text 
+                            className="text-sm text-red-700 font-medium"
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                          >
                             {request.dec_reason}
                           </Text>
                         </View>
                       )}
 
-                      {/* Cancellation Date */}
-                      {request.dec_date && (
-                        <View className="flex-row justify-between">
-                          <Text className="text-sm text-gray-600">Cancellation Date:</Text>
-                          <Text className="text-sm font-medium text-red-700">
-                            {formatTimestamp(request.dec_date)}
-                          </Text>
+                      {/* Image Preview (if available) */}
+                      {request.file_url && (
+                        <View className="mt-2">
+                          <TouchableOpacity 
+                            onPress={() => handleViewImage(request.file_url)}
+                            className="flex-row items-center"
+                          >
+                            <Text className="text-sm font-medium text-blue-600">
+                              View Attached Image
+                            </Text>
+                          </TouchableOpacity>
                         </View>
                       )}
                     </View>
@@ -200,39 +199,22 @@ export default function ResidentCancelled() {
       <Modal
         visible={viewImageModalVisible}
         transparent={true}
-        onRequestClose={() => {
-          setViewImageModalVisible(false);
-          setCurrentZoomScale(1);
-        }}
+        onRequestClose={() => setViewImageModalVisible(false)}
       >
         <View className="flex-1 bg-black/90">
-          {/* Close Button */}
           <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-end items-center">
-            <TouchableOpacity
-              onPress={() => {
-                setViewImageModalVisible(false);
-                setCurrentZoomScale(1);
-              }}
-            >
+            <TouchableOpacity onPress={() => setViewImageModalVisible(false)}>
               <X size={24} color="white" />
             </TouchableOpacity>
           </View>
 
-          {/* Image Viewer */}
-          <ScrollView
-            className="flex-1"
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-            zoomScale={currentZoomScale}
-            onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          >
+          <View className="flex-1 justify-center items-center">
             <Image
               source={{ uri: currentImage }}
               style={{ width: "100%", height: 400 }}
               resizeMode="contain"
             />
-          </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>

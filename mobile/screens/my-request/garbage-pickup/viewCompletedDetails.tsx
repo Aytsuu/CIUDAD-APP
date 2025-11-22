@@ -91,17 +91,15 @@ export default function ResidentCompletedDetails() {
           </View>
         </View>
 
-        {requestDetails?.staff_name && (
-          <View className="py-3">
-            <View className="flex-row items-center mb-2 gap-2">
-                <User size={16} color="#6b7280" className="mr-2" />
-              <Text className="text-gray-600 font-PoppinsMedium">Accepted by:</Text>
-            </View>
-            <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
-              {requestDetails?.staff_name}
-            </Text>
+        <View className="py-3 border-b border-gray-100">
+          <View className="flex-row items-center mb-2">
+            <Calendar size={16} color="#6b7280" className="mr-2" />
+            <Text className="text-gray-600 font-PoppinsMedium">Preferred Date & Time:</Text>
           </View>
-        )}
+          <Text className="font-PoppinsSemiBold text-gray-800 ml-6">
+            {formatDate(requestDetails?.garb_pref_date || "", "long")} • {formatTime(requestDetails?.garb_pref_time || "")}
+          </Text>
+        </View>
 
         <View className="py-3 border-b border-gray-100">
           <View className="flex-row items-center mb-2">
@@ -115,7 +113,7 @@ export default function ResidentCompletedDetails() {
 
         {requestDetails?.garb_additional_notes && (
           <View className="py-3">
-            <View className="flex-row items-center mb-2">
+            <View className="flex-row items-center mb-2 gap-2">
               <Info size={16} color="#6b7280" className="mr-2" />
               <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
             </View>
@@ -124,39 +122,49 @@ export default function ResidentCompletedDetails() {
             </Text>
           </View>
         )}
-
-        {requestDetails?.conf_staff_conf_date && (
-          <View className="py-3">
-            <View className="flex-row items-center mb-2">
-              <CheckCircle size={16} color="#6b7280" className="mr-2" />
-              <Text className="text-gray-600 font-PoppinsMedium">Pickup Completion Date:</Text>
-            </View>
-            <View className="ml-6">
-              <View className="bg-blue-100 px-3 py-2 rounded-lg self-start">
-                <Text className="font-PoppinsSemiBold text-blue-700">
-                  {formatTimestamp(requestDetails?.conf_staff_conf_date)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {requestDetails?.conf_resident_conf_date && (
-          <View className="py-3 border-b border-gray-100">
-            <View className="flex-row items-center mb-2">
-              <CheckCircle size={16} color="#6b7280" className="mr-2" />
-              <Text className="text-gray-600 font-PoppinsMedium">Completion Acknowledged:</Text>
-            </View>
-            <View className="ml-6">
-              <View className="bg-green-100 px-3 py-2 rounded-lg self-start">
-                <Text className="font-PoppinsSemiBold text-green-700">
-                  {formatTimestamp(requestDetails?.conf_resident_conf_date)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
       </View>
+
+      {/* Completion Details Card */}
+      {(requestDetails?.conf_resident_conf_date || requestDetails?.conf_staff_conf_date) && (
+        <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
+          <View className="flex-row items-center mb-4 gap-2">
+            <CheckCircle size={20} color="#16a34a" className="mr-2" />
+            <Text className="font-PoppinsBold text-lg text-gray-800 font-bold">Completion Details</Text>
+          </View>
+
+          {requestDetails?.conf_resident_conf_date && (
+            <View className="py-3 border-b border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <CheckCircle size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Resident Confirmation Date:</Text>
+              </View>
+              <View className="ml-6">
+                <View className="bg-green-100 px-3 py-2 rounded-lg self-start">
+                  <Text className="font-PoppinsSemiBold text-green-700">
+                    {formatTimestamp(requestDetails?.conf_resident_conf_date)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {requestDetails?.conf_staff_conf_date && (
+            <View className="py-3">
+              <View className="flex-row items-center mb-2">
+                <CheckCircle size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Staff Confirmation Date:</Text>
+              </View>
+              <View className="ml-6">
+                <View className="bg-blue-100 px-3 py-2 rounded-lg self-start">
+                  <Text className="font-PoppinsSemiBold text-blue-700">
+                    {formatTimestamp(requestDetails?.conf_staff_conf_date)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Assignment Info Card */}
       {requestDetails?.assignment_info && (
@@ -231,6 +239,18 @@ export default function ResidentCompletedDetails() {
                   </Text>
                 </View>
               </View>
+            </View>
+          )}
+
+          {(requestDetails?.staff_name || requestDetails?.dec_date) && (
+            <View className="py-3">
+              <View className="flex-row items-center mb-2">
+                <Calendar size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Assigned & Accepted by:</Text>
+              </View>
+              <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
+                {requestDetails?.staff_name || "Staff"} {requestDetails?.dec_date && `• ${formatTimestamp(requestDetails.dec_date)}`}
+              </Text>
             </View>
           )}
         </View>

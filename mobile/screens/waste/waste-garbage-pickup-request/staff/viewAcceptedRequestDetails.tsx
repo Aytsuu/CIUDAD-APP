@@ -86,18 +86,16 @@ export default function ViewRequestDetails() {
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Details</Text>}
       wrapScroll={false}
       footer={
-        <View className="p-6 bg-white">
-          <ConfirmationModal
-            trigger={
-              <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
-                <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm Completion</Text>
-            </Button>
-            }
-            description="Are you sure you want to mark this request as completed?"
-            title="Completion Confirmation"
-            onPress={() => handleConfirm(garb_id)}
-          />
-        </View>
+        <ConfirmationModal
+          trigger={
+            <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
+              <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm Completion</Text>
+          </Button>
+          }
+          description="Are you sure you want to mark this request as completed?"
+          title="Completion Confirmation"
+          onPress={() => handleConfirm(garb_id)}
+        />
       }
     >
       <View className="flex-1 bg-gray-50">
@@ -173,7 +171,7 @@ export default function ViewRequestDetails() {
 
             {requestDetails?.garb_additional_notes && (
               <View className="py-3">
-                <View className="flex-row items-center mb-2">
+                <View className="flex-row items-center mb-2 gap-2">
                   <Info size={16} color="#6b7280" className="mr-2" />
                   <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
                 </View>

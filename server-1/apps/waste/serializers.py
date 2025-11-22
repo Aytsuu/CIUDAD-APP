@@ -701,6 +701,8 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
             'garb_waste_type',
             'garb_created_at',
             'garb_requester',
+            'garb_pref_time',
+            'garb_pref_date',
             'garb_additional_notes',
             'garb_req_status',
             'assignment_info',

@@ -141,6 +141,7 @@ return useQuery<GarbageRequestReject>({
         staleTime: 1000 * 60 * 30,
     });
 }
+
 export type GarbageRequestAccept = {
   garb_id: string;
   garb_location: string;

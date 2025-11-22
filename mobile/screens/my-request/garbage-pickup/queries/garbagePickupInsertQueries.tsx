@@ -20,7 +20,7 @@ export const useCancelRequest = (onSuccess?: () => void) => {
 
                 toast.success('Request cancelled!')
                 onSuccess?.()
-                router.back()
+                router.push('/(my-request)/garbage-pickup/garbage-pickup-tracker')
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);

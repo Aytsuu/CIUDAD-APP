@@ -104,8 +104,8 @@ def create_garbage_pickup_notification_on_create(sender, instance, created, **kw
                 message=f'Garbage Pickup Request {instance.garb_id} is waiting for your review.',
                 recipients=admin_accounts,
                 notif_type='REQUEST',
-                mobile_route="/(waste)/garbage-pickup/staff/main-request",
-                # mobile_params={'rep_id': instance.rep_id},
+                mobile_route="/(waste)/garbage-pickup/staff/view-pending-details",
+                mobile_params={'garb_id': instance.garb_id},
                 web_route="/garbage-pickup-request",
             )
 
@@ -141,12 +141,16 @@ def create_garbage_request_notification_on_update(sender, instance, created, **k
                 'accepted': {
                     'title': 'Request Accepted',
                     'message': f'Your garbage pickup request {instance.garb_id} has been accepted and is scheduled for collection.',
-                    'notif_type': 'REQUEST'
+                    'notif_type': 'REQUEST',
+                    'mobile_route': '/(my-request)/garbage-pickup/view-accepted-details',
+                    'mobile_params': {'garb_id': instance.garb_id}
                 },
                 'rejected': {
                     'title': 'Request Rejected',
                     'message': f'Your garbage pickup request {instance.garb_id} has been rejected.',
-                    'notif_type': 'REQUEST'
+                    'notif_type': 'REQUEST',
+                    'mobile_route': '/(my-request)/garbage-pickup/view-rejected-details',
+                    'mobile_params': {'garb_id': instance.garb_id}
                 }
             }
             
@@ -157,7 +161,8 @@ def create_garbage_request_notification_on_update(sender, instance, created, **k
                 message=config['message'],
                 recipients=[account],
                 notif_type=config['notif_type'],
-                mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+                mobile_route=config['mobile_route'],
+                mobile_params=config['mobile_params']
             )
 
 @receiver(post_save, sender=Pickup_Confirmation)
@@ -173,7 +178,8 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 message=f'Garbage pickup for request {garbage_request.garb_id} is done. Please confirm completion.',
                 recipients=[garbage_request.rp.account],
                 notif_type='REQUEST',
-                mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+                mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
+                mobile_params={'garb_id': instance.garb_id}
             )
     
     # Full completion - both staff and resident confirmed
@@ -185,7 +191,8 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 message=f'Your garbage pickup request {garbage_request.garb_id} has been completed. Thank you!',
                 recipients=[garbage_request.rp.account],
                 notif_type='REQUEST',
-                mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+                mobile_route="/(my-request)/garbage-pickup/view-completed-details",
+                mobile_params={'garb_id': instance.garb_id}
             )
         
         # Notify admin staff that request is fully completed
@@ -204,7 +211,8 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 message=f'Garbage pickup request {garbage_request.garb_id} has been completed and confirmed by resident.',
                 recipients=admin_accounts,
                 notif_type='REQUEST',
-                mobile_route="/(my-request)/garbage-pickup/garbage-pickup-tracker",
+                mobile_route="/(waste)/garbage-pickup/staff/view-completed-details",
+                mobile_params={'garb_id': instance.garb_id}
             )
 
 

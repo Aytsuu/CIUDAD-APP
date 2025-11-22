@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getGarbagePendingResident, getGarbageRejectedResident, getGarbageAcceptedResident, getGarbageCompletedResident, getGarbageCancelledResident,
-    getAcceptedDetailsResident, getCompletedDetailsResident
+    getAcceptedDetailsResident, getCompletedDetailsResident, getGarbageRejectedRequestDetailsResident, getGarbagePendingRequestDetailsResident, getGarbageCancelledDetailsResident
  } from "../restful-API/garbagePickupGetAPI";
 
 export type GarbageRequestPending = {
@@ -11,7 +11,7 @@ export type GarbageRequestPending = {
     garb_pref_time: string;
     garb_created_at: string;
     garb_additional_notes: string; 
-    file_url: string;
+    file_url?: string;
     sitio_name: string;
 }  
 
@@ -21,6 +21,14 @@ export const useGetGarbagePendingResident = (rp_id: string) => {
         queryFn: () => getGarbagePendingResident(rp_id),
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
+    });
+}
+
+export const useGetGarbagePendingRequestDetailsResident = (garb_id: string) => {
+    return useQuery<GarbageRequestPending>({
+        queryKey: ["garbageRequestDetails", garb_id],
+        queryFn:() =>  getGarbagePendingRequestDetailsResident(garb_id),
+        staleTime: 1000 * 60 * 30, 
     });
 }
 
@@ -36,7 +44,7 @@ export type GarbageRequestReject = {
     dec_id?: string | null;  
     dec_date?: string | null;
     dec_reason: string;
-    file_url: string;
+    file_url?: string;
     sitio_name: string;
     staff_name: string;
 };
@@ -51,11 +59,21 @@ export const useGetGarbageRejectedResident = (rp_id: string) => {
     });
 }
 
+export const useGetGarbageRejectRequestDetailsResident = (garb_id: string) => {
+return useQuery<GarbageRequestReject>({
+        queryKey: ["garbageRejectedRequest", garb_id], 
+        queryFn:() => getGarbageRejectedRequestDetailsResident(garb_id),
+        staleTime: 1000 * 60 * 30,
+    });
+}
+
 export type GarbageRequestAccept = {
   garb_id: string;
   garb_location: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_date: string;
+  garb_pref_time: string;
   garb_additional_notes: string;
   garb_req_status: string;
   garb_requester: string;
@@ -109,7 +127,10 @@ export type GarbageRequestComplete = {
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
   conf_staff_conf: boolean | null;
+  garb_pref_date: string;
+  garb_pref_time: string;
   garb_additional_notes?: string; 
+  dec_date?: string | null;
   assignment_info?: {
     driver?: string;
     collectors?: string[];
@@ -162,5 +183,14 @@ export const useGetGarbageCancelledResident = (rp_id: string) => {
         queryFn:() =>  getGarbageCancelledResident(rp_id),
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
+    });
+}
+
+export const useGetGarbageCancelledDetailsResident = (garb_id: string) => {
+    return useQuery<GarbageRequestCancelled>({
+        queryKey: ["garbageCancelledRequest", garb_id], 
+        queryFn:() =>  getGarbageCancelledDetailsResident(garb_id),
+        staleTime: 1000 * 60 * 30,
+        enabled: !!garb_id,
     });
 }

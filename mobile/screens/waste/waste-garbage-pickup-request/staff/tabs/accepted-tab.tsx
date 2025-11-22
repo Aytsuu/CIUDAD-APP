@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-
 import { Search, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageAcceptRequest } from "../queries/garbagePickupStaffFetchQueries";
 import { useRouter } from "expo-router";
 import { LoadingState } from "@/components/ui/loading-state";
 import EmptyState from "@/components/ui/emptyState";
+import { formatDate } from "@/helpers/dateHelpers";
+import { formatTime } from "@/helpers/timeFormatter";
 
 export default function AcceptedGarbageRequest() {
   const [searchInputVal, setSearchInputVal] = useState("");
@@ -102,6 +103,15 @@ export default function AcceptedGarbageRequest() {
                   <Text className="text-orange-700 font-medium text-xs">{request.garb_waste_type}</Text>
                 </View>
               </View>
+
+              {request?.assignment_info?.pick_date && request?.assignment_info?.pick_time && (
+                <View className="flex-row justify-between">
+                  <Text className="text-sm text-gray-600">Pickup Date & Time:</Text>
+                  <Text className="text-sm text-gray-800 font-medium">
+                    {formatDate(request?.assignment_info?.pick_date || '', "long")}, {formatTime(request?.assignment_info?.pick_time || '')}
+                  </Text>
+                </View>
+              )}
 
              {/* Driver Name */}
               {request.assignment_info?.driver && (

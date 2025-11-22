@@ -142,7 +142,7 @@ export default function ViewCompletedRequestDetails() {
 
             {requestDetails?.garb_additional_notes && (
               <View className="py-3">
-                <View className="flex-row items-center mb-2">
+                <View className="flex-row items-center mb-2 gap-2">
                   <Info size={16} color="#6b7280" className="mr-2" />
                   <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
                 </View>

@@ -107,6 +107,15 @@ export default function RejectedGarbageRequest() {
                 </View>
               </View>
 
+              {request.dec_date && (
+                <View className="flex-row justify-between">
+                  <Text className="text-sm text-gray-600">Cancelled:</Text>
+                  <Text className="text-sm text-gray-800 font-medium">
+                    {formatTimestamp(request.dec_date)}
+                  </Text>
+                </View>
+              )}
+
               {/* Rejection Reason Preview */}
               {request.dec_reason && (
                 <View className="mt-2">

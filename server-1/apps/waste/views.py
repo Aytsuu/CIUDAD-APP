@@ -1777,4 +1777,18 @@ class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
             .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
             .order_by('-latest_dec_date')  # newest on top
         )
+    
+class GarbagePickupRequestCancelledDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestRejectedSerializer  
+    queryset = Garbage_Pickup_Request.objects.all()
+    lookup_field = 'garb_id'
+
+    def get_queryset(self):
+        # Filter only cancelled requests to prevent accessing non-cancelled ones
+        return Garbage_Pickup_Request.objects.filter(garb_req_status='cancelled')
+    
+    def get_object(self):
+        garb_id = self.kwargs.get('garb_id')
+        return generics.get_object_or_404(self.get_queryset(), garb_id=garb_id)
 
