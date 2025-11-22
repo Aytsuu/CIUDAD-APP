@@ -733,8 +733,8 @@ class CombinedStockTable(APIView):
                         'category': 'Vaccine',
                         'item': {
                             'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
-                            'dosage': stock.volume if hasattr(stock, 'volume') else None,
-                            'unit': 'container',
+                            'dosage': stock.dose_ml if hasattr(stock, 'dose_ml') else None,
+                            'unit': 'ml',
                         },
                         'qty': f"{stock.qty or 0} container/s",
                         'administered': f"{used_qty} container/s",
@@ -766,7 +766,7 @@ class CombinedStockTable(APIView):
                         'item': {
                             'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
                             'dosage': stock.dose_ml,
-                            'unit': 'ml',
+                            'unit': 'doses',
                         },
                         'qty': f"{stock.qty} vials ({total_doses} dose/s)",
                         'administered': f"{used_qty} dose/s",
@@ -1047,6 +1047,8 @@ class AntigenTransactionView(APIView):
                     vaccine = vaccine_stock.vac_id
                     inventory = vaccine_stock.inv_id
                     item_name = vaccine.vac_name if vaccine else "Unknown Vaccine"
+                    unit = "doses" if vaccine_stock.solvent and vaccine_stock.solvent.lower() == "doses" else "ml"
+                    dose_ml = vaccine_stock.dose_ml if vaccine_stock.dose_ml else 0
                     item_type = "Vaccine"
                     inv_id = inventory.inv_id if inventory else "N/A"
                 elif immunization_stock:
@@ -1068,6 +1070,8 @@ class AntigenTransactionView(APIView):
                     'antt_id': transaction.antt_id,
                     'item_name': item_name,
                     'item_type': item_type,
+                    'unit':unit,
+                    'dose_ml':dose_ml,
                     'inv_id': inv_id,
                     'antt_qty': transaction.antt_qty,
                     'antt_action': transaction.antt_action,
@@ -1200,8 +1204,8 @@ class ArchivedAntigenTable(APIView):
                         'category': 'Vaccine',
                         'item': {
                             'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
-                            'dosage': stock.volume if hasattr(stock, 'volume') else None,
-                            'unit': 'container',
+                            'dosage': stock.dose_ml if hasattr(stock, 'dose_ml') else None,
+                            'unit': 'ml',
                         },
                         'qty': f"{stock.qty} containers",
                         'administered': f"{actual_used_containers} containers",

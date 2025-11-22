@@ -13,10 +13,26 @@ export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
       </div>
     ),
   },
+        
   {
     accessorKey: "item_name",
     header: "Item Name",
-  },
+    cell: ({ row }) => {
+      const item = row.original;
+      
+      return (
+      <div>
+        <div>{item?.item_name || "N/A"}</div>
+        {row.original.item_type === "Vaccine" && (
+        <div className="text-sm text-center text-gray-600">
+          {item?.dose_ml || 0} {item?.unit || ""}
+        </div>
+        )}
+      </div>
+      );
+    }
+    },
+
   // {
   //   accessorKey: "item_type",
   //   header: "Item Type",

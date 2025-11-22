@@ -19,7 +19,7 @@ export const getStockColumns = (
       try {
         const date = new Date(dateString);
         return (
-          <div className="text-center w-[90px]">
+          <div className="text-center ">
             {date.toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
