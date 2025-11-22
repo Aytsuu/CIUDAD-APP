@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
 import { fetchCommodity } from "../REQUEST/Commodity/queries/fetch-queries";
+import { unitOptions } from "./options";
 
 export default function AddCommodityStock() {
   const { user } = useAuth();
@@ -23,7 +24,7 @@ export default function AddCommodityStock() {
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
       com_id: "",
-      cinv_qty_unit: "boxes",
+      cinv_qty_unit: "pcs",
       cinv_qty: undefined,
       cinv_pcs: undefined,
       cinv_recevFrom: "",
@@ -124,11 +125,7 @@ export default function AddCommodityStock() {
               control={form.control}
               name="cinv_qty_unit"
               label="Unit"
-              options={[
-                { id: "boxes", name: "Boxes" },
-                { id: "bottles", name: "Bottles" },
-                { id: "packs", name: "Packs" }
-              ]}
+              options={unitOptions}
             />
           </div>
 

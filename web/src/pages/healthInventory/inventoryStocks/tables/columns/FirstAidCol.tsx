@@ -5,6 +5,16 @@ import { Archive, Minus } from "lucide-react";
 
 export const getColumns = (handleArchiveInventory: (firstAid: any) => void, onOpenWastedModal?: (record: any) => void): ColumnDef<any>[] => [
   {
+    accessorKey: "id",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
+          {row.original.fat_id}
+        </div>
+      </div>
+    ),
+  }, {
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {

@@ -5,7 +5,6 @@ import sys
 from django.db import connection
 from django.db.utils import OperationalError
 from utils.create_notification import NotificationQueries
-
 logger = logging.getLogger(__name__)
 
 
@@ -98,8 +97,8 @@ def send_medicine_expired_notification(medicine_request_item):
                 f"You can submit a new request if you still need the medicine."
             ),
             recipients=[str(resident_profile.rp_id)],
-            notif_type="Request Cancellation",
-            web_route="/services/medicine-request",
+            notif_type="CANCELLED",
+            web_route="/services/medicine/requests/cancelled",
             web_params={"request_id": str(medicine_request.medreq_id), "status": "cancelled"},
             mobile_route="/(health)/medicine-request/my-requests",
             mobile_params={"request_id": str(medicine_request.medreq_id)},
@@ -115,3 +114,67 @@ def send_medicine_expired_notification(medicine_request_item):
     except Exception as e:
         print(f"❌ Error sending medicine expired notification for request item {medicine_request_item.medreqitem_id}: {str(e)}")
         return False
+
+
+def send_daily_pending_medicine_requests_notification():
+    """
+    Daily task that sends notification if there are pending medicine requests
+    Counts unique medreq_id to avoid duplicate counting of the same request
+    Only sends ONE notification per day (using cache to prevent duplicates)
+    """
+    try:
+        from django.core.cache import cache
+        from .models import MedicineRequestItem
+        from apps.inventory.signals import get_health_staff_recipients
+        
+        # Check if notification was already sent today (prevent duplicates)
+        cache_key = "pending_medicine_notification_sent_today"
+        if cache.get(cache_key):
+            logger.info("⏭️ Pending medicine notification already sent today, skipping")
+            return 0
+        
+        # Count unique pending medicine requests (distinct medreq_id)
+        pending_requests_count = MedicineRequestItem.objects.filter(
+            status__iexact='pending'
+        ).values('medreq_id').distinct().count()
+        
+        if pending_requests_count > 0:
+            # Get health staff recipients
+            recipients = get_health_staff_recipients()
+            
+            if recipients:
+                notification = NotificationQueries()
+                
+                # Create notification message based on count
+                if pending_requests_count == 1:
+                    message = "There is 1 pending medicine request waiting for review."
+                else:
+                    message = f"There are {pending_requests_count} pending medicine requests waiting for review."
+                
+                success = notification.create_notification(
+                    title="Pending Medicine Requests Alert",
+                    message=message,
+                    recipients=recipients,
+                    notif_type="PENDING",
+                    web_route="/services/medicine/requests/pending",
+                    web_params={"status": "pending"},
+                    mobile_route=None,
+                    mobile_params=None
+                )
+                
+                if success:
+                    # Mark notification as sent for today (86400 seconds = 24 hours)
+                    cache.set(cache_key, True, 86400)
+                    logger.info(f"✅ Daily pending medicine requests notification sent: {pending_requests_count} unique pending requests")
+                else:
+                    logger.error("❌ Failed to send daily pending medicine requests notification")
+            else:
+                logger.warning("⚠️ No health staff recipients found for pending medicine requests notification")
+        else:
+            logger.info("⏭️ No pending medicine requests, skipping daily notification")
+            
+        return pending_requests_count
+        
+    except Exception as e:
+        logger.error(f"❌ Error in daily pending medicine requests notification: {e}")
+        return 0

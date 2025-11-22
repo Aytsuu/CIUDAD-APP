@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { CardContent } from "@/components/ui/card";
 import { EditHeaderDialog } from "./edit_header";
 import TableLoading from "@/components/ui/table-loading";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 interface MonthlyMorbidityDetailsProps {
   state?: {
@@ -252,22 +253,24 @@ export default function MonthlyMorbidityDetails({ state: propState }: MonthlyMor
     <>
       {/* Export Controls */}
       <div>
-        <CardContent className="p-4">
+        <CardContent className="p-4 bg-white">
           <div className="flex justify-end gap-2 items-center mb-4">
             <Button variant="outline" onClick={handleExportPDF} className="flex items-center gap-2">
               <Printer className="h-4 w-4 mr-1" />
               Export PDF
             </Button>
+          <ProtectedComponent exclude={["DOCTOR"]}>
 
             {/* Add the Edit Header Button */}
             <Button onClick={() => setIsEditDialogOpen(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
               <Edit className="h-4 w-4" />
               Edit Header
             </Button>
+          </ProtectedComponent>
           </div>
 
           {/* Pagination Controls */}
-          <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 mb-4">
+          <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 mb-4 ">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-700">Show</span>
               <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>

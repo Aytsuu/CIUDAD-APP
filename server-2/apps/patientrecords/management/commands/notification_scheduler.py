@@ -30,13 +30,13 @@ class Command(BaseCommand):
         # === NORMAL MODE ===
         self.stdout.write(self.style.SUCCESS('Starting automatic notification scheduler...'))
 
-        scheduler = BackgroundScheduler()
+        scheduler = BackgroundScheduler() 
 
         # JOB 1: Today + Missed (8am)
         scheduler.add_job(
             lambda: self.run_cmd('create_todays_followup_notifications'),
             trigger=CronTrigger(hour=8, minute=00),
-            id='daily_followup_notifications_morning',
+            id='daily_followup_notifications_morning', 
             replace_existing=True
         )
 

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta, datetime
-from apps.patientrecords.models import FollowUpVisit
+from apps.patientrecords.models import FollowUpVisit, FamilyComposition
 from apps.administration.models import Staff
 from apps.healthProfiling.models import ResidentProfile
 from utils.create_notification import NotificationQueries
@@ -242,6 +242,29 @@ class Command(BaseCommand):
                             self.style.SUCCESS(f"   ✅ Created {followup_type} notification for resident {patient_name}")
                         )
                 
+                # Notify parents if child is < 6 years old
+                if patient.pat_type == 'Resident' and patient.rp_id:
+                    try:
+                        personal = patient.rp_id.per
+                        if personal and personal.per_dob:
+                            today_obj = timezone.now().date()
+                            patient_age = today_obj.year - personal.per_dob.year - ((today_obj.month, today_obj.day) < (personal.per_dob.month, personal.per_dob.day))
+                            
+                            if patient_age < 6:
+                                self._notify_parents_for_child_followup(
+                                    patient, 
+                                    followup_description, 
+                                    followup_type,
+                                    notifier,
+                                    patient_name,
+                                    test_mode
+                                )
+                    except Exception as e:
+                        if test_mode:
+                            self.stdout.write(
+                                self.style.WARNING(f"   ⚠️ Could not notify parents: {str(e)}")
+                            )
+                
                 if staff_success:
                     notification_count += 1
                     # Mark as notified today
@@ -264,7 +287,7 @@ class Command(BaseCommand):
         from django.utils import timezone
         
         today = timezone.now().date().isoformat()
-        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}
+        cache_key = f"followup_notified_{followup.followv_id}_{followup_type}_{today}"
         return cache.get(cache_key, False)
     
     def mark_as_notified_today(self, followup, followup_type):
@@ -277,3 +300,70 @@ class Command(BaseCommand):
         
         # Store until tomorrow (24 hours)
         cache.set(cache_key, True, 60 * 60 * 24)  # 24 hours
+    
+    def _notify_parents_for_child_followup(self, child_patient, followup_description, followup_type, notifier, child_name, test_mode):
+        """Notify parents (mother and father) if their dependent child (< 6 years) has a follow-up visit"""
+        try:
+            parent_rp_ids = []
+            child_composition = FamilyComposition.objects.filter(
+                rp=child_patient.rp_id
+            ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+            
+            if not child_composition:
+                if test_mode:
+                    self.stdout.write(f"   ℹ️  No family composition found for child")
+                return
+            
+            family_compositions = FamilyComposition.objects.filter(
+                fam_id=child_composition.fam_id
+            ).select_related('rp', 'rp__per')
+            
+            for composition in family_compositions:
+                role = (composition.fc_role or '').strip().lower()
+                if role in ['mother', 'father'] and composition.rp:
+                    parent_rp_ids.append(str(composition.rp.rp_id))
+                    if test_mode:
+                        self.stdout.write(f"   👨‍👩‍👧 Found parent: {composition.fc_role.upper()} (RP ID: {composition.rp.rp_id})")
+            
+            if parent_rp_ids:
+                description_text = f" - {followup_description}" if followup_description else ""
+                
+                if followup_type == "today":
+                    parent_title = "Your Child's Follow-Up Visit Today"
+                    parent_message = f"Your child, {child_name}, has a follow-up visit scheduled for today{description_text}"
+                elif followup_type == "missed":
+                    parent_title = "Your Child's Missed Follow-Up Visit"
+                    parent_message = f"Your child, {child_name}, has a missed follow-up visit that needs attention{description_text}"
+                else:
+                    parent_title = "Your Child's Follow-Up Visit"
+                    parent_message = f"Your child, {child_name}, has a follow-up visit{description_text}"
+                
+                parent_success = notifier.create_notification(
+                    title=parent_title,
+                    message=parent_message,
+                    recipients=parent_rp_ids,
+                    notif_type="REMINDER",
+                    web_route="",
+                    web_params="",
+                    mobile_route="/(health)/my-schedules/my-schedules",
+                    mobile_params="",
+                )
+                
+                if parent_success and test_mode:
+                    self.stdout.write(
+                        self.style.SUCCESS(f"   ✅ Created {followup_type} notification for {len(parent_rp_ids)} parent(s) about {child_name}")
+                    )
+                elif test_mode:
+                    self.stdout.write(
+                        self.style.WARNING(f"   ⚠️ Failed to create parent notification")
+                    )
+            else:
+                if test_mode:
+                    self.stdout.write(f"   ℹ️  No parents found in family composition")
+        
+        except Exception as e:
+            if test_mode:
+                self.stdout.write(
+                    self.style.WARNING(f"   💥 Error notifying parents: {str(e)}")
+                )
+            logger.error(f"Error notifying parents for child {child_patient.pat_id}: {str(e)}")

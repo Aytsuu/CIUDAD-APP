@@ -101,20 +101,27 @@ export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
 export const VaccineStocksSchema = z.object({
   vac_id: z.string().nonempty("Vaccine is required"),
   batchNumber: z.string().nonempty("Batch number is required"),
-  volume: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Volume must be a number" })),
   qty: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Quantity must be a number" })).optional(),
-  dose_ml: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Dose must be a number" })).optional(),
+  dose_ml: z.preprocess(
+    (a) => a === "" || a === undefined ? undefined : Number(a), 
+    z.number({ invalid_type_error: "Dose must be a number" }).optional()
+  ),
   expiry_date: z.string().nonempty("Expiry date is required"),
   solvent: z.enum(["diluent", "doses"]),
   inv_type: z.string(),
   staff: z.string()
 }).refine(
-  (data) => data.solvent === "diluent" || (data.solvent === "doses" && data.dose_ml !== undefined),
+  (data) => {
+    if (data.solvent === "doses") {
+      return data.dose_ml !== undefined && data.dose_ml !== null && data.dose_ml > 0;
+    }
+    return true;
+  },
   {
     message: "Dose (ml) is required when solvent is doses",
     path: ["dose_ml"]
   }
-); 
+);
 
 export const usedFaSchema = z.object({
   usedItem: positiveNumberSchema,

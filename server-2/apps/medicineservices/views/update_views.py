@@ -66,7 +66,7 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
             message=message_info['message'],
             # sender="00001250924",  # System sender
             recipients=recipient_rp_ids,
-            notif_type=f"MEDICINE_{new_status.upper()}",
+            notif_type="REQUEST",
             # target_obj=None,
             web_route="/services/medicine-request",
             web_params={"request_id": str(medicine_request.medreq_id), "status": new_status},
@@ -165,14 +165,17 @@ class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView):
             web_route = ""
             if status == 'rejected':
                 web_route = "/services/medicine/requests/rejected"
+                notif_type = "REJECTED"
+
             elif status == 'referred':
                 web_route = "/services/medicine/requests/referred"
+                notif_type = "REFERRED"
 
             success = notifier.create_notification(
                 title=title,
                 message=message,
                 recipients=recipient_rp_ids,
-                notif_type=f"MEDICINE_{status.upper()}",
+                notif_type=notif_type,
                 web_route=web_route,
                 web_params="",
                 mobile_route="/(health)/medicine-request/my-requests",
@@ -381,7 +384,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
             
             # Create notification
             success = notifier.create_notification(
-                title="Medicine request confirmed",
+                title="Medicine Request Confirmed",
                      message=(
                     f"Medicines requested: {medicine_list}.\n"
                     "Please note that if you do not pick up your medicine within 2 days, "
@@ -389,7 +392,7 @@ class UpdateConfirmAllPendingItemsView(APIView):
                 ),
                 # sender="00001250924",  # System sender
                 recipients=recipient_rp_ids,
-                notif_type="MEDICINE_CONFIRMED",
+                notif_type="CONFIRMED",
                 # target_obj=None,
                 web_route="/services/medicine/requests/pickup",
                 web_params="",

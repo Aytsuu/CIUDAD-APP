@@ -7,7 +7,7 @@ export const unitOptions = [
   { id: "boxes", name: "boxes" },
   { id: "bottles", name: "bottles" },
   { id: "packs", name: "packs" },
-  { id: "pc/s", name: "pc/s" },
+  { id: "pcs", name: "pc/s" },
 ];
 
 

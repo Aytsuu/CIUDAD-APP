@@ -87,6 +87,7 @@ class CommodityInventoryView(generics.ListAPIView):
 
 
 
+
 class CommodityStockTableView(APIView):
     """
     API view for commodity stocks with pagination, search, and filtering
@@ -154,16 +155,18 @@ class CommodityStockTableView(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
-                    # For boxes, low stock threshold is 2 boxes
-                    is_low_stock = available_stock <= 2
-                else:
-                    # For pieces, low stock threshold is 20 pcs
-                    is_low_stock = available_stock <= 20
-                
                 # Check out of stock
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if not out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:  # Only check for low stock if there's some stock available
+                    if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                        # For boxes, low stock threshold is 2 boxes
+                        is_low_stock = available_stock <= 2
+                    else:
+                        # For pieces, low stock threshold is 20 pcs
+                        is_low_stock = available_stock <= 20
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
@@ -260,7 +263,6 @@ class CommodityStockTableView(APIView):
                 'success': False,
                 'error': f'Error fetching commodity stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     # def auto_archive_expired_commodities(self):
     #     """Auto-archive commodities that expired more than 10 days ago and log transactions"""
     #     from datetime import timedelta
@@ -435,10 +437,11 @@ class CommodityStockCreate(APIView):
         qty_unit = data.get('cinv_qty_unit')
         qty = data.get('cinv_qty', 0)
         pcs = data.get('cinv_pcs', 0)
+        total_pcs = qty * pcs
         
         # Format quantity string based on unit
         if qty_unit == 'boxes':
-            comt_qty = f"{qty} boxes ({pcs} pcs per box)"
+            comt_qty = f"{qty} boxes ({total_pcs} pcs  )"
         else:
             comt_qty = f"{qty} {qty_unit}"
         
@@ -673,7 +676,7 @@ class ArchivedCommodityTable(APIView):
                     'category': 'Commodity',
                     'item': {
                         'com_name': stock.com_id.com_name if stock.com_id else "Unknown Commodity",
-                        'unit': stock.cinv_qty_unit or 'units',
+                        'unit': stock.cinv_qty_unit or 'pcs',
                     },
                     'qty': {
                         'cinv_qty': cinv_qty,
@@ -1014,6 +1017,8 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                 'com_name': first_tx.cinv_id.com_id.com_name,
                 'opening': display_opening,
                 'received': received_qty,
+                'pcs':first_tx.cinv_id.cinv_pcs,
+                'wasted': first_tx.cinv_id.wasted,
                 'receivedfrom': first_tx.cinv_id.cinv_recevFrom,
                 'dispensed': dispensed_qty,
                 'closing': closing_qty,
@@ -1296,12 +1301,14 @@ class MonthlyCommodityExpiredOutOfStockDetailAPIView(APIView):
             item_data = {
                 'com_name': f"{cinv.com_id.com_name}",
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
+                'wasted':cinv.wasted,
+                'pcs':cinv.cinv_pcs,
                 'opening_stock': opening_qty,
                 'received': received_qty,
                 'date_received': cinv.created_at.date() if cinv.created_at else None,
                 'dispensed': dispensed_qty,
                 'closing_stock': closing_qty,
-                'unit': 'pcs',
+                'unit': cinv.cinv_qty_unit,
                 'received_from': cinv.cinv_recevFrom,
                 'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
             }

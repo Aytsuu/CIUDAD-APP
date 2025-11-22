@@ -19,7 +19,7 @@ export const getStockColumns = (
       try {
         const date = new Date(dateString);
         return (
-          <div className="text-center w-[90px]">
+          <div className="text-center ">
             {date.toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
@@ -85,23 +85,23 @@ export const getStockColumns = (
       if (record.type === "vaccine") {
         if (record.solvent?.toLowerCase() === "diluent") {
           return (
-            <div className={`text-center ${expired ? "text-red-600 line-through" : isLow ? "text-yellow-600" : "text-black"}`}>
+            <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
               {record.availableStock} containers
               {expired && " (Expired)"}
               {!isOutOfStock && isLow && record.availableStock > 0 && " (Low Stock)"}
               {isOutOfStock && !expired && " (Out of Stock)"}
             </div>
-          );
-        }
-  
-        const dosesPerVial = record.dose_ml || 1;
-        const availableDoses = record.availableStock;
-        const fullVials = Math.ceil(availableDoses / dosesPerVial);
-  
-        return (
-          <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
-            <span className={expired ? "line-through" : isLow ? "text-yellow-600" : "text-black"}>
-              {fullVials} vial{fullVials !== 1 ? "s" : ""}
+            );
+          }
+        
+          const dosesPerVial = record.dose_ml || 1;
+          const availableDoses = record.availableStock;
+          const fullVials = Math.ceil(availableDoses / dosesPerVial);
+        
+          return (
+            <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
+            <span className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
+            {fullVials} vial{fullVials !== 1 ? "s" : ""}
               {expired && " (Expired)"}
               {!isOutOfStock && isLow && availableDoses > 0 && " (Low Stock)"}
               {isOutOfStock && !expired && " (Out of Stock)"}
@@ -176,7 +176,7 @@ export const getStockColumns = (
       const expired = row.original.isExpired;
       return (
         <div className="flex items-center justify-center gap-2">
-          <span className={`text-sm ${expired ? "text-red-600 line-through" : "text-gray-600"}`}>{row.original.wastedDose || 0}</span>
+          <span className={`text-sm ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wastedDose || 0}</span>
         </div>
       );
     }

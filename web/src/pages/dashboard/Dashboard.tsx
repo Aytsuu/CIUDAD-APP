@@ -36,10 +36,8 @@ export default function Dashboard() {
   const remarkCard = useNoRemarksSectionCard();
 
   const councilEvents = useCouncilUpcomingEvents();
-  const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents]
-  );
+  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents)
+  
 
   const validateFeature = (feature: string) => {
     // Always allow access to basic dashboard sections
@@ -69,11 +67,6 @@ export default function Dashboard() {
         ...chartItem,
       }))
     );
-    
-    // Debug logging
-    console.log('Dashboard - instance:', instance);
-    console.log('Dashboard - chartsWithAccess:', charts);
-    console.log('Dashboard - itemsWithCharts:', itemsWithCharts);
     
     return charts;
   }, [instance, user]);
@@ -136,14 +129,14 @@ export default function Dashboard() {
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
             {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+              <div className="w-2/3 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
               </div>
             )}
             {cardsWithAccess.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-2/3">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-full">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-gray-900">Analytics Overview</h2>
                   {totalPages > 1 && (
@@ -237,7 +230,7 @@ export default function Dashboard() {
               item.sidebar.map((component: any, sidebarIndex: number) => (
                 <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>
                   {/* Conditionally render specific sidebar items */}
-                  {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.tittle =="To-Pickup Medicine Requests" ? (
+                  {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.title === "To-Pickup Medicine Requests" ? (
                     <ProtectedComponent exclude={["DOCTOR"]}>
                       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
                         {/* Sidebar Header */}
@@ -279,84 +272,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-// import { AdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
-// import { ProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
-// import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sidebar";
-// import { ReportSectionCards } from "@/components/analytics/report/report-section-cards";
-// import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
-// import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
-// import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-// import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
-// import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
-// import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
-// import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
-// import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
-// import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
-// import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
-// import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
-// import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
-// import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
-// import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
-// import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
-// import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
-// import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
-// import { format } from "date-fns";
-// import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-// // HEALTH
-// import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
-// import { useAuth } from "@/context/AuthContext";
-
-// export default function Dashboard() {
-//   const currentMonth = format(new Date(), "yyyy-MM");
-//   const { user } = useAuth()
-//   console.log(user?.staff)
-
-//   return (
-//     <MainLayoutComponent title="Dashboard" description="Overview of key metrics, data, and insights">
-//       <div className="w-full flex gap-4">
-//         <div className="w-full grid gap-4">
-//           <div className="grid grid-cols-5">
-//             <AdminSectionCards />
-//             <ProfilingSectionCards />
-//             <ReportSectionCards />
-//             <DonationSectionCards />
-//             <WastePersonnelCards />
-//             <GargbagePickupSectionCards />
-//             <ServicesHealthRecordsSectionCards />
-//           </div>
-//           <div className="grid">
-//             <ReportSectionCharts />
-//             <StaffAttendanceRankingChart />
-//             <GADQuarterlyBudgetChart />
-//           </div>
-//           <div className="grid">
-//             <IncomeExpenseQuarterlyChart />
-//           </div>
-//           <div className="grid">
-//             <IncomeQuarterlyChart />
-//           </div>
-
-//           <div className="grid">
-//             <OPTStatusChart initialMonth={currentMonth} />
-//             <VaccineDistributionChart initialMonth={currentMonth} />
-//             <MedicalHistoryMonthlyChart initialMonth={currentMonth} />
-
-//           </div>
-//         </div>
-//         <div className="grid gap-2">
-
-//           <MedicineDistributionSidebar/>
-//           <FirstAidDistributionSidebar/>
-//           <ProfilingSidebar />
-//           <ReportSidebar />
-//           <GADExpenseSidebar />
-//           <CouncilEventsSidebar />
-//           <WasteActivitySidebar />
-//           <GADExpenseSidebar />
-//           <CouncilEventsSidebar />
-//         </div>
-//       </div>
-//     </MainLayoutComponent>
-//   );
-// }

@@ -46,7 +46,7 @@ class MedicalHistoryMonthlyChart(APIView):
                     'success': True,
                     'month': month,
                     'month_name': f"{month_num:02d}/{year}",
-                    'total_records': sum(illness_data.values()),
+                    'total_records': surveillance_counts.count(),
                     'illness_counts': illness_data,
                 },
                 status=status.HTTP_200_OK,

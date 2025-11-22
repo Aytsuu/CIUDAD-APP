@@ -2174,7 +2174,6 @@ class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
                 'error': f'Error fetching pending appointments: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-
 # ================== WEBVIEW APPOINTMENT (Unified by status + keeps date_filter) ==================
 class MedicalUserAppointmentsView(generics.ListAPIView):
     serializer_class = MedConsultAppointmentSerializer
@@ -2242,25 +2241,52 @@ class MedicalUserAppointmentsView(generics.ListAPIView):
                 Q(rp__respondents_info__fam__hh__hh_id__icontains=search_query)
             ).distinct()
 
-        # Date filter
+        # Date filter - Use scheduled_date for confirmed/completed appointments
         if date_filter != 'all':
             today = datetime.now().date()
-            if date_filter == 'today':
-                queryset = queryset.filter(created_at__date=today)
-            elif date_filter == 'this-week':
-                start_of_week = today - timedelta(days=today.weekday())
-                queryset = queryset.filter(created_at__date__gte=start_of_week)
-            elif date_filter == 'this-month':
-                start_of_month = today.replace(day=1)
-                queryset = queryset.filter(created_at__date__gte=start_of_month)
-            elif date_filter == 'tomorrow':
-                tomorrow = today + timedelta(days=1)
-                queryset = queryset.filter(scheduled_date=tomorrow)
-            elif date_filter == 'upcoming':
-                tomorrow = today + timedelta(days=1)
-                queryset = queryset.filter(scheduled_date__gte=tomorrow)
-            elif date_filter == 'past':
-                queryset = queryset.filter(scheduled_date__lt=today)
+            
+            # Check if we have confirmed or completed statuses in the filter
+            has_confirmed_or_completed = any(status.lower() in ['confirmed', 'completed'] for status in statuses) if statuses else False
+            
+            if has_confirmed_or_completed:
+                # Use scheduled_date for confirmed/completed appointments
+                if date_filter == 'today':
+                    queryset = queryset.filter(scheduled_date=today)
+                elif date_filter == 'this-week':
+                    start_of_week = today - timedelta(days=today.weekday())
+                    end_of_week = start_of_week + timedelta(days=6)
+                    queryset = queryset.filter(scheduled_date__range=[start_of_week, end_of_week])
+                elif date_filter == 'this-month':
+                    start_of_month = today.replace(day=1)
+                    end_of_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+                    queryset = queryset.filter(scheduled_date__range=[start_of_month, end_of_month])
+                elif date_filter == 'tomorrow':
+                    tomorrow = today + timedelta(days=1)
+                    queryset = queryset.filter(scheduled_date=tomorrow)
+                elif date_filter == 'upcoming':
+                    tomorrow = today + timedelta(days=1)
+                    queryset = queryset.filter(scheduled_date__gte=tomorrow)
+                elif date_filter == 'past':
+                    queryset = queryset.filter(scheduled_date__lt=today)
+            else:
+                # Use created_at for other statuses (pending, cancelled, etc.)
+                if date_filter == 'today':
+                    queryset = queryset.filter(created_at__date=today)
+                elif date_filter == 'this-week':
+                    start_of_week = today - timedelta(days=today.weekday())
+                    queryset = queryset.filter(created_at__date__gte=start_of_week)
+                elif date_filter == 'this-month':
+                    start_of_month = today.replace(day=1)
+                    queryset = queryset.filter(created_at__date__gte=start_of_month)
+                elif date_filter == 'tomorrow':
+                    # For non-confirmed appointments, tomorrow filter might not make sense
+                    # You can adjust this logic based on your business rules
+                    queryset = queryset.none()  # or keep using created_at if needed
+                elif date_filter == 'upcoming':
+                    # For non-confirmed appointments, upcoming might not apply
+                    queryset = queryset.none()  # or adjust based on your needs
+                elif date_filter == 'past':
+                    queryset = queryset.filter(created_at__date__lt=today)
 
         return queryset.order_by('-created_at')
 

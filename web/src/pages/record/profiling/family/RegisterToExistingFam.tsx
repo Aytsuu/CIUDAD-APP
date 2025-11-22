@@ -67,6 +67,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
                       name="familySchema.familyId"
                       label="Family ID"
                       placeholder="Enter the existing family ID"
+                      required
                     />
                     <p className="text-xs text-gray-500">The unique identifier of the family you want to join</p>
                   </div>
@@ -82,6 +83,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
                         { id: "guardian", name: "Guardian" },
                         { id: "dependent", name: "Dependent" },
                       ]}
+                      required
                     />
                     <p className="text-xs text-gray-500">The resident's role within the family structure</p>
                   </div>

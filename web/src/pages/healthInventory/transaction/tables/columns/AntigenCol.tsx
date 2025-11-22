@@ -1,21 +1,38 @@
 import { ColumnDef } from "@tanstack/react-table";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
-  // {
-  //   accessorKey: "id",
-  //   header: "#",
-  //   cell: ({ row }) => (
-  //     <div className="flex justify-center">
-  //       <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
-  //         {row.original.antt_id}
-  //       </div>
-  //     </div>
-  //   ),
-  // },
+  {
+    accessorKey: "id",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
+          {row.original.antt_id}
+        </div>
+      </div>
+    ),
+  },
+        
   {
     accessorKey: "item_name",
     header: "Item Name",
-  },
+    cell: ({ row }) => {
+      const item = row.original;
+      
+      return (
+      <div>
+        <div>{item?.item_name || "N/A"}</div>
+        {row.original.item_type === "Vaccine" && (
+        <div className="text-sm text-center text-gray-600">
+          {item?.dose_ml || 0} {item?.unit || ""}
+        </div>
+        )}
+      </div>
+      );
+    }
+    },
+
   // {
   //   accessorKey: "item_type",
   //   header: "Item Type",
@@ -48,10 +65,15 @@ export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
     accessorKey: "antt_action",
     header: "Action",
   },
-  {
-    accessorKey: "staff",
-    header: "Staff",
-  },
+ {
+     accessorKey: "staff", 
+     header: "Staff",
+     cell: ({ row }) => {
+       const staffName = row.original.staff;
+       return toTitleCase(staffName) 
+       || "N/A";
+     }
+   },
   {
     accessorKey: "created_at",
     header: "Created At",

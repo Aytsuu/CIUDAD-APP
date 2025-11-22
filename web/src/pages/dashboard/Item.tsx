@@ -315,7 +315,9 @@ export const getItemsConfig = (
             title: "Pending Medicine Requests",
             element: <PendingMedicineRequestsSidebar />,
           },
-          { title: "To-Pickup Medicine Requests", element: <ToPickupMedicineRequestsSidebar /> },
+          { title: "To-Pickup Medicine Requests", 
+            element: <ToPickupMedicineRequestsSidebar /> 
+          },
         ],
       },
 

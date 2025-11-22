@@ -90,12 +90,21 @@ class Command(BaseCommand):
                 patient = followup.patrec.pat_id
                 patient_name = "Unknown Patient"
                 patient_id = patient.pat_id
+                patient_rp_id = None
+                patient_age = None
                 
                 if patient.pat_type == 'Resident' and patient.rp_id and patient.rp_id.per:
                     personal = patient.rp_id.per
                     patient_name = f"{personal.per_fname} {personal.per_lname}"
-                    # Get patient's RP ID for resident notifications
                     patient_rp_id = str(patient.rp_id.rp_id) if patient.rp_id else None
+                    
+                    # Calculate patient age
+                    if personal.per_dob:
+                        today = timezone.now().date()
+                        patient_age = today.year - personal.per_dob.year - (
+                            (today.month, today.day) < 
+                            (personal.per_dob.month, personal.per_dob.day)
+                        )
                 elif patient.pat_type == 'Transient' and patient.trans_id:
                     transient = patient.trans_id
                     patient_name = f"{transient.tran_fname} {transient.tran_lname}"
@@ -108,6 +117,7 @@ class Command(BaseCommand):
                 if test_mode:
                     self.stdout.write(f"\n👤 Processing tomorrow: {patient_name} (ID: {patient_id})")
                     self.stdout.write(f"   📝 Follow-up description: {followup_description or 'No description'}")
+                    self.stdout.write(f"   🎂 Age: {patient_age} years old")
                 
                 # Create notification for staff
                 staff_success = notifier.create_notification(
@@ -142,6 +152,16 @@ class Command(BaseCommand):
                     if resident_success and test_mode:
                         self.stdout.write(
                             self.style.SUCCESS(f"   ✅ Created tomorrow notification for resident {patient_name}")
+                        )
+                
+                # 🆕 NOTIFY PARENTS if patient is a dependent child below 6 years old
+                if patient.pat_type == 'Resident' and patient.rp_id and patient_age is not None and patient_age < 6:
+                    parent_notifications = self._notify_parents_for_child_followup(
+                        patient, followup_description, test_mode
+                    )
+                    if test_mode and parent_notifications > 0:
+                        self.stdout.write(
+                            self.style.SUCCESS(f"   ✅ Created notifications for {parent_notifications} parent(s) of child {patient_name}")
                         )
                 
                 if staff_success:
@@ -182,3 +202,90 @@ class Command(BaseCommand):
         
         # Store until tomorrow (24 hours)
         cache.set(cache_key, True, 60 * 60 * 24)  # 24 hours
+    
+    def _notify_parents_for_child_followup(self, child_patient, followup_description, test_mode):
+        """
+        Notify parents (mother and father) if their dependent child (< 6 years) has a follow-up visit
+        Returns count of parent notifications sent
+        """
+        from apps.healthProfiling.models import FamilyComposition
+        from apps.patientrecords.models import Patient
+        notifier = NotificationQueries()
+        parent_notifications = 0
+        
+        try:
+            if not child_patient.rp_id:
+                return parent_notifications
+            
+            # Get child's family composition
+            child_composition = FamilyComposition.objects.filter(
+                rp=child_patient.rp_id
+            ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+            
+            if not child_composition:
+                if test_mode:
+                    self.stdout.write(f"   ⚠️  No family composition found for child {child_patient.pat_id}")
+                return parent_notifications
+            
+            # Get all family members in same family
+            fam_id = child_composition.fam_id
+            family_compositions = FamilyComposition.objects.filter(
+                fam_id=fam_id
+            ).select_related('rp', 'rp__per')
+            
+            # Find mother and father
+            parent_rp_ids = []
+            parent_names = []
+            
+            for composition in family_compositions:
+                role = (composition.fc_role or '').strip().lower()
+                
+                if role in ['mother', 'father']:
+                    parent_rp = composition.rp
+                    
+                    if parent_rp:
+                        parent_rp_id = str(parent_rp.rp_id)
+                        parent_rp_ids.append(parent_rp_id)
+                        
+                        # Get parent name
+                        if parent_rp.per:
+                            parent_name = f"{parent_rp.per.per_fname} {parent_rp.per.per_lname}"
+                            parent_names.append(f"{parent_name} ({role.title()})")
+                            
+                            if test_mode:
+                                self.stdout.write(f"   👨‍👩‍👧 Found {role}: {parent_name} (RP ID: {parent_rp_id})")
+            
+            # Send notification to parents if found
+            if parent_rp_ids:
+                child_name = f"{child_patient.rp_id.per.per_fname} {child_patient.rp_id.per.per_lname}"
+                description_text = f" - {followup_description}" if followup_description else ""
+                
+                parent_success = notifier.create_notification(
+                    title="Your Child's Follow-Up Visit Tomorrow",
+                    message=f"Your child, {child_name}, has a follow-up visit scheduled for tomorrow{description_text}",
+                    recipients=parent_rp_ids,
+                    notif_type="REMINDER",
+                    web_route="",
+                    web_params="",
+                    mobile_route="/(health)/my-schedules/my-schedules",
+                    mobile_params="",
+                )
+                
+                if parent_success:
+                    parent_notifications = len(parent_rp_ids)
+                    if test_mode:
+                        self.stdout.write(
+                            self.style.SUCCESS(f"   ✅ Sent notification to {', '.join(parent_names)}")
+                        )
+            else:
+                if test_mode:
+                    self.stdout.write(f"   ℹ️  No parents found in family composition for child {child_patient.pat_id}")
+        
+        except Exception as e:
+            if test_mode:
+                self.stdout.write(
+                    self.style.ERROR(f"   ❌ Error notifying parents for child {child_patient.pat_id}: {str(e)}")
+                )
+                self.stdout.write(traceback.format_exc())
+        
+        return parent_notifications

@@ -27,38 +27,87 @@ export function exportToExcel(data: any[], filename: string) {
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-export function exportToPDF(p0: any[], p1: string, orientation: 'portrait' | 'landscape' = 'portrait') {
+export function exportToPDF(orientation: 'portrait' | 'landscape' = 'portrait') {
   try {
     const element = document.getElementById("printable-area");
     if (!element) {
       throw new Error("Printable area not found");
     }
 
-    html2canvas(element as HTMLElement, {
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      allowTaint: true
-    }).then((canvas: HTMLCanvasElement) => {
-      const imgData = canvas.toDataURL("image/png");
+    // Dynamic sizing based on orientation but always long format
+    const isLandscape = orientation === 'landscape';
+    const width = isLandscape ? 1632 : 1056; // 17in : 11in at 96 DPI
+    const height = isLandscape ? 1056 : 1632; // 11in : 17in at 96 DPI
+    
+    // Create a temporary clone for PDF generation (keeps original element visible)
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.cssText = `
+      width: ${width}px !important;
+      min-height: ${height}px !important;
+      max-width: ${width}px !important;
+      font-size: 10px !important;
+      padding: 16px !important;
+      background: white !important;
+      box-sizing: border-box !important;
+      position: fixed !important;
+      top: -9999px !important;
+      left: -9999px !important;
+      transform: scale(1) !important;
+      zoom: 1 !important;
+      overflow: visible !important;
+      margin: 0 !important;
+      display: block !important;
+    `;
+    
+    document.body.appendChild(clone);
 
-      const pdf = new jsPDF({
-        orientation: orientation,
-        unit: "mm",
-        format: "legal" // Ensure long format
+    // Wait for layout to settle
+    setTimeout(() => {
+      html2canvas(clone as HTMLElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: width,
+        height: height,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 1920,
+        windowHeight: 1080,
+        backgroundColor: '#ffffff'
+      }).then((canvas: HTMLCanvasElement) => {
+        // Remove the clone
+        document.body.removeChild(clone);
+
+        const imgData = canvas.toDataURL("image/png", 1.0);
+
+        // Create PDF with long format based on orientation
+        const pdf = new jsPDF({
+          orientation: orientation,
+          unit: "mm",
+          format: isLandscape 
+            ? [279.4, 431.8] // 11in x 17in in mm (landscape long)
+            : [431.8, 279.4] // 17in x 11in in mm (portrait long)
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Add image to fill entire page
+        pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight);
+
+        // Open the PDF in a new blank tab
+        const pdfBlob = pdf.output("blob");
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        window.open(pdfUrl, "_blank");
+      }).catch((error) => {
+        // Remove the clone on error
+        if (clone.parentNode) {
+          document.body.removeChild(clone);
+        }
+        throw error;
       });
-
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-      // Open the PDF in a new blank tab instead of saving/exporting
-      const pdfBlob = pdf.output("blob");
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, "_blank");
-    });
+    }, 300);
   } catch (error) {
     console.error("Error generating PDF:", error);
     alert("Failed to generate PDF. Please try again.");

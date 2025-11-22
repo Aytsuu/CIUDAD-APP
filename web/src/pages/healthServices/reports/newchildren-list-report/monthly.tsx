@@ -1,7 +1,7 @@
 // MonthlyChildrenRecords.tsx
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Folder, UserPlus } from "lucide-react";
+import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";

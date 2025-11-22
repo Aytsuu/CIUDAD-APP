@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput } from "lucide-react";
-import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
@@ -80,11 +79,7 @@ export default function PendingConfirmation() {
           />
         </div>
 
-        <div className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto" asChild>
-            <Link to="/services/medicine/form">New Request</Link>
-          </Button>
-        </div>
+      
       </div>
 
       <div className="h-full w-full rounded-md">

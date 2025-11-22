@@ -138,14 +138,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
     }
   },
 
-    {
-    accessorKey: "wasted",
-    header: "Qty Wasted",
-    cell: ({ row }) => {
-      const expired = row.original.isExpired;
-      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-gray-700"}`}>{row.original.wasted}</div>;
-    }
-  },
+  
 
   {
     accessorKey: "qty_used",
@@ -155,7 +148,14 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.qty_used}</div>;
     }
   },
-
+  {
+    accessorKey: "wasted",
+    header: "Qty Wasted",
+    cell: ({ row }) => {
+      const expired = row.original.isExpired;
+      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wasted}</div>;
+    }
+  },
   {
     accessorKey: "expiryDate",
     header: "Expiry Date",

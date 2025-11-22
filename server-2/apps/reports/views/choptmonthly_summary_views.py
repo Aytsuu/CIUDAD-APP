@@ -177,9 +177,9 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
 
     def _apply_sitio_search(self, queryset, sitio_search):
         """Search by sitio - for both residents and transients"""
-        return queryset.filter(
-            Q(pat__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=sitio_search) |
-            Q(pat__trans_id__tradd_id__tradd_sitio__icontains=sitio_search)
+        return   queryset.filter(
+            Q(pat__pat_type='Resident', pat__rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=sitio_search) |
+            Q(pat__pat_type='Transient', pat__trans_id__tradd_id__tradd_sitio__icontains=sitio_search)
         ).distinct()
 
     def _calculate_age_in_months(self, dob, reference_date):

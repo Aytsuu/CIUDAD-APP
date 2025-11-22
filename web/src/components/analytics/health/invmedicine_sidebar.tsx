@@ -1,8 +1,8 @@
 // MedicineAlertsSidebar.tsx
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, XCircle, ArrowRight, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, Clock, XCircle, ArrowRight, Package } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { useMedicineStockTable } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicineFetchQueries";
@@ -22,46 +22,47 @@ interface StockAlertItem {
     dsgUnit?: string;
     form?: string;
   };
+  // New fields to track multiple statuses
+  isOutOfStock: boolean;
+  isLowStock: boolean;
+  isNearExpiry: boolean;
 }
 
 export function MedicineAlertsSidebar() {
   const [currentPage] = useState(1);
   const [pageSize] = useState(20); // Increased to get more items for the sidebar
-  const [showAll, setShowAll] = useState(false);
   const { data: apiResponse, isLoading } = useMedicineStockTable(currentPage, pageSize, "", "all");
 
-  // Transform medicine data into alert items
+  // Transform medicine data into alert items - FIXED to handle combined statuses
   const getAlertItems = (): StockAlertItem[] => {
     if (!apiResponse?.results) return [];
 
     const alerts: StockAlertItem[] = [];
 
     apiResponse.results.forEach((medicine: any) => {
-      if (medicine.isOutOfStock) {
+      // Only include medicines that have at least one alert status
+      if (medicine.isOutOfStock || medicine.isLowStock || medicine.isNearExpiry) {
+        // Determine primary status for display priority
+        let primaryStatus: StockStatus;
+        if (medicine.isOutOfStock) {
+          primaryStatus = "out_of_stock";
+        } else if (medicine.isLowStock) {
+          primaryStatus = "low_stock";
+        } else {
+          primaryStatus = "near_expiry";
+        }
+
         alerts.push({
           id: medicine.inv_id,
           name: medicine.item?.medicineName || "Unknown Medicine",
-          status: "out_of_stock",
-          availableStock: medicine.availableStock,
-          item: medicine.item
-        });
-      } else if (medicine.isLowStock) {
-        alerts.push({
-          id: medicine.inv_id,
-          name: medicine.item?.medicineName || "Unknown Medicine",
-          status: "low_stock",
+          status: primaryStatus,
           quantity: medicine.availableStock,
-          availableStock: medicine.availableStock,
-          item: medicine.item
-        });
-      } else if (medicine.isNearExpiry) {
-        alerts.push({
-          id: medicine.inv_id,
-          name: medicine.item?.medicineName || "Unknown Medicine",
-          status: "near_expiry",
           expiryDate: medicine.expiryDate,
           availableStock: medicine.availableStock,
-          item: medicine.item
+          item: medicine.item,
+          isOutOfStock: medicine.isOutOfStock,
+          isLowStock: medicine.isLowStock,
+          isNearExpiry: medicine.isNearExpiry
         });
       }
     });
@@ -78,8 +79,7 @@ export function MedicineAlertsSidebar() {
   };
 
   const allAlertItems = getAlertItems();
-  const itemsToShow = showAll ? allAlertItems : allAlertItems.slice(0, 10);
-  const hasMoreItems = allAlertItems.length > 10;
+  const itemsToShow = allAlertItems.slice(0, 10); // Always show max 10 items
   
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0 };
 
@@ -99,27 +99,56 @@ export function MedicineAlertsSidebar() {
   const getStatusColor = (status: StockStatus) => {
     switch (status) {
       case "out_of_stock":
-        return "text-red-700 bg-red-50 border-red-200" ;
+        return "text-red-700 bg-red-50 border-red-200";
       case "low_stock":
-        return "text-orange-700 bg-orange-50 border-orange-200 ";
+        return "text-orange-700 bg-orange-50 border-orange-200";
       case "near_expiry":
         return "text-yellow-700 bg-yellow-50 border-yellow-200";
       default:
-        return "text-gray-700 bg-gray-50 border-gray-200 ";
+        return "text-gray-700 bg-gray-50 border-gray-200";
     }
   };
 
-  const getStatusText = (status: StockStatus) => {
-    switch (status) {
-      case "out_of_stock":
-        return "Out of Stock";
-      case "low_stock":
-        return "Low Stock";
-      case "near_expiry":
-        return "Near Expiry";
-      default:
-        return "Alert";
+  const getStatusBadges = (item: StockAlertItem) => {
+    const badges = [];
+    
+    if (item.isOutOfStock) {
+      badges.push(
+        <Badge 
+          key="out_of_stock"
+          variant="secondary" 
+          className="text-xs bg-red-50 text-red-700 border-red-200 "
+        >
+          Out of Stock
+        </Badge>
+      );
     }
+    
+    if (item.isLowStock) {
+      badges.push(
+        <Badge 
+          key="low_stock"
+          variant="secondary" 
+          className="text-xs bg-orange-50 text-orange-700 border-orange-200 "
+        >
+          Low Stock
+        </Badge>
+      );
+    }
+    
+    if (item.isNearExpiry) {
+      badges.push(
+        <Badge 
+          key="near_expiry"
+          variant="secondary" 
+          className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200"
+        >
+          Near Expiry
+        </Badge>
+      );
+    }
+    
+    return badges;
   };
 
   const formatExpiryDate = (dateString: string) => {
@@ -137,7 +166,6 @@ export function MedicineAlertsSidebar() {
   if (isLoading) {
     return (
       <Card className="rounded-lg shadow-sm border-0">
-     
         <CardContent>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
@@ -159,7 +187,6 @@ export function MedicineAlertsSidebar() {
   return (
     <Card className="rounded-lg shadow-sm border-0">
       <CardHeader className="pb-3">
-      
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           {counts.out_of_stock > 0 && (
             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
@@ -196,7 +223,7 @@ export function MedicineAlertsSidebar() {
               {itemsToShow.map((item) => (
                 <div
                   key={item.id}
-                  className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors cursor-pointer`}
+                  className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors`}
                   onClick={() => {
                     // Optional: Add navigation to specific medicine detail
                     console.log('Navigate to medicine:', item.id);
@@ -209,25 +236,26 @@ export function MedicineAlertsSidebar() {
                         {item.name}
                       </span>
                     </div>
-                    <Badge 
-                      variant="secondary" 
-                      className={`text-xs ${getStatusColor(item.status)} border-0 flex-shrink-0 ml-2`}
-                    >
-                      {getStatusText(item.status)}
-                    </Badge>
+                    <div className="flex flex-col gap-1 flex-shrink-0 ml-2">
+                      {getStatusBadges(item)}
+                    </div>
                   </div>
                   
                   <div className="text-xs text-muted-foreground space-y-1">
-                    {item.status === "low_stock" && (
-                      <p className="font-medium">Only {item.quantity} units remaining</p>
-                    )}
-                    {item.status === "near_expiry" && item.expiryDate && (
-                      <p className="font-medium">Expires {formatExpiryDate(item.expiryDate)}</p>
-                    )}
-                    {item.status === "out_of_stock" && (
+                    {/* Status messages */}
+                    {item.isOutOfStock && (
                       <p className="font-medium">No available stock</p>
                     )}
+                    {!item.isOutOfStock && item.isLowStock && (
+                      <p className="font-medium">Only {item.quantity} units remaining</p>
+                    )}
                     
+                    {/* Expiry information */}
+                    {item.isNearExpiry && item.expiryDate && (
+                      <p className="font-medium">Expires {formatExpiryDate(item.expiryDate)}</p>
+                    )}
+                    
+                    {/* Medicine details */}
                     {item.item?.dosage && (
                       <p className="text-xs opacity-75">
                         {item.item.dosage} {item.item.dsgUnit}, {item.item.form}
@@ -238,59 +266,18 @@ export function MedicineAlertsSidebar() {
               ))}
             </div>
 
-            {/* Show More/Less Toggle */}
-            {hasMoreItems && (
-              <div className="pt-3 border-t border-gray-100 mt-3">
-                <Button 
-                  variant="ghost" 
-                  className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  onClick={() => setShowAll(!showAll)}
-                >
-                  {showAll ? (
-                    <>
-                      <ChevronUp className="h-4 w-4" />
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-4 w-4" />
-                      Show {allAlertItems.length - 10} More
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-
             {/* View All Button - Always visible when there are alerts */}
             <div className="pt-3 border-t border-gray-100 mt-3">
               <Link to="/inventory-stocks/list/stocks/medicine">
                 <Button 
                   variant="link" 
-                  className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="w-full flex items-center justify-start gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
                   View All Stock Alerts
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
-
-            {/* Summary Stats */}
-            {/* <div className="pt-3 border-t border-gray-100 mt-3">
-              <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                <div className="bg-red-50 text-red-700 rounded p-2">
-                  <div className="font-bold">{counts.out_of_stock}</div>
-                  <div>Out of Stock</div>
-                </div>
-                <div className="bg-orange-50 text-orange-700 rounded p-2">
-                  <div className="font-bold">{counts.low_stock}</div>
-                  <div>Low Stock</div>
-                </div>
-                <div className="bg-yellow-50 text-yellow-700 rounded p-2">
-                  <div className="font-bold">{counts.near_expiry}</div>
-                  <div>Near Expiry</div>
-                </div>
-              </div>
-            </div> */}
           </>
         )}
       </CardContent>

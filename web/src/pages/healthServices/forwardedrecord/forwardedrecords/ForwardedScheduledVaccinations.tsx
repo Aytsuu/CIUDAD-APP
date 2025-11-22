@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Users, Home, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
@@ -16,7 +15,6 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { api2 } from "@/api/api";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import TableLoading from "../../../../components/ui/table-loading";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useScheduledVaccinationColumns } from "./columns/scheduledvac-col";
 
 export const getScheduledVaccinations = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {

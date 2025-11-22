@@ -27,16 +27,25 @@ class MedicineservicesConfig(AppConfig):
         try:
             from apscheduler.schedulers.background import BackgroundScheduler
             from apscheduler.triggers.interval import IntervalTrigger
-            from .task import update_expired_medicine_requests  # your task function
+            from apscheduler.triggers.cron import CronTrigger
+            from .task import update_expired_medicine_requests,send_daily_pending_medicine_requests_notification  # your task function
 
             scheduler = BackgroundScheduler()
 
             # Schedule the job to run every 1 minute
+             # Schedule the job to run every 1 minute
             scheduler.add_job(
                 update_expired_medicine_requests,
-                trigger=IntervalTrigger(minutes=1),
+                trigger=CronTrigger(hour=18, minute=0, timezone='Asia/Manila'),
                 id="update_expired_medicine_requests",
                 max_instances=1,
+                replace_existing=True,
+            )
+              # Schedule daily pending medicine requests notification at 8 AM
+            scheduler.add_job(
+                send_daily_pending_medicine_requests_notification,
+                trigger=CronTrigger(hour=0, minute=0, timezone='Asia/Manila'),
+                id="daily_pending_medicine_requests_notification",
                 replace_existing=True,
             )
 
@@ -45,3 +54,4 @@ class MedicineservicesConfig(AppConfig):
             logger.info("✅ Medicineservices Scheduler started: update_expired_medicine_requests every 1 minute")
         except Exception as e:
             logger.error(f"Failed to start Medicineservices scheduler: {str(e)}")
+

@@ -37,9 +37,9 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
       accessorKey: "qty",
       header: "Total Qty",
       cell: ({ row }) => {
-        const qty = row.original.qty_number;
-        const unit = row.original.minv_qty_unit;
-        const pcs = row.original.qty?.pcs || 1;
+        const qty = row.original.qty.minv_qty;
+        const unit = row.original.unit;
+        const pcs = row.original.qty?.minv_pcs || 1;
 
         if (unit.toLowerCase() === "boxes" && pcs > 1) {
           return (
@@ -56,49 +56,55 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         );
       }
     },
-   
-     {
-      accessorKey: "qty_used",
-      header: "Qty Given",
-      cell: ({ row }) => {
-        const data = row.original;
-        return `${data.qty_used} ${data.minv_qty_unit}`;
-      },
-    },
-    {
-      accessorKey: "wasted",
-      header: "Wasted",
-    },
     {
       accessorKey: "availableStock",
       header: "Available Stock",
       cell: ({ row }) => {
         const record = row.original;
-        const unit = record.minv_qty_unit;
-        const pcs = record.qty?.pcs || 1;
-
+        const unit = record.unit;
+        const pcs = record.qty?.minv_pcs || 1;
+      
         if (unit.toLowerCase() === "boxes" && pcs > 1) {
           const availablePcs = record.availableStock;
           const fullBoxes = Math.floor(availablePcs / pcs);
           const remainingPcs = availablePcs % pcs;
-
+      
           return (
-            <div className="flex flex-col items-center">
-              <span className="text-black">
-                {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
-              </span>
-              <span className="text-blue-500">({availablePcs} total pcs)</span>
-            </div>
+        <div className="flex flex-col items-center">
+          <span>
+            {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
+          </span>
+          <span className="text-blue-500">({availablePcs} total pcs)</span>
+        </div>
           );
         }
-
+      
         return (
           <div className="text-center">
-            {record.availableStock} {unit}
+        {record.availableStock} {unit}
           </div>
         );
       }
+        },
+     {
+      accessorKey: "qty_used",
+      header: "Qty Given",
+      cell: ({ row }) => {
+        const data = row.original;
+        return `${data.qty_used} ${data.item.unit || "pcs"}`;
+      },
     },
+   
+    {
+      accessorKey: "qty_used",
+      header: "Wasted Unit",
+      cell: ({ row }) => {
+        const data = row.original;
+        return `${data.wasted} ${data.item.unit || "pcs"}`;
+      },
+    },
+ 
+       
     {
       accessorKey: "expiryDate",
       header: "Expiry Date",
@@ -107,7 +113,6 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         return expiryDate === "N/A" ? "N/A" : new Date(expiryDate).toLocaleDateString();
       },
     },
- 
     {
       accessorKey: "reason",
       header: "Reason",

@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
+import { ChevronLeft, Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../../export/export-report";
 import { ExportDropdown } from "../../../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -21,7 +21,7 @@ export default function MedicineProblemDetails() {
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: apiResponse, isLoading, error } = useMonthlyMedicineExpiredOutOfStockDetail(month);
@@ -39,7 +39,7 @@ export default function MedicineProblemDetails() {
 
   // CORRECTED: Add defensive checks for API response
   const responseData = apiResponse?.data || {};
-  const summary = responseData?.summary || {};
+  // const summary = responseData?.summary || {};
 
   // Get all problem items with proper fallback
   const allProblemItems = useMemo(() => {
@@ -51,6 +51,53 @@ export default function MedicineProblemDetails() {
     // Fallback: combine all individual arrays
     return [...(responseData?.expired_items || []), ...(responseData?.out_of_stock_items || []), ...(responseData?.expired_out_of_stock_items || []), ...(responseData?.near_expiry_items || [])];
   }, [responseData]);
+
+  // Format quantity unit - convert "boxes" to "pcs"
+  const formatQtyUnit = (unit: string) => {
+    return unit.toLowerCase() === "boxes" ? "pcs" : unit;
+  };
+
+  // Format quantity display - divide by pcs for boxes to get actual box count
+  const formatQuantityDisplay = (item: any, field: "opening_stock" | "received" | "dispensed" | "closing_stock") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      // Backend already multiplied by pcs, so we divide to get box count
+      const boxCount = quantity / pcs;
+      return (
+        <div className="text-center">
+          {boxCount} boxes ({quantity} pcs)
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center">
+        {quantity} {unit}
+      </div>
+    );
+  };
+
+  // Format quantity for export (keep as pieces for consistency)
+  const formatQuantityForExport = (item: any, field: "opening_stock" | "received" | "dispensed" | "closing_stock") => {
+    const quantity = item[field];
+    const unit = item.unit;
+    const pcs = item.pcs || 1;
+
+    if (unit.toLowerCase() === "boxes" && quantity > 0) {
+      const boxCount = quantity / pcs;
+      return `${boxCount} boxes (${quantity} pcs)`;
+    }
+
+    return `${quantity} ${unit}`;
+  };
+
+  // Format unit for display - convert boxes to pcs
+  const formatUnitDisplay = (item: any) => {
+    return formatQtyUnit(item.unit);
+  };
 
   // Filter records by search term
   const filteredRecords = useMemo(() => {
@@ -69,50 +116,26 @@ export default function MedicineProblemDetails() {
   const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalItems);
 
-  // Prepare data for export - UPDATED for medicine data structure
+  // Prepare data for export - UPDATED with proper formatting
   const prepareExportData = () =>
     filteredRecords.map((item: any) => ({
       "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "Medicine Name": item.med_name || "N/A",
+      "Opening Stock": formatQuantityForExport(item, "opening_stock"),
+      "Quantity Received": formatQuantityForExport(item, "received"),
+      "Quantity Available": formatQuantityForExport(item, "closing_stock"),
+      "Quantity used": `${item.dispensed - item.wasted} ${formatQtyUnit(item.unit)}`,
+      Wasted: item.wasted,
       "Expiry Date": item.expiry_date || "N/A",
-      "Opening Stock": item.opening_stock || 0,
-      Qty: item.received || 0,
-      "Qty Used": item.dispensed || 0,
-      "Qty Avaiable": item.closing_stock || 0,
-      Unit: item.unit || "pcs",
-      Status: item.status || "N/A",
+      Status: item.status || "N/A"
     }));
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `medicine_problems_${monthName}`);
-
   const handleExportExcel = () => exportToExcel(prepareExportData(), `medicine_problems_${monthName}`);
-
   const handleExportPDF = () => exportToPDF("landscape");
 
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
-
   // UPDATED table header for medicine data
-  const tableHeader = ["Date Received", "Medicine Name", "Expiry Date", "Qty", "Qty Used", "Qty Available", "Unit", "Status"];
-
-  // Show loading state while API response is being processed
-  // if (isLoading) {
-  //   return (
-  //     <div className="w-full h-screen flex items-center justify-center">
-  //       <Loader2 className="h-8 w-8 animate-spin" />
-  //       <span className="ml-2">Loading medicine problem details...</span>
-  //     </div>
-  //   );
-  // }
-
-  // Show error state if API call failed
+  const tableHeader = ["Date Received", "Medicine Name", "Stocks on Hand", "Stock Available", "Quantity Used", "Wasted", "Expiry Date", "Status"];
 
   return (
     <div>
@@ -134,28 +157,6 @@ export default function MedicineProblemDetails() {
         </div>
       ) : (
         <>
-          {/* Summary Stats */}
-          {/* {summary && (
-          <div className="bg-gray-50 p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{summary.expired_count || 0}</div>
-              <div className="text-sm text-gray-600">Expired</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{summary.out_of_stock_count || 0}</div>
-              <div className="text-sm text-gray-600">Out of Stock</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{summary.expired_out_of_stock_count || 0}</div>
-              <div className="text-sm text-gray-600">Expired & Out</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{summary.near_expiry_count || 0}</div>
-              <div className="text-sm text-gray-600">Near Expiry</div>
-            </div>
-          </div>
-        )} */}
-
           {/* Action Bar */}
           <div className="bg-white p-4 border flex flex-col sm:flex-row justify-between gap-4 ">
             <div className="flex-1 max-w-md relative">
@@ -173,10 +174,6 @@ export default function MedicineProblemDetails() {
 
             <div className="flex gap-2 items-center">
               <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-              <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-                <Printer className="h-4 w-4" />
-                <span>Print</span>
-              </Button>
             </div>
           </div>
 
@@ -195,7 +192,7 @@ export default function MedicineProblemDetails() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[10, 25, 50, 100].map((size) => (
+                  {[15].map((size) => (
                     <SelectItem key={size} value={size.toString()}>
                       {size}
                     </SelectItem>
@@ -214,70 +211,55 @@ export default function MedicineProblemDetails() {
           </div>
 
           {/* Table */}
-          <div className="bg-white p-4 border">
-            {filteredRecords.length > 0 ? (
-              <TableLayout
-                header={tableHeader}
-                rows={paginatedRecords.map((item: any) => [
-                  item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
 
-                  item.med_name || "N/A",
-                  item.expiry_date || "N/A",
-                  item.received?.toString() || "0",
-                  item.dispensed?.toString() || "0",
-                  item.closing_stock?.toString() || "0",
-                  item.unit || "pcs",
-                  item.status || "N/A",
-                ])}
-                tableClassName="w-full border rounded-lg"
-                bodyCellClassName="border border-gray-600 text-center text-xs p-2"
-                headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
-              />
-            ) : (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <p>No medicine problems found for {monthName}</p>
+          <div className="flex-1 mb-10 bg-white">
+            {/* Printable area - full filtered table (no pagination) */}
+            <div
+              id="printable-area"
+              className="bg-white p-6 mt-6"
+              style={{
+                minHeight: "11in",
+                margin: "0 auto",
+                fontSize: "12px"
+              }}
+            >
+              <div className="text-center mb-6 print-only">
+                <h2 className="font-bold text-lg">Medicine Restocking Report</h2>
+                <p className="text-sm">Month: {monthName}</p>
               </div>
-            )}
-          </div>
 
-          {/* Printable area */}
-          <div id="printable-area" className="hidden">
-            <div className="text-center mb-6">
-              <h2 className="font-bold uppercase tracking-wide text-lg">Medicine Problems Summary - {monthName}</h2>
-              {summary && (
-                <div className="flex justify-center gap-8 my-4">
-                  <div>Expired: {summary.expired_count || 0}</div>
-                  <div>Out of Stock: {summary.out_of_stock_count || 0}</div>
-                  <div>Expired & Out: {summary.expired_out_of_stock_count || 0}</div>
-                  <div>Near Expiry: {summary.near_expiry_count || 0}</div>
+              {filteredRecords.length > 0 ? (
+                <TableLayout
+                  header={tableHeader}
+                  rows={paginatedRecords.map((item: any) => [
+                    item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
+                    item.med_name || "N/A",
+                    // Custom rendering for Quantity Received
+                    <div key={`received-${item.med_name}`}>{formatQuantityDisplay(item, "received")}</div>,
+                    // Custom rendering for Quantity Available
+                    <div key={`closing-${item.med_name}`}>{formatQuantityDisplay(item, "closing_stock")}</div>,
+                    // Custom rendering for Quantity Issued
+                    <div key={`dispensed-${item.med_name}`}>
+                      {item.dispensed - item.wasted} {formatUnitDisplay(item)}
+                    </div>,
+                    <div key={`wasted-${item.med_name}`}>
+                      {item.wasted}
+                      {formatUnitDisplay(item)}
+                    </div>,
+                    item.expiry_date,
+                    item.status || "N/A"
+                  ])}
+                  tableClassName="w-full border rounded-lg"
+                  bodyCellClassName="border border-gray-600 text-center text-xs p-2"
+                  headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+                  defaultRowCount={15}
+                />
+              ) : (
+                <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                  <p>No medicine problems found for {monthName}</p>
                 </div>
               )}
             </div>
-            <table className="w-full border-collapse border border-gray-400">
-              <thead>
-                <tr>
-                  {tableHeader.map((header) => (
-                    <th key={header} className="border border-gray-400 p-2 bg-gray-100 font-bold">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.map((item: any, index: number) => (
-                  <tr key={index}>
-                    <td className="border border-gray-400 p-2">{item.med_name || "N/A"}</td>
-                    <td className="border border-gray-400 p-2">{item.expiry_date || "N/A"}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.opening_stock || 0}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.received || 0}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.dispensed || 0}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.closing_stock || 0}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.unit || "pcs"}</td>
-                    <td className="border border-gray-400 p-2 text-center">{item.status || "N/A"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </>
       )}

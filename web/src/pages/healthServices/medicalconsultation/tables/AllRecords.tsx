@@ -18,7 +18,8 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
-
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useReportsCount } from "../../count-return/count";
 
 export default function AllMedicalConsRecord() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +31,10 @@ export default function AllMedicalConsRecord() {
   // Fetch sitio data
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
+
+  // Fetch appointment counts
+  const { data: countData } = useReportsCount();
+  const appointmentCount = countData?.data?.total_appointments_count || 0;
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -58,7 +63,7 @@ export default function AllMedicalConsRecord() {
       page: currentPage,
       page_size: pageSize,
       search: combinedSearchQuery,
-      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
+      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined,
     }),
     [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
   );
@@ -70,7 +75,7 @@ export default function AllMedicalConsRecord() {
   const {
     medicalRecords,
     totalCount,
-    totalPages: apiTotalPages
+    totalPages: apiTotalPages,
   } = useMemo(() => {
     if (!apiResponse) {
       return { medicalRecords: [], totalCount: 0, totalPages: 1 };
@@ -82,14 +87,14 @@ export default function AllMedicalConsRecord() {
       return {
         medicalRecords: apiResponse.results,
         totalCount: apiResponse.count || 0,
-        totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
+        totalPages: Math.ceil((apiResponse.count || 0) / pageSize),
       };
     } else if (Array.isArray(apiResponse)) {
       // Direct array response (fallback)
       return {
         medicalRecords: apiResponse,
         totalCount: apiResponse.length,
-        totalPages: Math.ceil(apiResponse.length / pageSize)
+        totalPages: Math.ceil(apiResponse.length / pageSize),
       };
     } else {
       // Unknown structure
@@ -114,7 +119,8 @@ export default function AllMedicalConsRecord() {
       const sex = info.per_sex || "";
       const dob = info.per_dob || "";
 
-      const addressString = [address.add_street || info.per_address || "", address.add_barangay || "", address.add_city || "", address.add_province || ""].filter((part) => part.trim().length > 0).join(", ") || "";
+      const addressString =
+        [address.add_street || info.per_address || "", address.add_barangay || "", address.add_city || "", address.add_province || ""].filter((part) => part.trim().length > 0).join(", ") || "";
 
       return {
         rp_id: record.rp_id || null,
@@ -137,7 +143,7 @@ export default function AllMedicalConsRecord() {
         contact: info.per_contact || "",
         per_status: info.per_status || "",
         philhealth_id: details.additional_info?.philhealth_id || "",
-        latest_consultation_date: record.latest_consultation_date || "" // Add this line
+        latest_consultation_date: record.latest_consultation_date || "", // Add this line
       };
     });
   }, [medicalRecords]);
@@ -164,7 +170,7 @@ export default function AllMedicalConsRecord() {
     return {
       residents,
       transients,
-      totalCount: residents + transients
+      totalCount: residents + transients,
     };
   }, [medicalRecords]);
 
@@ -192,11 +198,11 @@ export default function AllMedicalConsRecord() {
     return formattedData.map((record) => ({
       "Patient No": record.pat_id,
       "Full Name": `${record.lname}, ${record.fname} ${record.mname ? record.mname : ""}`.trim(),
-      "Sex": record.sex,
-      "Age": record.age,
+      Sex: record.sex,
+      Age: record.age,
       "Patient Type": record.pat_type,
       "Full Address": record.address,
-      "Medical Records Count": record.medicalrec_count
+      "Medical Records Count": record.medicalrec_count,
     }));
   };
 
@@ -216,137 +222,180 @@ export default function AllMedicalConsRecord() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Summary Cards */}
-      <div className="w-full">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <EnhancedCardLayout
-            title="Total Records"
-            description="All medical consultation records"
-            value={calculatedTotalCount}
-            valueDescription="Total records"
-            icon={<Users className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
+    <MainLayoutComponent title="Medical Consultation Records" description="View and manage all medical consultation records.">
+      <div className="w-full h-full flex flex-col">
+        {/* Summary Cards */}
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <EnhancedCardLayout
+              title="Total Records"
+              description="All medical consultation records"
+              value={calculatedTotalCount}
+              valueDescription="Total records"
+              icon={<Users className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
 
-          <EnhancedCardLayout
-            title="Resident Patients"
-            description="Patients who are residents"
-            value={residents}
-            valueDescription="Total residents"
-            icon={<Home className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
+            <EnhancedCardLayout
+              title="Resident Patients"
+              description="Patients who are residents"
+              value={residents}
+              valueDescription="Total residents"
+              icon={<Home className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
 
-          <EnhancedCardLayout
-            title="Transient Patients"
-            description="Patients who are transients"
-            value={transients}
-            valueDescription="Total transients"
-            icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
-        </div>
-      </div>
-
-      {/* Filters Section */}
-      <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white no-print">
-        <div className="w-full flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search by name, patient ID, household number, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <EnhancedCardLayout
+              title="Transient Patients"
+              description="Patients who are transients"
+              value={transients}
+              valueDescription="Total transients"
+              icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
           </div>
-          <SelectLayout
-            placeholder="Filter records"
-            label=""
-            className="bg-white w-full sm:w-48"
-            options={[
-              { id: "all", name: "All Types" },
-              { id: "resident", name: "Resident" },
-              { id: "transient", name: "Transient" }
-            ]}
-            value={patientTypeFilter}
-            onChange={(value) => setPatientTypeFilter(value)}
-          />
-          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex gap-2">
-            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
-          </div>
-
+        <div className="border bg-white no-print">
           <ProtectedComponent exclude={["DOCTOR"]}>
-            <div className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto">
-                <Link
-                  to="/services/medical-consultation/form"
-                  state={{
-                    params: {
-                      mode: "fromallrecordtable"
-                    }
-                  }}
-                >
-                  New Record
+            <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 justify-end">
+              <Button className="w-full sm:w-auto relative" variant="outline">
+                <Link to="/services/medical-consultation/appointments" className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" /> {/* Add icon here */}
+                  View Appointments
+                  {appointmentCount > 0 && (
+                    <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center min-w-[20px]">
+                      {appointmentCount > 99 ? "99+" : appointmentCount}
+                    </span>
+                  )}
                 </Link>
               </Button>
+              <div className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">
+                  <Link
+                    to="/services/medical-consultation/form"
+                    state={{
+                      params: {
+                        mode: "fromallrecordtable",
+                      },
+                    }}
+                  >
+                    New Record
+                  </Link>
+                </Button>
+              </div>
             </div>
           </ProtectedComponent>
-        </div>
-      </div>
 
-      {/* Selected Filters Chips */}
-      {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
+          {/* Filters Section */}
+          <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 ">
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                <Input
+                  placeholder="Search by name, patient ID, household number, address, or sitio..."
+                  className="pl-10 bg-white w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <SelectLayout
+                placeholder="Filter records"
+                label=""
+                className="bg-white w-full sm:w-48"
+                options={[
+                  { id: "all", name: "All Types" },
+                  { id: "resident", name: "Resident" },
+                  { id: "transient", name: "Transient" },
+                ]}
+                value={patientTypeFilter}
+                onChange={(value) => setPatientTypeFilter(value)}
+              />
+              <FilterSitio
+                sitios={sitios}
+                isLoading={isLoadingSitios}
+                selectedSitios={selectedSitios}
+                onSitioSelection={handleSitioSelection}
+                onSelectAll={handleSelectAllSitios}
+                manualSearchValue=""
+              />
+            </div>
 
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 no-print">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-8"
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1);
-              }}
-              min="1"
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex gap-2">
+                <ExportDropdown
+                  onExportCSV={handleExportCSV}
+                  onExportExcel={handleExportExcel}
+                  onExportPDF={handleExportPDF}
+                  className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto border">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
-            </div>
-          ) : error ? (
-            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span>Error loading data. Please try again.</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={formattedData} />
-          )}
-        </div>
+        {/* Selected Filters Chips */}
+        {selectedSitios.length > 0 && (
+          <SelectedFiltersChips
+            items={selectedSitios}
+            onRemove={(sitio: any) => handleSitioSelection(sitio, false)}
+            onClearAll={() => setSelectedSitios([])}
+            label="Filtered by sitios"
+            chipColor="bg-blue-100"
+            textColor="text-blue-800"
+          />
+        )}
 
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border no-print">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
-          </p>
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 no-print">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
+                }}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+          </div>
+
+          <div className="bg-white w-full overflow-x-auto border">
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+                <span>Error loading data. Please try again.</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={formattedData} />
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border no-print">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+            </p>
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </MainLayoutComponent>
   );
 }

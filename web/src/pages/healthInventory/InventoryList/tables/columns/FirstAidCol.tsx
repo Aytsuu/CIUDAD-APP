@@ -18,17 +18,7 @@ export const FirstAidColumns = ({
   onEdit,
   onDelete
 }: FirstAidColumnsProps): ColumnDef<FirstAidRecords>[] => [
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
-          {row.original.id}
-        </div>
-      </div>
-    ),
-  },
+ 
   {
     accessorKey: "fa_name",
     header: "Item Name",

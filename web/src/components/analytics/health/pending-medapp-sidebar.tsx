@@ -115,7 +115,7 @@ export const PendingMedicalAppointmentsSidebar = () => {
       {/* Footer */}
       {totalCount > 0 && (
         <div className="p-4 border-t border-gray-100">
-          <Link to="/medical-consultation/appointments/pending">
+          <Link to="/services/medical-consultation/appointments/pending">
             <Button variant="link">
               View All Appointments ({totalCount > 100 ? "100+" : totalCount})
               {totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}

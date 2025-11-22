@@ -119,8 +119,10 @@ class MonthlyMorbiditySummaryAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 class MonthlyMorbidityView(APIView):
     pagination_class = StandardResultsPagination
+    
     def get(self, request, *args, **kwargs):
         try:
             month = kwargs.get('month')
@@ -205,7 +207,8 @@ class MonthlyMorbidityView(APIView):
             surveillance_histories = MedicalHistory.objects.filter(
                 created_at__gte=start_date,
                 created_at__lt=end_date,
-                is_for_surveillance=True
+                is_for_surveillance=True,
+                ill__isnull=False,
             ).select_related(
                 'ill',
                 'patrec__pat_id__rp_id__per',
@@ -237,6 +240,46 @@ class MonthlyMorbidityView(APIView):
                 
                 print(f"DEBUG: Processing illness {illness.illname} - {illness_histories.count()} records")
                 
+                # Track unique patients for this illness
+                unique_patients_by_age_group = {}
+                
+                # Initialize age group structure for unique patients
+                for min_days, max_days, age_range in age_groups:
+                    unique_patients_by_age_group[age_range] = {
+                        'M': set(),  # Use sets to track unique patient IDs
+                        'F': set()
+                    }
+                
+                # Process each medical history record for this illness
+                for med_history in illness_histories:
+                    patient = med_history.patrec.pat_id
+                    consultation_date = med_history.created_at.date()
+                    
+                    # Get patient info based on type
+                    sex, dob = self._get_sex_and_dob(patient)
+                    if not sex or not dob:
+                        print(f"DEBUG: Missing sex or dob for patient {patient.pat_id}")
+                        continue
+                    
+                    # Calculate age in days at the time of consultation
+                    age_days = (consultation_date - dob).days
+                    
+                    # Find the appropriate age group
+                    for min_days, max_days, age_range in age_groups:
+                        if self._is_in_age_group(age_days, min_days, max_days):
+                            # FIXED: Handle both "M"/"F" and "MALE"/"FEMALE" formats
+                            sex_upper = sex.upper()
+                            if sex_upper in ["M", "MALE"]:  # Male
+                                unique_patients_by_age_group[age_range]['M'].add(patient.pat_id)
+                                print(f"DEBUG: Added patient {patient.pat_id} as MALE to age group {age_range}")
+                            elif sex_upper in ["F", "FEMALE"]:  # Female
+                                unique_patients_by_age_group[age_range]['F'].add(patient.pat_id)
+                                print(f"DEBUG: Added patient {patient.pat_id} as FEMALE to age group {age_range}")
+                            else:
+                                print(f"DEBUG: Unknown sex value '{sex}' for patient {patient.pat_id}")
+                            break  # Found the age group, no need to check others
+                
+                # Build illness data structure with unique counts
                 illness_data = {
                     'illness_id': illness.ill_id,
                     'illness_name': illness.illname,
@@ -252,35 +295,8 @@ class MonthlyMorbidityView(APIView):
                 
                 # Process each age group for this illness
                 for min_days, max_days, age_range in age_groups:
-                    male_count = 0
-                    female_count = 0
-                    
-                    for med_history in illness_histories:
-                        patient = med_history.patrec.pat_id
-                        consultation_date = med_history.created_at.date()
-                        
-                        # Get patient info based on type
-                        sex, dob = self._get_sex_and_dob(patient)
-                        if not sex or not dob:
-                            print(f"DEBUG: Missing sex or dob for patient {patient.pat_id}")
-                            continue
-                        
-                        # Calculate age in days at the time of consultation
-                        age_days = (consultation_date - dob).days
-                        
-                        # Check if patient falls in current age group
-                        if self._is_in_age_group(age_days, min_days, max_days):
-                            # FIXED: Handle both "M"/"F" and "MALE"/"FEMALE" formats
-                            sex_upper = sex.upper()
-                            if sex_upper in ["M", "MALE"]:  # Male
-                                male_count += 1
-                                print(f"DEBUG: Counted as MALE - {sex}")
-                            elif sex_upper in ["F", "FEMALE"]:  # Female
-                                female_count += 1
-                                print(f"DEBUG: Counted as FEMALE - {sex}")
-                            else:
-                                print(f"DEBUG: Unknown sex value '{sex}' for patient {patient.pat_id}")
-                    
+                    male_count = len(unique_patients_by_age_group[age_range]['M'])
+                    female_count = len(unique_patients_by_age_group[age_range]['F'])
                     both_count = male_count + female_count
                     
                     # Add age group data
@@ -304,7 +320,7 @@ class MonthlyMorbidityView(APIView):
                 results['summary']['grand_totals']['F'] += illness_data['totals']['F']
                 results['summary']['grand_totals']['Both'] += illness_data['totals']['Both']
                 
-                print(f"DEBUG: Added illness {illness.illname} with {illness_data['totals']['Both']} cases (M: {illness_data['totals']['M']}, F: {illness_data['totals']['F']})")
+                print(f"DEBUG: Added illness {illness.illname} with {illness_data['totals']['Both']} unique cases (M: {illness_data['totals']['M']}, F: {illness_data['totals']['F']})")
             
             results['summary']['total_cases'] = results['summary']['grand_totals']['Both']
             results['summary']['total_illnesses'] = len(results['morbidity_data'])
@@ -333,7 +349,7 @@ class MonthlyMorbidityView(APIView):
                     })
                 results['morbidity_data'].append(empty_illness)
 
-            print(f"DEBUG: Final result - {results['summary']['total_illnesses']} illnesses, {results['summary']['total_cases']} total cases (M: {results['summary']['grand_totals']['M']}, F: {results['summary']['grand_totals']['F']})")
+            print(f"DEBUG: Final result - {results['summary']['total_illnesses']} illnesses, {results['summary']['total_cases']} total unique cases (M: {results['summary']['grand_totals']['M']}, F: {results['summary']['grand_totals']['F']})")
             
             return Response(results)
             
@@ -375,5 +391,3 @@ class MonthlyMorbidityView(APIView):
             return min_days <= age_days <= max_days
         else:  # Unbounded range (70+ years)
             return age_days >= min_days
-
-

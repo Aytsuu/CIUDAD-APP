@@ -12,7 +12,7 @@ interface FormData {
   };
 }
 
-export default function Page2({ state, onBack, onNext }: PageProps) {
+export default function Page2({ onBack, onNext }: PageProps) {
   const [formData, setFormData] = useState<FormData>({});
 
   const handleInputChange = (rowId: string, column: string, value: string) => {
@@ -79,10 +79,10 @@ export default function Page2({ state, onBack, onNext }: PageProps) {
   return (
     <div className="min-h-[500px] flex flex-col">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Prenatal Care Services and Postpartum and Newborn Care Section</h2>
-        <p className="text-gray-600">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 2:  Prenatal Care Services and Postpartum and Newborn Care Section</h2>
+        {/* <p className="text-gray-600">
           Reporting for: <strong>{state.monthName}</strong>
-        </p>
+        </p> */}
       </div>
 
       <div className="flex-1 overflow-auto">

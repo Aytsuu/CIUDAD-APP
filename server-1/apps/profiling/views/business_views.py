@@ -77,7 +77,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
         Q(bus_location=search_query) 
       ).distinct()
 
-    return queryset.order_by('bus_id')
+    return queryset.order_by('-bus_id')
   
 class PendingBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -99,7 +99,15 @@ class BusinessRespondentTableView(generics.ListAPIView):
       business_count=Count('owned_business')
     ).filter(business_count__gt=0)
 
-    return queryset
+    search = self.request.query_params.get('search', '').strip()
+    if search:
+      queryset = queryset.filter(
+        Q(br_lname__icontains=search) | 
+        Q(br_fname__icontains=search) | 
+        Q(br_mname__icontains=search)
+      )
+
+    return queryset.order_by('-br_id')
 
 
 class BusinessFileCreateView(generics.CreateAPIView):

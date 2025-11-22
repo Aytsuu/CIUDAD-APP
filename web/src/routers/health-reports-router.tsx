@@ -47,11 +47,10 @@ import PopulationStructureRecords from "@/pages/healthServices/reports/healthpro
 import HealthProfilingSummaryReport from "@/pages/healthServices/reports/healthprofiling-report/HealthProfilingSummaryReport";
 
 // DOCTOR REPORTS
-import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/monthly";
-import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/records";
-
-import MonthlyMorbidityDetails from "@/pages/healthServices/reports/fhisreport/fhis_pge17";
-
+import MonthlyConsultedSummaries from "@/pages/healthServices/reports/doctor-reports/consultation/monthly";
+import MonthlyConsultedDetails from "@/pages/healthServices/reports/doctor-reports/consultation/records";
+import MonthlyMorbiditySummary from "@/pages/healthServices/reports/doctor-reports/morbidity-report/monthly";
+import DoctorMonthlyMorbidityDetails from "@/pages/healthServices/reports/doctor-reports/morbidity-report/records";
 
 // DEWORMING REPORTS
 import YearlyDewormingRecords from "@/pages/healthServices/reports/deworming-reports/yearly";
@@ -190,7 +189,6 @@ export const healthreports_router = [
     element: <MonthlyInventoryFirstAidRecords />,
   },
 
-
   {
     path: "/monthly-new-children-records",
     element: <MonthlyNewChildrenRecords />,
@@ -233,22 +231,25 @@ export const healthreports_router = [
     path: "/reports/monthly-consulted-summaries/records",
     element: <MonthlyConsultedDetails />,
   },
+  {
+    path: "/reports/monthly-morbidity",
+    element: <MonthlyMorbiditySummary />,
+  },
 
   {
-    path: "/reports/monthly-morbidity-summary/records",
-    element: <MonthlyMorbidityDetails />,
+    path: "/reports/monthly-morbidity/records",
+    element: <DoctorMonthlyMorbidityDetails />,
   },
 
   // DEWORMING REPORTS
-{
-  path: "/reports/deworming-yearly",
-  element: <YearlyDewormingRecords />,
-},
-{
-  path: "/reports/deworming-yearly/details",
-  element: <DewormingRecordsDetails />,
-}
-
+  {
+    path: "/reports/deworming-yearly",
+    element: <YearlyDewormingRecords />,
+  },
+  {
+    path: "/reports/deworming-yearly/details",
+    element: <DewormingRecordsDetails />,
+  },
 
   // DOCTOR REPORTS - TODO: Add these components when they are created
   // {

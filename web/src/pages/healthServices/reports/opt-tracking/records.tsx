@@ -362,8 +362,8 @@ export default function OPTTrackingDetails() {
                       <tr key={index}>
                         <td className="border p-1">{item.household_no}</td>
                         <td className="border p-1">{item.parents?.mother || item.parents?.father || "N/A"}</td>
-                        <td className="border p-1 "></td>
-                        <td className="border p-1 "></td>
+                        <td className="border p-1 ">{item.family_planning_method || ""}</td>
+                        <td className="border p-1 ">{item.family_planning_method ? "" : "None"}</td>
                         <td className="border p-1">{item.child_name || "N/A"}</td>
                         <td className="border p-1 ">{item.sex}</td>
                         <td className="border p-1 text-center">{formatDate(item.date_of_birth)}</td>

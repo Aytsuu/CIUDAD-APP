@@ -91,7 +91,7 @@ export const handleExportExcel = async (searchQuery: string, showLoading: () => 
 export const handleExportPDF = async (searchQuery: string, showLoading: () => void, hideLoading: () => void) => {
   try {
     const allData = await fetchAllDataForExport(searchQuery, showLoading, hideLoading);
-    exportToPDF( "child_health_supplements_complete");
+    exportToPDF('landscape');
     showSuccessToast(`Exported ${allData.length} records to PDF`);
   } catch (error) {
     console.error("PDF export failed:", error);

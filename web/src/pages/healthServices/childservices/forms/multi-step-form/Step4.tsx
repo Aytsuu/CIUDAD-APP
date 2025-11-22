@@ -104,6 +104,15 @@ export default function LastPage({
     return calculateAgeFromDOB(formData.childDob, referenceDate).ageString;
   }, [formData.childDob, newVitalSigns, historicalVitalSigns]);
 
+  // Filter out invalid medicines from formData
+  const getValidMedicines = (medicines: any[] | undefined) => {
+    if (!medicines) return [];
+    return medicines.filter(med => 
+      med.minv_id && med.minv_id.trim() !== "" && 
+      med.medrec_qty && med.medrec_qty >= 1
+    );
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(ChildHealthFormSchema),
     defaultValues: {
@@ -120,7 +129,8 @@ export default function LastPage({
         given_iron: "",
         date_completed: "",
       },
-      medicines: formData.medicines || [],
+      // Ensure medicines array only contains valid objects
+      medicines: getValidMedicines(formData.medicines),
       status: formData.status || "recorded",
       nutritionalStatus: formData.nutritionalStatus || {},
       edemaSeverity: formData.edemaSeverity || "None",
@@ -260,7 +270,7 @@ export default function LastPage({
           given_iron: "",
           date_completed: "",
         },
-        medicines: formData.medicines || [],
+        medicines: getValidMedicines(formData.medicines),
         status: formData.status || "recorded",
         nutritionalStatus: formData.nutritionalStatus || {},
         edemaSeverity: formData.edemaSeverity || "None",
@@ -351,10 +361,24 @@ export default function LastPage({
       reason: string;
     }[]
   ) => {
-    const updatedMedicines = selectedMedicines.map((med) => ({
+    console.log("Raw medicine selection:", selectedMedicines);
+    
+    // Filter out invalid medicines that don't have required fields
+    const validMedicines = selectedMedicines.filter(med => {
+      const isValid = med.minv_id && med.minv_id.trim() !== "" && med.medrec_qty && med.medrec_qty >= 1;
+      if (!isValid) {
+        console.log("Filtering out invalid medicine:", med);
+      }
+      return isValid;
+    });
+
+    console.log("Valid medicines after filtering:", validMedicines);
+
+    const updatedMedicines = validMedicines.map((med) => ({
       ...med,
       medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0,
     }));
+    
     setValue("medicines", updatedMedicines);
     updateFormData({ medicines: updatedMedicines });
   };

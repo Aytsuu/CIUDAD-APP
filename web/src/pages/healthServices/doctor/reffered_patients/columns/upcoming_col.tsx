@@ -1,7 +1,7 @@
 // components/columns.ts
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate,formatDateTime } from "@/helpers/dateHelper";
+import { formatDate } from "@/helpers/dateHelper";
 import { toTitleCase} from "@/helpers/ToTitleCase";
 
 export const upcomingConsultation: ColumnDef<any>[] = [

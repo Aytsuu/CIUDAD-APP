@@ -18,6 +18,7 @@ from pagination import StandardResultsPagination
     
             
 # ==================MEDICINE REPORT=======================
+# ==================MEDICINE REPORT=======================
 class MedicineSummaryMonthsAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -27,55 +28,62 @@ class MedicineSummaryMonthsAPIView(APIView):
 
             search_query = request.GET.get('search', '').strip().lower()
 
-            # Get distinct years in queryset, sorted descending
-            distinct_years = queryset.dates('created_at', 'year', order='DESC')
+            # Get distinct months in queryset, sorted descending
+            distinct_months = queryset.dates('created_at', 'month', order='DESC')
 
-            formatted_years = []
+            formatted_months = []
 
-            for year_date in distinct_years:
-                year = year_date.year
-                year_str = str(year)
+            for month_date in distinct_months:
+                year = month_date.year
+                month = month_date.month
+                month_str = f"{year}-{month:02d}"  # Format as YYYY-MM
+                month_name = month_date.strftime("%B %Y")  # Format as "November 2025"
 
-                if search_query and search_query not in year_str:
+                if search_query and search_query not in month_str.lower() and search_query not in month_name.lower():
                     continue
 
-                # Get the date range for this year
-                start_date = datetime(year, 1, 1).date()
-                end_date = datetime(year, 12, 31).date()
+                # Get the date range for this month
+                start_date = datetime(year, month, 1).date()
+                # Get the last day of the month
+                if month == 12:
+                    end_date = datetime(year, month, 31).date()
+                else:
+                    end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
 
-                # Filter transactions for this year - EXCLUDE expired items
-                year_transactions = queryset.filter(
+                # Filter transactions for this month - EXCLUDE expired items
+                month_transactions = queryset.filter(
                     created_at__date__gte=start_date,
                     created_at__date__lte=end_date
                 ).exclude(
-                    # Exclude items that expired BEFORE this year
+                    # Exclude items that expired BEFORE this month
                     minv_id__inv_id__expiry_date__lt=start_date
                 )
 
                 # Count distinct medicine+inventory combos
-                total_items = year_transactions.values(
+                total_items = month_transactions.values(
                     "minv_id__med_id",
                     "minv_id__inv_id"
                 ).distinct().count()
 
-                formatted_years.append({
-                    'year': year_str,
+                formatted_months.append({
+                    'month': month_str,  # "YYYY-MM"
+                    'month_name': month_name,  # "November 2025"
                     'total_items': total_items,
                 })
 
             paginator = self.pagination_class()
-            page = paginator.paginate_queryset(formatted_years, request)
+            page = paginator.paginate_queryset(formatted_months, request)
             if page is not None:
                 return paginator.get_paginated_response({
                     'success': True,
                     'data': page,
-                    'total_years': len(formatted_years),
+                    'total_months': len(formatted_months),
                 })
 
             return Response({
                 'success': True,
-                'data': formatted_years,
-                'total_years': len(formatted_years),
+                'data': formatted_months,
+                'total_months': len(formatted_months),
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -353,8 +361,7 @@ class MedicineExpiredOutOfStockSummaryAPIView(APIView):
                 'success': False,
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
+
 class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -373,22 +380,35 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
         return qty_num
 
     def get(self, request, *args, **kwargs):
-        year_str = self.kwargs['month']  # Format: YYYY (kept param name for compatibility)
+        month_str = self.kwargs['month']  # Format: YYYY-MM
+        
         try:
-            year = int(year_str)
-        except ValueError:
-            return Response({"error": "Invalid year format"}, status=400)
+            # Parse the YYYY-MM format
+            year, month = map(int, month_str.split('-'))
+        except (ValueError, IndexError):
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
 
-        start_date = datetime(year, 1, 1).date()
-        end_date = datetime(year, 12, 31).date()
-        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current year
+        try:
+            # Calculate start and end dates for the specific month
+            start_date = datetime(year, month, 1).date()
+            
+            # Get the last day of the month
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+            else:
+                end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
+                
+        except ValueError as e:
+            return Response({"error": f"Invalid date: {str(e)}"}, status=400)
+
+        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
 
         expired_items = []
         out_of_stock_items = []
         expired_out_of_stock_items = []
-        near_expiry_items = []  # New category for near expiry
+        near_expiry_items = []
 
-        # Get all medicine inventory items that were active up to this year
+        # Get all medicine inventory items that were active up to this month
         med_expiry_inv_pairs = MedicineTransactions.objects.filter(
             created_at__date__lte=end_date
         ).values_list(
@@ -410,7 +430,7 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
             if not expiry_date:
                 continue
 
-            # Skip if expired BEFORE current year
+            # Skip if expired BEFORE current month
             if expiry_date < start_date:
                 continue
 
@@ -442,16 +462,16 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
             )
             opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
 
-            yearly_transactions = transactions.filter(
+            monthly_transactions = transactions.filter(
                 created_at__date__gte=start_date,
                 created_at__date__lte=end_date
             )
             # Multiply boxes for received items
-            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in yearly_transactions.filter(mdt_action__icontains="added"))
+            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(mdt_action__icontains="added"))
             # Don't multiply boxes for dispensed items (they're already in pieces)
             dispensed_qty = sum(
                 self._parse_qty(t, multiply_boxes=False)
-                for t in yearly_transactions.filter(
+                for t in monthly_transactions.filter(
                     Q(mdt_action__icontains="deducted") | Q(mdt_action__icontains="wasted")
                 )
             )
@@ -463,17 +483,20 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
             is_out_of_stock = closing_qty <= 0
             is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
 
-            # CORRECTED: Get medicine details from Medicinelist model
+            # Get medicine details from Medicinelist model
             medicine = minv.med_id
             item_data = {
                 'med_name': f"{medicine.med_name} {medicine.med_dsg}{medicine.med_dsg_unit} {medicine.med_form}",
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
                 'opening_stock': opening_qty,
+                'pcs': minv.minv_pcs,
+                'unit': minv.minv_qty_unit,
                 'received': received_qty,
                 'dispensed': dispensed_qty,
+                'wasted': minv.wasted,
                 'closing_stock': closing_qty,
                 'date_received': minv.created_at,
-                'unit': 'pcs',
+                'unit': minv.minv_qty_unit,
                 'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
             }
 
@@ -492,22 +515,21 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
         return Response({
             'success': True,
             'data': {
-                'year': year_str,
+                'month': month_str,
                 'summary': {
                     'total_problems': len(all_problem_items),
                     'expired_count': len(expired_items),
                     'out_of_stock_count': len(out_of_stock_items),
                     'expired_out_of_stock_count': len(expired_out_of_stock_items),
-                    'near_expiry_count': len(near_expiry_items),  # New count
+                    'near_expiry_count': len(near_expiry_items),
                 },
                 'expired_items': expired_items,
                 'out_of_stock_items': out_of_stock_items,
                 'expired_out_of_stock_items': expired_out_of_stock_items,
-                'near_expiry_items': near_expiry_items,  # New category
+                'near_expiry_items': near_expiry_items,
                 'all_problem_items': all_problem_items
             }
         })
-    
 
 
 # ================== MEDICINE REQUEST REPORTS =====================
@@ -577,21 +599,31 @@ class MedicineRequestSummaryMonthsAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
 class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
     serializer_class = MedicineInventorySerializer
     pagination_class = StandardResultsPagination
 
     def list(self, request, *args, **kwargs):
-        year_str = self.kwargs['month']  # Format: YYYY (kept param name for compatibility)
+        month_str = self.kwargs['month']  # Format: YYYY-MM
+        
         try:
-            year = int(year_str)
-        except ValueError:
-            return Response({"error": "Invalid year format"}, status=400)
+            # Parse the YYYY-MM format
+            year, month = map(int, month_str.split('-'))
+        except (ValueError, IndexError):
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
 
-        start_date = datetime(year, 1, 1).date()
-        end_date = datetime(year, 12, 31).date()
+        try:
+            # Calculate start and end dates for the specific month
+            start_date = datetime(year, month, 1).date()
+            
+            # Get the last day of the month
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+            else:
+                end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
+                
+        except ValueError as e:
+            return Response({"error": f"Invalid date: {str(e)}"}, status=400)
 
         inventory_summary = []
 
@@ -608,7 +640,7 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
         seen_combinations = set()
 
         for med_id, expiry_date, inv_id in med_expiry_inv_pairs:
-            # Skip if expiry date is before the current year (already expired)
+            # Skip if expiry date is before the current month (already expired)
             if expiry_date and expiry_date < start_date:
                 continue
                 
@@ -634,7 +666,7 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             unit = first_tx.minv_id.minv_qty_unit
             pcs_per_box = first_tx.minv_id.minv_pcs if unit and unit.lower() == "boxes" else 1
 
-            # Opening stock before start_date
+            # Opening stock before start_date (before the month)
             opening_in = transactions.filter(
                 created_at__date__lt=start_date,
                 mdt_action__icontains="added"
@@ -673,41 +705,39 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
             display_opening = opening_qty + received_qty
             closing_qty = display_opening - dispensed_qty
 
-            # Check if expired this year
-            expired_this_year = (first_tx.minv_id.inv_id.expiry_date and 
+            # Check if expired this month
+            expired_this_month = (first_tx.minv_id.inv_id.expiry_date and 
                                 start_date <= first_tx.minv_id.inv_id.expiry_date <= end_date)
             
-            # REMOVED: Don't set closing to 0 for expired items
-            # if expired_this_year:
-            #     closing_qty = 0
-            
-            # Skip if there's no stock and it's not expiring this year
-            # Also include items that expired this year even if closing_qty <= 0
+            # Skip if there's no stock and it's not expiring this month
+            # Also include items that expired this month even if closing_qty <= 0
             if (closing_qty <= 0 and 
                 (not expiry_date or expiry_date < start_date) and 
-                not expired_this_year and
+                not expired_this_month and
                 not monthly_transactions.exists() and
                 not transactions.filter(created_at__date__gte=start_date, created_at__date__lte=end_date).exists()):
                 continue
 
-            # CORRECTED: Get medicine details from Medicinelist model
+            # Get medicine details from Medicinelist model
             medicine = first_tx.minv_id.med_id
             inventory_summary.append({
                 'med_name': f"{medicine.med_name} {medicine.med_dsg}{medicine.med_dsg_unit} {medicine.med_form}",
                 'date_received': first_tx.created_at.date(),
                 'opening': display_opening,
+                'wasted': first_tx.minv_id.wasted,
+                'pcs':first_tx.minv_id.minv_pcs,
                 'received': received_qty,
                 'dispensed': dispensed_qty,
                 'closing': closing_qty,
-                'unit': "pcs",
+                'unit': first_tx.minv_id.minv_qty_unit,
                 'expiry': first_tx.minv_id.inv_id.expiry_date,
-                'expired_this_year': expired_this_year,
+                'expired_this_month': expired_this_month,
             })
 
         return Response({
             'success': True,
             'data': {
-                'year': year_str,
+                'month': month_str,
                 'inventory_summary': inventory_summary,
                 'total_items': len(inventory_summary)
             }

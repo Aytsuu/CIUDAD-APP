@@ -6,7 +6,7 @@ import { Search, FileInput, Loader2, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentMissedColumns } from "../columns/missed-appointments";
+import { refrecanmissed } from "../columns/refrecanmissed";
 import { useAppointments } from "../../queries/fetch";
 
 
@@ -89,8 +89,6 @@ export default function MissedMedicalAppointments() {
               { id: "all", name: "All Dates" },
               { id: "today", name: "Today" },
               { id: "this-week", name: "This Week" },
-              { id: "this-month", name: "This Month" },
-              { id: "past", name: "Past" }
             ]}
             value={dateFilter}
             onChange={(value) => {
@@ -131,6 +129,7 @@ export default function MissedMedicalAppointments() {
             </div>
           </div>
         </div>
+        
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -205,7 +204,7 @@ export default function MissedMedicalAppointments() {
               <p className="text-sm">{debouncedSearch || dateFilter !== "all" || meridiemFilter !== "all" ? "No confirmed appointments match your search criteria" : "No confirmed appointments at the moment"}</p>
             </div>
           ) : (
-            <DataTable columns={medicalAppointmentMissedColumns} data={appointments} />
+            <DataTable columns={refrecanmissed} data={appointments} />
           )}
         </div>
 

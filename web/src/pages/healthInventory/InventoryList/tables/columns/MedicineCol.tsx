@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Edit, Trash, ArrowUpDown } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 
 
 
@@ -11,17 +11,7 @@ export const Medcolumns = (
   setModalMode: (mode: 'add' | 'edit') => void,
   setShowMedicineModal: (show: boolean) => void
 ): ColumnDef<any>[] => [
-  {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Medicine ID <ArrowUpDown size={15} />
-      </div>
-    ),
-  },
+
   {
     accessorKey: "med_name",
     header:"medicine",

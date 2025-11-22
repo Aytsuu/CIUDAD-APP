@@ -26,7 +26,6 @@ export default function AddVaccineStock() {
     defaultValues: {
       vac_id: "",
       batchNumber: "",
-      volume: undefined,
       dose_ml: undefined,
       qty: undefined,
       expiry_date: "",
@@ -122,19 +121,25 @@ export default function AddVaccineStock() {
               ]}
               />
             </div>
-            <FormInput control={form.control} name="volume" label="Volume (ml)" type="number" />
-            <FormInput
+           
+        
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <FormInput
               control={form.control}
               name="qty"
               label={solvent === "diluent" ? "Number of Containers" : "Number of Vials"}
               type="number"
             />
 
-            {solvent === "doses" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormInput control={form.control} name="dose_ml" label="Dose" type="number" />
+                <FormInput 
+                  control={form.control} 
+                  name="dose_ml" 
+                  label={solvent === "diluent" ? "ML" : "Doses"} 
+                  type="number" 
+                />
               </div>
-            )}
+            
 
             {solvent === "doses" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -442,7 +442,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         <div className="flex gap-4">
           <div className="w-full">
             {showRespondent && respondentView()}
-            <Card className={`w-full max-h-[750px] overflow-y-auto ${showRespondent ? "rounded-t-none border-t-0" : "rounded-lg border"}`}>
+            <Card className={`w-full ${showRespondent ? "rounded-t-none border-t-0" : "rounded-lg border"}`}>
               <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
                 <form
                   onSubmit={(e) => {

@@ -126,6 +126,7 @@ class PatientSerializer(serializers.ModelSerializer):
     completed_pregnancy_count = serializers.IntegerField(read_only=True)
     family_planning_method = serializers.SerializerMethodField()
     
+    
     class Meta:
         model = Patient
         fields = '__all__'

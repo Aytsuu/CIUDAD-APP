@@ -47,6 +47,7 @@ export interface OPTChildHealthRecord {
     muac_status: string;
   };
   type_of_feeding: string;
+  family_planning_method:string
 }
 
 // OPT Monthly Detail Data
