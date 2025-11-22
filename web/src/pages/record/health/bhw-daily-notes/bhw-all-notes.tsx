@@ -25,6 +25,7 @@ interface NoteRow {
    no: number;
    date: string;
    name: string;
+   bhwdn_id: number | null;
 }
    
 export default function BHWAllNotes() {
@@ -67,15 +68,30 @@ export default function BHWAllNotes() {
        setPage(1);
     };
    
-   const tableData: NoteRow[] = filteredResults.map((staffEntry: any, idx: number) => {
+   // Flatten each staff's daily notes into separate table rows
+   const tableData: NoteRow[] = [];
+   filteredResults.forEach((staffEntry: any) => {
       const per = staffEntry?.rp?.per;
       const name = per ? `${per.per_lname}, ${per.per_fname}` : staffEntry.staff_id;
-      const date = staffEntry?.staff_assign_date || 'N/A';
-      return {
-         no: (page - 1) * pageSize + idx + 1,
-         date,
-         name
-      };
+      const notes: any[] = staffEntry?.daily_notes || [];
+      // If no notes, still show placeholder row? Skip if we only want notes.
+      if (notes.length === 0) return;
+      notes.forEach((note) => {
+         const rawDate = note?.created_at || null;
+         let date = 'N/A';
+         if (rawDate) {
+            try {
+               const d = new Date(rawDate);
+               if (!isNaN(d.getTime())) date = d.toISOString();
+            } catch {}
+         }
+         tableData.push({
+            no: tableData.length + 1,
+            date,
+            name,
+            bhwdn_id: note?.bhwdn_id ?? null,
+         });
+      });
    });
 
    const sortedTableData = [...tableData].sort((a, b) => {

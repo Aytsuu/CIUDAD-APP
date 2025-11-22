@@ -30,8 +30,8 @@ class StaffWithBHWDailyNotesView(generics.ListAPIView):
             'rp__per',
             'pos'
         ).annotate(
-            daily_notes_count=Count('daily_notes', distinct=True)
-        ).distinct()
+            daily_notes_count=Count('daily_notes')
+        )
         
         # Search functionality
         search = self.request.query_params.get('search', None)
@@ -72,6 +72,17 @@ class StaffWithBHWDailyNotesView(generics.ListAPIView):
                 data = serializer.data
                 for i, staff in enumerate(page):
                     data[i]['daily_notes_count'] = staff.daily_notes_count
+                    # Add latest daily note created_at if exists
+                    latest_note = getattr(staff, 'daily_notes', None).order_by('-created_at').first() if hasattr(staff, 'daily_notes') else None
+                    data[i]['latest_daily_note_date'] = latest_note.created_at.isoformat() if latest_note else None
+                    # Add full list of daily notes (id + created_at)
+                    notes_qs = staff.daily_notes.all().order_by('-created_at')
+                    data[i]['daily_notes'] = [
+                        {
+                            'bhwdn_id': n.bhwdn_id,
+                            'created_at': n.created_at.isoformat(),
+                        } for n in notes_qs
+                    ]
                 
                 response = self.get_paginated_response(data)
                 

@@ -31,7 +31,7 @@ import { IllnessCombobox } from "@/pages/healthServices/maternal/maternal-compon
 
 import { useIllnessList, useMaternalStaff } from "@/pages/healthServices/maternal/queries/maternalFetchQueries"
 import { useAddIllnessData } from "@/pages/healthServices/maternal/queries/maternalAddQueries"
-import { useCreateBHWDailyNote } from "./bhw-queries"
+import { useCreateBHWDailyNote } from "./queries/Add"
 
 
 export default function BHWNoteForm() {
@@ -179,7 +179,7 @@ export default function BHWNoteForm() {
       try {
          console.log("Submitting BHW Daily Note:", data)
          await createBHWMutation.mutateAsync(data as any)
-         
+
          navigate(-1);
          
          // Reset form after successful submission
