@@ -548,7 +548,7 @@ function GADProjectProposal() {
       </Dialog>
 
       <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+         <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
           <DialogHeader className="sticky top-0 z-10 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle>Supporting Documents</DialogTitle>
@@ -560,7 +560,7 @@ function GADProjectProposal() {
             onValueChange={(value) =>
               setSuppDocTab(value as "active" | "archived")
             }
-            className="w-full flex-1 flex flex-col"
+             className="w-full flex-1 flex flex-col min-h-0"
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>

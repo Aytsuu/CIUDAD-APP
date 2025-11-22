@@ -536,7 +536,7 @@ function TreasurerDisbursementVouchers() {
             onValueChange={(value) =>
               setFilesTab(value as "active" | "archived")
             }
-            className="w-full flex-1 flex flex-col"
+             className="w-full flex-1 flex flex-col min-h-0"
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>
