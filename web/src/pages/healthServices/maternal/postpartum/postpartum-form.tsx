@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router"
 import type { z } from "zod"
 
@@ -108,7 +108,8 @@ export default function PostpartumFormFirstPg({
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId);
   const { data: postpartumAssessments, isLoading: postpartumAssessmentsLoading } = usePostpartumAssessements(selectedPatientId);
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  // Fetch medicines including zero availability so user sees possible postpartum supplements
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock({ is_temp: true, includeZeroAvail: true })
 
   const { data: staffsData, isLoading: isLoadingStaff } = useMaternalStaff()
 
@@ -155,8 +156,6 @@ export default function PostpartumFormFirstPg({
     const latestRecord = latestPostpartumRecord?.latest_postpartum_record
     const patientDetails = latestRecord?.patient_details
 
-    console.log(latestRecord)
-    
     // Determine if patient is resident - check from selected patient or API response
     const isResident = patientDetails?.pat_type?.toLowerCase() === "resident" || 
                       selectedPatient?.pat_type?.toLowerCase() === "resident" ||
@@ -435,6 +434,21 @@ export default function PostpartumFormFirstPg({
   }, [])
   // end of medicine selection handlers
 
+  // lookup for medicine names by inventory id
+  const medicineLookup = useMemo(() => {
+    const list = Array.isArray(medicineStocksOptions)
+      ? medicineStocksOptions
+      : medicineStocksOptions?.medicines ?? []
+    const map = new Map<string, string>()
+    list.forEach((m: any) => {
+      const name = m?.med_name || m?.med?.med_name || m?.name || 'Unknown'
+      if (m?.minv_id) {
+        map.set(String(m.minv_id), String(name))
+      }
+    })
+    return map
+  }, [medicineStocksOptions])
+
   // conversion helpers
   const outcomeConversion = (value: string) => {
     switch (value) {
@@ -590,9 +604,6 @@ export default function PostpartumFormFirstPg({
     try {
       // Only send NEW assessments to prevent duplicates
       const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId, latestTtsId);
-
-      console.log("Submitting postpartum data:", transformedData);
-      console.log("New assessments only:", newAssessments);
 
       const success = await addPostpartumMutation.mutateAsync(transformedData);
 
@@ -781,6 +792,9 @@ export default function PostpartumFormFirstPg({
                       itemsPerPage={itemsPerPage}
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
+                      isLoading={isMedicineLoading}
+                      totalPages={medicineStocksOptions?.pagination?.totalPages || 1}
+                      totalItems={medicineStocksOptions?.pagination?.totalItems || (Array.isArray(medicineStocksOptions) ? medicineStocksOptions.length : (medicineStocksOptions?.medicines?.length || 0))}
                     />
                   )}
                   
@@ -788,13 +802,20 @@ export default function PostpartumFormFirstPg({
                     <div className="border rounded-lg p-3 w-full">
                       <Label className="font-semibold">Given Medicines</Label>
                       <div className="flex justify-center items-center p-3">
-                        {/* {selectedMedicines.map((medicine) => (
-                          <div key={medicine.id} className="flex justify-between">
-                            <span>{medicine.name}</span>
-                            <span>{medicine.dosage}</span>
-                          </div>
-                        ))} */}
-                        <Label className="text-black/70">No history of given medicines yet.</Label>
+                        {selectedMedicines.length === 0 ? (
+                          <Label className="text-black/70">No medicines selected.</Label>
+                        ) : (
+                          <ul className="w-full space-y-1">
+                            {selectedMedicines.map((m) => (
+                              <li key={m.minv_id} className="flex justify-between text-sm">
+                                <span className="truncate max-w-[60%]" title={medicineLookup.get(m.minv_id) || m.minv_id}>
+                                  {medicineLookup.get(m.minv_id) || m.minv_id}
+                                </span>
+                                <span>{m.medrec_qty} unit{m.medrec_qty > 1 ? 's' : ''}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     </div>
                   </div>

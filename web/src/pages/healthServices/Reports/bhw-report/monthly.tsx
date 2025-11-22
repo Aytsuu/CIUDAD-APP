@@ -4,7 +4,6 @@ import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { useMedicineMonthly } from "../medicine-report/queries/fetchQueries";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
@@ -17,7 +16,10 @@ export default function BHWReportsMonthlyRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
 
-  const { data: apiResponse, isLoading, error } = useMedicineMonthly(yearFilter);
+  // TODO: Replace with actual BHW monthly report query
+  const apiResponse = { data: [] };
+  const isLoading = false;
+  const error = null;
 
   useEffect(() => {
     if (error) {

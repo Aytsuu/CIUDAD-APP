@@ -39,7 +39,8 @@ export default function MedicineRequestForm() {
     page: 1,
     pageSize: 10,
     search: "",
-    is_temp: true // Changed to false for medicine request form
+    is_temp: true, // Changed to false for medicine request form
+    includeZeroAvail: true // Show out-of-stock medicines
   });
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);

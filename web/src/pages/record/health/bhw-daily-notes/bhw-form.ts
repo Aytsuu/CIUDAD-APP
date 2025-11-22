@@ -1,39 +1,40 @@
 import z from "zod"
+import { positiveNumberSchema } from "@/helpers/PositiveNumber"
 
+// Optional number schema that allows empty strings
+const optionalPositiveNumber = z.union([
+   z.string().transform(val => val === "" ? undefined : parseFloat(val)),
+   z.number(),
+   z.undefined()
+]).optional().refine(
+   val => val === undefined || val === null || (typeof val === 'number' && val >= 0),
+   { message: "Value must be a positive number" }
+)
 
 export const BHWFormSchema = z.object({
-   staffId: z.string(),
-   dateToday: z.string(),
+   staffId: z.string().min(1, "Staff ID is required"),
+   pat_id: z.string().optional(),
+   dateToday: z.string().min(1, "Date is required"),
    description: z.string().optional(),
-   age: z.string(), // Add this
-   gender: z.enum(["Male", "Female"]), // Add this
-   weight: z.number().optional(),
-   height: z.number().optional(),
-   muac: z.number().optional(), // Optional
-   nutritionalStatus: z.object({ // Add this to store the calculated status
+   age: z.string().optional(),
+   gender: z.enum(["Male", "Female"]).optional(),
+   weight: optionalPositiveNumber,
+   height: optionalPositiveNumber,
+   muac: optionalPositiveNumber, 
+   nutritionalStatus: z.object({ 
       wfa: z.string(),
       lhfa: z.string(),
       wfh: z.string(),
-      muac: z.number().optional(),
+      muac: optionalPositiveNumber,
       muac_status: z.string(),
    }).optional(),
-   surveillanceCasesCount: z.object({
-      feverCount: z.number().optional(),
-      dengueCount: z.number().optional(),
-      diarrheaCount: z.number().optional(),
-      pneumoniaCount: z.number().optional(),
-      measlesCount: z.number().optional(),
-      typhoidFeverCount: z.number().optional(),
-      hepatitisCount: z.number().optional(),
-      influenzaCount: z.number().optional(),
-      hypertensiveCount: z.number().optional(),
-      diabetesMellitusCount: z.number().optional(),
-      tuberculosisCount: z.number().optional(),
-      leprosyCount: z.number().optional(),
-      // Remove othersCount, replace with array
-      others: z.array(z.object({
-         diseaseName: z.string().min(1, "Disease name is required"),
-         count: z.number().min(0, "Count must be 0 or greater")
-      })).optional()
-   }),
+   illnesses: z.array(z.object({
+      illnessName: z.string().min(1, "Illness/Disease name is required"),
+      count: positiveNumberSchema
+   })).optional(),
+   numOfWorkingDays: optionalPositiveNumber,
+   daysPresent: optionalPositiveNumber,
+   daysAbsent: optionalPositiveNumber,
+   notedBy: z.string().optional(),
+   approvedBy: z.string().optional(),
 })

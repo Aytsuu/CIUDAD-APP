@@ -3,7 +3,7 @@
 import { useLocation } from "react-router-dom"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { usePrenatalRecordComparison } from "../../queries/maternalFetchQueries"
 
 import { capitalize } from "@/helpers/capitalize"
@@ -73,7 +73,6 @@ export default function PrenatalFormTableHistory() {
     <div className="p-4 text-xs">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Complete Prenatal History</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

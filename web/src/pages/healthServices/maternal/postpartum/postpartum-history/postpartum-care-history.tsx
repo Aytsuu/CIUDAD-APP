@@ -1,9 +1,12 @@
+import { FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
+
+import TableLoading from "@/components/ui/table-loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router";
+
 import { usePatientPostpartumAllRecords } from "../../queries/maternalFetchQueries";
 
 interface PostpartumRecord {
@@ -28,15 +31,18 @@ interface PostpartumRecord {
   feeding: string;
   findings: string;
   nursesNotes: string;
+  pprId?: string;
 }
 
 interface PostpartumCareHistoryProps {
   pregnancyId?: string;
+  recordId?: string;
 }
 
-export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: PostpartumCareHistoryProps) {
+export default function PostpartumCareHistory({ pregnancyId: propPregnancyId, recordId: propRecordId }: PostpartumCareHistoryProps) {
   const [postpartumRecords, setPostpartumRecords] = useState<PostpartumRecord[]>([]);
   const [pregnancyId, setPregnancyId] = useState<string>("");
+  const [recordId, setRecordId] = useState<string>("");
   
   const location = useLocation();
   
@@ -47,7 +53,13 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
     } else if (location.state?.params?.pregnancyId) {
       setPregnancyId(location.state.params.pregnancyId);
     }
-  }, [propPregnancyId, location.state]);
+
+    if (propRecordId) {
+      setRecordId(propRecordId);
+    } else if (location.state?.params?.recordId) {
+      setRecordId(location.state.params.recordId);
+    }
+  }, [propPregnancyId, propRecordId, location.state]);
 
   // Fetch postpartum records using the hook
   const { data: postpartumData, isLoading, error } = usePatientPostpartumAllRecords(pregnancyId);
@@ -60,9 +72,10 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
         const address = record.patient_details?.address;
         const family = record.patient_details?.family;
         const deliveryRecord = record.delivery_records?.[0];
+        const ttStatusInfo = record.tts_info;
         const vitalSigns = record.vital_signs;
         const assessment = record.assessments?.[0]; // Get first assessment
-        
+
         // Check if patient is resident and get spouse information
         const isResident = record.patient_details?.pat_type?.toLowerCase() === "resident";
         const fatherInfo = record.patient_details?.family?.family_heads?.father?.personal_info;
@@ -87,8 +100,8 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
           placeOfDelivery: deliveryRecord?.ppdr_place_of_delivery || "N/A",
           attendedBy: deliveryRecord?.ppdr_attended_by || "N/A",
           outcome: deliveryRecord?.ppdr_outcome || "N/A",
-          ttStatus: "N/A", // Not available in current API structure
-          ironSupplementationDate: "N/A", // Not available in current API structure
+          ttStatus: ttStatusInfo?.tts_status || "N/A",
+          ironSupplementationDate: ttStatusInfo?.tts_date_given || "N/A",
           lochialDischarges: record.ppr_lochial_discharges || "N/A",
           vitASupplementation: record.ppr_vit_a_date_given || "N/A",
           numOfPadsPerDay: record.ppr_num_of_pads?.toString() || "N/A",
@@ -98,7 +111,8 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
           bloodPressure: vitalSigns ? `${vitalSigns.vital_bp_systolic}/${vitalSigns.vital_bp_diastolic}` : "N/A",
           feeding: assessment?.ppa_feeding || "N/A",
           findings: assessment?.ppa_findings || "N/A",
-          nursesNotes: assessment?.ppa_nurses_notes || "N/A"
+          nursesNotes: assessment?.ppa_nurses_notes || "N/A",
+          pprId: record.ppr_id
         };
       });
       
@@ -109,8 +123,7 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin h-8 w-8 mr-2" />
-        Loading postpartum records...
+        <TableLoading />
       </div>
     );
   }
@@ -132,6 +145,16 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
     return dateB.getTime() - dateA.getTime();
   });
 
+  // Filter to show clicked record and all older records
+  const displayData = recordId 
+    ? (() => {
+        const clickedRecordIndex = sortedData.findIndex(record => record.pprId === recordId);
+        if (clickedRecordIndex === -1) return sortedData; // If record not found, show all
+        // Show from clicked record index to end (all older records)
+        return sortedData.slice(clickedRecordIndex);
+      })()
+    : sortedData;
+
   if (!postpartumRecords || postpartumRecords.length === 0) {
     return (
       <Card className="border-slate-200 shadow-sm font-poppins">
@@ -148,7 +171,7 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
     );
   }
 
-  const hasMoreRecords = sortedData.length > 3;
+  const hasMoreRecords = displayData.length > 3;
 
   interface TableRowConfig {
     label: string;
@@ -291,12 +314,12 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
                 <TableHead className={`font-semibold text-slate-700 text-xs uppercase tracking-wide w-44 ${hasMoreRecords ? 'sticky left-0 bg-slate-100 z-10' : ''}`}>
                   Clinical Parameter
                 </TableHead>
-                {sortedData.map((_, index) => (
+                {displayData.map((_, index) => (
                   <TableHead 
                     key={index} 
                     className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreRecords ? 'min-w-48' : 'w-auto'}`}
                   >
-                    Visit {sortedData.length - index}
+                    Visit {displayData.length - index}
                     {index === 0 && <span className="text-blue-500 ml-1">[CURRENT]</span>}
                   </TableHead>
                 ))}
@@ -311,7 +334,7 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
                       <span>{row.label}</span>
                     </div>
                   </TableCell>
-                  {sortedData.map((record, recordIndex) => (
+                  {displayData.map((record, recordIndex) => (
                     <TableCell 
                       key={recordIndex} 
                       className={`${row.cellClassName} ${hasMoreRecords ? 'min-w-48' : ''}`}
@@ -326,7 +349,7 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
         </div>
         {hasMoreRecords && (
           <div className="bg-slate-50 border-t border-slate-200 p-3 text-center text-sm text-slate-600">
-            Showing all {sortedData.length} records. Scroll left/right to see all records.
+            Showing all {displayData.length} records. Scroll left/right to see all records.
           </div>
         )}
       </CardContent>

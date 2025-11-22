@@ -67,8 +67,11 @@ export const transformPostpartumFormData = (
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],
     followup_description: "Postpartum Follow-up Visit",
 
-    // Selected medicines for micronutrient supplementation
-    selected_medicines: selectedMedicines || [],
+    // Selected medicines for micronutrient supplementation (normalize reason)
+    selected_medicines: (selectedMedicines || []).map(m => ({
+      ...m,
+      reason: m.reason?.trim() || 'Postpartum micronutrient supplementation'
+    })),
     
     // TT Status FK relationship
     tts_id: ttsId || null,  // ✅ Include the tts_id FK

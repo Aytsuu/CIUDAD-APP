@@ -21,15 +21,15 @@ export default function BHWStaffList() {
          
          {/* Content stays in front */}
          <div className="relative z-10">
-         <p className="font-semibold text-blue-800">Barangay Health Workers ({bhwStaff.length})</p>
-         <div className="grid grid-cols-4 p-4 gap-4">
+         <p className="font-bold text-blue-800">Barangay Health Workers ({bhwStaff.length})</p>
+         <div className="grid grid-cols-5 p-4 gap-5">
             {bhwStaff.length > 0 ? (
                bhwStaff.map((staff: any) => (
                   <div 
                      key={staff.staff_id} 
-                     className="flex flex-col bg-transparent border-l-4 border-blue-500 px-2 py-1"
+                     className="flex flex-col items-center bg-transparent border-b-4 rounded-sm border-blue-600 px-2 py-1"
                   >
-                     <p className="font-medium text-md text-blue-800">{capitalize(staff.last_name)}, {capitalize(staff.first_name)} {capitalize(staff.middle_name || "")}</p>
+                     <p className="font-medium text-sm text-blue-800">{capitalize(staff.last_name)}, {capitalize(staff.first_name)} {capitalize(staff.middle_name || "")}</p>
                   </div>
                ))
             ) : (

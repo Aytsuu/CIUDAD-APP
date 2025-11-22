@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.administration.models import Staff  # Adjust the import based on your project structure
-from apps.patientrecords.models import Illness
+from apps.patientrecords.models import BodyMeasurement, Illness
 
 class HeaderRecipientListReporTemplate(models.Model):
     rcpheader_id = models.AutoField(primary_key=True)
@@ -52,7 +52,8 @@ class MonthlyRecipientListReport(models.Model):
 
 class BHWDailyNotes(models.Model):
     bhwdn_id = models.BigAutoField(primary_key=True)
-    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='staff_id', related_name='daily_notes')
+    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, db_column='bm_id')
     description = models.TextField(null=True, blank=True)
     disease_surv_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -61,18 +62,32 @@ class BHWDailyNotes(models.Model):
     class Meta:
         db_table = 'bhw_daily_notes'
         indexes = [
-            models.Index(fields=['bhwdn_id', 'staff_id', 'created_at']),
+            models.Index(fields=['bhwdn_id', 'staff', 'created_at']),
         ]
 
 
 class BHWReferOrFollowUp(models.Model):
     bhwrof_id = models.BigAutoField(primary_key=True)
-    bhwdn_id = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE)
+    bhwdn = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE)
     referred_follow_up_count = models.IntegerField(default=0)
-    ill_id = models.ForeignKey(Illness, on_delete=models.CASCADE)
+    ill = models.ForeignKey(Illness, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'bhw_refer_or_follow_up'
         indexes = [
             models.Index(fields=['bhwrof_id', 'bhwdn_id', 'ill_id']),
         ]
+
+
+class BHWAttendanceRecord(models.Model):
+    bhwa_id = models.BigAutoField(primary_key=True)
+    num_working_days = models.IntegerField(default=0)
+    days_present = models.IntegerField(default=0)
+    days_absent = models.IntegerField(default=0)
+    noted_by = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='noted_by', related_name='attendance_noted')
+    approved_by = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='approved_by', related_name='attendance_approved')
+    bhwdn = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE, db_column='bhwdn_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'bhw_attendance_record'

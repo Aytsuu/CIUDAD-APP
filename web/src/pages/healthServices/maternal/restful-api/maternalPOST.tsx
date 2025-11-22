@@ -203,11 +203,11 @@ export interface PostpartumCompleteData {
   vital_RR: string
   vital_o2: string
   vital_pulse: string
-  // selected_medicines?: Array<{
-  //   minv_id: string              // Medicine inventory ID from MedicineInventory model
-  //   medrec_qty: number           // Quantity to dispense (positive integer)
-  //   reason?: string              // Reason for dispensing; defaults to "Micronutrient supplementation"
-  // }>
+  selected_medicines?: Array<{
+    minv_id: string              // Medicine inventory ID from MedicineInventory model
+    medrec_qty: number           // Quantity to dispense (positive integer)
+    reason?: string              // Reason for dispensing; defaults handled in transform helper
+  }>
   tts_id?: number | null  // ✅ Add TT Status FK
   staff_id?: string
   followup_date: string

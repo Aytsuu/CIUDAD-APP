@@ -248,7 +248,7 @@ class PostpartumRecordsListView(generics.ListAPIView):
         ).order_by('-created_at')
     
 
-class PostpartumPartumFormView(generics.RetrieveAPIView):
+class PostpartumFormView(generics.RetrieveAPIView):
     serializer_class = PostpartumCompleteSerializer
     queryset = PostpartumRecord.objects.all()
     lookup_field = 'ppr_id'

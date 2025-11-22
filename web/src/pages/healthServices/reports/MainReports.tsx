@@ -29,7 +29,7 @@ export default function HealthcareReports() {
       icon: <Activity className="w-6 h-6 text-green-600" />,
       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
       description: "Monthly report of Barangay Health Workers activities and achievements",
-      link: "/bhw-monthly-reports",
+      link: "/reports/bhw-accomplishment-reports/monthly",
     },
     {
       title: "Family Planning Monthly Report",

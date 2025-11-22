@@ -62,13 +62,14 @@ export interface MedicineSearchParams {
   pageSize?: number;
   search?: string;
   is_temp?: boolean;
+  includeZeroAvail?: boolean; // when true, include medicines with 0 final availability (useful for showing disabled/out-of-stock items)
 }
 
 export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
-  const { page = 1, pageSize = 10, search = "", is_temp = false } = params;
+  const { page = 1, pageSize = 10, search = "", is_temp = false, includeZeroAvail = false } = params;
 
   return useQuery({
-    queryKey: ["medicineStocks", page, pageSize, search, is_temp],
+    queryKey: ["medicineStocks", page, pageSize, search, is_temp, includeZeroAvail],
     queryFn: async () => {
       console.log("=== fetchMedicinesWithStock called ===");
       console.log("Parameters:", { page, pageSize, search, is_temp });
@@ -169,23 +170,33 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
         console.log(`Transformed ${transformedData.length} stocks without temp deductions`);
       }
 
-      // Filter out expired and zero-stock medicines
+      // Filter logic: always remove expired; optionally keep zero availability
       const filteredMedicines = transformedData.filter((med) => {
         const isExpired = med.expiry ? new Date(med.expiry) < new Date() : false;
-        const hasStock = med.avail > 0;
-
-        if (!hasStock || isExpired) {
-          console.log(`Filtered out: ${med.name} (avail: ${med.avail}, expired: ${isExpired})`);
+        if (isExpired) {
+          console.log(`Filtered out (expired): ${med.name} exp ${med.expiry}`);
+          return false;
         }
-
-        return hasStock && !isExpired;
+        if (!includeZeroAvail && med.avail <= 0) {
+          console.log(`Filtered out (no stock): ${med.name} avail ${med.avail}`);
+          return false;
+        }
+        return true;
       });
 
       console.log(`Final filtered medicines: ${filteredMedicines.length}`);
       console.log("=== fetchMedicinesWithStock completed ===\n");
 
+      // If including zero availability, tag them so UI can disable selection
+      const finalMedicines = filteredMedicines.map(m => {
+        if (m.avail <= 0) {
+          return { ...m, out_of_stock: true };
+        }
+        return m;
+      });
+
       return {
-        medicines: filteredMedicines,
+        medicines: finalMedicines,
         pagination: paginationInfo,
       };
     },

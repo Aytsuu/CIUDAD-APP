@@ -1,7 +1,6 @@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 
 import PrenatalFormTableHistory from "./prenatal-form-history";
 import PFHistoryTab from "./form-history/form-history-tab";
@@ -9,6 +8,8 @@ import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
 import PrenatalViewingTwo from "./form-history/prenatal-viewing-two";
 import { usePrenatalRecordComplete } from "../../queries/maternalFetchQueries";
 import { usePrenatalRecordComparison } from "../../queries/maternalFetchQueries";
+import { Spinner } from "@/components/ui/spinner";
+import { Label } from "@/components/ui/label";
 
 // main component
 export default function PrenatalIndivHistory() {
@@ -34,9 +35,9 @@ export default function PrenatalIndivHistory() {
         title="Prenatal Visit Records"
         description="Complete record of prenatal visits and clinical notes"
       >
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="animate-spin h-8 w-8 mr-2" />
-          <span>Loading prenatal records...</span>
+        <div className="flex items-center justify-center py-20">
+            <Spinner size="md"/>
+            <span className="ml-2 text-gray-600">Loading...</span>
         </div>
       </LayoutWithBack>
     );
@@ -48,7 +49,10 @@ export default function PrenatalIndivHistory() {
       description="Complete record of prenatal visits and clinical notes"
     >
       <div className="bg-white p-3 space-y-2">
-        <div className="w-full mt-8" defaultValue={1}>
+        <div className="flex m-5 mb-10 p-2 border-b-2 border-black/40">
+            <Label className="text-xl">Prenatal Form Overview</Label>
+        </div>
+        <div className="w-full" defaultValue={1}>
           <div className="flex items-center justify-center">
             <PFHistoryTab onPageChange={handlePFPageChange} />
           </div>
@@ -62,7 +66,10 @@ export default function PrenatalIndivHistory() {
           )}
         </div>
        
-        <div className="bg-white/70 pt-5 px-2 py-2">
+       <div className="flex m-5 p-2 border-b-2 border-black/40">
+            <Label className="text-xl">Prenatal Data Overview</Label>
+        </div>
+        <div className="bg-white/70 px-2">
           <PrenatalFormTableHistory/>
         </div>
       </div>

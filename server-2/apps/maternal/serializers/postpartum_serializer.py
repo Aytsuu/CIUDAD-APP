@@ -6,9 +6,8 @@ from django.db.models import Max
 
 from apps.maternal.models import *
 
-from apps.maternal.utils import handle_spouse_logic
+from apps.maternal.utils import handle_spouse_logic, create_medicine_request_for_maternal
 from apps.healthProfiling.models import PersonalAddress, FamilyComposition
-from apps.inventory.models import MedicineTransactions
 from apps.administration.models import Staff
 
 
@@ -100,7 +99,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     followup_date = serializers.DateField(write_only=True)
     followup_description = serializers.CharField(default="Postpartum follow-up visit", write_only=True)
     
-    # TT Status FK - for linking vaccination status
+    # TT Status FK
     tts_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     
     # Medicine data - for micronutrient supplementation
@@ -614,71 +613,20 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f"Created assessment {i+1}: {assessment.ppa_id}")
                 
-                # Process selected medicines for micronutrient supplementation
-                medicine_record = None
+                # Process selected medicines using shared utility -> creates MedicineRequest & allocations
                 if selected_medicines:
-                    from apps.medicineservices.models import MedicineRecord, MedicineInventory, MedicineTransactions
-                    
-                    print(f"Processing {len(selected_medicines)} selected medicines")
-                    
-                    # Create medicine records for each selected medicine
-                    for i, medicine_data in enumerate(selected_medicines):
-                        minv_id = medicine_data.get('minv_id')
-                        medrec_qty = medicine_data.get('medrec_qty')
-                        reason = medicine_data.get('reason', 'Postpartum micronutrient supplementation')
-                        
-                        try:
-                            # Get medicine inventory
-                            medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                            
-                            # Check stock availability (already validated but double-check)
-                            if medicine_inv.minv_qty_avail < medrec_qty:
-                                raise Exception(f"Insufficient stock for {medicine_inv.med_id.med_name}")
-                            
-                            # Update inventory stock
-                            medicine_inv.minv_qty_avail -= medrec_qty
-                            medicine_inv.save()
-                            print(f"Updated medicine inventory: {medicine_inv.med_id.med_name}, new stock: {medicine_inv.minv_qty_avail}")
-                            
-                            # Create medicine record
-                            medicine_record = MedicineRecord.objects.create(
-                                medrec_qty=medrec_qty,
-                                reason=reason,
-                                requested_at=timezone.now(),
-                                fulfilled_at=timezone.now(),
-                                patrec_id=patient_record,
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            print(f"Created medicine record {i+1}: {medicine_record.medrec_id}")
-                            
-                            # Create medicine transaction for audit trail
-                            unit = medicine_inv.minv_qty_unit or 'pcs'
-                            if unit.lower() == 'boxes':
-                                mdt_qty = f"{medrec_qty} pcs"  # Convert boxes to pieces
-                            else:
-                                mdt_qty = f"{medrec_qty} {unit}"
-                            
-                            MedicineTransactions.objects.create(
-                                mdt_qty=mdt_qty,
-                                mdt_action="Deducted",
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            print(f"Created medicine transaction for {medicine_inv.med_id.med_name}")
-                            
-                        except MedicineInventory.DoesNotExist:
-                            print(f"Medicine with ID {minv_id} not found")
-                            continue
-                        except Exception as e:
-                            print(f"Error processing medicine {minv_id}: {str(e)}")
-                            continue
-                
-                # Link the first medicine record to postpartum record if created
-                if medicine_record:
-                    postpartum_record.medrec_id = medicine_record
-                    postpartum_record.save()
-                    print(f"Linked medicine record {medicine_record.medrec_id} to postpartum record")
+                    try:
+                        med_request = create_medicine_request_for_maternal(
+                            patient_record=patient_record,
+                            selected_medicines=selected_medicines,
+                            staff_instance=staff_instance
+                        )
+                        if med_request:
+                            postpartum_record.medreq_id = med_request
+                            postpartum_record.save()
+                            print(f"Linked MedicineRequest {med_request.medreq_id} to postpartum record")
+                    except Exception as e:
+                        print(f"Error creating MedicineRequest for postpartum record: {str(e)}")
                 
                 print(f"Successfully created complete postpartum record: {postpartum_record.ppr_id}")
                 return postpartum_record
@@ -793,14 +741,12 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         # Add TT Status FK data
         if instance.tts_id:
-            representation['tts_id'] = instance.tts_id.tts_id
             representation['tts_info'] = {
                 'tts_id': instance.tts_id.tts_id,
-                'tts_date': str(instance.tts_id.tts_date) if hasattr(instance.tts_id, 'tts_date') else None,
-                'tts_dosage': getattr(instance.tts_id, 'tts_dosage', None),
+                'tts_status': instance.tts_id.tts_status,
+                'tts_date_given': str(instance.tts_id.tts_date_given) if hasattr(instance.tts_id, 'tts_date_given') else None,
             }
         else:
-            representation['tts_id'] = None
             representation['tts_info'] = None
         
         return representation

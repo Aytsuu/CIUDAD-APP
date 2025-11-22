@@ -19,6 +19,7 @@ from .views.chreport_part1 import  MonthlyVaccinationStatisticsAPIView, MonthlyN
 from .views.fhisdeworming import DewormingMonthlyStatisticsAPIView
 from.views.doctor_report_assessed import  *
 from .views.morbidity_report import *
+from .views.bhw.bhw_daily_notes_views import *
 
 
 urlpatterns=[
@@ -90,5 +91,9 @@ urlpatterns=[
         # MORBIDITY REPORTS
         path('morbidity/monthly-details/<str:month>/', MonthlyMorbidityView.as_view(), name='monthly-morbidity'),
         path('morbidity/monthly-summaries/', MonthlyMorbiditySummaryAPIView.as_view(), name='yearly-morbidity'),
+        
+        # BHW DAILY NOTES
+        path('bhw/with-notes/', StaffWithBHWDailyNotesView.as_view(), name='staff-with-bhw-notes'),
+        path('bhw/daily-notes/create/', CreateBHWDailyNoteView.as_view(), name='create-bhw-daily-note'),
  
 ] 

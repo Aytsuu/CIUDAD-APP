@@ -310,10 +310,7 @@ export default function PrenatalFormFirstPg({
     return { weeks, days };
   }
 
-  const handlePatientSelection = (
-    patient: Patient | null,
-    patientId: string
-  ) => {
+  const handlePatientSelection = (patient: Patient | null, patientId: string  ) => {
     setSelectedPatIdDisplay(patientId);
 
     if (!patient) {
@@ -1023,18 +1020,18 @@ export default function PrenatalFormFirstPg({
 
     // Check for duplicates
     const isDuplicateIllness = prevIllnessData.some(
-      (existingIllness) =>
-        existingIllness.prevIllness.toLowerCase().trim() ===
-          illness.toLowerCase().trim() && existingIllness.prevIllnessYr === year
-    );
+        (existingIllness) =>
+          existingIllness.prevIllness.toLowerCase().trim() ===
+            illness.toLowerCase().trim() && existingIllness.prevIllnessYr === year
+      );
 
-    if (isDuplicateIllness) {
-      showErrorToast("This illness record already exists.");
-      return;
-    }
+      if (isDuplicateIllness) {
+        showErrorToast("This illness record already exists.");
+        return;
+      }
 
-    const selectedillnessData = illnessesData?.illnesses?.find(
-      (ill: any) => ill.illname === illness
+      const selectedillnessData = illnessesData?.illnesses?.find(
+        (ill: any) => ill.illname === illness
     );
 
     const newIllness: previousIllness = {

@@ -187,13 +187,11 @@ export const PatientInfoCard = ({ patient, isLoading = false }: PatientInfoCardP
           {/* Row 2: Date of Birth */}
           <InfoItem label="Date of Birth" value={dob} icon={Calendar} color="text-blue-600" />
 
-          <div className="flex flex-row gap-8">
-            {/* Row 3: Full Address spans both columns */}
-            <InfoItem label="Full Address" value={address} icon={MapPin} color="text-orange-600" />
-            <InfoItem label="Sitio" value={sitio} icon={Map} color="text-red-600" />
-          </div>
+          {/* Row 3: Full Address spans both columns */}
+          <InfoItem label="Full Address" value={address} icon={MapPin} color="text-orange-600" />
 
           {/* Row 4: Sitio */}
+          <InfoItem label="Sitio" value={sitio} icon={Map} color="text-red-600" />
         </div>
       </div>
     </div>

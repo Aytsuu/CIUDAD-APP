@@ -11,18 +11,21 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useAuth } from "@/context/AuthContext";
 
 import { ProtectedComponent } from "@/ProtectedComponent";
 
 import { noteColumns } from "./bhw-columns";
-
 import BHWStaffList from "./bdn-staff-list";
 
-interface NoteDiv {
-      no: number;
-      date: string;
-      name: string;
-   }
+import { useBHWStaffWithNotes } from "./queries/Fetch";
+
+interface NoteRow {
+   no: number;
+   date: string;
+   name: string;
+}
    
 export default function BHWAllNotes() {
 
@@ -30,9 +33,26 @@ export default function BHWAllNotes() {
    const [page, setPage] = useState(1);
    const [pageSize, setPageSize] = useState(10);
 
+   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+   
+   const { data: bhwNotesData, isLoading } = useBHWStaffWithNotes(page, pageSize, debouncedSearchTerm);
 
-   const bhwNames = ['Miranda, Saachi', 'Nakpil, Jordyn', 'Fallarco, Soleil', 'Castro, Morgan', 'Gonzaga, Merope'];
+   const staffAuth = useAuth();
+   const staffUserId = staffAuth.user?.staff?.staff_id;
+   const staffPositionTitle = staffAuth.user?.staff?.pos?.pos_title; 
 
+   // Filter according to role logic
+   const allResults = bhwNotesData?.results || [];
+   const filteredResults = staffPositionTitle === 'ADMIN'
+      ? allResults
+      : staffPositionTitle === 'BARANGAY HEALTH WORKERS'
+         ? allResults.filter((r:any) => r.staff_id === staffUserId)
+         : allResults;
+
+   const displayCount = filteredResults.length; 
+   const totalPages = Math.ceil((bhwNotesData?.count || 0) / pageSize);
+
+   // searching and pagination handlers
    const handlePageChange = (newPage: number) => {
       setPage(newPage);
    }
@@ -41,39 +61,28 @@ export default function BHWAllNotes() {
       setPageSize(newSize);
       setPage(1);
    }
+
+    const handleSearch = (search: string) => {
+       setSearchTerm(search);
+       setPage(1);
+    };
    
-   const mockData: NoteDiv[] = [
-      {
-         no: 1,
-         date: "2023-10-01",
-         name: bhwNames[0],
-      },
-      {
-         no: 2,
-         date: "2023-10-02",
-         name: bhwNames[1],
-      },
-      {
-         no: 3,
-         date: "2023-10-03",
-         name: bhwNames[2],
-      },
-      {
-         no: 4,
-         date: "2023-10-03",
-         name: bhwNames[3],
-      },
-      {
-         no: 5,
-         date: "2023-10-03",
-         name: bhwNames[4],
-      }
-   ]
+   const tableData: NoteRow[] = filteredResults.map((staffEntry: any, idx: number) => {
+      const per = staffEntry?.rp?.per;
+      const name = per ? `${per.per_lname}, ${per.per_fname}` : staffEntry.staff_id;
+      const date = staffEntry?.staff_assign_date || 'N/A';
+      return {
+         no: (page - 1) * pageSize + idx + 1,
+         date,
+         name
+      };
+   });
 
-   const totalPages = 0
-
-   // sort notes by date descending (newest first)
-   const sortedNotes = [...mockData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+   const sortedTableData = [...tableData].sort((a, b) => {
+      const da = new Date(a.date).getTime();
+      const db = new Date(b.date).getTime();
+      return db - da;
+   });
 
    return (
       <MainLayoutComponent 
@@ -96,7 +105,7 @@ export default function BHWAllNotes() {
                         placeholder="Search..."
                         className="pl-10 w-full bg-white"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                      />
                   </div>
                   <ProtectedComponent exclude={['ADMIN']}>
@@ -121,13 +130,18 @@ export default function BHWAllNotes() {
                   </div>
 
                   <div className="mt-2">
-                     <DataTable columns={noteColumns} data={sortedNotes} />
+                     <DataTable columns={noteColumns} data={sortedTableData} />
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
                      {/* Showing Rows Info */}
                      <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 0 of 0 rows
+                        {isLoading ? 'Loading...' : (
+                           displayCount === 0
+                           ? 'No records found'
+                           : `Showing ${((page - 1) * pageSize) + 1}-${Math.min(page * pageSize, (bhwNotesData?.count || 0))} of ${bhwNotesData?.count} rows${staffPositionTitle === 'BARANGAY HEALTH WORKERS' ? ' (filtered to your own records)' : ''}`
+                        )}
+
                      </p>
          
                      {/* Pagination */}

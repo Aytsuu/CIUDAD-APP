@@ -1,14 +1,18 @@
 // imports
 import React from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-import { Loader2, Download } from "lucide-react";
-
-import { usePatientPostpartumCompleteRecord } from "../../../queries/maternalFetchQueries";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { cn } from "@/lib/utils";
+import { Download } from "lucide-react";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button/button";
+import { Label } from "@/components/ui/label";
+import TableLoading from "@/components/ui/table-loading";
+
+import { usePatientPostpartumCompleteRecord } from "../../../queries/maternalFetchQueries";
+import { usePostpartumAssessements } from "../../../queries/maternalFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 // input line component
 export const InputLine = ({
@@ -38,9 +42,64 @@ interface PostpartumViewingProps {
 
 // main component
 export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
-  const { data: postpartumForm, isLoading, error } = usePatientPostpartumCompleteRecord(pprId || "");
+  const { data: postpartumForm, isLoading: formLoading, error: formError } = usePatientPostpartumCompleteRecord(pprId || "");
+  const { data: assessmentsData, isLoading: assessmentsLoading, error: assessmentsError } = usePostpartumAssessements(postpartumForm?.patient_details?.pat_id || "");
 
   const printRef = React.useRef(null);
+
+
+  type postpartumCare = {
+    date: string;
+    lochialDischarges: string;
+    bp: string;
+    feeding: string;
+    findings: string;
+    nursesNotes: string;
+  };
+
+  // Filter, transform assessments by ppr_id - MUST be before early returns
+  const transformedAssessments = React.useMemo((): postpartumCare[] => {
+    if (!assessmentsData?.postpartum_assessments) {
+      return [];
+    }
+
+    // Get all assessments up to and including the accessed ppr_id
+    const allAssessments = assessmentsData.postpartum_assessments;
+    
+    let filteredAssessments = allAssessments;
+    
+    if (pprId) {
+      const accessedRecordIndex = allAssessments.findIndex(
+        (a: any) => a.postpartum_record_info?.ppr_id === pprId
+      );
+
+      if (accessedRecordIndex !== -1) {
+        // API is newest -> oldest; show clicked + all older (historical) assessments
+        filteredAssessments = allAssessments.slice(accessedRecordIndex);
+      }
+    }
+
+    // Sort from oldest to latest by visit date then transform
+    const sortedAssessments = [...filteredAssessments].sort((a: any, b: any) => {
+      const dateA = a.ppa_date_of_visit ? new Date(a.ppa_date_of_visit).getTime() : 0;
+      const dateB = b.ppa_date_of_visit ? new Date(b.ppa_date_of_visit).getTime() : 0;
+      return dateA - dateB; // oldest first
+    });
+
+    return sortedAssessments.map((assessment: any) => ({
+      date: assessment.ppa_date_of_visit || "",
+      lochialDischarges: assessment.postpartum_record_info?.ppr_lochial_discharges || "",
+      bp: assessment.vital_signs
+        ? `${assessment.vital_signs.vital_bp_systolic}/${assessment.vital_signs.vital_bp_diastolic}`
+        : "",
+      feeding: assessment.ppa_feeding || "",
+      findings: assessment.ppa_findings || "",
+      nursesNotes: assessment.ppa_nurses_notes || "",
+    }));
+  }, [assessmentsData, pprId]);
+
+  const isLoading = formLoading || assessmentsLoading;
+  const error = formError || assessmentsError;
 
   const handleDownloadPDF = async () => {
     const element = printRef.current;
@@ -55,19 +114,19 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
       format: "letter",
     })
 
-    const imgProperties = pdf.getImageProperties(data);
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+    const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
 
     pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`postpartum-${pprId || 'record'}.pdf`);
+    pdf.save(`Postpartum-${pprId || 'record'}.pdf`);
   }
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin h-8 w-8 mr-2" />
-        Loading postpartum record...
+        <TableLoading />
       </div>
     );
   }
@@ -85,8 +144,6 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
   const address = postpartumForm?.patient_details?.address;
   const family = postpartumForm?.patient_details?.family;
   const deliveryRecord = postpartumForm?.delivery_records?.[0];
-  const vitalSigns = postpartumForm?.vital_signs;
-  const assessments = postpartumForm?.assessments || [];
 
   // Check if patient is resident and get spouse information
   const isResident =
@@ -104,42 +161,19 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
       ).toString()
     : "";
 
-  type postpartumCare = {
-    date: string;
-    lochialDischarges: string;
-    bp: string;
-    feeding: string;
-    findings: string;
-    nursesNotes: string;
-  };
-
-  // Transform assessments data for table
-  const transformedAssessments: postpartumCare[] = assessments.map(
-    (assessment: any) => ({
-      date: assessment.ppa_date_of_visit || "",
-      lochialDischarges: postpartumForm?.ppr_lochial_discharges || "",
-      bp: vitalSigns
-        ? `${vitalSigns.vital_bp_systolic}/${vitalSigns.vital_bp_diastolic}`
-        : "",
-      feeding: assessment.ppa_feeding || "",
-      findings: assessment.ppa_findings || "",
-      nursesNotes: assessment.ppa_nurses_notes || "",
-    })
-  );
-
   return (
     <div className="w-full">
-      <div className="flex max-w-6xl justify-end my-5 mx-auto">
+      <div className="flex justify-end max-w-6xl mt-8 mx-auto">
         <Button onClick={handleDownloadPDF} className="text-sm">
           <Download />
-          Download PDF
+            PDF
         </Button>
       </div>
 
       <div className="flex max-w-6xl h-[80rem] mx-auto m-5 overflow-hidden border border-gray-500">
         <div ref={printRef} className="container">
           <div className="m-5 px-8">
-            <div className="mt-[7rem]">
+            <div className="mt-[6rem]">
               <h4 className="text-center text-2xl m-4 pb-3">
                 {" "}
                 <b>POSTPARTUM RECORD</b>{" "}
@@ -162,9 +196,9 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
                   <Label className="mt-4">Name:</Label>
                   <InputLine
                     className="mr-8 w-[400px]"
-                    value={`${personalInfo?.per_lname || ""}, ${
+                    value={capitalize(`${personalInfo?.per_lname || ""}, ${
                       personalInfo?.per_fname || ""
-                    } ${personalInfo?.per_mname || ""}`.trim()}
+                    } ${personalInfo?.per_mname || ""}`.trim())}
                   />
                 </div>
                 <div className="flex items-center">
@@ -248,9 +282,15 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
               {/* TT Status and Iron Supplementation */}
               <div className="flex">
                 <Label className="mt-4">TT Status:</Label>
-                <InputLine className="mr-8 w-[384px]" value="" />
+                <InputLine
+                  className="mr-8 w-[384px]"
+                  value={postpartumForm?.tts_info?.tts_status || ""}
+                />
                 <Label className="mt-4">Iron Supplementation:</Label>
-                <InputLine className="w-[230px]" value="" />
+                <InputLine
+                  className="w-[230px]"
+                  value={postpartumForm?.tts_info?.tts_date_given || ""}
+                />
               </div>
 
               {/* Lochial Discharges and Vit A Supplementation */}
