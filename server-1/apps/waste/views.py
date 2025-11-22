@@ -20,8 +20,8 @@ from django.db.models import Case, When, Value, IntegerField
 from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
 from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
-from apps.notification.utils import create_notification
 import logging
+from django.db.models import Prefetch
 
 logger = logging.getLogger(__name__)
 
@@ -1168,7 +1168,7 @@ class GarbagePickupRequestPendingView(ActivityLogMixin, generics.ListCreateAPIVi
     def get_queryset(self):
         queryset = (
             Garbage_Pickup_Request.objects.filter(garb_req_status='pending')
-            .select_related('rp__per', 'sitio_id', 'gprf')
+            .select_related('rp__per', 'sitio_id')
             .only(
                 'garb_id',
                 'garb_location',
@@ -1182,7 +1182,6 @@ class GarbagePickupRequestPendingView(ActivityLogMixin, generics.ListCreateAPIVi
                 'rp__per__per_fname',
                 'rp__per__per_mname',
                 'sitio_id__sitio_name',
-                'gprf__gprf_url',
             )
         )
 
@@ -1207,7 +1206,31 @@ class GarbagePickupRequestPendingView(ActivityLogMixin, generics.ListCreateAPIVi
 
         return queryset.order_by('-garb_created_at')
 
-
+class GarbagePickupRequestPendingDetailView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestPendingSerializer
+    lookup_field = 'garb_id'
+    
+    def get_queryset(self):
+        return (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='pending')
+            .select_related('rp__per', 'sitio_id', 'gprf')
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url',
+            )
+        )
 
 class GarbagePickupRequestRejectedView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -1220,7 +1243,6 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
             .select_related(
                 'rp__per',
                 'sitio_id',
-                'gprf'
             )
             .prefetch_related(
                 'pickup_decisions__staff_id__rp__per'
@@ -1238,7 +1260,6 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
                 'rp__per__per_fname',
                 'rp__per__per_mname',
                 'sitio_id__sitio_name',
-                'gprf__gprf_url'
             )
         )
 
@@ -1266,7 +1287,45 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
             queryset = queryset.filter(sitio_id__sitio_name__iexact=sitio_param)
 
         return queryset.order_by('-garb_created_at')
-
+    
+class GarbagePickupRequestRejectedDetailView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestRejectedSerializer
+    lookup_field = 'garb_id'
+    
+    def get_queryset(self):
+        return (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='rejected')
+            .select_related(
+                'rp__per', 
+                'sitio_id',
+                'gprf'  # ADD THIS for file_url
+            )
+            .prefetch_related(
+                Prefetch(
+                    'pickup_decisions',
+                    queryset=Pickup_Request_Decision.objects.select_related(
+                        'staff_id__rp__per'
+                    )
+                )
+            )
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'rp__per__per_suffix',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url',
+            )
+        )
 
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
     permission_classes = [AllowAny]

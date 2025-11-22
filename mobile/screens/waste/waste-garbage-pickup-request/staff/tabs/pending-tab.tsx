@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Modal, Image, RefreshControl } from "react-native";
-import { CheckCircle, XCircle, X, Search, Info } from "lucide-react-native";
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
+import { CheckCircle, XCircle, Search, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetGarbagePendingRequest } from "../queries/garbagePickupStaffFetchQueries";
-import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useRouter } from "expo-router";
 import { LoadingState } from "@/components/ui/loading-state";
 import EmptyState from "@/components/ui/emptyState";
+import { formatDate } from "@/helpers/dateHelpers";
 
 export default function PendingGarbageRequest() {
   const [searchInputVal, setSearchInputVal] = useState("");
@@ -17,17 +17,10 @@ export default function PendingGarbageRequest() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, _setPageSize] = useState(10);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
-  const [currentImage, setCurrentImage] = useState("");
-  const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const router = useRouter();
   
   // Query hook with pagination and search
-  const { 
-    data: pendingReqData, 
-    isLoading, 
-    refetch 
-  } = useGetGarbagePendingRequest(currentPage, pageSize, searchQuery);
+  const {  data: pendingReqData, isLoading,  refetch } = useGetGarbagePendingRequest(currentPage, pageSize, searchQuery);
 
   const requests = pendingReqData?.results || [];
   const totalCount = pendingReqData?.count || 0;
@@ -42,12 +35,6 @@ export default function PendingGarbageRequest() {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     setCurrentPage(1);
-  };
-
-  const handleViewImage = (imageUrl: string) => {
-    setCurrentImage(imageUrl);
-    setViewImageModalVisible(true);
-    setCurrentZoomScale(1);
   };
 
   const handleReject = (garb_id: string) => { 
@@ -66,6 +53,16 @@ export default function PendingGarbageRequest() {
         garb_id: garb_id,
         pref_date: pref_date,
         pref_time: pref_time
+      }
+    });
+  };
+
+  // Navigate to full details
+  const handleViewDetails = (garb_id: string) => {
+    router.push({
+      pathname: '/(waste)/garbage-pickup/staff/view-pending-details',
+      params: { 
+        garb_id: garb_id
       }
     });
   };
@@ -99,77 +96,63 @@ export default function PendingGarbageRequest() {
           className="border border-gray-200 rounded-lg bg-white"
         >
           <CardHeader className="border-b border-gray-200 p-4">
-            <View className="flex flex-row justify-between items-center">
-                <View className="flex-1">
-                  <View className='flex flex-row items-center gap-2 mb-1'>
-                    <View className="bg-blue-600 px-3 py-1 rounded-full self-start">
-                      <Text className="text-white font-bold text-sm tracking-wide">{request.garb_id}</Text>
-                    </View>
-                    <Text className="font-medium">{request.garb_requester}</Text>
+            <TouchableOpacity 
+              onPress={() => handleViewDetails(request.garb_id)}
+              className="flex flex-row justify-between items-center"
+            >
+              <View className="flex-1">
+                <View className='flex flex-row items-center gap-2 mb-1'>
+                  <View className="bg-blue-600 px-3 py-1 rounded-full self-start">
+                    <Text className="text-white font-bold text-sm tracking-wide" numberOfLines={1}>
+                      {request.garb_id}
+                    </Text>
                   </View>
-                  <View className='flex flex-row justify-between items-center gap-2'>
-                      <Text className="text-xs text-gray-500">
-                        Sitio: {request.sitio_name}, {request.garb_location}
-                      </Text>
-                      <Text className="text-xs text-gray-500">{formatTimestamp(request.garb_created_at)}</Text>
-                  </View>
+                  <Text className="font-medium flex-1" numberOfLines={1}>
+                    {request.garb_requester}
+                  </Text>
                 </View>
-            </View>
+                <View className='flex flex-row justify-between items-center gap-2'>
+                    <Text className="text-xs text-gray-500 flex-1" numberOfLines={1}>
+                      {request.sitio_name}, {request.garb_location}
+                    </Text>
+                </View>
+              </View>
+              <ChevronRight size={18} color="#6b7280" />
+            </TouchableOpacity>
           </CardHeader>
           <CardContent className="p-4">
             <View className="gap-3">
               {/* Waste Type */}
-              <View className="flex-row justify-between">
+              <View className="flex-row justify-between items-center">
                 <Text className="text-sm text-gray-600">Waste Type:</Text>
-                <Text className="text-sm font-medium">{request.garb_waste_type}</Text>
-              </View>
-
-              {/* Preferred Date */}
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-600">Preferred Date:</Text>
-                <Text className="text-sm">{request.garb_pref_date}</Text>
-              </View>
-
-              {/* Preferred Time */}
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-600">Preferred Time:</Text>
-                <Text className="text-sm">{formatTime(request.garb_pref_time)}</Text>
-              </View>
-
-              {/* Additional Notes */}
-              {request.garb_additional_notes && (
-                <View className="mt-2">
-                  <Text className="text-sm text-gray-600">Notes:</Text>
-                  <Text className="text-sm">{request.garb_additional_notes}</Text>
+                <View className="bg-orange-100 px-2 py-1 rounded-full">
+                  <Text className="text-orange-700 font-medium text-xs">{request.garb_waste_type}</Text>
                 </View>
-              )}
+              </View>
 
-              {/* Attached File Link */}
-              {request.file_url && (
-                <View className="mt-2">
-                  <TouchableOpacity
-                    onPress={() => handleViewImage(request.file_url)}
-                  >
-                    <Text className="text-sm text-blue-600 underline">
-                      View Attached Image
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              {/* Preferred Date & Time Combined */}
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
+                <Text className="text-sm font-medium text-right flex-1 ml-2" numberOfLines={2}>
+                  {formatDate(request.garb_pref_date, "long")} • {formatTime(request.garb_pref_time)}
+                </Text>
+              </View>
 
               {/* Action Buttons */}
               <View className="flex-row justify-end gap-2 mt-4">
                 <Button 
-                  className="bg-[#17AD00] p-2"
+                  className="bg-[#17AD00] px-4 py-2 flex-row items-center gap-2"
                   onPress={() => handleAccept(request.garb_id, request.garb_pref_date, request.garb_pref_time)}
                 >
                   <CheckCircle size={16} color="white" />
+                  <Text className="text-white text-sm font-medium">Accept</Text>
                 </Button>
                 <Button 
-                  className="bg-[#ff2c2c] p-2"
+                  className="bg-[#ff2c2c] px-4 py-2 flex-row items-center gap-2"
                   onPress={() => handleReject(request.garb_id)}
                 >
                   <XCircle size={16} color="white" />
+                  <Text className="text-white text-sm font-medium">Reject</Text>
                 </Button>
               </View>
             </View>
@@ -195,7 +178,7 @@ export default function PendingGarbageRequest() {
   return (
     <View className="flex-1">
       {/* Search Bar*/}
-      {!isLoading && (
+     
         <View>
           <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-2">
             <Search size={18} color="#6b7280" />
@@ -210,14 +193,15 @@ export default function PendingGarbageRequest() {
               style={{ borderWidth: 0, shadowOpacity: 0 }}
             />
           </View>
-          
+         {!isLoading && (  
           <View className="mb-4">
             <Text className="text-sm text-gray-500">
               {totalCount} request{totalCount !== 1 ? 's' : ''} found
             </Text>
           </View>
+        )}
         </View>
-      )}
+     
 
       {/* Main Content with Refresh Control */}
       <ScrollView 
@@ -239,46 +223,6 @@ export default function PendingGarbageRequest() {
       >
         {renderContent()}
       </ScrollView>
-
-      {/* Image Modal */}
-      <Modal
-        visible={viewImageModalVisible}
-        transparent={true}
-        onRequestClose={() => {
-          setViewImageModalVisible(false);
-          setCurrentZoomScale(1);
-        }}
-      >
-        <View className="flex-1 bg-black/90">
-          {/* Close Button */}
-          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-end items-center">
-            <TouchableOpacity
-              onPress={() => {
-                setViewImageModalVisible(false);
-                setCurrentZoomScale(1);
-              }}
-            >
-              <X size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Image Viewer */}
-          <ScrollView
-            className="flex-1"
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-            zoomScale={currentZoomScale}
-            onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          >
-            <Image
-              source={{ uri: currentImage }}
-              style={{ width: "100%", height: 400 }}
-              resizeMode="contain"
-            />
-          </ScrollView>
-        </View>
-      </Modal>
     </View>
   );
 }

@@ -58,7 +58,6 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
             truck_id: assignmentInfo.truck,
             wstp_id: assignmentInfo.driver,
             garb_id: garb_id,
-            staff_id: assignmentInfo.staff_id
         });
 
         const pick_id = res.data.pick_id;

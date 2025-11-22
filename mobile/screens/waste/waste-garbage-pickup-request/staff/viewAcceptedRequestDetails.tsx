@@ -86,7 +86,7 @@ export default function ViewRequestDetails() {
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Details</Text>}
       wrapScroll={false}
       footer={
-        <View className="p-6 bg-white border-t border-gray-200">
+        <View className="p-6 bg-white">
           <ConfirmationModal
             trigger={
               <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
@@ -112,7 +112,7 @@ export default function ViewRequestDetails() {
               tintColor="#00a8f0"
             />
           }
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20  }}
         >
           {/* Request Info Card */}
           <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
@@ -154,6 +154,16 @@ export default function ViewRequestDetails() {
             <View className="py-3 border-b border-gray-100">
               <View className="flex-row items-center mb-2">
                 <Calendar size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Preferred Date & Time:</Text>
+              </View>
+              <Text className="font-PoppinsSemiBold text-gray-800 ml-6">
+                {formatDate(requestDetails?.garb_pref_date || "", "long")} • {formatTime(requestDetails?.garb_pref_time || "")}
+              </Text>
+            </View>
+
+            <View className="py-3 border-b border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <Calendar size={16} color="#6b7280" className="mr-2" />
                 <Text className="text-gray-600 font-PoppinsMedium">Created:</Text>
               </View>
               <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
@@ -161,15 +171,13 @@ export default function ViewRequestDetails() {
               </Text>
             </View>
 
-            {requestDetails?.dec_date && (
+            {requestDetails?.garb_additional_notes && (
               <View className="py-3">
                 <View className="flex-row items-center mb-2">
-                  <Calendar size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Decision Date:</Text>
+                  <Info size={16} color="#6b7280" className="mr-2" />
+                  <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
                 </View>
-                <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
-                  {formatTimestamp(requestDetails?.dec_date)}
-                </Text>
+                <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails?.garb_additional_notes}</Text>
               </View>
             )}
           </View>
@@ -253,6 +261,18 @@ export default function ViewRequestDetails() {
                 </View>
               </View>
             )}
+
+           {(requestDetails?.staff_name || requestDetails?.dec_date) && (
+            <View className="py-3">
+                <View className="flex-row items-center mb-2">
+                  <Calendar size={16} color="#6b7280" className="mr-2" />
+                  <Text className="text-gray-600 font-PoppinsMedium">Assigned & Accepted by:</Text>
+                </View>
+                <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
+                  {requestDetails?.staff_name || "Staff"} {requestDetails?.dec_date && `• ${formatTimestamp(requestDetails.dec_date)}`}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Attached Image Section - Updated with modal functionality */}
@@ -265,7 +285,7 @@ export default function ViewRequestDetails() {
               
               {/* Make the image clickable */}
               <TouchableOpacity 
-                onPress={() => handleViewImage(requestDetails.file_url, "Garbage Pickup Image")}
+                onPress={() => handleViewImage(requestDetails.file_url)}
                 className="bg-gray-50 rounded-lg p-2"
               >
                 <Image

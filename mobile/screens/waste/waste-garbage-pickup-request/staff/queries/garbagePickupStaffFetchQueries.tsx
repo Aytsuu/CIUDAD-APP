@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTrucks, getDrivers, getCollectors, getGarbageAcceptedRequest, getGarbageCompletedRequest,
-     getGarbagePendingRequest, getGarbageRejectedRequest, getAcceptedDetails, getCompletedDetails } from "../restful-API/garbagePickupStaffGetAPI";
+     getGarbagePendingRequest, getGarbageRejectedRequest, getAcceptedDetails, getCompletedDetails, getGarbagePendingRequestDetails, getGarbageRejectedRequestDetails } from "../restful-API/garbagePickupStaffGetAPI";
 
 // Retrieve Drivers
 export type Drivers = {
@@ -100,6 +100,14 @@ export const useGetGarbagePendingRequest = (page: number, pageSize: number, sear
     });
 }
 
+export const useGetGarbagePendingRequestDetails = (garb_id: string) => {
+    return useQuery<GarbageRequestPending>({
+        queryKey: ["garbageRequestDetails", garb_id],
+        queryFn:() =>  getGarbagePendingRequestDetails(garb_id),
+        staleTime: 1000 * 60 * 30, 
+    });
+}
+
 export type GarbageRequestReject = {
     garb_id: string;
     garb_requester: string;
@@ -126,6 +134,13 @@ return useQuery<{results: GarbageRequestReject[], count: number}>({
     });
 }
 
+export const useGetGarbageRejectRequestDetails = (garb_id: string) => {
+return useQuery<GarbageRequestReject>({
+        queryKey: ["garbageRejectedRequest", garb_id], 
+        queryFn:() => getGarbageRejectedRequestDetails(garb_id),
+        staleTime: 1000 * 60 * 30,
+    });
+}
 export type GarbageRequestAccept = {
   garb_id: string;
   garb_location: string;
@@ -148,7 +163,6 @@ export type GarbageRequestAccept = {
     pick_date?: string;
     truck?: string;
   } | null;
-  file_url: string;
   sitio_name: string;
   staff_name: string;
 };
@@ -169,6 +183,9 @@ export type GarbageRequestAcceptDetails = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
+  garb_additional_notes: string; 
   dec_date: string;
   truck_id: string | null;
   driver_id: string | null;
@@ -184,6 +201,7 @@ export type GarbageRequestAcceptDetails = {
   } | null;
   file_url: string;
   sitio_name: string;
+  staff_name: string;
 };
 
 
@@ -217,7 +235,6 @@ export type GarbageRequestComplete = {
     pick_date?: string;      
     truck?: string;
   } | null;
-  file_url: string;
   sitio_name: string;
   staff_name: string;
 }
@@ -237,10 +254,14 @@ export type GarbageRequestCompleteDetails = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
+  garb_additional_notes: string; 
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
   conf_staff_conf: boolean | null; 
+  dec_date: string;
   assignment_info?: {
     driver?: string;
     collectors?: string[];
@@ -250,6 +271,7 @@ export type GarbageRequestCompleteDetails = {
   } | null;
   file_url: string;
   sitio_name: string;
+  staff_name: string;
 }
 
 export const useGetViewCompleted = (garb_id: string) => {
