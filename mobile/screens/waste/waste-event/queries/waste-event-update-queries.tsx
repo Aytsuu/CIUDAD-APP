@@ -21,8 +21,8 @@ export const useUpdateWasteEvent = () => {
                 we_date: formattedDate,
                 we_time: formattedTime,
                 we_description: eventData.eventDescription || '',
-                we_organizer: eventData.organizer,
-                we_invitees: eventData.invitees || '',
+                we_organizer: eventData.organizer, // This will be the staff name
+                we_invitees: null, // Removed invitees field to match web
                 // Include announcement data
                 selectedAnnouncements: eventData.selectedAnnouncements || [],
                 eventSubject: eventData.eventSubject || ''

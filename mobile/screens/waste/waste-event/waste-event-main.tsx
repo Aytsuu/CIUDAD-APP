@@ -1,340 +1,266 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
-  SectionList,
-  TextInput,
-} from 'react-native';
-import { useGetActiveWasteEvents, useGetArchivedWasteEvents, type WasteEvent } from './queries/waste-event-fetch-queries';
-import { useArchiveWasteEvent, useRestoreWasteEvent, useDeleteWasteEvent } from './queries/waste-event-delete-queries';
-import { Plus, Trash, Archive, ArchiveRestore, Edit3, Search, ChevronLeft, Calendar } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+  FlatList,
+  Dimensions,
+  RefreshControl,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { format, parseISO, isSameMonth, isSameDay, addMonths } from "date-fns";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Plus } from "lucide-react-native";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ChevronLeft } from "lucide-react-native";
+import { useGetActiveWasteEvents, type WasteEvent } from './queries/waste-event-fetch-queries';
 import { formatTime } from '@/helpers/timeFormatter';
-import { formatDate } from '@/helpers/dateHelpers';
-import { SelectLayout } from '@/components/ui/select-layout';
-import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import PageLayout from '@/screens/_PageLayout';
-import { useDebounce } from '@/hooks/use-debounce';
 
-// Day options for filtering
-const dayOptions = [
-  { label: "All Days", value: "0" },
-  { label: "Monday", value: "Monday" },
-  { label: "Tuesday", value: "Tuesday" },
-  { label: "Wednesday", value: "Wednesday" },
-  { label: "Thursday", value: "Thursday" },
-  { label: "Friday", value: "Friday" },
-  { label: "Saturday", value: "Saturday" },
-  { label: "Sunday", value: "Sunday" }
-];
+const { width } = Dimensions.get("window");
+const DAY_SIZE = width / 7 - 10;
 
 const WasteEventMain = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>('active');
-  const [selectedDay, setSelectedDay] = useState('0');
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Add debouncing for search
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [allEvents, setAllEvents] = useState<WasteEvent[]>([]);
 
-  // Fetch data with search and filter parameters
-  const { data: activeEventsData = [], isLoading: isActiveLoading } = useGetActiveWasteEvents(debouncedSearchQuery);
-  const { data: archivedEventsData = [], isLoading: isArchivedLoading } = useGetArchivedWasteEvents(debouncedSearchQuery);
+  // Fetch active waste events
+  const { data: activeEventsData = [], isLoading: isActiveLoading, refetch } = useGetActiveWasteEvents();
 
-  // Mutation hooks
-  const { mutate: archiveWasteEvent, isPending: isArchiving } = useArchiveWasteEvent();
-  const { mutate: deleteWasteEvent, isPending: isDeleting } = useDeleteWasteEvent();
-  const { mutate: restoreWasteEvent, isPending: isRestoring } = useRestoreWasteEvent();
+  useEffect(() => {
+    if (!isActiveLoading) {
+      setAllEvents(activeEventsData);
+      setIsLoading(false);
+    }
+  }, [activeEventsData, isActiveLoading]);
 
-  // Filter data by day
-  const filterByDay = (events: WasteEvent[]) => {
-    if (selectedDay === '0') return events;
-    
-    return events.filter(event => {
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  // Get events for the selected date
+  const getEventsForDate = (date: Date) => {
+    return allEvents.filter(event => {
       if (!event.we_date) return false;
-      const eventDate = new Date(event.we_date);
-      const dayName = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
-      return dayName === selectedDay;
+      const eventDate = parseISO(event.we_date);
+      return isSameDay(eventDate, date);
     });
   };
 
-  // Filter Active Events
-  const activeFilteredData = useMemo(() => {
-    return filterByDay(activeEventsData);
-  }, [activeEventsData, selectedDay]);
+  // Get events for the selected date
+  const selectedDateEvents = getEventsForDate(selectedDate);
 
-  // Filter Archived Events
-  const archivedFilteredData = useMemo(() => {
-    return filterByDay(archivedEventsData);
-  }, [archivedEventsData, selectedDay]);
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blankDays = Array.from({ length: firstDayOfMonth }, (_, i) => null);
 
-  // Grouping function
-  const groupByDate = (data: WasteEvent[]) => {
-    const groups: { [key: string]: WasteEvent[] } = {};
-    data.forEach(item => {
-      if (item.we_date) {
-        const dateKey = formatDate(item.we_date as string);
-        if (dateKey) {
-          if (!groups[dateKey]) {
-            groups[dateKey] = [];
-          }
-          groups[dateKey].push(item);
-        }
-      }
-    });
-    const result = Object.keys(groups).map(date => ({
-      title: date,
-      data: groups[date],
-    }));
-    return result.sort((a, b) => new Date(a.title).getTime() - new Date(b.title).getTime());
+  const handleMonthChange = (increment: number) => {
+    setCurrentMonth(addMonths(currentMonth, increment));
+    setSelectedDate(addMonths(selectedDate, increment));
   };
 
-  const activeGroupedData = useMemo(() => groupByDate(activeFilteredData), [activeFilteredData]);
-  const archivedGroupedData = useMemo(() => groupByDate(archivedFilteredData), [archivedFilteredData]);
-
-  const handleEdit = (item: WasteEvent) => {
-    router.push({
-      pathname: '/(waste)/waste-event/waste-event-edit',
-      params: {
-        weNum: item.we_num.toString(),
-        eventName: item.we_name,
-        location: item.we_location,
-        date: item.we_date,
-        time: item.we_time,
-        organizer: item.we_organizer,
-        invitees: item.we_invitees || '',
-        description: item.we_description || '',
-      }
-    });
+  const handleDateSelect = (date: number) => {
+    setSelectedDate(new Date(year, month, date));
   };
 
-  const handleDelete = (weNum: number) => {
-    deleteWasteEvent(weNum);
-  };
-
-  const handleArchive = (weNum: number) => {
-    archiveWasteEvent(weNum);
-  };
-
-  const handleRestore = (weNum: number) => {
-    restoreWasteEvent(weNum);
-  };
-
-  const renderItem = ({ item }: { item: WasteEvent }) => (
-    <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2 border border-gray-200">
-      {/* First row with event name and action icons */}
-      <View className="flex-row justify-between items-center mb-1">
-        <Text className="text-gray-800 font-semibold text-base flex-1 mr-2">{item.we_name}</Text>
-        <View className="flex-row gap-1">
-          {activeTab === 'active' ? (
-            <>
-              <TouchableOpacity
-                className="bg-blue-50 rounded py-1 px-1"
-                onPress={() => handleEdit(item)}
-              >
-                <Edit3 size={16} color="#00A8F0" />
-              </TouchableOpacity>
-
-              <ConfirmationModal
-                trigger={
-                  <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-                    <Archive size={16} color="#dc2626" />
-                  </TouchableOpacity>
-                }
-                title="Archive Event"
-                description="This event will be archived. Are you sure?"
-                actionLabel="Archive"
-                onPress={() => handleArchive(item.we_num)}
-              />
-            </>
-          ) : (
-            <>
-              <ConfirmationModal
-                trigger={
-                  <TouchableOpacity className="bg-green-50 rounded py-1 px-1.5">
-                    <ArchiveRestore size={16} color="#15803d" />
-                  </TouchableOpacity>
-                }
-                title="Restore Event"
-                description="This event will be restored. Are you sure?"
-                actionLabel="Restore"
-                onPress={() => handleRestore(item.we_num)}
-              />
-
-              <ConfirmationModal
-                trigger={
-                  <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-                    <Trash size={16} color="#dc2626" />
-                  </TouchableOpacity>
-                }
-                title="Delete Event"
-                description="This event will be permanently deleted. Are you sure?"
-                actionLabel="Delete"
-                onPress={() => handleDelete(item.we_num)}
-              />
-            </>
-          )}
-        </View>
-      </View>
-
-      {/* Location and time row */}
-      <View className="mb-1">
-        <Text className="text-gray-600 text-sm">📍 {item.we_location}</Text>
-        <Text className="text-gray-500 text-sm">🕒 {formatTime(item.we_time)}</Text>
-      </View>
-
-      {/* Organizer */}
-      <View className="mb-1">
-        <Text className="text-gray-600 text-sm">👤 Organizer: {item.we_organizer}</Text>
-      </View>
-
-      {/* Description if exists */}
-      {item.we_description && item.we_description !== "None" && (
-        <View className="mt-1">
-          <Text className="text-gray-600 text-sm">{item.we_description}</Text>
-        </View>
-      )}
-
-      {/* Invitees if exists */}
-      {item.we_invitees && item.we_invitees !== "None" && (
-        <View className="mt-1">
-          <Text className="text-gray-600 text-sm">👥 Invitees: {item.we_invitees}</Text>
-        </View>
-      )}
+  const renderDayHeader = (day: string) => (
+    <View key={day} className="items-center py-2">
+      <Text className="text-gray-500 text-sm font-medium">{day}</Text>
     </View>
   );
 
-  const renderSectionHeader = ({ section }: { section: { title: string } }) => (
-    <View className="bg-orange-50 py-3 px-4 rounded-md mb-3 mt-3">
-      <Text className="text-lg font-bold text-orange-800">{section.title}</Text>
+  const renderDateCell = (date: number | null, index: number) => {
+    if (date === null) {
+      return (
+        <View
+          key={`blank-${index}`}
+          style={{ width: DAY_SIZE, height: DAY_SIZE }}
+        />
+      );
+    }
+
+    const dateObj = new Date(year, month, date);
+    const hasEvent = allEvents.some((event) => {
+      if (!event.we_date) return false;
+      const eventDate = parseISO(event.we_date);
+      return isSameDay(eventDate, dateObj);
+    });
+    const isSelected = isSameDay(selectedDate, dateObj);
+    const isToday = isSameDay(dateObj, new Date());
+
+    return (
+      <TouchableOpacity
+        key={date}
+        className={`items-center justify-center rounded-full m-1 ${
+          isSelected
+            ? "bg-primaryBlue"
+            : hasEvent
+            ? "bg-blue-100"
+            : isToday
+            ? "bg-gray-200"
+            : "bg-white"
+        }`}
+        style={{ width: DAY_SIZE, height: DAY_SIZE }}
+        onPress={() => handleDateSelect(date)}
+      >
+        <Text
+          className={`text-lg ${
+            isSelected
+              ? "text-white font-bold"
+              : isToday
+              ? "text-primaryBlue font-bold"
+              : "text-gray-800"
+          }`}
+        >
+          {date}
+        </Text>
+        {hasEvent && !isSelected && (
+          <View className="w-1 h-1 rounded-full bg-primaryBlue mt-1" />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEventItem = ({ item }: { item: WasteEvent }) => (
+    <View className="mb-3">
+      <View className="bg-white shadow-sm rounded-lg p-4 mx-2 border-2 border-gray-200">
+        <View className="flex-row justify-between items-start">
+          <Text className="text-[#1a2332] text-lg font-semibold flex-1">
+            {item.we_name}
+          </Text>
+        </View>
+        {item.we_description && item.we_description !== "None" && (
+          <Text className="text-gray-600 mt-2">{item.we_description}</Text>
+        )}
+        <View className="mt-2">
+          <Text className="text-xs font-medium text-gray-500">Location:</Text>
+          <Text className="text-sm text-gray-700">📍 {item.we_location}</Text>
+        </View>
+        {item.we_time && (
+          <View className="mt-2">
+            <Text className="text-xs font-medium text-gray-500">Time:</Text>
+            <Text className="text-sm text-gray-700">🕒 {formatTime(item.we_time)}</Text>
+          </View>
+        )}
+        {item.we_organizer && (
+          <View className="mt-2">
+            <Text className="text-xs font-medium text-gray-500">Organizer:</Text>
+            <Text className="text-sm text-gray-700">👤 {item.we_organizer}</Text>
+          </View>
+        )}
+        {item.we_invitees && item.we_invitees !== "None" && (
+          <View className="mt-2">
+            <Text className="text-xs font-medium text-gray-500">Invitees:</Text>
+            <Text className="text-sm text-gray-700">👥 {item.we_invitees}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 
-  const isLoading = activeTab === 'active' ? isActiveLoading : isArchivedLoading;
-  const currentData = activeTab === 'active' ? activeGroupedData : archivedGroupedData;
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-          <ChevronLeft size={24} className="text-gray-700" />
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-md">
-          Waste Events
-        </Text>
+        <Text className="text-gray-900 text-[13px]">Waste Event Calendar</Text>
       }
-      rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
-      }
-      wrapScroll={false}      
+      rightAction={<View />}
     >
-      {isLoading || isRestoring || isArchiving || isDeleting ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-sm text-gray-500 mt-2 text-center">
-            {
-              isArchiving ? "Archiving Event..." : 
-              isRestoring ? "Restoring Event..." : 
-              isDeleting ? "Deleting Event..." :
-              "Loading..."
-            }
+      {/* Calendar Header */}
+      <View className="bg-white shadow-sm py-4 px-6">
+        <View className="flex-row justify-between items-center mb-4 px-2">
+          <TouchableOpacity
+            onPress={() => handleMonthChange(-1)}
+            className="p-2"
+          >
+            <MaterialIcons name="chevron-left" size={24} color="#3B82F6" />
+          </TouchableOpacity>
+
+          <Text className="text-xl font-bold text-gray-800">
+            {format(currentMonth, "MMMM yyyy")}
           </Text>
+
+          <TouchableOpacity
+            onPress={() => handleMonthChange(1)}
+            className="p-2"
+          >
+            <MaterialIcons name="chevron-right" size={24} color="#3B82F6" />
+          </TouchableOpacity>
         </View>
-      ) : (
-        <>
-          {/* Search and Filter */}
-          <View className="px-4 pb-4 pt-4">
-            <View className="flex-row items-center gap-2">
-              <View className="relative flex-1">
-                <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-                <TextInput
-                  placeholder="Search events..."
-                  className="pl-3 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
 
-              <View className="w-[120px] pb-5">
-                <SelectLayout
-                  options={dayOptions}
-                  className="h-8"
-                  selectedValue={selectedDay}
-                  onSelect={(option) => setSelectedDay(option.value)}
-                  placeholder="Day"
-                  isInModal={false}
-                />
-              </View>
-            </View>
-          </View>
+        <View className="flex-row justify-around mb-2">
+          {days.map(renderDayHeader)}
+        </View>
 
-          {/* Create Button */}
-          <View className="pb-4 px-4">
+        <View className="flex-row flex-wrap justify-around">
+          {blankDays.map((date, index) => renderDateCell(date, index))}
+          {dates.map(renderDateCell)}
+        </View>
+      </View>
+
+      {/* Events Section */}
+      <View className="flex-1 px-6 pt-4">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-lg font-bold text-gray-800">
+            {format(selectedDate, "EEEE, MMMM d")}
+          </Text>
+          <View className="flex-row items-center gap-3">
+            <Text className="text-primaryBlue">
+              {selectedDateEvents.length}{" "}
+              {selectedDateEvents.length === 1 ? "Event" : "Events"}
+            </Text>
             <TouchableOpacity
-              className="bg-orange-500 flex-row items-center justify-center w-full px-4 py-4 rounded-lg mb-3"
+              className="bg-primaryBlue p-2 rounded-full"
               onPress={() => router.push('/(waste)/waste-event/waste-event-create')}
             >
-              <Plus size={16} className="text-white mr-2" />
-              <Text className="text-white text-lg font-medium">Create Event</Text>
+              <Plus size={20} color="#ffffff" />
             </TouchableOpacity>
-          </View>      
-
-          {/* View Mode Toggle */}
-          <View className="flex-row justify-center px-3 mb-3">
-            <View className="flex-row bg-orange-50 mb-3 w-full p-2 rounded-md items-center">
-              <TouchableOpacity
-                className={`flex-1 mx-1 h-8 items-center justify-center ${activeTab === 'active' ? 'bg-white border-b-2 border-orange-500' : ''}`}
-                onPress={() => setActiveTab('active')}
-              >
-                <Text className={`text-sm ${activeTab === 'active' ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
-                  Active
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 mx-1 h-8 items-center justify-center ${activeTab === 'archive' ? 'bg-white border-b-2 border-orange-500' : ''}`}
-                onPress={() => setActiveTab('archive')}
-              >
-                <View className="flex-row items-center justify-center">
-                  <Archive 
-                    size={14} 
-                    className="mr-1" 
-                    color={activeTab === 'archive' ? '#f97316' : '#6b7280'} 
-                  />
-                  <Text className={`text-sm ${activeTab === 'archive' ? 'text-orange-600 font-medium' : 'text-gray-500'} pl-1`}>
-                    Archive
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
           </View>
+        </View>
 
-          {/* Conditional rendering based on active tab */}
-          <View className="flex-1 px-4">
-            {currentData.length > 0 ? (
-              <SectionList
-                sections={currentData}
-                keyExtractor={item => item.we_num.toString()}
-                renderItem={renderItem}
-                renderSectionHeader={renderSectionHeader}
-                contentContainerStyle={{ paddingBottom: 20 }}
-                showsVerticalScrollIndicator={false}
-                stickySectionHeadersEnabled={true}
-              />
-            ) : (
-              <View className="flex-1 justify-center items-center py-10">
-                <Calendar size={48} color="#d1d5db" />
-                <Text className="text-gray-400 text-lg mt-2">
-                  {activeTab === 'active' ? 'No active events found' : 'No archived events found'}
-                </Text>
-              </View>
-            )}
+        {selectedDateEvents.length > 0 ? (
+          <FlatList
+            data={selectedDateEvents}
+            renderItem={renderEventItem}
+            keyExtractor={(item) => item.we_num.toString()}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+        ) : (
+          <View className="flex-1 justify-center items-center">
+            <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
+            <Text className="text-gray-400 mt-4 text-lg">
+              No events scheduled for this date
+            </Text>
           </View>
-        </>
-      )}
+        )}
+      </View>
     </PageLayout>
   );
 };
