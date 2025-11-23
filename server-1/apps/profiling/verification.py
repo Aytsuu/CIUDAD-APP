@@ -26,17 +26,41 @@ if os.path.exists(tesseract_cmd):
 else:
     logger.error(f"Tesseract not found at {tesseract_cmd}")
 
-class KYCVerificationProcessor:
-    @classmethod
-    def get_models(cls):
-        models = cache.get('face_recognition_models')
-        if models is None:
-            mtcnn = MTCNN(keep_all=True, thresholds=[0.7, 0.7, 0.8], min_face_size=40, device='cpu')
-            resnet = InceptionResnetV1(pretrained='vggface2').eval()
-            models = {'mtcnn': mtcnn, 'resnet': resnet}
-            cache.set('face_recognition_models', models, timeout=3600) # cache for 1 hour
-        return models
+# Global singleton for models (loaded once per worker process)
+_MODELS_CACHE = None
 
+def get_face_recognition_models():
+    """Lazy load models once per worker process"""
+    global _MODELS_CACHE
+    
+    if _MODELS_CACHE is None:
+        try:
+            from facenet_pytorch import MTCNN, InceptionResnetV1
+            
+            # Use keep_all=False to detect only the most prominent face
+            mtcnn = MTCNN(
+                keep_all=False,  # Only detect the primary face
+                thresholds=[0.7, 0.7, 0.8], 
+                min_face_size=40, 
+                device='cpu',
+                post_process=False  # Skip unnecessary post-processing
+            )
+            
+            resnet = InceptionResnetV1(pretrained='vggface2').eval()
+            
+            # Optimize for inference
+            with torch.no_grad():
+                resnet.eval()
+            
+            _MODELS_CACHE = {'mtcnn': mtcnn, 'resnet': resnet}
+            logger.info("Face recognition models loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load face recognition models: {e}")
+            raise
+    
+    return _MODELS_CACHE
+
+class KYCVerificationProcessor:
     def __init__(self):
         # Verify tesseract on initialization
         try:
@@ -46,7 +70,7 @@ class KYCVerificationProcessor:
             logger.error(f"Tesseract not found: {e}")
             logger.error(f"PATH: {os.environ.get('PATH')}")
             
-        models = self.get_models()
+        models = self.get_face_recognition_models()
         self.mtcnn = models['mtcnn']
         self.resnet = models['resnet']
         self.threshold = 0.5
@@ -89,15 +113,34 @@ class KYCVerificationProcessor:
         except Exception as e:
             logger.error(f"KYC verification error: {str(e)}")
             return False
+        
+        finally:
+            if id_image_cv is not None:
+                del id_image_cv
+            if id_face is not None:
+                del id_face
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
     
     def process_kyc_face_matching(self, face_img, id_img):
-        face_img = self._face_embedding(self._uploaded_file_to_cv2(face_img))
-        if face_img is None:
-            logger.error('No face found in live photo')
+        """Process face matching with memory cleanup"""
+        try:
+            face_img = self._face_embedding(self._uploaded_file_to_cv2(face_img))
+
+            if face_img is None:
+                logger.error('No face found in live photo')
+                return False
+            face_match = self._compare_faces(face_img, id_img)
+            logger.info(face_match)
+            return face_match > self.threshold
+        
+        except Exception as e:
+            logger.error("Face matching error")
             return False
-        face_match = self._compare_faces(face_img, id_img)
-        logger.info(face_match)
-        return face_match > self.threshold
+            
+        finally:
+            if face_img is not None:
+                del face_img
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
     
     def _uploaded_file_to_cv2(self, uploaded_file):
         """Convert Django UploadedFile (or ContentFile) to OpenCV image"""
@@ -121,6 +164,8 @@ class KYCVerificationProcessor:
         except Exception as e:
             logger.error(f"Document extraction error: {str(e)}")
             return None
+        finally:
+            del gray, blurred, threshold
         
     def _extract_personal_info(self, text):
         """Extract name and DOB from unstructured ID text with improved patterns"""

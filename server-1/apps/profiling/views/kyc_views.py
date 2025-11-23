@@ -47,18 +47,23 @@ class KYCFaceMatchingView(APIView):
     key = f'{lname}{fname}'
 
     if face_image and key:
-      try:
-        id_img = cache.get(key)
-      except Exception as e:
-        logger.error("No cached ID face image")
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+      # Retrieve cached ID face embedding
+      id_embedding_np = cache.get(key)
+      
+      if id_embedding_np is None:
+          logger.error(f"No cached ID face embedding for key: {key}")
+          return Response(
+              {'error': 'No previous document verification found. Please verify document first.'},
+              status=status.HTTP_404_NOT_FOUND
+          )
 
       processor = KYCVerificationProcessor()
       processed_data = processor.process_kyc_face_matching(
         face_img=face_image,
-        id_img=id_img
+        id_img=id_embedding_np
       )
 
       if processed_data:
+        cache.delete(key)
         return Response(data=processed_data,status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
