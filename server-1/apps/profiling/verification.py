@@ -35,7 +35,7 @@ class KYCVerificationProcessor:
 
     def process_kyc_document_matching(self, user_data, id_image):
         try:
-            print(user_data)
+            logger.info(user_data)
     
             # Convert Django InMemoryUploadedFile to OpenCV image
             id_image_cv = self._uploaded_file_to_cv2(id_image)
@@ -78,7 +78,7 @@ class KYCVerificationProcessor:
             logger.error('No face found in live photo')
             return False
         face_match = self._compare_faces(face_img, id_img)
-        print(face_match)
+        logger.info(face_match)
         return face_match > self.threshold
     
     def _uploaded_file_to_cv2(self, uploaded_file):
@@ -107,7 +107,7 @@ class KYCVerificationProcessor:
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
-        print(text)
+        logger.info(text)
         
         # Extract date of birth (flexible date parsing)
         dob = None
@@ -146,14 +146,14 @@ class KYCVerificationProcessor:
         mismatches = []
         text = re.sub(r'[^\w\s]', '', extracted_info['raw_text'])
         text = text.split()
-        print("Cleaned text:", text)  # Debug print
+        logger.info("Cleaned text:", text)  # Debug logger.info
         
         # Name comparison (case insensitive, allow partial matches)
         first_name_match = set(user_data['fname'].split(' ')).issubset(text)
         last_name_match = set(user_data['lname'].split(' ')).issubset(text)
         middle_name_match = set(user_data['mname'].split(' ')).issubset(text) if 'mname' in user_data else True
         name_match = first_name_match and last_name_match and middle_name_match
-        print('Name matched:', name_match)
+        logger.info('Name matched:', name_match)
 
         if not name_match:
             mismatches.append(f"Name mismatch: User entered '{user_data['lname']}, {user_data['fname']}'")
@@ -162,9 +162,9 @@ class KYCVerificationProcessor:
         try:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
-            print("User dob:", user_dob)
-            print("Extracted dob:", extracted_dob)
-            print("DOB matched:", user_dob == extracted_dob)
+            logger.info("User dob:", user_dob)
+            logger.info("Extracted dob:", extracted_dob)
+            logger.info("DOB matched:", user_dob == extracted_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")
@@ -189,7 +189,7 @@ class KYCVerificationProcessor:
                 return embedding
             return None
         except Exception as e:
-            print('Error getting face embedding', e)
+            logger.info('Error getting face embedding', e)
             return None
     
     def _compare_faces(self, face_img, id_img):
