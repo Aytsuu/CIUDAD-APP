@@ -78,7 +78,6 @@ export const getBusinessPermits = async (
       } as BusinessPermit;
     });
     
-    console.log('Web backend mapped business permits:', mapped);
     return {
       results: mapped,
       count: rawData.count,
@@ -87,7 +86,6 @@ export const getBusinessPermits = async (
     };
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error in business permit queries:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -102,7 +100,6 @@ export const getIssuedBusinessPermits = async (
   dateTo?: string
 ): Promise<{results: IssuedBusinessPermit[], count: number, next: string | null, previous: string | null}> => {
   try {
-    console.log('Fetching issued business permits with web backend mapping...');
     const rawData = await getIssuedBusinessPermitsAPI(search, page, pageSize, purpose, dateFrom, dateTo);
     
     const mapped: IssuedBusinessPermit[] = (rawData.results || []).map((item: any) => {
@@ -115,7 +112,6 @@ export const getIssuedBusinessPermits = async (
       } as IssuedBusinessPermit;
     });
     
-    console.log('Web backend mapped issued business permits:', mapped);
     return {
       results: mapped,
       count: rawData.count,
@@ -124,9 +120,7 @@ export const getIssuedBusinessPermits = async (
     };
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error in issued business permit queries:', error.response?.data || error.message);
     if (error.response?.status === 500) {
-      console.log('No issued business permits found, returning empty array');
       return {
         results: [],
         count: 0,

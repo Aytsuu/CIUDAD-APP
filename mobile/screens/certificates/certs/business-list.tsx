@@ -207,7 +207,7 @@ const BusinessList = () => {
                 <View className="flex-1 items-center justify-center py-12">
                   <View className="items-center">
                     <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      <Text className="text-gray-500 text-2xl">🏢</Text>
+                      `<Text className="text-gray-500 text-2xl">🏢</Text>`
                     </View>
                     <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
                       {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
