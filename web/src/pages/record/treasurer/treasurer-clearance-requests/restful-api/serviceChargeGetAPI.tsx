@@ -10,6 +10,10 @@ export type ServiceCharge = {
   comp_id: number;
   staff_id: number | null;
   complainant_name: string | null;
+  complainant_names?: string[] | null;
+  complainant_addresses?: string[] | null;
+  accused_names?: string[] | null;
+  accused_addresses?: string[] | null;
   pay_reason?: string | null;
   payment_request: {
     spay_id: number;

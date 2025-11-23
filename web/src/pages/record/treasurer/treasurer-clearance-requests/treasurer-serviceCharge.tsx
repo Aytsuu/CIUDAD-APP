@@ -39,6 +39,23 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         )
     },
     {accessorKey: "complainant_name", header: "Complainant Name"},
+    {
+        accessorKey: "accused_names",
+        header: "Respondent",
+        cell: ({ row }: { row: any }) => {
+            const accusedNames = row.original.accused_names as string[] | null | undefined;
+            if (!accusedNames || accusedNames.length === 0) {
+                return <span className="text-gray-400">N/A</span>;
+            }
+            return (
+                <div className="max-w-md">
+                    <span className="text-sm text-gray-700">
+                        {accusedNames.join(', ')}
+                    </span>
+                </div>
+            );
+        }
+    },
     {accessorKey: "sr_type", 
         header: "Type",
         cell: ({ row }) => {

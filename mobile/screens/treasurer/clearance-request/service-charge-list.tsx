@@ -231,11 +231,6 @@ const ServiceChargeClearanceList = () => {
                         <Text className="text-gray-700 text-sm font-medium">
                           {serviceCharge.accused_names.join(', ')}
                         </Text>
-                        {serviceCharge.accused_addresses && serviceCharge.accused_addresses.length > 0 && (
-                          <Text className="text-gray-600 text-xs mt-1">
-                            {serviceCharge.accused_addresses.filter(Boolean).join(', ')}
-                          </Text>
-                        )}
                       </View>
                     )}
                     
