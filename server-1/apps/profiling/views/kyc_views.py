@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from django.core.files.base import ContentFile
 from ..verification import KYCVerificationProcessor
 from django.core.cache import cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 class KYCDocumentMatchingView(APIView):
   permission_classes = [AllowAny]
@@ -44,7 +47,12 @@ class KYCFaceMatchingView(APIView):
     key = f'{lname}{fname}'
 
     if face_image and key:
-      id_img = cache.get(key)
+      try:
+        id_img = cache.get(key)
+      except Exception as e:
+        logger.error("No cached ID face image")
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
       processor = KYCVerificationProcessor()
       processed_data = processor.process_kyc_face_matching(
         face_img=face_image,
