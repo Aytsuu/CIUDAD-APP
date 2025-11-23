@@ -122,8 +122,18 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     recipient_dict = {'ann': announcement.ann_id}
                     
                     if announcement_type == "all":
-                        recipient_dict['ar_category'] = "all"
-                        recipient_dict['ar_type'] = "ALL"
+                        # Create separate recipients for staff and residents
+                        recipients_data.append({
+                            'ann': announcement.ann_id,
+                            'ar_category': "staff",
+                            'ar_type': "STAFF"
+                        })
+                        recipients_data.append({
+                            'ann': announcement.ann_id,
+                            'ar_category': "resident",
+                            'ar_type': "RESIDENT"
+                        })
+                        continue  # Skip the append at the end since we already added both
                     elif announcement_type == "allbrgystaff":
                         recipient_dict['ar_category'] = "staff"
                         recipient_dict['ar_type'] = "ALL"

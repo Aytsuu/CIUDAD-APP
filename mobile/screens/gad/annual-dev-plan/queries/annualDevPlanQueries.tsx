@@ -10,6 +10,7 @@ import { createAnnualDevPlan } from "../restful-api/annualDevPlanPostAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualDevPlanPutAPI";
 import { deleteAnnualDevPlans } from "../restful-api/annualDevPlanDeleteAPI";
 import { useToastContext } from "@/components/ui/toast";
+import { api } from "@/api/api";
 
 // Archive queries
 export const useGetArchivedAnnualDevPlans = (page?: number, pageSize?: number, search?: string, ordering?: string) => {
@@ -137,6 +138,23 @@ export const useDeleteAnnualDevPlans = () => {
       console.error("Error deleting development plans:", error);
       toast.error("Failed to delete development plans");
     },
+  });
+};
+
+// Fetch approved project proposals for status determination
+export const useGetApprovedProposals = () => {
+  return useQuery({
+    queryKey: ['approvedProposalsFull'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('council/approved-proposals/');
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error('Error fetching proposals:', err);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 30,
   });
 };
 

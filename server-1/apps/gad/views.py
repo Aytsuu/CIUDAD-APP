@@ -85,11 +85,11 @@ def create_gad_announcement(development_plan, staff, reason="mandated"):
             staff=staff if staff else None
         )
         
-        # Create recipient for "all" users
+        # Create recipient for residents only
         recipients_data = [{
             'ann': announcement.ann_id,
-            'ar_category': 'all',
-            'ar_type': 'ALL'
+            'ar_category': 'resident',
+            'ar_type': 'RESIDENT'
         }]
         
         # Use BulkAnnouncementRecipientSerializer to create recipients and send notifications/emails

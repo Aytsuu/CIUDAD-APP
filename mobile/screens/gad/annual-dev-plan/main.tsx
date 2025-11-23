@@ -97,7 +97,7 @@ const AnnualDevPlanMain = () => {
       leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          className="items-center justify-center"
         >
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
