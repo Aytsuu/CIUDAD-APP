@@ -114,7 +114,7 @@ export function AttendanceDocumentCard({
                   className="w-full h-full object-contain rounded-md cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => setIsImageModalOpen(true)}
                   onError={(e) => {
-                    console.error(`Failed to load image: ${doc.att_file_url}`);
+                    // console.error(`Failed to load image: ${doc.att_file_url}`);
                     (e.target as HTMLImageElement).src = "/placeholder-image.png";
                   }}
                 />
@@ -153,7 +153,7 @@ export function AttendanceDocumentCard({
               alt={`Attendance Sheet ${displayName}`}
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
               onError={(e) => {
-                console.error(`Failed to load image: ${doc.att_file_url}`);
+                // console.error(`Failed to load image: ${doc.att_file_url}`);
                 (e.target as HTMLImageElement).src = "/placeholder-image.png";
               }}
             />

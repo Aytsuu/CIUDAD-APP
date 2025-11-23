@@ -113,7 +113,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
               yPos += finalHeight + 20;
               resolve();
             } catch (e) {
-              console.error("Error adding image to PDF:", e);
+              // console.error("Error adding image to PDF:", e);
               reject(e);
             }
           };
@@ -123,7 +123,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
         });
       }
     } catch (e) {
-      console.error("Error processing header image for PDF:", e);
+      // console.error("Error processing header image for PDF:", e);
       yPos = addTextWithPageBreak(
         "No header image available",
         margin,

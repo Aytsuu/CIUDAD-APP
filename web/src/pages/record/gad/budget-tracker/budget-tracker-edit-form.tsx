@@ -97,10 +97,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
           try {
             recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
           } catch (e) {
-            console.error(
-              "Failed to parse gbud_exp_particulars:",
-              budgetEntry.gbud_exp_particulars
-            );
+            // console.error(
+            //   "Failed to parse gbud_exp_particulars:",
+            //   budgetEntry.gbud_exp_particulars
+            // );
             recordedItems = [];
           }
         } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {

@@ -8,7 +8,7 @@ export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
 
 export const createGADBudgetFile = async (gbud_num: number, files: Array<{ id: string; name: string; type: string; file?: string }>) => {
   try {
-    console.log('Received files in createGADBudgetFile:', files);
+    // console.log('Received files in createGADBudgetFile:', files);
 
     const payload = {
       gbud_num,
