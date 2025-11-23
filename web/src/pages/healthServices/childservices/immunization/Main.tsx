@@ -11,7 +11,7 @@ import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
-import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
+import { useFetchVaccinesWithStock } from "../../vaccination/queries/fetch";
 import TableLoading from "../../../../components/ui/table-loading";
 
 export default function ChildImmunization() {
@@ -30,7 +30,7 @@ export default function ChildImmunization() {
   const [vaccineHistory, setVaccineHistory] = useState<any[]>([]);
 
   // Data fetching hooks
-  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock(pat_dob);
+  const { data: vaccinesData, isLoading: isVaccinesLoading } = useFetchVaccinesWithStock(pat_dob);
   const { data: vaccinesListData, isLoading: isVaccinesListLoading } = useVaccinesListImmunization();
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(pat_id, pat_dob);
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(pat_id);

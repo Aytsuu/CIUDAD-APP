@@ -31,7 +31,7 @@ import LaboratoryResults, {
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // hooks
-import { fetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
+import { useFetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
 import { usePrenatalLabResult } from "../../queries/maternalFetchQueries"
 
 // helpers
@@ -64,7 +64,7 @@ export default function PrenatalFormSecPg({
   const patientDob = form.watch("motherPersonalInfo.motherDOB")
   const pregnancyId = form.watch("pregnancy_id")
 
-  const { data: vaccineStocksData, isLoading: isVaccineLoading } = fetchVaccinesWithStock(patientDob)
+  const { data: vaccineStocksData, isLoading: isVaccineLoading } = useFetchVaccinesWithStock(patientDob)
   const { data: prenatalLabResults } = usePrenatalLabResult(pregnancyId || "")
 
   // Check if selected vaccine is conditional

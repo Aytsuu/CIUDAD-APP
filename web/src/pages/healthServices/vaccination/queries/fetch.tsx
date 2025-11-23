@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
 import { getUnvaccinatedVaccines, getUnvaccinatedVaccinesSummary, getUnvaccinatedResidentsDetailsForVaccine } from "../restful-api/get";
 import { VaccinationRecord } from "../tables/columns/types";
-import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { getUnvaccinatedResidents, getVaccinationRecords, getVaccinationRecordById, getLatestVitals } from "../restful-api/get";
 import { showErrorToast } from "@/components/ui/toast";
 import { getVaccintStocks } from "../restful-api/get";
@@ -128,49 +127,39 @@ export const useUnvaccinatedVaccines = (patientId?: string, patientDob?: string)
     queryKey: ["unvaccinatedVaccines", patientId, patientDob],
     queryFn: async () => {
       if (!patientId) return [];
-      const allUnvaccinated = await getUnvaccinatedVaccines(patientId);
-      if (!allUnvaccinated) return [];
+      
+      try {
+        const allUnvaccinated = await getUnvaccinatedVaccines(patientId);
+        
+        if (!allUnvaccinated || !Array.isArray(allUnvaccinated) || allUnvaccinated.length === 0) {
+          return [];
+        }
 
-      if (!patientDob) {
+        // Map the response to include proper structure
         return allUnvaccinated.map((vaccine: any) => ({
-          vac_name: vaccine?.vac_name || "Unknown Vaccine",
-          vac_type_choices: vaccine?.vac_type_choices || "Unknown Type"
-        }));
-      }
-      return allUnvaccinated
-        .filter((vaccine: any) => {
-          const ageGroup = vaccine.age_group;
-
-          // Include if vaccine has no age group requirements
-          if (!ageGroup) return true;
-
-          const { min_age, max_age, time_unit } = ageGroup;
-
-          // Include if age group has no valid restrictions
-          if (time_unit === "NA" || min_age == null || max_age == null) {
-            return true;
-          }
-
-          try {
-            // Calculate patient's age in the required unit
-            const ageInUnit = getAgeInUnit(patientDob, time_unit);
-            return ageInUnit >= min_age && ageInUnit <= max_age;
-          } catch (error) {
-            console.error("Age calculation error:", error);
-            return false;
-          }
-        })
-        .map((vaccine: any) => ({
+          vac_id: vaccine?.vac_id,
           vac_name: vaccine?.vac_name || "Unknown Vaccine",
           vac_type_choices: vaccine?.vac_type_choices || "Unknown Type",
+          no_of_doses: vaccine?.no_of_doses || 0,
           // Include age group info for display
           age_group: vaccine.age_group
             ? {
+                agegrp_id: vaccine.age_group.agegrp_id,
                 name: vaccine.age_group.agegroup_name,
-                range: `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`
+                agegroup_name: vaccine.age_group.agegroup_name,
+                min_age: vaccine.age_group.min_age,
+                max_age: vaccine.age_group.max_age,
+                time_unit: vaccine.age_group.time_unit,
+                range: vaccine.age_group.time_unit !== "NA" 
+                  ? `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`
+                  : "No age restriction"
               }
             : null
         }));
+      } catch (error) {
+        console.error("Error fetching unvaccinated vaccines:", error);
+        return [];
+      }
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!patientId,
@@ -213,8 +202,8 @@ export const useUnvaccinatedResidents = () => {
   });
 };
 
-//  fetchVaccinesWithStock function with age filtering
-export const fetchVaccinesWithStock = (dob?: string) => {
+//  useFetchVaccinesWithStock function with age filtering
+export const useFetchVaccinesWithStock = (dob?: string) => {
   return useQuery({
     queryKey: ["vaccineStocks", dob],
     queryFn: async () => {

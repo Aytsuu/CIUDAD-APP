@@ -51,8 +51,7 @@ urlpatterns = [
    
     path("findings/", FindingView.as_view(), name="findings"),
 
-    path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
+    path('patient-followup-visits/<str:pat_id>/', GetPatientFollowUpVisits.as_view(), name='patient-followup-visits'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),

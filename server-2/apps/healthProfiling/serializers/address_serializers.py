@@ -2,9 +2,9 @@ from rest_framework import serializers
 from ..models import *
 
 class AddressBaseSerializer(serializers.ModelSerializer):
-  sitio = serializers.CharField(source="sitio.sitio_name")
-  add_id = serializers.IntegerField(read_only=False, required=False)
-
+  sitio = serializers.SerializerMethodField()
+  add_id = serializers.IntegerField(allow_null=True, required=False)
+  
   class Meta:
     model = Address
     fields = ['add_id', 'add_province', 'add_city', 'add_barangay', 'add_external_sitio', 'add_street', 'sitio']
@@ -12,6 +12,10 @@ class AddressBaseSerializer(serializers.ModelSerializer):
       'sitio': {'required': False, 'allow_null': True},
       'add_external_sitio': {'required': False, 'allow_null': True},
     }
+
+  def get_sitio(self, obj):
+    if obj.sitio:
+      return obj.sitio.sitio_name
 
 
 class AddressBulkCreateSerializer(serializers.ModelSerializer):

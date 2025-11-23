@@ -2,11 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
 
-export function useCompletedFollowUpVisits(patientId: string) {
+type FollowUpStatus = "completed" | "pending" | "missed" | "all";
+
+export function usePatientFollowUpVisits(patientId: string, status: FollowUpStatus = "all") {
   return useQuery({
-    queryKey: ["completedFollowUpVisits", patientId],
+    queryKey: ["patientFollowUpVisits", patientId, status],
     queryFn: async () => {
-      const response = await api2.get(`/patientrecords/followup-complete/${patientId}/`);
+      const response = await api2.get(`/patientrecords/patient-followup-visits/${patientId}/`, {
+        params: { status }
+      });
       return response.data;
     },
     enabled: !!patientId,
@@ -15,15 +19,19 @@ export function useCompletedFollowUpVisits(patientId: string) {
   });
 }
 
+// Convenience hooks for specific statuses
+export function useCompletedFollowUpVisits(patientId: string) {
+  return usePatientFollowUpVisits(patientId, "completed");
+}
+
 export function usePendingFollowUpVisits(patientId: string) {
-  return useQuery({
-    queryKey: ["pendingFollowUpVisits", patientId],
-    queryFn: async () => {
-      const response = await api2.get(`/patientrecords/followup-pending/${patientId}/`);
-      return response.data;
-    },
-    enabled: !!patientId,
-    refetchOnMount: true,
-    staleTime: 0
-  });
+  return usePatientFollowUpVisits(patientId, "pending");
+}
+
+export function useMissedFollowUpVisits(patientId: string) {
+  return usePatientFollowUpVisits(patientId, "missed");
+}
+
+export function useAllFollowUpVisits(patientId: string) {
+  return usePatientFollowUpVisits(patientId, "all");
 }

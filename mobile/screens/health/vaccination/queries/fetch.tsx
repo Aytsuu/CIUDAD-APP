@@ -137,12 +137,25 @@ export const useUnvaccinatedVaccines = (patientId?: string, patientDob?: string)
       const allUnvaccinated = await getUnvaccinatedVaccines(patientId);
       if (!allUnvaccinated) return [];
       
+      const formatVaccine = (vaccine: any) => ({
+        vac_name: vaccine?.vac_name || "Unknown Vaccine",
+        vac_type_choices: vaccine?.vac_type_choices || "Unknown Type",
+        age_group: vaccine.age_group
+          ? {
+              name: vaccine.age_group.agegroup_name,
+              range: `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`,
+            }
+          : null,
+      });
+
       // 2. If no DOB provided, return basic unvaccinated list
       if (!patientDob) {
-        return allUnvaccinated.map((vaccine:any) => ({
-          vac_name: vaccine?.vac_name || "Unknown Vaccine",
-          vac_type_choices: vaccine?.vac_type_choices || "Unknown Type"
-        }));
+        return allUnvaccinated.map(formatVaccine);
+      }
+
+      const patientAgeYears = getAgeInUnit(patientDob, 'years');
+      if (patientAgeYears <= 6) {
+        return allUnvaccinated.map(formatVaccine);
       }
       
       // 3. Filter by age group
@@ -153,29 +166,27 @@ export const useUnvaccinatedVaccines = (patientId?: string, patientDob?: string)
         if (!ageGroup) return true;
         
         const { min_age, max_age, time_unit } = ageGroup;
+        const normalizedUnit = typeof time_unit === 'string' ? time_unit.toLowerCase() : '';
         
         // Include if age group has no valid restrictions
-        if (time_unit === "NA" || min_age == null || max_age == null) {
+        if (normalizedUnit === 'na' || min_age == null || max_age == null) {
+          return true;
+        }
+        
+        const supportedUnits = ['years', 'months', 'weeks', 'days'];
+        if (!supportedUnits.includes(normalizedUnit)) {
           return true;
         }
         
         try {
           // Calculate patient's age in the required unit
-          const ageInUnit = getAgeInUnit(patientDob, time_unit);
+          const ageInUnit = getAgeInUnit(patientDob, normalizedUnit as 'years' | 'months' | 'weeks' | 'days');
           return ageInUnit >= min_age && ageInUnit <= max_age;
         } catch (error) {
           console.error("Age calculation error:", error);
           return false;
         }
-      }).map((vaccine:any) => ({
-        vac_name: vaccine?.vac_name || "Unknown Vaccine",
-        vac_type_choices: vaccine?.vac_type_choices || "Unknown Type",
-        // Include age group info for display
-        age_group: vaccine.age_group ? {
-          name: vaccine.age_group.agegroup_name,
-          range: `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`
-        } : null
-      }));
+      }).map(formatVaccine);
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!patientId,
