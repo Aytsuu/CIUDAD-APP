@@ -6,6 +6,8 @@ import io
 import re
 import logging  
 import torch
+import shutil
+import os
 from django.core.files.base import ContentFile
 from django.conf import settings
 from utils.supabase_client import supabase
@@ -15,7 +17,14 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+
+# Auto-detect tesseract
+tesseract_cmd = shutil.which('tesseract') or '/usr/bin/tesseract'
+if os.path.exists(tesseract_cmd):
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+    logger.info(f"Tesseract found at: {tesseract_cmd}")
+else:
+    logger.error(f"Tesseract not found at {tesseract_cmd}")
 
 class KYCVerificationProcessor:
     @classmethod
@@ -29,6 +38,14 @@ class KYCVerificationProcessor:
         return models
 
     def __init__(self):
+        # Verify tesseract on initialization
+        try:
+            version = pytesseract.get_tesseract_version()
+            logger.info(f"Tesseract initialized: {version}")
+        except pytesseract.TesseractNotFoundError as e:
+            logger.error(f"Tesseract not found: {e}")
+            logger.error(f"PATH: {os.environ.get('PATH')}")
+            
         models = self.get_models()
         self.mtcnn = models['mtcnn']
         self.resnet = models['resnet']
