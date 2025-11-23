@@ -128,7 +128,7 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
         )
         
         if is_update:
-            announcement_details += "This event has been updated. Please take note of the changes."
+            announcement_details += " This event has been updated. Please take note of the changes."
         
         # Create the announcement
         announcement = Announcement.objects.create(
