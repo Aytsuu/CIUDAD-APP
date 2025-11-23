@@ -125,7 +125,7 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
                 description = ". ".join(description_parts) if description_parts else "Budget_Plan record created"
                 
                 create_activity_log(
-                    act_type="Budget_Plan Create",
+                    act_type="Budget Plan Create",
                     act_description=description,
                     staff=staff,
                     record_id=str(instance.plan_id)
@@ -434,6 +434,40 @@ class DisbursementVoucherView(ActivityLogMixin, generics.ListCreateAPIView):
             queryset = queryset.filter(dis_is_archive=archive == 'true')
             
         return queryset
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.dis_num:
+                    description_parts.append(f"Voucher Number: {instance.dis_num}")
+                if instance.dis_payee:
+                    description_parts.append(f"Payee: {instance.dis_payee}")
+                if instance.dis_fund:
+                    description_parts.append(f"Amount: ₱{instance.dis_fund:,.2f}")
+                if instance.dis_date:
+                    date_str = instance.dis_date.strftime('%Y-%m-%d') if not isinstance(instance.dis_date, str) else instance.dis_date
+                    description_parts.append(f"Date: {date_str}")
+                
+                description = ". ".join(description_parts) if description_parts else "Disbursement Voucher record created"
+                
+                create_activity_log(
+                    act_type="Disbursement Voucher Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.dis_num)
+                )
+                logger.info(f"Activity logged for disbursement voucher creation: {instance.dis_num}")
+            else:
+                logger.debug(f"Skipping activity log for Disbursement Voucher create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for disbursement voucher creation: {str(e)}")
+        return instance
     
     def list(self, request, *args, **kwargs):
         try:

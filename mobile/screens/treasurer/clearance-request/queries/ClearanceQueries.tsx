@@ -27,8 +27,10 @@ export interface UnpaidCertificate {
 
 export interface UnpaidBusinessPermit {
   bp_id: string;
+  bpr_id?: string; // Add bpr_id for consistency with web
   business_name: string;
   business_type: string;
+  purpose?: string; // Add purpose field like web version
   owner_name: string;
   business_address: string;
   req_request_date: string;
@@ -203,6 +205,99 @@ export const getUnpaidBusinessPermits = async (
     console.error('Error fetching unpaid business permits:', error.response?.data || error.message);
     if (error.response?.status === 500) {
       return { results: [], count: 0, next: null, previous: null };
+    }
+    throw error;
+  }
+};
+
+// Fetch business permits matching web version (Paid and not Completed)
+export const getBusinessPermits = async (
+  search?: string
+): Promise<UnpaidBusinessPermit[]> => {
+  try {
+    // Fetch from the same endpoint as web version
+    const firstResponse = await api.get('/clerk/business-permit/');
+    const firstPayload = firstResponse.data as any;
+
+    // Handle paginated or non-paginated responses (like web version)
+    let itemsAccumulator: any[] = [];
+    let nextUrl: string | null | undefined = undefined;
+
+    if (Array.isArray(firstPayload)) {
+      itemsAccumulator = firstPayload;
+      nextUrl = null;
+    } else if (Array.isArray(firstPayload?.data)) {
+      itemsAccumulator = firstPayload.data;
+      nextUrl = firstPayload?.next ?? null;
+    } else if (Array.isArray(firstPayload?.results)) {
+      itemsAccumulator = firstPayload.results;
+      nextUrl = firstPayload?.next ?? null;
+    }
+
+    // Follow pagination if present (like web version)
+    const MAX_PAGES = 10;
+    let pagesFetched = 1;
+    while (nextUrl && pagesFetched < MAX_PAGES) {
+      const pageRes = await api.get(nextUrl);
+      const pagePayload = pageRes.data as any;
+      const pageItems = Array.isArray(pagePayload)
+        ? pagePayload
+        : Array.isArray(pagePayload?.data)
+        ? pagePayload.data
+        : Array.isArray(pagePayload?.results)
+        ? pagePayload.results
+        : [];
+      itemsAccumulator = itemsAccumulator.concat(pageItems);
+      nextUrl = pagePayload?.next ?? null;
+      pagesFetched += 1;
+    }
+
+    // Normalize and map fields like web version
+    const normalized: UnpaidBusinessPermit[] = itemsAccumulator.map((item: any) => ({
+      bp_id: String(item.bpr_id ?? item.bp_id ?? item.id ?? ''),
+      bpr_id: item.bpr_id ? String(item.bpr_id) : undefined,
+      business_name: item.business_name ?? item.bus_permit_name ?? '',
+      business_type: item.business_type || '',
+      purpose: item.purpose || '',
+      owner_name: item.owner_name || item.requestor || '',
+      business_address: item.business_address ?? item.bus_permit_address ?? '',
+      req_request_date: item.req_request_date || '',
+      req_status: item.req_status || 'Pending',
+      req_payment_status: item.req_payment_status || 'Unpaid',
+      req_transac_id: item.req_transac_id || '',
+      decline_reason: item.bus_reason || item.bpr_reason || item.req_declined_reason || item.decline_reason || '',
+    }));
+
+    // Filter for Paid and exclude Completed (exactly like web version)
+    // Web version: .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
+    //            .filter((p) => String(p.req_status || "").toLowerCase() !== "completed")
+    const filtered = normalized.filter((item) => {
+      const paymentStatus = String(item.req_payment_status || '').toLowerCase().trim();
+      const reqStatus = String(item.req_status || '').toLowerCase().trim();
+      // Only show Paid permits that are not Completed
+      return paymentStatus === 'paid' && reqStatus !== 'completed';
+    });
+
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      return filtered.filter((item) => {
+        return (
+          item.bp_id?.toLowerCase().includes(searchLower) ||
+          item.bpr_id?.toLowerCase().includes(searchLower) ||
+          item.business_name?.toLowerCase().includes(searchLower) ||
+          item.owner_name?.toLowerCase().includes(searchLower) ||
+          item.business_type?.toLowerCase().includes(searchLower) ||
+          item.purpose?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filtered;
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response?.status === 500) {
+      return [];
     }
     throw error;
   }

@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const BusinessList = () => {
   const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
@@ -153,15 +153,15 @@ const BusinessList = () => {
 
         {/* Purpose Filter */}
         <View className="bg-white px-6 py-4 border-b border-gray-200">
-          <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
-          <CustomDropdown
-            value={purposeFilter}
-            onSelect={(value: string) => setPurposeFilter(value)}
-            data={[
+          <SelectLayout
+            label="Purpose Filter"
+            placeholder="Select purpose"
+            options={[
               { label: 'All', value: 'all' },
               ...purposes.map(purpose => ({ label: purpose, value: purpose }))
             ]}
-            placeholder="Select purpose"
+            selectedValue={purposeFilter}
+            onSelect={(option) => setPurposeFilter(option.value)}
           />
         </View>
 
