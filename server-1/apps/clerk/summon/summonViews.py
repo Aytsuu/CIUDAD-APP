@@ -52,7 +52,7 @@ class LuponCasesView(generics.ListAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
 class CouncilMediationCasesView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -89,7 +89,7 @@ class CouncilMediationCasesView(generics.ListAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
 class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -127,7 +127,6 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to log activity for summon case creation: {str(log_error)}")
-            # Don't fail the request if logging fails
         
         return instance
 
@@ -166,7 +165,7 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
     
 class SummonCaseDetailView(generics.RetrieveAPIView):

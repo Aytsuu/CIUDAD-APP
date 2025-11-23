@@ -20,6 +20,7 @@ export default function HearingHistory() {
   const params = useLocalSearchParams();
   const sc_id = params.sc_id as string
   const status = params.status as string
+  console.log('status', status)
   const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
@@ -267,7 +268,6 @@ export default function HearingHistory() {
               contentContainerStyle={{
                 paddingHorizontal: 24,
                 paddingVertical: 16,
-                paddingBottom: 80, // Extra padding for floating button
               }}
               ListHeaderComponent={<View className="pt-2" />}
               ListFooterComponent={<View className="pb-4" />}
@@ -278,7 +278,7 @@ export default function HearingHistory() {
 
       {/* Floating Add Button */}
       <TouchableOpacity onPress={handleAddSchedule}
-          disabled={hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus}
+          disabled={hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus || status.toLowerCase() !== 'waiting for schedule'}
           className={`absolute bottom-20 right-6 w-16 h-16 rounded-full items-center justify-center shadow-lg z-50 ${
             hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus ? "bg-gray-400" : "bg-blue-600"
           }`}

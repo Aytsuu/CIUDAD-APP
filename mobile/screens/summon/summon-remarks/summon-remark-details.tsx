@@ -38,8 +38,6 @@ export default function SummonRemarkDetails(){
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
     const accusedNames = acc_names ? (acc_names as string).split(',') : []
 
-    const hasResidentBool = hasResident === "true"
-
     // badge color
     const getStatusColor = (status: string | null | undefined) => {
         if (!status) return "bg-gray-100 text-gray-800 border-gray-200";
@@ -110,7 +108,7 @@ export default function SummonRemarkDetails(){
                 <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
                     <CardHeader className="flex flex-row gap-3 items-center">
                         <Text className="text-md font-bold text-gray-900">Case Information </Text>
-                        {hasResidentBool && (
+                        {hasResident && (
                             <View className="bg-green-100 px-2 py-1 rounded-full border border-green-200">
                                 <Text className="text-green-700 text-xs font-semibold">Resident</Text>
                             </View>
