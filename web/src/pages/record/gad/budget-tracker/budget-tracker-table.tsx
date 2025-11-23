@@ -575,7 +575,7 @@ function BudgetTracker() {
                             className="w-full h-full object-contain rounded-md cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => handleImageClick(file)}
                             onError={(e) => {
-                              console.error("Image load failed:", file.gbf_url);
+                              // console.error("Image load failed:", file.gbf_url);
                               (e.target as HTMLImageElement).src =
                                 "/placeholder-image.png";
                             }}
@@ -621,7 +621,7 @@ function BudgetTracker() {
                 alt={selectedImage.name}
                 className="max-w-full max-h-[90vh] object-contain rounded-lg"
                 onError={(e) => {
-                  console.error(`Failed to load image: ${selectedImage.url}`);
+                  // console.error(`Failed to load image: ${selectedImage.url}`);
                   (e.target as HTMLImageElement).src = "/placeholder-image.png";
                 }}
               />

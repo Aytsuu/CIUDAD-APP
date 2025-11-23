@@ -316,6 +316,18 @@ useEffect(() => {
       headerTitle={<Text>Create Budget Entry</Text>}
       rightAction={<View />}
       footer={ <View >
+          {/* {Object.keys(form.formState.errors).length > 0 && (
+            <View className="mb-2 p-2 bg-red-50 rounded border border-red-200">
+              <Text className="text-red-600 text-xs font-bold mb-1">
+                Validation Errors:
+              </Text>
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <Text key={field} className="text-red-500 text-xs">
+                  {field}: {error?.message}
+                </Text>
+              ))}
+            </View>
+          )} */}
         <TouchableOpacity
           className="bg-blue-500 py-3 rounded-lg"
           onPress={form.handleSubmit(onSubmit)}

@@ -6,7 +6,6 @@ const WasteEventSchema = z.object({
     date: z.string().min(1, "Date is required"),
     time: z.string().min(1, "Event time is required"),
     organizer: z.string().min(1, "Organizer is required"),
-    invitees: z.string().optional(),
     eventDescription: z.string().optional(),
     eventSubject: z.string().optional(),
     selectedAnnouncements: z.array(z.string()).optional(),

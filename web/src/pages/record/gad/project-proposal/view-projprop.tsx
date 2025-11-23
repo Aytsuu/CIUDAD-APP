@@ -68,7 +68,7 @@ const generateAndSetPdf = async () => {
       onLoad?.();
     }
   } catch (error) {
-    console.error("PDF generation failed:", error);
+    // console.error("PDF generation failed:", error);
     if (isMounted.current) {
       setGenerationError(true);
       setIsGenerating(false);

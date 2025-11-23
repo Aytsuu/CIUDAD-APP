@@ -404,21 +404,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   };
 
   const onSubmit = async (data: ProjectProposalFormValues) => {
-    console.log("Form submitted with data:", data);
-    console.log("Media files:", mediaFiles);
-    console.log("Supporting docs:", supportingDocs);
-    console.log("Media files length:", mediaFiles.length);
-    console.log("Supporting docs length:", supportingDocs.length);
+    // if (mediaFiles.length > 0) {
+    //   console.log("First media file:", mediaFiles[0]);
+    //   console.log("Media file has file property:", !!mediaFiles[0].file);
+    // }
     
-    if (mediaFiles.length > 0) {
-      console.log("First media file:", mediaFiles[0]);
-      console.log("Media file has file property:", !!mediaFiles[0].file);
-    }
-    
-    if (supportingDocs.length > 0) {
-      console.log("First supporting doc:", supportingDocs[0]);
-      console.log("Supporting doc has file property:", !!supportingDocs[0].file);
-    }
+    // if (supportingDocs.length > 0) {
+    //   console.log("First supporting doc:", supportingDocs[0]);
+    //   console.log("Supporting doc has file property:", !!supportingDocs[0].file);
+    // }
 
     const formattedParticipants = data.participants
       .filter(p => p.category.trim() !== "")
@@ -479,11 +473,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           throw new Error('No proposal ID returned from server');
         }
         
-        const supportDocResult = await addSupportDocMutation.mutateAsync({
-          gpr_id: gprId,
-          files: newFiles,
-        });
-        console.log("Support documents uploaded:", supportDocResult);
+        // const supportDocResult = await addSupportDocMutation.mutateAsync({
+        //   gpr_id: gprId,
+        //   files: newFiles,
+        // });
+        // console.log("Support documents uploaded:", supportDocResult);
       }
 
       form.reset();

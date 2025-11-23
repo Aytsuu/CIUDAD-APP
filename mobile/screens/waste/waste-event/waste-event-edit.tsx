@@ -1,16 +1,17 @@
-
-import { View, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronLeft, Calendar, Clock, MapPin, User, Users, FileText, Bell } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useState, useEffect } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import WasteEventSchema, { type WasteEventFormData } from '@/form-schema/waste/waste-event-schema';
 import { useUpdateWasteEvent } from './queries/waste-event-update-queries';
 import { useGetWasteSitio } from '@/screens/waste/waste-collection/queries/waste-col-fetch-queries';
+import { useGetStaffList } from './queries/waste-event-staff-queries';
 import { SelectLayout, DropdownOption } from '@/components/ui/select-layout';
 import PageLayout from '@/screens/_PageLayout';
-
 
 // Announcement options matching web implementation
 const announcementOptions = [
@@ -27,6 +28,10 @@ function WasteEventEdit() {
   const params = useLocalSearchParams();
   const updateWasteEvent = useUpdateWasteEvent();
   const { data: sitios = [] } = useGetWasteSitio();
+  const { data: staffList = [] } = useGetStaffList();
+  
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const {
     weNum,
@@ -35,9 +40,14 @@ function WasteEventEdit() {
     date,
     time,
     organizer,
-    invitees,
     description,
   } = params;
+
+  // Find organizer ID from organizer name
+  const findOrganizerId = (organizerName: string) => {
+    const staff = staffList.find((s) => s.full_name === organizerName);
+    return staff?.staff_id.toString() || '';
+  };
 
   const form = useForm<WasteEventFormData>({
     resolver: zodResolver(WasteEventSchema),
@@ -46,18 +56,39 @@ function WasteEventEdit() {
       location: location as string || '',
       date: date as string || '',
       time: time as string || '',
-      organizer: organizer as string || '',
-      invitees: invitees as string || '',
+      organizer: '',
       eventDescription: description as string || '',
       eventSubject: '',
       selectedAnnouncements: [],
     },
   });
 
+  // Set organizer ID when staff list is loaded
+  useEffect(() => {
+    if (organizer && staffList.length > 0) {
+      const organizerId = findOrganizerId(organizer as string);
+      if (organizerId) {
+        form.setValue('organizer', organizerId);
+      }
+    }
+  }, [organizer, staffList]);
+
+  const selectedAnnouncements = form.watch('selectedAnnouncements') || [];
+
   const onSubmit = (values: WasteEventFormData) => {
+    // Find staff name from staff ID
+    const selectedStaff = staffList.find((s) => String(s.staff_id) === String(values.organizer));
+    const organizerName = selectedStaff?.full_name || '';
+
+    // Create payload with organizer name instead of ID
+    const payload = {
+      ...values,
+      organizer: organizerName,
+    };
+
     updateWasteEvent.mutate({
       weNum: parseInt(weNum as string),
-      eventData: values
+      eventData: payload
     });
   };
 
@@ -67,22 +98,37 @@ function WasteEventEdit() {
     value: sitio.sitio_id.toString(),
   }));
 
-  // Time options
-  const timeOptions: DropdownOption[] = [
-    { label: "08:00 AM", value: "08:00" },
-    { label: "09:00 AM", value: "09:00" },
-    { label: "10:00 AM", value: "10:00" },
-    { label: "11:00 AM", value: "11:00" },
-    { label: "12:00 PM", value: "12:00" },
-    { label: "01:00 PM", value: "13:00" },
-    { label: "02:00 PM", value: "14:00" },
-    { label: "03:00 PM", value: "15:00" },
-    { label: "04:00 PM", value: "16:00" },
-    { label: "05:00 PM", value: "17:00" },
-    { label: "06:00 PM", value: "18:00" },
-    { label: "07:00 PM", value: "19:00" },
-    { label: "08:00 PM", value: "20:00" },
-  ];
+  // Convert staff to dropdown options
+  const staffOptions: DropdownOption[] = staffList.map(staff => ({
+    label: staff.full_name,
+    value: staff.staff_id.toString(),
+  }));
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString();
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    try {
+      const [hours, minutes] = timeString.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    } catch {
+      return timeString;
+    }
+  };
 
   return (
     <PageLayout
@@ -97,8 +143,7 @@ function WasteEventEdit() {
       <View className="w-full px-6">
         {/* Event Name */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <FileText size={16} color="#374151" className="mr-2" />
+          <Text className="text-sm font-medium text-gray-700 mb-2">
             Event Name
           </Text>
           <Controller
@@ -124,8 +169,7 @@ function WasteEventEdit() {
 
         {/* Location */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <MapPin size={16} color="#374151" className="mr-2" />
+          <Text className="text-sm font-medium text-gray-700 mb-2">
             Location
           </Text>
           <Controller
@@ -146,111 +190,130 @@ function WasteEventEdit() {
           )}
         </View>
 
-        {/* Date */}
+        {/* Date and Time */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <Calendar size={16} color="#374151" className="mr-2" />
-            Date
-          </Text>
-          <Controller
-            control={form.control}
-            name="date"
-            render={({ field: { onChange, value } }) => (
-              <TouchableOpacity
-                className="rounded-lg px-3 py-3 border border-gray-200 bg-white"
-                onPress={() => {
-                  // You can implement a date picker here
-                  // For now, we'll use a simple text input
+          <View className="flex-row gap-4">
+            {/* Date */}
+            <View className="flex-1">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Date
+              </Text>
+              <Controller
+                control={form.control}
+                name="date"
+                render={({ field: { onChange, value } }) => {
+                  let dateValue = new Date();
+                  if (value) {
+                    const parsed = new Date(value);
+                    if (!isNaN(parsed.getTime())) {
+                      dateValue = parsed;
+                    }
+                  }
+                  
+                  return (
+                    <>
+                      <TouchableOpacity
+                        className="rounded-lg px-3 py-3 border border-gray-200 bg-white"
+                        onPress={() => setShowDatePicker(true)}
+                      >
+                        <Text className="text-base" style={{ color: value ? '#000' : '#888' }}>
+                          {value ? formatDate(value) : 'Select Date'}
+                        </Text>
+                      </TouchableOpacity>
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={dateValue}
+                          mode="date"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          onChange={(event, selectedDate) => {
+                            setShowDatePicker(Platform.OS === 'ios');
+                            if (selectedDate) {
+                              // Store date as YYYY-MM-DD format
+                              const year = selectedDate.getFullYear();
+                              const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                              const day = String(selectedDate.getDate()).padStart(2, '0');
+                              onChange(`${year}-${month}-${day}`);
+                            }
+                          }}
+                        />
+                      )}
+                    </>
+                  );
                 }}
-              >
-                <TextInput
-                  className="text-base"
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#888"
-                  value={value}
-                  onChangeText={onChange}
-                />
-              </TouchableOpacity>
-            )}
-          />
-          {form.formState.errors.date && (
-            <Text className="text-red-500 text-sm mt-1">{form.formState.errors.date.message}</Text>
-          )}
-        </View>
-
-        {/* Time */}
-        <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <Clock size={16} color="#374151" className="mr-2" />
-            Time
-          </Text>
-          <Controller
-            control={form.control}
-            name="time"
-            render={({ field: { onChange, value } }) => (
-              <SelectLayout
-                options={timeOptions}
-                selectedValue={value}
-                onSelect={(option) => onChange(option.value)}
-                placeholder="Select time"
-                className="mb-3"
               />
-            )}
-          />
-          {form.formState.errors.time && (
-            <Text className="text-red-500 text-sm mt-1">{form.formState.errors.time.message}</Text>
-          )}
+              {form.formState.errors.date && (
+                <Text className="text-red-500 text-sm mt-1">{form.formState.errors.date.message}</Text>
+              )}
+            </View>
+
+            {/* Time */}
+            <View className="flex-1">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Time
+              </Text>
+              <Controller
+                control={form.control}
+                name="time"
+                render={({ field: { onChange, value } }) => {
+                  const timeValue = value ? new Date(`2000-01-01T${value}`) : new Date();
+                  
+                  return (
+                    <>
+                      <TouchableOpacity
+                        className="rounded-lg px-3 py-3 border border-gray-200 bg-white"
+                        onPress={() => setShowTimePicker(true)}
+                      >
+                        <Text className="text-base" style={{ color: value ? '#000' : '#888' }}>
+                          {value ? formatTime(value) : 'Select Time'}
+                        </Text>
+                      </TouchableOpacity>
+                      {showTimePicker && (
+                        <DateTimePicker
+                          value={timeValue}
+                          mode="time"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          onChange={(event, selectedTime) => {
+                            setShowTimePicker(Platform.OS === 'ios');
+                            if (selectedTime) {
+                              const hours = selectedTime.getHours().toString().padStart(2, '0');
+                              const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+                              onChange(`${hours}:${minutes}`);
+                            }
+                          }}
+                        />
+                      )}
+                    </>
+                  );
+                }}
+              />
+              {form.formState.errors.time && (
+                <Text className="text-red-500 text-sm mt-1">{form.formState.errors.time.message}</Text>
+              )}
+            </View>
+          </View>
         </View>
 
         {/* Organizer */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <User size={16} color="#374151" className="mr-2" />
+          <Text className="text-sm font-medium text-gray-700 mb-2">
             Organizer
           </Text>
           <Controller
             control={form.control}
             name="organizer"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="rounded-lg px-3 py-3 border border-gray-200 text-base bg-white"
-                placeholder="Enter organizer name"
-                placeholderTextColor="#888"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                autoCapitalize="words"
-                autoCorrect={false}
+            render={({ field: { onChange, value } }) => (
+              <SelectLayout
+                options={staffOptions}
+                selectedValue={value}
+                onSelect={(option) => onChange(option.value)}
+                placeholder="Select organizer"
+                className="mb-3"
               />
             )}
           />
           {form.formState.errors.organizer && (
             <Text className="text-red-500 text-sm mt-1">{form.formState.errors.organizer.message}</Text>
           )}
-        </View>
-
-        {/* Invitees */}
-        <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2 flex-row items-center">
-            <Users size={16} color="#374151" className="mr-2" />
-            Invitees (Optional)
-          </Text>
-          <Controller
-            control={form.control}
-            name="invitees"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="rounded-lg px-3 py-3 border border-gray-200 text-base bg-white"
-                placeholder="Enter invitees (comma separated)"
-                placeholderTextColor="#888"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-            )}
-          />
         </View>
 
         {/* Event Description */}
@@ -275,33 +338,10 @@ function WasteEventEdit() {
           />
         </View>
 
-        {/* Event Subject */}
-        <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Event Subject (Optional)</Text>
-          <Controller
-            control={form.control}
-            name="eventSubject"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="rounded-lg px-3 py-3 border border-gray-200 text-base bg-white"
-                placeholder="Enter event subject for announcements"
-                placeholderTextColor="#888"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                multiline
-                numberOfLines={2}
-                textAlignVertical="top"
-              />
-            )}
-          />
-        </View>
-
         {/* Announcement Settings */}
         <View className="mb-4">
           <View className="flex-row items-center mb-3">
-            <Bell size={16} color="#374151" />
-            <Text className="text-sm font-medium text-gray-700 ml-2">Announcement Settings</Text>
+            <Text className="text-sm font-medium text-gray-700">Announcement Settings</Text>
           </View>
           <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <Text className="text-sm text-gray-600 mb-3">
@@ -321,10 +361,21 @@ function WasteEventEdit() {
                           : 'bg-white border-gray-300'
                       }`}
                       onPress={() => {
-                        const newSelected = value?.includes(option.id)
-                          ? value.filter((id) => id !== option.id)
-                          : [...(value || []), option.id];
-                        onChange(newSelected);
+                        const currentValue = value || [];
+                        
+                        if (option.id === "all") {
+                          // If "All" is checked, only select "All"
+                          onChange(currentValue.includes("all") ? [] : ["all"]);
+                        } else {
+                          // If another option is checked, remove "All" if it exists
+                          let newSelected;
+                          if (currentValue.includes(option.id)) {
+                            newSelected = currentValue.filter((id) => id !== option.id);
+                          } else {
+                            newSelected = [...currentValue.filter(id => id !== "all"), option.id];
+                          }
+                          onChange(newSelected);
+                        }
                       }}
                     >
                       <Text className={`text-sm ${
@@ -340,10 +391,34 @@ function WasteEventEdit() {
           </View>
         </View>
 
+        {/* Event Subject - Only show when announcements are selected */}
+        {selectedAnnouncements.length > 0 && (
+          <View className="mb-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">Event Subject</Text>
+            <Controller
+              control={form.control}
+              name="eventSubject"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="rounded-lg px-3 py-3 border border-gray-200 text-base bg-white"
+                  placeholder="Enter event subject for announcement"
+                  placeholderTextColor="#888"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+              )}
+            />
+          </View>
+        )}
+
         {/* Submit Button */}
         <View className="px-6 py-4 border-t border-gray-200 bg-white">
           <TouchableOpacity
-            className="bg-orange-500 py-4 rounded-xl w-full items-center"
+            className="bg-primaryBlue py-4 rounded-xl w-full items-center"
             onPress={form.handleSubmit(onSubmit)}
             disabled={updateWasteEvent.isPending}
           >

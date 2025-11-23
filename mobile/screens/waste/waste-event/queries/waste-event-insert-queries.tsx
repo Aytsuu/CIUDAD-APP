@@ -23,14 +23,16 @@ export const useCreateWasteEvent = () => {
             const formattedDate = eventData.date ? new Date(eventData.date).toISOString().split('T')[0] : null;
             const formattedTime = eventData.time || null;
 
+            // Get organizer name from staff list if organizer is an ID
+            // For now, organizer is expected to be the staff ID, we'll get the name in the form component
             const payload = {
                 we_name: eventData.eventName,
                 we_location: eventData.location,
                 we_date: formattedDate,
                 we_time: formattedTime,
                 we_description: eventData.eventDescription || '',
-                we_organizer: eventData.organizer,
-                we_invitees: eventData.invitees || '',
+                we_organizer: eventData.organizer, // This will be the staff name
+                we_invitees: null, // Removed invitees field to match web
                 we_is_archive: false,
                 staff: staffId,
                 // Include announcement data

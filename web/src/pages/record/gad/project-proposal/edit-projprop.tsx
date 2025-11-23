@@ -375,7 +375,7 @@ export const EditProjectProposalForm: React.FC<
         onSuccess(updatedProject);
       }
     } catch (error: any) {
-      console.error("Error in handleSave:", error);
+      // console.error("Error in handleSave:", error);
       setErrorMessage(
         error.response?.data?.detail ||
           error.message ||
