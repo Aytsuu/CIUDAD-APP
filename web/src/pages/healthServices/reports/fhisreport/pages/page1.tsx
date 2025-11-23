@@ -1,8 +1,7 @@
 
 import FPReportDetails from "../../famplanning-report/FPRecordDetails";
-import { Page1Props } from "./type";
 
-export default function Page1({ state, onNext }: Page1Props) {
+export default function Page1({onNext }: any) {
   return (
     <div className="min-h-[500px] flex flex-col">
       <div className="mb-6">

@@ -16,7 +16,6 @@ export default function CommodityProblemDetails() {
   const location = useLocation();
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");

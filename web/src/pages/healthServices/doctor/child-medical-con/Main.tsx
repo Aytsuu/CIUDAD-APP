@@ -158,7 +158,7 @@ export default function ChildMedicalConsultation() {
         content={
           <>
             {/* Step Content */}
-            {currentStep === 1 && <PendingDisplaycheckupData patientData={patientData} checkupData={checkupData} onNext={nextStep} />}
+            {currentStep === 1 && <PendingDisplaycheckupData  checkupData={checkupData} onNext={nextStep} />}
 
             {currentStep === 2 && <SoapForm patientData={patientData} checkupData={checkupData} onBack={prevStep} initialData={formData} onFormDataUpdate={handleFormDataUpdate} />}
           </>

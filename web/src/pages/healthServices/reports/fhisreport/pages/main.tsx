@@ -62,7 +62,7 @@ export default function MultiPageFormFHIS() {
 
       {/* Page Content */}
       <Card className="p-6">
-        {currentPage === 1 && <Page1 state={state} onNext={nextPage} />}
+        {currentPage === 1 && <Page1 onNext={nextPage} />}
         {currentPage === 2 && <Page2 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 3 && <Page3 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 4 && <Page4 state={state} onBack={prevPage} onNext={nextPage} />}

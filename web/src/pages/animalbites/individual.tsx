@@ -378,7 +378,7 @@ const IndividualPatientHistory: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {patientRecords.map((record, index) => (
+                {patientRecords.map((record) => (
                   <div key={record.bite_id} className="flex-shrink-0 w-72 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-5 border-2 border-blue-200 shadow-md hover:shadow-xl transition-all">
                     <div className="border-b-2 border-blue-300 pb-3 mb-4 text-center">
                       <div className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md">

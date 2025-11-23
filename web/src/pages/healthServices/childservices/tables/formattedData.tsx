@@ -65,7 +65,7 @@ export const processHistoryData = (historyData: any[], dob: string): any[] => {
 
   const latestDate = sortedHistories.length > 0 ? sortedHistories[0].created_at : null;
 
-  return sortedHistories.map((record: any, index: number) => {
+  return sortedHistories.map((record: any) => {
     let bmi = "N/A";
     let findingsData = {
       subj_summary: "",

@@ -207,7 +207,7 @@ export default function FPReportDetails() {
         <ExportDropdown
           onExportCSV={() => exportToCSV(prepareExportData(report), `FP_Report_${month}`)}
           onExportExcel={() => exportToExcel(prepareExportData(report), `FP_Report_${month}`)}
-          onExportPDF={() => exportToPDF(prepareExportData(report), `FP_Report_${month}`)}
+          onExportPDF={() => exportToPDF('landscape')}
         />
         <Button variant="outline" onClick={handlePrint} className="gap-2">
           <Printer className="h-4 w-4" /> Print
