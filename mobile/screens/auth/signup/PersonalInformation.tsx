@@ -134,10 +134,10 @@ export default function PersonalInformation({
       {/* Full Name Section */}
       <View className="mb-8">
         <View className="w-full mb-4 pb-2 border-b border-gray-200">
-          <Text className="text-lg font-PoppinsSemiBold text-gray-800">
+          <Text className="text-lg font-semibold text-gray-800">
             Full Name
           </Text>
-          <Text className="text-sm text-gray-600 font-PoppinsRegular">
+          <Text className="text-sm text-gray-600">
             Enter your complete legal name
           </Text>
         </View>
@@ -183,10 +183,10 @@ export default function PersonalInformation({
       {/* Demographics Section */}
       <View className="mb-8">
         <View className="mb-4 pb-2 border-b border-gray-200">
-          <Text className="text-lg font-PoppinsSemiBold text-gray-800">
+          <Text className="text-lg font-semibold text-gray-800">
             Demographics
           </Text>
-          <Text className="text-sm text-gray-600 font-PoppinsRegular">
+          <Text className="text-sm text-gray-600">
             Basic demographic information
           </Text>
         </View>
@@ -226,10 +226,10 @@ export default function PersonalInformation({
       {/* Education & Professional Section */}
       <View className="mb-8">
         <View className="mb-4 pb-2 border-b border-gray-200">
-          <Text className="text-lg font-PoppinsSemiBold text-gray-800">
+          <Text className="text-lg font-semibold text-gray-800">
             Education
           </Text>
-          <Text className="text-sm text-gray-600 font-PoppinsRegular">
+          <Text className="text-sm text-gray-600">
             Educational and professional background
           </Text>
         </View>
@@ -247,10 +247,10 @@ export default function PersonalInformation({
       {/* Contact Information Section */}
       <View className="mb-8">
         <View className="mb-4 pb-2 border-b border-gray-200">
-          <Text className="text-lg font-PoppinsSemiBold text-gray-800">
+          <Text className="text-lg font-semibold text-gray-800">
             Contact Information
           </Text>
-          <Text className="text-sm text-gray-600 font-PoppinsRegular">
+          <Text className="text-sm text-gray-600">
             How we can reach you
           </Text>
         </View>
@@ -263,8 +263,8 @@ export default function PersonalInformation({
           keyboardType="phone-pad"
         />
 
-        <View className="mt-4">
-          <Text className="text-[14px] font-PoppinsRegular mb-2">
+        <View>
+          <Text className="text-[13px] mb-2">
             Addresses
           </Text>
           <View
