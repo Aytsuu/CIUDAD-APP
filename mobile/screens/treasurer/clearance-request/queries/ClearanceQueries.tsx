@@ -37,6 +37,8 @@ export interface UnpaidBusinessPermit {
   req_status: string;
   req_payment_status: string;
   req_transac_id: string;
+  req_amount?: number | string; // Add amount field
+  bus_clearance_gross_sales?: string; // Add gross sales field
   decline_reason?: string;
 }
 
@@ -210,73 +212,50 @@ export const getUnpaidBusinessPermits = async (
   }
 };
 
-// Fetch business permits matching web version (Paid and not Completed)
+// Fetch unpaid business permits (matching web version for unpaid tab)
 export const getBusinessPermits = async (
   search?: string
 ): Promise<UnpaidBusinessPermit[]> => {
   try {
     // Fetch from the same endpoint as web version
-    const firstResponse = await api.get('/clerk/business-permit/');
-    const firstPayload = firstResponse.data as any;
-
-    // Handle paginated or non-paginated responses (like web version)
-    let itemsAccumulator: any[] = [];
-    let nextUrl: string | null | undefined = undefined;
-
-    if (Array.isArray(firstPayload)) {
-      itemsAccumulator = firstPayload;
-      nextUrl = null;
-    } else if (Array.isArray(firstPayload?.data)) {
-      itemsAccumulator = firstPayload.data;
-      nextUrl = firstPayload?.next ?? null;
-    } else if (Array.isArray(firstPayload?.results)) {
-      itemsAccumulator = firstPayload.results;
-      nextUrl = firstPayload?.next ?? null;
+    const params = new URLSearchParams();
+    if (search) {
+      params.append('search', search);
     }
+    const url = `/clerk/business-permit/${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await api.get(url);
+    const payload = res.data as any;
 
-    // Follow pagination if present (like web version)
-    const MAX_PAGES = 10;
-    let pagesFetched = 1;
-    while (nextUrl && pagesFetched < MAX_PAGES) {
-      const pageRes = await api.get(nextUrl);
-      const pagePayload = pageRes.data as any;
-      const pageItems = Array.isArray(pagePayload)
-        ? pagePayload
-        : Array.isArray(pagePayload?.data)
-        ? pagePayload.data
-        : Array.isArray(pagePayload?.results)
-        ? pagePayload.results
-        : [];
-      itemsAccumulator = itemsAccumulator.concat(pageItems);
-      nextUrl = pagePayload?.next ?? null;
-      pagesFetched += 1;
+    // Handle paginated or non-paginated responses
+    let rawItems: any[] = [];
+    if (Array.isArray(payload)) {
+      rawItems = payload;
+    } else if (Array.isArray(payload?.results)) {
+      rawItems = payload.results;
+    } else if (Array.isArray(payload?.data)) {
+      rawItems = payload.data;
     }
 
     // Normalize and map fields like web version
-    const normalized: UnpaidBusinessPermit[] = itemsAccumulator.map((item: any) => ({
+    const normalized: UnpaidBusinessPermit[] = rawItems.map((item: any) => ({
       bp_id: String(item.bpr_id ?? item.bp_id ?? item.id ?? ''),
       bpr_id: item.bpr_id ? String(item.bpr_id) : undefined,
       business_name: item.business_name ?? item.bus_permit_name ?? '',
-      business_type: item.business_type || '',
+      business_type: item.business_type || item.purpose || '',
       purpose: item.purpose || '',
-      owner_name: item.owner_name || item.requestor || '',
+      owner_name: item.requestor || item.owner_name || '',
       business_address: item.business_address ?? item.bus_permit_address ?? '',
       req_request_date: item.req_request_date || '',
       req_status: item.req_status || 'Pending',
       req_payment_status: item.req_payment_status || 'Unpaid',
       req_transac_id: item.req_transac_id || '',
+      req_amount: item.req_amount ?? item.bus_clearance_gross_sales ?? undefined,
+      bus_clearance_gross_sales: item.bus_clearance_gross_sales,
       decline_reason: item.bus_reason || item.bpr_reason || item.req_declined_reason || item.decline_reason || '',
     }));
 
-    // Filter for Paid and exclude Completed (exactly like web version)
-    // Web version: .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
-    //            .filter((p) => String(p.req_status || "").toLowerCase() !== "completed")
-    const filtered = normalized.filter((item) => {
-      const paymentStatus = String(item.req_payment_status || '').toLowerCase().trim();
-      const reqStatus = String(item.req_status || '').toLowerCase().trim();
-      // Only show Paid permits that are not Completed
-      return paymentStatus === 'paid' && reqStatus !== 'completed';
-    });
+    // Don't filter by payment status here - let the component handle filtering
+    const filtered = normalized;
 
     // Apply search filter if provided
     if (search) {
