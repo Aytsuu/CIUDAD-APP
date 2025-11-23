@@ -14,7 +14,6 @@ import {Provider} from "react-redux"
 import { store, persistor } from '@/redux/store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { useFCMToken } from '@/helpers/useFCMToken';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -56,15 +55,14 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
       <View style={{ flex: 1 }}>
-          <StatusBar style='dark' translucent/>
-          <ThemeProvider value={LIGHT_THEME}>
-            <GestureHandlerRootView className='flex-1'>
-              <Provider store={store}>
-                <PersistGate loading={null} persistor={persistor}>
-                  <QueryClientProvider client={queryClient}>
-                    <ToastProvider>
+        <StatusBar style='dark' translucent/>
+        <ThemeProvider value={LIGHT_THEME}>
+          <GestureHandlerRootView className='flex-1'>
+            <Provider store={store}>
+              <PersistGate loading={null} persistor={persistor}>
+                <QueryClientProvider client={queryClient}>
+                  <ToastProvider>
                       <FCMTokenInitializer/>
                       <Stack initialRouteName='(auth)'>
                         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
@@ -89,14 +87,13 @@ export default function RootLayout() {
                         <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
                         <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
                       </Stack>
-                    </ToastProvider>
-                  </QueryClientProvider>
-                </PersistGate>
-              </Provider>
-              <PortalHost />
-            </GestureHandlerRootView>
-          </ThemeProvider>
+                  </ToastProvider>
+                </QueryClientProvider>
+              </PersistGate>
+            </Provider>
+            <PortalHost />
+          </GestureHandlerRootView>
+        </ThemeProvider>
       </View>
-    </SafeAreaProvider>
   );
 }

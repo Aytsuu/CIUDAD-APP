@@ -179,7 +179,7 @@ USE_TZ = True
 
 # # Static files 
 STATIC_URL = 'static/'
-STATC_ROOT = BASE_DIR / 'staticfiles'
+STATC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
