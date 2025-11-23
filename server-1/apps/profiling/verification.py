@@ -15,6 +15,7 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
 class KYCVerificationProcessor:
     @classmethod
@@ -98,6 +99,8 @@ class KYCVerificationProcessor:
             # Perform OCR
             text = pytesseract.image_to_string(threshold)    
             return text
+        except pytesseract.TesseractNotFoundError:
+            logger.error("Tesseract is still missing")
         except Exception as e:
             logger.error(f"Document extraction error: {str(e)}")
             return None
