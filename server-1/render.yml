@@ -1,9 +1,13 @@
 services:
   - type: web
     name: server-1
-    runtime: python
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:10000 --timeout 120"
+    runtime: docker
+    repo: https://github.com/Aytsuu/CIUDAD-APP
+    region: singapore
+    plan: Standard
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       # Django Core
       - key: DJANGO_SECRET_KEY
