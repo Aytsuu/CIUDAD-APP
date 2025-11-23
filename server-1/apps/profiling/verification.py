@@ -70,7 +70,7 @@ class KYCVerificationProcessor:
             logger.error(f"Tesseract not found: {e}")
             logger.error(f"PATH: {os.environ.get('PATH')}")
             
-        models = self.get_face_recognition_models()
+        models = get_face_recognition_models()
         self.mtcnn = models['mtcnn']
         self.resnet = models['resnet']
         self.threshold = 0.5
