@@ -32,7 +32,7 @@ const ClearanceRequestMain = () => {
     },
     {
       id: 'business',
-      title: 'Business Permits',
+      title: 'Barangay Permits',
       description: 'View business permit requests',
       icon: "",
       gradient: ['#60a5fa', '#3b82f6'],
