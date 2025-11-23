@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import {View, Text, TextInput, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image} from 'react-native';
+import {View, Text, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image} from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Search, Eye, FileText, X, Plus } from 'lucide-react-native';
+import { ChevronLeft, Eye, FileText, X, Plus } from 'lucide-react-native';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useOrdinances, OrdinanceData } from './queries/ordinance-fetch-queries';
 import { useUpdateOrdinance } from './queries/ordinance-fetch-insert-queries';
@@ -12,6 +12,8 @@ import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
 import OrdinanceUpload from './ordinance-upload';
+import { Search } from '@/lib/icons/Search';
+import { SearchInput } from '@/components/ui/search-input';
 
 // Helper type for grouped ordinances
 interface OrdinanceFolder {
@@ -24,7 +26,10 @@ interface OrdinanceFolder {
 
 function OrdinancePage() {
   const router = useRouter();
+  const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [selectedFolder, setSelectedFolder] = useState<OrdinanceFolder | null>(null);
@@ -37,8 +42,14 @@ function OrdinancePage() {
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Convert empty string to undefined for API
+  const searchQueryParam = debouncedSearchQuery && debouncedSearchQuery.trim() !== "" 
+    ? debouncedSearchQuery.trim() 
+    : undefined;
 
-  // Fetch data with backend filtering
+  // Fetch data - if searching, fetch all data and filter client-side for better reliability
+  // Otherwise use backend filtering
   const { 
     data: ordinanceData = { results: [], count: 0, total_pages: 1 }, 
     isLoading, 
@@ -47,7 +58,7 @@ function OrdinancePage() {
   } = useOrdinances(
     1,
     1000, // large number to get all data
-    debouncedSearchQuery, 
+    undefined, // Don't send search to backend - we'll filter client-side for reliability
     categoryFilter, 
     yearFilter,
     false // Show all ordinances (both active and archived)
@@ -84,15 +95,60 @@ function OrdinancePage() {
   }, []);
 
   // Group ordinances into folders and sort by ord_num
+  // Also apply client-side search filtering as fallback/backup
   const ordinanceFolders = useMemo(() => {
-    const folders = groupOrdinancesIntoFolders(fetchedData);
+    let filteredData = fetchedData;
+    
+    // Apply client-side search filter as backup (in case backend search doesn't work properly)
+    if (searchQueryParam && searchQueryParam.trim() !== '') {
+      const searchLower = searchQueryParam.toLowerCase().trim();
+      
+      // First, find all ordinances that match the search
+      const matchingOrdinances = new Set<string>();
+      fetchedData.forEach((ord) => {
+        const title = (ord.ord_title || '').toLowerCase();
+        const num = (ord.ord_num || '').toLowerCase();
+        const details = (ord.ord_details || '').toLowerCase();
+        const category = Array.isArray(ord.ord_category) 
+          ? ord.ord_category.map(c => c.toLowerCase()).join(' ')
+          : (ord.ord_category || '').toLowerCase();
+        
+        if (
+          title.includes(searchLower) ||
+          num.includes(searchLower) ||
+          details.includes(searchLower) ||
+          category.includes(searchLower)
+        ) {
+          matchingOrdinances.add(ord.ord_num);
+          // If this is an amendment, also include its parent
+          if (ord.ord_parent && ord.ord_parent !== ord.ord_num) {
+            matchingOrdinances.add(ord.ord_parent);
+          }
+        }
+      });
+      
+      // Also include parents of matching amendments
+      fetchedData.forEach((ord) => {
+        if (ord.ord_parent && ord.ord_parent !== ord.ord_num && matchingOrdinances.has(ord.ord_num)) {
+          matchingOrdinances.add(ord.ord_parent);
+        }
+      });
+      
+      // Filter to include only matching ordinances and their parents
+      filteredData = fetchedData.filter((ord) => matchingOrdinances.has(ord.ord_num));
+    }
+    
+    const folders = groupOrdinancesIntoFolders(filteredData);
     // Sort by ord_num (extract number and year for proper sorting)
-    return folders.sort((a, b) => {
-      const aNum = a.baseOrdinance.ord_num || '';
-      const bNum = b.baseOrdinance.ord_num || '';
-      return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
-    });
-  }, [fetchedData]);
+    // Filter out any folders with undefined baseOrdinance (safety check)
+    return folders
+      .filter(folder => folder.baseOrdinance && folder.baseOrdinance.ord_num)
+      .sort((a, b) => {
+        const aNum = a.baseOrdinance?.ord_num || '';
+        const bNum = b.baseOrdinance?.ord_num || '';
+        return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
+      });
+  }, [fetchedData, searchQueryParam]);
 
   // Get available ordinances for amendment/repeal selection
   const availableOrdinances = useMemo(() => {
@@ -113,6 +169,22 @@ function OrdinancePage() {
   const handleYearFilterChange = (value: string) => {
     setYearFilter(value);
   };
+
+  const handleSearch = React.useCallback(() => {
+    setIsSearching(true);
+    setSearchQuery(searchInputVal);
+  }, [searchInputVal]);
+
+  // Clear loading state when debounced search completes and results are filtered
+  React.useEffect(() => {
+    if (searchQuery && searchQuery === debouncedSearchQuery) {
+      // Small delay to ensure filtering is complete
+      const timer = setTimeout(() => setIsSearching(false), 100);
+      return () => clearTimeout(timer);
+    } else if (!searchQuery) {
+      setIsSearching(false);
+    }
+  }, [searchQuery, debouncedSearchQuery]);
 
   const handleViewPdf = (pdfUrl: string) => {
     if (!pdfUrl) {
@@ -291,42 +363,6 @@ function OrdinancePage() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <LoadingState />
-      </SafeAreaView>
-    );
-  }
-
-  if (isError) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Ordinance Record</Text>}
-        rightAction={
-          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
-        }
-      >
-        <View className="flex-1 justify-center items-center px-6">
-          <Text className="text-red-500 text-center mb-4">
-            Failed to load ordinances.
-          </Text>
-          <TouchableOpacity
-            onPress={handleRefresh}
-            className="bg-[#2a3a61] px-4 py-2 rounded-lg"
-          >
-            <Text className="text-white">Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout
       leftAction={
@@ -338,70 +374,103 @@ function OrdinancePage() {
         <Text className="text-gray-900 text-[13px]">Ordinance Record</Text>
       }
       rightAction={
-        <TouchableOpacity 
-          onPress={() => {
-            resetForm();
-            setUploadModalVisible(true);
-          }}
-          className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center"
-        >
-          <Plus size={20} color="white" />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => {
+              resetForm();
+              setUploadModalVisible(true);
+            }}
+            className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center"
+          >
+            <Plus size={20} color="white" />
+          </TouchableOpacity>
+        </View>
       }
       wrapScroll={false}
     >
-      <View className="flex-1 px-6">
-        {/* Search and Filters */}
-        <View className="mb-4">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1">
-              <Search className="absolute left-3 top-3 text-gray-500 z-10" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-10 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
 
-            <View className="w-[120px] pb-5">
+        {/* Filters */}
+        <View className="bg-white px-6 py-4 border-b border-gray-200">
+          <View className="flex-row gap-3 pb-3">
+            <View className="flex-1">
               <SelectLayout
+                label="Category Filter"
+                placeholder="Select category"
                 options={categoryOptions.map(f => ({ label: f.name, value: f.id }))}
-                className="h-8"
                 selectedValue={categoryFilter}
                 onSelect={(option) => handleCategoryFilterChange(option.value)}
-                placeholder="Category"
-                isInModal={false}
               />
             </View>
-          </View>
-
-          {/* Year Filter */}
-          <View className="pb-5">
-            <SelectLayout
-              options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
-              className="h-8"
-              selectedValue={yearFilter}
-              onSelect={(option) => handleYearFilterChange(option.value)}
-              placeholder="Year Filter"
-              isInModal={false}
-            />
+            <View className="flex-1">
+              <SelectLayout
+                label="Year Filter"
+                placeholder="Select year"
+                options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+                selectedValue={yearFilter}
+                onSelect={(option) => handleYearFilterChange(option.value)}
+              />
+            </View>
           </View>
         </View>
 
         {/* Ordinances List */}
-        <FlatList
-          data={ordinanceFolders}
-          renderItem={renderFolderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingBottom: 500 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <Text className="text-center text-gray-500 py-4">
-              No ordinances found
-            </Text>
-          }
-        />
+        <View className="flex-1">
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center py-20">
+              <LoadingState />
+            </View>
+          ) : isError ? (
+            <View className="flex-1 justify-center items-center px-6 py-20">
+              <Text className="text-red-500 text-center mb-4">
+                Failed to load ordinances.
+              </Text>
+              <TouchableOpacity
+                onPress={handleRefresh}
+                className="bg-[#2a3a61] px-4 py-2 rounded-lg"
+              >
+                <Text className="text-white">Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : isSearching ? (
+            <View className="flex-1 justify-center items-center py-20">
+              <LoadingState />
+            </View>
+          ) : (
+            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+              {ordinanceFolders.length ? (
+                ordinanceFolders.map((folder) => (
+                  <React.Fragment key={folder.id}>
+                    {renderFolderItem({ item: folder })}
+                  </React.Fragment>
+                ))
+              ) : (
+                <View className="flex-1 items-center justify-center py-12">
+                  <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                    {searchQuery ? 'No ordinances found matching your search' : 'No ordinances yet'}
+                  </Text>
+                  <Text className="text-gray-500 text-sm text-center">
+                    {searchQuery ? 'Try adjusting your search terms' : 'Ordinances will appear here'}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          )}
+        </View>
 
         {/* Folder View Modal */}
         <Modal
