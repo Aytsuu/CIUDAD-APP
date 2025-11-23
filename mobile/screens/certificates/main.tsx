@@ -35,7 +35,7 @@ const CertificatesMain = () => {
     },
     {
       id: 'permit',
-      title: 'Permit',
+      title: 'Business Permit',
       description: 'View business permits',
       icon: "",
       gradient: ['#60a5fa', '#3b82f6'],

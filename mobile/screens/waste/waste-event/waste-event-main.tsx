@@ -165,7 +165,7 @@ const WasteEventMain = () => {
             {item.we_name}
           </Text>
         </View>
-        {item.we_description && item.we_description !== "None" && (
+      {item.we_description && item.we_description !== "None" && (
           <Text className="text-gray-600 mt-2">{item.we_description}</Text>
         )}
         <View className="mt-2">
@@ -182,15 +182,15 @@ const WasteEventMain = () => {
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Organizer:</Text>
             <Text className="text-sm text-gray-700">{item.we_organizer}</Text>
-          </View>
-        )}
-        {item.we_invitees && item.we_invitees !== "None" && (
+        </View>
+      )}
+      {item.we_invitees && item.we_invitees !== "None" && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Invitees:</Text>
             <Text className="text-sm text-gray-700">{item.we_invitees}</Text>
-          </View>
-        )}
-      </View>
+        </View>
+      )}
+    </View>
     </View>
   );
 
@@ -204,6 +204,7 @@ const WasteEventMain = () => {
 
   return (
     <PageLayout
+      wrapScroll={false}
       leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" className="text-black" />
@@ -238,13 +239,13 @@ const WasteEventMain = () => {
 
         <View className="flex-row justify-around mb-2">
           {days.map(renderDayHeader)}
-        </View>
+              </View>
 
         <View className="flex-row flex-wrap justify-around">
           {blankDays.map((date, index) => renderDateCell(date, index))}
           {dates.map(renderDateCell)}
-        </View>
-      </View>
+            </View>
+          </View>
 
       {/* Events Section */}
       <View className="flex-1 px-6 pt-4">
@@ -264,28 +265,28 @@ const WasteEventMain = () => {
               <Plus size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
-        </View>
+          </View>
 
         {selectedDateEvents.length > 0 ? (
           <FlatList
             data={selectedDateEvents}
             renderItem={renderEventItem}
             keyExtractor={(item) => item.we_num.toString()}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-          />
-        ) : (
+              />
+            ) : (
           <View className="flex-1 justify-center items-center">
             <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
             <Text className="text-gray-400 mt-4 text-lg">
               No events scheduled for this date
-            </Text>
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
     </PageLayout>
   );
 };

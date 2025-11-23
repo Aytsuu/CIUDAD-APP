@@ -15,6 +15,8 @@ import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { getAnnualDevPlansByYear } from "../annual-dev-plan/restful-api/annualDevPlanGetAPI";
 import { ChevronLeft } from "lucide-react-native";
+import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
+import { useResolution } from "@/screens/council/resolution/queries/resolution-fetch-queries";
 
 const { width } = Dimensions.get("window");
 const DAY_SIZE = width / 7 - 10;
@@ -43,12 +45,50 @@ const GADActivityCalendar = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [allEvents, setAllEvents] = useState<GADEvent[]>([]);
 
+  // Fetch project proposals and resolutions for filtering
+  const { data: projectProposalsData = { results: [], count: 0 } } = useGetProjectProposals(1, 1000, undefined, false, undefined);
+  const { data: resolutionsData = { results: [], count: 0 } } = useResolution(1, 1000);
+
+  // Create set of devIds that have project proposals with resolutions (like web version)
+  const devIdsWithProposals = useMemo(() => {
+    const proposalsList = Array.isArray(projectProposalsData) 
+      ? projectProposalsData 
+      : Array.isArray(projectProposalsData?.results) 
+      ? projectProposalsData.results 
+      : [];
+    
+    const resolutionsList = Array.isArray(resolutionsData)
+      ? resolutionsData
+      : Array.isArray(resolutionsData?.results)
+      ? resolutionsData.results
+      : [];
+
+    // Get set of gpr_ids from resolutions
+    const resolutionGprIds = new Set(
+      resolutionsList
+        .map((r: any) => r.gpr_id)
+        .filter((id: any) => id !== null && id !== undefined)
+    );
+
+    // Filter project proposals that have matching resolutions and extract devIds
+    return new Set(
+      proposalsList
+        .filter((p: any) => {
+          const devId = p.devId ?? p.dev_id ?? p.devDetails?.dev_id ?? p.dev?.dev_id;
+          const gprId = p.gprId ?? p.gpr_id;
+          return devId && gprId && resolutionGprIds.has(gprId);
+        })
+        .map((p: any) => p.devId ?? p.dev_id ?? p.devDetails?.dev_id ?? p.dev?.dev_id)
+        .filter((id: any) => id !== null && id !== undefined)
+    );
+  }, [projectProposalsData, resolutionsData]);
+
   // Fetch data for multiple years
   const yearsToFetch = [2024, 2025, 2026, 2027, 2028, 2029];
 
   useEffect(() => {
     fetchAllEvents();
-  }, []);
+  }, [devIdsWithProposals]);
 
   const fetchAllEvents = async () => {
     setIsLoading(true);
@@ -61,8 +101,33 @@ const GADActivityCalendar = () => {
           const yearData = await getAnnualDevPlansByYear(year);
           const eventsData = Array.isArray(yearData) ? yearData : yearData?.results || [];
           
-          // Transform the data to match our interface
-          const transformedEvents = eventsData.map((plan: any) => ({
+          // Filter events: only include mandated OR those with project proposals and resolutions (like web version)
+          const filteredEvents = eventsData.filter((plan: any) => {
+            // Check if archived
+            const archivedValue = plan?.dev_archived;
+            if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+              return false; // Exclude archived
+            }
+            
+            // Check if past date
+            if (plan?.dev_date) {
+              const planDate = new Date(plan.dev_date);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              planDate.setHours(0, 0, 0, 0);
+              if (planDate < today) {
+                return false; // Exclude past dates
+              }
+            }
+            
+            // Filter: include if mandated OR has proposal with resolution
+            const isMandated = Boolean(plan?.dev_mandated);
+            const hasProposal = devIdsWithProposals.has(plan.dev_id);
+            return isMandated || hasProposal;
+          });
+          
+          // Transform the filtered data to match our interface
+          const transformedEvents = filteredEvents.map((plan: any) => ({
             id: plan.dev_id,
             title: plan.dev_client,
             date: plan.dev_date,
@@ -80,13 +145,13 @@ const GADActivityCalendar = () => {
           
           allEventsData.push(...transformedEvents);
         } catch (error) {
-          console.error(`Error fetching events for year ${year}:`, error);
+          // Silently handle errors for individual years
         }
       }
       
       setAllEvents(allEventsData);
     } catch (error) {
-      console.error("Error fetching events:", error);
+      // Silently handle errors
     } finally {
       setIsLoading(false);
     }

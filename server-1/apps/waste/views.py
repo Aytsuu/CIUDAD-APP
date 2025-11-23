@@ -47,6 +47,7 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         instance = serializer.save()
         try:
             from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            from apps.profiling.models import Sitio
             
             staff, staff_identifier = resolve_staff_from_request(self.request)
             
@@ -55,7 +56,18 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 if instance.we_name:
                     description_parts.append(f"Event: {instance.we_name}")
                 if instance.we_location:
-                    description_parts.append(f"Location: {instance.we_location}")
+                    # Try to resolve sitio name if we_location is a sitio_id
+                    location_display = instance.we_location
+                    try:
+                        # Check if we_location is a numeric ID
+                        sitio_id = int(instance.we_location)
+                        sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                        if sitio:
+                            location_display = sitio.sitio_name
+                    except (ValueError, TypeError):
+                        # If it's not a number, use it as-is (might already be a name)
+                        pass
+                    description_parts.append(f"Location: {location_display}")
                 if instance.we_date:
                     date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
                     description_parts.append(f"Date: {date_str}")
@@ -186,9 +198,23 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
             return Response(status=status.HTTP_404_NOT_FOUND)
         
         from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from apps.profiling.models import Sitio
         
         staff, staff_identifier = resolve_staff_from_request(request)
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        # Helper function to resolve location name
+        def resolve_location_name(location_value):
+            if not location_value:
+                return None
+            try:
+                sitio_id = int(location_value)
+                sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                if sitio:
+                    return sitio.sitio_name
+            except (ValueError, TypeError):
+                pass
+            return location_value
         
         if permanent:
             # Log before permanent delete
@@ -196,8 +222,9 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
                 description_parts = []
                 if instance.we_name:
                     description_parts.append(f"Event: {instance.we_name}")
-                if instance.we_location:
-                    description_parts.append(f"Location: {instance.we_location}")
+                location_display = resolve_location_name(instance.we_location)
+                if location_display:
+                    description_parts.append(f"Location: {location_display}")
                 if instance.we_date:
                     date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
                     description_parts.append(f"Date: {date_str}")
@@ -225,8 +252,9 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
                 description_parts = []
                 if instance.we_name:
                     description_parts.append(f"Event: {instance.we_name}")
-                if instance.we_location:
-                    description_parts.append(f"Location: {instance.we_location}")
+                location_display = resolve_location_name(instance.we_location)
+                if location_display:
+                    description_parts.append(f"Location: {location_display}")
                 if instance.we_date:
                     date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
                     description_parts.append(f"Date: {date_str}")
@@ -252,10 +280,24 @@ class WasteEventRestoreView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from apps.profiling.models import Sitio
         
         instance = self.get_object()
         instance.we_is_archive = False
         instance.save()
+        
+        # Helper function to resolve location name
+        def resolve_location_name(location_value):
+            if not location_value:
+                return None
+            try:
+                sitio_id = int(location_value)
+                sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                if sitio:
+                    return sitio.sitio_name
+            except (ValueError, TypeError):
+                pass
+            return location_value
         
         # Log restore
         staff, staff_identifier = resolve_staff_from_request(request)
@@ -263,8 +305,9 @@ class WasteEventRestoreView(generics.UpdateAPIView):
             description_parts = []
             if instance.we_name:
                 description_parts.append(f"Event: {instance.we_name}")
-            if instance.we_location:
-                description_parts.append(f"Location: {instance.we_location}")
+            location_display = resolve_location_name(instance.we_location)
+            if location_display:
+                description_parts.append(f"Location: {location_display}")
             if instance.we_date:
                 date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
                 description_parts.append(f"Date: {date_str}")
@@ -1565,6 +1608,54 @@ class PickupRequestDecisionView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                
+                # Add garbage pickup request ID
+                if instance.garb_id:
+                    description_parts.append(f"Request ID: {instance.garb_id}")
+                    
+                    # Add request location if available
+                    try:
+                        if instance.garb_id.garb_location:
+                            description_parts.append(f"Location: {instance.garb_id.garb_location}")
+                        if instance.garb_id.garb_waste_type:
+                            description_parts.append(f"Waste Type: {instance.garb_id.garb_waste_type}")
+                    except Exception:
+                        pass
+                
+                # Add decision reason
+                if instance.dec_reason:
+                    reason_short = (instance.dec_reason[:60] + '…') if len(instance.dec_reason) > 60 else instance.dec_reason
+                    description_parts.append(f"Reason: {reason_short}")
+                
+                # Add decision date
+                if instance.dec_date:
+                    date_str = instance.dec_date.strftime('%Y-%m-%d %H:%M:%S') if not isinstance(instance.dec_date, str) else instance.dec_date
+                    description_parts.append(f"Decision Date: {date_str}")
+                
+                description = ". ".join(description_parts) if description_parts else "Pickup_Request_Decision record created"
+                
+                create_activity_log(
+                    act_type="Pickup Request Decision Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.dec_id)
+                )
+                logger.info(f"Activity logged for pickup request decision creation: {instance.dec_id}")
+            else:
+                logger.debug(f"Skipping activity log for Pickup_Request_Decision create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for pickup request decision creation: {str(e)}")
+        return instance
 
 class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -1646,7 +1737,7 @@ class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
                         description = ". ".join(description_parts)
                         
                         create_activity_log(
-                            act_type="Pickup_Assignment Created",
+                            act_type="Pickup Assignment Created",
                             act_description=description,
                             staff=staff,
                             record_id=str(instance.pick_id)

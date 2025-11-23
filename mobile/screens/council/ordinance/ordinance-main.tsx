@@ -221,20 +221,6 @@ function OrdinancePage() {
                 </View>
               </TouchableOpacity>
             )}
-            
-            {/* Repeal button - only show if not already repealed */}
-            {!hasRepeal && (
-              <TouchableOpacity
-                onPress={() => {
-                  setCreationMode('repeal');
-                  setSelectedOrdinance(folder.baseOrdinance.ord_num);
-                  setUploadModalVisible(true);
-                }}
-                className="bg-red-50 px-2 py-1 rounded"
-              >
-                <Text className="text-xs text-red-600 font-medium">Repeal</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </CardHeader>
 

@@ -610,11 +610,11 @@ function CalendarPage() {
   const [viewWasteEvent, setViewWasteEvent] = useState<WasteEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
   const isSecretary = user?.staff?.pos?.toLowerCase() === "admin";
-  const isWaste = user?.staff?.pos?.toLowerCase() === "waste";
+  const isWaste = user?.staff?.pos?.toLowerCase() === "waste" || user?.staff?.pos?.toLowerCase() === "admin";
   const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase().includes("lupon");
   const isClerk = user?.staff?.pos?.toLowerCase().includes("clerk");
   const showMediation = isSecretary || isClerk;
-  const isGADRole = user?.staff?.pos?.toLowerCase() === "gad";
+  const isGADRole = user?.staff?.pos?.toLowerCase() === "gad" || user?.staff?.pos?.toLowerCase() === "admin";
   
   // Fetch mediation schedules (ONLY if Secretary or Clerk)
   const { data: mediationSchedules = [], isLoading: isMediationLoading, isRefetching: isMediationRefetching } = useGetMediationSchedules();

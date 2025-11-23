@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const BusinessList = () => {
   const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
@@ -23,11 +23,11 @@ const BusinessList = () => {
     const fetchBusinessPermits = async () => {
       try {
         setLoading(true)
-        const data = await getBusinessPermits()
+        // Fetch all business permits (like web version)
+        const data = await getBusinessPermits(undefined, 1, 1000, undefined, undefined, undefined)
         setBusinessPermits(data.results)
         setError(null)
       } catch (err) {
-        console.error('Error fetching business permits:', err)
         setError('Failed to load business permits')
       } finally {
         setLoading(false)
@@ -79,31 +79,43 @@ const BusinessList = () => {
   const purposes = useMemo(() => {
     const uniquePurposes = new Set<string>();
     businessPermits.forEach(business => {
-      if (business.business_type) {
-        uniquePurposes.add(business.business_type);
+      const purpose = business.purpose || business.business_type;
+      if (purpose) {
+        uniquePurposes.add(purpose);
       }
     });
     return Array.from(uniquePurposes).sort();
   }, [businessPermits])
 
-  // Filter business permits based on purpose and search
+  // Filter business permits based on payment status, purpose, and search (like web version)
   const filteredBusinesses = useMemo(() => {
-    let filtered = businessPermits.filter(business => {
-      // Purpose filter (using business_type as purpose)
-      if (purposeFilter !== 'all' && business.business_type !== purposeFilter) {
-        return false;
-      }
-      return true;
-    });
+    // First filter for paid and not completed (exactly like web version)
+    let filtered = businessPermits
+      .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
+      .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
+
+    // Then filter by purpose (using purpose or business_type)
+    if (purposeFilter !== 'all') {
+      filtered = filtered.filter(business => {
+        const purpose = business.purpose || business.business_type;
+        if (purpose !== purposeFilter) {
+          return false;
+        }
+        return true;
+      });
+    }
 
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(business => {
         const searchLower = searchQuery.toLowerCase();
         return (
+          business.bpr_id?.toLowerCase().includes(searchLower) ||
           business.bp_id?.toLowerCase().includes(searchLower) ||
           business.business_name?.toLowerCase().includes(searchLower) ||
           business.owner_name?.toLowerCase().includes(searchLower) ||
+          business.requestor?.toLowerCase().includes(searchLower) ||
+          business.purpose?.toLowerCase().includes(searchLower) ||
           business.business_type?.toLowerCase().includes(searchLower)
         );
       });
@@ -153,15 +165,15 @@ const BusinessList = () => {
 
         {/* Purpose Filter */}
         <View className="bg-white px-6 py-4 border-b border-gray-200">
-          <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
-          <CustomDropdown
-            value={purposeFilter}
-            onSelect={(value: string) => setPurposeFilter(value)}
-            data={[
+          <SelectLayout
+            label="Purpose Filter"
+            placeholder="Select purpose"
+            options={[
               { label: 'All', value: 'all' },
               ...purposes.map(purpose => ({ label: purpose, value: purpose }))
             ]}
-            placeholder="Select purpose"
+            selectedValue={purposeFilter}
+            onSelect={(option) => setPurposeFilter(option.value)}
           />
         </View>
 
@@ -182,9 +194,9 @@ const BusinessList = () => {
                       <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
                       {getStatusBadge(business.req_status)}
                     </View>
-                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bp_id}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Type: {business.business_type}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bpr_id || business.bp_id || '—'}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name || business.requestor || '—'}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Type: {business.purpose || business.business_type || '—'}</Text>
                     <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
                     {business.req_claim_date && (
                       <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(business.req_claim_date)}</Text>
@@ -195,7 +207,7 @@ const BusinessList = () => {
                 <View className="flex-1 items-center justify-center py-12">
                   <View className="items-center">
                     <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      <Text className="text-gray-500 text-2xl">🏢</Text>
+                      `<Text className="text-gray-500 text-2xl">🏢</Text>`
                     </View>
                     <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
                       {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}

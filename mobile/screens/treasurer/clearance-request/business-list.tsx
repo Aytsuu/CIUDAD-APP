@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
-import { getUnpaidBusinessPermits, UnpaidBusinessPermit } from './queries/ClearanceQueries'
+import { getBusinessPermits, UnpaidBusinessPermit } from './queries/ClearanceQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -19,17 +19,15 @@ const BusinessClearanceList = () => {
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
 
-  // Fetch business permits from API (fetch all, filter client-side like web)
+  // Fetch unpaid business permits from API
   useEffect(() => {
     const fetchBusinessPermits = async () => {
       try {
         setLoading(true)
-        // Fetch all data without payment_status filter (like web does)
-        const data = await getUnpaidBusinessPermits(searchQuery, 1, 1000)
-        setBusinessPermits(data.results)
+        const data = await getBusinessPermits(searchQuery)
+        setBusinessPermits(data)
         setError(null)
       } catch (err) {
-        console.error('Error fetching business permits:', err)
         setError('Failed to load business permits')
       } finally {
         setLoading(false)
@@ -39,11 +37,16 @@ const BusinessClearanceList = () => {
     fetchBusinessPermits()
   }, [searchQuery])
 
-  const getPaymentBadge = (business: UnpaidBusinessPermit) => {
-    // First check if request status is Declined
+  const getStatusBadge = (business: UnpaidBusinessPermit) => {
+    // First check if request status is Cancelled
     const reqStatus = (business.req_status || "").toLowerCase();
-    if (reqStatus === "declined" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
-      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>
+    if (reqStatus === "cancelled" || reqStatus.includes("cancel")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700">Cancelled</Text>
+    }
+    
+    // Then check if request status is Declined
+    if (reqStatus === "declined" || reqStatus.includes("decline") || reqStatus.includes("rejected")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Decline</Text>
     }
     
     // Then check payment status
@@ -52,7 +55,7 @@ const BusinessClearanceList = () => {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Paid</Text>
     }
     
-    // Default to Unpaid
+    // Default to Unpaid (instead of Pending)
     return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Unpaid</Text>
   }
 
@@ -79,29 +82,25 @@ const BusinessClearanceList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Filter business permits based on payment status and search (like web does)
+  // Filter business permits by payment status and request status
   const filteredBusinesses = useMemo(() => {
     let filtered = businessPermits;
-    
-    // Filter out cancelled requests first
-    filtered = filtered.filter(business => {
-      const status = business.req_status || '';
-      return status !== 'Cancelled' && status.toLowerCase() !== 'cancelled';
-    });
-    
-    // Filter by payment status (exactly like web component does)
+
+    // Filter by payment status (exactly like certificate list)
     if (paymentStatusFilter === 'Declined') {
-      // Show only declined requests (check req_status field like web does)
+      // Show only declined/cancelled requests
       filtered = filtered.filter(business => {
         const status = business.req_status || '';
-        return status === 'Declined' || status.toLowerCase() === 'declined';
+        const statusLower = status.toLowerCase();
+        return statusLower === 'declined' || statusLower === 'cancelled';
       });
     } else {
-      // For paid/unpaid/all, filter out declined requests first
+      // For paid/unpaid, filter out declined/cancelled requests first
       filtered = filtered.filter(business => {
         const status = business.req_status || '';
-        // Filter out declined requests (like web does)
-        if (status === 'Declined' || status.toLowerCase() === 'declined') {
+        const statusLower = status.toLowerCase();
+        // Filter out declined and cancelled requests
+        if (statusLower === 'declined' || statusLower === 'cancelled') {
           return false;
         }
         
@@ -112,26 +111,12 @@ const BusinessClearanceList = () => {
         } else if (paymentStatusFilter === 'Unpaid') {
           return paymentStatus !== 'paid';
         }
-        // Declined already handled above
         return false;
       });
     }
-    
-    // Apply search filter
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      filtered = filtered.filter(business => {
-        return (
-          business.bp_id?.toLowerCase().includes(searchLower) ||
-          business.business_name?.toLowerCase().includes(searchLower) ||
-          business.owner_name?.toLowerCase().includes(searchLower) ||
-          business.business_type?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-    
+
     return filtered;
-  }, [businessPermits, searchQuery, paymentStatusFilter])
+  }, [businessPermits, paymentStatusFilter]);
 
   if (loading) {
     return (
@@ -151,7 +136,7 @@ const BusinessClearanceList = () => {
           <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Business Permit Requests</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Business Permit Request</Text>}
       rightAction={
         <TouchableOpacity 
           onPress={() => setShowSearch(!showSearch)} 
@@ -192,7 +177,7 @@ const BusinessClearanceList = () => {
           {error ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <Text className="text-red-800 text-sm text-center">Failed to load unpaid business permits.</Text>
+                <Text className="text-red-800 text-sm text-center">Failed to load business permits.</Text>
               </View>
             </View>
           ) : (
@@ -201,14 +186,31 @@ const BusinessClearanceList = () => {
                 filteredBusinesses.map((business, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                     <View className="flex-row justify-between items-center">
-                      <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
-                      {getPaymentBadge(business)}
+                      <View className="flex-1">
+                        <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
+                        {business.purpose && (
+                          <Text className="text-gray-600 text-xs mt-1">{business.purpose}</Text>
+                        )}
+                        {business.bus_clearance_gross_sales && (
+                          <Text className="text-gray-900 text-xs mt-1 font-semibold">
+                            ₱{parseFloat(String(business.bus_clearance_gross_sales)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Text>
+                        )}
+                        {business.req_amount && !business.bus_clearance_gross_sales && (
+                          <Text className="text-gray-900 text-xs mt-1 font-semibold">
+                            ₱{parseFloat(String(business.req_amount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Text>
+                        )}
+                        <Text className="text-gray-500 text-xs mt-1">{formatDate(business.req_request_date)}</Text>
+                        <Text className="text-gray-500 text-xs mt-1">{business.req_payment_status}</Text>
+                      </View>
+                      {getStatusBadge(business)}
                     </View>
-                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bp_id}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Type: {business.business_type}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
-                    {business.req_status === 'Declined' && business.decline_reason && (
+                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bpr_id || business.bp_id}</Text>
+                    {business.owner_name && (
+                      <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name}</Text>
+                    )}
+                    {(business.req_status === 'Declined' || business.req_status === 'Cancelled') && business.decline_reason && (
                       <Text className="text-gray-500 text-xs mt-1">Decline Reason: {business.decline_reason}</Text>
                     )}
                   </View>

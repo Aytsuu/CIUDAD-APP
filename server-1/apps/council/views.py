@@ -331,6 +331,27 @@ class TemplateView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                create_activity_log(
+                    act_type="Template Create",
+                    act_description=f"Template record created. Filename: '{instance.temp_filename}'. Purpose: {instance.pr_id.pr_purpose if instance.pr_id else 'N/A'}",
+                    staff=staff,
+                    record_id=str(instance.temp_id)
+                )
+                logger.info(f"Activity logged for template creation: {instance.temp_id}")
+            else:
+                logger.debug(f"Skipping activity log for Template create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for template creation: {str(e)}")
+        return instance
+
 
 class TemplateFileView(generics.ListCreateAPIView):
     serializer_class = TemplateFileSerializer
@@ -400,9 +421,51 @@ class UpdateTemplateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Capture old values
+        old_values = {
+            'temp_filename': instance.temp_filename,
+            'pr_id': instance.pr_id.pr_id if instance.pr_id else None
+        }
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Log activity with field changes
+            try:
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    changes = []
+                    
+                    if 'temp_filename' in serializer.validated_data and old_values['temp_filename'] != updated_instance.temp_filename:
+                        changes.append(f"temp_filename: '{old_values['temp_filename']}' → '{updated_instance.temp_filename}'")
+                    
+                    if 'pr_id' in serializer.validated_data:
+                        new_pr_id = serializer.validated_data.get('pr_id')
+                        if new_pr_id and hasattr(new_pr_id, 'pr_id'):
+                            new_pr_id = new_pr_id.pr_id
+                        if old_values['pr_id'] != new_pr_id:
+                            changes.append(f"pr_id: '{old_values['pr_id']}' → '{new_pr_id}'")
+                    
+                    if changes:
+                        description = f"Template changes: {'; '.join(changes)}"
+                    else:
+                        description = f"Template {updated_instance.temp_id} updated (no field-level changes recorded)"
+                    
+                    create_activity_log(
+                        act_type="Template Updated",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(updated_instance.temp_id)
+                    )
+                    logger.info(f"Activity logged for template update: {updated_instance.temp_id}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for template update: {str(log_error)}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1080,6 +1143,35 @@ class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
         # Order by date descending (most recent first)
         return queryset.order_by('-mom_date')
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Format area of focus for display
+                area_of_focus = instance.mom_area_of_focus
+                if isinstance(area_of_focus, list):
+                    area_of_focus_display = ", ".join(area_of_focus).upper()
+                else:
+                    area_of_focus_display = str(area_of_focus).upper() if area_of_focus else "N/A"
+                
+                # Create detailed activity log
+                create_activity_log(
+                    act_type="Minutes of Meeting Create",
+                    act_description=f"MinutesOfMeeting record created. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                    staff=staff,
+                    record_id=str(instance.mom_id)
+                )
+                logger.info(f"Activity logged for minutes of meeting creation: {instance.mom_id}")
+            else:
+                logger.debug(f"Skipping activity log for MinutesOfMeeting create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for minutes of meeting creation: {str(e)}")
+        return instance
+    
 class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
@@ -1148,65 +1240,104 @@ class UpdateMinutesOfMeetingView(ActivityLogMixin, generics.RetrieveUpdateAPIVie
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        old_is_archive = instance.mom_is_archive
         
-        # Format area of focus for display
-        old_area_of_focus = instance.mom_area_of_focus
-        if isinstance(old_area_of_focus, list):
-            old_area_of_focus_display = ", ".join(old_area_of_focus).upper()
-        else:
-            old_area_of_focus_display = str(old_area_of_focus).upper() if old_area_of_focus else "N/A"
+        # Capture old values for all fields that might be updated
+        old_values = {
+            'mom_title': instance.mom_title,
+            'mom_agenda': instance.mom_agenda,
+            'mom_date': instance.mom_date,
+            'mom_area_of_focus': instance.mom_area_of_focus,
+            'mom_is_archive': instance.mom_is_archive,
+            'staff_id': instance.staff_id.staff_id if instance.staff_id else None
+        }
         
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             updated_instance = serializer.save()
             
-            # Log activity (custom logging for archive/restore and updates)
+            # Log activity with field-level changes
             try:
-                from apps.act_log.utils import create_activity_log
-                from apps.administration.models import Staff
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
                 
-                staff_id = request.data.get('staff_id')
-                if not staff_id:
-                    staff_id = updated_instance.staff_id.staff_id if updated_instance.staff_id else None
+                staff, staff_identifier = resolve_staff_from_request(request)
                 
-                if staff_id:
-                    if isinstance(staff_id, str) and len(staff_id) < 11:
-                        staff_id = staff_id.zfill(11)
-                    elif isinstance(staff_id, int):
-                        staff_id = str(staff_id).zfill(11)
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Track field changes
+                    changes = []
                     
-                    staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                    # Check each field for changes
+                    if 'mom_title' in serializer.validated_data and old_values['mom_title'] != updated_instance.mom_title:
+                        old_title = old_values['mom_title'] or 'N/A'
+                        new_title = updated_instance.mom_title or 'N/A'
+                        changes.append(f"mom_title: '{old_title}' → '{new_title}'")
                     
-                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
-                        # Check if archive status changed
-                        new_is_archive = updated_instance.mom_is_archive
-                        new_area_of_focus = updated_instance.mom_area_of_focus
-                        if isinstance(new_area_of_focus, list):
-                            new_area_of_focus_display = ", ".join(new_area_of_focus).upper()
+                    if 'mom_agenda' in serializer.validated_data and old_values['mom_agenda'] != updated_instance.mom_agenda:
+                        old_agenda = old_values['mom_agenda'] or 'N/A'
+                        new_agenda = updated_instance.mom_agenda or 'N/A'
+                        # Truncate long strings
+                        old_agenda_short = (old_agenda[:60] + '…') if len(old_agenda) > 60 else old_agenda
+                        new_agenda_short = (new_agenda[:60] + '…') if len(new_agenda) > 60 else new_agenda
+                        changes.append(f"mom_agenda: '{old_agenda_short}' → '{new_agenda_short}'")
+                    
+                    if 'mom_date' in serializer.validated_data and old_values['mom_date'] != updated_instance.mom_date:
+                        old_date = str(old_values['mom_date']) if old_values['mom_date'] else 'N/A'
+                        new_date = str(updated_instance.mom_date) if updated_instance.mom_date else 'N/A'
+                        changes.append(f"mom_date: '{old_date}' → '{new_date}'")
+                    
+                    if 'mom_area_of_focus' in serializer.validated_data and old_values['mom_area_of_focus'] != updated_instance.mom_area_of_focus:
+                        old_areas = old_values['mom_area_of_focus']
+                        if isinstance(old_areas, list):
+                            old_areas_display = ", ".join(old_areas).upper()
                         else:
-                            new_area_of_focus_display = str(new_area_of_focus).upper() if new_area_of_focus else "N/A"
+                            old_areas_display = str(old_areas).upper() if old_areas else 'N/A'
                         
-                        description_parts = []
+                        new_areas = updated_instance.mom_area_of_focus
+                        if isinstance(new_areas, list):
+                            new_areas_display = ", ".join(new_areas).upper()
+                        else:
+                            new_areas_display = str(new_areas).upper() if new_areas else 'N/A'
                         
-                        # Check for archive status change
-                        if old_is_archive != new_is_archive:
-                            if new_is_archive:
-                                description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' archived")
+                        changes.append(f"mom_area_of_focus: '{old_areas_display}' → '{new_areas_display}'")
+                    
+                    if 'mom_is_archive' in serializer.validated_data and old_values['mom_is_archive'] != updated_instance.mom_is_archive:
+                        old_archive = 'True' if old_values['mom_is_archive'] else 'False'
+                        new_archive = 'True' if updated_instance.mom_is_archive else 'False'
+                        changes.append(f"mom_is_archive: '{old_archive}' → '{new_archive}'")
+                    
+                    if 'staff_id' in request.data:
+                        new_staff_id = request.data.get('staff_id')
+                        if isinstance(new_staff_id, str) and len(new_staff_id) < 11:
+                            new_staff_id = new_staff_id.zfill(11)
+                        elif isinstance(new_staff_id, int):
+                            new_staff_id = str(new_staff_id).zfill(11)
+                        
+                        old_staff_id = old_values['staff_id'] or 'N/A'
+                        if isinstance(old_staff_id, str) and len(old_staff_id) < 11:
+                            old_staff_id = old_staff_id.zfill(11)
+                        elif isinstance(old_staff_id, int):
+                            old_staff_id = str(old_staff_id).zfill(11)
+                        
+                        if str(old_staff_id) != str(new_staff_id):
+                            changes.append(f"staff_id: '{old_staff_id}' → '{new_staff_id}'")
+                    
+                    # Determine action type
+                        if old_values['mom_is_archive'] != updated_instance.mom_is_archive:
+                            if updated_instance.mom_is_archive:
+                                act_type = "Minutes of Meeting Archived"
                             else:
-                                description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' restored")
-                        
-                        # Add update details
-                        if not description_parts:
-                            description_parts.append(f"Minutes of Meeting '{updated_instance.mom_title}' updated")
-                        
-                        # Add details
-                        description_parts.append(f"Date: {updated_instance.mom_date}")
-                        description_parts.append(f"Area of Focus: {new_area_of_focus_display}")
+                                act_type = "Minutes of Meeting Restored"
+                        else:
+                            act_type = "Minutes of Meeting Updated"
+                    
+                    # Build description
+                    if changes:
+                        description = f"MinutesOfMeeting changes: {'; '.join(changes)}"
+                    else:
+                        description = "MinutesOfMeeting record updated (no field-level changes recorded)"
                         
                         create_activity_log(
-                            act_type="Minutes of Meeting Updated" if old_is_archive == new_is_archive else ("Minutes of Meeting Archived" if new_is_archive else "Minutes of Meeting Restored"),
-                            act_description=". ".join(description_parts),
+                        act_type=act_type,
+                        act_description=description,
                             staff=staff,
                             record_id=str(updated_instance.mom_id)
                         )
@@ -1238,27 +1369,31 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
         
         # Log activity before deletion
         try:
-            from apps.act_log.utils import create_activity_log
-            from apps.administration.models import Staff
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
             
-            staff_id = request.data.get('staff_id') or (instance.staff_id.staff_id if instance.staff_id else None)
+            staff, staff_identifier = resolve_staff_from_request(request)
             
+            if not staff:
+                # Fallback to instance staff_id
+                staff_id = instance.staff_id.staff_id if instance.staff_id else None
             if staff_id:
                 if isinstance(staff_id, str) and len(staff_id) < 11:
                     staff_id = staff_id.zfill(11)
                 elif isinstance(staff_id, int):
                     staff_id = str(staff_id).zfill(11)
-                
+                    from apps.administration.models import Staff
                 staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
                 
                 if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                     create_activity_log(
                         act_type="Minutes of Meeting Deleted",
-                        act_description=f"Minutes of Meeting '{instance.mom_title}' deleted. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                    act_description=f"MinutesOfMeeting record deleted. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
                         staff=staff,
                         record_id=str(instance.mom_id)
                     )
                     logger.info(f"Activity logged for minutes of meeting deletion: {instance.mom_id}")
+            else:
+                logger.debug(f"Skipping activity log for MinutesOfMeeting delete: No valid staff")
         except Exception as log_error:
             logger.error(f"Failed to log activity for minutes of meeting deletion: {str(log_error)}")
         
@@ -1376,31 +1511,116 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def update(self, request, *args, **kwargs):
         ordinance = self.get_object()
+        
+        # Capture old values for all fields that might be updated
+        old_values = {
+            'ord_title': ordinance.ord_title,
+            'ord_date_created': ordinance.ord_date_created,
+            'ord_category': ordinance.ord_category,
+            'ord_details': ordinance.ord_details,
+            'ord_year': ordinance.ord_year,
+            'ord_is_archive': ordinance.ord_is_archive,
+            'ord_repealed': ordinance.ord_repealed,
+            'ord_is_ammend': ordinance.ord_is_ammend,
+            'ord_ammend_ver': ordinance.ord_ammend_ver,
+            'ord_parent': ordinance.ord_parent,
+            'staff_id': ordinance.staff.staff_id if ordinance.staff else None
+        }
+        
         serializer = self.get_serializer(ordinance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         updated_ordinance = serializer.save()
         
-        # Log the activity
+        # Log the activity with field-level changes
         try:
-            from apps.act_log.utils import create_activity_log
-            from apps.administration.models import Staff
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
             
-            # Get staff member from the ordinance or request
-            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
+            staff, staff_identifier = resolve_staff_from_request(request)
+            
+            if not staff:
+                # Fallback to instance staff_id
+                staff_id = updated_ordinance.staff.staff_id if updated_ordinance.staff else None
             if staff_id:
-                # Format staff_id properly (pad with leading zeros if needed)
                 if isinstance(staff_id, str) and len(staff_id) < 11:
                     staff_id = staff_id.zfill(11)
                 elif isinstance(staff_id, int):
                     staff_id = str(staff_id).zfill(11)
+                    from apps.administration.models import Staff
             staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            # Only log if we have a valid staff with staff_id
             if staff and hasattr(staff, 'staff_id') and staff.staff_id:
-                # Create activity log
+                # Track field changes
+                changes = []
+                
+                if 'ord_title' in serializer.validated_data and old_values['ord_title'] != updated_ordinance.ord_title:
+                    old_title = old_values['ord_title'] or 'N/A'
+                    new_title = updated_ordinance.ord_title or 'N/A'
+                    changes.append(f"ord_title: '{old_title}' → '{new_title}'")
+                
+                if 'ord_date_created' in serializer.validated_data and old_values['ord_date_created'] != updated_ordinance.ord_date_created:
+                    old_date = str(old_values['ord_date_created']) if old_values['ord_date_created'] else 'N/A'
+                    new_date = str(updated_ordinance.ord_date_created) if updated_ordinance.ord_date_created else 'N/A'
+                    changes.append(f"ord_date_created: '{old_date}' → '{new_date}'")
+                
+                if 'ord_category' in serializer.validated_data and old_values['ord_category'] != updated_ordinance.ord_category:
+                    old_cat = ", ".join(old_values['ord_category']) if isinstance(old_values['ord_category'], list) and old_values['ord_category'] else (str(old_values['ord_category']) if old_values['ord_category'] else 'N/A')
+                    new_cat = ", ".join(updated_ordinance.ord_category) if isinstance(updated_ordinance.ord_category, list) and updated_ordinance.ord_category else (str(updated_ordinance.ord_category) if updated_ordinance.ord_category else 'N/A')
+                    changes.append(f"ord_category: '{old_cat}' → '{new_cat}'")
+                
+                if 'ord_details' in serializer.validated_data and old_values['ord_details'] != updated_ordinance.ord_details:
+                    old_details = (old_values['ord_details'][:60] + '…') if old_values['ord_details'] and len(old_values['ord_details']) > 60 else (old_values['ord_details'] or 'N/A')
+                    new_details = (updated_ordinance.ord_details[:60] + '…') if updated_ordinance.ord_details and len(updated_ordinance.ord_details) > 60 else (updated_ordinance.ord_details or 'N/A')
+                    changes.append(f"ord_details: '{old_details}' → '{new_details}'")
+                
+                if 'ord_year' in serializer.validated_data and old_values['ord_year'] != updated_ordinance.ord_year:
+                    changes.append(f"ord_year: '{old_values['ord_year']}' → '{updated_ordinance.ord_year}'")
+                
+                if 'ord_is_archive' in serializer.validated_data and old_values['ord_is_archive'] != updated_ordinance.ord_is_archive:
+                    old_archive = 'True' if old_values['ord_is_archive'] else 'False'
+                    new_archive = 'True' if updated_ordinance.ord_is_archive else 'False'
+                    changes.append(f"ord_is_archive: '{old_archive}' → '{new_archive}'")
+                
+                if 'ord_repealed' in serializer.validated_data and old_values['ord_repealed'] != updated_ordinance.ord_repealed:
+                    old_repealed = 'True' if old_values['ord_repealed'] else 'False'
+                    new_repealed = 'True' if updated_ordinance.ord_repealed else 'False'
+                    changes.append(f"ord_repealed: '{old_repealed}' → '{new_repealed}'")
+                
+                if 'ord_is_ammend' in serializer.validated_data and old_values['ord_is_ammend'] != updated_ordinance.ord_is_ammend:
+                    old_amend = 'True' if old_values['ord_is_ammend'] else 'False'
+                    new_amend = 'True' if updated_ordinance.ord_is_ammend else 'False'
+                    changes.append(f"ord_is_ammend: '{old_amend}' → '{new_amend}'")
+                
+                if 'ord_ammend_ver' in serializer.validated_data and old_values['ord_ammend_ver'] != updated_ordinance.ord_ammend_ver:
+                    changes.append(f"ord_ammend_ver: '{old_values['ord_ammend_ver']}' → '{updated_ordinance.ord_ammend_ver}'")
+                
+                if 'ord_parent' in serializer.validated_data and old_values['ord_parent'] != updated_ordinance.ord_parent:
+                    changes.append(f"ord_parent: '{old_values['ord_parent']}' → '{updated_ordinance.ord_parent}'")
+                
+                if 'staff_id' in request.data:
+                    new_staff_id = request.data.get('staff_id')
+                    if isinstance(new_staff_id, str) and len(new_staff_id) < 11:
+                        new_staff_id = new_staff_id.zfill(11)
+                    elif isinstance(new_staff_id, int):
+                        new_staff_id = str(new_staff_id).zfill(11)
+                    
+                    old_staff_id = old_values['staff_id'] or 'N/A'
+                    if isinstance(old_staff_id, str) and len(old_staff_id) < 11:
+                        old_staff_id = old_staff_id.zfill(11)
+                    elif isinstance(old_staff_id, int):
+                        old_staff_id = str(old_staff_id).zfill(11)
+                    
+                    if str(old_staff_id) != str(new_staff_id):
+                        changes.append(f"staff_id: '{old_staff_id}' → '{new_staff_id}'")
+                
+                # Build description
+                if changes:
+                    description = f"Ordinance changes: {'; '.join(changes)}"
+                else:
+                    description = f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated (no field-level changes recorded)"
+                
                 create_activity_log(
                     act_type="Ordinance Updated",
-                    act_description=f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated",
+                    act_description=description,
                     staff=staff,
                     record_id=updated_ordinance.ord_num
                 )

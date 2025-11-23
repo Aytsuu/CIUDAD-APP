@@ -40,9 +40,15 @@ const CertificateClearanceList = () => {
   }, [searchQuery])
 
   const getPaymentBadge = (certificate: UnpaidCertificate) => {
-    // First check if request status is Declined or Cancelled (both show as Declined)
     const reqStatus = (certificate.req_status || "").toLowerCase();
-    if (reqStatus === "declined" || reqStatus === "cancelled" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
+    
+    // First check if request status is Cancelled (check this before declined)
+    if (reqStatus === "cancelled" || reqStatus.includes("cancel")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700">Cancelled</Text>
+    }
+    
+    // Then check if request status is Declined
+    if (reqStatus === "declined" || reqStatus.includes("decline") || reqStatus.includes("rejected")) {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>
     }
     

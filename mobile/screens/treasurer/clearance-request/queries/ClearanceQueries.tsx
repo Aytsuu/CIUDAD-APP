@@ -27,14 +27,18 @@ export interface UnpaidCertificate {
 
 export interface UnpaidBusinessPermit {
   bp_id: string;
+  bpr_id?: string; // Add bpr_id for consistency with web
   business_name: string;
   business_type: string;
+  purpose?: string; // Add purpose field like web version
   owner_name: string;
   business_address: string;
   req_request_date: string;
   req_status: string;
   req_payment_status: string;
   req_transac_id: string;
+  req_amount?: number | string; // Add amount field
+  bus_clearance_gross_sales?: string; // Add gross sales field
   decline_reason?: string;
 }
 
@@ -203,6 +207,76 @@ export const getUnpaidBusinessPermits = async (
     console.error('Error fetching unpaid business permits:', error.response?.data || error.message);
     if (error.response?.status === 500) {
       return { results: [], count: 0, next: null, previous: null };
+    }
+    throw error;
+  }
+};
+
+// Fetch unpaid business permits (matching web version for unpaid tab)
+export const getBusinessPermits = async (
+  search?: string
+): Promise<UnpaidBusinessPermit[]> => {
+  try {
+    // Fetch from the same endpoint as web version
+    const params = new URLSearchParams();
+    if (search) {
+      params.append('search', search);
+    }
+    const url = `/clerk/business-permit/${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await api.get(url);
+    const payload = res.data as any;
+
+    // Handle paginated or non-paginated responses
+    let rawItems: any[] = [];
+    if (Array.isArray(payload)) {
+      rawItems = payload;
+    } else if (Array.isArray(payload?.results)) {
+      rawItems = payload.results;
+    } else if (Array.isArray(payload?.data)) {
+      rawItems = payload.data;
+    }
+
+    // Normalize and map fields like web version
+    const normalized: UnpaidBusinessPermit[] = rawItems.map((item: any) => ({
+      bp_id: String(item.bpr_id ?? item.bp_id ?? item.id ?? ''),
+      bpr_id: item.bpr_id ? String(item.bpr_id) : undefined,
+      business_name: item.business_name ?? item.bus_permit_name ?? '',
+      business_type: item.business_type || item.purpose || '',
+      purpose: item.purpose || '',
+      owner_name: item.requestor || item.owner_name || '',
+      business_address: item.business_address ?? item.bus_permit_address ?? '',
+      req_request_date: item.req_request_date || '',
+      req_status: item.req_status || 'Pending',
+      req_payment_status: item.req_payment_status || 'Unpaid',
+      req_transac_id: item.req_transac_id || '',
+      req_amount: item.req_amount ?? item.bus_clearance_gross_sales ?? undefined,
+      bus_clearance_gross_sales: item.bus_clearance_gross_sales,
+      decline_reason: item.bus_reason || item.bpr_reason || item.req_declined_reason || item.decline_reason || '',
+    }));
+
+    // Don't filter by payment status here - let the component handle filtering
+    const filtered = normalized;
+
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      return filtered.filter((item) => {
+        return (
+          item.bp_id?.toLowerCase().includes(searchLower) ||
+          item.bpr_id?.toLowerCase().includes(searchLower) ||
+          item.business_name?.toLowerCase().includes(searchLower) ||
+          item.owner_name?.toLowerCase().includes(searchLower) ||
+          item.business_type?.toLowerCase().includes(searchLower) ||
+          item.purpose?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filtered;
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response?.status === 500) {
+      return [];
     }
     throw error;
   }

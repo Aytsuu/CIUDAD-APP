@@ -45,7 +45,8 @@ export const getCertificates = async (
         if (purpose) params.append('purpose', purpose);
         
         const queryString = params.toString();
-        const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+        // Use certificate-all endpoint to get both resident and non-resident certificates (matching web)
+        const url = `/clerk/certificate-all/${queryString ? '?' + queryString : ''}`;
         
         const res = await api.get(url);
         
