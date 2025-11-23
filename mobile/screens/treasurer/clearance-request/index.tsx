@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { router } from 'expo-router'
-import { FileText, Building2, Award, ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import PageLayout from '../../_PageLayout'
 import { LinearGradient } from 'expo-linear-gradient'
 
@@ -27,21 +27,21 @@ const ClearanceRequestMain = () => {
       id: 'certificate',
       title: 'Personal & Others',
       description: 'View certificate requests',
-      icon: FileText,
+      icon: "",
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
       id: 'business',
       title: 'Business Permits',
       description: 'View business permit requests',
-      icon: Building2,
+      icon: "",
       gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       id: 'service_charge',
       title: 'Service Charge',
       description: 'View service charge requests',
-      icon: Award,
+      icon: "",
       gradient: ['#2563eb', '#1e40af'],
     }
   ]
@@ -87,7 +87,7 @@ const ClearanceRequestMain = () => {
                 <View className="flex-1 justify-between">
                   <View className="items-start">
                     <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center">
-                      <item.icon size={24} color="white" />
+                      <Text className="text-3xl">{item.icon}</Text>
                     </View>
                   </View>
                   

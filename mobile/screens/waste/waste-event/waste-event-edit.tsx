@@ -318,7 +318,7 @@ function WasteEventEdit() {
 
         {/* Event Description */}
         <View className="mb-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Event Description (Optional)</Text>
+          <Text className="text-sm font-medium text-gray-700 mb-2">Event Description</Text>
           <Controller
             control={form.control}
             name="eventDescription"

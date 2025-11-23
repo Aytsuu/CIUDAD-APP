@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { format, parseISO, isSameMonth, isSameDay, addMonths } from "date-fns";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Plus } from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -32,9 +33,18 @@ const WasteEventMain = () => {
   // Fetch active waste events
   const { data: activeEventsData = [], isLoading: isActiveLoading, refetch } = useGetActiveWasteEvents();
 
+  // Refetch when screen comes into focus (e.g., after creating an event)
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   useEffect(() => {
-    if (!isActiveLoading) {
-      setAllEvents(activeEventsData);
+    if (!isActiveLoading && activeEventsData) {
+      // Ensure we have an array and map the data correctly
+      const events = Array.isArray(activeEventsData) ? activeEventsData : [];
+      setAllEvents(events);
       setIsLoading(false);
     }
   }, [activeEventsData, isActiveLoading]);
@@ -49,8 +59,16 @@ const WasteEventMain = () => {
   const getEventsForDate = (date: Date) => {
     return allEvents.filter(event => {
       if (!event.we_date) return false;
-      const eventDate = parseISO(event.we_date);
-      return isSameDay(eventDate, date);
+      try {
+        // Parse the date string (format: "2025-11-23")
+        // Create a date object from the date string, ignoring timezone
+        const dateStr = event.we_date.split('T')[0]; // Get just the date part
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const eventDate = new Date(year, month - 1, day); // month is 0-indexed
+        return isSameDay(eventDate, date);
+      } catch (error) {
+        return false;
+      }
     });
   };
 
@@ -93,8 +111,15 @@ const WasteEventMain = () => {
     const dateObj = new Date(year, month, date);
     const hasEvent = allEvents.some((event) => {
       if (!event.we_date) return false;
-      const eventDate = parseISO(event.we_date);
-      return isSameDay(eventDate, dateObj);
+      try {
+        // Parse the date string (format: "2025-11-23")
+        const dateStr = event.we_date.split('T')[0]; // Get just the date part
+        const [eventYear, eventMonth, eventDay] = dateStr.split('-').map(Number);
+        const eventDate = new Date(eventYear, eventMonth - 1, eventDay); // month is 0-indexed
+        return isSameDay(eventDate, dateObj);
+      } catch (error) {
+        return false;
+      }
     });
     const isSelected = isSameDay(selectedDate, dateObj);
     const isToday = isSameDay(dateObj, new Date());
@@ -145,24 +170,24 @@ const WasteEventMain = () => {
         )}
         <View className="mt-2">
           <Text className="text-xs font-medium text-gray-500">Location:</Text>
-          <Text className="text-sm text-gray-700">📍 {item.we_location}</Text>
+          <Text className="text-sm text-gray-700">{item.we_location}</Text>
         </View>
         {item.we_time && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Time:</Text>
-            <Text className="text-sm text-gray-700">🕒 {formatTime(item.we_time)}</Text>
+            <Text className="text-sm text-gray-700">{formatTime(item.we_time)}</Text>
           </View>
         )}
         {item.we_organizer && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Organizer:</Text>
-            <Text className="text-sm text-gray-700">👤 {item.we_organizer}</Text>
+            <Text className="text-sm text-gray-700">{item.we_organizer}</Text>
           </View>
         )}
         {item.we_invitees && item.we_invitees !== "None" && (
           <View className="mt-2">
             <Text className="text-xs font-medium text-gray-500">Invitees:</Text>
-            <Text className="text-sm text-gray-700">👥 {item.we_invitees}</Text>
+            <Text className="text-sm text-gray-700">{item.we_invitees}</Text>
           </View>
         )}
       </View>

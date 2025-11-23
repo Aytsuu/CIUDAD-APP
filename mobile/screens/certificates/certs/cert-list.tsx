@@ -29,7 +29,6 @@ const CertList = () => {
         setCertificates(data.results)
         setError(null)
       } catch (err) {
-        console.error('Error fetching certificates:', err)
         setError('Failed to load certificates')
       } finally {
         setLoading(false)

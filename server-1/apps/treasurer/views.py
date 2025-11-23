@@ -105,6 +105,38 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
 
         return queryset.order_by('plan_id')
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.plan_year:
+                    description_parts.append(f"Year: {instance.plan_year}")
+                if instance.plan_issue_date:
+                    date_str = instance.plan_issue_date.strftime('%Y-%m-%d') if not isinstance(instance.plan_issue_date, str) else instance.plan_issue_date
+                    description_parts.append(f"Issue Date: {date_str}")
+                if instance.plan_budgetaryObligations:
+                    description_parts.append(f"Budgetary Obligations: ₱{instance.plan_budgetaryObligations:,.2f}")
+                
+                description = ". ".join(description_parts) if description_parts else "Budget_Plan record created"
+                
+                create_activity_log(
+                    act_type="Budget_Plan Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.plan_id)
+                )
+                logger.info(f"Activity logged for budget plan creation: {instance.plan_id}")
+            else:
+                logger.debug(f"Skipping activity log for Budget_Plan create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for budget plan creation: {str(e)}")
+        return instance
+    
 class BudgetPlanInactiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer

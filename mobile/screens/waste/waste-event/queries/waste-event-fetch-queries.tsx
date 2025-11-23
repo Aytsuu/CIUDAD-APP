@@ -75,7 +75,12 @@ export const useGetActiveWasteEvents = (search?: string) => {
             }
 
             const response = await api.get(`waste/waste-event/?${params.toString()}`);
-            return response.data.results || [];
+            // Handle both array response and paginated response
+            const data = response.data;
+            if (Array.isArray(data)) {
+                return data;
+            }
+            return data.results || [];
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
     });

@@ -92,17 +92,18 @@ function PersonalClearance() {
 
     const filteredData = clearanceRequests?.filter((item: NonResidentReq | ResidentReq) => {
         if (activeTab === "declined") {
-            // Show only declined requests
-            return residentType === "non-resident" 
-                ? (item as NonResidentReq).nrc_req_status === "Declined"
-                : (item as ResidentReq).cr_req_status === "Declined";
+            // Show only declined/cancelled requests (both show as Declined)
+            const status = residentType === "non-resident" 
+                ? (item as NonResidentReq).nrc_req_status
+                : (item as ResidentReq).cr_req_status;
+            return status === "Declined" || status === "Cancelled";
         } else {
-            // Filter out declined requests for paid/unpaid tabs
-            const isDeclined = residentType === "non-resident" 
-                ? (item as NonResidentReq).nrc_req_status === "Declined"
-                : (item as ResidentReq).cr_req_status === "Declined";
+            // Filter out declined/cancelled requests for paid/unpaid tabs
+            const status = residentType === "non-resident" 
+                ? (item as NonResidentReq).nrc_req_status
+                : (item as ResidentReq).cr_req_status;
             
-            if (isDeclined) {
+            if (status === "Declined" || status === "Cancelled") {
                 return false;
             }
             

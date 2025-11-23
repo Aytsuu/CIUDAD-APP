@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const CertificateClearanceList = () => {
   const [certificates, setCertificates] = useState<UnpaidCertificate[]>([])
@@ -30,7 +30,6 @@ const CertificateClearanceList = () => {
         setCertificates(data.results)
         setError(null)
       } catch (err) {
-        console.error('Error fetching certificates:', err)
         setError('Failed to load certificates')
       } finally {
         setLoading(false)
@@ -41,9 +40,9 @@ const CertificateClearanceList = () => {
   }, [searchQuery])
 
   const getPaymentBadge = (certificate: UnpaidCertificate) => {
-    // First check if request status is Declined
+    // First check if request status is Declined or Cancelled (both show as Declined)
     const reqStatus = (certificate.req_status || "").toLowerCase();
-    if (reqStatus === "declined" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
+    if (reqStatus === "declined" || reqStatus === "cancelled" || reqStatus.includes("declined") || reqStatus.includes("rejected")) {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>
     }
     
@@ -84,12 +83,6 @@ const CertificateClearanceList = () => {
   const filteredCertificates = useMemo(() => {
     let filtered = certificates;
     
-    // Filter out cancelled requests first
-    filtered = filtered.filter(cert => {
-      const status = cert.req_status || '';
-      return status !== 'Cancelled' && status.toLowerCase() !== 'cancelled';
-    });
-    
     // Filter by resident type first
     if (residentTypeFilter !== 'all') {
       filtered = filtered.filter(cert => {
@@ -102,17 +95,19 @@ const CertificateClearanceList = () => {
     
     // Filter by payment status (exactly like web component does)
     if (paymentStatusFilter === 'Declined') {
-      // Show only declined requests (check req_status field like web does)
+      // Show only declined/cancelled requests (both show as Declined like web does)
       filtered = filtered.filter(cert => {
         const status = cert.req_status || '';
-        return status === 'Declined' || status.toLowerCase() === 'declined';
+        const statusLower = status.toLowerCase();
+        return statusLower === 'declined' || statusLower === 'cancelled';
       });
     } else {
-      // For paid/unpaid/all, filter out declined requests first
+      // For paid/unpaid, filter out declined/cancelled requests first (like web does)
       filtered = filtered.filter(cert => {
         const status = cert.req_status || '';
-        // Filter out declined requests (like web does)
-        if (status === 'Declined' || status.toLowerCase() === 'declined') {
+        const statusLower = status.toLowerCase();
+        // Filter out declined and cancelled requests (like web does)
+        if (statusLower === 'declined' || statusLower === 'cancelled') {
           return false;
         }
         
@@ -123,7 +118,6 @@ const CertificateClearanceList = () => {
         } else if (paymentStatusFilter === 'Unpaid') {
           return paymentStatus !== 'paid';
         }
-        // Declined already handled above
         return false;
       });
     }
@@ -203,29 +197,29 @@ const CertificateClearanceList = () => {
         <View className="bg-white px-6 py-4 border-b border-gray-200">
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="text-xs font-medium text-gray-600 mb-2">Type Filter</Text>
-              <CustomDropdown
-                value={residentTypeFilter}
-                onSelect={(value: string) => setResidentTypeFilter(value as any)}
-                data={[
+              <SelectLayout
+                label="Type Filter"
+                placeholder="Select type"
+                options={[
                   { label: 'All', value: 'all' },
                   { label: 'Resident', value: 'resident' },
                   { label: 'Non-Resident', value: 'nonresident' }
                 ]}
-                placeholder="Select type"
+                selectedValue={residentTypeFilter}
+                onSelect={(option) => setResidentTypeFilter(option.value as any)}
               />
             </View>
             <View className="flex-1">
-              <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status Filter</Text>
-              <CustomDropdown
-                value={paymentStatusFilter}
-                onSelect={(value: string) => setPaymentStatusFilter(value as any)}
-                data={[
+              <SelectLayout
+                label="Payment Status Filter"
+                placeholder="Select payment status"
+                options={[
                   { label: 'Unpaid', value: 'Unpaid' },
                   { label: 'Paid', value: 'Paid' },
                   { label: 'Declined', value: 'Declined' }
                 ]}
-                placeholder="Select payment status"
+                selectedValue={paymentStatusFilter}
+                onSelect={(option) => setPaymentStatusFilter(option.value as any)}
               />
             </View>
           </View>
@@ -267,7 +261,7 @@ const CertificateClearanceList = () => {
                       {certificate.amount && (
                         <Text className="text-gray-500 text-xs mt-1">Amount: ₱{parseFloat(certificate.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
                       )}
-                      {certificate.req_status === 'Declined' && certificate.decline_reason && (
+                      {(certificate.req_status === 'Declined' || certificate.req_status === 'Cancelled') && certificate.decline_reason && (
                         <Text className="text-gray-500 text-xs mt-1">Decline Reason: {certificate.decline_reason}</Text>
                       )}
                     </View>

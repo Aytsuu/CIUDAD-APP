@@ -43,6 +43,42 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         
         return queryset
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                if instance.we_location:
+                    description_parts.append(f"Location: {instance.we_location}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                if instance.we_time:
+                    description_parts.append(f"Time: {instance.we_time}")
+                if instance.we_organizer:
+                    description_parts.append(f"Organizer: {instance.we_organizer}")
+                
+                description = ". ".join(description_parts) if description_parts else "WasteEvent record created"
+                
+                create_activity_log(
+                    act_type="WasteEvent Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged for waste event creation: {instance.we_num}")
+            else:
+                logger.debug(f"Skipping activity log for WasteEvent create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for waste event creation: {str(e)}")
+        return instance
+    
     def create(self, request, *args, **kwargs):
         # Create the waste event first
         response = super().create(request, *args, **kwargs)

@@ -80,7 +80,6 @@ export const getCertificates = async (
       } as Certificate;
     });
     
-    console.log('Web backend mapped certificates:', mapped);
     return {
       results: mapped,
       count: rawData.count,
@@ -89,7 +88,6 @@ export const getCertificates = async (
     };
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error in certificate queries:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -100,12 +98,9 @@ export { getCertificateById, searchCertificates, getPersonalClearances } from '.
 
 export const markCertificateAsIssued = async (certificateData: MarkCertificateVariables) => {
   try {
-    console.log('Making request to /clerk/mark-certificate-issued/');
-   
     throw new Error('markCertificateAsIssued not implemented in mobile API layer');
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error marking certificate as issued:', error.response?.data || error.message);
     throw error;
   }
 };

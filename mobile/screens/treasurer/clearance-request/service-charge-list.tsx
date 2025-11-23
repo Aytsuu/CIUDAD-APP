@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const ServiceChargeClearanceList = () => {
   const [serviceCharges, setServiceCharges] = useState<UnpaidServiceCharge[]>([])
@@ -175,16 +175,16 @@ const ServiceChargeClearanceList = () => {
 
         {/* Payment Status Filter */}
         <View className="bg-white px-6 py-4 border-b border-gray-200">
-          <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status Filter</Text>
-          <CustomDropdown
-            value={paymentStatusFilter}
-            onSelect={(value: string) => setPaymentStatusFilter(value as any)}
-            data={[
+          <SelectLayout
+            label="Payment Status Filter"
+            placeholder="Select payment status"
+            options={[
               { label: 'Unpaid', value: 'Unpaid' },
               { label: 'Paid', value: 'Paid' },
               { label: 'Declined', value: 'Declined' }
             ]}
-            placeholder="Select payment status"
+            selectedValue={paymentStatusFilter}
+            onSelect={(option) => setPaymentStatusFilter(option.value as any)}
           />
         </View>
 

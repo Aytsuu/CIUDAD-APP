@@ -47,9 +47,7 @@ export const getCertificates = async (
         const queryString = params.toString();
         const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
         
-        console.log('Making request to:', url);
         const res = await api.get(url);
-        console.log('API Response:', res.data);
         
         // Handle both paginated and non-paginated responses
         if (res.data.results) {
@@ -64,8 +62,6 @@ export const getCertificates = async (
         }
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -76,14 +72,10 @@ export const getCertificateById = async (crId: string): Promise<Certificate> => 
         // Validate input
         const validatedData = CertificateByIdSchema.parse({ cr_id: crId });
         
-        console.log(`Making request to /clerk/certificate/${validatedData.cr_id}/`);
         const res = await api.get(`/clerk/certificate/${validatedData.cr_id}/`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching certificate by ID:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -94,14 +86,10 @@ export const searchCertificates = async (query: string): Promise<Certificate[]> 
         // Validate input
         const validatedData = SearchCertificateSchema.parse({ query });
         
-        console.log(`Making search request to /clerk/certificate/?search=${validatedData.query}`);
         const res = await api.get(`/clerk/certificate/?search=${encodeURIComponent(validatedData.query)}`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error searching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -109,14 +97,10 @@ export const searchCertificates = async (query: string): Promise<Certificate[]> 
 // Get personal clearances
 export const getPersonalClearances = async (): Promise<any[]> => {
     try {
-        console.log('Making request to /clerk/personal-clearances/');
         const res = await api.get('/clerk/personal-clearances/');
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching personal clearances:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 }; 
