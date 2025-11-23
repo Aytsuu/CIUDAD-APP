@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Archive } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
 import AnnualDevelopmentPlanArchive from './annual_development_plan_archive.tsx';
@@ -11,7 +11,10 @@ import { useGetArchivedAnnualDevPlans } from "./queries/annualDevPlanFetchQuerie
 
 function AnnualDevelopmentPlan(){
     const { showLoading, hideLoading } = useLoading();
-    const [openedYear, setOpenedYear] = useState<number | null>(null);
+    const location = useLocation();
+    const [openedYear, setOpenedYear] = useState<number | null>(
+        (location.state as any)?.openedYear || null
+    );
     const [years, setYears] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'main' | 'archive'>('main');

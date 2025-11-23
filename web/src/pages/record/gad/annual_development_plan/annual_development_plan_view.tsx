@@ -138,7 +138,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   };
 
   const handleEdit = (devId: number) => {
-    navigate(`/gad-annual-development-plan/edit/${devId}`);
+    navigate(`/gad-annual-development-plan/edit/${devId}`, { state: { fromView: true, year } });
   };
 
   const handleViewProject = (proposal: any) => {
