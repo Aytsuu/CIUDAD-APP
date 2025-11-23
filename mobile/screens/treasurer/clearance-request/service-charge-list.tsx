@@ -19,13 +19,14 @@ const ServiceChargeClearanceList = () => {
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
 
-  // Fetch service charges from API (fetch all, filter client-side like web)
+  // Fetch service charges from API (use tab parameter like web)
   useEffect(() => {
     const fetchServiceCharges = async () => {
       try {
         setLoading(true)
-        // Fetch all data without payment_status filter (like web does)
-        const data = await getUnpaidServiceCharges(searchQuery, 1, 1000)
+        // Pass the tab parameter to fetch the correct data (like web does)
+        const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
+        const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
         setServiceCharges(data.results)
         setError(null)
       } catch (err) {
@@ -37,7 +38,7 @@ const ServiceChargeClearanceList = () => {
     }
 
     fetchServiceCharges()
-  }, [searchQuery])
+  }, [searchQuery, paymentStatusFilter])
 
   const getPaymentBadge = (serviceCharge: UnpaidServiceCharge) => {
     // Check payment status (for service charges, declined status is in payment_status)
@@ -76,44 +77,11 @@ const ServiceChargeClearanceList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Filter service charges based on payment status and search (like web does)
+  // Filter service charges based on search (backend already filters by tab)
   const filteredServiceCharges = useMemo(() => {
     let filtered = serviceCharges;
     
-    // Filter out cancelled requests first (service charges may not have cancelled status, but filter for consistency)
-    filtered = filtered.filter(sc => {
-      const paymentStatus = (sc.req_payment_status || '').toLowerCase();
-      // Service charges typically don't have "Cancelled" in payment_status, but filter it out if present
-      return paymentStatus !== 'cancelled';
-    });
-    
-    // Filter by payment status (like web component does)
-    if (paymentStatusFilter === 'Declined') {
-      // Show only declined requests
-      filtered = filtered.filter(sc => {
-        const status = (sc.req_payment_status || '').toLowerCase();
-        return status.includes('declined') || status.includes('rejected');
-      });
-    } else {
-      // For paid/unpaid, filter out declined requests
-      filtered = filtered.filter(sc => {
-        const status = (sc.req_payment_status || '').toLowerCase();
-        if (status.includes('declined') || status.includes('rejected')) {
-          return false;
-        }
-        
-        // Then filter by payment status
-        if (paymentStatusFilter === 'Paid') {
-          return status === 'paid';
-        } else if (paymentStatusFilter === 'Unpaid') {
-          return status !== 'paid';
-        }
-        // Declined already handled above
-        return false;
-      });
-    }
-    
-    // Apply search filter
+    // Apply search filter (backend already handles tab filtering)
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(sc => {
@@ -132,7 +100,7 @@ const ServiceChargeClearanceList = () => {
     }
     
     return filtered;
-  }, [serviceCharges, searchQuery, paymentStatusFilter])
+  }, [serviceCharges, searchQuery])
 
   if (loading) {
     return (

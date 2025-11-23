@@ -303,44 +303,7 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
     //     cell: ({row}) => (
     //         <div className="">{row.getValue("claimDate")}</div>
     //     )
-    // },
-    { accessorKey: "paymentStat", 
-      header: "Payment Status",
-      cell: ({ row }) => {
-        const value = row.getValue("paymentStat") as string;
-        const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
-        let bg = "bg-[#eaf4ff]";
-        let text = "text-[#2563eb]";
-        let border = "border border-[#b6d6f7]";
-        
-        if (capitalizedValue === "Pending") {
-            bg = "bg-[#fffbe6]";
-            text = "text-[#b59f00]";
-            border = "border border-[#f7e7b6]";
-        } else if (capitalizedValue === "Paid") {
-            bg = "bg-[#e6f7e6]";
-            text = "text-[#16a34a]";
-            border = "border border-[#d1f2d1]";
-        } else if (capitalizedValue === "Declined") {
-            bg = "bg-[#ffeaea]";
-            text = "text-[#b91c1c]";
-            border = "border border-[#f3dada]";
-        } else {
-            bg = "bg-[#f3f2f2]";
-            text = "text-black";
-            border = "border border-[#e5e7eb]";
-        }
-
-        return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
-        );
-      }
-    },
+    //     },
     ...(activeTab === "unpaid" ? [
         { accessorKey: "action", 
           header: "Action",
