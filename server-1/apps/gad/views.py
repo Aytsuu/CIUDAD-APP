@@ -17,10 +17,97 @@ from utils.supabase_client import remove_from_storage
 from django.db.models import Sum, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
 Staff = apps.get_model('administration', 'Staff')
+
+def create_gad_announcement(development_plan, staff, reason="mandated"):
+    """
+    Create an announcement for a GAD development plan.
+    
+    Args:
+        development_plan: DevelopmentPlan instance
+        staff: Staff instance (for announcement creator)
+        reason: "mandated" or "proposal_resolution"
+    """
+    try:
+        from apps.announcement.models import Announcement, AnnouncementRecipient
+        from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
+        
+        # Check if announcement already exists for this dev plan
+        project_title = development_plan.dev_project or 'Untitled Project'
+        
+        # Format date
+        if development_plan.dev_date:
+            if isinstance(development_plan.dev_date, str):
+                date_str = development_plan.dev_date
+            else:
+                date_str = development_plan.dev_date.strftime('%B %d, %Y')
+        else:
+            date_str = 'TBD'
+        
+        # Build announcement title and details
+        if reason == "mandated":
+            ann_title = f"GAD Mandated Development Plan: {project_title}"
+        else:  # proposal_resolution
+            ann_title = f"GAD Development Plan Approved: {project_title}"
+        
+        # Build details with only project, date, and client
+        ann_details = f"Project: {project_title}\n"
+        ann_details += f"Date: {date_str}\n"
+        
+        if development_plan.dev_client:
+            ann_details += f"Client Focus: {development_plan.dev_client}\n"
+        
+        # Check if announcement already exists (to avoid duplicates)
+        existing_announcement = Announcement.objects.filter(
+            ann_title=ann_title,
+            ann_created_at__date=timezone.now().date()
+        ).first()
+        
+        if existing_announcement:
+            logger.info(f"Announcement already exists for dev plan {development_plan.dev_id}")
+            return existing_announcement
+        
+        # Create announcement
+        announcement = Announcement.objects.create(
+            ann_title=ann_title,
+            ann_details=ann_details,
+            ann_created_at=timezone.now(),
+            ann_start_at=timezone.now(),
+            ann_end_at=timezone.now() + timedelta(days=7),  # Active for 7 days
+            ann_type="GENERAL",
+            ann_to_email=True,
+            ann_to_sms=True,
+            ann_status="ACTIVE",
+            staff=staff if staff else None
+        )
+        
+        # Create recipient for "all" users
+        recipients_data = [{
+            'ann': announcement.ann_id,
+            'ar_category': 'all',
+            'ar_type': 'ALL'
+        }]
+        
+        # Use BulkAnnouncementRecipientSerializer to create recipients and send notifications/emails
+        bulk_serializer = BulkAnnouncementRecipientSerializer(
+            data={'recipients': recipients_data}
+        )
+        
+        if bulk_serializer.is_valid():
+            bulk_serializer.save()
+            logger.info(f"Announcement created successfully for dev plan {development_plan.dev_id}")
+        else:
+            logger.error(f"Failed to create announcement recipients: {bulk_serializer.errors}")
+        
+        return announcement
+        
+    except Exception as e:
+        logger.error(f"Error creating announcement for dev plan {development_plan.dev_id}: {str(e)}", exc_info=True)
+        return None
 
 class GAD_Budget_TrackerView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
@@ -413,6 +500,26 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 # Verify the instance was actually saved
                 saved_instance = ProjectProposal.objects.get(pk=instance.gpr_id)
                 logger.info(f"Verified saved instance: {saved_instance.gpr_id}")
+                
+                # Check if there's already a resolution for this proposal's dev plan
+                # If so, create announcement (dev plan now has both proposal and resolution)
+                try:
+                    from apps.council.models import Resolution
+                    dev_plan = instance.dev
+                    if dev_plan:
+                        # Check if there's a resolution linked to this proposal
+                        has_resolution = Resolution.objects.filter(
+                            gpr_id=instance.gpr_id,
+                            res_is_archive=False
+                        ).exists()
+                        
+                        if has_resolution:
+                            # Create announcement since dev plan now has both proposal and resolution
+                            staff_for_announcement, _ = resolve_staff_from_request(request)
+                            create_gad_announcement(dev_plan, staff_for_announcement, reason="proposal_resolution")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement when proposal created with existing resolution: {str(ann_error)}")
+                    # Don't fail if announcement creation fails
                 
             except Exception as save_error:
                 logger.error(f"Error saving proposal: {str(save_error)}", exc_info=True)
@@ -1011,6 +1118,14 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 logger.error(f"Failed to log activity for GAD development plan creation: {str(log_error)}")
                 # Don't fail the request if logging fails
             
+            # Create announcement if dev plan is mandated
+            if development_plan.dev_mandated:
+                try:
+                    staff_for_announcement, _ = resolve_staff_from_request(request)
+                    create_gad_announcement(development_plan, staff_for_announcement, reason="mandated")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement for mandated dev plan: {str(ann_error)}")
+                    # Don't fail the request if announcement creation fails
             
             response_data = serializer.data
             return Response(response_data, status=status.HTTP_201_CREATED)
@@ -1472,6 +1587,15 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
             except Exception as log_error:
                 logger.error(f"Failed to log activity for GAD development plan update: {str(log_error)}")
                 # Don't fail the request if logging fails
+            
+            # Create announcement if dev_mandated changed from False to True
+            if not old_values['dev_mandated'] and development_plan.dev_mandated:
+                try:
+                    staff_for_announcement, _ = resolve_staff_from_request(request)
+                    create_gad_announcement(development_plan, staff_for_announcement, reason="mandated")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement for mandated dev plan: {str(ann_error)}")
+                    # Don't fail the request if announcement creation fails
             
             return Response(serializer.data, status=status.HTTP_200_OK)
             
