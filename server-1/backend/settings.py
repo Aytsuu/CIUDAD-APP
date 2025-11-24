@@ -229,7 +229,8 @@ CORS_ALLOWED_ORIGINS=[
     # Physical Mobile Device Host IP (confirmed from ipconfig)
     "http://192.168.1.52:8000",
 ]
-CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool) # false in production
+
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
     'accept',
