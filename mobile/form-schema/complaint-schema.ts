@@ -35,29 +35,4 @@ export const complaintFormSchema = z.object({
   files: z.array(z.object({})).default([]),
 });
 
-export type ComplaintPayload = {
-  complainant: Array<{
-    cpnt_name?: string;
-    cpnt_gender?: string;
-    cpnt_age?: string;
-    cpnt_number?: string;
-    cpnt_relation_to_respondent: string;
-    cpnt_address?: string;
-    rp_id?: string | null;
-  }>;
-  accused: Array<{
-    acsd_name: string;
-    acsd_age: string;
-    acsd_gender: string;
-    acsd_description: string;
-    acsd_address: string;
-    rp_id?: string | null;
-  }>;
-  comp_incident_type: string;
-  comp_allegation: string;
-  comp_location: string;
-  comp_datetime: string;
-  files: any[];
-};
-
 export type ComplaintFormData = z.infer<typeof complaintFormSchema>;

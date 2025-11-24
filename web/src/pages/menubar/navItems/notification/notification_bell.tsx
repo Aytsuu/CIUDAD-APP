@@ -133,8 +133,6 @@ export const NotificationBell: React.FC = () => {
               path: payload.data.web_route,
               params: params
             };
-            
-            console.log('📍 Parsed redirect URL:', redirectUrl);
           } catch (e) {
             console.error("Failed to parse web params:", e);
           }
@@ -175,9 +173,6 @@ export const NotificationBell: React.FC = () => {
             })
           } : undefined,
         });
-        
-        // Also refetch to ensure we're in sync with backend
-        console.log('🔄 Refetching notifications from backend...');
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
@@ -261,12 +256,21 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
+  /* 
+    Main Options navigation
+  */
+
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
     if(action === "view_notification") {
       navigate("/notification");
+      setOpen(false);
+    }
+    if(action === "notification_settings"){
+      navigate("/manage/preferences");
+      setOpen(false);
     }
   };
 

@@ -1,21 +1,22 @@
 import React, { useState, useMemo, useRef } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { getResidentComplaint } from "./queries/ComplaintGetQueries";
 import { router } from "expo-router";
-import { ChevronLeft, MoreVertical, AlertCircle, XCircle } from "lucide-react-native";
+import {
+  ChevronLeft,
+  MoreVertical,
+  AlertCircle,
+  XCircle,
+  Plus,
+  Search,
+} from "lucide-react-native";
 import { SearchWithTabs } from "./components/SearchWithTabs";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useAuth } from "@/contexts/AuthContext";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
-import { DrawerView } from "@/components/ui/drawer"; 
+import { DrawerView } from "@/components/ui/drawer";
 import { ConfirmationModal } from "./components/ComplaintConfirmationModal";
 import { useRaiseComplaint } from "./queries/ComplaintPostQueries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,14 +35,19 @@ interface ComplaintItem {
 export default function ResidentComplaint() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: ResidentComplaintList, isLoading, isError } = getResidentComplaint();
+  const {
+    data: ResidentComplaintList,
+    isLoading,
+    isError,
+  } = getResidentComplaint();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [actionType, setActionType] = useState<"raise" | "cancel" | null>(null);
-  const [selectedComplaint, setSelectedComplaint] = useState<ComplaintItem | null>(null);
+  const [selectedComplaint, setSelectedComplaint] =
+    useState<ComplaintItem | null>(null);
 
   const { mutate: raiseComplaint, isPending: isRaising } = useRaiseComplaint();
 
@@ -68,7 +74,9 @@ export default function ResidentComplaint() {
     if (actionType === "raise") {
       raiseComplaint(Number(selectedComplaint.comp_id), {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["ResidentComplaintList"] });
+          queryClient.invalidateQueries({
+            queryKey: ["ResidentComplaintList"],
+          });
           setConfirmModalVisible(false);
           setActionType(null);
           alert("Complaint successfully raised!");
@@ -142,17 +150,24 @@ export default function ResidentComplaint() {
               </Text>
 
               <View
-                className={`px-3 py-1 rounded-full ${getStatusColor(item.comp_status).split(" ")[0]}`}
+                className={`px-3 py-1 rounded-full ${
+                  getStatusColor(item.comp_status).split(" ")[0]
+                }`}
               >
                 <Text
-                  className={`text-xs font-PoppinsMedium ${getStatusColor(item.comp_status).split(" ")[1]}`}
+                  className={`text-xs font-PoppinsMedium ${
+                    getStatusColor(item.comp_status).split(" ")[1]
+                  }`}
                 >
                   {item.comp_status}
                 </Text>
               </View>
             </View>
 
-            <Text className="text-sm font-PoppinsRegular text-gray-500" numberOfLines={1}>
+            <Text
+              className="text-sm font-PoppinsRegular text-gray-500"
+              numberOfLines={1}
+            >
               {item.comp_allegation} | {item.comp_location}
             </Text>
 
@@ -229,18 +244,18 @@ export default function ResidentComplaint() {
           Blotter
         </Text>
       }
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={
+        <View className="flex-row gap-3">
+          <TouchableOpacity
+            onPress={() => searchQuery}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        </View>
+      }
     >
       <View className="flex-1 text-black">
-        <SearchWithTabs
-          searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchSubmit={() => {}}
-          tabs={[]}
-          activeTab={activeStatus}
-          onTabChange={setActiveStatus}
-          showTabCounts={true}
-        />
         {renderContent()}
       </View>
 
@@ -293,7 +308,9 @@ export default function ResidentComplaint() {
         onClose={handleCancelModal}
         onConfirm={handleConfirmAction}
         type={actionType === "raise" ? "raise" : "cancel"}
-        title={actionType === "raise" ? "Raise Complaint?" : "Cancel Complaint?"}
+        title={
+          actionType === "raise" ? "Raise Complaint?" : "Cancel Complaint?"
+        }
         description={
           actionType === "raise"
             ? "This will escalate your complaint to higher authorities. Continue?"

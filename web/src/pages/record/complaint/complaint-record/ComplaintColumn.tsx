@@ -2,17 +2,35 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint, Complainant, Accused } from "../complaint-type";
 import { Link } from "react-router";
 import { ArrowUpDown, AlertCircle, CircleChevronRight } from "lucide-react";
-import {MdCheckCircle, MdCancel, MdTrendingUp, MdAccessTimeFilled, MdError, MdSecurity, MdGavel, MdHomeRepairService, MdVolumeUp, MdHelpOutline, MdMoreHoriz} from "react-icons/md";
+import {
+  MdCheckCircle,
+  MdCancel,
+  MdTrendingUp,
+  MdAccessTimeFilled,
+  MdError,
+  MdSecurity,
+  MdGavel,
+  MdHomeRepairService,
+  MdVolumeUp,
+  MdHelpOutline,
+  MdMoreHoriz,
+} from "react-icons/md";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverTrigger, PopoverContent,} from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 interface ComplaintColumnsOptions {
-  statusFilter?: string | null; 
-  showAllStatuses?: boolean; 
+  statusFilter?: string | null;
+  showAllStatuses?: boolean;
 }
 
-export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnDef<Complaint>[] => {
+export const complaintColumns = (
+  options: ComplaintColumnsOptions = {}
+): ColumnDef<Complaint>[] => {
   const { statusFilter = null, showAllStatuses = true } = options;
 
   return [
@@ -50,6 +68,7 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
     },
     {
       accessorKey: "comp_id",
+      size:100,
       header: () => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
           ID
@@ -65,6 +84,7 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
     },
     {
       accessorKey: "complainant",
+      size: 200,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -74,57 +94,80 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
           <ArrowUpDown size={14} />
         </div>
       ),
+
       cell: ({ row }) => {
         const complainants = row.original.complainant;
+
         if (!complainants || complainants.length === 0) {
-          return <div className="text-gray-500">Anonymous</div>;
+          return (
+            <div className="flex justify-center items-center text-gray-500">
+              Anonymous
+            </div>
+          );
         }
 
-        const name = complainants[0].cpnt_name;
-        const firstComplainant =
-          name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() ||
-          "Anonymous";
+        const first = complainants[0];
+        const formattedName =
+          first.cpnt_name.charAt(0).toUpperCase() +
+          first.cpnt_name.slice(1).toLowerCase();
+
         const remainingCount = complainants.length - 1;
 
         return (
-          <div className="flex justify-between items-center font-semibold text-gray-700 whitespace-nowrap">
-            <div>{firstComplainant.toUpperCase()}</div>
-            {remainingCount > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <MdMoreHoriz />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-2 w-auto max-w-md">
-                  <div className="flex flex-col gap-1 items-start">
-                    {complainants
-                      .slice(1)
-                      .map((person: Complainant, idx: number) => (
-                        <div
-                          key={person.cpnt_id ?? idx}
-                          className="flex items-center gap-x-2 text-gray-700 w-full"
-                        >
-                          <span className="flex-shrink-0">
-                            {person.rp_id ? (
-                              <div className="bg-green-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
-                                Resident
-                              </div>
-                            ) : (
-                              <div className="bg-blue-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
-                                Non-resident
-                              </div>
-                            )}
-                          </span>
-                          <span className="break-words min-w-0 flex-1">
-                            {person.cpnt_name.toUpperCase()}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+          <div className="flex justify-center items-center w-full">
+            <div className="flex items-center justify-between w-full max-w-[220px] text-gray-700 font-semibold">
+              {/* FIRST complainant: Badge + Name */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`px-3 py-1 rounded-full font-semibold text-white text-xs whitespace-nowrap ${
+                    first.rp_id ? "bg-green-500" : "bg-blue-500"
+                  }`}
+                >
+                  {first.rp_id ? "Resident" : "Non-resident"}
+                </span>
+
+                <span className="truncate">{formattedName.toUpperCase()}</span>
+              </div>
+
+              {/* MORE BUTTON */}
+              {remainingCount > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex justify-center items-center w-7 h-7 cursor-pointer 
+                  bg-white rounded-md border border-gray-300 hover:bg-gray-100 transition shrink-0"
+                    >
+                      <MdMoreHoriz size={18} />
+                    </div>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="p-2 w-auto max-w-md">
+                    <div className="flex flex-col gap-1 items-start">
+                      {complainants
+                        .slice(0)
+                        .map((person: Complainant, idx: number) => (
+                          <div
+                            key={person.cpnt_id ?? idx}
+                            className="flex items-center gap-2 text-gray-700 w-full"
+                          >
+                            <span
+                              className={`px-3 py-1 rounded-full font-semibold text-white text-xs whitespace-nowrap ${
+                                person.rp_id ? "bg-green-500" : "bg-blue-500"
+                              }`}
+                            >
+                              {person.rp_id ? "Resident" : "Non-resident"}
+                            </span>
+
+                            <span className="break-words text-sm">
+                              {person.cpnt_name.toUpperCase()}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
         );
       },
@@ -132,6 +175,7 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
 
     {
       accessorKey: "accused_persons",
+      size: 200,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -141,52 +185,71 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
           <ArrowUpDown size={14} />
         </div>
       ),
+
       cell: ({ row }) => {
-        const accusedPersons = row.original.accused;
+        const accusedPersons: Accused[] = row.original.accused;
+
         if (!accusedPersons || accusedPersons.length === 0) {
           return <div className="text-gray-500">No accused persons</div>;
         }
 
-        const name = accusedPersons[0].acsd_name;
-        const firstAccused =
-          name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+        const first = accusedPersons[0];
+        const firstName =
+          first.acsd_name.charAt(0).toUpperCase() +
+          first.acsd_name.slice(1).toLowerCase();
+
+        const isResident = Boolean(first.rp_id);
         const remainingCount = accusedPersons.length - 1;
 
         return (
-          <div className="flex justify-between items-center font-semibold text-gray-700 whitespace-nowrap">
-            <div>{firstAccused.toUpperCase()}</div>
+          <div className="flex items-center justify-between w-full font-semibold text-gray-700">
+            <div className="flex items-center gap-3 min-w-0">
+              <span
+                className={`px-4 py-1 rounded-full font-semibold text-white text-xs
+              ${isResident ? "bg-green-500" : "bg-red-500"}`}
+              >
+                {isResident ? "Resident" : "Non-Resident"}
+              </span>
+
+              <span className="truncate text-gray-900">
+                {firstName.toUpperCase()}
+              </span>
+            </div>
+
             {remainingCount > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className="flex justify-center items-center w-9 h-9 cursor-pointer bg-white px-1 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <MdMoreHoriz />
-                  </div>
+                  <button
+                    className="flex items-center justify-center w-9 h-9 rounded-lg 
+                    border border-gray-200 bg-white hover:bg-gray-100"
+                  >
+                    <MdMoreHoriz size={20} />
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="p-2 w-auto max-w-md">
-                  <div className="flex flex-col gap-1 items-start">
-                    {accusedPersons
-                      .slice(1)
-                      .map((person: Accused, idx: number) => (
+
+                <PopoverContent className="p-3 w-auto max-w-md">
+                  <div className="flex flex-col gap-2">
+                    {accusedPersons.slice(0).map((person, idx) => {
+                      const resident = Boolean(person.rp_id);
+
+                      return (
                         <div
                           key={person.acsd_id ?? idx}
-                          className="flex items-center gap-x-2 text-gray-700 w-full"
+                          className="flex items-center gap-3 text-gray-700"
                         >
-                          <span className="flex-shrink-0">
-                            {person.rp_id ? (
-                              <div className="bg-green-500 px-5 py-1 rounded-full font-semibold text-white text-sm">
-                                Resident
-                              </div>
-                            ) : (
-                              <div className="bg-blue-500 px-4 py-1 rounded-full font-semibold text-white text-sm">
-                                Non-resident
-                              </div>
-                            )}
+                          <span
+                            className={`px-4 py-1 rounded-full font-semibold text-white text-xs
+                          ${resident ? "bg-green-500" : "bg-blue-500"}`}
+                          >
+                            {resident ? "Resident" : "Non-Resident"}
                           </span>
-                          <span className="break-words min-w-0 flex-1">
+
+                          <span className="text-sm">
                             {person.acsd_name.toUpperCase()}
                           </span>
                         </div>
-                      ))}
+                      );
+                    })}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -195,7 +258,6 @@ export const complaintColumns = (options: ComplaintColumnsOptions = {}): ColumnD
         );
       },
     },
-
     {
       accessorKey: "comp_incident_type",
       header: "Incident Type",

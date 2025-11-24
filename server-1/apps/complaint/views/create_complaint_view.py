@@ -234,34 +234,34 @@ class ComplaintCreateView(APIView):
                         
                         complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
                         
-                        notification = create_notification(
-                            title="New Complaint Filed",
-                            message=(
-                                f"A {complaint.comp_incident_type} complaint is awaiting your review. "
-                            ),
-                            recipients=recipients,
-                            notif_type="REQUEST",
-                            web_route="complaint/view/",
-                            web_params={"comp_id": str(complaint.comp_id),},
-                            mobile_route="/(my-request)/complaint-tracking/compMainView",
-                            mobile_params={"comp_id": str(complaint.comp_id)},
-                        )
+                        # notification = create_notification(
+                        #     title="New Complaint Filed",
+                        #     message=(
+                        #         f"A {complaint.comp_incident_type} complaint is awaiting your review. "
+                        #     ),
+                        #     recipients=recipients,
+                        #     notif_type="REQUEST",
+                        #     web_route="complaint/view/",
+                        #     web_params={"comp_id": str(complaint.comp_id),},
+                        #     mobile_route="/(my-request)/complaint-tracking/compMainView",
+                        #     mobile_params={"comp_id": str(complaint.comp_id)},
+                        # )
                         
                         # Schedule reminder notification in 1 minute
                         send_time = timezone.now() + timedelta(minutes=1)
-                        reminder = reminder_notification(
-                            title="Reminder: Complaint Awaiting Review",
-                            message=(
-                                f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
-                            ),
-                            recipients=recipients,
-                            notif_type="REMINDER",
-                            send_at=send_time,
-                            web_route="complaint/view/",
-                            web_params={"comp_id": str(complaint.comp_id)},
-                            mobile_route="/(my-request)/complaint-tracking/compMainView",
-                            mobile_params={"comp_id": str(complaint.comp_id)},
-                        )
+                        # reminder = reminder_notification(
+                        #     title="Reminder: Complaint Awaiting Review",
+                        #     message=(
+                        #         f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
+                        #     ),
+                        #     recipients=recipients,
+                        #     notif_type="REMINDER",
+                        #     send_at=send_time,
+                        #     web_route="complaint/view/",
+                        #     web_params={"comp_id": str(complaint.comp_id)},
+                        #     mobile_route="/(my-request)/complaint-tracking/compMainView",
+                        #     mobile_params={"comp_id": str(complaint.comp_id)},
+                        # )
                         
                         logger.info(
                             f"Notifications sent to {len(recipients)} ADMIN staff members with sender rp_id: {sender}"

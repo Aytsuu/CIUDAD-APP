@@ -22,7 +22,7 @@ const initialFilters: FilterState = {
   dateRange: { start: null, end: null },
 };
 
-export default function ComplaintRequest() {
+export default function ComplaintArchive() {
   const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(initialFilters);
@@ -36,27 +36,27 @@ export default function ComplaintRequest() {
   }, [searchQuery, filters, pageSize]);
 
   // Filter for pending complaints
-  const pendingComplaints = useMemo(() => {
-    return complaints.filter((c: Complaint) => c.comp_status === "Pending");
+  const archivedComplaints = useMemo(() => {
+    return complaints.filter((c: Complaint) => c.comp_status === "Archived");
   }, [complaints]);
 
   // Get unique types for filter dropdown (from pending complaints)
   const availableTypes = useMemo(
-    () => getUniqueTypes(pendingComplaints),
-    [pendingComplaints]
+    () => getUniqueTypes(archivedComplaints),
+    [archivedComplaints]
   );
 
   // Since we're already filtering for Pending, status filter may not be needed
   // But we include it in case you want to use it for sub-statuses later
   const availableStatuses = useMemo(
-    () => getUniqueStatuses(pendingComplaints),
-    [pendingComplaints]
+    () => getUniqueStatuses(archivedComplaints),
+    [archivedComplaints]
   );
 
   // Apply all filters
   const filteredData = useMemo(() => {
-    return filterComplaints(pendingComplaints, searchQuery, filters);
-  }, [pendingComplaints, searchQuery, filters]);
+    return filterComplaints(archivedComplaints, searchQuery, filters);
+  }, [archivedComplaints, searchQuery, filters]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -84,10 +84,10 @@ export default function ComplaintRequest() {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-darkBlue2">Request</h1>
+            <h1 className="text-2xl font-semibold text-darkBlue2">Archive</h1>
           </div>
           <p className="text-darkGray text-sm">
-            Manage and view pending blotter requests
+            View all resolved or past complaints that are no longer active.
           </p>
         </div>
       </div>

@@ -70,18 +70,17 @@ class ServiceChargeRequestCreateView(APIView):
             
             recipients = [staff.rp for staff in admin_staff if staff.rp]
             
-            if recipients:
-                create_notification(
-                    title="Blotter Request Raised",
-                    message=f"Your request is now being raised to higher ups for further action.",
-                    sender=request.user.rp.rp_id,
-                    recipients=recipients,
-                    notif_type="Info",
-                    web_route="complaint/view/",
-                    web_params={"comp_id": str(complaint.comp_id)},
-                    mobile_route="/(my-request)/complaint-tracking/compMainView",
-                    mobile_params={"comp_id": str(complaint.comp_id)}
-                )
+            # if recipients:
+            #     create_notification(
+            #         title="Blotter Request Raised",
+            #         message=f"Your request is now being raised to higher ups for further action.",
+            #         recipients=recipients,
+            #         notif_type="Info",
+            #         web_route="complaint/view/",
+            #         web_params={"comp_id": str(complaint.comp_id)},
+            #         mobile_route="/(my-request)/complaint-tracking/compMainView",
+            #         mobile_params={"comp_id": str(complaint.comp_id)}
+            #     )
             
             return Response({
                 'status': 'success',

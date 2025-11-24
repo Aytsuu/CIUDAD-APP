@@ -1,15 +1,14 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, FlatList, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Alert, ActivityIndicator, ScrollView } from "react-native";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PageLayout from "../_PageLayout";
 import { getComplaintLists } from "./queries/ComplaintGetQueries";
 import { updateComplaintStatus } from "./queries/ComplaintUpdateQueries";
 import { router } from "expo-router";
-import { ChevronLeft, MoreVertical, CheckCircle, XCircle, ArrowUp, UserCircle, User } from "lucide-react-native";
-import { SearchWithTabs } from "./SearchWithTabs";
+import { ChevronLeft, MoreVertical, CheckCircle, XCircle, ArrowUp, UserCircle, User, Search, Plus } from "lucide-react-native";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
-// import { ConfirmationModal } from "../my-request/complaint/components/ComplaintConfirmationModal";
+import { SearchInput } from "@/components/ui/search-input";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { ComplaintData } from "../my-request/complaint/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -281,6 +280,7 @@ export default function ComplaintLists() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [processingId, setProcessingId] = useState<number | null>(null);
   const {user} = useAuth();
+  const staff = user?.staff?.staff_id;
   const [modalConfig, setModalConfig] = useState<ModalConfig>({
     visible: false,
     type: "accept",
@@ -290,11 +290,6 @@ export default function ComplaintLists() {
     requiresInput: false,
     confirmText: "Confirm",
   });
-
-  // Get staff_id from authContext
-  const getStaffId = () => {
-    return user?.staff; 
-  };
 
   const showModal = (
     type: "accept" | "reject" | "raise",
@@ -342,14 +337,13 @@ export default function ComplaintLists() {
     setProcessingId(modalConfig.complaintId);
 
     try {
-      const staffId = getStaffId();
       let updateData: any = {};
 
       switch (modalConfig.type) {
         case "accept":
           updateData = {
             comp_status: "Accepted",
-            staff_id: staffId,
+            staff_id: staff,
           };
           break;
         case "reject":
@@ -361,7 +355,7 @@ export default function ComplaintLists() {
         case "raise":
           updateData = {
             comp_status: "Raised",
-            staff_id: staffId,
+            staff_id: staff,
           };
           break;
       }
@@ -439,13 +433,55 @@ export default function ComplaintLists() {
   }, [complaintList, activeStatus, searchQuery]);
 
   const handleAddComplaint = () => {
-    // router.push("/(my-request)/complaint-tracking/add-complaint");
+    router.push({
+      pathname: "/(request)/complaint/complaint-req-form", 
+      params: staff
+    });
   };
 
-  const renderContent = () => {
+  const renderTabBar = () => (
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false} 
+      className="px-4 pb-2"
+      contentContainerStyle={{ paddingRight: 16 }}
+    >
+      <View className="h-12 bg-white flex-row border-b border-gray-200">
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.id}
+            onPress={() => setActiveStatus(tab.id)}
+            className={`px-4 flex-row items-center border-b-2 bg-white ${
+              activeStatus === tab.id ? 'border-blue-500' : 'border-transparent'
+            }`}
+            activeOpacity={0.7}
+          >
+            <Text className={`text-sm font-PoppinsMedium ${
+              activeStatus === tab.id ? 'text-blue-500' : 'text-gray-600'
+            }`}>
+              {tab.label}
+            </Text>
+            {tab.count > 0 && (
+              <View className={`ml-2 px-2 py-0.5 rounded-full min-w-[20px] items-center ${
+                activeStatus === tab.id ? 'bg-blue-500' : 'bg-gray-300'
+              }`}>
+                <Text className={`text-xs font-PoppinsSemiBold ${
+                  activeStatus === tab.id ? 'text-white' : 'text-gray-600'
+                }`}>
+                  {tab.count}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
+  );
+
+  const renderEmptyState = () => {
     if (isLoading) {
       return (
-        <View className="flex-1 items-center justify-center">
+        <View className="flex-1 items-center justify-center py-20">
           <LoadingState />
         </View>
       );
@@ -453,7 +489,7 @@ export default function ComplaintLists() {
 
     if (isError) {
       return (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6 py-20">
           <Text className="text-red-500 font-PoppinsSemiBold text-lg mb-2">
             Error Loading Data
           </Text>
@@ -466,7 +502,7 @@ export default function ComplaintLists() {
 
     if (!complaintList || complaintList.length === 0) {
       return (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6 py-20">
           <Text className="text-gray-700 font-PoppinsSemiBold text-lg mb-2">
             No Complaints
           </Text>
@@ -479,35 +515,13 @@ export default function ComplaintLists() {
 
     if (filteredComplaints.length === 0) {
       return (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6 py-20">
           <EmptyInbox />
         </View>
       );
     }
 
-    return (
-      <FlatList
-        data={filteredComplaints}
-        renderItem={({ item }) => (
-          <ComplaintCard
-            item={item}
-            onAccept={(id) => showModal("accept", id)}
-            onReject={(id) => showModal("reject", id)}
-            onRaise={(id) => showModal("raise", id)}
-            onPress={() =>
-              router.push({
-                pathname: `/(my-request)/complaint-tracking/compMainView`,
-                params: { comp_id: item.comp_id },
-              })
-            }
-            isProcessing={processingId === item.comp_id}
-          />
-        )}
-        keyExtractor={(item) => item.comp_id.toString()}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
-      />
-    );
+    return null;
   };
 
   return (
@@ -525,23 +539,66 @@ export default function ComplaintLists() {
           Blotter
         </Text>
       }
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={
+        <View className="flex-row gap-3">
+          <TouchableOpacity
+            onPress={() => handleAddComplaint()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Plus size={22} className="text-gray-700" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setSearchQuery(searchQuery ? "" : " ")}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        </View>
+      }
     >
-      <View className="flex-1 bg-gray-50">
-        <SearchWithTabs
-          searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchSubmit={() => {}}
-          tabs={tabs}
-          activeTab={activeStatus}
-          onTabChange={setActiveStatus}
-          showTabCounts={true}
-          searchPlaceholder="Search complaints..."
-          showAddButton={true}
-          onAddPress={handleAddComplaint}
-          addButtonLabel="Add"
-        />
-        {renderContent()}
+      <View className="flex-1 bg-gray-50">          
+        {searchQuery && (
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => searchQuery}
+          />
+        )}
+
+        {(isLoading || isError || !complaintList || complaintList.length === 0 || filteredComplaints.length === 0) ? (
+          <View className="flex-1">
+            {renderTabBar()}
+            {renderEmptyState()}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredComplaints}
+            renderItem={({ item }) => (
+              <ComplaintCard
+                item={item}
+                onAccept={(id) => showModal("accept", id)}
+                onReject={(id) => showModal("reject", id)}
+                onRaise={(id) => showModal("raise", id)}
+                onPress={() =>
+                  router.push({
+                    pathname: `/(my-request)/complaint-tracking/compMainView`,
+                    params: { comp_id: item.comp_id },
+                  })
+                }
+                isProcessing={processingId === item.comp_id}
+              />
+            )}
+            keyExtractor={(item) => item.comp_id.toString()}
+            ListHeaderComponent={renderTabBar}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={50}
+            initialNumToRender={5}
+            windowSize={5}
+          />
+        )}
 
         <ConfirmationModal
           {...({
