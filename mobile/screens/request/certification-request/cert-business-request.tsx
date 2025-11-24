@@ -334,7 +334,6 @@ const CertPermit: React.FC = () => {
         }
         
       } catch (uploadError) {
-        console.error("Business permit file upload failed:", uploadError);
         setError("Failed to upload business permit files. Please try again.");
         setIsUploadingFiles(false);
         setUploadProgress("");

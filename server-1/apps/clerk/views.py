@@ -1703,10 +1703,6 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     'error': f'Business permit request with bpr_id {bpr_id} not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            print(f"Updating business permit request: {instance.bpr_id}")
-            print(f"Current payment status: {instance.req_payment_status}")
-            print(f"Request data: {request.data}")
-            
             # Store old payment status for comparison
             old_payment_status = instance.req_payment_status
             
@@ -1726,12 +1722,8 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     else:
                         instance.req_date_completed = request.data.get('req_date_completed')
                 except Exception as date_error:
-                    print(f"Date conversion error: {date_error}")
                     # Fallback: use current date
                     instance.req_date_completed = timezone.now().date()
-            
-            print(f"New payment status: {instance.req_payment_status}")
-            print(f"Completion date: {instance.req_date_completed}")
             
             instance.save(update_fields=['req_payment_status', 'req_date_completed'])
             
@@ -1842,9 +1834,6 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                 'completion_date': instance.req_date_completed
             }, status=status.HTTP_200_OK)
         except Exception as e:
-            print(f"Error updating business permit request status: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
             return Response({
                 'error': str(e),
                 'detail': 'An error occurred while updating business permit request status'
