@@ -23,7 +23,8 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
 
         return res.data.plan_id;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
+        throw err
     }
 };
 
@@ -38,8 +39,7 @@ export const budget_plan_details = async (detailInfo: Array<{ dtl_proposed_budge
         const res = await api.post('treasurer/budget-plan-detail/', transformedDetails);
         return res.data;
     } catch (error) {
-        const axiosError = error as { response?: { data: any }; message: string };
-        console.error("Error submitting budget plan details:", axiosError.response?.data || axiosError.message);
+        throw error
     }
 };
 
@@ -69,7 +69,7 @@ export const createBudgetPlanHistory = async (headerHistoryInfo: BudgetHeaderUpd
         });
         return res;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -85,7 +85,7 @@ export const createBudgetPlanDetailHistory = async (bph_id: string, detailHistor
         });
         return res;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -107,7 +107,7 @@ export const addBudgetPlanSuppDoc = async ( plan_id: number, files: { name: stri
 
         return response.data;
     } catch (error: any) {
-        console.error('Upload failed:', error.response?.data || error);
+        // console.error('Upload failed:', error.response?.data || error);
         throw error;
     }
 };

@@ -22,7 +22,7 @@ export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
             router.back()
         },
         onError: (err) => {
-            console.error("Error restore record:", err);
+            // console.error("Error restore record:", err);
             toast.error("Failed to restore record")
         }
     })
@@ -46,7 +46,7 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
             router.back()
         },
         onError: (err) => {
-            console.error("Error archiving record:", err);
+            // console.error("Error archiving record:", err);
             toast.error("Failed to archive record")
         }
     })
@@ -95,7 +95,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
       router.back();
     },
     onError: (err) => {
-      console.error("Error updating Minutes of Meeting:", err);
+    //   console.error("Error updating Minutes of Meeting:", err);
       toast.error("Failed to update Minutes of Meeting");
     }
   });

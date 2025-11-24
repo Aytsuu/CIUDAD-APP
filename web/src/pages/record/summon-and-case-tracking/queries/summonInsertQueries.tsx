@@ -28,8 +28,8 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
                 });
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
+                // console.error("Error submitting record:", err);
                 toast.error(
                     "Failed to submit record. Please check the input data and try again.",
                     { duration: 2000 }
@@ -58,8 +58,8 @@ export const useAddSummonDates = (onSuccess?: () => void) => {
             });
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error updating dates:", err);
+        onError: () => {
+            // console.error("Error updating dates:", err);
             toast.error(
                 "Failed to update dates. Please try again.",
                 { id: "addDates", duration: 2000 }
@@ -82,8 +82,8 @@ export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
             onSuccess?.();
             toast.success("Time slots saved successfully", { duration: 2000 });
         },
-        onError: (err) => {
-            console.error("Error saving time slots:", err);
+        onError: () => {
+            // console.error("Error saving time slots:", err);
             toast.error(
                 "Failed to save time slots. Please try again.",
                 { duration: 2000 }
@@ -112,8 +112,8 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
             showSuccessToast('Hearing Minutes uploaded successfully!')
             onSuccess?.();
         },
-        onError: (err: Error) => {
-            console.error("Upload error:", err);
+        onError: () => {
+            // console.error("Upload error:", err);
             showErrorToast( "Failed to upload documents. Please try again.")
         }
     });
@@ -143,8 +143,8 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             showSuccessToast('Remarks added successfully!')
             onSuccess?.();
         },
-        onError: (err: Error) => {
-            console.error("Upload error:", err);
+        onError: () => {
+            // console.error("Upload error:", err);
             showErrorToast( "Failed to add remarks. Please try again.")
         }
     });

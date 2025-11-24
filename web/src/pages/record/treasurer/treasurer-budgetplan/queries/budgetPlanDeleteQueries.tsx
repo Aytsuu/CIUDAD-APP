@@ -22,12 +22,12 @@ export const useDeleteBudgetPlan = () => {
                 duration: 2000
             });
         },
-        onError: (err) => {
+        onError: () => {
             toast.error("Failed to delete budget plan", {
                 id: "deleteBudgetplan",
                 duration: 1000
             });
-            console.error("Failed to delete entry:", err);
+            // console.error("Failed to delete entry:", err);
         }
     });
 };
@@ -49,12 +49,12 @@ export const useDeleteBudgetPlanFile = () => {
                 duration: 2000
             });
         },
-        onError: (err) => {
+        onError: () => {
             toast.error("Failed to delete document", {
                 id: "deleteBudgetplanfile",
                 duration: 1000
             });
-            console.error("Failed to delete file:", err);
+            // console.error("Failed to delete file:", err);
         }
     });
 }

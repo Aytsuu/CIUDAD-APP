@@ -6,7 +6,7 @@ export const getDrivers = async () => {
         const res = await api.get('waste/waste-drivers/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -16,7 +16,7 @@ export const getTrucks = async () => {
         const res = await api.get('waste/all-trucks/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -26,7 +26,7 @@ export const getCollectors = async () => {
         const res = await api.get('waste/waste-collectors/');
         return res.data
     } catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }
@@ -58,8 +58,9 @@ export const getGarbagePendingRequest = async (page: number, pageSize: number, s
             count: data.count || 0
         };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -68,8 +69,9 @@ export const getGarbagePendingRequestDetails = async (garb_id: string) => {
         const res = await api.get(`waste/garbage-pickup-view-pending/${garb_id}/`)
         return res.data
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -104,8 +106,9 @@ export const getGarbageRejectedRequest = async (page: number, pageSize: number, 
             count: data.count || 0
         };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -114,8 +117,9 @@ export const getGarbageRejectedRequestDetails = async (garb_id: string) => {
         const res = await api.get(`waste/garbage-pickup-view-rejected/${garb_id}/`)
         return res.data
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -161,8 +165,9 @@ export const getGarbageAcceptedRequest = async (page: number, pageSize: number, 
         };
 
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -206,8 +211,9 @@ export const getGarbageCompletedRequest = async (page: number, pageSize: number,
             count: data.count || 0
         };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return { results: [], count: 0 };
+        throw err
     }
 }
 
@@ -247,8 +253,9 @@ export const getAcceptedDetails = async (garb_id: string) => {
         };
 
     } catch (err) {
-        console.error('Failed to fetch garbage request details:', err);
+        // console.error('Failed to fetch garbage request details:', err);
         return null; 
+        throw err
     }
 }
 
@@ -286,7 +293,8 @@ export const getCompletedDetails = async (garb_id: string) => {
             staff_name: data.staff_name || ''
         }
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         return null;
+        throw err
     }
 }

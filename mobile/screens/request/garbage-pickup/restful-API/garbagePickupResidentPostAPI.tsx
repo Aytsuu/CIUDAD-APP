@@ -36,7 +36,7 @@ export const addGarbagePickupRequest = async (requestInfo: Record<string, any>, 
         return res.data;
 
     } catch (err) {
-        console.error("Error submitting garbage pickup request");
+        // console.error("Error submitting garbage pickup request");
         throw err;
     }
 };

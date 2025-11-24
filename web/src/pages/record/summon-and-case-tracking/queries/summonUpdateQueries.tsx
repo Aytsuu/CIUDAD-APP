@@ -27,8 +27,8 @@ export const useResolveCase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "resolveCase",
             duration: 2000
@@ -61,8 +61,8 @@ export const useForwardcase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "resolveCase",
             duration: 2000
@@ -94,8 +94,8 @@ export const useEscalateCase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "escalateCase",
             duration: 2000
@@ -124,8 +124,8 @@ export const useReEscalateCase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in re-escalating case:", err);
+        onError: () => {
+            // console.error("Error in re-escalating case:", err);
             toast.error("Failed to re-escalate case.", {
                 id: "reEscalateCase",
                 duration: 2000

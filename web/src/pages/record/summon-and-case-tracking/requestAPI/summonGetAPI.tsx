@@ -17,7 +17,8 @@ export const getSummonCaseList = async (page: number, pageSize: number, searchQu
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -38,7 +39,8 @@ export const getCouncilCaseList = async (page: number, pageSize: number, searchQ
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -59,7 +61,8 @@ export const getLuponCaseList = async (page: number, pageSize: number, searchQue
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -69,7 +72,8 @@ export const getSummonCaseDetail = async (sc_id: string) => {
         const res = await api.get(`clerk/summon-case-detail/${sc_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -78,7 +82,8 @@ export const getCouncilCaseDetail = async (sc_id: string) => {
         const res = await api.get(`clerk/council-case-detail/${sc_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -87,7 +92,8 @@ export const getLuponCaseDetail = async (sc_id: string) => {
         const res = await api.get(`clerk/lupon-case-detail/${sc_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -96,7 +102,8 @@ export const getSummonScheduleList = async (sc_id: string) => {
         const res = await api.get( `clerk/summon-schedule-list/${sc_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -105,7 +112,8 @@ export const getSummonSuppDoc = async (ss_id: string) => {
         const res = await api.get( `clerk/summon-supp-doc/${ss_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -114,7 +122,8 @@ export const getSummonDates = async() => {
         const res = await api.get('clerk/summon-date-availability/')
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -123,7 +132,8 @@ export const getSummonTimeSlots = async(sd_id: number) => {
         const res = await api.get(`clerk/summon-time-availability/${sd_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -134,7 +144,8 @@ export const getComplaintDetails = async (comp_id: string) => {
 
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -143,7 +154,7 @@ export const getFileActionPaymentLogs = async (comp_id: string) => {
         const res = await api.get(`clerk/file-action-payment-logs/${comp_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err
     }
 }

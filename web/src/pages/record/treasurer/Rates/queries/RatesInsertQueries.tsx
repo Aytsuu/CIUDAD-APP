@@ -24,8 +24,8 @@ export const useAddAnnualGrossSales = (onSuccess?: () => void) => {
                 });
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
+                // console.error("Error submitting record:", err);
                 toast.error(
                     "Failed to submit record. Please check the input data and try again.",
                     { duration: 2000 }
@@ -57,8 +57,8 @@ export const useAddPurposeAndRate = (onSuccess?: () => void) => {
                 });
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
+                // console.error("Error submitting record:", err);
                 toast.error(
                     "Failed to submit record. Please check the input data and try again.",
                     { duration: 2000 }

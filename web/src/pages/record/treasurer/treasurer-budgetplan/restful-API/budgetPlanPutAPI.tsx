@@ -23,7 +23,8 @@ export const updateBudgetHeader = async(budgetInfo: Record<string, any>) => {
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err
     }
 }
 
@@ -35,7 +36,8 @@ export const archiveBudgetPlan = async (planId: number) => {
 
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -47,7 +49,8 @@ export const restoreBudgetPlan = async (planId: number) => {
 
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -86,7 +89,7 @@ export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl
         
         return results;
     } catch(err) {
-        console.error(err);
+        // console.error(err);
         throw err; 
     }
 }
@@ -111,6 +114,7 @@ const addHistory = async ( historyRecords: Array<{
     const res = await api.post('treasurer/budget-plan-history/', recordsWithDate);
     return res.data;
   } catch (err) {
-    console.error(err);
+    // console.error(err);
+    throw err
   }
 };

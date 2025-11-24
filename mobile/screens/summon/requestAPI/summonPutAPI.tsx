@@ -21,7 +21,8 @@ export const resolveCase = async (status_type: string, sc_id: string, staff_id: 
         }
         
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -33,7 +34,7 @@ export const forwardCase = async(sc_id:string) => {
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err
     }
 }
@@ -67,7 +68,8 @@ export const escalateCase = async (sc_id: string, comp_id: string, staff_id: str
 
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -91,7 +93,7 @@ export const reEscalateCase = async (comp_id: string) => {
             })
         }
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err
     }
 }

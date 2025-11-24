@@ -36,7 +36,7 @@ export const updateAssignmentCollectorsAndSchedule = async (pick_id: string, acl
 
     return updateResponse.data;
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     throw err; 
   }
 };
@@ -65,6 +65,7 @@ export const updateGarbageRequestStatus = async (garb_id: string) => {
 
         return res.data.conf_id
     } catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }

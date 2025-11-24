@@ -28,7 +28,7 @@ export const addSummonSched = async (sd_id: string, st_id: string, sc_id: string
         }
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }

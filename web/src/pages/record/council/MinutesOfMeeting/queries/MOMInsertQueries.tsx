@@ -23,8 +23,8 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
       showSuccessToast('Meeting Minutes Created!')
       onSuccess?.();
     },
-    onError: (err: Error) => {
-      console.error("Error submitting meeting minutes:", err);
+    onError: () => {
+      // console.error("Error submitting meeting minutes:", err);
       showErrorToast(
         "Failed to create meeting minutes. Please check the input data and try again."
       );

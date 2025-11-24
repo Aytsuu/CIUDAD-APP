@@ -16,7 +16,7 @@ export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error deleting record:", err);
+            // console.error("Error deleting record:", err);
             toast.error("Failed to delete record")
         }
     })

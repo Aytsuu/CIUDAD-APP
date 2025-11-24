@@ -31,7 +31,7 @@ export const useUpdateAssignmentCollectorsAndSchedule = (onSuccess?: () => void)
     },
     
     onError: (err) => {
-      console.error("Error updating assignment:", err);
+      // console.error("Error updating assignment:", err);
       toast.error("Failed to update assignment")
     }
   });
@@ -56,7 +56,7 @@ export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
       router.back()
     },
     onError: (err) => {
-      console.error("Error updating request status:", err);
+      // console.error("Error updating request status:", err);
       toast.error("Failed to update request status")
     }
   });

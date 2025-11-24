@@ -24,7 +24,8 @@ export const addDecision = async (garb_id: string, decisionInfo: {reason: string
         return res.data.dec_id
 
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -64,7 +65,7 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
         return res.data.pick_id; 
 
     } catch(err) {
-        console.error(err);
+        // console.error(err);
         throw err;  
     }
 }

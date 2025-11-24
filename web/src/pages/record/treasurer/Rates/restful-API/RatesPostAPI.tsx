@@ -15,7 +15,8 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
 
         return res.data.ags_id;
     } catch (error){
-        console.error(error)
+        // console.error(error)
+        throw error
     }
 }
 
@@ -33,7 +34,8 @@ const addPurposeAndRate = async (purposeAndRate: Record<string, any>) => {
         })
         return res.data.pr_id;
     } catch(error){
-        console.error(error)
+        // console.error(error)
+        throw error
     }
 }
 

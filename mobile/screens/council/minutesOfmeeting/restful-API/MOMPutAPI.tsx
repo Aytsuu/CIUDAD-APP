@@ -8,7 +8,8 @@ export const restoreMinutesOfMeeting = async (mom_id: string) => {
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -19,7 +20,8 @@ export const archiveMinutesOfMeeting = async (mom_id: string) => {
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -44,7 +46,7 @@ export const handleMOMFileUpdates = async (mom_id: number, files: MOMFileType[])
         }
     }
   } catch (err) {
-    console.error("Error updating MOM file:", err);
+    // console.error("Error updating MOM file:", err);
     throw err;
   }
 };
@@ -64,7 +66,8 @@ export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: strin
 
     return res.data
   } catch (err) {
-    console.error(err);
+    // console.error(err);
+    throw err
   }
 };
 
@@ -104,7 +107,7 @@ export const handleMOMSuppDocUpdates = async (mom_id: number, suppDocs: MOMSuppD
       return res.data;
     }
   } catch (err) {
-    console.error("Error updating supporting documents:", err);
+    // console.error("Error updating supporting documents:", err);
     throw err;
   }
 };

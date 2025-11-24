@@ -16,7 +16,7 @@ export const useDeleteSummonTime = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error deleting time slot:", err);
+            // console.error("Error deleting time slot:", err);
             toast.error("Failed to delete time slot")
         }
     })

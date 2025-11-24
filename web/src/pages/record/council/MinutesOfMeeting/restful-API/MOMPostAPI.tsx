@@ -41,7 +41,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, files
 
         return momResponse.data;
     } catch (error) {
-        console.error('Error creating Minutes of Meeting:', error);
+        // console.error('Error creating Minutes of Meeting:', error);
         throw error;
     }
 };

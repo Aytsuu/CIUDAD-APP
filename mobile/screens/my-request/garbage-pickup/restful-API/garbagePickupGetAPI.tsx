@@ -57,7 +57,7 @@ export const getGarbageRejectedRequestDetailsResident = async (garb_id: string) 
         const res = await api.get(`waste/garbage-pickup-view-rejected/${garb_id}/`)
         return res.data
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
+        // console.error('Failed to fetch garbage requests:', err);
         throw err;
     }
 }
@@ -93,7 +93,7 @@ export const getGarbageAcceptedResident = async (rp_id: string) => {
             sitio_name: item.sitio_name || '',
         }));
     } catch(err) {
-        console.error('API Error:', err);
+        // console.error('API Error:', err);
         throw err;
     }
 }
@@ -123,7 +123,7 @@ export const getGarbageCompletedResident = async (rp_id: string) => {
             sitio_name: item.sitio_name || ''
         }));
     }catch(err){
-        console.error('API Error:', err)
+        // console.error('API Error:', err)
         throw err;
     }
 }
@@ -148,7 +148,7 @@ export const getGarbageCancelledResident = async (rp_id: string) => {
             sitio_name: item.sitio_name || ''
         }));
     }catch(err){
-        console.error('API Error:', err)
+        // console.error('API Error:', err)
         throw err;
     }
 }
@@ -195,8 +195,8 @@ export const getAcceptedDetailsResident = async (garb_id: string) => {
             staff_name: data.staff_name || ''
         };
     } catch (err) {
-        console.error('Failed to fetch garbage request details:', err);
-        return null; 
+        // console.error('Failed to fetch garbage request details:', err);
+        throw err
     }
 }
 
@@ -230,8 +230,8 @@ export const getCompletedDetailsResident = async (garb_id: string) => {
             staff_name: data.staff_name || ''
         }
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
-        return null;
+        // console.error('Failed to fetch garbage requests:', err);
+        throw err
     }
 }
 

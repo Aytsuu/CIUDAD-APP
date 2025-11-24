@@ -5,8 +5,8 @@ export const deleteBudgetPlan = async(planId: number) => {
         await api.delete(`treasurer/budget-plan/${planId}/`)
         return true
     } catch (error){
-        console.error(error)
-        return false
+        // console.error(error)
+        throw error
     }
 }
 
@@ -15,7 +15,8 @@ export const deleteBudgetPlanFile = async(bpf_id: number) => {
         await api.delete(`treasurer/delete-budget-plan-file/${bpf_id}/`)
         return true
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 
 }

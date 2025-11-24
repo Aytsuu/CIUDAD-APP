@@ -11,7 +11,7 @@ export const getAnnualGrossSalesActive = async (page?: number, pageSize?: number
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -27,7 +27,7 @@ export const getAllAnnualGrossSales= async (page: number, pageSize: number, sear
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -38,7 +38,7 @@ export const getPurposeAndRate = async () => {
         const res = await api.get('treasurer/purpose-and-rate/');
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -54,7 +54,7 @@ export const getPurposeAndRatePersonalActive = async (page: number, pageSize: nu
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -70,7 +70,7 @@ export const getPurposeAndRateAllPersonal = async (page: number, pageSize: numbe
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -86,7 +86,7 @@ export const getPurposeAndRateServiceChargeActive = async (page: number, pageSiz
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -102,7 +102,7 @@ export const getPurposeAndRateAllServiceCharge = async (page: number, pageSize: 
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -118,7 +118,7 @@ export const getPurposeAndRateBarangayPermitActive = async (page: number, pageSi
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -134,7 +134,7 @@ export const getPurposeAndRateAllBarangayPermit = async (page: number, pageSize:
         });
         return res.data; 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };

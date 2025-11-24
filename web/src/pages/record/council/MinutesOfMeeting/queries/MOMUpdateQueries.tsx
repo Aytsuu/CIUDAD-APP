@@ -28,7 +28,7 @@ export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error restore record:", err);
+            // console.error("Error restore record:", err);
             toast.error("Failed to restore record", {
             id: "restoreMOM",
             duration: 2000
@@ -57,8 +57,8 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error archiving record:", err);
+        onError: () => {
+            // console.error("Error archiving record:", err);
             toast.error("Failed to archive record", {
             id: "archiveMOM",
             duration: 2000
@@ -94,8 +94,8 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
             showSuccessToast('Record updated successfully')
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error updating record:", err);
+        onError: () => {
+            // console.error("Error updating record:", err);
             showErrorToast("Failed to update record");
         }
     });

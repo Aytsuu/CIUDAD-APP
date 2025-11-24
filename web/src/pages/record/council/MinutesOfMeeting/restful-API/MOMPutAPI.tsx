@@ -8,7 +8,8 @@ export const restoreMinutesOfMeeting = async (mom_id: string) => {
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -19,7 +20,8 @@ export const archiveMinutesOfMeeting = async (mom_id: string) => {
         })
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -34,7 +36,7 @@ export const updateMOMFile = async (files: MOMFileType[], mom_id: number) => {
         return {res: res.data, response: response.data};
     }
   } catch (error: any) {
-    console.error('MOM file update failed:', error.response?.data || error);
+    // console.error('MOM file update failed:', error.response?.data || error);
     throw error;
   }
 };
@@ -56,6 +58,7 @@ export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: strin
 
      
    } catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }

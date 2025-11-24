@@ -5,6 +5,7 @@ export const deleteSummonTime = async (st_id: number) => {
         const res = await api.delete(`clerk/delete-summon-time-availability/${st_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err;
     }
 }

@@ -13,7 +13,7 @@ export const cancelGarbageRequest = async (values: {garb_id: string, reason: str
             garb_id: values.garb_id,
         });
     }catch(err){
-        console.error('API Error:', err)
+        // console.error('API Error:', err)
         throw err;
     }
 }

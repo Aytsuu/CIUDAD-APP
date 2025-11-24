@@ -22,8 +22,8 @@ export const useDeleteSuppDoc = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error deleting document:", err);
+        onError: () => {
+            // console.error("Error deleting document:", err);
             toast.error("Failed to delete document", {
             id: "deleteSuppDoc",
             duration: 2000
@@ -51,8 +51,8 @@ export const useDeleteSummonTime = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error deleting time slot:", err);
+        onError: () => {
+            // console.error("Error deleting time slot:", err);
             toast.error("Failed to delete time slot", {
             id: "deleteTimeSlot",
             duration: 2000

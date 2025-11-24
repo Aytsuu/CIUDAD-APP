@@ -25,7 +25,7 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
 
         return res.data.ags_id;
   } catch (error) {
-    console.error("Error in editAnnualGrossSales:", error);
+    // console.error("Error in editAnnualGrossSales:", error);
     throw error; 
   }
 }
@@ -55,7 +55,7 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
       
         return res.data.pr_id;
   } catch (error) {
-    console.error("Error in editAnnualGrossSales:", error);
+    // console.error("Error in editAnnualGrossSales:", error);
     throw error; 
   }
 }
