@@ -36,7 +36,6 @@ const AnnualDevPlanMain = () => {
       
       setFolders(yearFolders);
     } catch (error) {
-      console.error('Error fetching years:', error);
       Alert.alert('Error', 'Failed to load annual development plans');
     } finally {
       setIsLoading(false);
@@ -44,7 +43,6 @@ const AnnualDevPlanMain = () => {
   };
 
   const handleFolderPress = (folder: FolderItem) => {
-    console.log(`Opening year: ${folder.name}`);
     // Navigate to view plan for the selected year
     router.push({
       pathname: '/(gad)/annual-dev-plan/view-plan',

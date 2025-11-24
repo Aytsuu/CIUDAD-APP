@@ -134,7 +134,6 @@ const ViewPlan = () => {
       
       setPlans(plansData);
     } catch (error) {
-      console.error('Error fetching plans:', error);
       Alert.alert('Error', 'Failed to fetch annual development plans');
       setPlans([]);
     } finally {

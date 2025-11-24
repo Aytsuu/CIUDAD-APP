@@ -153,8 +153,6 @@ export default function OrdinanceUpload({
           
           fileId = uploadResult.fileId;
         } catch (fileError: any) {
-          console.error('Error uploading file:', fileError);
-          console.error('Error response:', fileError?.response?.data);
           Alert.alert('Error', `Failed to upload file: ${fileError?.message || 'Unknown error'}`);
           return;
         }
@@ -190,7 +188,6 @@ export default function OrdinanceUpload({
         })
       };
 
-      console.log("🚀 Creating ordinance with data:", submitData);
       await createOrdinanceMutation.mutateAsync(submitData);
       
       Alert.alert('Success', 'Ordinance created successfully');
@@ -198,8 +195,6 @@ export default function OrdinanceUpload({
       resetForm();
       onSuccess();
     } catch (error: any) {
-      console.error('Error creating ordinance:', error);
-      console.error('Error response:', error?.response?.data);
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to create ordinance';
       Alert.alert('Error', errorMessage);
     } finally {

@@ -181,7 +181,6 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 
             except Exception as e:
                 # Log error but don't fail the event creation
-                print(f"Error creating announcement for waste event: {str(e)}")
                 response.data['announcement_created'] = False
                 response.data['announcement_error'] = str(e)
         
@@ -1801,12 +1800,10 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
-        print(f"Filtering for rp_id: {rp_id}")  
         queryset = Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='pending'  
         ).order_by('-garb_created_at')  # Most recent first
-        print(f"Found {queryset.count()} records") 
         return queryset
 
 

@@ -8,7 +8,6 @@ export const deleteAnnualDevPlans = async (devIds: number[]) => {
     });
     return res.data;
   } catch (error) {
-    console.error('Error deleting annual dev plans:', error);
     throw error;
   }
 };

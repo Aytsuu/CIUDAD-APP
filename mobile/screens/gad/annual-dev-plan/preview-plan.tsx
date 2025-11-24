@@ -152,7 +152,6 @@ const PreviewPlan = () => {
       const data = await getAnnualDevPlanById(devIdValue);
       setPlan(data);
     } catch (error) {
-      console.error('Error fetching plan:', error);
       Alert.alert('Error', 'Failed to fetch development plan');
     } finally {
       setIsLoading(false);
@@ -396,7 +395,7 @@ const PreviewPlan = () => {
                       }
                     }
                   } catch (error) {
-                    console.error('Error parsing budget items:', error);
+                    // Error parsing budget items
                   }
 
                   if (budgetItems.length === 0 && plan.budgets && plan.budgets.length > 0) {

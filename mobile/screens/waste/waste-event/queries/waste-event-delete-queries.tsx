@@ -21,7 +21,6 @@ export const useArchiveWasteEvent = () => {
             toast.success("Event archived successfully!");
         },
         onError: (error: any) => {
-            console.error('Error archiving waste event:', error);
             toast.error("Failed to archive event. Please try again.");
         }
     });
@@ -46,7 +45,6 @@ export const useRestoreWasteEvent = () => {
             toast.success("Event restored successfully!");
         },
         onError: (error: any) => {
-            console.error('Error restoring waste event:', error);
             toast.error("Failed to restore event. Please try again.");
         }
     });
@@ -69,7 +67,6 @@ export const useDeleteWasteEvent = () => {
             toast.success("Event deleted successfully!");
         },
         onError: (error: any) => {
-            console.error('Error deleting waste event:', error);
             toast.error("Failed to delete event. Please try again.");
         }
     });

@@ -37,7 +37,6 @@ const CreatePlan = () => {
         }
       ]);
     } catch (error) {
-      console.error('Error creating plan:', error);
       Alert.alert('Error', 'Failed to create annual development plan. Please try again.');
     } finally {
       setIsLoading(false);

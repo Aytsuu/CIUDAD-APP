@@ -21,11 +21,9 @@ export const updateAnnualDevPlan = async (planId: string | number, data: any) =>
       }] : []
     };
 
-    console.log('Updating annual dev plan with payload:', payload);
     const res = await api.put(`/gad/gad-annual-development-plan/${planId}/`, payload);
     return res.data;
   } catch (error) {
-    console.error('Error updating annual development plan:', error);
     throw error;
   }
 }; 

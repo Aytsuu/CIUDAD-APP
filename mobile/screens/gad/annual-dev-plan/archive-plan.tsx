@@ -209,7 +209,7 @@ export const ArchivePlanContent = () => {
     try {
       await restoreMutation.mutateAsync([planId]);
     } catch (error) {
-      console.error('Failed to restore plan:', error);
+      // Failed to restore plan
     } finally {
       setRestoringPlanId(null);
     }
@@ -220,7 +220,7 @@ export const ArchivePlanContent = () => {
     try {
       await deleteMutation.mutateAsync([planId]);
     } catch (error) {
-      console.error('Failed to delete plan:', error);
+      // Failed to delete plan
     } finally {
       setDeletingPlanId(null);
     }
@@ -232,7 +232,7 @@ export const ArchivePlanContent = () => {
       setSelectedPlans([]);
       setShowBulkRestoreDialog(false);
     } catch (error) {
-      console.error('Failed to restore plans:', error);
+      // Failed to restore plans
     }
   };
 
@@ -242,7 +242,7 @@ export const ArchivePlanContent = () => {
       setSelectedPlans([]);
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error('Failed to delete plans:', error);
+      // Failed to delete plans
     }
   };
 

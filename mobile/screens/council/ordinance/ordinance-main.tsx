@@ -192,9 +192,6 @@ function OrdinancePage() {
       return;
     }
     
-    console.log("🔍 Opening PDF URL:", pdfUrl);
-    console.log("🔍 URL type:", pdfUrl.startsWith('data:') ? 'Data URL' : 'Regular URL');
-    
     Linking.openURL(pdfUrl).catch(() =>
       Alert.alert('Cannot Open PDF', 'Please make sure you have a PDF reader app installed.')
     );
