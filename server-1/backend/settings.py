@@ -217,7 +217,8 @@ CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bo
 CORS_ALLOWED_ORIGINS=[
     # Production Hosts (fixed commas)
     "https://ciudad-app.onrender.com", 
-    "https://sanroqueciudad.com",
+    "https://www.sanroqueciudad.com/",
+    "https://securado.onrender.com/",
 
     # Local Testing (fixed comma)
     "http://127.0.0.1:8000",
