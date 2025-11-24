@@ -215,18 +215,18 @@ AUTH_USER_MODEL = 'account.Account'
 ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
 CORS_ALLOWED_ORIGINS=[
-    # Production Hosts (fixed commas)
+    # Production Hosts
     "https://ciudad-app.onrender.com", 
-    "https://www.sanroqueciudad.com/",
-    "https://securado.onrender.com/",
+    "https://www.sanroqueciudad.com",
+    "https://securado.onrender.com",
 
-    # Local Testing (fixed comma)
+    # Local Testing 
     "http://127.0.0.1:8000",
     "http://localhost:8000",
     "http://127.0.0.1:5173",
     "http://localhost:5173",
 
-    # Physical Mobile Device Host IP (confirmed from ipconfig)
+    # Physical Mobile Device Host IP
     "http://192.168.1.52:8000",
 ]
 
