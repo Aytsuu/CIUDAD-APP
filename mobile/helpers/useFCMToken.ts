@@ -6,15 +6,7 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/api';
 import { getApp } from '@react-native-firebase/app';
-import {
-  getMessaging,
-  requestPermission,
-  getToken,
-  onMessage,
-  onTokenRefresh,
-  setBackgroundMessageHandler,
-  AuthorizationStatus,
-} from '@react-native-firebase/messaging';
+import { getMessaging, requestPermission, getToken, onMessage, onTokenRefresh, setBackgroundMessageHandler, AuthorizationStatus} from '@react-native-firebase/messaging';
 
 
 Notifications.setNotificationHandler({
@@ -30,22 +22,22 @@ Notifications.setNotificationHandler({
 const app = getApp();
 const messaging = getMessaging(app);
 
-setBackgroundMessageHandler(messaging, async (remoteMessage) => {
-  console.log('📩 Background FCM message received:', remoteMessage);
-  try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: remoteMessage.notification?.title || 'New Notification',
-        body: remoteMessage.notification?.body || '',
-        data: remoteMessage.data || {},
-        sound: true,
-      },
-      trigger: null,
-    });
-  } catch (error) {
-    console.error('❌ Failed to show background notification:', error);
-  }
-});
+// setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+//   console.log('📩 Background FCM message received:', remoteMessage);
+//   try {
+//     await Notifications.scheduleNotificationAsync({
+//       content: {
+//         title: remoteMessage.notification?.title || 'New Notification',
+//         body: remoteMessage.notification?.body || '',
+//         data: remoteMessage.data || {},
+//         sound: true,
+//       },
+//       trigger: null,
+//     });
+//   } catch (error) {
+//     console.error('❌ Failed to show background notification:', error);
+//   }
+// });
 
 export function useFCMToken() {
   const router = useRouter();

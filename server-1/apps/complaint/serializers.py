@@ -146,25 +146,6 @@ class ComplaintSerializer(serializers.ModelSerializer):
             return StaffMinimalSerializer(obj.staff).data
         return None
     
-# class ComplaintUpdateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Complaint
-#         fields = [
-#             'comp_status',
-#             'comp_rejection_reason',
-#         ]
-#         extra_kwargs = {
-#             'comp_rejection_reason': {'required': False, 'allow_blank': True}
-#         }
-    
-#     def validate(self, data):
-#         """Validate that rejection reason is provided when status is Rejected"""
-#         if data.get('comp_status') == 'Rejected':
-#             raise serializers.ValidationError({
-#                 'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
-#             })
-#         return data
-    
 class ComplaintUpdateSerializer(serializers.ModelSerializer):
     staff_id = serializers.IntegerField(required=False, allow_null=True)
     

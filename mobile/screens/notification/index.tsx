@@ -1,13 +1,5 @@
 import React, { useState, useRef } from "react";
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-} from "react-native";
+import { TouchableOpacity, View, Text, FlatList, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { Bell, MoreVertical, Check, CheckCheck, ChevronLeft, FileText, Info, Clock  } from "lucide-react-native";
 import GetNotification from "./queries/getNotification";
 import { DrawerView } from "@/components/ui/drawer";
