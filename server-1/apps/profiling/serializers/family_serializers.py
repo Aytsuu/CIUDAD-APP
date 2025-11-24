@@ -4,6 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -59,9 +61,10 @@ class FamilyTableSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 
@@ -90,6 +93,21 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
       except ValueError:
           error_detail = response.text
       raise serializers.ValidationError({"error": error_detail})
+    
+    # Create notification
+    create_notification(
+      title="New Family Record",
+      message=(
+          f"A new family has been registered."
+      ),
+      recipients=general_recipients(False, family.staff.staff_id),
+      notif_type="REGISTRATION",
+      web_route="profiling/family",
+      web_params={},
+      mobile_route="/(profiling)/family/records",
+      mobile_params={},
+    )
+      
     return family
   
   def generate_fam_no(self, building_type):

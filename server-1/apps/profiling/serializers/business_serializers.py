@@ -7,6 +7,8 @@ from utils.supabase_client import upload_to_storage, remove_from_storage
 from datetime import datetime
 from ..utils import *
 import logging
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +58,15 @@ class BusinessTableSerializer(serializers.ModelSerializer):
   def get_registered_by(self, obj):
     staff = obj.staff
     if staff:
-      staff_type = staff.staff_type
-      staff_id = staff.staff_id
-      fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
-      fam_id = fam.fam.fam_id if fam else ""
-      personal = staff.rp.per
-      staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
   businesses = serializers.SerializerMethodField()
@@ -103,9 +106,10 @@ class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 
 class BusinessInfoSerializer(serializers.ModelSerializer):
@@ -140,9 +144,10 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FileInputSerializer(serializers.Serializer):
   name = serializers.CharField()
@@ -164,6 +169,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
   @transaction.atomic
   def create(self, validated_data):
+    # Create business record
     try:
         create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
@@ -182,6 +188,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
             staff = validated_data["staff"]
           )
 
+          # Create notification
+          create_notification(
+            title="New Business Respondent",
+            message=(
+                f"A new business respondent has been registered."
+            ),
+            recipients=general_recipients(True, br.staff.staff_id),
+            notif_type="REGISTRATION",
+            web_route="profiling/business/record",
+            web_params={},
+            mobile_route="/(profiling)/business/records",
+            mobile_params={},
+          )
+
         # Handle respondent/rp/br logic
         business_instance = self.create_business_instance(
             validated_data, rp, br
@@ -190,6 +210,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         # Handle file uploads
         if create_files:
             self.upload_files(business_instance, create_files)
+
+        # Create notification
+        create_notification(
+          title="New Business Record",
+          message=(
+              f"A new business has been registered."
+          ),
+          recipients=general_recipients(True, business_instance.staff.staff_id),
+          notif_type="REGISTRATION",
+          web_route="profiling/business/record",
+          web_params={},
+          mobile_route="/(profiling)/business/records",
+          mobile_params={},
+        )
 
         return business_instance
 
@@ -231,6 +265,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   
   @transaction.atomic
   def update(self, instance, validated_data):
+    # Update business details
     modification_request_files = validated_data.pop('modification_files', [])
     edit_files = validated_data.pop('edit_files', [])
     staff = validated_data.pop('staff', None)

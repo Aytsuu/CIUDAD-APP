@@ -20,7 +20,7 @@ export const RenderHistory = ({
       return (
         <div className="flex flex-col items-center justify-center py-12 space-y-4 p-4">
           <Spinner size="lg" />
-          <p className="text-sm text-gray-500">Loading family members...</p>
+          <p className="text-sm text-gray-500">Loading History...</p>
         </div>
       )
     }

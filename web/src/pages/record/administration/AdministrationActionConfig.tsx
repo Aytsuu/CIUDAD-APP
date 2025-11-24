@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { Check } from "lucide-react";
 
+// Configuration
 export const buttonConfig = (
-  submit: () => void
+  submit: () => void,
+  update?: () => void
 ) => ({
   [Type.Add]: (
     <ConfirmationModal
@@ -25,21 +27,24 @@ export const buttonConfig = (
       title="Confirm Save"
       description="Are you sure you want to save your changes?"
       actionLabel="Confirm"
-      onClick={submit}
+      onClick={update && update}
     />
   )
 });
 
+// Render button
 export const renderActionButton = ({
   formType,
   isSubmitting,
   submit,
+  update
 }: {
   formType: Type;
   isSubmitting: boolean;
   submit: () => void;
+  update?: () => void;
 }) => {
-  const config = buttonConfig(submit);
+  const config = buttonConfig(submit, update);
   const button = config[formType];
 
   if(isSubmitting) {

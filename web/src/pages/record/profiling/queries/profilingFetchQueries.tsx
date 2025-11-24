@@ -21,34 +21,6 @@ import {
   getSitioList,
 } from "../restful-api/profilingGetAPI";
 import { api } from "@/api/api";
-
-// ================ ALL =================
-// export const useProfilingAllRecord = (
-//   page: number,
-//   pageSize: number,
-//   searchQuery: string,
-// ) => {
-//   return useQuery({
-//     queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
-//     queryFn: async () => {
-//       try {
-//         const res = await api.get('profiling/all/', {
-//           params: {
-//             page,
-//             page_size: pageSize,
-//             search: searchQuery
-//           }
-//         });
-
-//         return res.data;
-//       } catch (err) {
-//         console.error(err);
-//         throw err;
-//       }
-//     },
-//     staleTime: 5000
-//   })
-// } 
  
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
@@ -202,11 +174,12 @@ export const useSitioList = () => {
 export const useFamiliesTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  occupancy: string
 ) => {
   return useQuery({
-    queryKey: ["familiesTableData", page, pageSize, searchQuery],
-    queryFn: () => getFamiliesTable(page, pageSize, searchQuery),
+    queryKey: ["familiesTableData", page, pageSize, searchQuery, occupancy],
+    queryFn: () => getFamiliesTable(page, pageSize, searchQuery, occupancy),
     staleTime: 5000,
   });
 };
@@ -398,11 +371,12 @@ export const useHouseholdData = (hh_id: string) => {
 export const useHouseholdTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  nhts: string
 ) => {
   return useQuery({
-    queryKey: ["householdTable", page, pageSize, searchQuery],
-    queryFn: () => getHouseholdTable(page, pageSize, searchQuery),
+    queryKey: ["householdTable", page, pageSize, searchQuery, nhts],
+    queryFn: () => getHouseholdTable(page, pageSize, searchQuery, nhts),
     staleTime: 5000,
   });
 };

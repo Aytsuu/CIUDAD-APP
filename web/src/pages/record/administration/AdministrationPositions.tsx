@@ -21,12 +21,14 @@ export default function AdministrationPositions({
   selectedPosition: string
   setSelectedPosition: (value: string) => void
 }) {
+  // =============== STATE INITIALIZATION ===============
   const navigate = useNavigate()
   const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
 
   // Check if any deletion is in progress
   const isDeletingAny = isDeleting
 
+  // =============== MEMOIZATIONS ===============
   // Group positions by category with filtering logic
   const groupedPositions = React.useMemo(() => {
     const filtered =
@@ -52,6 +54,7 @@ export default function AdministrationPositions({
     }, {})
   }, [positions])
 
+  // =============== HANDLERS ===============
   // Delete a position
   const handleAction = React.useCallback(
     (value: string) => {
@@ -110,6 +113,23 @@ export default function AdministrationPositions({
     }
   }
 
+  const handleEditGroup = (category: string, categoryPositions: any) => {
+    navigate('group-position', {
+      state: {
+        params: {
+          title: "Edit Group",
+          description: "Edit group and positions under this group",
+          type: Type.Edit,
+          data: {
+            category: category,
+            categoryPositions: categoryPositions
+          }
+        }
+      } 
+    })
+  }
+
+  // =============== RENDER ===============
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Header */}
@@ -232,6 +252,13 @@ export default function AdministrationPositions({
                                 </div>
                               </div>
                             ))}
+                          </div>
+                          <div className="flex justify-end mt-4">
+                            <Button variant={"outline"} className="shadow-none text-gray-700 border-none hover:bg-white hover:text-blue-500"
+                              onClick={() => handleEditGroup(category, categoryPositions)}
+                            >
+                              <Pen/> Edit Group
+                            </Button>
                           </div>
                         </CardContent>
                       </AccordionContent>

@@ -19,7 +19,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG=True
+DEBUG=config('DEBUG', False)
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -178,7 +178,7 @@ USE_TZ = True
 
 # # Static files 
 STATIC_URL = 'static/'
-STATC_ROOT = BASE_DIR / 'staticfiles'
+STATC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
@@ -213,8 +213,20 @@ AUTH_USER_MODEL = 'account.Account'
 # ========================
 
 ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS = True # disable in production
-CORS_ALLOW_CREDENTIALS = True # false in production
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
+CORS_ALLOWED_ORIGINS=[
+    # Production Hosts (fixed commas)
+    "https://ciudad-app.onrender.com", 
+    "https://sanroqueciudad.com",
+
+    # Local Testing (fixed comma)
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+
+    # Physical Mobile Device Host IP (confirmed from ipconfig)
+    "http://192.168.1.52:8000",
+]
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool) # false in production
 
 CORS_ALLOW_HEADERS = [
     'accept',

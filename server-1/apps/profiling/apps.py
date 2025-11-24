@@ -12,8 +12,10 @@ class ProfilingConfig(AppConfig):
 
     def ready(self):
         # Start scheduler only when Django is fully loaded
+        import apps.profiling.signals
         if settings.SCHEDULER_AUTOSTART: 
             self.start_scheduler()
+            self.start_tesseract()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""
@@ -30,6 +32,18 @@ class ProfilingConfig(AppConfig):
                 id='expired_requests_check'  # Unique ID for the job
             )
             scheduler.start()
-            logger.info("Scheduler started successfully")
+            logger.info("✅ Expired request checker started successfully")
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")
+    
+    def start_tesseract(self):
+        """Initialize and start tesseract model"""
+        try:
+            from .tasks import get_face_recognition_models
+
+            # Call methood
+            get_face_recognition_models()
+            logger.info("✅ Tesseract initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize tesseract: {str(e)}")
