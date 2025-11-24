@@ -131,8 +131,11 @@ export function calculateAgeFromDOB(
   // Create age string with improved formatting
   let ageString = "";
 
-  if (totalYears >= 1) {
-    // 1+ years: show years and months
+  if (totalYears >= 7) {
+    // 7+ years: show years only (no months/days detail)
+    ageString = `${totalYears} year${totalYears > 1 ? "s" : ""}`;
+  } else if (totalYears >= 1) {
+    // 1-6 years: show years and months
     if (remainingMonths > 0) {
       ageString = `${totalYears} year${
         totalYears > 1 ? "s" : ""

@@ -27,16 +27,46 @@ export const vaccineTypes = [
 ];
 
 export const formMedOptions = [
-  { id: "Tablet", name: "tablet" },
-  { id: "Capsule", name: "capsule" },
+  { id: "Tablet", name: "Tablet" },
+  { id: "Capsule", name: "Capsule" },
+  { id: "Syrup", name: "Syrup" },
+  { id: "Injection", name: "Injection" },
+  { id: "Ointment", name: "Ointment" },
+  { id: "Cream", name: "Cream" },
+  { id: "Gel", name: "Gel" },
+  { id: "Lotion", name: "Lotion" },
+  { id: "Solution", name: "Solution" },
+  { id: "Suspension", name: "Suspension" },
+  { id: "Inhaler", name: "Inhaler" },
+  { id: "Nebulizer", name: "Nebulizer" },
+  { id: "Spray", name: "Spray" },
+  { id: "Drops", name: "Drops" },
+  { id: "Suppository", name: "Suppository" },
+  { id: "Patch", name: "Patch" },
+  { id: "Powder", name: "Powder" },
+  { id: "Granules", name: "Granules" },
+  { id: "Sachet", name: "Sachet" },
+  { id: "Lozenges", name: "Lozenges" },
+  { id: "Chewable", name: "Chewable Tablet" },
+  { id: "Implants", name: "Implants" }
 ];
-
-
 
 export const dosageUnitOptions = [
     { id: "Mg", name: "mg" },
     { id: "Ml", name: "ml" },
-  ]
+    { id: "Mcg", name: "mcg" },
+    { id: "Iu", name: "IU" },
+    { id: "G", name: "g" },
+    { id: "Percent", name: "%" },
+    { id: "Unit", name: "Unit" },
+    { id: "Puff", name: "Puff" },
+    { id: "Drop", name: "Drop" },
+    { id: "Patch", name: "Patch" },
+    { id: "Ampule", name: "Ampule" },
+    { id: "Vial", name: "Vial" },
+    { id: "Sachet", name: "Sachet" },
+    { id: "Suppository", name: "Suppository" }
+];
 
 export interface DoseDetail {
   id?: number;

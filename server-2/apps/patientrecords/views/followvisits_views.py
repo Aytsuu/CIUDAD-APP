@@ -115,11 +115,32 @@ class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Follow-up visit record not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-class GetCompletedFollowUpVisits(APIView):
+class GetPatientFollowUpVisits(APIView):
+    """
+    Get follow-up visits for a specific patient with optional status filtering.
+    Query params:
+        - status: 'completed', 'pending', 'missed', or 'all' (default: 'all')
+    """
     def get(self, request, pat_id):
         try:
-            # Get completed visits using the utility function
-            visits = get_completed_followup_visits(pat_id)
+            # Get status filter from query params
+            status_filter = request.query_params.get('status', 'all').lower()
+            
+            # Get all patient records for this patient
+            from apps.patientrecords.models import PatientRecord
+            patient_records = PatientRecord.objects.filter(pat_id=pat_id)
+            
+            # Base queryset
+            visits = FollowUpVisit.objects.filter(
+                patrec__in=patient_records
+            )
+            
+            # Apply status filter
+            if status_filter and status_filter != 'all':
+                visits = visits.filter(followv_status__iexact=status_filter)
+            
+            # Order by most recent first
+            visits = visits.order_by('-followv_date')
             
             # Serialize the data
             serialized_visits = [{
@@ -129,44 +150,16 @@ class GetCompletedFollowUpVisits(APIView):
                 'status': visit.followv_status,
                 'patrec_id': visit.patrec_id,
                 'created_at': visit.created_at.isoformat() if visit.created_at else None,
-                'completed_at': visit.completed_at.isoformat() if visit.completed_at else None
+                'completed_at': visit.completed_at.isoformat() if hasattr(visit, 'completed_at') and visit.completed_at else None
             } for visit in visits]
             
             response_data = {
                 'count': visits.count(),
+                'status_filter': status_filter,
                 'results': serialized_visits
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
             
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
-
-
-class GetPendingFollowUpVisits(APIView):
-    def get(self, request, pat_id):
-        try:
-            # Get completed visits using the utility function
-            visits = get_pending_followup_visits(pat_id)
-            
-            # Serialize the data
-            serialized_visits = [{
-                'id': visit.followv_id,
-                'date': visit.followv_date.isoformat(),
-                'description': visit.followv_description,
-                'status': visit.followv_status,
-                'patrec_id': visit.patrec_id,
-                'created_at': visit.created_at.isoformat() if visit.created_at else None
-            } for visit in visits]
-            
-            response_data = {
-                'count': visits.count(),
-                'results': serialized_visits
-            }
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-        
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
