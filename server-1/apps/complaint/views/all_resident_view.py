@@ -12,8 +12,8 @@ class AllResidentsView(APIView):
             # Fetch residents with related person, addresses, and account
             residents = (
                 ResidentProfile.objects
-                .select_related('per', 'account')  # ✅ include account (OneToOne)
-                .prefetch_related('per__personal_addresses__add')  # prefetch addresses
+                .select_related('per', 'account')
+                .prefetch_related('per__personal_addresses__add')
                 .all()[:100]
             )
 

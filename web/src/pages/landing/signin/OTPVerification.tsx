@@ -25,7 +25,7 @@ export default function OTPVerification({
   email,
   onSuccess,
   onResend,
-  isResending = false
+  isResending = false,
 }: OTPVerificationProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState("");
@@ -33,19 +33,22 @@ export default function OTPVerification({
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
+
   const validateOTPMutation = useLoginMutation();
 
   // const contact = method === "phone" ? phone! : email!;
   const Icon = method === "phone" ? Phone : Mail;
   // const iconColorClass = method === "phone" ? "text-green-600" : "text-blue-600";
-  const bgGradient = method === "phone" 
-    ? "bg-gradient-to-br from-green-500 to-green-600" 
-    : "bg-gradient-to-br from-blue-500 to-blue-600";
-  const buttonGradient = method === "phone"
-    ? "from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-    : "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800";
-  const shadowColor = method === "phone" ? "shadow-green-200" : "shadow-blue-200";
+  const bgGradient =
+    method === "phone"
+      ? "bg-gradient-to-br from-green-500 to-green-600"
+      : "bg-gradient-to-br from-blue-500 to-blue-600";
+  const buttonGradient =
+    method === "phone"
+      ? "from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+      : "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800";
+  const shadowColor =
+    method === "phone" ? "shadow-green-200" : "shadow-blue-200";
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -73,7 +76,7 @@ export default function OTPVerification({
       inputRefs.current[index + 1]?.focus();
     }
 
-    if (newOtp.every(digit => digit !== "") && !isVerifying) {
+    if (newOtp.every((digit) => digit !== "") && !isVerifying) {
       handleVerifyOtp(newOtp.join(""));
     }
   };
@@ -117,7 +120,7 @@ export default function OTPVerification({
         } else {
           toast.info("Notifications blocked by user");
         }
-
+    
         toast.success("Successfully signed in!");
         onSuccess();
       } else {
@@ -128,9 +131,9 @@ export default function OTPVerification({
       console.error("OTP verification error:", error);
       setErrorMessage(
         error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Invalid OTP. Please try again."
+          error?.response?.data?.message ||
+          error?.message ||
+          "Invalid OTP. Please try again."
       );
       resetOtp();
     } finally {
@@ -153,14 +156,16 @@ export default function OTPVerification({
       setTimer(60);
       setCanResend(false);
       resetOtp();
-      toast.success(`New OTP sent to your ${method === "phone" ? "phone" : "email"}!`);
+      toast.success(
+        `New OTP sent to your ${method === "phone" ? "phone" : "email"}!`
+      );
     } catch (error: any) {
       console.error("Resend error:", error);
       setErrorMessage(
         error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to resend OTP. Please try again."
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to resend OTP. Please try again."
       );
     }
   };
@@ -182,7 +187,9 @@ export default function OTPVerification({
     <div className="space-y-6">
       {/* Header with Icon */}
       <div className="text-center space-y-3">
-        <div className={`w-16 h-16 ${bgGradient} rounded-2xl flex items-center justify-center mx-auto shadow-lg ${shadowColor}`}>
+        <div
+          className={`w-16 h-16 ${bgGradient} rounded-2xl flex items-center justify-center mx-auto shadow-lg ${shadowColor}`}
+        >
           <Icon className="w-8 h-8 text-white" />
         </div>
       </div>
@@ -208,7 +215,10 @@ export default function OTPVerification({
 
       {/* Error Message */}
       {errorMessage && (
-        <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
+        <Alert
+          variant="destructive"
+          className="rounded-xl border-red-200 bg-red-50"
+        >
           <AlertDescription className="text-red-700 text-sm text-center">
             {errorMessage}
           </AlertDescription>
@@ -225,9 +235,7 @@ export default function OTPVerification({
 
       {/* Resend Section */}
       <div className="text-center space-y-10">
-        <p className="text-gray-600 text-sm">
-          Didn't receive the code?
-        </p>
+        <p className="text-gray-600 text-sm">Didn't receive the code?</p>
 
         {canResend ? (
           <Button
@@ -252,14 +260,15 @@ export default function OTPVerification({
         ) : (
           <div className="space-y-3">
             <p className="text-gray-500 text-sm font-medium">
-              Resend available in <span className="text-blue-600">{timer}s</span>
+              Resend available in{" "}
+              <span className="text-blue-600">{timer}s</span>
             </p>
           </div>
         )}
       </div>
 
       {/* Manual Verify Button (hidden when auto-submit works) */}
-      {otp.every(digit => digit !== "") && !isVerifying && (
+      {otp.every((digit) => digit !== "") && !isVerifying && (
         <Button
           onClick={() => handleVerifyOtp(otp.join(""))}
           disabled={isVerifying}

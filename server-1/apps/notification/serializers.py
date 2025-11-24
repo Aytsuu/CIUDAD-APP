@@ -97,3 +97,4 @@ class FCMTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = FCMToken
         fields = ["fcm_token", "fcm_device_id"]
+        

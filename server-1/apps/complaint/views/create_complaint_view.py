@@ -249,19 +249,19 @@ class ComplaintCreateView(APIView):
                         
                         # Schedule reminder notification in 1 minute
                         send_time = timezone.now() + timedelta(minutes=1)
-                        reminder = reminder_notification(
-                            title="Reminder: Complaint Awaiting Review",
-                            message=(
-                                f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
-                            ),
-                            recipients=recipients,
-                            notif_type="REMINDER",
-                            send_at=send_time,
-                            web_route="complaint/view/",
-                            web_params={"comp_id": str(complaint.comp_id)},
-                            mobile_route="/(my-request)/complaint-tracking/compMainView",
-                            mobile_params={"comp_id": str(complaint.comp_id)},
-                        )
+                        # reminder = reminder_notification(
+                        #     title="Reminder: Complaint Awaiting Review",
+                        #     message=(
+                        #         f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
+                        #     ),
+                        #     recipients=recipients,
+                        #     notif_type="REMINDER",
+                        #     send_at=send_time,
+                        #     web_route="complaint/view/",
+                        #     web_params={"comp_id": str(complaint.comp_id)},
+                        #     mobile_route="/(my-request)/complaint-tracking/compMainView",
+                        #     mobile_params={"comp_id": str(complaint.comp_id)},
+                        # )
                         
                         logger.info(
                             f"Notifications sent to {len(recipients)} ADMIN staff members with sender rp_id: {sender}"

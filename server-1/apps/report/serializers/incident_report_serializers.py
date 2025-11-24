@@ -38,6 +38,18 @@ class IRTableSerializer(serializers.ModelSerializer):
       info = obj.rp.per
       return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
+  
+  def get_files(self, obj):
+    files = [
+      {
+        'id': file.irf_id,
+        'name': file.irf_name,
+        'type': file.irf_type,
+        'url': file.irf_url
+      }
+      for file in obj.report_files.filter(ir=obj.ir_id)]
+    
+    return files
 
 class IRCreateSerializer(serializers.ModelSerializer):
   ir_type = serializers.CharField(write_only=True, required=False)
@@ -94,4 +106,3 @@ class IRCreateSerializer(serializers.ModelSerializer):
       IncidentReportFile.objects.bulk_create(report_files)
       
     return incident_report
-    

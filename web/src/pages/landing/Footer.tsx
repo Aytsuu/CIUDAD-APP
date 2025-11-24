@@ -15,7 +15,7 @@ export const Footer = ({data, homeRef, aboutRef, mobileAppRef, announcementRef, 
 }) => {
   return (
     <footer className="bg-[#0F1F3A] text-white py-16 px-4 sm:px-6 lg:px-8">
-      <div className="w-3/4 mx-auto flex flex-col md:flex-row justify-between gap-28">
+      <div className="w-full lg:w-3/4 mx-auto flex flex-col md:flex-row justify-between gap-16 lg:gap-28">
         {/* About Section */}
         <div className="w-full space-y-4">
           <h3 className="text-xl font-bold">Barangay San Roque (Ciudad)</h3>
@@ -75,7 +75,7 @@ export const Footer = ({data, homeRef, aboutRef, mobileAppRef, announcementRef, 
       </div>
 
       {/* Copyright */}
-      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-700 text-center text-gray-400">
+      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-700 text-sm sm:text-base text-center text-gray-400">
         <p>
           &copy; {new Date().getFullYear()} Barangay San Roque (Ciudad). All rights reserved.
         </p>

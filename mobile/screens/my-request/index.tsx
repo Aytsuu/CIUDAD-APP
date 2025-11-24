@@ -1,8 +1,8 @@
-import { Text, View, TouchableOpacity } from "react-native"
-import PageLayout from "../_PageLayout"
+import { Text, View, TouchableOpacity } from "react-native";
+import PageLayout from "../_PageLayout";
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default () => {
   const router = useRouter();
@@ -12,53 +12,45 @@ export default () => {
       title: "Garbage Pickup Request",
       route: "/(my-request)/garbage-pickup/garbage-pickup-tracker",
       icon: "",
-      gradient: ['#60a5fa', '#3b82f6'],
+      gradient: ["#60a5fa", "#3b82f6"],
     },
     {
       title: "Certification Request",
       route: "/(my-request)/certification-tracking/certificate-request-tracker",
       icon: "",
-      gradient: ['#3b82f6', '#2563eb'],
+      gradient: ["#3b82f6", "#2563eb"],
     },
     {
       title: "Blotter Request",
       route: "/(my-request)/complaint-tracking/compMain",
       icon: "",
-      gradient: ['#2563eb', '#1e40af'],
+      gradient: ["#2563eb", "#1e40af"],
     },
     {
       title: "Medicine Request",
       route: "/(health)/medicine-request/my-requests",
       icon: "",
-      gradient: ['#93c5fd', '#60a5fa'],
+      gradient: ["#93c5fd", "#60a5fa"],
     },
     {
       title: "Maternal Appointment",
       route: "",
       icon: "",
-      gradient: ['#60a5fa', '#3b82f6'],
+      gradient: ["#60a5fa", "#3b82f6"],
     },
     {
       title: "Medical Consultation",
       route: "",
       icon: "",
-      gradient: ['#2563eb', '#1e40af'],
+      gradient: ["#2563eb", "#1e40af"],
     },
-  ]
+  ];
 
   return (
     <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity> 
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">My Requests</Text>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">My Requests</Text>}
-      rightAction={<View className="w-10 h-10" />}
-      wrapScroll={false}
     >
       <View className="flex-1 px-6 py-4">
         <View className="flex-row flex-wrap gap-3">
@@ -66,10 +58,10 @@ export default () => {
             <TouchableOpacity
               key={index}
               className="rounded-2xl overflow-hidden"
-              style={{ 
-                width: '48%', 
+              style={{
+                width: "48%",
                 aspectRatio: 1,
-                shadowColor: '#000',
+                shadowColor: "#000",
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.1,
                 shadowRadius: 8,
@@ -90,7 +82,7 @@ export default () => {
                       <Text className="text-3xl"></Text>
                     </View>
                   </View>
-                  
+
                   <View>
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}
@@ -103,5 +95,5 @@ export default () => {
         </View>
       </View>
     </PageLayout>
-  )
-}
+  );
+};

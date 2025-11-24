@@ -24,9 +24,8 @@ interface IncidentProps {
 }
 
 const IncidentHeader = memo(() => (
-  <View className="bg-white rounded-lg p-4 border border-gray-100">
+  <View className="bg-white rounded-lg mb-10">
     <View className="flex-row items-center mb-2">
-      <FileText size={20} color="#111111" className="mr-2" />
       <Text className="text-lg font-semibold text-gray-900">Incident Details</Text>
     </View>
     <Text className="text-sm text-gray-600">
@@ -255,7 +254,7 @@ export const Incident = memo(({ onSubmit, onPrev, isSubmitting }: IncidentProps)
       />
 
       {/* Action Buttons */}
-      <View className="flex-row space-x-3 mt-6">
+      <View className="flex-row gap-x-4 mt-4">
         <TouchableOpacity
           onPress={onPrev}
           disabled={isSubmitting}
@@ -280,17 +279,12 @@ export const Incident = memo(({ onSubmit, onPrev, isSubmitting }: IncidentProps)
           onPress={onSubmit}
           disabled={isSubmitting}
           className={`flex-1 py-3 px-4 rounded-lg flex-row items-center justify-center ${
-            isSubmitting ? "bg-gray-300" : "bg-green-600"
+            isSubmitting ? "bg-blue-400" : "bg-blue-600"
           }`}
         >
-          <Send
-            size={20}
-            className={isSubmitting ? "text-gray-500" : "text-white"}
-          />
+          <Send color="#ffffff"/>
           <Text
-            className={`font-semibold ml-2 ${
-              isSubmitting ? "text-gray-500" : "text-white"
-            }`}
+            className={`font-semibold ml-2 text-white`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Text>

@@ -66,7 +66,6 @@ class Personal(AbstractModels):
 
     class Meta:
         db_table = 'personal'
-        managed = False
         indexes = [
             models.Index(fields=['per_lname', 'per_fname']),
             models.Index(fields=['per_contact']),

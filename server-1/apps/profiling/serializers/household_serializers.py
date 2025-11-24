@@ -1,6 +1,8 @@
+
 from rest_framework import serializers
 from django.utils import timezone
 from ..models import *
+from django.db.models import Count
 from ..double_queries import PostQueries
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
@@ -37,8 +39,7 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        middle_name = f' {personal.per_mname}' if personal.per_mname else ''
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{middle_name}'
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
@@ -55,15 +56,27 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 'head_id',
-              'date_registered']
+              'date_registered', "registered_by"]
     
   def get_total_families(self, obj):
-    return Family.objects.filter(hh=obj).count()
+    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
   
   def get_head(self, obj):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
+  
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
@@ -85,16 +98,9 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     household.save()
 
     # Perform double query
-    # Convert model instances to IDs for JSON serialization
-    double_query_data = {
-      'hh_nhts': validated_data['hh_nhts'],
-      'add': validated_data['add'].add_id,  # Get the ID from Address instance
-      'rp': validated_data['rp'].rp_id,      # Get the ID from ResidentProfile instance
-      'staff': validated_data['staff'].staff_id  # Get the ID from Staff instance
-    }
-    
+    request = self.context.get("request")
     double_queries = PostQueries()
-    response = double_queries.household(double_query_data)
+    response = double_queries.household(request.data)
     if not response.ok:
       try:
           error_detail = response.json()

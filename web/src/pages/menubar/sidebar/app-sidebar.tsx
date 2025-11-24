@@ -191,11 +191,7 @@ export function AppSidebar() {
       ? [
           {
             title: "Blotter",
-            url: "/",
-            items: [
-              {title: "Process", url: "/complaint"},
-              {title: "Record", url: "/record"}
-            ]
+            url: "/complaint",
           },
         ]
       : []),

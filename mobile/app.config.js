@@ -27,20 +27,20 @@
       },
       web: {
         bundler: "metro",
-        output: "static",
+        output: "static", 
         favicon: "./assets/images/CIUDADLogo.svg"
       },
       plugins: [
         "expo-router",
-        [
-          "expo-splash-screen",
-          {
-            image: "./assets/images/splash-icon.png",
-            imageWidth: 200,
-            resizeMode: "contain",
-            backgroundColor: "#ffffff"
-          }
-        ],
+        // [
+        //   "expo-splash-screen",
+        //   {
+        //     image: "./assets/images/splash-icon.png",
+        //     imageWidth: 200,
+        //     resizeMode: "contain",
+        //     backgroundColor: "#ffffff"
+        //   }
+        // ],
         [
           "expo-dev-client",
           {

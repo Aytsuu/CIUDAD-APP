@@ -113,7 +113,7 @@ export default function AdministrationRecords() {
 
               <DialogLayout 
                 trigger={<Button variant={"outline"}>
-                  <MapPin  className="text-blue-700 mr-2"/>
+                  <MapPin  className="mr-1"/>
                   Sitio
                 </Button>}
                 title="Sitio"
@@ -126,7 +126,7 @@ export default function AdministrationRecords() {
                   variant="outline"
                   className="px-4 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
                 >
-                  <UserRoundCog size={16} className="text-blue-700  mr-2" />
+                  <UserRoundCog size={16} className="mr-1" />
                   Manage Roles
                 </Button>
               </Link>
@@ -143,7 +143,7 @@ export default function AdministrationRecords() {
                 }}
               >
                 <Button className="px-4">
-                  <Plus size={16} className="mr-2" />
+                  <Plus size={16} className="mr-1" />
                   Add New Staff
                 </Button>
               </Link>

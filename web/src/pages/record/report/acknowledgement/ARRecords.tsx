@@ -199,7 +199,7 @@ export default function ARRecords() {
                 </div>
                 <div>
                   <SelectLayout
-                    withRest={false}
+                    withReset={false}
                     value={status}
                     valueLabel="Status"
                     className="gap-4 focus:ring-0"

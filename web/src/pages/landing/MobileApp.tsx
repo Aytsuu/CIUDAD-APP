@@ -10,17 +10,13 @@ export default function MobileApp() {
       <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
 
-      <div className="relative container mx-auto px-6">
+      <div className="relative container mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-full text-sm font-medium mb-6">
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-            Mobile Application
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
             Download Our App
           </h1>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
             Access barangay services anytime, anywhere with our mobile
             application
           </p>

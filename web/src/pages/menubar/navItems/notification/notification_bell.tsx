@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock  } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle  } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
@@ -57,6 +57,12 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
           <Info className="w-5 h-5 text-indigo-600" />
         </div>
       );
+    case "REPORT":
+      return (
+        <div className={`${baseClass} bg-red-100 ${className}`}>
+          <AlertTriangle className="w-5 h-5 text-red-600" />
+        </div>
+      )
     default:
       return (
         <div className={`${baseClass} bg-gray-100 ${className}`}>
@@ -102,24 +108,6 @@ export const NotificationBell: React.FC = () => {
     }
   }, [data]);
 
-  const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
-    if (!redirectUrl || !redirectUrl.path) return null;
-    
-    const { path, params } = redirectUrl;
-    if (!params || Object.keys(params).length === 0) {
-      return path;
-    }
-    
-    const searchParams = new URLSearchParams(
-      Object.entries(params).reduce((acc, [key, value]) => {
-        acc[key] = String(value);
-        return acc;
-      }, {} as Record<string, string>)
-    ).toString();
-    
-    return `${path}?${searchParams}`;
-  };
-
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
     console.log('Setting up FCM listener...');
@@ -145,8 +133,6 @@ export const NotificationBell: React.FC = () => {
               path: payload.data.web_route,
               params: params
             };
-            
-            console.log('📍 Parsed redirect URL:', redirectUrl);
           } catch (e) {
             console.error("Failed to parse web params:", e);
           }
@@ -154,22 +140,22 @@ export const NotificationBell: React.FC = () => {
         const notifTitle = payload.notification?.title || "No title";
         const notifMessage = payload.notification?.body || "No message";
 
-        // const newNotif: Notification = {
-        //   notif_id: payload.data?.notification_id || Date.now().toString(),
-        //   notif_title: payload.notification?.title || "No title",
-        //   notif_message: payload.notification?.body || "No message",
-        //   notif_type: payload.data?.notif_type || "",
-        //   is_read: false,
-        //   notif_created_at: new Date().toISOString(),
-        //   redirect_url: redirectUrl,
-        // };
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: payload.notification?.title || "No title",
+          notif_message: payload.notification?.body || "No message",
+          notif_type: payload.data?.notif_type || "",
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
 
-        // // Update state first
-        // setNotifications((prev) => {
-        //   console.log('📝 Adding notification to state. Current count:', prev.length);
-        //   return [newNotif, ...prev];
-        // });
-        // setUnreadCount((prev) => prev + 1);
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
 
         // Show toast notification
         showNotificationToast({
@@ -178,13 +164,15 @@ export const NotificationBell: React.FC = () => {
           avatarSrc: ciudadLogo,
           timestamp: "just now",
           onClick: redirectUrl ? () => {
-            const url = buildRedirectUrl(redirectUrl);
-            if (url) navigate(url);
+
+            const { path, params } = redirectUrl
+            navigate(path, {
+              state: {
+                params: params
+              }
+            })
           } : undefined,
         });
-        
-        // Also refetch to ensure we're in sync with backend
-        console.log('🔄 Refetching notifications from backend...');
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
@@ -230,10 +218,13 @@ export const NotificationBell: React.FC = () => {
     
     // Navigate using the redirect_url
     if (notification.redirect_url) {
-      const url = buildRedirectUrl(notification.redirect_url);
-      if (url) {
-        navigate(url);
-      }
+
+      const { path, params } = notification.redirect_url
+      navigate(path, {
+        state: {
+          params: params
+        }
+      })
     }
     
     setOpen(false);
@@ -248,10 +239,14 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          const url = buildRedirectUrl(notification.redirect_url);
-          if (url) {
-            navigate(url);
-          }
+          
+          const { path, params } = notification.redirect_url
+          navigate(path, {
+            state: {
+              params: params
+            }
+          })
+
         }
         setOpen(false);
         break;
@@ -261,12 +256,21 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
+  /* 
+    Main Options navigation
+  */
+
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
     if(action === "view_notification") {
       navigate("/notification");
+      setOpen(false);
+    }
+    if(action === "notification_settings"){
+      navigate("/manage/preferences");
+      setOpen(false);
     }
   };
 

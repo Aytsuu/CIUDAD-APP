@@ -30,9 +30,8 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
   const { control, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({control, name: "accused",});
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
   const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
-  const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
+  const { data: allResidents = [] } = useAllResidents();
   const currentAccused = watch(`accused.${activeTab}`);
 
   const addAccused = () => {
@@ -46,7 +45,7 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
       acsd_address: "",
     });
     setActiveTab(newIndex);
-    setSelectedResident(null);
+
     setSelectedResidentValue("");
   };
 
@@ -58,7 +57,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
     } else if (activeTab > index) {
       setActiveTab(activeTab - 1);
     }
-    setSelectedResident(null);
     setSelectedResidentValue("");
   };
 
@@ -66,7 +64,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
     const resident = allResidents.find((r: Resident) => r.rp_id === residentId);
     if (!resident) return;
 
-    setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
     setValue(`accused.${activeTab}.acsd_name`, resident.name);
@@ -87,7 +84,6 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
   };
 
   const clearSelection = () => {
-    setSelectedResident(null);
     setSelectedResidentValue("");
     setValue(`accused.${activeTab}.rp_id`, null);
     setValue(`accused.${activeTab}.acsd_name`, "");
@@ -108,13 +104,8 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
   useEffect(() => {
     const currentAccusedData = watch(`accused.${activeTab}`);
     if (currentAccusedData?.rp_id) {
-      const resident = allResidents.find(
-        (r: Resident) => r.rp_id === currentAccusedData.rp_id
-      );
-      setSelectedResident(resident || null);
       setSelectedResidentValue(currentAccusedData.rp_id);
     } else {
-      setSelectedResident(null);
       setSelectedResidentValue("");
     }
   }, [activeTab, allResidents, watch]);
