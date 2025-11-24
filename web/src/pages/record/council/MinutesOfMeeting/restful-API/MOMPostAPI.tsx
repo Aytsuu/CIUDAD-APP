@@ -12,12 +12,11 @@ export const createMOMFile = async (files: { name: string; type: string; file: s
             }))
         };
 
-        console.log("payload", payload)
         const response = await api.post('council/mom-file/', payload)
     
         return response.data;
     } catch (error) {
-        console.error(error)
+        // console.error(error)
         throw error;
     }
 };

@@ -15,7 +15,6 @@ export const getSummonCaseList = async (page: number, pageSize: number, searchQu
         const res = await api.get('clerk/summon-case-list/', {
             params
         })
-        console.log(res.data)
         return res.data
     }catch(err){
         console.error(err)
@@ -37,7 +36,6 @@ export const getCouncilCaseList = async (page: number, pageSize: number, searchQ
         const res = await api.get('clerk/council-case-list/', {
             params
         })
-        console.log(res.data)
         return res.data
     }catch(err){
         console.error(err)
@@ -59,7 +57,6 @@ export const getLuponCaseList = async (page: number, pageSize: number, searchQue
         const res = await api.get('clerk/lupon-case-list/', {
             params
         })
-        console.log(res.data)
         return res.data
     }catch(err){
         console.error(err)
