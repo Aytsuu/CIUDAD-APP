@@ -90,7 +90,6 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
       setSelectedPlans([]);
       setShowRestoreDialog(false);
     } catch (error) {
-      console.error("Failed to restore plans:", error);
       showErrorToast("Failed to restore development plans");
     } finally {
       setIsRestoring(false);
@@ -111,7 +110,6 @@ export default function AnnualDevelopmentPlanArchive({ onBack }: AnnualDevelopme
       setSelectedPlans([]);
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error("Failed to delete plans:", error);
       showErrorToast("Failed to delete development plans");
     } finally {
       setIsDeleting(false);

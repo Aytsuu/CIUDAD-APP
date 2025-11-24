@@ -22,12 +22,9 @@ export interface Staff {
 
 export const createWasteEvent = async (eventData: Omit<WasteEvent, 'we_num'>) => {
     try {
-        console.log("Waste Event Data:", eventData);
         const response = await api.post('/waste/waste-event/', eventData);
         return response.data;
     } catch (error: any) {
-        console.error("Error creating waste event:", error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -41,7 +38,6 @@ export const getWasteEvents = async (isArchive?: boolean) => {
         const response = await api.get('/waste/waste-event/', { params });
         return response.data;
     } catch (error) {
-        console.error("Error fetching waste events:", error);
         throw error;
     }
 };

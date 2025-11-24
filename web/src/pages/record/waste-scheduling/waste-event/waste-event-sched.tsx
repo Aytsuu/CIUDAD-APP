@@ -156,7 +156,6 @@ function WasteEventSched() {
             form.reset();
             setIsDialogOpen(false);
         } catch (error) {
-            console.error('Error creating waste event:', error);
             showErrorToast("Failed to schedule event. Please try again.");
         } finally {
             setIsSubmitting(false);

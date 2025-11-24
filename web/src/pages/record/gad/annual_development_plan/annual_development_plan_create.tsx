@@ -91,7 +91,7 @@ export default function AnnualDevelopmentPlanCreate() {
         const data = await getStaffList();
         setStaffOptions(data || []);
       } catch (e) {
-        console.error("Failed to fetch staff list", e);
+        // Failed to fetch staff list
       } finally {
         setStaffLoading(false);
       }
@@ -208,7 +208,6 @@ export default function AnnualDevelopmentPlanCreate() {
       showSuccessToast("Annual development plan created successfully!");
       navigate(-1);
     } catch (error) {
-      console.error("Error creating annual development plan:", error);
       showErrorToast("Failed to create annual development plan");
     } finally {
       setIsLoading(false);

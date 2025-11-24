@@ -130,7 +130,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       const plansData = Array.isArray(data) ? data : data?.results || [];
       setPlans(plansData);
     } catch (error) {
-      console.error("Error fetching plans:", error);
       showErrorToast("Failed to fetch annual development plans");
     } finally {
       setIsLoading(false);
@@ -224,7 +223,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       setShowArchiveButtons(false);
       onBack(); // Go back to main view after archiving
     } catch (error) {
-      console.error("Failed to archive plans:", error);
       showErrorToast("Failed to archive development plans");
     } finally {
       setIsArchiving(false);
@@ -263,7 +261,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       // Remove the archived plan from the view
       setPlans(prev => prev.filter(plan => plan.dev_id !== archivedId));
     } catch (error) {
-      console.error("Failed to archive plan:", error);
       showErrorToast("Failed to archive development plan");
     } finally {
       setIsArchiving(false);

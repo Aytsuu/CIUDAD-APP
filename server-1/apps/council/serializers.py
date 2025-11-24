@@ -210,7 +210,6 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
                 attendance_sheets.append(attendance_sheet)
                 
             except Exception as e:
-                print(f"Failed to process file {file_data.get('name')}: {str(e)}")
                 continue
 
         if attendance_sheets:
@@ -440,7 +439,6 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     def get_mom_file(self, obj):
         try:
             mom_file = obj.momfile
-            print('MOM File', mom_file)
             return {
                 'momf_id': mom_file.momf_id,
                 'momf_url': mom_file.momf_url,
@@ -524,7 +522,6 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
         BUCKET = "ordinance-bucket"
         created_files = []
         for file_data in files:
-            print(f"Processing file: {file_data['name']}, type: {file_data['type']}")
             unique_name = f"{int(time.time())}-{file_data['name'].replace(' ', '_')}"
             file_path = f"ordinances/{unique_name}"
             of_file = OrdinanceFile(
@@ -532,7 +529,6 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
                 of_type=file_data['type'],
                 of_path=file_path,
             )
-            print(f"Uploading to Supabase: {unique_name}")
             try:
                 b64_string = file_data['file']
                 if b64_string.startswith('data:'):
@@ -551,18 +547,14 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
                     }
                 )
                 if hasattr(upload_result, 'error') and upload_result.error:
-                    print(f"❌ Upload error: {upload_result.error}")
                     raise Exception(upload_result.error)
                 url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{file_path}"
-                print(f"✅ Upload successful, URL: {url}")
             except Exception as e:
-                print(f"❌ Upload failed: {e}")
                 url = None
             if not url:
                 raise Exception("Failed to upload file to Supabase. No URL associated.")
             of_file.of_url = url
             of_file.save()
-            print(f"Saved to database with ID: {of_file.of_id}")
             created_files.append(of_file)
         return created_files
 

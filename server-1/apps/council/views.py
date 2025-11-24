@@ -1236,7 +1236,6 @@ class MOMFileView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(serializer.errors) 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
 
@@ -1745,8 +1744,6 @@ class OrdinanceFileView(generics.ListCreateAPIView):
                 {"error": "No files provided"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        print(f"Uploading {len(files)} ordinance files")
         
         # Call serializer's upload method and get created files
         created_files = self.get_serializer()._upload_files(files)

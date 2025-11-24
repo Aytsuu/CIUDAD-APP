@@ -65,7 +65,7 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
         }, 0);
       }
     } catch (error) {
-      console.error('Error parsing budget items:', error);
+      // Error parsing budget items - silently continue
     }
     
     // Use calculated total if available, otherwise fall back to plan.total

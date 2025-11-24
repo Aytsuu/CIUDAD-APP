@@ -36,7 +36,6 @@ function AnnualDevelopmentPlan(){
             const uniqueYears: number[] = [...new Set(allPlans.map((plan: any) => new Date(plan.dev_date).getFullYear()))].sort((a: number, b: number) => b - a); // Sort descending
             setYears(uniqueYears);
         } catch (error) {
-            console.error("Error fetching years:", error);
             setYears([]);
         } finally {
             setIsLoading(false);

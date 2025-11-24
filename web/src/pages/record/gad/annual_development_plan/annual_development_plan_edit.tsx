@@ -94,7 +94,7 @@ export default function AnnualDevelopmentPlanEdit() {
         const data = await getStaffList();
         setStaffOptions(data || []);
       } catch (e) {
-        console.error("Failed to fetch staff list", e);
+        // Failed to fetch staff list
       } finally {
         setStaffLoading(false);
       }
@@ -252,7 +252,6 @@ export default function AnnualDevelopmentPlanEdit() {
         navigate("/gad-annual-development-plan");
       }
     } catch (error) {
-      console.error("Error updating annual development plan:", error);
       showErrorToast("Failed to update annual development plan");
     } finally {
       setIsLoading(false);
