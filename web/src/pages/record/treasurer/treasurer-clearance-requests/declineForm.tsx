@@ -26,8 +26,6 @@ function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance,
     const{mutate: declinePermitClearance, isPending: pendingPermitClearance} = useDeclinePermitClearance(onSuccess)
 
     const onSubmit = (value: z.infer<typeof DeclineReqSchema>) => {
-        console.log("Data: ", value);
-
         if(isServiceCharge){
             declineServiceCharge({
                 pay_id: id,

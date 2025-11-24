@@ -111,7 +111,6 @@ export const useDeclinePermitClearance = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error declining permit clearance", err);
             showErrorToast("Failed to decline request. Please check the data and try again.");
         }
     });

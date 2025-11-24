@@ -6,7 +6,6 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
         // Handle business ID - now stored in businessName field
         let businessId = payload.businessName; // businessName now contains the business ID
         if (businessId && !businessId.startsWith('BUS-')) {
-            console.warn("Business ID appears to be a name instead of ID:", businessId);
             businessId = null;
         }
         
@@ -32,7 +31,6 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
         const response = await api.post('/clerk/permit-clearances/', clearancePayload);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to create permit clearance:", error);
         throw new Error(error.response?.data?.detail || "Failed to create permit clearance");
     }
 };
@@ -42,27 +40,14 @@ export const declinePermitClearance = async (bpr_id: string, reason: string) => 
     try {
         const payload = {
             req_status: "Declined",
+            req_payment_status: "Declined",
             bus_reason: reason
         };
         
-        console.log("====== DECLINE PERMIT CLEARANCE ======");
-        console.log("Endpoint: /clerk/business-permit/" + bpr_id + "/cancel/");
-        console.log("Method: POST");
-        console.log("Payload being sent:", JSON.stringify(payload, null, 2));
-        console.log("=====================================");
-        
         const response = await api.post(`/clerk/business-permit/${bpr_id}/cancel/`, payload);
-        
-        console.log("====== DECLINE RESPONSE ======");
-        console.log("Response data:", JSON.stringify(response.data, null, 2));
-        console.log("==============================");
         
         return response.data;
     } catch (error: any) {
-        console.error("====== DECLINE ERROR ======");
-        console.error("Error:", error);
-        console.error("Error response:", error.response?.data);
-        console.error("===========================");
         throw new Error(error.response?.data?.detail || "Failed to decline permit clearance");
     }
 };

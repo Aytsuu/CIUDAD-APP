@@ -93,6 +93,16 @@ export default function CertTrackingMain() {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-orange-100 text-orange-800">Unpaid</Text>;
     }
     
+    // Handle declined payment status (when request is declined, payment status is also set to Declined)
+    if (normalized === 'declined') {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Declined</Text>;
+    }
+    
+    // Handle cancelled payment status (when request is cancelled, payment status is also set to Cancelled)
+    if (normalized === 'cancelled') {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-orange-100 text-orange-700">Cancelled</Text>;
+    }
+    
     return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-800">—</Text>;
   }
 
@@ -372,7 +382,19 @@ export default function CertTrackingMain() {
                     const paymentStatus = getPaymentStatus(i).toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                    let paymentMatch = true;
+                    if (paymentFilter !== 'all') {
+                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                        paymentMatch = false;
+                      } else if (paymentFilter === 'unpaid') {
+                        paymentMatch = paymentStatus === 'unpaid';
+                      } else if (paymentFilter === 'paid') {
+                        paymentMatch = paymentStatus === 'paid';
+                      }
+                    }
                     const searchMatch = !searchQuery || 
                       (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
                     
@@ -385,7 +407,19 @@ export default function CertTrackingMain() {
                         const paymentStatus = getPaymentStatus(i).toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                        let paymentMatch = true;
+                        if (paymentFilter !== 'all') {
+                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                            paymentMatch = false;
+                          } else if (paymentFilter === 'unpaid') {
+                            paymentMatch = paymentStatus === 'unpaid';
+                          } else if (paymentFilter === 'paid') {
+                            paymentMatch = paymentStatus === 'paid';
+                          }
+                        }
                         const searchMatch = !searchQuery || 
                           (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
                         
@@ -492,7 +526,19 @@ export default function CertTrackingMain() {
                     const paymentStatus = getPaymentStatus(i).toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                    let paymentMatch = true;
+                    if (paymentFilter !== 'all') {
+                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                        paymentMatch = false;
+                      } else if (paymentFilter === 'unpaid') {
+                        paymentMatch = paymentStatus === 'unpaid';
+                      } else if (paymentFilter === 'paid') {
+                        paymentMatch = paymentStatus === 'paid';
+                      }
+                    }
                     const searchMatch = !searchQuery || 
                       (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
                     
@@ -504,7 +550,19 @@ export default function CertTrackingMain() {
                         const paymentStatus = getPaymentStatus(i).toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                        let paymentMatch = true;
+                        if (paymentFilter !== 'all') {
+                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                            paymentMatch = false;
+                          } else if (paymentFilter === 'unpaid') {
+                            paymentMatch = paymentStatus === 'unpaid';
+                          } else if (paymentFilter === 'paid') {
+                            paymentMatch = paymentStatus === 'paid';
+                          }
+                        }
                         const searchMatch = !searchQuery || 
                           (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
                         
@@ -611,7 +669,19 @@ export default function CertTrackingMain() {
                     const paymentStatus = getPaymentStatus(i).toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                    let paymentMatch = true;
+                    if (paymentFilter !== 'all') {
+                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                        paymentMatch = false;
+                      } else if (paymentFilter === 'unpaid') {
+                        paymentMatch = paymentStatus === 'unpaid';
+                      } else if (paymentFilter === 'paid') {
+                        paymentMatch = paymentStatus === 'paid';
+                      }
+                    }
                     const searchMatch = !searchQuery || 
                       (i?.purpose ?? "Service Charge").toLowerCase().includes(searchQuery.toLowerCase());
                     
@@ -623,7 +693,19 @@ export default function CertTrackingMain() {
                         const paymentStatus = getPaymentStatus(i).toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        const paymentMatch = paymentFilter === 'all' || paymentStatus === paymentFilter;
+                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
+                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
+                        let paymentMatch = true;
+                        if (paymentFilter !== 'all') {
+                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
+                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+                            paymentMatch = false;
+                          } else if (paymentFilter === 'unpaid') {
+                            paymentMatch = paymentStatus === 'unpaid';
+                          } else if (paymentFilter === 'paid') {
+                            paymentMatch = paymentStatus === 'paid';
+                          }
+                        }
                         const searchMatch = !searchQuery || 
                           (i?.purpose ?? "serviceCharge").toLowerCase().includes(searchQuery.toLowerCase());
                         

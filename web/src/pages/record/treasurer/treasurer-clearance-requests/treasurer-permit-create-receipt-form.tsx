@@ -55,12 +55,6 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
     const { user } = useAuth();
     const staffId = user?.staff?.staff_id as string | undefined;
 
-    // Debug logging
-    console.log('ReceiptForm - certificateRequest:', certificateRequest);
-    console.log('ReceiptForm - business_name:', certificateRequest.business_name);
-    console.log('ReceiptForm - req_amount:', certificateRequest.req_amount);
-
-   
     const { data: purposeAndRates = [] } = useQuery<PurposeAndRate[]>({
         queryKey: ["purpose-and-rates"],
         queryFn: async () => {
@@ -80,11 +74,6 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
             rate.pr_purpose.toLowerCase().includes(certificateRequest.req_purpose.toLowerCase())
         );
 
-    // Debug logging
-    console.log('Certificate Request Purpose:', certificateRequest.req_purpose);
-    console.log('Available Purpose and Rates:', purposeAndRates);
-    console.log('Selected Purpose Rate:', selectedPurposeRate);
-
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
@@ -103,15 +92,8 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 
     const onSubmit = (values: z.infer<typeof ReceiptSchema>) => {
         if (!staffId) {
-            console.error("Missing staff ID. Please re-login and try again.");
             return;
         }
-        console.log('=== RECEIPT FORM SUBMISSION ===');
-        console.log('Form values:', values);
-        console.log('certificateRequest:', certificateRequest);
-        console.log('certificateRequest.cr_id:', certificateRequest.cr_id);
-        console.log('certificateRequest.cr_id type:', typeof certificateRequest.cr_id);
-        console.log('================================');
         
         // Add additional fields needed for business clearance
         const receiptData = {
@@ -122,7 +104,6 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
             staff_id: staffId,
         };
         
-        console.log('Receipt data with business clearance fields:', receiptData);
         receipt(receiptData);
     };
 

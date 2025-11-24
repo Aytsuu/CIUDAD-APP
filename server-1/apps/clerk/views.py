@@ -252,7 +252,17 @@ class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
         instance = self.get_object()
         old_payment_status = instance.nrc_req_payment_status
         old_status = instance.nrc_req_status
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        
+        # If req_status is being set to Declined or Cancelled, also set payment status to the same value
+        request_data = request.data.copy()
+        if 'nrc_req_status' in request_data:
+            new_status = request_data.get('nrc_req_status')
+            if new_status in ['Declined', 'Cancelled']:
+                # Only set payment status if not explicitly provided in request
+                if 'nrc_req_payment_status' not in request_data:
+                    request_data['nrc_req_payment_status'] = new_status
+        
+        serializer = self.get_serializer(instance, data=request_data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
@@ -372,7 +382,17 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
         instance = self.get_object()
         old_payment_status = instance.cr_req_payment_status
         old_status = instance.cr_req_status
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        
+        # If req_status is being set to Declined or Cancelled, also set payment status to the same value
+        request_data = request.data.copy()
+        if 'cr_req_status' in request_data:
+            new_status = request_data.get('cr_req_status')
+            if new_status in ['Declined', 'Cancelled']:
+                # Only set payment status if not explicitly provided in request
+                if 'cr_req_payment_status' not in request_data:
+                    request_data['cr_req_payment_status'] = new_status
+        
+        serializer = self.get_serializer(instance, data=request_data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
@@ -713,10 +733,12 @@ class CancelCertificateView(APIView):
         try:
             cert = ClerkCertificate.objects.get(cr_id=cr_id)
             cert.cr_req_status = 'Cancelled'
+            # Also set payment status to Cancelled when cancelling
+            cert.cr_req_payment_status = 'Cancelled'
             # set rejection date for cancelled requests
             cert.cr_date_rejected = timezone.now()
             cert.cr_reason = 'Cancelled by user'
-            cert.save(update_fields=['cr_req_status', 'cr_date_rejected', 'cr_reason'])
+            cert.save(update_fields=['cr_req_status', 'cr_req_payment_status', 'cr_date_rejected', 'cr_reason'])
             return Response({
                 'message': 'Cancelled',
                 'cr_id': cert.cr_id,
@@ -736,12 +758,19 @@ class CancelBusinessPermitView(APIView):
             permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
             old_status = permit.req_status
             # Accept req_status from request, default to 'Cancelled' if not provided
-            permit.req_status = request.data.get('req_status', 'Cancelled')
+            new_status = request.data.get('req_status', 'Cancelled')
+            permit.req_status = new_status
+            
+            # If req_status is Declined or Cancelled, also set payment status to the same value
+            if new_status in ['Declined', 'Cancelled']:
+                # Use payment status from request if provided, otherwise set to same as req_status
+                permit.req_payment_status = request.data.get('req_payment_status', new_status)
+            
             # Set cancellation date for cancelled requests
             permit.req_date_completed = timezone.now().date()
             # Save the decline/cancel reason
             permit.bus_reason = request.data.get('bus_reason')
-            permit.save(update_fields=['req_status', 'req_date_completed', 'bus_reason'])
+            permit.save(update_fields=['req_status', 'req_payment_status', 'req_date_completed', 'bus_reason'])
             
             # Log activity if status changed to Declined
             if old_status != permit.req_status and permit.req_status == "Declined":
@@ -2060,10 +2089,12 @@ class UpdateServiceChargePaymentStatusView(APIView):
             
             # Update request status if provided
             if 'pay_req_status' in request.data:
-                payment_request.pay_req_status = request.data['pay_req_status']
-                # If declining, also set pay_status to Unpaid and clear payment date
-                if request.data['pay_req_status'] == "Declined":
-                    payment_request.pay_status = "Unpaid"
+                new_req_status = request.data['pay_req_status']
+                payment_request.pay_req_status = new_req_status
+                # If declining or cancelling, also set pay_status to the same value and clear payment date
+                if new_req_status in ['Declined', 'Cancelled']:
+                    # Use pay_status from request if provided, otherwise set to same as pay_req_status
+                    payment_request.pay_status = request.data.get('pay_status', new_req_status)
                     payment_request.pay_date_paid = None
             
             # Update reason if provided (for declining)

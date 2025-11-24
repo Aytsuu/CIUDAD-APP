@@ -33,7 +33,6 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
         const response = await getBusinessPermitFiles(bprId);
         setFiles(response.files || []);
       } catch (err: any) {
-        console.error("Error fetching files:", err);
         setError(err.message || "Failed to load documents");
       } finally {
         setIsLoading(false);
@@ -51,7 +50,6 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
         const response = await getBusinessPermitFiles(bprId);
         setFiles(response.files || []);
       } catch (err: any) {
-        console.error("Error fetching files:", err);
         setError(err.message || "Failed to load documents");
       } finally {
         setIsLoading(false);
@@ -291,19 +289,6 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
             <div className="">{row.getValue("reqDate")}</div>
         )
     },
-    // {  accessorKey: "claimDate",
-    //     header: ({ column }) => (
-    //           <div
-    //             className="flex w-full justify-center items-center gap-2 cursor-pointer"
-    //             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    //           >Date to Claim
-    //             <ArrowUpDown size={14}/>
-    //           </div>
-    //     ),
-    //     cell: ({row}) => (
-    //         <div className="">{row.getValue("claimDate")}</div>
-    //     )
-    //     },
     ...(activeTab === "unpaid" ? [
         { accessorKey: "action", 
           header: "Action",

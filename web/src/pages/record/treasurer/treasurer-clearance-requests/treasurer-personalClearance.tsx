@@ -85,7 +85,6 @@ function PersonalClearance() {
 
     useEffect(() => {
         if (error) {
-            console.error("Error fetching personal clearances:", error);
             showErrorToast("Failed to load personal clearance data. Please try again.");
         }
     }, [error]);
@@ -208,8 +207,6 @@ function PersonalClearance() {
                                 <div
                                     className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
                                     onClick={() => {
-                                        console.log('DEBUG: Non-resident row data:', row.original);
-                                        console.log('DEBUG: nrc_id value:', row.original.nrc_id, 'type:', typeof row.original.nrc_id);
                                         setCurrentReceipt({
                                             id: row.original.nrc_id,
                                             purpose: row.original.purpose?.pr_purpose,
