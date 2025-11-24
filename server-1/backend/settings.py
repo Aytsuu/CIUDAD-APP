@@ -223,6 +223,8 @@ CORS_ALLOWED_ORIGINS=[
     # Local Testing (fixed comma)
     "http://127.0.0.1:8000",
     "http://localhost:8000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
 
     # Physical Mobile Device Host IP (confirmed from ipconfig)
     "http://192.168.1.52:8000",
