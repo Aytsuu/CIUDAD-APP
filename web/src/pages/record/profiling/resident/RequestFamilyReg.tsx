@@ -26,7 +26,6 @@ import { useLoading } from "@/context/LoadingContext"
 import { formatHouseholds } from "../ProfilingFormats"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { demographicInfoSchema } from "@/form-schema/profiling-schema"
-import { capitalize } from "@/helpers/capitalize"
 import { LoadButton } from "@/components/ui/button/load-button"
 import { useDebounce } from "@/hooks/use-debounce"
 
@@ -73,8 +72,8 @@ export default function RequestFamilyReg() {
   const formatAddress = (address: any) => {
     const parts = [
       address.add_street,
-      address.sitio && `Sitio ${capitalize(address.sitio)}`,
-      address.add_barangay && `Brgy. ${capitalize(address.add_barangay)}`,
+      address.sitio && `Sitio ${address.sitio}`,
+      address.add_barangay && `Brgy. ${address.add_barangay}`,
       address.add_city,
       address.add_province,
     ].filter(Boolean)
