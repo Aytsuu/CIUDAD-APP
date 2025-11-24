@@ -281,10 +281,10 @@ export default function PersonalInformation({
                     className="flex-row items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2"
                   >
                     <View className="flex-1">
-                      <Text className="text-sm font-PoppinsMedium text-gray-800">
+                      <Text className="text-sm font-medium text-gray-800">
                         {address.add_street}, {address.add_barangay}
                       </Text>
-                      <Text className="text-xs text-gray-500 font-PoppinsRegular">
+                      <Text className="text-xs text-gray-500">
                         {address.add_city}, {address.add_province}
                         {address.sitio && ` • ${address.sitio}`}
                       </Text>

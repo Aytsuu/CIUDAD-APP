@@ -26,7 +26,6 @@ import { useLoading } from "@/context/LoadingContext"
 import { formatHouseholds } from "../ProfilingFormats"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { demographicInfoSchema } from "@/form-schema/profiling-schema"
-import { capitalize } from "@/helpers/capitalize"
 import { LoadButton } from "@/components/ui/button/load-button"
 import { useDebounce } from "@/hooks/use-debounce"
 
@@ -73,8 +72,8 @@ export default function RequestFamilyReg() {
   const formatAddress = (address: any) => {
     const parts = [
       address.add_street,
-      address.sitio && `Sitio ${capitalize(address.sitio)}`,
-      address.add_barangay && `Brgy. ${capitalize(address.add_barangay)}`,
+      address.sitio && `SITIO ${address.sitio}`,
+      address.add_barangay && `BRGY. ${address.add_barangay}`,
       address.add_city,
       address.add_province,
     ].filter(Boolean)
@@ -293,7 +292,8 @@ export default function RequestFamilyReg() {
                       <div className="space-y-4 pt-4">
                         <div className="grid">
                           <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                            Select Household Number
+                            Select Household
+                            <span className="ml-1 text-red-500">*</span>
                           </Label>
                           <p className="text-sm text-gray-600 mb-3">
                             Choose the household this family belongs to. Each household represents a group of families
@@ -304,7 +304,7 @@ export default function RequestFamilyReg() {
                             value={form.watch(`householdNo`)}
                             onChange={(value: any) => form.setValue("householdNo", value)}
                             onSearchChange={(value) => setSearchQuery(value)}
-                            placeholder="Select household"
+                            placeholder="Select"
                             contentClassName="w-full"
                             emptyMessage={
                               <div className="flex gap-2 justify-center items-center p-4">
@@ -340,6 +340,7 @@ export default function RequestFamilyReg() {
                                 { id: "SHARER", name: "SHARER" },
                               ]}
                               readOnly={false}
+                              required
                             />
                           </div>
 
@@ -354,6 +355,7 @@ export default function RequestFamilyReg() {
                                 { id: "YES", name: "YES" },
                               ]}
                               readOnly={false}
+                              required
                             />
                           </div>
                         </div>

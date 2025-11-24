@@ -7,7 +7,7 @@ import {
   CardContent,
   CardHeader
 } from "@/components/ui/card";
-import { FileText, MapPin, MoveRight, Shield, User, UserRoundPlus } from "lucide-react";
+import { MoveRight, UserRoundPlus } from "lucide-react";
 import { useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../ProfilingFormats";
 import { showErrorToast } from "@/components/ui/toast";
@@ -110,32 +110,6 @@ export default function ResidentRequestForm({ params }: { params: any }) {
                 </Button>
               </div>
             </div> 
-          </div>
-
-          {/* Help Section */}
-          <div className="text-center pt-4 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-2">
-              Need assistance with resident registration? Contact your system
-              administrator for help.
-            </p>
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                Personal Info
-              </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                Address Details
-              </span>
-              <span className="flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                Documentation
-              </span>
-              <span className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                Secure Storage
-              </span> 
-            </div>
           </div>
         </CardContent>
       </Card>

@@ -15,6 +15,7 @@ class ProfilingConfig(AppConfig):
         import apps.profiling.signals
         if settings.SCHEDULER_AUTOSTART: 
             self.start_scheduler()
+            self.start_tesseract()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""
@@ -34,3 +35,15 @@ class ProfilingConfig(AppConfig):
             logger.info("✅ Expired request checker started successfully")
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")
+    
+    def start_tesseract(self):
+        """Initialize and start tesseract model"""
+        try:
+            from .tasks import get_face_recognition_models
+
+            # Call methood
+            get_face_recognition_models()
+            logger.info("✅ Tesseract initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize tesseract: {str(e)}")
