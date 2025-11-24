@@ -26,8 +26,6 @@ export const getActivityLogs = async (search?: string, page?: number, pageSize?:
     return res.data;
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error fetching activity logs:', error);
-    console.error('Error details:', error.response?.data || 'No error details available');
     throw error;
   }
 };

@@ -39,6 +39,23 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         )
     },
     {accessorKey: "complainant_name", header: "Complainant Name"},
+    {
+        accessorKey: "accused_names",
+        header: "Respondent",
+        cell: ({ row }: { row: any }) => {
+            const accusedNames = row.original.accused_names as string[] | null | undefined;
+            if (!accusedNames || accusedNames.length === 0) {
+                return <span className="text-gray-400">N/A</span>;
+            }
+            return (
+                <div className="max-w-md">
+                    <span className="text-sm text-gray-700">
+                        {accusedNames.join(', ')}
+                    </span>
+                </div>
+            );
+        }
+    },
     {accessorKey: "sr_type", 
         header: "Type",
         cell: ({ row }) => {
@@ -251,14 +268,9 @@ function ServiceCharge(){
     // Handle errors
     useEffect(() => {
         if (error) {
-            console.error("Error fetching service charges:", error);
             showErrorToast("Failed to load service charge data. Please try again.");
         }
     }, [error]);
-    
-    // Console log the fetched data
-    console.log("Fetched ServiceCharge data:", data);
-    console.log("Fetched rate data:", rateObj);
     
     // Expose to receipt dialog content renderer (string value)
     (window as any).__serviceChargeRate = rateObj?.pr_rate != null ? String(rateObj.pr_rate) : "0";
@@ -270,20 +282,16 @@ function ServiceCharge(){
 
     // Function to refresh data after successful payment
     const handlePaymentSuccess = async () => {
-        console.log("Payment successful, refreshing data...");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
-        console.log("Data refreshed successfully");
     };
 
     // Function to refresh data after declining a request
     const handleDeclineSuccess = async () => {
-        console.log("Request declined, refreshing data...");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
-        console.log("Data refreshed successfully");
     };
 
     const columns = useMemo(() => createColumns(handlePaymentSuccess, handleDeclineSuccess, activeTab), [handlePaymentSuccess, handleDeclineSuccess, activeTab]);

@@ -53,7 +53,6 @@ export function useDeclineServiceChargeRequest(onSuccess?: () => void) {
       onSuccess?.();
     },
     onError: (err) => {
-      console.error("Error declining service charge request", err);
       showErrorToast("Failed to decline request. Please check the data and try again.");
     }
   });

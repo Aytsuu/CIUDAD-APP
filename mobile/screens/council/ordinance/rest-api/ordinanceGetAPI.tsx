@@ -54,7 +54,6 @@ export const getOrdinances = async (
             total_pages: 1
         };
     } catch (err) {
-        console.error('Error fetching ordinances:', err);
         return { results: [], count: 0, total_pages: 1 };
     }
 };
@@ -65,7 +64,6 @@ export const createOrdinance = async (data: any) => {
         const response = await api.post('council/ordinance/', data);
         return response.data;
     } catch (err) {
-        console.error('Error creating ordinance:', err);
         throw err;
     }
 };
@@ -76,7 +74,6 @@ export const updateOrdinance = async (id: string, data: Partial<OrdinanceData>) 
         const response = await api.put(`council/ordinance/${id}/`, data);
         return response.data;
     } catch (err) {
-        console.error('Error updating ordinance:', err);
         throw err;
     }
 };
@@ -86,7 +83,6 @@ export const deleteOrdinance = async (id: string) => {
     try {
         await api.delete(`council/ordinance/${id}/`);
     } catch (err) {
-        console.error('Error deleting ordinance:', err);
         throw err;
     }
 };
@@ -101,7 +97,6 @@ export const uploadOrdinance = async (formData: FormData) => {
         });
         return response.data;
     } catch (err) {
-        console.error('Error uploading ordinance:', err);
         throw err;
     }
 };

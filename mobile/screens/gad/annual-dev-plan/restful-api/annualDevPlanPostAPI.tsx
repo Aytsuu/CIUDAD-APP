@@ -21,11 +21,9 @@ export const createAnnualDevPlan = async (data: any) => {
       }] : []
     };
 
-    console.log('Creating annual dev plan with payload:', payload);
     const res = await api.post('/gad/gad-annual-development-plan/', payload);
     return res.data;
   } catch (error) {
-    console.error('Error creating annual development plan:', error);
     throw error;
   }
 }; 

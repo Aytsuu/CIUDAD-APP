@@ -60,7 +60,6 @@ import { Loader2 } from "lucide-react";
     const { mutateAsync: _acceptSummon } = useAcceptSummonRequest();
     const { mutateAsync: updateServiceChargeStatus } = useUpdateServiceChargeStatus();
 
-   console.log('stat', pay_status, 'staffId', staffId)
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
    const isFree = Boolean(
@@ -102,16 +101,12 @@ import { Loader2 } from "lucide-react";
     const onSubmit = async () => {
         
         try {
-            console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
-            
             let newPayId; // Declare newPayId in the outer scope
             
             if (nat_col === 'Service Charge'){
                 // Check if payment request already exists
                 if (pay_id) {
-                    console.log('[Receipt onSubmit] Payment request already exists with pay_id:', pay_id);
                     // Just update the existing payment request status to Paid
-                    console.log('[Receipt onSubmit] updating service charge status to Paid');
                     await updateServiceChargeStatus({ 
                         pay_id: pay_id, 
                         data: { 
@@ -123,9 +118,8 @@ import { Loader2 } from "lucide-react";
                     const prId = scRate?.pr_id;
                     const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
                     if (prId == null){
-                        console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
+                        // Service Charge rate not found; skipping payment request creation
                     } else {
-                        console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
                         const newPaymentRequest = await createScPayReq({ 
                             sr_id: id.toString(), 
                             pr_id: prId, 
@@ -133,7 +127,6 @@ import { Loader2 } from "lucide-react";
                             pay_sr_type: purpose || 'File Action'
                         });
                         newPayId = newPaymentRequest?.pay_id || newPaymentRequest?.spay_id;
-                        console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
                             pay_id: newPayId, 
                             data: { 
@@ -145,11 +138,9 @@ import { Loader2 } from "lucide-react";
             } else {
                 // Certificate flow
                 if (effectiveIsResident){
-                    console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
                     await acceptReq(id)
                 } else {
                     // For non-resident requests, use the acceptNonResReq mutation
-                    console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
                     await acceptNonResReq({nrc_id: id, discountReason: discountReason})
                 }
             }
@@ -171,17 +162,13 @@ import { Loader2 } from "lucide-react";
                 // Use newPayId if available (from newly created payment request), otherwise use the original pay_id
                 effectivePayId = typeof newPayId !== 'undefined' ? newPayId : pay_id;
                 if (!effectivePayId) {
-                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without pay_id');
                     return;
                 }
                 payload.pay_id = effectivePayId;
-                console.log('[Receipt onSubmit] Added pay_id to payload:', effectivePayId);
             } else if (effectiveIsResident) {
                 payload.cr_id = id.toString();
-                console.log('DEBUG: Set cr_id to:', id.toString());
             } else {
                 payload.nrc_id = id; // nrc_id is now a string like "NRC001-25"
-                console.log('DEBUG: Set nrc_id to:', id, 'type:', typeof id);
             }
             
             // Clean up undefined/empty values, but preserve pay_id even if it's 0
@@ -194,11 +181,6 @@ import { Loader2 } from "lucide-react";
                     delete payload[k];
                 }
             });
-            console.log('[Receipt onSubmit] Final payload before sending:', payload);
-            console.log('[Receipt onSubmit] pay_id value:', pay_id, 'type:', typeof pay_id);
-            console.log('[Receipt onSubmit] effectivePayId:', effectivePayId, 'type:', typeof effectivePayId);
-            console.log('[Receipt onSubmit] newPayId:', newPayId, 'type:', typeof newPayId);
-            console.log('[Receipt onSubmit] payload.pay_id:', payload.pay_id, 'type:', typeof payload.pay_id);
             
             // Use the appropriate mutation based on the type
             if (nat_col === 'Service Charge') {
@@ -206,13 +188,11 @@ import { Loader2 } from "lucide-react";
             } else {
                 await receipt(payload as any);
             }
-
-            console.log('Receipt mutation called successfully');
             
             // Call onComplete callback to finish the flow
             onComplete();
         } catch (error) {
-            console.error('Error in onSubmit:', error);
+            // Error handled
         }
     };
 

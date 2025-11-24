@@ -8,7 +8,6 @@ export const getAnnualDevPlanYears = async () => {
     const res = await api.get(`/gad/gad-annual-development-plan/years/?${params.toString()}`);
     return res.data;
   } catch (error) {
-    console.error('Error fetching annual dev plan years:', error);
     throw error;
   }
 };
@@ -22,7 +21,6 @@ export const getAnnualDevPlansByYear = async (year: string | number) => {
     const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
     return res.data;
   } catch (error) {
-    console.error('Error fetching annual dev plans by year:', error);
     throw error;
   }
 };
@@ -33,7 +31,6 @@ export const getAnnualDevPlanById = async (planId: string | number) => {
     const res = await api.get(`/gad/gad-annual-development-plan/${planId}/`);
     return res.data;
   } catch (error) {
-    console.error('Error fetching annual dev plan by ID:', error);
     throw error;
   }
 };
@@ -58,7 +55,6 @@ export const getArchivedAnnualDevPlans = async (search?: string, page?: number, 
     const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
     return res.data;
   } catch (error) {
-    console.error('Error fetching archived annual dev plans:', error);
     throw error;
   }
 };
@@ -72,7 +68,6 @@ export const archiveAnnualDevPlans = async (devIds: number[]) => {
     });
     return res.data;
   } catch (error) {
-    console.error('Error archiving annual dev plans:', error);
     throw error;
   }
 };
@@ -86,7 +81,6 @@ export const restoreAnnualDevPlans = async (devIds: number[]) => {
     });
     return res.data;
   } catch (error) {
-    console.error('Error restoring annual dev plans:', error);
     throw error;
   }
 }; 

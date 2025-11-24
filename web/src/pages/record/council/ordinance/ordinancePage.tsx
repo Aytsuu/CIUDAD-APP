@@ -195,7 +195,6 @@ function OrdinancePage() {
             setOrdinanceToToggle(null);
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (e) {
-            console.error('Failed to toggle repeal:', e);
             showErrorToast('Failed to update ordinance repeal status');
         }
     };
@@ -234,7 +233,6 @@ function OrdinancePage() {
             showSuccessToast('Ordinance deleted successfully');
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (error) {
-            console.error('Error deleting ordinance:', error);
             showErrorToast('Failed to delete ordinance');
         } finally {
             setDeleteDialogOpen(false);

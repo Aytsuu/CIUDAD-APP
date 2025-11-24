@@ -643,6 +643,14 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
                             record_id=str(dev_plan.dev_id)
                         )
                         logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated with resolution")
+                        
+                        # Create announcement for dev plan with proposal and resolution
+                        try:
+                            from apps.gad.views import create_gad_announcement
+                            create_gad_announcement(dev_plan, staff, reason="proposal_resolution")
+                        except Exception as ann_error:
+                            logger.error(f"Failed to create announcement for dev plan with proposal and resolution: {str(ann_error)}")
+                            # Don't fail if announcement creation fails
                     except Exception as check_error:
                         logger.debug(f"Error logging dev plan update for resolution: {str(check_error)}")
                         # Don't fail if this check fails
@@ -1228,7 +1236,6 @@ class MOMFileView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(serializer.errors) 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
 
@@ -1737,8 +1744,6 @@ class OrdinanceFileView(generics.ListCreateAPIView):
                 {"error": "No files provided"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        print(f"Uploading {len(files)} ordinance files")
         
         # Call serializer's upload method and get created files
         created_files = self.get_serializer()._upload_files(files)

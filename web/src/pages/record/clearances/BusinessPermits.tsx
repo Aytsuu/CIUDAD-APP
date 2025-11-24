@@ -78,10 +78,7 @@ function BusinessDocumentPage() {
   };
 
   const handleViewFile = (permit: BusinessPermit) => {
-    console.log("Eye button clicked for permit:", permit);
-    console.log("Setting selectedPermit to:", permit);
     setSelectedPermit(permit); 
-    console.log("selectedPermit state should now be:", permit);
   };
 
   const handlePageChange = (page: number) => {

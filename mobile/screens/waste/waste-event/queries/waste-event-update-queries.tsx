@@ -41,7 +41,6 @@ export const useUpdateWasteEvent = () => {
             router.back();
         },
         onError: (error: any) => {
-            console.error('Error updating waste event:', error);
             toast.error("Failed to update event. Please try again.");
         }
     });

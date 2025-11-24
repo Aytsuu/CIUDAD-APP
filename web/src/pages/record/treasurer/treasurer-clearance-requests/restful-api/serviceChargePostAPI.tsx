@@ -20,10 +20,12 @@ export const declineServiceChargeRequest = async (
 ) => {
   const payload: {
     pay_req_status: string;
+    pay_status: string;
     pay_reason: string;
     staff_id?: string | number;
   } = {
     pay_req_status: "Declined",
+    pay_status: "Declined",
     pay_reason: reason
   };
   

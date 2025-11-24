@@ -17,7 +17,6 @@ export const useAcceptRequest = (onSuccess?: () => void) => {
                 onSuccess?.()
             },
             onError: (err) => {
-                console.error("Error accepting request", err);
                 showErrorToast("Failed to accept request. Please check the data and try again.");
             }
         })
@@ -37,7 +36,6 @@ export const useDeclineRequest = (onSuccess?: () => void) => {
                 onSuccess?.()
             },
             onError: (err) => {
-                console.error("Error declining request", err);
                 showErrorToast("Failed to decline request. Please check the data and try again.");
             }
         })
@@ -57,7 +55,6 @@ export const useAcceptNonResRequest = (onSuccess?: () => void) => {
                 onSuccess?.()
             },
             onError: (err) => {
-                console.error("Error accepting request", err);
                 showErrorToast("Failed to accept request. Please check the data and try again.");
             }
         })
@@ -77,7 +74,6 @@ export const useDeclineNonReq = (onSuccess?: () => void) => {
                 onSuccess?.()
             },
             onError: (err) => {
-                console.error("Error declining request", err);
                 showErrorToast("Failed to decline request. Please check the data and try again.");
             }
         })

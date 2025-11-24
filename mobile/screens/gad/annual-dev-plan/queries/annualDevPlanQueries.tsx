@@ -10,6 +10,7 @@ import { createAnnualDevPlan } from "../restful-api/annualDevPlanPostAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualDevPlanPutAPI";
 import { deleteAnnualDevPlans } from "../restful-api/annualDevPlanDeleteAPI";
 import { useToastContext } from "@/components/ui/toast";
+import { api } from "@/api/api";
 
 // Archive queries
 export const useGetArchivedAnnualDevPlans = (page?: number, pageSize?: number, search?: string, ordering?: string) => {
@@ -36,7 +37,6 @@ export const useArchiveAnnualDevPlans = () => {
       toast.success("Development plans archived successfully");
     },
     onError: (error: any) => {
-      console.error("Error archiving development plans:", error);
       toast.error("Failed to archive development plans");
     },
   });
@@ -57,7 +57,6 @@ export const useRestoreAnnualDevPlans = () => {
       toast.success("Development plans restored successfully");
     },
     onError: (error: any) => {
-      console.error("Error restoring development plans:", error);
       toast.error("Failed to restore development plans");
     },
   });
@@ -96,7 +95,6 @@ export const useCreateAnnualDevPlan = () => {
       toast.success("Development plan created successfully");
     },
     onError: (error: any) => {
-      console.error("Error creating development plan:", error);
       toast.error("Failed to create development plan");
     },
   });
@@ -114,7 +112,6 @@ export const useUpdateAnnualDevPlan = () => {
       toast.success("Development plan updated successfully");
     },
     onError: (error: any) => {
-      console.error("Error updating development plan:", error);
       toast.error("Failed to update development plan");
     },
   });
@@ -134,9 +131,24 @@ export const useDeleteAnnualDevPlans = () => {
       toast.success("Development plans deleted successfully");
     },
     onError: (error: any) => {
-      console.error("Error deleting development plans:", error);
       toast.error("Failed to delete development plans");
     },
+  });
+};
+
+// Fetch approved project proposals for status determination
+export const useGetApprovedProposals = () => {
+  return useQuery({
+    queryKey: ['approvedProposalsFull'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('council/approved-proposals/');
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 30,
   });
 };
 

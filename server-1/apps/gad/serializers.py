@@ -67,13 +67,11 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
                 gbf_files.append(gbf_file)
                 
             except Exception as e:
-                print(f"Error processing file: {str(e)}")
+                # Error processing file
                 continue
 
         if gbf_files:
             GAD_Budget_File.objects.bulk_create(gbf_files)
-        else:
-            print('No valid files to save.')
     
     def _delete_files(self, files_to_delete, gbud_num=None):
         if not gbud_num:
@@ -90,7 +88,6 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
                 file_path = file_data.get('path')
                 
                 if not file_id or not file_path:
-                    print(f"Skipping file deletion: Missing id or path in {file_data}")
                     continue
 
                 # Delete from Supabase storage
@@ -100,7 +97,6 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
                 GAD_Budget_File.objects.filter(gbf_id=file_id, gbud=tracker_instance).delete()
                 
             except Exception as e:
-                print(f"Error deleting file {file_data.get('id', 'unknown')}: {str(e)}")
                 continue
 
 class GADBudgetFileReadSerializer(serializers.ModelSerializer):
@@ -449,7 +445,8 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 try:
                     dev_plan.save()
                 except Exception as e:
-                    print("Error saving DevelopmentPlan:", str(e))
+                    # Error saving DevelopmentPlan
+                    pass
                         
         if header_img_data:
             try:

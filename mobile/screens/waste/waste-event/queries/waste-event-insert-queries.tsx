@@ -58,7 +58,6 @@ export const useCreateWasteEvent = () => {
             router.back();
         },
         onError: (error: any) => {
-            console.error('Error creating waste event:', error);
             toast.error("Failed to schedule event. Please try again.");
         }
     });

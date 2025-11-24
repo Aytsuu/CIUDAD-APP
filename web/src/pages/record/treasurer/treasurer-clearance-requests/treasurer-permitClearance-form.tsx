@@ -147,7 +147,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             }
             
         } catch (error) {
-            console.error('Error creating permit clearance:', error);
             showErrorToast("Failed to create permit clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -237,7 +236,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                                             form.setValue('rp_id', "");
                                                         }
                                                     } catch (error) {
-                                                        console.error("Error fetching business owner:", error);
                                                         form.setValue("requestor", "");
                                                         form.setValue('rp_id', "");
                                                     }

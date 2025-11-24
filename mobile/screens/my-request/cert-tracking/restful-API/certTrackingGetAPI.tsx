@@ -51,7 +51,8 @@ export const cancelBusinessPermit = async (bpr_id: string) => {
 
 export const cancelServiceCharge = async (pay_id: string) => {
   const res = await api.put(`clerk/treasurer/service-charge-payment/${pay_id}/`, {
-    pay_req_status: 'Cancelled'
+    pay_req_status: 'Cancelled',
+    pay_status: 'Cancelled'
   });
   return res.data;
 };
