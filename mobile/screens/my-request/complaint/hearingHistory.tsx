@@ -20,7 +20,6 @@ export default function HearingHistory() {
   const params = useLocalSearchParams();
   const sc_id = params.sc_id as string
   const status = params.status as string
-  console.log('status', status)
   const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);

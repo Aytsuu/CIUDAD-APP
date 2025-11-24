@@ -2,14 +2,6 @@ import api from "@/api/api";
 
 export const addSummonSched = async (sd_id: string, st_id: string, sc_id: string, level: string, type: string) => {
     try{
-        console.log('data:', {
-            sd_id: sd_id,
-            st_id: st_id,
-            hs_level: level,
-            hs_is_closed: false,
-            sc_id: sc_id
-        })
-   
         const res = await api.post('clerk/hearing-schedule/', {
             sd_id: sd_id,
             st_id: st_id,

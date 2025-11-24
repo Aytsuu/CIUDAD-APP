@@ -16,8 +16,6 @@ export const createMOMFile = async (data: { mom_id: number;
             }]
         };
 
-        console.log(payload)
-
         const res = await api.post('council/mom-file/', payload);
 
         return res.data;
@@ -26,15 +24,6 @@ export const createMOMFile = async (data: { mom_id: number;
 
 export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
     try {
-
-        console.log({
-            mom_date: momInfo.meetingDate,
-            mom_title: momInfo.meetingTitle,
-            mom_agenda: momInfo.meetingAgenda,
-            mom_area_of_focus: momInfo.meetingAreaOfFocus,  
-            mom_is_archive: false,
-            staff_id: momInfo.staff_id
-        })
 
         const momResponse = await api.post('council/minutes-of-meeting/', {
             mom_date: momInfo.meetingDate,
@@ -68,7 +57,6 @@ export const addSuppDoc = async(data: { mom_id: number;
         }]
     };
 
-    console.log(payload)
     const res = await api.post('council/mom-supp-doc/', payload);
 
     return res.data;
