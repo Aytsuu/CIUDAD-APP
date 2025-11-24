@@ -67,7 +67,7 @@ class CompleteRegistrationView(APIView):
         create_notification(
           title="New House Record",
           message=(
-              f"{len(houses)} new house{"s" if len(houses) > 1 else ""} has been registered."
+              f"{len(houses)} new house{'s' if len(houses) > 1 else ''} has been registered."
           ),
           recipients=general_all,
           notif_type="REGISTRATION",

@@ -2,10 +2,13 @@ from django.utils import timezone
 from .models import Announcement
 from apps.notification.utils import create_notification
 from apps.profiling.models import ResidentProfile
+import logging
+
+logger = logging.getLogger(__name__)
 
 def update_ann_status():
     now = timezone.now() 
-    print(f"[{timezone.localtime(now)}] Checking announcements...")
+    logger.info("Checking announcements...")
 
     announcements = Announcement.objects.filter(
         ann_start_at__lte=now,
@@ -17,7 +20,7 @@ def update_ann_status():
         create_notification(
             title=f"New Announcement",
             message=(
-                f"{announcements} new announcement{"s" if announcements > 1 else ""} has been added"
+                f"{announcements} new announcement{'s' if announcements > 1 else ''} has been added"
             ),
 
             recipients=[res.rp_id for res in ResidentProfile.objects.all()],
