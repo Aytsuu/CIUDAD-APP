@@ -6,70 +6,15 @@ import io
 import re
 import logging  
 import torch
-import shutil
-import os
-from django.core.files.base import ContentFile
-from django.conf import settings
-from utils.supabase_client import supabase
 from dateutil.parser import parse
 from datetime import datetime
-from facenet_pytorch import MTCNN, InceptionResnetV1
 from django.core.cache import cache
+from .tasks import get_face_recognition_models
 
 logger = logging.getLogger(__name__)
 
-# Auto-detect tesseract
-tesseract_cmd = shutil.which('tesseract') or '/usr/bin/tesseract'
-if os.path.exists(tesseract_cmd):
-    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
-    logger.info(f"Tesseract found at: {tesseract_cmd}")
-else:
-    logger.error(f"Tesseract not found at {tesseract_cmd}")
-
-# Global singleton for models (loaded once per worker process)
-_MODELS_CACHE = None
-
-def get_face_recognition_models():
-    """Lazy load models once per worker process"""
-    global _MODELS_CACHE
-    
-    if _MODELS_CACHE is None:
-        try:
-            from facenet_pytorch import MTCNN, InceptionResnetV1
-            
-            # Use keep_all=False to detect only the most prominent face
-            mtcnn = MTCNN(
-                keep_all=False,  # Only detect the primary face
-                thresholds=[0.7, 0.7, 0.8], 
-                min_face_size=40, 
-                device='cpu',
-                post_process=False  # Skip unnecessary post-processing
-            )
-            
-            resnet = InceptionResnetV1(pretrained='vggface2').eval()
-            
-            # Optimize for inference
-            with torch.no_grad():
-                resnet.eval()
-            
-            _MODELS_CACHE = {'mtcnn': mtcnn, 'resnet': resnet}
-            logger.info("Face recognition models loaded successfully")
-        except Exception as e:
-            logger.error(f"Failed to load face recognition models: {e}")
-            raise
-    
-    return _MODELS_CACHE
-
 class KYCVerificationProcessor:
     def __init__(self):
-        # Verify tesseract on initialization
-        try:
-            version = pytesseract.get_tesseract_version()
-            logger.info(f"Tesseract initialized: {version}")
-        except pytesseract.TesseractNotFoundError as e:
-            logger.error(f"Tesseract not found: {e}")
-            logger.error(f"PATH: {os.environ.get('PATH')}")
-            
         models = get_face_recognition_models()
         self.mtcnn = models['mtcnn']
         self.resnet = models['resnet']
@@ -77,8 +22,6 @@ class KYCVerificationProcessor:
 
     def process_kyc_document_matching(self, user_data, id_image):
         try:
-            logger.info(user_data)
-    
             # Convert Django InMemoryUploadedFile to OpenCV image
             id_image_cv = self._uploaded_file_to_cv2(id_image)
 
@@ -107,19 +50,11 @@ class KYCVerificationProcessor:
             key = f"{user_data['lname']}{user_data['fname']}"
             
             cache.set(key, id_face, timeout=1200)
-            logger.info('info matched')
             return True
 
         except Exception as e:
             logger.error(f"KYC verification error: {str(e)}")
             return False
-        
-        finally:
-            if id_image_cv is not None:
-                del id_image_cv
-            if id_face is not None:
-                del id_face
-            torch.cuda.empty_cache() if torch.cuda.is_available() else None
     
     def process_kyc_face_matching(self, face_img, id_img):
         """Process face matching with memory cleanup"""
@@ -159,8 +94,6 @@ class KYCVerificationProcessor:
             # Perform OCR
             text = pytesseract.image_to_string(threshold)    
             return text
-        except pytesseract.TesseractNotFoundError:
-            logger.error("Tesseract is still missing")
         except Exception as e:
             logger.error(f"Document extraction error: {str(e)}")
             return None
@@ -172,7 +105,6 @@ class KYCVerificationProcessor:
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
-        logger.info(text)
         
         # Extract date of birth (flexible date parsing)
         dob = None
@@ -211,7 +143,7 @@ class KYCVerificationProcessor:
         mismatches = []
         text = re.sub(r'[^\w\s]', '', extracted_info['raw_text'])
         text = text.split()
-        logger.info("Cleaned text:", text)  # Debug logger.info
+        logger.info("Cleaned text:", text)  # Debug print
         
         # Name comparison (case insensitive, allow partial matches)
         first_name_match = set(user_data['fname'].split(' ')).issubset(text)
@@ -227,9 +159,6 @@ class KYCVerificationProcessor:
         try:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
-            logger.info("User dob:", user_dob)
-            logger.info("Extracted dob:", extracted_dob)
-            logger.info("DOB matched:", user_dob == extracted_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")
@@ -254,7 +183,7 @@ class KYCVerificationProcessor:
                 return embedding
             return None
         except Exception as e:
-            logger.info('Error getting face embedding', e)
+            logger.error('Error getting face embedding', e)
             return None
     
     def _compare_faces(self, face_img, id_img):
