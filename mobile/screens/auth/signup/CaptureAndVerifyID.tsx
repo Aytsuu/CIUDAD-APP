@@ -134,16 +134,6 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
           // Capture photo
           const photo = await camera.current.takePhoto();
           const photoUri = `file://${photo?.path}`;
-          // const compressedImage = await ImageManipulator.manipulateAsync(
-          //   photoUri,
-          //   [
-          //     // {
-          //     //   resize: { width: 800 },
-          //     // },
-          //   ],
-          //   { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-          // );
-          // const optimizedPhoto = compressedImage.uri;
 
           // Send data for processing
           try {

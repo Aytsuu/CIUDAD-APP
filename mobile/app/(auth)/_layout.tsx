@@ -8,6 +8,7 @@ import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { RegistrationTypeProvider } from "@/contexts/RegistrationTypeContext";
 import React from "react";
+import { DrawerProvider } from "@/contexts/DrawerContext";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)
@@ -20,28 +21,30 @@ export default () => {
   })
 
   return (
-      <ProgressProvider>
-        <RegistrationTypeProvider>
-          <RegistationFormProvider methods={methods}>
+    <ProgressProvider>
+      <RegistrationTypeProvider>
+        <RegistationFormProvider methods={methods}>
+          <DrawerProvider>
             <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="loginscreen" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/register-new" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/respondent" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/father" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/mother" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/guardian" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/dependent" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/family/scan" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/link/verification" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/individual/information" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/individual/scan" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false, animation: 'none' }} />     
-            </Stack>
-          </RegistationFormProvider>
-        </RegistrationTypeProvider>
-      </ProgressProvider>
+            <Stack.Screen name="index" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="loginscreen" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/register-new" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/respondent" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/father" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/mother" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/guardian" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/dependent" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/family/scan" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/link/verification" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/individual/information" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/individual/scan" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false, animation: 'none' }} />     
+          </Stack>
+          </DrawerProvider>
+        </RegistationFormProvider>
+      </RegistrationTypeProvider>
+    </ProgressProvider>
   );
 };

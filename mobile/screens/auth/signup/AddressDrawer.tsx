@@ -2,7 +2,6 @@ import React from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import {
   Dimensions,
-  ScrollView,
   TouchableOpacity,
   View,
   Text,
@@ -14,15 +13,11 @@ import { useGetSitio } from "@/screens/_global_queries/Retrieve";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatSitio } from "@/helpers/formatSitio";
 import { useToastContext } from "@/components/ui/toast";
-import { Drawer } from "@/components/ui/drawer-deprecated";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Plus } from "@/lib/icons/Plus";
+import { useDrawer } from "@/contexts/DrawerContext";
 
-export const AddressDrawer = ({
-  visible,
-  onClose,
-}: {
-  visible: boolean;
-  onClose: () => void;
-}) => {
+export const AddressDrawer = () => {
   // ===================== STATE INITIALIZATION =====================
   const { toast } = useToastContext();
   const { height: screenHeight } = Dimensions.get("window");
@@ -35,6 +30,7 @@ export const AddressDrawer = ({
     () => formatSitio(sitioList),
     [sitioList]
   );
+  const { closeDrawer } = useDrawer();
 
   const { append } = useFieldArray({
     control: control,
@@ -43,25 +39,30 @@ export const AddressDrawer = ({
 
   const barangay = useWatch({
     control,
-    name: "personalInfoSchema.per_addresses.new.add_barangay"
-  })
-  
+    name: "personalInfoSchema.per_addresses.new.add_barangay",
+  });
+
   // ===================== SIDE EFFECTS =====================
   React.useEffect(() => {
-    if (barangay?.trim().toLowerCase() === "san roque" || 
-        barangay?.trim().toLowerCase() === "ciudad") {
-      setValue('personalInfoSchema.per_addresses.new.add_barangay', "SAN ROQUE (CIUDAD)");
+    if (
+      barangay?.trim().toLowerCase() === "san roque" ||
+      barangay?.trim().toLowerCase() === "ciudad"
+    ) {
+      setValue(
+        "personalInfoSchema.per_addresses.new.add_barangay",
+        "SAN ROQUE (CIUDAD)"
+      );
     }
 
     if (barangay?.trim().toLowerCase() === "san roque (ciudad)") {
       setIsInternalAddress(true);
-    } else if(barangay != undefined) {
+    } else if (barangay != undefined) {
       setIsInternalAddress(false);
     }
   }, [barangay]);
 
   React.useEffect(() => {
-    setIsInternalAddress(true)
+    setIsInternalAddress(true);
   }, []);
 
   // ===================== HANDLERS =====================
@@ -75,7 +76,7 @@ export const AddressDrawer = ({
         : "personalInfoSchema.per_addresses.new.add_external_sitio",
       "personalInfoSchema.per_addresses.new.add_street",
     ]);
-    
+
     if (!formIsValid) {
       return;
     }
@@ -84,10 +85,13 @@ export const AddressDrawer = ({
     const values = getValues("personalInfoSchema.per_addresses.new");
     const alreadyAdded = list.some(
       (address) =>
-        address.add_province.toLowerCase() == values.add_province.toLowerCase() &&
+        address.add_province.toLowerCase() ==
+          values.add_province.toLowerCase() &&
         address.add_city.toLowerCase() == values.add_city.toLowerCase() &&
-        address.add_barangay.toLowerCase() == values.add_barangay.toLowerCase() &&
-        address.add_external_sitio.toLowerCase() == values.add_external_sitio.toLowerCase() &&
+        address.add_barangay.toLowerCase() ==
+          values.add_barangay.toLowerCase() &&
+        address.add_external_sitio.toLowerCase() ==
+          values.add_external_sitio.toLowerCase() &&
         address.sitio.toLowerCase() == values.sitio.toLowerCase() &&
         address.add_street.toLowerCase() == values.add_street.toLowerCase()
     );
@@ -99,88 +103,81 @@ export const AddressDrawer = ({
 
     append({
       ...values,
-      sitio: values.sitio ? values.sitio: ''
+      sitio: values.sitio ? values.sitio : "",
+      add_street: values.add_street ? values.add_street.toUpperCase() : ""
     } as any);
     handleClose();
   };
 
   const handleClose = () => {
     resetField("personalInfoSchema.per_addresses.new");
-    onClose();
+    closeDrawer();
   };
 
   // ===================== RENDER =====================
   return (
-    <Drawer 
-      header="Add Address" 
-      description="Provide your complete address details"
-      visible={visible} onClose={handleClose}
+    <BottomSheetScrollView
+      contentContainerStyle={{
+        paddingHorizontal: 4,
+        paddingBottom: 15,
+      }}
+      showsVerticalScrollIndicator={false}
     >
-      {/* Drawer Content */}
-      <ScrollView
-        className="flex-1 px-6 py-4"
-        showsVerticalScrollIndicator={false}
-        style={{ maxHeight: screenHeight * 0.6 }}
-      >
-        <View className="space-y-4 mb-8">
+      <View className="space-y-4 mb-8">
+        <FormInput
+          control={control}
+          label="Province"
+          name="personalInfoSchema.per_addresses.new.add_province"
+        />
+        <FormInput
+          control={control}
+          label="City"
+          name="personalInfoSchema.per_addresses.new.add_city"
+        />
+        <FormInput
+          control={control}
+          label="Barangay"
+          name="personalInfoSchema.per_addresses.new.add_barangay"
+        />
+        {isInternalAddress ? (
+          <FormSelect
+            control={control}
+            label="Sitio"
+            name="personalInfoSchema.per_addresses.new.sitio"
+            options={formattedSitio}
+          />
+        ) : (
           <FormInput
             control={control}
-            label="Province"
-            name="personalInfoSchema.per_addresses.new.add_province"
-            upper={true}
+            label="Sitio"
+            name="personalInfoSchema.per_addresses.new.add_external_sitio"
           />
-          <FormInput
-            control={control}
-            label="City"
-            name="personalInfoSchema.per_addresses.new.add_city"
-            upper={true}
-          />
-          <FormInput
-            control={control}
-            label="Barangay"
-            name="personalInfoSchema.per_addresses.new.add_barangay"
-            upper={true}
-          />
-          {isInternalAddress ? (
-            <FormSelect
-              control={control}
-              label="Sitio"
-              name="personalInfoSchema.per_addresses.new.sitio"
-              options={formattedSitio}
-            />
-          ) : (
-            <FormInput
-              control={control}
-              label="Sitio"
-              name="personalInfoSchema.per_addresses.new.add_external_sitio"
-            />
-          )}
-          <FormInput
-            control={control}
-            label="Street"
-            name="personalInfoSchema.per_addresses.new.add_street"
-            upper={true}
-          />
-        </View>
-      </ScrollView>
+        )}
+        <FormInput
+          control={control}
+          label="Street"
+          name="personalInfoSchema.per_addresses.new.add_street"
+        />
+      </View>
 
       {/* Drawer Footer */}
-      <View className="px-6 py-4 border-t border-gray-200">
-        <View className="flex-row gap-3">
+      <View className="py-4 border-t border-gray-200">
+        <View className="flex-row justify-between gap-3">
           <TouchableOpacity
-            className="flex-1 py-3 border border-gray-300 rounded-lg items-center"
+            className="px-8 border py-2 border-gray-300 rounded-full items-center"
             onPress={handleClose}
           >
-            <Text className="text-gray-700 font-PoppinsMedium">Cancel</Text>
+            <Text className="text-gray-700">Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className="flex-1 py-3 bg-blue-500 rounded-lg items-center"
+            className="flex-row justify-center gap-2 py-2 px-8 bg-blue-500 rounded-full items-center"
             onPress={handleSave}
           >
-            <Text className="text-white font-PoppinsMedium">Save Address</Text>
+            <Plus size={18} className="text-white"/>
+            <Text className="text-white text-sm">Save</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </Drawer>
+    </BottomSheetScrollView>
   );
 };

@@ -161,8 +161,8 @@ export default function WeeklyAcknowledgementReports() {
               {formatDate(item.created_at, "long")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {item.war_composition?.map((comp:any ) => (
-                <Text className="text-primaryBlue text-xs">AR-{comp.ar.id}</Text>
+              {item.war_composition?.map((comp:any, index: number) => (
+                <Text key={index} className="text-primaryBlue text-xs">AR-{comp.ar.id}</Text>
               ))}
             </View>
           </View>
