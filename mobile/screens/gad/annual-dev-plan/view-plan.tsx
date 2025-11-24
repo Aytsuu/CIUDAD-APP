@@ -227,7 +227,7 @@ const ViewPlan = () => {
                     activeOpacity={0.7}
                   >
                     <Text className="text-white font-semibold text-sm">
-                      Preview
+                      View
                     </Text>
                   </TouchableOpacity>
                 </View>
