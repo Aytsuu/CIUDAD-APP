@@ -1,6 +1,5 @@
 "use client";
 
-import { Link } from "react-router";
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { ArrowUpDown, Search, AlertCircle, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -389,12 +388,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
           </div>
 
           {/* defaulters tracking */}
-          <div className="flex justify-center items-center">
-            <Link to="/health-appointments/defaulters-tracking">
-              <Button variant="link">Defaulters Tracking</Button>
-            </Link>
-            
-          </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           <div className="flex flex-col md:flex-row gap-4 w-full">
