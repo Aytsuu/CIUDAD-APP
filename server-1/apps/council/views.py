@@ -1169,7 +1169,7 @@ class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
                 # Create detailed activity log
                 create_activity_log(
                     act_type="Minutes of Meeting Create",
-                    act_description=f"MinutesOfMeeting record created. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                    act_description=f"Minutes of Meeting record created. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
                     staff=staff,
                     record_id=str(instance.mom_id)
                 )
@@ -1338,9 +1338,9 @@ class UpdateMinutesOfMeetingView(ActivityLogMixin, generics.RetrieveUpdateAPIVie
                     
                     # Build description
                     if changes:
-                        description = f"MinutesOfMeeting changes: {'; '.join(changes)}"
+                        description = f"Minutes of Meeting changes: {'; '.join(changes)}"
                     else:
-                        description = "MinutesOfMeeting record updated (no field-level changes recorded)"
+                        description = "Minutes of Meeting record updated (no field-level changes recorded)"
                         
                         create_activity_log(
                         act_type=act_type,
@@ -1394,7 +1394,7 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
                 if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                     create_activity_log(
                         act_type="Minutes of Meeting Deleted",
-                    act_description=f"MinutesOfMeeting record deleted. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                    act_description=f"Minutes of Meeting record deleted. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
                         staff=staff,
                         record_id=str(instance.mom_id)
                     )
