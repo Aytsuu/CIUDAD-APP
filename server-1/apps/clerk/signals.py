@@ -7,6 +7,7 @@ from apps.notification.utils import create_notification, reminder_notification
 from apps.administration.models import Staff
 from .notif_recipients import conciliation_recipient, mediation_recipient, payment_req_recipient
 from datetime import timedelta
+from apps.complaint.models import ComplaintComplainant
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +68,13 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                             web_route="/summon-case",
                         )
                     
-                    complainants_with_rp = instance.comp_id.complainant.filter(rp_id__isnull=False)
+                    # FIX: Use the correct way to get complainants through ComplaintComplainant
+                    complainants_with_rp = ComplaintComplainant.objects.filter(
+                        comp=instance.comp_id,
+                        cpnt__rp_id__isnull=False
+                    ).select_related('cpnt__rp_id__account')
                 
+                   
                     for complainant in complainants_with_rp:
                         if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
                             create_notification(
@@ -214,17 +220,21 @@ def create_notification_on_waiting_for_schedule(sender, instance, created, **kwa
             
             # Only create notification if we haven't reached the max schedules
             if hearing_schedule_count < max_schedules:
-                # Get complainants with resident profiles
-                complainants_with_rp = instance.comp_id.complainant.filter(rp_id__isnull=False)
+                # FIX: Use the correct way to get complainants through ComplaintComplainant
+                complainants_with_rp = ComplaintComplainant.objects.filter(
+                    comp=instance.comp_id,
+                    cpnt__rp_id__isnull=False
+                ).select_related('cpnt__rp_id__account')
                 
-                for complainant in complainants_with_rp:
+                for complaint_complainant in complainants_with_rp:
+                    complainant = complaint_complainant.cpnt
                     if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
                         create_notification(
                             title='Set Schedule', 
                             message=f'Your Case No. {instance.sc_code} is waiting for you to set a hearing schedule.',
                             recipients=[complainant.rp_id.account],
                             notif_type='CASE_UPDATE',
-                            mobile_route= '/(my-request)/complaint-tracking/compMainView',
+                            mobile_route='/(my-request)/complaint-tracking/compMainView',
                             mobile_params={'comp_id': str(instance.comp_id.comp_id)},
                         )
 
@@ -308,8 +318,11 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
             
 
             # for complainants
-            complainants_with_rp = complaint.complainant.filter(rp_id__isnull=False)
-
+            complainants_with_rp = ComplaintComplainant.objects.filter(
+                comp=complaint,
+                cpnt__rp_id__isnull=False
+            ).select_related('cpnt__rp_id__account')
+            
             status = (
                 summon_case.sc_conciliation_status or
                 summon_case.sc_mediation_status or
@@ -321,16 +334,17 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                 'status': status
             }
             
-            for complainant in complainants_with_rp:
+            for complaint_complainant in complainants_with_rp:
+                complainant = complaint_complainant.cpnt
                 if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
-                    create_notification(
-                        title='Remarks Available', 
-                        message=f'Case No. {summon_case.sc_code} has remarks available for your {hearing_schedule.hs_level} hearing.',
-                        recipients=[complainant.rp_id.account],
-                        notif_type='CASE_UPDATE',
-                        mobile_route="/(my-request)/complaint-tracking/hearing-history", 
-                        mobile_params=mobile_params,
-                    )
+                        create_notification(
+                            title='Remarks Available', 
+                            message=f'Case No. {summon_case.sc_code} has remarks available for your {hearing_schedule.hs_level} hearing.',
+                            recipients=[complainant.rp_id.account],
+                            notif_type='CASE_UPDATE',
+                            mobile_route="/(my-request)/complaint-tracking/hearing-history", 
+                            mobile_params=mobile_params,
+                        )
 
 
 # =================== SERVICE CHARGE CREATE NOTIF =============================
