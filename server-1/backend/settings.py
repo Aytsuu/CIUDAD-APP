@@ -17,9 +17,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # SECURITY CONFIGURATION
 # ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
-
-# DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG=config('DEBUG', False)
+DEBUG=config('DEBUG', default=False)
 
 # ========================
 # SUPABASE CONFIGURATION
