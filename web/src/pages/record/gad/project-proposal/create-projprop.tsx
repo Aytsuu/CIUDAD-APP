@@ -473,11 +473,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           throw new Error('No proposal ID returned from server');
         }
         
-        // const supportDocResult = await addSupportDocMutation.mutateAsync({
-        //   gpr_id: gprId,
-        //   files: newFiles,
-        // });
-        // console.log("Support documents uploaded:", supportDocResult);
+        await addSupportDocMutation.mutateAsync({
+          gpr_id: gprId,
+          files: newFiles,
+        });
       }
 
       form.reset();

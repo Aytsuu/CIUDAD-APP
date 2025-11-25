@@ -181,7 +181,9 @@ export const EditDisbursementVoucher: React.FC<
     position?: string
   ) => {
     setValue(`dis_signatories.${index}.${field}`, value);
-    if (position && field === "name") {
+    
+    // Always update position when name is selected from dropdown
+    if (field === "name" && position) {
       setValue(`dis_signatories.${index}.position`, position);
     }
   };
