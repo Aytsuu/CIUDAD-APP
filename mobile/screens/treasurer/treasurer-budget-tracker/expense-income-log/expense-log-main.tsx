@@ -41,7 +41,6 @@ const ExpenseLogMain = () => {
   const params = useLocalSearchParams();
   const year = params.LogYear as string;
 
-  console.log("LOGYEAR: ", year)
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
