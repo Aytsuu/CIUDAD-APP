@@ -48,6 +48,13 @@ class PostQueries:
             json=data
         )
         return response
+    
+    def family_registration_request(self, data):
+        response = requests.post(
+            f"{self.client}/health-profiling/family/registration-request/approve/",
+            json=data
+        )
+        return response
 
     def family_composition(self, data):
         response = requests.post(

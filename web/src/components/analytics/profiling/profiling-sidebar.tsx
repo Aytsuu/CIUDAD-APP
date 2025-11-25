@@ -45,7 +45,6 @@ export const ProfilingSidebar = () => {
           per_addresses: personal.per_addresses,
         };
       } else {
-        console.log(request)
         const respondent = request.compositions.filter(
           (comp: any) => comp.acc !== null
         )[0];
@@ -62,7 +61,6 @@ export const ProfilingSidebar = () => {
   }, [requests]);
 
   const handleClick = (data: Record<string, any>) => {
-    console.log(data)
     if(data?.respondent) {
       navigate("/profiling/request/pending/family/registration", {
         state: {
