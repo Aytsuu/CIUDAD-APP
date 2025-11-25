@@ -17,8 +17,7 @@ export function filterComplaints(
 
     // Status filter - if no statuses selected, show all; otherwise filter by selected statuses
     const matchesStatus =
-      filters.statuses.length === 0 ||
-      filters.statuses.includes(c.comp_status);
+      filters.statuses.length === 0 || filters.statuses.includes(c.comp_status);
 
     // Date filter - filter by date range
     const matchesDate = checkDateRange(
@@ -37,10 +36,7 @@ function checkSearchQuery(c: Complaint, query: string): boolean {
   const q = query.toLowerCase();
   const firstComplainant = c.complainant?.[0];
   const accusedNames = c.accused?.map((a) => a.acsd_name) || [];
-  const accusedAddresses =
-    c.accused?.flatMap((a) => [
-      a?.address
-    ]) || [];
+  const accusedAddresses = c.accused?.flatMap((a) => [a?.address]) || [];
 
   const fields = [
     c.comp_id?.toString(),
@@ -54,7 +50,7 @@ function checkSearchQuery(c: Complaint, query: string): boolean {
     ...accusedAddresses,
   ];
 
-  return fields.some((val) => val);
+  return fields.some((val) => val && val.toString().toLowerCase().includes(q));
 }
 
 function checkDateRange(

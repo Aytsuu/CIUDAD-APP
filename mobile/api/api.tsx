@@ -24,13 +24,13 @@ export const api = axios.create({
 //   timeout: 10000,
 // });
 
-export const api = axios.create({
-  baseURL: Constants.expoConfig?.extra?.apiUrl,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
+// export const api = axios.create({
+//   baseURL: Constants.expoConfig?.extra?.apiUrl,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
 
 // export const api2 = axios.create({
 //   baseURL: "http://172.31.225.66:8001",
