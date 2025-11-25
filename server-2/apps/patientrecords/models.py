@@ -4,6 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 from apps.healthProfiling.models import ResidentProfile
 from apps.administration.models import Staff
+from simple_history.models import HistoricalRecords
 
 
 
@@ -116,8 +117,21 @@ class Patient(models.Model):
         blank=True,
         db_column='trans_id'
     )
+    location = models.CharField(max_length=100, default="", null=True, blank=True)
+    is_transferred_from = models.BooleanField(default=False)
+    registered_by = models.ForeignKey(
+        Staff,
+        on_delete=models.SET_NULL,
+        related_name='registered_patients',
+        null=True,
+        blank=True,
+        db_column='registered_by'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Add history tracking
+    history = HistoricalRecords()
 
     def clean(self):
         from django.core.exceptions import ValidationError

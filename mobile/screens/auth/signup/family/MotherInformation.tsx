@@ -6,6 +6,8 @@ import { TouchableOpacity, Text, ScrollView, View } from "react-native";
 import { useProgressContext } from "@/contexts/ProgressContext";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import React from "react";
+import { Link } from '@/lib/icons/Link'
+import { Unlink } from '@/lib/icons/Unlink'
 
 export default function MotherInformation() {
   const { setValue, getValues, resetField } = useRegistrationFormContext();
@@ -64,26 +66,38 @@ export default function MotherInformation() {
       >
         {completedSteps.includes(2) && !isRespondentLinked &&
           <View className="flex-1 flex-row px-5 mb-5">
-            <View className="flex-1 bg-primaryBlue rounded-lg p-4 gap-4">
-              <Text className="text-white text-sm">Are you the the one who's filling out this form? If yes, you can skip re-entering your information by simply pressing</Text>
-              <TouchableOpacity
-                onPress={linkRespondent}
-              >
-                <Text>Link to respondent</Text>
-              </TouchableOpacity>
+            <View className="flex-1 bg-gray-200 rounded-lg shadow-sm p-4 gap-4">
+              <Text className="text-gray-700 font-medium text-sm">
+                Are you the respondent filling out this form? If yes, link information by pressing:
+              </Text>
+              <View className="flex-row">
+                <TouchableOpacity
+                  onPress={linkRespondent}
+                  className="px-6 py-2 bg-blue-950 rounded-full flex-row items-center gap-3"
+                >
+                  <Link size={16} className="text-white"/>
+                  <Text className="text-white text-sm font-medium">Link</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         }
 
         {linkedTo === 4 && 
           <View className="flex-1 flex-row px-5 mb-5">
-            <View className="flex-1 bg-primaryBlue rounded-lg p-4 gap-4">
-              <Text className="text-white text-sm">This form has been linked to respondent information</Text>
-              <TouchableOpacity
-                onPress={unlinkRespondent}
-              >
-                <Text>Unlink</Text>
-              </TouchableOpacity>
+            <View className="flex-1 bg-gray-200 rounded-lg shadow-sm p-4 gap-4">
+              <Text className="text-gray-700 font-medium text-sm">
+                This form has been linked to respondent information
+              </Text>
+              <View className="flex-row">
+                <TouchableOpacity
+                  onPress={unlinkRespondent}
+                  className="px-6 py-2 bg-red-500 rounded-full flex-row items-center gap-3"
+                >
+                  <Unlink size={16} className="text-white"/>
+                  <Text className="text-white text-sm font-medium">Unlink</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         }

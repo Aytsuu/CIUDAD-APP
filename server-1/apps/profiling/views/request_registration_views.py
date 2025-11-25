@@ -117,7 +117,7 @@ class RequestCreateView(APIView):
         ),
         recipients=recipients,
         notif_type="REQUEST",
-        web_route=f"profiling/request/pending/{"family/registration" if len(new_comp) > 1 else "individual/registration"}",
+        web_route=f"profiling/request/pending/{'family/registration' if len(new_comp) > 1 else 'individual/registration'}",
         web_params=web_params,
         mobile_route="",
         mobile_params={},
