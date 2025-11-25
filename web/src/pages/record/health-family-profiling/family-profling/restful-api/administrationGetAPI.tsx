@@ -21,3 +21,4 @@ export const searchHealthStaff = async (searchQuery: string) => {
     throw err;
   }
 };
+

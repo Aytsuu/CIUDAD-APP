@@ -63,6 +63,16 @@ class FamilyTableView(generics.ListCreateAPIView):
                     output_field=CharField()
                 ),
                 Value('')
+            ),
+            independent=Coalesce(
+                Subquery(
+                    family_compositions.filter(
+                        fam=OuterRef('pk'), 
+                        fc_role='Independent'
+                    ).annotate(name=full_name).values('name')[:1],
+                    output_field=CharField()
+                ),
+                Value('')
             )
         ).filter(
            members__gt=0

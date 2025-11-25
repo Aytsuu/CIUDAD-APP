@@ -2,11 +2,11 @@
 export const formatHealthStaff = (staff: any) => {
   if (!staff) return [];
   
-  console.log('formatHealthStaff - Input staff:', staff);
+  // console.log('formatHealthStaff - Input staff:', staff);
 
   return staff.map((staffMember: any) => {
-    console.log('formatHealthStaff - Processing staff member:', staffMember);
-    console.log('formatHealthStaff - Staff member keys:', Object.keys(staffMember));
+    // console.log('formatHealthStaff - Processing staff member:', staffMember);
+    // console.log('formatHealthStaff - Staff member keys:', Object.keys(staffMember));
     
     return {
       id: `${staffMember.staff_id} ${staffMember.fname} ${staffMember.lname}`,
@@ -22,3 +22,4 @@ export const formatHealthStaff = (staff: any) => {
     };
   });
 };
+

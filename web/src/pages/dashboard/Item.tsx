@@ -58,6 +58,8 @@ import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pe
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
 import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
 import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+import { PopulationAnalyticsTabs } from "@/components/analytics/health/health-profiling/population-analytics-tabs";
+// import { NutritionalStatusSummaryChart } from "@/components/analytics/health/health-profiling/nutritional-status-summary-chart";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -284,6 +286,14 @@ export const getItemsConfig = (
             title: "Maternal",
             element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
           },
+          {
+            title: "Population Structure",
+            element: <PopulationAnalyticsTabs />
+          },
+          // {
+          //   title: "Health Profiling Summary",
+          //   element: <NutritionalStatusSummaryChart />
+          // },
           {
             title: "Animal Bites",
             element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,

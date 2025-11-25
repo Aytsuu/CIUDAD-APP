@@ -58,10 +58,10 @@ export default function EnvironmentalForm({
 
   // Debug logging
   React.useEffect(() => {
-    console.log('EnvironmentalForm - Water supply value:', selectedWaterSupply);
-    console.log('EnvironmentalForm - Household ID from form:', selectedHouseholdId);
-    console.log('EnvironmentalForm - Household ID from props:', householdId);
-    console.log('EnvironmentalForm - Water supply options data:', waterSupplyOptionsData);
+    // console.log('EnvironmentalForm - Water supply value:', selectedWaterSupply);
+    // console.log('EnvironmentalForm - Household ID from form:', selectedHouseholdId);
+    // console.log('EnvironmentalForm - Household ID from props:', householdId);
+    // console.log('EnvironmentalForm - Water supply options data:', waterSupplyOptionsData);
   }, [selectedWaterSupply, selectedHouseholdId, householdId, waterSupplyOptionsData]);
 
   // Prepare water supply options for RadioCardGroup
@@ -219,3 +219,4 @@ export default function EnvironmentalForm({
     </div>
   );
 }
+

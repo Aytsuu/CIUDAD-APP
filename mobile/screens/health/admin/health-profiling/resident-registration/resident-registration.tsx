@@ -15,7 +15,6 @@ import {
 } from "lucide-react-native";
 import { CompleteResidentProfilingSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { 
   AccountForm, 
   PersonalForm, 
@@ -27,6 +26,7 @@ import api from "@/api/api";
 import { useToastContext } from "@/components/ui/toast";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useAuth } from "@/contexts/AuthContext";
+import { MultiStepProgressBar } from "@/components/healthcomponents/multi-step-progress-bar";
 
 type RegistrationForm = z.infer<typeof CompleteResidentProfilingSchema>;
 
@@ -35,37 +35,44 @@ const registrationSteps = [
     id: 1,
     label: "Account",
     title: "Account Setup",
-    description: "Create login credentials",
+
     icon: CircleUserRound,
   },
   {
     id: 2,
     label: "Resident",
     title: "Personal Information",
-    description: "Basic resident details",
+
     icon: UserRoundPlus,
   },
   {
     id: 3,
-    label: "House",
+    label: "Household",
     title: "Household Details",
-    description: "Housing information",
+
     icon: HousePlus,
   },
   {
     id: 4,
     label: "Family",
     title: "Family Information",
-    description: "Family composition",
+
     icon: UsersRound,
   },
 ];
+
+// Convert registration steps to MultiStepProgressBar format
+const progressSteps = registrationSteps.map(step => ({
+  id: step.id,
+  label: step.label,
+ 
+}));
 
 export default function ResidentRegistration() {
   const router = useRouter();
   const { toast } = useToastContext();
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = React.useState<number>(1);
+  const [currentStep, setCurrentStep] = React.useState<number>(0); // Changed to 0-based for the progress bar
   const [completedSteps, setCompletedSteps] = React.useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
@@ -73,20 +80,6 @@ export default function ResidentRegistration() {
     resolver: zodResolver(CompleteResidentProfilingSchema),
     defaultValues: generateDefaultValues(CompleteResidentProfilingSchema),
     mode: "onChange"
-  });
-
-  // Animated progress bar
-  const progressWidth = useSharedValue(0);
-
-  React.useEffect(() => {
-    const newProgress = (currentStep / registrationSteps.length) * 100;
-    progressWidth.value = withTiming(newProgress, { duration: 300 });
-  }, [currentStep]);
-
-  const animatedProgressStyle = useAnimatedStyle(() => {
-    return {
-      width: `${progressWidth.value}%`,
-    };
   });
 
   const handleNext = React.useCallback((stepId: number, isComplete: boolean) => {
@@ -101,29 +94,38 @@ export default function ResidentRegistration() {
     }
     
     // Move to next step or completion screen
-    if (stepId < registrationSteps.length) {
-      setCurrentStep(stepId + 1);
+    // stepId is the current step that was just completed, so navigate to stepId + 1
+    if (stepId < registrationSteps.length - 1) {
+      setCurrentStep(stepId + 1); // Navigate to next step
     } else {
-      setCurrentStep(registrationSteps.length + 1); // Completion screen
+      setCurrentStep(registrationSteps.length); // Completion screen (step 4, one beyond last form)
     }
   }, []);
 
-  const handleStepPress = React.useCallback((stepId: number) => {
+  const handleStepPress = React.useCallback((stepIndex: number) => {
     // Allow navigation to any step that has been reached before
     // or to any step from the completion screen
-    if (stepId <= currentStep || currentStep === registrationSteps.length + 1) {
-      setCurrentStep(stepId);
+    if (stepIndex <= currentStep || currentStep === registrationSteps.length) {
+      setCurrentStep(stepIndex);
     }
   }, [currentStep]);
 
   const canSubmit = React.useMemo(() => {
-    // At minimum: Account, Resident, and either House or Family must be completed
-    const hasAccount = completedSteps.has(1);
-    const hasResident = completedSteps.has(2);
-    const hasHouseOrFamily = completedSteps.has(3) || completedSteps.has(4);
+    // Only Personal Information (step 1 in 0-based indexing) is required
+    const hasPersonalInfo = completedSteps.has(1);
     
-    return hasAccount && hasResident && hasHouseOrFamily;
-  }, [completedSteps]);
+    // Account step is optional - if user enters data but doesn't verify, block submission
+    const accountData = form.getValues("accountSchema");
+    const hasAccountData = accountData?.phone || accountData?.email;
+    
+    // If account data exists but step not completed, user must complete verification
+    if (hasAccountData && !completedSteps.has(0)) {
+      return false;
+    }
+    
+    // Only Personal Information is required for submission
+    return hasPersonalInfo;
+  }, [completedSteps, form]);
 
   // Helper function to check if object is empty
   const isEmpty = (obj: Record<string, any>) =>
@@ -142,8 +144,8 @@ export default function ResidentRegistration() {
       } = values;
 
       // Determine which sections are complete
-      const noAccount = !completedSteps.has(1);
-      const noHouse = !completedSteps.has(3);
+      const noAccount = !completedSteps.has(0); // 0-based
+      const noHouse = !completedSteps.has(2);
       const notLivingSolo = isEmpty(livingSoloSchema);
       const noFamily = isEmpty(familySchema);
       const noBusiness = true; // Business is not implemented in mobile yet
@@ -169,8 +171,19 @@ export default function ResidentRegistration() {
         per_addresses: formattedAddresses
       };
 
-      // Prepare account data (remove confirmPassword)
-      const { confirmPassword, ...account } = accountSchema;
+      // Prepare account data (remove verification flags)
+      let account = null;
+      if (!noAccount && accountSchema) {
+        const { isVerifiedEmail, isVerifiedPhone, ...accountRest } = accountSchema;
+        // Only include email if it's provided and not empty
+        if (accountRest.email && accountRest.email.trim().length > 0) {
+          account = accountRest;
+        } else {
+          // Exclude email if it's empty
+          const { email, ...accountWithoutEmail } = accountRest;
+          account = accountWithoutEmail;
+        }
+      }
 
       // Prepare the request payload matching web implementation
       const payload: any = {
@@ -178,7 +191,7 @@ export default function ResidentRegistration() {
       };
 
       // Add optional sections based on completion
-      if (!noAccount) {
+      if (!noAccount && account) {
         payload.account = account;
       }
 
@@ -188,18 +201,12 @@ export default function ResidentRegistration() {
 
       if (!notLivingSolo && livingSoloSchema.householdNo) {
         // Extract HH-ID from the householdNo
-        // Format can be:
-        // - "HH-00001 Owner: Name" (existing household from API)
-        // - "0", "1", "2" (owned house index)
         let householdNo = livingSoloSchema.householdNo;
         
-        // If it contains a space, it's from API - extract just the HH-ID part
         if (householdNo.includes(" ")) {
           householdNo = householdNo.split(" ")[0];
         }
-        // Otherwise, it's already just the index number, use as is
         
-        // Remove the 'id' field as it's not needed for backend
         const { id, ...livingSoloRest } = livingSoloSchema;
         
         payload.livingSolo = {
@@ -212,22 +219,17 @@ export default function ResidentRegistration() {
         payload.family = familySchema;
       }
 
-      // Note: Business is not implemented yet, but can be added later
-      // if (!noBusiness) {
-      //   payload.business = { ...business, bus_status: 'Active', files: files };
-      // }
-
       // Add staff ID if available from auth context
       if (user?.staff?.staff_id) {
         payload.staff = user.staff.staff_id;
       }
 
-      console.log("Submitting registration payload:", JSON.stringify(payload, null, 2));
+      // // console.log("Submitting registration payload:", JSON.stringify(payload, null, 2));
 
       // Call the API endpoint
       const response = await api.post("profiling/complete/registration/", payload);
 
-      console.log("Registration response:", response.data);
+      // // console.log("Registration response:", response.data);
 
       // Show success toast
       toast.success("Registration completed successfully!", 4000);
@@ -235,7 +237,7 @@ export default function ResidentRegistration() {
       // Reset form and state
       form.reset();
       setCompletedSteps(new Set());
-      setCurrentStep(1);
+      setCurrentStep(0);
 
       // Navigate back after a short delay
       setTimeout(() => {
@@ -250,7 +252,6 @@ export default function ResidentRegistration() {
       // Extract error message
       let errorMessage = "Failed to register. Please try again.";
       if (error.response?.data) {
-        // If backend returns structured error
         if (error.response.data.error) {
           errorMessage = typeof error.response.data.error === 'string' 
             ? error.response.data.error 
@@ -258,7 +259,6 @@ export default function ResidentRegistration() {
         } else if (error.response.data.message) {
           errorMessage = error.response.data.message;
         } else {
-          // Show full error data for debugging
           errorMessage = JSON.stringify(error.response.data);
         }
       } else if (error.message) {
@@ -271,59 +271,17 @@ export default function ResidentRegistration() {
     }
   };
 
-  const StepIndicator = ({ step }: { step: typeof registrationSteps[0] }) => {
-    const isCompleted = completedSteps.has(step.id);
-    const isCurrent = currentStep === step.id;
-    const IconComponent = step.icon;
-
-    return (
-      <TouchableOpacity
-        onPress={() => handleStepPress(step.id)}
-        disabled={step.id > currentStep}
-        className="flex-1"
-      >
-        <View className="items-center">
-          <View
-            className={`w-12 h-12 rounded-full items-center justify-center mb-2 ${
-              isCompleted
-                ? "bg-green-500"
-                : isCurrent
-                ? "bg-blue-600"
-                : "bg-gray-200"
-            }`}
-          >
-            {isCompleted ? (
-              <Check size={20} color="white" />
-            ) : (
-              <IconComponent 
-                size={20} 
-                color={isCurrent ? "white" : "#9CA3AF"} 
-              />
-            )}
-          </View>
-          <Text
-            className={`text-xs text-center ${
-              isCompleted || isCurrent ? "text-gray-900 font-semibold" : "text-gray-500"
-            }`}
-          >
-            {step.label}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   const renderCurrentForm = () => {
     switch (currentStep) {
-      case 1:
+      case 0: // Account
         return <AccountForm form={form} onNext={handleNext} />;
-      case 2:
+      case 1: // Resident
         return <PersonalForm form={form} onNext={handleNext} />;
-      case 3:
+      case 2: // House
         return <HouseholdForm form={form} onNext={handleNext} />;
-      case 4:
+      case 3: // Family
         return <FamilyForm form={form} onNext={handleNext} />;
-      case 5:
+      case 4: // Completion (one step beyond the last form step)
         return (
           <CompletionScreen
             completedSteps={Array.from(completedSteps)}
@@ -359,33 +317,22 @@ export default function ResidentRegistration() {
       wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
-        {/* Progress Bar and Step Indicators */}
+        {/* MultiStep Progress Bar */}
         {currentStep <= registrationSteps.length && (
-          <View className="bg-white px-5 pt-4 pb-5 border-b border-gray-200">
-            {/* Animated Progress Bar */}
-            <View className="h-2 bg-gray-200 rounded-full mb-4 overflow-hidden">
-              <Animated.View 
-                style={[
-                  animatedProgressStyle,
-                  { height: '100%', backgroundColor: '#3B82F6', borderRadius: 9999 }
-                ]}
-              />
-            </View>
+          <View className="bg-white px-5 pb-5 border-b border-gray-200">
+            <MultiStepProgressBar
+              steps={progressSteps}
+              currentStep={currentStep}
+              onStepClick={handleStepPress}
+              variant="numbers"
+              size="sm"
+              
+            />
 
-            {/* Step Indicators */}
-            <View className="flex-row justify-between items-center mb-3">
-              {registrationSteps.map((step) => (
-                <StepIndicator key={step.id} step={step} />
-              ))}
-            </View>
-
-            {/* Current Step Title */}
-            <View className="mt-2">
-              <Text className="text-lg font-bold text-gray-900">
-                {registrationSteps[currentStep - 1]?.title}
-              </Text>
-              <Text className="text-sm text-gray-600 mt-1">
-                {registrationSteps[currentStep - 1]?.description}
+            {/* Step Counter (Centered) */}
+            <View className="mt-4 items-center">
+              <Text className="text-xs font-semibold text-gray-800">
+                Step {currentStep + 1} of {registrationSteps.length}
               </Text>
             </View>
           </View>

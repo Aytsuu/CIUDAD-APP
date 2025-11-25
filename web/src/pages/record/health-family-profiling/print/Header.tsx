@@ -85,3 +85,4 @@ const Header = ({ householdData, buildingType }: HeaderProps) => {
 }
 
 export default Header
+
