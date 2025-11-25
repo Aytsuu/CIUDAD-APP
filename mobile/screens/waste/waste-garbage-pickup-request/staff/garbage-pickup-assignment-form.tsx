@@ -118,6 +118,7 @@ export default function AcceptGarbagePickupForm() {
                                 name="date"
                                 label="Date"
                                 type = "date"
+                                minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
                             />
 
                             <FormDateTimeInput

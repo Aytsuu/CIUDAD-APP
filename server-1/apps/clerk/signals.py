@@ -353,3 +353,234 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                         mobile_route="/(my-request)/complaint-tracking/hearing-history", 
                         mobile_params=mobile_params,
                     )
+
+
+# =================== SERVICE CHARGE CREATE NOTIF =============================
+@receiver(post_save, sender=ServiceChargePaymentRequest)
+def create_service_charge_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        # Get all staff with ADMIN position
+        admin_staff = Staff.objects.filter(
+            pos__pos_title__iexact='ADMIN'
+        ).select_related('rp__account')
+        
+        # Get the account IDs of admin staff
+        admin_accounts = []
+        for staff in admin_staff:
+            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
+                admin_accounts.append(staff.rp.account)
+        
+        if admin_accounts:
+            create_notification(
+                title='New Certificate Request', 
+                message=f'Request {instance.pay_id} for {instance.pay_sr_type} is waiting for review.',
+                recipients=admin_accounts,
+                notif_type='REQUEST',
+                mobile_route="/(treasurer)/clearance-request/service-charge-list", 
+                web_route="/treasurer-service-charge",  
+            )
+
+# ======================= PERSONAL CERT NOTIFICATION ==========================
+@receiver(post_save, sender=ClerkCertificate)
+def create_clerk_certificate_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        # Get all staff with ADMIN position
+        admin_staff = Staff.objects.filter(
+            pos__pos_title__iexact='ADMIN'
+        ).select_related('rp__account')
+        
+        # Get the account IDs of admin staff
+        admin_accounts = []
+        for staff in admin_staff:
+            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
+                admin_accounts.append(staff.rp.account)
+        
+        if admin_accounts:
+            create_notification(
+                title='New Certificate Request', 
+                message=f'Request {instance.cr_id} is waiting for your review.',
+                recipients=admin_accounts,
+                notif_type='REQUEST',
+                mobile_route="/(treasurer)/clearance-request/certificate-list",  
+                web_route="/treasurer-personal-and-others",  
+            )
+
+# ======================= BUSINESS CERT NOTIFICATION ==========================
+@receiver(post_save, sender=BusinessPermitRequest)
+def create_clerk_business_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        # Get all staff with ADMIN position
+        admin_staff = Staff.objects.filter(
+            pos__pos_title__iexact='ADMIN'
+        ).select_related('rp__account')
+        
+        # Get the account IDs of admin staff
+        admin_accounts = []
+        for staff in admin_staff:
+            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
+                admin_accounts.append(staff.rp.account)
+        
+        if admin_accounts:
+            create_notification(
+                title='New Clearance Request', 
+                message=f'Request {instance.bpr_id} is waiting for your review.',
+                recipients=admin_accounts,
+                notif_type='REQUEST',
+                mobile_route="/(treasurer)/clearance-request/business-list",  
+                web_route="/treasurer-permit",  
+            )
+
+# =================== SERVICE CHARGE PAYMENT STATUS RESIDENT SIDE NOTIF =====================
+@receiver(pre_save, sender=ServiceChargePaymentRequest)
+def notify_payment_status_change(sender, instance, **kwargs):
+
+    # If new object, no previous status exists
+    if not instance.pk:
+        return
+
+    # Get the existing row BEFORE it is overwritten
+    old_instance = ServiceChargePaymentRequest.objects.filter(pk=instance.pk).first()
+
+    if not old_instance:
+        return
+
+    # No change → ignore
+    if old_instance.pay_status == instance.pay_status:
+        return
+
+    # If no complaint, no residents to notify
+    if not instance.comp_id:
+        return
+
+    complainants = instance.comp_id.complainant.filter(rp_id__isnull=False)
+
+    for c in complainants:
+        if not (c.rp_id and hasattr(c.rp_id, 'account') and c.rp_id.account):
+            continue
+
+        # ============= PAID =============
+        if instance.pay_status == 'Paid':
+            create_notification(
+                title='Payment Received',
+                message=f"Your request {instance.pay_id} for Service Charge is now marked Paid.",
+                recipients=[c.rp_id.account],
+                notif_type='REQUEST',
+                mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            )
+
+        # ============= DECLINED =============
+        elif instance.pay_status == 'Declined':
+            reason = instance.pay_reason or "No reason specified."
+            
+            create_notification(
+                title='Payment Declined',
+                message=(
+                    f"Your payment for request {instance.pay_id} for Service Charge has been declined. "
+                    f"Reason: {reason}"
+                ),
+                recipients=[c.rp_id.account],
+                notif_type='PAYMENT_UPDATE',
+                mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            )
+
+
+# ==================== PERSONAL CERTIFICATE RESIDENT SIDE NOTIF =========================
+@receiver(pre_save, sender=ClerkCertificate)
+def notify_certificate_payment_status_change(sender, instance, **kwargs):
+
+    # If new object → nothing to compare yet
+    if not instance.pk:
+        return
+
+    # Get the current saved version before updating
+    old_instance = ClerkCertificate.objects.filter(pk=instance.pk).first()
+    if not old_instance:
+        return
+
+    # Check if payment status changed
+    if old_instance.cr_req_payment_status == instance.cr_req_payment_status:
+        return
+
+    # Must have resident profile
+    if not instance.rp_id or not hasattr(instance.rp_id, 'account'):
+        return
+
+    resident_account = instance.rp_id.account
+    if not resident_account:
+        return
+
+    # =================== PAYMENT STATUS: PAID ===================
+    if instance.cr_req_payment_status == "Paid":
+        create_notification(
+            title="Payment Received",
+            message=f"Your request {instance.cr_id} for Personal has been marked as Paid.",
+            recipients=[resident_account],
+            notif_type="REQUEST",
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+        )
+
+    # =================== PAYMENT STATUS: DECLINED ===================
+    elif instance.cr_req_payment_status == "Declined":
+        reason = instance.cr_reason or "No reason specified."
+
+        create_notification(
+            title="Payment Declined",
+            message=(
+                f"Your request {instance.cr_id} for Personal has been declined. "
+                f"Reason: {reason}"
+            ),
+            recipients=[resident_account],
+            notif_type="REQUEST",
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+        )
+
+
+# ==================== BUSINESS/BARANGAY CLEARANCE RESIDENT SIDE NOTIF =========================
+@receiver(pre_save, sender=BusinessPermitRequest)
+def notify_business_permit_payment_change(sender, instance, **kwargs):
+
+    # If creating a new record → nothing to compare yet
+    if not instance.pk:
+        return
+
+    # Get old version BEFORE update
+    old_instance = BusinessPermitRequest.objects.filter(pk=instance.pk).first()
+    if not old_instance:
+        return
+
+    # If no change in payment status → no notification needed
+    if old_instance.req_payment_status == instance.req_payment_status:
+        return
+
+    # Ensure there is an RP account to notify
+    if not instance.rp_id or not hasattr(instance.rp_id, 'account'):
+        return
+
+    resident_account = instance.rp_id.account
+    if not resident_account:
+        return
+
+    # ===================== PAID =====================
+    if instance.req_payment_status == "Paid":
+        create_notification(
+            title="Payment Received",
+            message=f"Your request {instance.bpr_id} for Business/Barangay Permit has been marked as Paid.",
+            recipients=[resident_account],
+            notif_type="REQUEST",
+            mobile_route="/(my-request)/business-permit/tracking",
+        )
+
+    # ===================== DECLINED =====================
+    elif instance.req_payment_status == "Declined":
+        reason = instance.bus_reason or "No reason specified."
+
+        create_notification(
+            title="Payment Declined",
+            message=(
+                f"Your request {instance.bpr_id} for Business/Barangay Permit has been declined. "
+                f"Reason: {reason}"
+            ),
+            recipients=[resident_account],
+            notif_type="REQUEST",
+            mobile_route="/(my-request)/business-permit/tracking",
+        )

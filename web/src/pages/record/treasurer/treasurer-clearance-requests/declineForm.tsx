@@ -35,7 +35,8 @@ function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance,
         } else if(isPermitClearance){
             declinePermitClearance({
                 bpr_id: id,
-                reason: value.reason
+                reason: value.reason,
+                staffId: staffId
             })
         } else if(isResident){
             declineResident({

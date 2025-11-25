@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatDate } from "@/helpers/dateHelpers";
 import { formatTime } from "@/helpers/timeFormatter";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function ResidentAccepted() {
   const [searchInputVal, setSearchInputVal] = useState("");
@@ -21,7 +22,7 @@ export default function ResidentAccepted() {
 
   // Add refetch to the query hook
   const { data: acceptedRequest = [], isLoading: isDataLoading, refetch } = useGetGarbageAcceptedResident(String(user?.rp));
-  const { mutate: confirm } = useUpdateGarbReqStatusResident(() => {}, false);
+  const { mutate: confirm, isPending } = useUpdateGarbReqStatusResident(() => {}, false);
 
   const filteredData = acceptedRequest.filter((request) => {
     const searchString = `
@@ -230,6 +231,7 @@ export default function ResidentAccepted() {
         }}
       >
         {renderContent()}
+        <LoadingModal visible={isPending}/>
       </ScrollView>
     </View>
   );

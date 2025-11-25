@@ -861,7 +861,7 @@ class ResidentCompletedPickupRequestSerializer(serializers.ModelSerializer):
 
     def _get_collector_names(self, assignment):
         try:
-            collectors = assignment.assignment_collector_set.all()
+            collectors = assignment.collectors.all()
             return [
                 collector.wstp_id.get_staff_name()
                 for collector in collectors

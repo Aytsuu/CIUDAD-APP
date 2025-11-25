@@ -6,7 +6,7 @@ from .models import WasteHotspot, WasteEvent
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
-from apps.notification.utils import create_notification
+from apps.notification.utils import create_notification, reminder_notification
 from apps.administration.models import Staff
 
 
@@ -168,6 +168,7 @@ def create_garbage_request_notification_on_update(sender, instance, created, **k
 @receiver(post_save, sender=Pickup_Confirmation)
 def create_completion_notifications(sender, instance, created, **kwargs):
     garbage_request = instance.garb_id
+    garb_id_str = str(garbage_request.garb_id) if hasattr(garbage_request, 'garb_id') else str(garbage_request.pk)
     
     # Partial completion - only staff confirmed
     if instance.conf_staff_conf and not instance.conf_resident_conf:
@@ -179,7 +180,7 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 recipients=[garbage_request.rp.account],
                 notif_type='REQUEST',
                 mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
-                mobile_params={'garb_id': instance.garb_id}
+                mobile_params={'garb_id': garb_id_str}
             )
     
     # Full completion - both staff and resident confirmed
@@ -192,7 +193,7 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 recipients=[garbage_request.rp.account],
                 notif_type='REQUEST',
                 mobile_route="/(my-request)/garbage-pickup/view-completed-details",
-                mobile_params={'garb_id': instance.garb_id}
+                mobile_params={'garb_id': garb_id_str}
             )
         
         # Notify admin staff that request is fully completed
@@ -212,7 +213,8 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 recipients=admin_accounts,
                 notif_type='REQUEST',
                 mobile_route="/(waste)/garbage-pickup/staff/view-completed-details",
-                mobile_params={'garb_id': instance.garb_id}
+                mobile_params={'garb_id': garb_id_str},
+                web_route="/garbage-pickup-request"
             )
 
 

@@ -36,18 +36,19 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
 };
 
 // Decline permit clearance
-export const declinePermitClearance = async (bpr_id: string, reason: string) => {
-    try {
-        const payload = {
-            req_status: "Declined",
-            req_payment_status: "Declined",
-            bus_reason: reason
-        };
-        
-        const response = await api.post(`/clerk/business-permit/${bpr_id}/cancel/`, payload);
-        
-        return response.data;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.detail || "Failed to decline permit clearance");
-    }
-};
+    export const declinePermitClearance = async (bpr_id: string, reason: string, staffId: string) => {
+        try {
+            const payload = {
+                req_status: "Declined",
+                req_payment_status: "Declined",
+                bus_reason: reason,
+                staff_id: staffId
+            };
+            
+            const response = await api.post(`/clerk/business-permit/${bpr_id}/cancel/`, payload);
+            
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.detail || "Failed to decline permit clearance");
+        }
+    };

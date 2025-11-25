@@ -522,7 +522,13 @@ export default function CertTrackingMain() {
                             )}
                           </>
                         )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && getNormalizedStatus(extractStatus(item)) !== 'declined' && (item?.cr_id || item?.bpr_id) && (
+                       {getNormalizedStatus(extractStatus(item)) !== 'completed' &&
+                        getNormalizedStatus(extractStatus(item)) !== 'cancelled' &&
+                        getNormalizedStatus(extractStatus(item)) !== 'declined' &&
+                        (item?.cr_id || item?.bpr_id) &&
+                        item.cr_req_payment_status.toLowerCase() !== "paid" &&
+                        item.pay_status.toLowerCase() !== "paid" &&
+                        item.req_payment_status.toLowerCase() !== "paid" && (
                           <View className="mt-3">
                             <ConfirmationModal
                               trigger={
@@ -532,7 +538,9 @@ export default function CertTrackingMain() {
                                   activeOpacity={0.8}
                                 >
                                   <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
+                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)
+                                      ? 'Cancelling…'
+                                      : 'Cancel Request'}
                                   </Text>
                                 </TouchableOpacity>
                               }
@@ -546,6 +554,7 @@ export default function CertTrackingMain() {
                             />
                           </View>
                         )}
+
                       </View>
                       ))
                   ) : (

@@ -61,7 +61,7 @@ urlpatterns = [
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
     path('business-permit/upload/', BusinessPermitUploadView.as_view(), name='business-permit-upload'),
     path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
-    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit_cancel'),
+    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit-cancel'),
     path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
     

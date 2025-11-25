@@ -11,6 +11,7 @@ import { useUpdateGarbReqStatusResident } from "./queries/garbagePickupUpdateQue
 import { LoadingState } from "@/components/ui/loading-state"
 import { useState } from "react"
 import { formatDate } from "@/helpers/dateHelpers"
+import { LoadingModal } from "@/components/ui/loading-modal"
 
 export default function ResidentAcceptedDetails() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function ResidentAcceptedDetails() {
   
   // Query with refetch
   const { data: requestDetails, isLoading, refetch } = useGetAcceptedDetailsResident(garb_id)
-  const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, true)
+  const {mutate: confirm, isPending} = useUpdateGarbReqStatusResident(() => {}, true)
   
   // State for image modal
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
@@ -299,6 +300,8 @@ export default function ResidentAcceptedDetails() {
               />
             </View>
           )}
+
+          <LoadingModal visible={isPending}/>
         </View>
       </ScrollView>
     );
