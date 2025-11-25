@@ -49,7 +49,8 @@ export const PlantillaDocTemplate = ({
   const [pdfBlob, setPdfBlob] = React.useState<string>(''); 
   // const [tableData, setTableData] = React.useState<any[]>([])
   const [month, setMonth] = React.useState<string>(getMonthName(new Date().toISOString()));
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [rate, setRate] = React.useState<number>(0)
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { data: reportTemplate } = useGetSpecificTemplate('PLANTILLA');  
@@ -80,6 +81,7 @@ export const PlantillaDocTemplate = ({
     const blob = await pdf(
       <PlantillaTemplatePDF
         logo={reportTemplate?.rte_logoTop}
+        rate={rate}
         staff={staff}
         preparedBy={prepared_by}
         recommendedBy={recommended_by}
@@ -195,6 +197,8 @@ export const PlantillaDocTemplate = ({
     }
   }
 
+  console.log(rate)
+
   // Logo component (copied from ARDocTemplate)
   const LogoUpload = ({ 
     logoUrl, 
@@ -254,7 +258,7 @@ export const PlantillaDocTemplate = ({
         />
 
         {/* Pagination Controls - Top */}
-        <div className="absolute top-2 left-2 flex items-center gap-2 bg-gray-100 p-2 rounded-sm">
+        <div className="absolute top-2 left-2 flex items-center gap-2 p-2 rounded-sm">
           {totalPages > 1 && (
             <>
               <Button
@@ -280,8 +284,9 @@ export const PlantillaDocTemplate = ({
               </Button>
             </>
           )}
-          <div className="w-40">
+          <div className="flex items-center gap-2">
             <SelectLayout 
+              withReset={false}
               value={month}
               options={getMonths.map((month) => ({
                 id: month,
@@ -289,7 +294,22 @@ export const PlantillaDocTemplate = ({
               }))}
               onChange={(value: string) => setMonth(value)}
               placeholder={month}
+              className="w-40"
             />
+            <div className="w-40 flex items-center border shadow-sm rounded-lg px-4">
+              <Label>Rate:</Label>
+              <Input 
+                value={rate}
+                onChange={(e) => {
+                  const value = e.target.value
+
+                  if(value == "") setRate(0)
+                  else setRate(parseFloat(e.target.value))
+                }}
+                type="text"
+                className="border-none shadow-none focus-visible:ring-0"
+              />
+            </div>
           </div>
         </div>
 
@@ -342,7 +362,7 @@ export const PlantillaDocTemplate = ({
                       </TableCell>
                       <TableCell className="text-center text-[13px] border border-black">BARANGAY BASE RESPONDER</TableCell>
                       <TableCell className="text-center text-[13px] border border-black">{month.toUpperCase()} {new Date().getFullYear()}</TableCell>
-                      <TableCell className="text-center text-[13px] border border-black">5,000.00</TableCell>
+                      <TableCell className="text-center text-[13px] border border-black">{`${rate}.00`}</TableCell>
                     </TableRow>
                   ))}  
                 </TableBody>

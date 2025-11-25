@@ -15,7 +15,7 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
   );
 
   return (
-    <div className="relative w-full h-full bg-[#17294A] overflow-hidden">
+    <div className="relative w-full h-screen bg-[#17294A] overflow-hidden">
       {/* Background Carousel */}
       <div className="absolute inset-0 w-full h-full">
         <Carousel
@@ -25,8 +25,8 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
           className="hidden lg:block"
         >
           <CarouselContent>
-            {carousel.map((file: any) => (
-              <CarouselItem key={file.name} className="basis-full p-0">
+            {carousel.map((file: any, index: number) => (
+              <CarouselItem key={index} className="basis-full p-0">
                 <img
                   src={file.url}
                   className="w-full h-full object-cover"

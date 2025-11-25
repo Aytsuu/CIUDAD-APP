@@ -72,3 +72,20 @@ export const useUpdateSitio = () => {
     }
   })
 }
+
+export const useUpdatePositionGroup = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.patch('administration/position/update/group/', data);
+        return res.data
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['positions']})
+    },
+  })
+}

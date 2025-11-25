@@ -94,6 +94,10 @@ export const DrawerView = ({
         width: 40,
         height: 4,
       }}
+      // Add these props for better behavior
+      enableDynamicSizing={false}
+      keyboardBehavior="interactive"
+      android_keyboardInputMode="adjustResize"
     >
       <View style={{ flex: 1, padding: 8 }}>
         <View className="flex-1 px-4">

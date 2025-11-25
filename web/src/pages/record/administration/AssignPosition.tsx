@@ -68,7 +68,6 @@ export default function AssignPosition({
 
       // If resident exists, assign position 
       if (residentId && residentId !== "undefined") {
-        console.log(residentId, positionId);
         
         // Assign staff position 
         await addStaff({
@@ -109,7 +108,6 @@ export default function AssignPosition({
         deliverFeedback();
       }
     } catch (error) {
-      console.error('Error during submission:', error);
       showErrorToast('An error occurred while processing the request');
       setIsSubmitting(false);
     }
@@ -168,7 +166,7 @@ export default function AssignPosition({
                   <div>
                     <span className="font-medium text-gray-600">Name:</span>
                     <span className="ml-2 text-gray-900">
-                      {`${residentInfo.per_fname || ''} ${residentInfo.per_lname || ''}`.trim() || 'Not specified'}
+                      {`${residentInfo.per_fname.toUpperCase() || ''} ${residentInfo.per_lname.toUpperCase() || ''}`.trim() || 'Not specified'}
                     </span>
                   </div>
                   <div>

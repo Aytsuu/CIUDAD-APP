@@ -4,7 +4,7 @@ from datetime import datetime
 
 class NotificationQueries:
     def __init__(self):
-        self.client = config("CLIENT", default="http://localhost:8001")
+        self.client = config("CLIENT", default="http://localhost:8000")
 
     def create_notification(
         self,
@@ -32,7 +32,6 @@ class NotificationQueries:
             response = requests.post(
                 f"{self.client}/notification/create/",
                 json=payload,
-                headers=headers,
                 timeout=5
             )
             response.raise_for_status()
@@ -73,7 +72,6 @@ class NotificationQueries:
             response = requests.post(
                 f"{self.client}/notification/create-reminder/",
                 json=payload,
-                headers=headers,
                 timeout=5
             )
             response.raise_for_status()

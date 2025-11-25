@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Users, FileDown } from "lucide-react"
+import { Search, Plus, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -9,11 +9,11 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { Link } from "react-router"
 import { useHouseholdTable } from "../queries/profilingFetchQueries"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Spinner } from "@/components/ui/spinner"
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 export default function HouseholdRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -21,10 +21,16 @@ export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const [nhts, setNhts] = React.useState<string>("all");
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
-  const { data: householdTable, isLoading } = useHouseholdTable(currentPage, debouncedPageSize, debouncedSearchQuery)
+  const { data: householdTable, isLoading } = useHouseholdTable(
+    currentPage, 
+    debouncedPageSize, 
+    debouncedSearchQuery,
+    nhts
+  )
 
   const households = householdTable?.results || []
   const totalCount = householdTable?.count || 0
@@ -35,21 +41,6 @@ export default function HouseholdRecords() {
     if(isLoading) showLoading();
     else hideLoading();
   }, [isLoading])
-
-  // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        // exportToCSV(households)
-        break
-      case "excel":
-        // exportToExcel(households)
-        break
-      case "pdf":
-        // exportToPDF(households)
-        break
-    }
-  }
 
   return (
     // ----------------- RENDER --------------------
@@ -70,30 +61,23 @@ export default function HouseholdRecords() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport("csv")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("excel")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as Excel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
+              <div className="flex gap-3">         
+                <SelectLayout
+                  withReset={false}
+                  value={nhts}
+                  valueLabel="NHTS"
+                  className="gap-4 focus:ring-0"
+                  onChange={(val) => {
+                    val !== nhts && setNhts(val)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "yes", name: "Yes" },
+                    { id: "No", name: "No" },
+                  ]}
+                />    
                 <Link to="/profiling/household/form">
                   <Button className="px-4">
                     <Plus size={16} className="mr-2" />
@@ -143,7 +127,7 @@ export default function HouseholdRecords() {
               <p className="text-gray-500 mb-4">
                 {searchQuery
                   ? `No households match "${searchQuery}". Try adjusting your search.`
-                  : "Get started by registering your first household."}
+                  : "Get started by registering a house."}
               </p>
             </div>
           )}

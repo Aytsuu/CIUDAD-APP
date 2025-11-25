@@ -133,51 +133,51 @@ export const NotificationBell: React.FC = () => {
               path: payload.data.web_route,
               params: params
             };
-            
-            console.log('📍 Parsed redirect URL:', redirectUrl);
           } catch (e) {
             console.error("Failed to parse web params:", e);
           }
         }
+        
         const notifTitle = payload.notification?.title || "No title";
         const notifMessage = payload.notification?.body || "No message";
+        const notifType = payload.data?.notif_type || "";
 
-        // const newNotif: Notification = {
-        //   notif_id: payload.data?.notification_id || Date.now().toString(),
-        //   notif_title: payload.notification?.title || "No title",
-        //   notif_message: payload.notification?.body || "No message",
-        //   notif_type: payload.data?.notif_type || "",
-        //   is_read: false,
-        //   notif_created_at: new Date().toISOString(),
-        //   redirect_url: redirectUrl,
-        // };
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: notifTitle,
+          notif_message: notifMessage,
+          notif_type: notifType,
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
 
-        // // Update state first
-        // setNotifications((prev) => {
-        //   console.log('📝 Adding notification to state. Current count:', prev.length);
-        //   return [newNotif, ...prev];
-        // });
-        // setUnreadCount((prev) => prev + 1);
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
 
-        // Show toast notification
+        // Show toast notification with navigation support
         showNotificationToast({
           title: notifTitle,
           description: notifMessage,
           avatarSrc: ciudadLogo,
           timestamp: "just now",
+          notif_type: notifType, // Pass the notification type for proper icon display
           onClick: redirectUrl ? () => {
-
-            const { path, params } = redirectUrl
+            const { path, params } = redirectUrl;
+            console.log('🔗 Navigating to:', path, 'with params:', params);
             navigate(path, {
               state: {
                 params: params
               }
-            })
+            });
           } : undefined,
         });
         
-        // Also refetch to ensure we're in sync with backend
-        console.log('🔄 Refetching notifications from backend...');
+        // Refetch to sync with server
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
@@ -223,13 +223,13 @@ export const NotificationBell: React.FC = () => {
     
     // Navigate using the redirect_url
     if (notification.redirect_url) {
-
-      const { path, params } = notification.redirect_url
+      const { path, params } = notification.redirect_url;
+      console.log('🔗 Navigating to:', path, 'with params:', params);
       navigate(path, {
         state: {
           params: params
         }
-      })
+      });
     }
     
     setOpen(false);
@@ -244,14 +244,13 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          
-          const { path, params } = notification.redirect_url
+          const { path, params } = notification.redirect_url;
+          console.log('🔗 Navigating to:', path, 'with params:', params);
           navigate(path, {
             state: {
               params: params
             }
-          })
-
+          });
         }
         setOpen(false);
         break;
@@ -261,12 +260,21 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
+  /* 
+    Main Options navigation
+  */
+
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
     if(action === "view_notification") {
       navigate("/notification");
+      setOpen(false);
+    }
+    if(action === "notification_settings"){
+      navigate("/manage/preferences");
+      setOpen(false);
     }
   };
 

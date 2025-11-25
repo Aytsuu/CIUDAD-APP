@@ -1,11 +1,12 @@
-import MobileHome from "@/assets/images/m_home.jpg";
+  import MobileHome from "@/assets/images/m_home.jpg";
 import MobileLanding from "@/assets/images/m_landing.jpg";
 import MobileSignup from "@/assets/images/m_signup.jpg";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { AlertTriangle, BellRing, FileText } from "lucide-react";
 
 export default function MobileApp() {
   return (
-    <section className="relative w-full min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 overflow-hidden">
+    <section className="relative w-full min-h-screen bg-blue-950 py-20 overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -29,19 +30,7 @@ export default function MobileApp() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300">
               <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
+                <BellRing className="text-blue-500"/>
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 Real-time Notifications
@@ -53,19 +42,7 @@ export default function MobileApp() {
 
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-300">
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-emerald-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <FileText className="text-green-500"/>
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 Document Requests
@@ -77,19 +54,7 @@ export default function MobileApp() {
 
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 hover:border-rose-500/50 transition-all duration-300">
               <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-rose-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <AlertTriangle  className="text-red-500"/>
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 Emergency Reports

@@ -14,7 +14,7 @@ class ComplaintUpdateView(UpdateAPIView):
     def update(self, request, *args, **kwargs):
         complaint = get_object_or_404(Complaint, comp_id=kwargs['comp_id'])
         print(f"Updating Complaint ID: {complaint.comp_id} with data: {request.data}")
-        
+        print(f"Current Complaint Status: {complaint.comp_status}, Staff ID: {complaint.staff_id}")
         serializer = self.get_serializer(complaint, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

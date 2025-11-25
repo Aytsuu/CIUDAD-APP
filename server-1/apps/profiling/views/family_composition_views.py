@@ -7,6 +7,8 @@ from ..serializers.family_composition_serializers import *
 from ..models import *
 from apps.pagination import *
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from ..notif_recipients import family_recipients
 
 class FamilyCompositionCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]
@@ -90,6 +92,18 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
                 except ValueError:
                     error_detail = response.text
                 raise serializers.ValidationError({"error": error_detail})
+            
+            # Create notification
+            create_notification(
+                title="New Family Member",
+                message="You have a new member registered in your family.",
+                recipients=family_recipients(created_instances[0].fam),
+                notif_type="",
+                web_route="",
+                web_params={},
+                mobile_route="/(account)/family",
+                mobile_params={}
+            )
 
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)

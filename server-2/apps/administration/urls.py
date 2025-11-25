@@ -18,7 +18,8 @@ urlpatterns = [
     path('position/bulk/create/', PositionBulkCreateView.as_view(), name="position-bulk-create"),
     path('position/delete/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
     path('position/update/<int:pos_id>/', PositionUpdateView.as_view(), name='position-update'),
-    
+    path('position/update/group/', PositionGroupUpdateView.as_view(), name="position-group-update"),
+
     # Feature Urls 
     path('feature/', FeatureView.as_view(), name='features-list'),
     path('feature/assign/<int:feat>/', FeatureDataView.as_view(), name='feature-data'),

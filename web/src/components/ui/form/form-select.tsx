@@ -20,7 +20,8 @@
         readOnly,
         isLoading = false,
         placeholder,
-        emptyMessage = "No options available"
+        emptyMessage = "No options available",
+        required = false
     }: { 
         control: any; 
         name: string; 
@@ -30,6 +31,7 @@
         readOnly?: boolean;
         isLoading?: boolean;
         emptyMessage?: string;
+        required?: boolean
     }) => {
         // Combine loading and empty states into the options
         const selectOptions = React.useMemo(() => {
@@ -48,7 +50,10 @@
                 name={name}
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="text-black/70">{label}</FormLabel>
+                        {label && <FormLabel className="text-black/70">
+                            {label}
+                            {required && <span className="ml-1 text-red-500">*</span>}
+                        </FormLabel>}
                         <FormControl>
                             {!readOnly ? (
                                 <SelectLayout

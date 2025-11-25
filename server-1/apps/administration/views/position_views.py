@@ -96,10 +96,47 @@ class PositionUpdateView(generics.RetrieveUpdateAPIView):
     
 class PositionGroupsListView(APIView):
     def get(self, request, *args, **kwargs):
+        category = request.query_params.get('category', None)
+
         queryset = Position.objects.filter(pos_group__isnull=False) \
                 .exclude(pos_group__exact='') \
                 .values_list('pos_group', flat=True) \
                 .distinct()
+        
+        if category:
+            queryset = queryset.filter(pos_category=category)
+
         if queryset:
             return Response(queryset)
         return Response(status=status.HTTP_404_NOT_FOUND)
+    
+class PositionGroupUpdateView(APIView):
+    @transaction.atomic
+    def patch(self, request, *args, **kwargs):
+        positions = request.data
+        
+        for pos in positions:
+            instance = Position.objects.filter(pos_id=pos['pos_id']).first()
+            for key, val in pos.items():
+                setattr(
+                    instance,
+                    key,
+                    val,
+                )
+            instance.save()
+
+        # Perform double query
+        double_query = UpdateQueries()
+        response = double_query.group_position(positions)
+
+        if not response.ok:
+            try:
+                error_details = response.json()
+            except ValueError:
+                error_details = response.text
+            raise serializers.ValidationError({'error': error_details})
+
+        return Response(
+            PositionBaseSerializer(Position.objects.all(), many=True).data, 
+            status=status.HTTP_200_OK
+        )

@@ -10,13 +10,18 @@ export default function SanRoqueMap(): JSX.Element {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
+    const apiKey = import.meta.env.VITE_MAP_TILE_API_KEY;
+
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
-        import.meta.env.VITE_MAP_TILE_API_KEY
-      }`,
-      center: [123.90608103742457, 10.293906040416475], // [lng, lat]
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
+      center: [123.90608103742457, 10.293906040416475],
       zoom: 17,
+    });
+
+    // Add error handler
+    map.on('error', (e) => {
+      console.error('Map error:', e);
     });
 
     mapRef.current = map;

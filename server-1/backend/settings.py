@@ -6,6 +6,7 @@ import os
 from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
+import json
 
 
 # Build paths
@@ -16,9 +17,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # SECURITY CONFIGURATION
 # ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
-
-# DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG=True
+DEBUG=config('DEBUG', default=False)
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -39,11 +38,17 @@ SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 # ========================
 # FIREBASE CONFIGURATION
 # ========================
-FIREBASE_CREDENTIAL_PATH = os.path.join(BASE_DIR, 'firebase', 'firebase-key.json')
+FIREBASE_KEY = config('FIREBASE_KEY', default='MY_FIREBASE_KEY')
 
-if not firebase_admin._apps and os.path.exists(FIREBASE_CREDENTIAL_PATH):
-    cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
-    firebase_admin.initialize_app(cred)
+if FIREBASE_KEY:
+    try:
+        cred_dict = json.loads(FIREBASE_KEY)
+        cred = credentials.Certificate(cred_dict)
+
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(e)
 
 # ========================
 # APPLICATION DEFINITION
@@ -171,7 +176,7 @@ USE_TZ = True
 
 # # Static files 
 STATIC_URL = 'static/'
-STATC_ROOT = BASE_DIR / 'staticfiles'
+STATC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
@@ -205,9 +210,30 @@ AUTH_USER_MODEL = 'account.Account'
 # CORS SETTINGS
 # ========================
 
-ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS = True # disable in production
-CORS_ALLOW_CREDENTIALS = True # false in production
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'ciudad-app-server-1.onrender.com',
+]
+
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
+CORS_ALLOWED_ORIGINS=[
+    # Production Hosts
+    "https://ciudad-app.onrender.com", 
+    "https://www.sanroqueciudad.com",
+    "https://securado.onrender.com",
+
+    # Local Testing 
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+
+    # Physical Mobile Device Host IP
+    "http://192.168.1.52:8000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
     'accept',

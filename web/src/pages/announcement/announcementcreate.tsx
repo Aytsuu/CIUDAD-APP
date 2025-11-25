@@ -139,8 +139,6 @@ const AnnouncementCreate = () => {
     }
   }, [data]);
 
-  console.log(form.getValues())
-
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
   const { mutateAsync: postAnnouncementRecipient } =
     usePostAnnouncementRecipient();
@@ -221,23 +219,10 @@ const AnnouncementCreate = () => {
         if (announcementData.ann_event_end && !announcementData.ann_end_at) {
           announcementData.ann_end_at = announcementData.ann_event_end;
         }
-        if (!announcementData.ann_event_end && announcementData.ann_end_at) {
-          announcementData.ann_event_end = announcementData.ann_end_at;
-        }
-      }
-
-      // Handle Event Types
-      if (["EVENT"].includes(announcementData.ann_type)) {
-        if (announcementData.ann_event_end && !announcementData.ann_end_at) {
-          announcementData.ann_end_at = announcementData.ann_event_end;
-        }
-        if (!announcementData.ann_event_end && announcementData.ann_end_at) {
-          announcementData.ann_event_end = announcementData.ann_end_at;
-        }
       }
 
       // **Force Active if no scheduler provided**
-      if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
+      if (!announcementData.ann_start_at) {
         announcementData.ann_status = "ACTIVE";
       }
 

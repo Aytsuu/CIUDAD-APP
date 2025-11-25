@@ -280,7 +280,7 @@ export const CertDocTemplate = ({
         />
 
         {/* Pagination Controls - Top */}
-        <div className="absolute top-2 left-2 flex items-center gap-2 bg-gray-100 p-2 rounded-sm">
+        <div className="absolute top-2 left-2 flex items-center gap-2 p-2 rounded-sm">
           {totalPages > 1 && (
             <>
               <Button
@@ -308,6 +308,7 @@ export const CertDocTemplate = ({
           )}
           <div className="w-40">
             <SelectLayout 
+            withReset={false}
               value={month}
               options={getMonths.map((month) => ({
                 id: month,

@@ -33,7 +33,7 @@ class PersonalHistoryBaseSerializer(serializers.ModelSerializer):
         return [
             {
                 'street': pa.add.add_street,
-                'sitio': pa.add.sitio.sitio_name,
+                'sitio': pa.add.sitio.sitio_name if pa.add.sitio else pa.add.add_external_sitio,
                 'barangay': pa.add.add_barangay,
                 'city': pa.add.add_city,
                 'province': pa.add.add_province

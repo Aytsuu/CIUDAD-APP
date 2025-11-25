@@ -43,12 +43,11 @@ export const ConfirmationModal = ({
           icon: <AlertCircle size={32} color="#3B82F6" />,
         };
       case "cancel":
-      case "delete":
         return {
           bgColor: "bg-red-100",
-          buttonColor: "bg-red-600",
-          icon: <AlertTriangle size={32} color="#EF4444" />,
-        };
+          buttonColor: "bg-red-500",
+          icon: <AlertTriangle size={32} color="#ffffff"/>,
+        }
       case "warning":
         return {
           bgColor: "bg-orange-100",

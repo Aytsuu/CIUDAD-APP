@@ -4,6 +4,8 @@ from django.utils import timezone
 from ..models import *
 from django.db.models import Count
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -39,9 +41,10 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class HouseholdTableSerializer(serializers.ModelSerializer):
   total_families = serializers.SerializerMethodField()
@@ -74,9 +77,10 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
@@ -107,6 +111,20 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       except ValueError:
           error_detail = response.text
       raise serializers.ValidationError({"error": error_detail})
+
+    # Create notification
+    create_notification(
+      title="New House Record",
+      message=(
+          f"A new house has been registered."
+      ),
+      recipients=general_recipients(False, household.staff.staff_id),
+      notif_type="REGISTRATION",
+      web_route="profiling/household",
+      web_params={},
+      mobile_route="/(profiling)/household/records",
+      mobile_params={},
+    )
 
     return household
 

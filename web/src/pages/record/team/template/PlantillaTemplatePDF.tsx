@@ -167,7 +167,8 @@ interface PlantillaTemplatePDFProps {
   preparedBy?: string
   recommendedBy?: string
   approvedBy?: string
-  month?: string
+  month?: string,
+  rate: number
 }
 
 export const PlantillaTemplatePDF: React.FC<PlantillaTemplatePDFProps> = ({
@@ -177,6 +178,7 @@ export const PlantillaTemplatePDF: React.FC<PlantillaTemplatePDFProps> = ({
   recommendedBy = "Not Added",
   approvedBy = "Not Added",
   month = "TO BE SPECIFIED",
+  rate
 }) => {
   const ITEMS_PER_PAGE = 25; // Increased items per page for more compact layout
   const totalPages = Math.ceil(staff.length / ITEMS_PER_PAGE);
@@ -242,7 +244,7 @@ export const PlantillaTemplatePDF: React.FC<PlantillaTemplatePDFProps> = ({
                 </Text>
                 <Text style={[styles.tableCell, styles.designationCol]}>BARANGAY BASE RESPONDER</Text>
                 <Text style={[styles.tableCell, styles.periodCol]}>{month}</Text>
-                <Text style={[styles.tableCell, styles.rateCol, { borderRight: "none" }]}>5,000.00</Text>
+                <Text style={[styles.tableCell, styles.rateCol, { borderRight: "none" }]}>{`${rate}.00`}</Text>
               </View>
             ))}
 

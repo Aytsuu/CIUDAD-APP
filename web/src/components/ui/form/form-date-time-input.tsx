@@ -17,6 +17,7 @@ export const FormDateTimeInput = React.memo(
     type,
     min,
     max,
+    required = false
   }: {
     control: any;
     name: string;
@@ -25,13 +26,17 @@ export const FormDateTimeInput = React.memo(
     type: "date" | "time" | "datetime-local" | "month";
     min?: string;
     max?: string;
+    required?: boolean
   }) => (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-black/70">{label}</FormLabel>
+          {label && <FormLabel className="text-black/70">
+            {label}
+            {required && <span className="ml-1 text-red-500">*</span>}
+          </FormLabel>}
           <FormControl>
             <input
               type={type}

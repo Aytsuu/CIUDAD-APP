@@ -71,9 +71,6 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const checkDefaultValues = (currentValues: any, initialValues: any) => {
     const obj1 = normalize(currentValues);
     const obj2 = normalize(initialValues);
-
-    console.log(obj1);
-    console.log(obj2);
     return _.isEqual(obj1, obj2);
   };
 

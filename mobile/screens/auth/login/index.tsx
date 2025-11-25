@@ -141,8 +141,8 @@ export default function App() {
       <DrawerView
         bottomSheetRef={bottomSheetRef}
         snapPoints={["80%"]}
-        title={"Reports"}
-        description={"View all reports"}
+        title={"Choose Registration Type"}
+        description={"Select how you'd like to register"}
       >
         <BottomSheetScrollView
           contentContainerStyle={{

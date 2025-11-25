@@ -2,7 +2,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, TrendingDown, BarChart3, AlertCircle } from "lucide-react";
+import { BarChart3, AlertCircle } from "lucide-react";
 import { useGetChartAnalytics } from "./report-analytics-queries";
 import { useLoading } from "@/context/LoadingContext";
 import React from "react";
@@ -15,22 +15,6 @@ export default function ReportSectionCharts() {
   const totalReports = reportChartAnalytics.reduce((acc: number, data: any) => acc + (data.report || 0), 0);
   const averageReports = reportChartAnalytics.length > 0 ? Math.round(totalReports / reportChartAnalytics.length) : 0;
   
-  // Calculate trend
-  const midPoint = Math.floor(reportChartAnalytics.length / 2);
-  const firstHalf = reportChartAnalytics.slice(0, midPoint);
-  const secondHalf = reportChartAnalytics.slice(midPoint);
-  
-  const firstHalfTotal = firstHalf.reduce((acc: number, data: any) => acc + (data.report || 0), 0);
-  const secondHalfTotal = secondHalf.reduce((acc: number, data: any) => acc + (data.report || 0), 0);
-  
-  const firstHalfAvg = firstHalf.length > 0 ? firstHalfTotal / firstHalf.length : 0;
-  const secondHalfAvg = secondHalf.length > 0 ? secondHalfTotal / secondHalf.length : 0;
-  
-  const trendPercentage = firstHalfAvg > 0 
-    ? Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
-    : 0;
-  
-  const isIncreasing = trendPercentage > 0;
   const peakDay = reportChartAnalytics.reduce((max: any, current: any) => 
     (current.report > (max?.report || 0)) ? current : max, 
     reportChartAnalytics[0]
@@ -92,18 +76,6 @@ export default function ReportSectionCharts() {
             <span className="text-2xl font-bold text-gray-900">
               {totalReports.toLocaleString()}
             </span>
-            {trendPercentage !== 0 && (
-              <div className={`flex items-center gap-1 ${isIncreasing ? 'text-red-600' : 'text-green-600'}`}>
-                {isIncreasing ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                <span className="text-sm font-semibold">
-                  {isIncreasing ? '+' : ''}{trendPercentage}%
-                </span>
-              </div>
-            )}
           </div>
         </div>
 

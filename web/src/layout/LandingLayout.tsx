@@ -32,6 +32,7 @@ import LandingEditForm from "@/pages/landing/LandingEditForm";
 import { Separator } from "@/components/ui/separator";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import supabase from "@/supabase/supabase";
+import Featured from "@/pages/landing/Featured";
 
 export default function LandingLayout() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export default function LandingLayout() {
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const announcementRef = React.useRef<HTMLDivElement>(null);
   const mobileAppRef = React.useRef<HTMLDivElement>(null);
+  const barangayConnectRef = React.useRef<HTMLDivElement>(null);
   const [hideEditButton, setHideEditButton] = React.useState<boolean>(false);
   const [carousel, setCarousel] = React.useState<MediaUploadType>([]);
 
@@ -46,6 +48,7 @@ export default function LandingLayout() {
     { path: homeRef, title: "Home" },
     { path: aboutRef, title: "Our Barangay" },
     { path: announcementRef, title: "Announcement" },
+    { path: barangayConnectRef, title: "BarangayConnect"},
     { path: mobileAppRef, title: "Mobile App" },
   ];
 
@@ -300,18 +303,29 @@ export default function LandingLayout() {
         )}
 
       {/* Scrollable Page Content - Added pt-[120px] to account for fixed headers */}
-      <main className="w-full overflow-hidden pt-[88px] sm:pt-[96px] md:pt-[112px]">
+      <main className="w-full bg-white overflow-hidden">
         <section
           ref={homeRef}
-          className="w-full h-screen flex justify-center items-center"
         >
           <Home carousel={carousel} />
         </section>
-        <section ref={aboutRef}>
+        <section 
+          ref={aboutRef}
+          className="pt-16"
+        >
           <About data={landingData} />
         </section>
-        <section ref={announcementRef}>
+        <section 
+          ref={announcementRef}
+          className="pt-16"
+        >
           <Announcements />
+        </section>
+        <section
+          ref={barangayConnectRef}
+          className="pt-16"
+        >
+          <Featured/>
         </section>
         <section ref={mobileAppRef}>
           <MobileApp />

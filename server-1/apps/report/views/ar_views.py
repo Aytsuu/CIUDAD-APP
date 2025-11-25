@@ -31,7 +31,7 @@ class ARTableView(generics.ListAPIView):
           Q(ar_status__icontains=search)
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-ar_id')
 
 
 class ARFileCreateView(generics.CreateAPIView):
@@ -62,7 +62,7 @@ class ARFileCreateView(generics.CreateAPIView):
           instances.append(file)
 
         ARFile.objects.bulk_create(instances)
-        ar.ar_status = "Signed"
+        ar.ar_status = "SIGNED"
         ar.save()
     
         return Response(data=ARFileBaseSerializer(instances, many=True).data,status=status.HTTP_201_CREATED)

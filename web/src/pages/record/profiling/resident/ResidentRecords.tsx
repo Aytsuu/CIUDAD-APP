@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Plus, ClockArrowUp, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -15,7 +15,6 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Spinner } from "@/components/ui/spinner"
 
 const profiles = [
@@ -71,8 +70,6 @@ export default function ResidentRecords() {
     else hideLoading();
   }, [isLoading])
 
-  // ----------------- HANDLERS --------------------
-
   // ----------------- RENDER --------------------
   return (
     <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
@@ -94,20 +91,6 @@ export default function ResidentRecords() {
               </div>
 
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
-
                 <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
@@ -227,7 +210,7 @@ export default function ResidentRecords() {
                 <p className="text-gray-500 mb-4">
                   {searchQuery
                     ? `No residents match "${searchQuery}". Try adjusting your search.`
-                    : "Get started by registering your first resident."}
+                    : "Get started by registering a resident."}
                 </p>
                 {!searchQuery && (
                   <Link

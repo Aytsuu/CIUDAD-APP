@@ -231,7 +231,7 @@ export default function BusinessRecords() {
             <p className="text-gray-500 mb-4">
               {searchQuery
                 ? `No businesses match "${searchQuery}". Try adjusting your search.`
-                : "Get started by registering your first business."}
+                : "Get started by registering a business."}
             </p>
           </div>
         )}

@@ -164,6 +164,10 @@ export function AppSidebar() {
     ...(featureValidator("report")
       ? [
           {
+            title: "Team",
+            url: "/team",
+          },
+          {
             title: "Report",
             url: "/",
             items: [
@@ -182,27 +186,18 @@ export function AppSidebar() {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
               },
-              // { title: "Securado", url: "/report/securado" },
             ],
-          },
+          }
         ]
       : []),
     ...(featureValidator("complaint")
       ? [
           {
             title: "Blotter",
-            url: "/",
-            items: [
-              {title: "Process", url: "/complaint"},
-              {title: "Record", url: "/record"}
-            ]
+            url: "/complaint",
           },
         ]
       : []),
-    {
-      title: "Team",
-      url: "/team",
-    },
     ...(featureValidator("council mediation")
       ? [
           {
@@ -434,7 +429,6 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

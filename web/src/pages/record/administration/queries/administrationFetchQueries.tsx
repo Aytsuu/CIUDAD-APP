@@ -45,15 +45,18 @@ export const useAllAssignedFeatures = () => {
   });
 };
 
-export const usePositionGroups = () => {
+export const usePositionGroups = (category?: string) => {
   return useQuery({
-    queryKey: ['positionGroups'],
+    queryKey: ['positionGroups', category],
     queryFn: async () => {
       try {
-        const res = await api.get('administration/position/group/list/');
+        const res = await api.get('administration/position/group/list/', {
+          params: {
+            category
+          }
+        });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
@@ -61,19 +64,19 @@ export const usePositionGroups = () => {
   })
 }
 
-export const useGetStaffByTitle = (position: string) => {
+export const useGetStaffByTitle = (position: string, staff_type: string) => {
   return useQuery({
-    queryKey: ['staffByTitle', position]  ,
+    queryKey: ['staffByTitle', position, staff_type],
     queryFn: async () => {
       try {
         const res = await api.get('administration/staff/by-title/', {
           params: {
-            pos_title: position
+            pos_title: position,
+            staff_type
           }
         });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
