@@ -19,6 +19,9 @@ from ..double_queries import PostQueries
 import copy
 import json
 from ..notif_recipients import general_recipients, family_recipients
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CompleteRegistrationView(APIView):
   permission_classes = [AllowAny]
@@ -145,7 +148,10 @@ class CompleteRegistrationView(APIView):
     staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
     residentId = rp.rp_id
     familyId = new_fam.fam_id
-    rp.per.per_dob = datetime.strptime(rp.per.per_dob, '%Y-%m-%d').date()
+    try:
+       rp.per.per_dob = datetime.strptime(rp.per.per_dob, '%Y-%m-%d').date()
+    except:
+       logger.info("per_dob is of type Date")
     json_data = json.dumps(
        ResidentProfileTableSerializer(rp).data,
        default=str
