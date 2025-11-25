@@ -116,6 +116,10 @@ function CertificatePage() {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
   const [childBirthdate, setChildBirthdate] = useState("");
+  
+  // Proof of Custody manual input
+  const [isManualCustodyInput, setIsManualCustodyInput] = useState(false);
+  const [manualCustodyNames, setManualCustodyNames] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -207,10 +211,19 @@ function CertificatePage() {
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
 
-
-
-  // Since we're now using backend filtering, we don't need frontend filtering
-  const filteredCertificates = certificates;
+  // Sort certificates by request date (latest first) and apply filters
+  const filteredCertificates = useMemo(() => {
+    let result = [...certificates];
+    
+    // Sort by request date descending (latest first)
+    result.sort((a, b) => {
+      const dateA = new Date(a.req_request_date || 0).getTime();
+      const dateB = new Date(b.req_request_date || 0).getTime();
+      return dateB - dateA; // Descending order (latest first)
+    });
+    
+    return result;
+  }, [certificates]);
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
@@ -275,6 +288,8 @@ function CertificatePage() {
     setChildAge("");
     setChildBirthdate("");
     setCustody([]);
+    setIsManualCustodyInput(false);
+    setManualCustodyNames("");
     
     // Auto-populate burial fields if the person is deceased and purpose is burial
     if (certificate.req_purpose?.toLowerCase() === "burial" && 
@@ -394,14 +409,21 @@ function CertificatePage() {
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
   
-      const custodies = custody
-        .map(lowercaseId => {
-          const resident = residentOptions.find((resident: any) => 
-            resident.id.toLowerCase() === lowercaseId
-          );
-          return resident?.displayName;
-        })
-        .filter(Boolean) as string[];
+      // Handle custody names - either from selection or manual input
+      let custodies: string[] = [];
+      if (isManualCustodyInput && manualCustodyNames.trim()) {
+        // Split manual input by comma and trim each name
+        custodies = manualCustodyNames.split(',').map(name => name.trim()).filter(Boolean);
+      } else {
+        custodies = custody
+          .map(lowercaseId => {
+            const resident = residentOptions.find((resident: any) => 
+              resident.id.toLowerCase() === lowercaseId
+            );
+            return resident?.displayName;
+          })
+          .filter(Boolean) as string[];
+      }
       
       // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
@@ -430,6 +452,8 @@ function CertificatePage() {
       
       // Reset for next use
       setCustody([]);
+      setIsManualCustodyInput(false);
+      setManualCustodyNames("");
       setDeceasedName("");
       setDeceasedBirthdate("");
       setDeceasedAddress("");
@@ -804,6 +828,8 @@ function CertificatePage() {
           setIsDialogOpen(open);
           if (!open) {
             setCustody([]);
+            setIsManualCustodyInput(false);
+            setManualCustodyNames("");
             setDeceasedName("");
             setDeceasedBirthdate("");
             setDeceasedAddress("");
@@ -1000,17 +1026,53 @@ function CertificatePage() {
 
                 {/* PROOF OF CUSTODY FIELDS */}
                 {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
-                  <div className="w-full pb-3">
-                    <ComboCheckboxStandalone
-                      value={custody}
-                      onChange={setCustody}
-                      label="Custodies"
-                      options={residentOptions}
-                      placeholder="Select child/children"
-                      showBadges={true}
-                      maxDisplayValues={Infinity}
-                    />
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label className="pb-1">Children under Custody</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsManualCustodyInput(!isManualCustodyInput);
+                          if (!isManualCustodyInput) {
+                            // Switching to manual input - clear dropdown selection
+                            setCustody([]);
+                          } else {
+                            // Switching back to dropdown - clear manual input
+                            setManualCustodyNames("");
+                          }
+                        }}
+                        className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        {isManualCustodyInput ? "Select from List" : "Manual Input"}
+                      </Button>
+                    </div>
+                    
+                    {!isManualCustodyInput ? (
+                      <div className="w-full pb-3">
+                        <ComboCheckboxStandalone
+                          value={custody}
+                          onChange={setCustody}
+                          options={residentOptions}
+                          placeholder="Select child/children"
+                          showBadges={true}
+                          maxDisplayValues={Infinity}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full pb-3">
+                        <Input 
+                          placeholder="Enter names separated by commas (e.g., John Doe, Jane Doe)"
+                          value={manualCustodyNames}
+                          onChange={(e) => setManualCustodyNames(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Separate multiple names with commas
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}                  
 
                 <div className="flex justify-end">
