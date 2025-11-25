@@ -34,7 +34,7 @@ export default () => {
     },
     {
       title: "Maternal Appointment",
-      route: "",
+      route: "(health)/maternal/my-appointments",
       icon: "",
       gradient: ["#60a5fa", "#3b82f6"],
     },

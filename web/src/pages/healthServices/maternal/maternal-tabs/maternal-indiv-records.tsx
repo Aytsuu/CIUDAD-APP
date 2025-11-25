@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -133,10 +135,12 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [isPregnancyLossDialogOpen, setIsPregnancyLossDialogOpen] = useState(false);
+  const [pregnancyLossReason, setPregnancyLossReason] = useState("");
+  const [selectedPregnancyId, setSelectedPregnancyId] = useState<string>("");
   const navigate = useNavigate();
 
   const location = useLocation();
-  console.log("Location state:", location.state);
   const { data: pregnancyData, isLoading: pregnancyDataLoading } = usePregnancyDetails(selectedPatient?.pat_id || "", page, pageSize, selectedFilter === "All" ? "" : selectedFilter);
 
   // mutations
@@ -403,8 +407,20 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   // };
 
   const handlePregnancyLossRecord = (pregnancyId: string) => {
-    if (!selectedPatient?.pat_id) return;
-    addPregnancyLoss({ pat_id: selectedPatient.pat_id, pregnancy_id: pregnancyId });
+    setSelectedPregnancyId(pregnancyId);
+    setIsPregnancyLossDialogOpen(true);
+  };
+
+  const confirmPregnancyLoss = () => {
+    if (!selectedPatient?.pat_id || !selectedPregnancyId) return;
+    addPregnancyLoss({ 
+      pat_id: selectedPatient.pat_id, 
+      pregnancy_id: selectedPregnancyId,
+      pregnancyloss_reason: pregnancyLossReason.trim() || undefined
+    });
+    setIsPregnancyLossDialogOpen(false);
+    setPregnancyLossReason("");
+    setSelectedPregnancyId("");
   };
 
   // Extract mode, patientData, and specificPregnancyId from props or location.state
@@ -423,8 +439,8 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     specificPregnancyId = patientData?.pregnancy_id;
   }
 
-  console.log("PapatientDataProps:", patientDataProps);
-  console.log("props mode", patientDataProps?.mode);
+  // console.log("PapatientDataProps:", patientDataProps);
+  // console.log("props mode", patientDataProps?.mode);
 
   if ((mode === "child" || mode === "maternal") && patientData && specificPregnancyId && pregnancyGroups.length > 0) {
     // Find the specific pregnancy group
@@ -627,6 +643,33 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
             <div className="w-full sm:w-auto flex justify-center">{totalPages > 0 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
           </div>
         </div>
+
+        {/* Pregnancy Loss Dialog */}
+        <AlertDialog open={isPregnancyLossDialogOpen} onOpenChange={setIsPregnancyLossDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Pregnancy Loss</AlertDialogTitle>
+              <AlertDialogDescription>
+                What was the reason for the pregnancy loss?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Textarea
+                placeholder="Enter reason for pregnancy loss..."
+                value={pregnancyLossReason}
+                onChange={(e) => setPregnancyLossReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setPregnancyLossReason("");
+                setSelectedPregnancyId("");
+              }}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmPregnancyLoss}>Confirm</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </LayoutWithBack>
   );

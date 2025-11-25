@@ -304,6 +304,10 @@ export const getItemsConfig = (
 
         sidebar: [
           {
+            title: "Weekly Schedule",
+            element: <SchedulerSidebar />,
+          },
+          {
             title: "Pending Medical Appointments",
             element: <PendingMedicalAppointmentsSidebar />,
           },
@@ -324,10 +328,7 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          {
-            title: "Weekly Schedule",
-            element: <SchedulerSidebar />,
-          },
+          
           {
             title: "Medicine Alerts",
             element: <MedicineAlertsSidebar />,

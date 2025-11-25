@@ -1018,6 +1018,17 @@ export default function PrenatalFormFirstPg({
       year = new Date().getFullYear();
     }
 
+    // Validate year: must be 4 digits and not in the future
+    const currentYear = new Date().getFullYear();
+    if (year.toString().length !== 4) {
+      showErrorToast("Please enter a valid 4-digit year.");
+      return;
+    }
+    if (year > currentYear) {
+      showErrorToast("Year cannot be in the future.");
+      return;
+    }
+
     // Check for duplicates
     const isDuplicateIllness = prevIllnessData.some(
         (existingIllness) =>
@@ -1063,6 +1074,17 @@ export default function PrenatalFormFirstPg({
 
     if (!hospitalizationYr) {
       hospitalizationYr = new Date().getFullYear();
+    }
+
+    // Validate year: must be 4 digits and not in the future
+    const currentYear = new Date().getFullYear();
+    if (hospitalizationYr.toString().length !== 4) {
+      showErrorToast("Please enter a valid 4-digit year.");
+      return;
+    }
+    if (hospitalizationYr > currentYear) {
+      showErrorToast("Year cannot be in the future.");
+      return;
     }
 
     // Check for duplicates
@@ -1499,11 +1521,12 @@ export default function PrenatalFormFirstPg({
                           />
                         </div>
                         <div className="flex-1">
-                          <FormDateTimeInput
+                          <FormInput
                             control={control}
                             name="medicalHistory.prevIllnessYr"
                             label=""
-                            type="month"
+                            placeholder="Enter year"
+                            type="number"
                           />
                         </div>
                         <Button
