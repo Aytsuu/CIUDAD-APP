@@ -294,14 +294,14 @@ useEffect(() => {
             refetchYearBudgets();
             router.back();
           },
-          onError: (error) => {
-            console.error("Submission error:", error);
+          onError: (_error) => {
+            // console.error("Submission error:", error);
             setIsSubmitting(false);
           },
         }
       );
     } catch (error) {
-      console.error("Error:", error);
+      // console.error("Error:", error);
       setIsSubmitting(false);
     }
   };
