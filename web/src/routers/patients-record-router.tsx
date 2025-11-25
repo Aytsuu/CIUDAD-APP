@@ -1,6 +1,7 @@
 import PatientsRecord from "@/pages/record/health/patientsRecord/PatientsRecordMain"
 import CreatePatientRecord from "@/pages/record/health/patientsRecord/CreatePatientRecord"
 import ViewPatientsRecord from "@/pages/record/health/patientsRecord/ViewDisplay/Main"
+import PatientHistoryView from "@/pages/record/health/patientsRecord/ViewDisplay/PatientHistoryView"
 
 export const patientsRecordRouter = [
 
@@ -16,6 +17,10 @@ export const patientsRecordRouter = [
     {
         path: 'patientrecords/view',
         element: <ViewPatientsRecord />
+    },
+    {
+        path: 'patientrecords/history/view',
+        element: <PatientHistoryView />
     },
  ]
  

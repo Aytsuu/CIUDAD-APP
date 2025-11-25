@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import React from "react";
-import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, Edit, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "react-router";
@@ -15,6 +15,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
@@ -22,10 +35,12 @@ import { PatientData } from "./types";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
+import TableLoading from "@/components/ui/table-loading";
 
 // fetch queries
 import { useUpdatePatient } from "../queries/update";
-import { usePatientDetails, useChildData } from "../queries/fetch";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePatientDetails, useChildData, useResidents } from "../queries/fetch";
 import { useMedConCount, useChildHealthRecordCount, useFamplanCount, useAnimalbitesCount } from "../queries/count";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
@@ -37,11 +52,22 @@ import { ProtectedComponent} from "@/ProtectedComponent";
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
   const [isEditable, setIsEditable] = useState(false);
+  const [selectedResidentId, setSelectedResidentId] = useState<string>("");
+  const [showResidentSelector, setShowResidentSelector] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [hasTransferred, setHasTransferred] = useState<string>("no");
+  const [transferLocation, setTransferLocation] = useState({
+    sitio: "",
+    barangay: "",
+    city: ""
+  });
+  
   const location = useLocation();
   const { patientId } = location.state || {};
 
   const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "");
   const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
+  const { data: residentsData } = useResidents();
 
   const { data: medicineCountData } = useMedicineCount(patientId ?? "");
   const medicineCount = medicineCountData?.medicinerecord_count;
@@ -59,7 +85,6 @@ export default function ViewPatientRecord() {
   const medconCount = medconCountData?.medcon_count;
 
   const { data: famplanCount  } = useFamplanCount(patientId ?? "");
-  console.log("Main.tsx - famplanCount:", famplanCount);
 
   const { data: animalbitesCountData } = useAnimalbitesCount(patientId ?? "");
   const animalbitesCount = animalbitesCountData?.count;
@@ -74,6 +99,7 @@ export default function ViewPatientRecord() {
   const prenatalCount = prenatalCountData;
 
   const updatePatientData = useUpdatePatient();
+  const queryClient = useQueryClient();
 
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;
@@ -84,19 +110,17 @@ export default function ViewPatientRecord() {
     return patientArray.find((patient: PatientData) => patient.pat_id === patientId) ?? null;
   }, [patientsData, patientId]);
 
-  useEffect(() => {
-    if (currentPatient) {
-      console.log("Current Patient Data:", currentPatient);
-      console.log("Address Object:", currentPatient.address);
-      console.log("Individual Address Fields:", {
-        street: currentPatient.address?.add_street,
-        barangay: currentPatient.address?.add_barangay,
-        city: currentPatient.address?.add_city,
-        province: currentPatient.address?.add_province,
-        sitio: currentPatient.address?.add_sitio,
-      });
-    }
-  }, [currentPatient]);
+  // useEffect(() => {
+  //   if (currentPatient) {
+  //     console.log("Individual Address Fields:", {
+  //       street: currentPatient.address?.add_street,
+  //       barangay: currentPatient.address?.add_barangay,
+  //       city: currentPatient.address?.add_city,
+  //       province: currentPatient.address?.add_province,
+  //       sitio: currentPatient.address?.add_sitio,
+  //     });
+  //   }
+  // }, [currentPatient]);
 
   const patientData = useMemo(() => {
     if (!currentPatient) return null;
@@ -107,7 +131,22 @@ export default function ViewPatientRecord() {
     } else if (currentPatient.additional_info && currentPatient.additional_info.per_add_philhealth_id) {
       philhealthId = currentPatient.additional_info.per_add_philhealth_id;
     }
+    
+    // Parse location string (format: "Sitio, Barangay, City")
+    const parseLocation = (locationStr: string | undefined | null) => {
+      if (!locationStr) return { sitio: "", brgy: "", city: "" };
+      const parts = locationStr.split(',').map(s => s.trim());
+      return {
+        sitio: parts[0] || "",
+        brgy: parts[1] || "",
+        city: parts[2] || "",
+      };
+    };
+    
     return {
+      patientStatus: currentPatient.pat_status || "",
+      isTransferredFrom: currentPatient.is_transferred_from || false,
+      location: parseLocation(currentPatient.location),
       lastName: currentPatient.personal_info.per_lname,
       firstName: currentPatient.personal_info.per_fname,
       middleName: currentPatient.personal_info.per_mname,
@@ -131,11 +170,13 @@ export default function ViewPatientRecord() {
       visits: currentPatient.visits ?? [],
     };
   }, [currentPatient]);
-  console.log("Transformed Patient Data:", patientData);
+  // console.log("Transformed Patient Data:", patientData);
 
   const form = useForm({
     resolver: zodResolver(patientRecordSchema),
     defaultValues: patientData ?? {
+      isTransferredFrom: false,
+      location: { sitio: "", brgy: "", city: "" },
       lastName: "",
       firstName: "",
       middleName: "",
@@ -151,6 +192,82 @@ export default function ViewPatientRecord() {
   useEffect(() => {
     if (patientData) form.reset(patientData);
   }, [patientData, form]);
+
+  // Watch for patient type changes
+  const currentPatientType = form.watch("patientType");
+  const originalPatientType = currentPatient?.pat_type;
+
+  useEffect(() => {
+    // Show resident selector when changing from Transient to Resident
+    if (isEditable && originalPatientType === "Transient" && currentPatientType === "Resident") {
+      setShowResidentSelector(true);
+    } else {
+      setShowResidentSelector(false);
+      setSelectedResidentId("");
+    }
+  }, [currentPatientType, isEditable, originalPatientType]);
+
+  // Format residents for combobox
+  const residentsOptions = useMemo(() => {
+    if (!residentsData) return [];
+    return residentsData.map((personal: any) => {
+      const fullName = `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim();
+      const searchableValue = `${personal.rp_id} ${fullName}`;
+      
+      return {
+        id: searchableValue,
+        name: (
+          <>
+            <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id}</span>
+            {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
+          </>
+        )
+      };
+    }).sort((a: any, b: any) => {
+      const aName = a.id.split(' ').slice(1).join(' ');
+      const bName = b.id.split(' ').slice(1).join(' ');
+      return aName.localeCompare(bName);
+    });
+  }, [residentsData]);
+
+  const handleResidentSelect = (id: string | undefined) => {
+    if (!id) {
+      setSelectedResidentId("");
+      return;
+    }
+    
+    // Store the full searchable value for the combobox
+    setSelectedResidentId(id);
+    
+    // Extract the actual resident ID from the searchable value
+    const actualId = id.split(' ')[0];
+    
+    // Find the selected resident and populate form fields
+    const selectedResident = residentsData?.find((r: any) => r.rp_id.toString() === actualId);
+    
+    if (selectedResident && selectedResident.personal_info) {
+      const personalInfo = selectedResident.personal_info;
+      
+      // Populate all form fields with resident data
+      form.setValue("lastName", personalInfo.per_lname || "");
+      form.setValue("firstName", personalInfo.per_fname || "");
+      form.setValue("middleName", personalInfo.per_mname || "");
+      form.setValue("sex", personalInfo.per_sex?.toLowerCase() || "");
+      form.setValue("contact", personalInfo.per_contact || "");
+      form.setValue("dateOfBirth", personalInfo.per_dob || "");
+      form.setValue("philhealthId", selectedResident.per_add_philhealth_id || "");
+      
+      // Populate address fields
+      if (personalInfo.per_addresses && personalInfo.per_addresses.length > 0) {
+        const address = personalInfo.per_addresses[0];
+        form.setValue("address.street", address.add_street || "");
+        form.setValue("address.sitio", address.sitio || "");
+        form.setValue("address.barangay", address.add_barangay || "");
+        form.setValue("address.city", address.add_city || "");
+        form.setValue("address.province", address.add_province || "");
+      }
+    }
+  };
 
   const getInitials = () => (patientData ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}` : "");
 
@@ -270,7 +387,7 @@ export default function ViewPatientRecord() {
       };
     });
   }, [rawChildHealthRecords]);
-  console.log("Formatted Child Health Records:", formatChildHealthData());
+  // console.log("Formatted Child Health Records:", formatChildHealthData());
 
   const formattedChildHealthData = formatChildHealthData();
 
@@ -281,6 +398,41 @@ export default function ViewPatientRecord() {
   const handleSaveEdit = async () => {
     try {
       const formData = form.getValues();
+      
+      // Handle conversion from Transient to Resident
+      if (originalPatientType === "Transient" && formData.patientType === "Resident") {
+        if (!selectedResidentId) {
+          showErrorToast("Please select a resident to link with this patient record");
+          return;
+        }
+        
+        // Extract the actual resident ID from the searchable value
+        const actualResidentId = selectedResidentId.split(' ')[0];
+        
+        const updatedData = {
+          pat_type: "Resident",
+          rp_id: actualResidentId,
+          staff_id: (window as any)?.__AUTH__?.user?.staff?.staff_id
+        };
+        
+        await updatePatientData.mutateAsync({
+          patientId: currentPatient.pat_id,
+          patientData: updatedData,
+        }, {
+          onSuccess: () => {
+            // Immediately refresh patient history for this patient
+            queryClient.invalidateQueries({ queryKey: ['patientHistory', currentPatient.pat_id] });
+          }
+        });
+        
+        setIsEditable(false);
+        setShowResidentSelector(false);
+        setSelectedResidentId("");
+        showSuccessToast("Patient converted to resident successfully!");
+        return;
+      }
+      
+      // Handle regular transient update
       if (!currentPatient?.trans_id) {
         showErrorToast("Cannot update: Missing transient ID.");
         return;
@@ -307,15 +459,20 @@ export default function ViewPatientRecord() {
             tradd_province: formData.address.province,
           },
         },
+        staff_id: (window as any)?.__AUTH__?.user?.staff?.staff_id
       };
       await updatePatientData.mutateAsync({
         patientId: currentPatient.pat_id,
         patientData: updatedData,
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['patientHistory', currentPatient.pat_id] });
+        }
       });
       setIsEditable(false);
       showSuccessToast("Patient data updated successfully!");
     } catch (error) {
-      console.error("Error saving patient data: ", error);
+      // console.error("Error saving patient data: ", error);
       showErrorToast("Failed to update patient data. Please try again.");
     }
   };
@@ -326,12 +483,66 @@ export default function ViewPatientRecord() {
     toast("Edit cancelled. No changes were made.");
   };
 
+  const handleStatusEditClick = () => {
+    setShowStatusDialog(true);
+    // Check if patient has Transfer of Residency status
+    setHasTransferred(currentPatient?.pat_status === "Transfer of Residency" ? "yes" : "no");
+    if (currentPatient?.location) {
+      const locationParts = currentPatient.location.split(',').map((s: string) => s.trim());
+      setTransferLocation({
+        sitio: locationParts[0] || "",
+        barangay: locationParts[1] || "",
+        city: locationParts[2] || ""
+      });
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    try {
+      const updatedData: any = {
+        staff_id: (window as any)?.__AUTH__?.user?.staff?.staff_id
+      };
+
+      if (hasTransferred === "yes") {
+        // Validate location fields
+        if (!transferLocation.sitio || !transferLocation.barangay || !transferLocation.city) {
+          showErrorToast("Please fill in all location fields (Sitio, Barangay, City)");
+          return;
+        }
+        
+        updatedData.pat_status = "Transfer of Residency";
+        updatedData.location = `${transferLocation.sitio}, ${transferLocation.barangay}, ${transferLocation.city}`;
+      } else {
+        updatedData.pat_status = "Active";
+        updatedData.location = "";
+      }
+
+      await updatePatientData.mutateAsync({
+        patientId: currentPatient.pat_id,
+        patientData: updatedData,
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['patientHistory', currentPatient.pat_id] });
+        }
+      });
+
+      setShowStatusDialog(false);
+      showSuccessToast("Patient status updated successfully!");
+    } catch (error) {
+      showErrorToast("Failed to update patient status. Please try again.");
+    }
+  };
+
+  const handleCancelStatusUpdate = () => {
+    setShowStatusDialog(false);
+    setHasTransferred("no");
+    setTransferLocation({ sitio: "", barangay: "", city: "" });
+  };
+
   if (isLoading) {
     return (
       <LayoutWithBack title="Patient Information and Records" description="View patient information, medical records, and follow-up visits">
-        <div className="flex h-full items-center justify-center">
-          <Loader2 className="animate-spin" /> Loading...
-        </div>
+        <TableLoading />
       </LayoutWithBack>
     );
   }
@@ -358,6 +569,14 @@ export default function ViewPatientRecord() {
   }
 
   const isTransient = patientData?.patientType?.toLowerCase() === "transient";
+  const transferredFrom = patientData?.isTransferredFrom === true;
+  const isTransferredFrom  = () => {
+    if (patientData?.isTransferredFrom) {
+      return "Transferred from: " + patientData.location.sitio + ", " + patientData.location.brgy + ", " + patientData.location.city;
+    } else {
+      return "";
+    }
+  }
 
   return (
     <LayoutWithBack title="Patient Information and Records" description="View patient information, medical records, and follow-up visits  ">
@@ -384,6 +603,19 @@ export default function ViewPatientRecord() {
                   </div>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <Badge variant={patientData?.patientType === "Resident" ? "default" : "secondary"}>{patientData?.patientType}</Badge>
+                    <div className={`flex gap-2 items-center border rounded-md shadow-md text-xs text-semibold p-1 px-3 ${
+                      patientData?.patientStatus === "Transfer of Residency" 
+                        ? "bg-black text-white" 
+                        : "bg-green-500 text-white"
+                    }`}>
+                      {patientData?.patientStatus} 
+                      {patientData?.patientStatus !== "Transfer of Residency" && (
+                        <Edit size={15} className="hover:text-green-600 cursor-pointer" onClick={handleStatusEditClick}/>
+                      )}
+                    </div>
+                    {transferredFrom && (
+                      <div className="border rounded-md bg-white shadow-md text-xs p-1">{isTransferredFrom()}</div>
+                    )}
                   </div>
                 </div>
 
@@ -419,7 +651,19 @@ export default function ViewPatientRecord() {
           </TabsList>
 
           {activeTab === "personal" && (
-            <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />
+            <PersonalInfoTab 
+              form={form} 
+              isEditable={isEditable} 
+              isTransient={isTransient} 
+              patientData={patientData} 
+              patientId={patientId}
+              handleSaveEdit={handleSaveEdit} 
+              handleCancelEdit={handleCancelEdit}
+              residentsOptions={residentsOptions}
+              selectedResidentId={selectedResidentId}
+              onResidentSelect={handleResidentSelect}
+              showResidentSelector={showResidentSelector}
+            />
           )}
 
           {activeTab === "medical" && (
@@ -441,6 +685,80 @@ export default function ViewPatientRecord() {
 
           {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
         </Tabs>
+
+        {/* Status Update Dialog */}
+        <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Update Patient Status</AlertDialogTitle>
+              <AlertDialogDescription>
+                Is this patient transferring to another barangay/location?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <RadioGroup value={hasTransferred} onValueChange={setHasTransferred}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="no" />
+                  <Label htmlFor="no" className="font-normal cursor-pointer">
+                    No, patient is still residing here
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="yes" />
+                  <Label htmlFor="yes" className="font-normal cursor-pointer">
+                    Yes, patient is transferring to another location
+                  </Label>
+                </div>
+              </RadioGroup>
+
+              {hasTransferred === "yes" && (
+                <div className="space-y-3 mt-4 p-4 border rounded-md bg-gray-50">
+                  <p className="text-sm font-medium text-gray-700">New Location Information (Where they're moving to)</p>
+                  <div className="space-y-2">
+                    <div>
+                      <Label htmlFor="sitio" className="text-sm">Sitio *</Label>
+                      <Input
+                        id="sitio"
+                        placeholder="Enter sitio"
+                        value={transferLocation.sitio}
+                        onChange={(e) => setTransferLocation(prev => ({ ...prev, sitio: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="barangay" className="text-sm">Barangay *</Label>
+                      <Input
+                        id="barangay"
+                        placeholder="Enter barangay"
+                        value={transferLocation.barangay}
+                        onChange={(e) => setTransferLocation(prev => ({ ...prev, barangay: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city" className="text-sm">City *</Label>
+                      <Input
+                        id="city"
+                        placeholder="Enter city"
+                        value={transferLocation.city}
+                        onChange={(e) => setTransferLocation(prev => ({ ...prev, city: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelStatusUpdate}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleStatusUpdate} className="bg-green-500 hover:bg-green-600">
+                Update
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </LayoutWithBack>
   );
