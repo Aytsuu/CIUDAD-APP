@@ -10,11 +10,8 @@ export default function Page5({ state, onBack, onNext }: PageProps) {
   const { data, isLoading, error } = useNutritionStatistics(state.month);
 
   return (
-    <div className="min-h-[500px] flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 5: Child Health and Nutrition Services</h2>
-      </div>
-
+    <div className=" flex flex-col">
+    
       <div className="overflow-x-auto">
         {error && (
           <div className="bg-red-50 p-6 rounded-lg mb-6 border border-red-200">

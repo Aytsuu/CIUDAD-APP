@@ -35,7 +35,7 @@ def send_cancellation_notification_to_staff(medicine_request_item, reason):
         # --- Get Staff Recipients (Admin & BHW) ---
         staff_to_notify = Staff.objects.filter(
             staff_type="HEALTH STAFF",
-            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS','MIDWIFE']
         ).select_related('rp')
         
         staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]

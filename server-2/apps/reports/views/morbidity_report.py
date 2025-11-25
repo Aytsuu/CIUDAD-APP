@@ -235,49 +235,32 @@ class MonthlyMorbidityView(APIView):
             
             # Process each illness that has surveillance cases (or create empty structure if no data)
             for illness in illnesses:
-                # Get medical histories for this specific illness
-                illness_histories = surveillance_histories.filter(ill=illness)
-                
+                # Get medical histories for this specific illness, is_for_surveillance=True only
+                illness_histories = surveillance_histories.filter(ill=illness, is_for_surveillance=True)
                 print(f"DEBUG: Processing illness {illness.illname} - {illness_histories.count()} records")
-                
-                # Track unique patients for this illness
+                # Track unique patients for this illness and age group
                 unique_patients_by_age_group = {}
-                
-                # Initialize age group structure for unique patients
                 for min_days, max_days, age_range in age_groups:
                     unique_patients_by_age_group[age_range] = {
-                        'M': set(),  # Use sets to track unique patient IDs
+                        'M': set(),
                         'F': set()
                     }
-                
-                # Process each medical history record for this illness
+                # Use a set to ensure unique patients per illness
                 for med_history in illness_histories:
                     patient = med_history.patrec.pat_id
                     consultation_date = med_history.created_at.date()
-                    
-                    # Get patient info based on type
                     sex, dob = self._get_sex_and_dob(patient)
                     if not sex or not dob:
-                        print(f"DEBUG: Missing sex or dob for patient {patient.pat_id}")
                         continue
-                    
-                    # Calculate age in days at the time of consultation
                     age_days = (consultation_date - dob).days
-                    
-                    # Find the appropriate age group
                     for min_days, max_days, age_range in age_groups:
                         if self._is_in_age_group(age_days, min_days, max_days):
-                            # FIXED: Handle both "M"/"F" and "MALE"/"FEMALE" formats
                             sex_upper = sex.upper()
-                            if sex_upper in ["M", "MALE"]:  # Male
+                            if sex_upper in ["M", "MALE"]:
                                 unique_patients_by_age_group[age_range]['M'].add(patient.pat_id)
-                                print(f"DEBUG: Added patient {patient.pat_id} as MALE to age group {age_range}")
-                            elif sex_upper in ["F", "FEMALE"]:  # Female
+                            elif sex_upper in ["F", "FEMALE"]:
                                 unique_patients_by_age_group[age_range]['F'].add(patient.pat_id)
-                                print(f"DEBUG: Added patient {patient.pat_id} as FEMALE to age group {age_range}")
-                            else:
-                                print(f"DEBUG: Unknown sex value '{sex}' for patient {patient.pat_id}")
-                            break  # Found the age group, no need to check others
+                            break
                 
                 # Build illness data structure with unique counts
                 illness_data = {

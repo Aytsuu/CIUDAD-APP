@@ -10,9 +10,7 @@ export default function Page4({ state, onBack, onNext }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 4: Immunization</h2>
-      </div>
+    
       <div className=" overflow-x-auto">
         {isError ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center gap-3">

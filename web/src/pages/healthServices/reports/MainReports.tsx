@@ -185,26 +185,16 @@ const DOCTOR_REPORTS: ReportItem[] = [
   },
 ];
 
-const ALL_REPORTS = [
-  ...PROFILING_REPORTS,
-  ...BHW_REPORTS,
-  ...RECIPIENT_LISTS,
-  ...INVENTORY_REPORTS,
-  ...OPT_REPORTS,
-  ...FHIS_REPORTS,
-  ...DOCTOR_REPORTS,
-];
-
 // Tab configuration
 const TAB_CONFIG = {
-  all: { name: "All", icon: ClipboardList, count: ALL_REPORTS.length },
+  all: { name: "All", icon: ClipboardList, count: 0 }, // Count will be calculated dynamically
   profiling: { name: "Profiling", icon: Users, count: PROFILING_REPORTS.length },
   bhw: { name: "BHW", icon: Users, count: BHW_REPORTS.length },
   recipients: { name: "Recipients", icon: Syringe, count: RECIPIENT_LISTS.length },
   inventory: { name: "Inventory", icon: Box, count: INVENTORY_REPORTS.length },
   opt: { name: "OPT", icon: Activity, count: OPT_REPORTS.length },
   fhis: { name: "FHIS", icon: Heart, count: FHIS_REPORTS.length },
-  doctor: { name: "All", icon: Users, count: DOCTOR_REPORTS.length },
+  doctor: { name: "Doctor", icon: Users, count: DOCTOR_REPORTS.length },
 } as const;
 
 // Color configuration for tabs
@@ -378,6 +368,27 @@ export default function HealthcareReports() {
     }
   }, [user?.staff?.pos]);
 
+  // Get ALL_REPORTS dynamically based on user role
+  const getAllReports = () => {
+    const baseReports = [
+      ...PROFILING_REPORTS,
+      ...BHW_REPORTS,
+      ...RECIPIENT_LISTS,
+      ...INVENTORY_REPORTS,
+      ...OPT_REPORTS,
+      ...FHIS_REPORTS,
+    ];
+    
+    // Only include doctor reports if user is a doctor
+    if (isDoctor) {
+      return [...baseReports, ...DOCTOR_REPORTS];
+    }
+    
+    return baseReports;
+  };
+
+  const ALL_REPORTS = getAllReports();
+
   const getReportsByTab = (tab: TabType): ReportItem[] => {
     switch (tab) {
       case "all": return ALL_REPORTS;
@@ -387,18 +398,28 @@ export default function HealthcareReports() {
       case "inventory": return INVENTORY_REPORTS;
       case "opt": return OPT_REPORTS;
       case "fhis": return FHIS_REPORTS;
-      case "doctor": return DOCTOR_REPORTS;
+      case "doctor": return isDoctor ? DOCTOR_REPORTS : [];
       default: return [];
     }
   };
 
-
   // Get tabs to display based on user role
   const getVisibleTabs = () => {
-    if (isDoctor) {
-      return [["doctor", TAB_CONFIG.doctor] as const];
-    }
-    return Object.entries(TAB_CONFIG).filter(([tabType]) => tabType !== "doctor") as [TabType, typeof TAB_CONFIG.all][];
+    const tabs = Object.entries(TAB_CONFIG).filter(([tabType]) => {
+      // Always show doctor tab to doctors, never show it to non-doctors
+      if (tabType === "doctor") {
+        return isDoctor;
+      }
+      return true;
+    }) as [TabType, typeof TAB_CONFIG.all][];
+
+    // Update the "all" tab count dynamically
+    return tabs.map(([tabType, tabInfo]) => {
+      if (tabType === "all") {
+        return [tabType, { ...tabInfo, count: ALL_REPORTS.length }] as const;
+      }
+      return [tabType, tabInfo] as const;
+    });
   };
 
   return (
@@ -450,7 +471,19 @@ export default function HealthcareReports() {
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">{tabInfo.name} Reports</h2>
                   </div>
                   
-                  <ProtectedComponent exclude={tabType === "doctor" ? ["BARANGAY HEALTH WORKERS", "NURSE", "ADMIN"] : ["DOCTOR"]}>
+                  {/* Only show ProtectedComponent for doctor tab, other tabs are visible to all */}
+                  {tabType === "doctor" ? (
+                    <ProtectedComponent exclude={["BARANGAY HEALTH WORKERS", "NURSE", "ADMIN"]}>
+                      <ReportsSection
+                        title={tabInfo.name}
+                        icon={tabInfo.icon}
+                        reports={reports}
+                        searchTerm={searchTerm}
+                        iconColor={colorConfig.iconColor}
+                        bgColor={colorConfig.bgColor}
+                      />
+                    </ProtectedComponent>
+                  ) : (
                     <ReportsSection
                       title={tabInfo.name}
                       icon={tabInfo.icon}
@@ -459,7 +492,7 @@ export default function HealthcareReports() {
                       iconColor={colorConfig.iconColor}
                       bgColor={colorConfig.bgColor}
                     />
-                  </ProtectedComponent>
+                  )}
                 </div>
               </TabsContent>
             );
