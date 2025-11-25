@@ -11,7 +11,6 @@ export const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  timeout: 10000
 });
 
 // export const api = axios.create({
@@ -20,7 +19,6 @@ export const api = axios.create({
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
-//   timeout: 10000
 // });
 
 export const api2 = axios.create({
@@ -29,7 +27,6 @@ export const api2 = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  timeout: 10000
 });
 
 // export const api2 = axios.create({
