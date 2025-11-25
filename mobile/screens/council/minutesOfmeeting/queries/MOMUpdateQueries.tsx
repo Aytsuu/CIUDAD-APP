@@ -77,7 +77,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
 
   return useMutation({
     mutationFn: async (values: MOMData) => {
-      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files);
+      await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files);
 
       await handleMOMSuppDocUpdates(values.mom_id, values.suppDocs)
      

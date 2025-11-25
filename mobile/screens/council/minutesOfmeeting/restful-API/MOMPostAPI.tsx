@@ -20,12 +20,12 @@ export const createMOMFile = async (data: { mom_id: number;
 
         return res.data;
 
-    }
+}
 
 export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
     try {
 
-        const momResponse = await api.post('council/minutes-of-meeting/', {
+        const momResponse = await api.post('council/minutes-of-meeting-active/', {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
@@ -62,3 +62,4 @@ export const addSuppDoc = async(data: { mom_id: number;
     return res.data;
 
 }
+

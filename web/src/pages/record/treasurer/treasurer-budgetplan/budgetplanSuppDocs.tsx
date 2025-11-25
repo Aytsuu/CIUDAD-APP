@@ -1,4 +1,4 @@
-import { FolderOpen, Plus, Trash2, Calendar, FileText } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, Calendar, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button/button';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
 import { useState } from 'react';
@@ -97,25 +97,43 @@ function DocumentCard({ doc, onDelete}: {
 }) {
     const [imageError, setImageError] = useState(false);
 
+    const handleImageClick = () => {
+        // Open image in new tab
+        window.open(doc.bpf_url, '_blank');
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent image click when deleting
+    };
+
     return (
         <div className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-            {/* Image Container */}
-            <div className="relative aspect-square bg-gray-50">
+            {/* Image Container - Make it clickable */}
+            <div 
+                className="relative aspect-square bg-gray-50 cursor-pointer"
+                onClick={handleImageClick}
+            >
                 {!imageError ? (
                     <img
                         src={doc.bpf_url || "/placeholder.svg"}
                         alt={doc.bpf_name}
-                        className="object-cover w-full h-full"
+                        className="object-cover w-full h-full hover:opacity-90 transition-opacity"
                         onError={() => setImageError(true)}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <div 
+                        className="w-full h-full flex items-center justify-center bg-gray-100 cursor-pointer"
+                        onClick={handleImageClick}
+                    >
                         <FileText className="h-12 w-12 text-gray-400" />
                     </div>
                 )}
 
                 {/* Delete Button - Only shown on hover */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div 
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                    onClick={handleDeleteClick}
+                >
                     <ConfirmationModal
                         title="Delete Document"
                         description="Are you sure you want to delete this document? This action cannot be undone."
@@ -125,12 +143,21 @@ function DocumentCard({ doc, onDelete}: {
                                 size="sm"
                                 variant="destructive"
                                 className="h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600"
+                                onClick={handleDeleteClick}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         }
                         onClick={onDelete}
                     />
+                </div>
+
+                {/* Hover Overlay with "Click to view" */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="text-white text-sm font-medium bg-black/70 px-3 py-2 rounded-lg flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Click to view
+                    </div>
                 </div>
             </div>
 

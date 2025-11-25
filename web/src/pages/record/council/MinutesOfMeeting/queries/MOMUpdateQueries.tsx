@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, updateMinutesOfMeeting } from "../restful-API/MOMPutAPI";
+import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, updateMinutesOfMeeting, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import {z} from "zod"
@@ -27,7 +27,7 @@ export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
+        onError: () => {
             // console.error("Error restore record:", err);
             toast.error("Failed to restore record", {
             id: "restoreMOM",
@@ -69,23 +69,37 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
 
 
 
+
 export type MOMFileType = {
     id: string;
-    name: string;
-    type: string;
+    name: string | undefined;
+    type: string | undefined;
+    file: string | undefined;
+}
+export type MOMSuppDoc = {
+    id: string;
+    name: string | undefined;
+    type: string | undefined;
     file: string | undefined;
 }
 
 type MOMData = z.infer<typeof minutesOfMeetingEditFormSchema> & {
-    files: MOMFileType[]
+    files: MOMFileType[],
+    suppDocs: MOMSuppDoc[],
 }
+
 
 export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (values: MOMData) => updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files),
-        onMutate: () => {
+        mutationFn: async (values: MOMData) => {
+            await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files);
+
+            await handleMOMSuppDocUpdates(values.mom_id, values.suppDocs)
+            
+            return values.mom_id;
+    },        onMutate: () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ActivemomRecords'] });

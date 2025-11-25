@@ -18,7 +18,6 @@ import { useQuery } from "@tanstack/react-query";
             queryFn: async () => {
                 try {
                     const res = await api.get('waste/upcoming-hotspots/');
-                    console.log('upcoming hotspots: ', res.data)
                     return res.data;
                 } catch (err) {
                     throw err;
