@@ -21,7 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 
 function DonationTracker() {
   const { user } = useAuth(); 
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);

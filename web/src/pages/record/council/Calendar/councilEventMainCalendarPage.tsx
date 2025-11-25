@@ -609,7 +609,7 @@ function CalendarPage() {
   const [viewEvent, setViewEvent] = useState<CouncilEvent | null>(null);
   const [viewWasteEvent, setViewWasteEvent] = useState<WasteEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "admin";
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const isWaste = user?.staff?.pos?.toLowerCase() === "waste" || user?.staff?.pos?.toLowerCase() === "admin";
   const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase().includes("lupon");
   const isClerk = user?.staff?.pos?.toLowerCase().includes("clerk");

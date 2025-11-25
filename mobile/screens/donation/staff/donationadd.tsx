@@ -53,7 +53,7 @@ const DonationAdd = () => {
   const onSubmit = async (formData: any) => {
     const isValid = await trigger();
     if (!isValid) {
-      console.log('Form Errors:', control._formState.errors);
+      // console.log('Form Errors:', control._formState.errors);
       return;
     }
 
@@ -73,7 +73,7 @@ const DonationAdd = () => {
       await addDonationMutation.mutateAsync(payload);
       router.back();
     } catch (error) {
-      console.error('Error submitting donation', error);
+      // console.error('Error submitting donation', error);
     } finally {
       setIsSubmitting(false);
     }

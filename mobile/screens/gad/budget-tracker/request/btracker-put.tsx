@@ -30,7 +30,6 @@ export const updateGADBudgetFile = async (
         file.file && typeof file.file === 'string' && file.file.startsWith('data:')
       );
       if (validFiles.length === 0) {
-        console.warn('No valid files to upload');
         return { success: true, message: 'No valid files to upload' };
       }
       const response = await api.post('/gad/gad-budget-files/', {

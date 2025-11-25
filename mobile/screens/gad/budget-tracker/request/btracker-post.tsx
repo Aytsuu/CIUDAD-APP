@@ -19,11 +19,9 @@ export const createGADBudgetFile = async (
     );
 
     if (validFiles.length === 0) {
-      console.warn('No valid files to upload');
       return { success: true, message: 'No valid files to upload' };
     }
 
-    console.log(`Uploading ${validFiles.length} files to server`);
 
     const response = await api.post('/gad/gad-budget-files/', {
       gbud_num: gbud_num,
@@ -37,7 +35,6 @@ export const createGADBudgetFile = async (
 
     return response.data;
   } catch (err) {
-    console.error('File upload error:', err);
     throw new Error('Failed to upload files to server');
   }
 };
