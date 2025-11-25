@@ -1,9 +1,8 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Search, FileDown, Archive, FileText } from "lucide-react"
+import { Search, Archive, FileText } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { IRColumns } from "../ReportColumns"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -81,19 +80,6 @@ export default function IRRecords() {
                   valueLabel="Severity"
                 />
 
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
                 <TooltipLayout 
                   trigger={
                     <Button variant={"outline"}

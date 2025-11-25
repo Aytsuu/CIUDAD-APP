@@ -69,12 +69,17 @@ class ARCreateSerializer(serializers.ModelSerializer):
   @transaction.atomic
   def create(self, validated_data):
     files = validated_data.pop('files', [])
+    ir = validated_data.get('ir', None)
 
     instance = AcknowledgementReport(**validated_data)
     instance.save()
     
     if files:
       self._upload_files(instance, files)
+
+    if ir:
+      ir.ir_is_archive = True
+      ir.save()
     
     return instance
   

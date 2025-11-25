@@ -5,21 +5,23 @@ export const mapApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
 // export const api = axios.create({
-//   baseURL: "http://localhost:8000",
+//   baseURL: import.meta.env.VITE_API_URL,
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
+//   timeout: 10000
 // });
+
+export const api = axios.create({
+  baseURL: "http://localhost:8000",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  timeout: 10000
+});
 
 export const api2 = axios.create({
   baseURL: import.meta.env.VITE_API_URL2,
@@ -27,6 +29,7 @@ export const api2 = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
+  timeout: 10000
 });
 
 // export const api2 = axios.create({
