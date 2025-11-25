@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Users, Home, UserCheck, FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
@@ -154,21 +153,7 @@ export default function ReferredTable() {
                 <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(+e.target.value)} min="1" />
                 <p className="text-xs sm:text-sm">Entries</p>
               </div>
-              <div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                      <FileInput className="h-4 w-4" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+             
             </div>
 
             <div className="bg-white w-full overflow-x-auto border">{combinedLoading ? <TableLoading /> : <DataTable columns={columns} data={combinedData?.results || []} />}</div>

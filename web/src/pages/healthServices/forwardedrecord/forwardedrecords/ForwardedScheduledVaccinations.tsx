@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, FileInput, Users, Home, UserCheck } from "lucide-react";
+import { Search, Users, Home, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
@@ -210,21 +208,7 @@ export default function ForwardedScheduledVaccinationsTables() {
             <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(+e.target.value)} min="1" />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" aria-label="Export data">
-                  <FileInput className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        
         </div>
         <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableLoading /> : <DataTable columns={columns} data={currentData} />}</div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

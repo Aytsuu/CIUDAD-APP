@@ -83,7 +83,6 @@ class IndividualFirstaidRecordView(generics.ListAPIView):
             patrec__pat_id=pat_id  # Direct field access, not through relationship
         ).select_related(
             'finv__fa_id',  # FirstAid details
-            'finv__fa_id__cat',  # Category details
             'patrec',  # Patient record
             'staff'  # Staff details
         ).order_by('-created_at')
@@ -101,8 +100,6 @@ class IndividualFirstaidRecordView(generics.ListAPIView):
         """
         return queryset.filter(
             Q(finv__fa_id__fa_name__icontains=search_term) |  # FirstAid name
-            Q(finv__fa_id__cat__cat_name__icontains=search_term) |  # Category name
-            Q(finv__fa_id__cat__cat_type__icontains=search_term) |  # Category type
             Q(reason__icontains=search_term) |  # Reason field
             Q(qty__icontains=search_term)  # Quantity field
         )
