@@ -80,8 +80,8 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
             showSuccessToast('Documents uploaded successfully!')
             onSuccess?.();
         },
-        onError: (err: Error) => {
-            console.error("Upload error:", err);
+        onError: () => {
+            // console.error("Upload error:", err);
             showErrorToast( "Failed to upload documents. Please try again.")
         }
     });

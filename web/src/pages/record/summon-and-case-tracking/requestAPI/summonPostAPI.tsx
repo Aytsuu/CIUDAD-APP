@@ -23,7 +23,7 @@ export const addSummonDate = async (newDates: string[], oldDates: {
         
         return responses.map(res => res.data);
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -34,12 +34,11 @@ export const addSummonTimeSlots = async (timeSlots: Array<{
     st_is_booked?: boolean;
 }>) => {
 
-    console.log('Slots', timeSlots)
     try {
         const res = await api.post('clerk/summon-time-availability/', timeSlots);
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err; 
     }
 }
@@ -47,14 +46,6 @@ export const addSummonTimeSlots = async (timeSlots: Array<{
 
 export const addSchedule = async (schedule: Record<string, any>, status_type: string) => {
     try{
-        console.log('data:', {
-            sd_id: schedule.sd_id,
-            st_id: schedule.st_id,
-            hs_level: schedule.hs_level,
-            hs_is_closed: false,
-            sc_id: schedule.sc_id
-        })
-   
         const res = await api.post('clerk/hearing-schedule/', {
             sd_id: schedule.sd_id,
             st_id: schedule.st_id,
@@ -81,7 +72,7 @@ export const addSchedule = async (schedule: Record<string, any>, status_type: st
         }
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }
@@ -120,7 +111,7 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_ty
         return response.data;
 
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }
@@ -178,7 +169,7 @@ export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: s
 
         return response.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
         throw err
     }
 }

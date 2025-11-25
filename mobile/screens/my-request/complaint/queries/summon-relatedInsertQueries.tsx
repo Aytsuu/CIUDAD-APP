@@ -20,7 +20,7 @@ export const useAddSched = (onSuccess?: () => void) => {
                 router.back()
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
+                // console.error("Error submitting record:", err);
                 toast.error("Failed to submit record. Please check the input data and try again.")
             }
         })

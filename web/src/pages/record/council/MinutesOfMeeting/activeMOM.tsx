@@ -114,6 +114,7 @@ export default function ActiveMOM() {
                         mom_id={Number(record.mom_id)}
                         momf_id={Number(record.mom_file.momf_id)}
                         momf_url={record.mom_file.momf_url}
+                        supporting_docs={record.supporting_docs}
                         areas_of_focus={record.mom_area_of_focus}
                         onSuccess={() => setEditingRowId(null)}
                       />

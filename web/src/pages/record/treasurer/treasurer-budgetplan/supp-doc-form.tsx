@@ -62,6 +62,7 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
                                 activeVideoId={activeVideoId}
                                 setActiveVideoId={setActiveVideoId}
                                 maxFiles={1}
+                                acceptableFiles="image"
                             />
                         </FormControl>
                     </FormItem>

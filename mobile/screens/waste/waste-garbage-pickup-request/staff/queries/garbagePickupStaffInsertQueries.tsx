@@ -28,7 +28,7 @@ export const useAddDecision = (onSuccess?: () => void) => {
                 router.push('/(waste)/garbage-pickup/staff/main-request')
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
+                // console.error("Error submitting record:", err);
                 toast.error( "Failed to submit record. Please check the input data and try again.",)
             }
         })
@@ -59,7 +59,7 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
             router.push('/(waste)/garbage-pickup/staff/main-request')
         },
         onError: (err) => {
-            console.error("Error creating pickup assignment:", err);
+            // console.error("Error creating pickup assignment:", err);
             toast.error("Failed to create pickup assignment. Please check the input data and try again.")
         }
     });

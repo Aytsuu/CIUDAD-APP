@@ -19,7 +19,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
             toast.success('Case marked as resolved')
         },
         onError: (err) => {
-            console.error("Error in marking case:", err);
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.")
         }
     })
@@ -44,7 +44,7 @@ export const useForwardcase = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error in marking case:", err);
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.")
         }
     })
@@ -68,7 +68,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error in marking case:", err);
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.")
         }
     })
@@ -89,7 +89,7 @@ export const useReEscalateCase = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error in re-escalating case:", err);
+            // console.error("Error in re-escalating case:", err);
             toast.error("Failed to re-escalate case.")
         }
     })

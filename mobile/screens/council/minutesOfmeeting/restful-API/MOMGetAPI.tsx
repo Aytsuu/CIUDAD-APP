@@ -11,7 +11,8 @@ export const getActiveMinutesOfMeeting = async (page: number, pageSize: number, 
         })
         return res.data
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -26,7 +27,8 @@ export const getInactiveMinutesOfMeeting = async (page: number, pageSize: number
         })
         return res.data
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -35,6 +37,7 @@ export const getMinutesOfMeetingDetails = async (mom_id: string) => {
         const res = await api.get(`council/mom-details-view/${mom_id}/`)
         return res.data
     }catch(err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }

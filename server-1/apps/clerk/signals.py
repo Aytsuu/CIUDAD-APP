@@ -67,10 +67,23 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                             title='New Case Opened', 
                             message=f'Case No. {summoncase.sc_code} has been opened and waiting for schedule.',
                             recipients=admin_accounts,
-                            notif_type='MEDIATION_CASE',
+                            notif_type='CASE_UPDATE',
                             mobile_route="/(summon)/council-mediation-main",
                             web_route="/summon-case",
                         )
+                    
+                    complainants_with_rp = instance.comp_id.complainant.filter(rp_id__isnull=False)
+                
+                    for complainant in complainants_with_rp:
+                        if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                            create_notification(
+                                title='Set Schedule', 
+                                message=f'Your Case No. {summoncase.sc_code} is now open and waiting for you to set a hearing schedule.',  
+                                recipients=[complainant.rp_id.account],
+                                notif_type='CASE_UPDATE',
+                                mobile_route='/(my-request)/complaint-tracking/compMainView',
+                                mobile_params={'comp_id': str(instance.comp_id.comp_id)},  
+                            )
                     break  
                     
                 except Exception as e:
@@ -81,24 +94,86 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
 
 
 @receiver(pre_save, sender=SummonCase)
-def store_previous_mediation_status(sender, instance, **kwargs):
+def store_previous_statuses(sender, instance, **kwargs):
     if instance.pk:
         try:
             previous = SummonCase.objects.get(pk=instance.pk)
             instance._previous_mediation_status = previous.sc_mediation_status
+            instance._previous_conciliation_status = previous.sc_conciliation_status
         except SummonCase.DoesNotExist:
             instance._previous_mediation_status = None
+            instance._previous_conciliation_status = None
     else:
         instance._previous_mediation_status = None
+        instance._previous_conciliation_status = None
 
 @receiver(post_save, sender=SummonCase)
-def create_notification_on_case_forwarded(sender, instance, created, **kwargs):
-    if not created and hasattr(instance, '_previous_mediation_status'):
-        previous_status = instance._previous_mediation_status
-        current_status = instance.sc_mediation_status
+def create_case_status_notification(sender, instance, created, **kwargs):
+    if not created and (hasattr(instance, '_previous_mediation_status') or hasattr(instance, '_previous_conciliation_status')):
+        previous_mediation = getattr(instance, '_previous_mediation_status', None)
+        previous_conciliation = getattr(instance, '_previous_conciliation_status', None)
+        current_mediation = instance.sc_mediation_status
+        current_conciliation = instance.sc_conciliation_status
         
-        if (previous_status != current_status and 
-            current_status.lower() == 'forwarded to lupon'):
+        # Check if any status changed to a notify-worthy state
+        status_config = {
+            'resolved': {
+                'title': 'Case Resolved',
+                'message': f'Your Case No. {instance.sc_code} has been successfully resolved.',
+                'notif_type': 'CASE_UPDATE',
+                'mobile_route': '/(my-request)/complaint-tracking/compMainView',
+                'mobile_params': {'comp_id': str(instance.comp_id.comp_id)}
+            },
+            'escalated': {
+                'title': 'Case Escalated', 
+                'message': f'Your Case No. {instance.sc_code} has been escalated for further action.',
+                'notif_type': 'CASE_UPDATE',
+                'mobile_route': '/(my-request)/complaint-tracking/compMainView',
+                'mobile_params': {'comp_id': str(instance.comp_id.comp_id)}
+            }
+        }
+        
+        # Get complainants with resident profiles
+        complainants_with_rp = []
+        if instance.comp_id:
+            complainants_with_rp = instance.comp_id.complainant.filter(rp_id__isnull=False)
+        
+        # Check for resolved status in either mediation or conciliation
+        if ((previous_mediation != current_mediation and current_mediation.lower() == 'resolved') or
+            (previous_conciliation != current_conciliation and current_conciliation and current_conciliation.lower() == 'resolved')):
+            
+            config = status_config['resolved']
+            for complainant in complainants_with_rp:
+                if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                    create_notification(
+                        title=config['title'],
+                        message=config['message'],
+                        recipients=[complainant.rp_id.account],
+                        notif_type=config['notif_type'],
+                        mobile_route=config['mobile_route'],
+                        mobile_params=config['mobile_params']
+                    )
+        
+        # Check for escalated status in conciliation
+        elif (previous_conciliation != current_conciliation and 
+              current_conciliation and 
+              current_conciliation.lower() == 'escalated'):
+            
+            config = status_config['escalated']
+            for complainant in complainants_with_rp:
+                if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                    create_notification(
+                        title=config['title'],
+                        message=config['message'],
+                        recipients=[complainant.rp_id.account],
+                        notif_type=config['notif_type'],
+                        mobile_route=config['mobile_route'],
+                        mobile_params=config['mobile_params']
+                    )
+        
+        # Keep your existing forwarded to lupon logic
+        elif (previous_mediation != current_mediation and 
+              current_mediation.lower() == 'forwarded to lupon'):
             
             admin_staff = Staff.objects.filter(
                 pos__pos_title__iexact='ADMIN'
@@ -114,10 +189,57 @@ def create_notification_on_case_forwarded(sender, instance, created, **kwargs):
                     title='New Case Forwarded', 
                     message=f'Case No. {instance.sc_code} has been forwarded and is waiting for schedule.',
                     recipients=admin_accounts,
-                    notif_type='CONCILIATION_CASE',
+                    notif_type='CASE_UPDATE',
                     mobile_route="/(summon)/lupon-conciliation-main", 
                     web_route="/conciliation-proceedings",
                 )
+
+# =================== CASE STATUS UPDATE NOTIF (WAITING FOR SCHEDULE) ==============
+@receiver(post_save, sender=SummonCase)
+def create_notification_on_waiting_for_schedule(sender, instance, created, **kwargs):
+    if not created and (hasattr(instance, '_previous_mediation_status') or hasattr(instance, '_previous_conciliation_status')):
+        previous_mediation = getattr(instance, '_previous_mediation_status', None)
+        previous_conciliation = getattr(instance, '_previous_conciliation_status', None)
+        current_mediation = instance.sc_mediation_status
+        current_conciliation = instance.sc_conciliation_status
+        
+        # Check if status changed TO 'waiting for schedule'
+        mediation_changed_to_waiting = (
+            previous_mediation != current_mediation and 
+            current_mediation.lower() == 'waiting for schedule'
+        )
+        
+        conciliation_changed_to_waiting = (
+            previous_conciliation != current_conciliation and 
+            current_conciliation and 
+            current_conciliation.lower() == 'waiting for schedule'
+        )
+        
+        if (mediation_changed_to_waiting or conciliation_changed_to_waiting) and instance.comp_id:
+            # Get current hearing schedule count
+            hearing_schedule_count = instance.hearing_schedules.count()
+            
+            # Determine max allowed schedules
+            if mediation_changed_to_waiting:
+                max_schedules = 3
+            else:
+                max_schedules = 6
+            
+            # Only create notification if we haven't reached the max schedules
+            if hearing_schedule_count < max_schedules:
+                # Get complainants with resident profiles
+                complainants_with_rp = instance.comp_id.complainant.filter(rp_id__isnull=False)
+                
+                for complainant in complainants_with_rp:
+                    if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                        create_notification(
+                            title='Set Schedule', 
+                            message=f'Your Case No. {instance.sc_code} is waiting for you to set a hearing schedule.',
+                            recipients=[complainant.rp_id.account],
+                            notif_type='CASE_UPDATE',
+                            mobile_route= '/(my-request)/complaint-tracking/compMainView',
+                            mobile_params={'comp_id': str(instance.comp_id.comp_id)},
+                        )
 
 # ================== HEARING SCHEDULE NOTIFICATION ====================
 @receiver(post_save, sender=HearingSchedule)
@@ -163,7 +285,7 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
                         title=f'{instance.hs_level} Hearing Schedule', 
                         message=f'{instance.hs_level} for Case No. {summon_case.sc_code} has been scheduled{date_time_info}.',
                         recipients=admin_accounts,
-                        notif_type='HEARING_SCHEDULE',
+                        notif_type='CASE_UPDATE',
                         mobile_route=mobile_route, 
                         web_route=web_route,
                     )
@@ -201,7 +323,7 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                     title='New Remarks Added', 
                     message=f'New remarks have been posted for {hearing_schedule.hs_level} - Case No. {summon_case.sc_code}.',
                     recipients=admin_accounts,
-                    notif_type='REMARK',
+                    notif_type='CASE_UPDATE',
                     mobile_route=mobile_route, 
                     web_route=web_route,
                 )
@@ -227,7 +349,7 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                         title='Remarks Available', 
                         message=f'Case No. {summon_case.sc_code} has remarks available for your {hearing_schedule.hs_level} hearing.',
                         recipients=[complainant.rp_id.account],
-                        notif_type='REMARK',
+                        notif_type='CASE_UPDATE',
                         mobile_route="/(my-request)/complaint-tracking/hearing-history", 
                         mobile_params=mobile_params,
                     )

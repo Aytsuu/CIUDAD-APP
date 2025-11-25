@@ -10,14 +10,16 @@ import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
 import { minutesOfMeetingEditFormSchema } from '@/form-schema/council/minutesOfMeetingSchema';
 import { useUpdateMinutesOfMeeting } from './queries/MOMUpdateQueries';
+import type { SupportingDoc } from './queries/MOMFetchQueries';
 
-export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, mom_id, momf_url, momf_id, areas_of_focus, onSuccess}: {
+export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, mom_id, momf_url, momf_id, supporting_docs, areas_of_focus, onSuccess}: {
     mom_title: string;
     mom_agenda: string;
     mom_date: string;
     mom_id: number;
     momf_url: string;
     momf_id: number;
+    supporting_docs: SupportingDoc[]
     areas_of_focus: string[];
     onSuccess?: () => void;
 }) {
@@ -34,6 +36,17 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
     });
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [fileError, setFileError] = useState<string>("");
+    const [suppMediaFiles, setSuppMediaFiles] = useState<MediaUploadType>(() => {
+        return supporting_docs.map(doc => ({
+            id: `existing-${doc.momsp_id}`,
+            name: doc.momsp_name,
+            type: doc.momsp_type,
+            url: doc.momsp_url
+        }));
+    });
+
+    const [suppActiveVideoId, setSuppActiveVideoId] = useState<string>("");
+
 
     const { mutate: editMOM, isPending } = useUpdateMinutesOfMeeting(onSuccess);
     const form = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
@@ -66,7 +79,15 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
             type: media.type,
             file: media.file
         }));
-        editMOM({ ...values, files });
+
+        const suppDocs = suppMediaFiles.map((media) => ({
+            id: media.id,
+            name: media.name,
+            type: media.type,
+            file: media.file
+        }))
+        
+        editMOM({ ...values, files, suppDocs });
     };
 
     return (
@@ -109,6 +130,21 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                         {fileError && (
                             <div className="text-red-500 text-xs mt-2">{fileError}</div>
                         )}
+                    </FormItem>
+
+                     <FormItem>
+                        <FormControl>
+                            <MediaUpload
+                                title="Supporting Images"
+                                description="Upload supporting images (optional)"
+                                mediaFiles={suppMediaFiles}
+                                setMediaFiles={setSuppMediaFiles}
+                                activeVideoId={suppActiveVideoId}
+                                setActiveVideoId={setSuppActiveVideoId}
+                                acceptableFiles='image'
+                            />
+                        </FormControl>
+                        <FormMessage />
                     </FormItem>
 
                     <FormComboCheckbox

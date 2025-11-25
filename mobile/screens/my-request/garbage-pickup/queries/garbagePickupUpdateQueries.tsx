@@ -27,7 +27,7 @@ export const useUpdateGarbReqStatusResident = (onSuccess?: () => void, isViewDet
       } 
     },
     onError: (err) => {
-      console.error("Error updating request status:", err);
+      // console.error("Error updating request status:", err);
       toast.error("Failed to update request status")
     }
   });

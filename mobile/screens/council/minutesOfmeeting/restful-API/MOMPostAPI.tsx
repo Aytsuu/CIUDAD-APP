@@ -16,27 +16,16 @@ export const createMOMFile = async (data: { mom_id: number;
             }]
         };
 
-        console.log(payload)
-
         const res = await api.post('council/mom-file/', payload);
 
         return res.data;
 
-    }
+}
 
 export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
     try {
 
-        console.log({
-            mom_date: momInfo.meetingDate,
-            mom_title: momInfo.meetingTitle,
-            mom_agenda: momInfo.meetingAgenda,
-            mom_area_of_focus: momInfo.meetingAreaOfFocus,  
-            mom_is_archive: false,
-            staff_id: momInfo.staff_id
-        })
-
-        const momResponse = await api.post('council/minutes-of-meeting/', {
+        const momResponse = await api.post('council/minutes-of-meeting-active/', {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
@@ -47,7 +36,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
 
         return momResponse.data.mom_id;
     } catch (error) {
-        console.error('Error creating Minutes of Meeting:', error);
+        // console.error('Error creating Minutes of Meeting:', error);
         throw error;
     }
 };
@@ -68,9 +57,9 @@ export const addSuppDoc = async(data: { mom_id: number;
         }]
     };
 
-    console.log(payload)
     const res = await api.post('council/mom-supp-doc/', payload);
 
     return res.data;
 
 }
+

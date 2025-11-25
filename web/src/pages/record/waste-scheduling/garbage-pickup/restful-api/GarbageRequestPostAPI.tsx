@@ -9,13 +9,6 @@ const getLocalISOString = () => {
 
 export const addDecision = async (garb_id: string, decisionInfo: {reason: string, staff_id: string}) => {
     try{
-        console.log({
-            dec_rejection_reason: decisionInfo.reason,
-            dec_date: new Date().toISOString(),
-            garb_id: garb_id,
-            staff_id: decisionInfo.staff_id
-        })
-
         await api.put(`/waste/update-garbage-pickup-request/${garb_id}/`, {
             garb_req_status: "rejected"
         });
@@ -30,22 +23,13 @@ export const addDecision = async (garb_id: string, decisionInfo: {reason: string
         return res.data.dec_id
 
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
 export const addPickupAssignmentandCollectors = async (garb_id: string, assignmentInfo: {date: string; driver: string; time: string; truck: string; collectors: string[], staff_id: string}) => {
     try {
-        console.log({
-            pick_time: assignmentInfo.time,
-            pick_date: assignmentInfo.date,
-            truck_id: assignmentInfo.truck,
-            wstp_id: assignmentInfo.driver,
-            garb_id: garb_id,
-            collectors: assignmentInfo.collectors,
-            staff_id: assignmentInfo.staff_id
-        });
-
         // 1. Update garbage pickup request status
         await api.put(`/waste/update-garbage-pickup-request/${garb_id}/`, {
             garb_req_status: "accepted"
@@ -81,7 +65,7 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
         return res.data.pick_id, res2.data; 
 
     } catch(err) {
-        console.error(err);
+        // console.error(err);
         throw err;  
     }
 }

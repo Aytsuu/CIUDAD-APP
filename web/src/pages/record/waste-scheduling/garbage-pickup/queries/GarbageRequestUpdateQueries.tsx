@@ -27,7 +27,7 @@ export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
       onSuccess?.();
     },
     onError: (err) => {
-      console.error("Error updating request status:", err);
+      // console.error("Error updating request status:", err);
       toast.error("Failed to update request status", {
         id: "updateGarbageStatus",
         duration: 2000
@@ -75,8 +75,8 @@ export const useUpdateAssignmentCollectorsAndSchedule = (onSuccess?: () => void)
       onSuccess?.();
     },
     
-    onError: (err) => {
-      console.error("Error updating assignment:", err);
+    onError: () => {
+      // console.error("Error updating assignment:", err);
       toast.error("Failed to update assignment", {
         id: "updateAssignment",
         duration: 2000
