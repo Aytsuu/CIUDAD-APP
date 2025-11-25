@@ -199,7 +199,7 @@ export default function FPReportDetails() {
   return (
     <div className="p-4">
       <div className="flex items-center gap-4 mb-4">
-        <Button variant="outline" onClick={() => navigate(-1)}><ChevronLeft /></Button>
+        {/* <Button variant="outline" onClick={() => navigate(-1)}><ChevronLeft /></Button> */}
         <h1 className="text-2xl font-bold">Family Planning Report - {monthName}</h1>
       </div>
 

@@ -1666,7 +1666,7 @@ def get_complete_fp_record_data(request, fprecord_id):
                 "illname": history.ill.illname,
                 "ill_code": history.ill.ill_code,
                 "created_at": history.created_at.isoformat() if history.created_at else None,
-                "is_for_surveillance": True
+                # "is_for_surveillance": True
             })
             current_selected_illness_ids.append(history.ill.ill_id)
 
