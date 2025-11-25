@@ -4,19 +4,22 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban } from 'lucide-react';
-import { useState, useEffect } from "react";
+import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from "react";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
-import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
 import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showErrorToast } from "@/components/ui/toast";
 
 function PersonalClearance() {
-    // const { user } = useAuth();
+    
+    const { showLoading, hideLoading } = useLoading();
 
     const [currentPage, setCurrentPage] = useState(1); 
     const [pageSize, setPageSize] = useState(10);
@@ -40,25 +43,50 @@ function PersonalClearance() {
         hasDisabilityEligible?: boolean;
     } | null>(null);
 
-    const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
-    const {data: residentClearanceRequests = [], isLoading: residentLoading, error: residentError} = usegetResidentCertReq();
+    const [searchTerm, setSearchTerm] = useState("");
 
-    console.log('resident', residentClearanceRequests)
+    const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize);
+    const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize);
+    
+    // Function to get resident eligibility info directly from API response (backend calculates it)
+    const getResidentEligibility = (residentDetails: any) => {
+        if (!residentDetails) {
+            return { isVoter: false, isSenior: false, isPWD: false };
+        }
+        
+        // Use eligibility fields directly from backend API response
+        return {
+            isVoter: residentDetails.is_voter || false,
+            isSenior: residentDetails.is_senior || false,
+            isPWD: residentDetails.is_pwd || false
+        };
+    };
+
+    // Handle loading state
+    useEffect(() => {
+        if (nonResidentLoading || residentLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [nonResidentLoading, residentLoading, showLoading, hideLoading]);
+
+    const nonResidentClearanceRequests = nonResidentData?.results || [];
+    const residentClearanceRequests = residentData?.results || [];
+    const totalCount = residentType === "non-resident" ? (nonResidentData?.count || 0) : (residentData?.count || 0);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
     
     // Select data based on resident type
     const clearanceRequests = residentType === "non-resident" ? nonResidentClearanceRequests : residentClearanceRequests;
     const isLoading = residentType === "non-resident" ? nonResidentLoading : residentLoading;
     const error = residentType === "non-resident" ? nonResidentError : residentError;
 
-    useEffect(() => {
-        if (clearanceRequests) {
-            console.log("Personal clearances data:", clearanceRequests);
-        }
-    }, [clearanceRequests]);
 
     useEffect(() => {
         if (error) {
             console.error("Error fetching personal clearances:", error);
+            showErrorToast("Failed to load personal clearance data. Please try again.");
         }
     }, [error]);
 
@@ -97,7 +125,17 @@ function PersonalClearance() {
     // Non-Resident Columns
     const nonResidentColumns: ColumnDef<NonResidentReq>[] = [
         {
-            accessorKey: "nrc_requester",
+            id: "nrc_requester",
+            accessorFn: (row) => {
+                // Use individual name fields: lname fname mname (all uppercase)
+                const nameParts = [
+                    row.nrc_lname,
+                    row.nrc_fname,
+                    row.nrc_mname
+                ].filter(part => part && part.trim() !== '');
+                
+                return nameParts.join(' ').toUpperCase() || 'N/A';
+            },
             header: ({ column }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -154,7 +192,7 @@ function PersonalClearance() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {format(new Date(row.getValue("nrc_req_date")), "MM-dd-yyyy")}
+                    {formatDate(row.getValue("nrc_req_date"), "long")}
                 </div>
             ),
         },
@@ -169,13 +207,24 @@ function PersonalClearance() {
                                 <div
                                     className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
                                     onClick={() => {
+                                        console.log('DEBUG: Non-resident row data:', row.original);
+                                        console.log('DEBUG: nrc_id value:', row.original.nrc_id, 'type:', typeof row.original.nrc_id);
                                         setCurrentReceipt({
                                             id: row.original.nrc_id,
                                             purpose: row.original.purpose?.pr_purpose,
                                             rate: row.original.purpose?.pr_rate,
-                                            requester: row.original.nrc_requester,
+                                            requester: (() => {
+                                                // Use individual name fields: lname fname mname (all uppercase)
+                                                const nameParts = [
+                                                    row.original.nrc_lname,
+                                                    row.original.nrc_fname,
+                                                    row.original.nrc_mname
+                                                ].filter(part => part && part.trim() !== '');
+                                                
+                                                return nameParts.join(' ').toUpperCase() || 'N/A';
+                                            })(),
                                             pay_status: row.original.nrc_req_payment_status,
-                                            nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                            nat_col: row.original.purpose?.pr_purpose,
                                             is_resident: false
                                         });
                                         // Ensure discount modal is closed when opening receipt
@@ -201,7 +250,9 @@ function PersonalClearance() {
                                 <DeclineRequestForm
                                     id = {row.original.nrc_id}
                                     isResident = {false}
-                                    onSuccess={() => setIsDialogOpen(false)}
+                                    onSuccess={() => {
+                                        setIsDialogOpen(false);
+                                    }}
                                 />
                             }
                         />
@@ -222,8 +273,8 @@ function PersonalClearance() {
         ] : []),
     ];
 
-    // Resident Columns
-    const residentColumns: ColumnDef<ResidentReq>[] = [
+    // Resident Columns - memoized to recalculate when residentTableData changes
+    const residentColumns: ColumnDef<ResidentReq>[] = useMemo(() => [
         {
             accessorKey: "resident_details",
             header: ({ column }) => (
@@ -235,9 +286,19 @@ function PersonalClearance() {
                     <ArrowUpDown size={14} />
                 </div>
             ),
-            cell: ({ row }) => (
-                <div>{`${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`}</div>
-            ),
+            cell: ({ row }) => {
+                // For residents, format as "Last Name First Name Middle Name"
+                const resident = row.original.resident_details;
+                if (!resident) return <div>N/A</div>;
+                
+                const nameParts = [
+                    resident.per_lname,
+                    resident.per_fname,
+                    resident.per_mname
+                ].filter(part => part && part.trim() !== '');
+                
+                return <div>{nameParts.join(' ') || 'N/A'}</div>;
+            },
         },
         {
             accessorKey: "purpose.pr_purpose",
@@ -264,7 +325,10 @@ function PersonalClearance() {
                 </div>
             ),
             cell: ({ row }) => {
-                const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                // Get resident eligibility from table data
+                const eligibility = getResidentEligibility(row.original.resident_details);
+                const isFree = eligibility.isVoter || eligibility.isSenior || eligibility.isPWD;
+                
                 const raw = row.original.purpose ? Number(row.original.purpose.pr_rate) : 0;
                 const value = isFree ? 0 : raw;
                 return (
@@ -287,7 +351,7 @@ function PersonalClearance() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {format(new Date(row.original.cr_req_request_date), "MM-dd-yyyy")}
+                    {formatDate(row.original.cr_req_request_date, "long")}
                 </div>
             ),
         },
@@ -296,7 +360,10 @@ function PersonalClearance() {
                 accessorKey: "action",
                 header: "Action",
                 cell: ({ row }: { row: Row<ResidentReq> }) => {
-                    const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                    // Get resident eligibility from table data
+                    const eligibility = getResidentEligibility(row.original.resident_details);
+                    const isFree = eligibility.isVoter || eligibility.isSenior || eligibility.isPWD;
+                    
                     return (
                         <div className="flex justify-center gap-1">
                             {isFree ? (
@@ -304,34 +371,29 @@ function PersonalClearance() {
                                     trigger={
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
-                                            onClick={() => {
-                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
-                                                let isSenior = false;
-                                                if (dobStr) {
-                                                    try {
-                                                        const dob = new Date(dobStr);
-                                                        if (!isNaN(dob.getTime())) {
-                                                            const today = new Date();
-                                                            let age = today.getFullYear() - dob.getFullYear();
-                                                            const m = today.getMonth() - dob.getMonth();
-                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                                            isSenior = age >= 60;
-                                                        }
-                                                    } catch {}
-                                                }
-                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
-                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+                                            onClick={async () => {
+                                                // Get resident eligibility from table data
+                                                const eligibility = getResidentEligibility(row.original.resident_details);
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: "0",
-                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    requester: (() => {
+                                                
+                                                        const resident = row.original.resident_details;
+                                                        const nameParts = [
+                                                            resident.per_lname,
+                                                            resident.per_fname,
+                                                            resident.per_mname
+                                                        ].filter(part => part && part.trim() !== '');
+                                                        return nameParts.join(' ') || 'N/A';
+                                                    })(),
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                                    nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
-                                                    isSeniorEligible: isSenior,
-                                                    hasDisabilityEligible: hasDisability
+                                                    voter_id: eligibility.isVoter ? 1 : null,
+                                                    isSeniorEligible: eligibility.isSenior,
+                                                    hasDisabilityEligible: eligibility.isPWD
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);
@@ -348,35 +410,30 @@ function PersonalClearance() {
                                     trigger={
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
-                                            onClick={() => {
-                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
-                                                let isSenior = false;
-                                                if (dobStr) {
-                                                    try {
-                                                        const dob = new Date(dobStr);
-                                                        if (!isNaN(dob.getTime())) {
-                                                            const today = new Date();
-                                                            let age = today.getFullYear() - dob.getFullYear();
-                                                            const m = today.getMonth() - dob.getMonth();
-                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                                            isSenior = age >= 60;
-                                                        }
-                                                    } catch {}
-                                                }
-                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
-                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+                                            onClick={async () => {
+                                                // Get resident eligibility from table data
+                                                const eligibility = getResidentEligibility(row.original.resident_details);
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: row.original.purpose?.pr_rate,
-                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    requester: (() => {
+                                                        // Format resident name: "Last Name First Name Middle Name"
+                                                        const resident = row.original.resident_details;
+                                                        const nameParts = [
+                                                            resident.per_lname,
+                                                            resident.per_fname,
+                                                            resident.per_mname
+                                                        ].filter(part => part && part.trim() !== '');
+                                                        return nameParts.join(' ') || 'N/A';
+                                                    })(),
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
+                                                    nat_col: row.original.purpose?.pr_purpose || 'Personal Clearance',
                                                     // Paid resident without voter_id should still be treated as resident
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
-                                                    isSeniorEligible: isSenior,
-                                                    hasDisabilityEligible: hasDisability
+                                                    voter_id: eligibility.isVoter ? 1 : null,
+                                                    isSeniorEligible: eligibility.isSenior,
+                                                    hasDisabilityEligible: eligibility.isPWD
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);
@@ -402,7 +459,9 @@ function PersonalClearance() {
                                     <DeclineRequestForm
                                         id = {row.original.cr_id}
                                         isResident={true}
-                                        onSuccess={() => setIsDialogOpen(false)}
+                                        onSuccess={() => {
+                                            setIsDialogOpen(false);
+                                        }}
                                     />
                                 }
                             />
@@ -422,7 +481,7 @@ function PersonalClearance() {
                 ),
             }
         ] : []),
-    ];
+    ], [activeTab]); // Recalculate when activeTab changes (eligibility now comes from API)
 
     // Select the appropriate columns based on resident type
     const columns = residentType === "non-resident" 
@@ -439,17 +498,22 @@ function PersonalClearance() {
                     Create, manage, and process personal clearance requests.
                 </p>
             </div>
-            <hr className="border-gray mb-7 sm:mb-8" /> 
+
 
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                         <div className="relative flex-1">
                             <Search
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                className="absolute left-3 top-[38%] transform -translate-y-1/2 text-black-400 "
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
+                            <Input 
+                                placeholder="Search by name, ID, or purpose..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 w-full bg-white text-sm border-gray-300" 
+                            />
                         </div>
                         
                         {/* Toggle Button between Resident and Non-Resident */}
@@ -490,7 +554,9 @@ function PersonalClearance() {
                             mainContent={
                                 <div className="w-full h-full">
                                     <PersonalClearanceForm 
-                                        onSuccess={() => setIsDialogOpen(false)} 
+                                        onSuccess={() => {
+                                            setIsDialogOpen(false);
+                                        }} 
                                     />
                                 </div>
                             }
@@ -517,29 +583,31 @@ function PersonalClearance() {
                              <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
                                  <button
                                      onClick={() => setActiveTab("unpaid")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "unpaid"
-                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                             ? "bg-[#fffbe6] text-[#b59f00] border-[#f7e7b6] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
+                                     <Clock size={14} />
                                      Unpaid
                                  </button>
                                  <button
                                      onClick={() => setActiveTab("paid")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "paid"
-                                             ? "bg-[#eaffea] text-[#15803d] border-[#b6e7c3] shadow-sm"
+                                             ? "bg-[#e6f7e6] text-[#16a34a] border-[#d1f2d1] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
+                                     <CheckCircle size={14} />
                                      Paid
                                  </button>
                                  <button
                                      onClick={() => setActiveTab("declined")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-1 ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "declined"
-                                             ? "bg-[#f3f3f3] text-[#6b7280] border-[#e5e7eb] shadow-sm"
+                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
@@ -552,39 +620,8 @@ function PersonalClearance() {
                      </div>    
 
                     {isLoading ? (
-                        <div className="rounded-md border">
-                            <div className="p-6">
-                                {/* Table header skeleton */}
-                                <div className={`grid ${activeTab === "unpaid" ? "grid-cols-6" : activeTab === "paid" ? "grid-cols-5" : "grid-cols-5"} gap-4 mb-4 pb-4 border-b`}>
-                                    <Skeleton className="h-6 w-20 opacity-30" />
-                                    <Skeleton className="h-6 w-20 opacity-30" />
-                                    <Skeleton className="h-6 w-16 opacity-30" />
-                                    <Skeleton className="h-6 w-24 opacity-30" />
-                                    {activeTab !== "declined" && <Skeleton className="h-6 w-20 opacity-30" />}
-                                    {activeTab === "unpaid" && <Skeleton className="h-6 w-16 opacity-30" />}
-                                    {activeTab === "declined" && <Skeleton className="h-6 w-24 opacity-30" />}
-                                </div>
-                                
-                                {/* Table rows skeleton */}
-                                <div className="space-y-4">
-                                    {[...Array(5)].map((_, index) => (
-                                        <div key={index} className={`grid ${activeTab === "unpaid" ? "grid-cols-6" : activeTab === "paid" ? "grid-cols-5" : "grid-cols-5"} gap-4 items-center py-2`}>
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            <Skeleton className="h-4 w-16 opacity-30" />
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            {activeTab !== "declined" && <Skeleton className="h-6 w-16 rounded-full opacity-30" />}
-                                            {activeTab === "unpaid" && (
-                                                <div className="flex justify-center gap-1">
-                                                    <Skeleton className="h-8 w-8 rounded opacity-30" />
-                                                    <Skeleton className="h-8 w-8 rounded opacity-30" />
-                                                </div>
-                                            )}
-                                            {activeTab === "declined" && <Skeleton className="h-4 w-32 opacity-30" />}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="flex items-center justify-center py-12">
+                            <Spinner size="lg" />
                         </div>
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>
@@ -601,12 +638,12 @@ function PersonalClearance() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
                      <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredData?.length || 0)} of {filteredData?.length || 0} rows
+                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                      </p>
  
                      <div className="w-full sm:w-auto flex justify-center">
                          <PaginationLayout
-                             totalPages={Math.ceil((filteredData?.length || 0) / pageSize)}
+                             totalPages={totalPages}
                              currentPage={currentPage}
                              onPageChange={setCurrentPage}
                          />
@@ -629,7 +666,6 @@ function PersonalClearance() {
                             discountedAmount={appliedDiscountAmount}
                             discountReason={appliedDiscountReason}
                             onComplete={() => {
-                                
                                 setIsReceiptModalOpen(false);
                             }}
                             onRequestDiscount={() => {
@@ -645,11 +681,7 @@ function PersonalClearance() {
             <DialogLayout
                 trigger={<></>}
                 isOpen={isDiscountModalOpen}
-                onOpenChange={(open) => {
-                    console.log('Discount modal onOpenChange:', open);
-                    setIsDiscountModalOpen(open);
-                    // Note: Receipt form opening is now handled directly in onAuthorize and onCancel handlers
-                }}
+                onOpenChange={setIsDiscountModalOpen}
                 title="Authorize Discount"
                 description="Enter authorization code to apply a discount"
                 mainContent={
@@ -657,11 +689,8 @@ function PersonalClearance() {
                         <DiscountAuthorizationForm
                             originalAmount={currentReceipt.rate}
                             onAuthorize={(amount: string, reason: string) => {
-                                console.log('Discounted amount applied:', amount);
-                                console.log('Discount reason:', reason);
                                 setAppliedDiscountAmount(amount);
                                 setAppliedDiscountReason(reason);
-                                console.log('Setting discount amount and showing receipt form');
                                 setIsDiscountModalOpen(false);
                                 // Use setTimeout to ensure the discount modal closes before opening receipt modal
                                 setTimeout(() => {
@@ -669,7 +698,6 @@ function PersonalClearance() {
                                 }, 100);
                             }}
                             onCancel={() => {
-                                console.log('Discount cancelled, showing receipt form');
                                 setAppliedDiscountAmount(undefined);
                                 setAppliedDiscountReason(undefined);
                                 setIsDiscountModalOpen(false);

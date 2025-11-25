@@ -1,11 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
 import { archiveProjectProposal, 
   restoreProjectProposal,
   permanentDeleteProjectProposal, deleteSupportDocument, archiveSupportDocument, restoreSupportDocument } from "../api/projpropdelreq";
 import { ProjectProposal } from "../projprop-types";
-
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 export const useArchiveProjectProposal = () => {
   const queryClient = useQueryClient();
@@ -26,22 +24,16 @@ export const useArchiveProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, _gprId, context) => {
+    onError: (_error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
-      toast.error("Failed to archive project proposal", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to archive project proposal");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
-      toast.success("Project proposal archived successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
+      showSuccessToast("Project proposal archived successfully");
     }
   });
 };
@@ -65,22 +57,16 @@ export const useRestoreProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, _gprId, context) => {
+    onError: (_error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
-      toast.error("Failed to restore project proposal", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to restore project proposal");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
-      toast.success("Project proposal restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
+      showSuccessToast("Project proposal restored successfully");
     }
   });
 };
@@ -100,27 +86,20 @@ export const usePermanentDeleteProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, _gprId, context) => {
+    onError: (_error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
-      toast.error("Failed to permanently delete project proposal", {
-        description: error.message,
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000
-      });
+      showErrorToast("Failed to permanently delete project proposal");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
-      toast.success("Project proposal permanently deleted", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Project proposal permanently deleted");
     }
   });
 };
 
- export const useDeleteSupportDocument = () => {
+export const useDeleteSupportDocument = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -129,16 +108,10 @@ export const usePermanentDeleteProjectProposal = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
-      toast.success("Support document deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Support document deleted successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete support document", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to delete support document");
     },
   });
 };
@@ -152,16 +125,10 @@ export const useArchiveSupportDocument = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
-      toast.success("Support document archived successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Support document archived successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete archive document", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to archive support document");
     },
   });
 };
@@ -175,16 +142,10 @@ export const useRestoreSupportDocument = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
-      toast.success("Support document restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Support document restored successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to restore support document", {
-        description: error.message,
-        duration: 2000,
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to restore support document");
     },
   });
 };

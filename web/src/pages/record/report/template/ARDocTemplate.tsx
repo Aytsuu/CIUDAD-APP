@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { pdf } from "@react-pdf/renderer";
-import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
+import { Loader2, Pen, Printer, Upload } from "lucide-react";
 import React from "react";
 import { ARTemplatePDF } from "./ARTemplatePDF";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { formatStaffs } from "../../administration/AdministrationFormats";
-import { toast } from "sonner";
 import { handleImageUpload } from "@/helpers/fileHelpers";
+import { useNavigate } from "react-router";
+import { showErrorToast } from "@/components/ui/toast";
 
 export const ARDocTemplate = ({
   incident,
@@ -21,38 +22,53 @@ export const ARDocTemplate = ({
   location,
   act_taken,
   images,
-} : {
+  completeData,
+}: {
   incident: string;
   dateTime: string;
   location: string;
   act_taken: string;
   images: any[];
+  completeData: Record<string, any>;
 }) => {
+  const navigate = useNavigate();
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
-  const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('AR'); 
-  const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
-  const [pdfBlob, setPdfBlob] = React.useState<string>(''); 
+  const { data: reportTemplate, isLoading: isLoadingTemplate } =
+    useGetSpecificTemplate("AR");
+  const { data: staffByTitle, isLoading: isLoadingStaffByTitle } =
+    useGetStaffByTitle("all", "BARANGAY STAFF");
+  const [pdfBlob, setPdfBlob] = React.useState<string>("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const formattedStaffs = React.useMemo(() => formatStaffs(staffByTitle) ,[staffByTitle]);
-  const isLoading = React.useMemo(() => 
-    isLoadingTemplate || isLoadingStaffByTitle
-  , [isLoadingTemplate, isLoadingStaffByTitle])
+  const formattedStaffs = React.useMemo(
+    () => formatStaffs(staffByTitle),
+    [staffByTitle]
+  );
+  const isLoading = React.useMemo(
+    () => isLoadingTemplate || isLoadingStaffByTitle,
+    [isLoadingTemplate, isLoadingStaffByTitle]
+  );
 
-  const prepared_by = React.useMemo(() => 
-    reportTemplate?.rte_prepared_by || 'Not Added' ,[reportTemplate]);
-  const recommended_by = React.useMemo(() => 
-    reportTemplate?.rte_recommended_by || 'Not Added' ,[reportTemplate]);
-  const approved_by = React.useMemo(() => 
-    reportTemplate?.rte_approved_by || 'Not Added' ,[reportTemplate]);
+  const prepared_by = React.useMemo(
+    () => reportTemplate?.rte_prepared_by || "Not Added",
+    [reportTemplate]
+  );
+  const recommended_by = React.useMemo(
+    () => reportTemplate?.rte_recommended_by || "Not Added",
+    [reportTemplate]
+  );
+  const approved_by = React.useMemo(
+    () => reportTemplate?.rte_approved_by || "Not Added",
+    [reportTemplate]
+  );
 
   const handlePrintClick = async () => {
     // Generate PDF blob
     const blob = await pdf(
-      <ARTemplatePDF 
+      <ARTemplatePDF
         logo1={reportTemplate.rte_logoLeft}
         logo2={reportTemplate.rte_logoRight}
         incidentName={incident}
-        dateTime={dateTime}
+        dateTime={dateTime.toUpperCase()}
         location={location}
         actionsTaken={act_taken}
         preparedBy={prepared_by}
@@ -64,136 +80,148 @@ export const ARDocTemplate = ({
 
     // Create object URL
     const pdfUrl = URL.createObjectURL(blob);
-    
+
     // Open in new tab
-    window.open(pdfUrl, '_blank');
-    
+    window.open(pdfUrl, "_blank");
+
     // Store blob to revoke URL later
     setPdfBlob(pdfUrl);
-  }
+  };
 
   React.useEffect(() => {
-    return (() => {
-      if(pdfBlob) {
+    return () => {
+      if (pdfBlob) {
         URL.revokeObjectURL(pdfBlob);
       }
-    })
-  }, [])
+    };
+  }, []);
 
-  const handleLeftLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    try {
-      const publicUrl = await handleImageUpload(files);
-      if(publicUrl){
-        updateTemplate({
-          data: {
-            logo_left: publicUrl
-          },
-          type: 'AR'  
-        })
-      }
-    } catch (err) {
-      throw err;
+  const handleEdit = () => {
+    if (completeData.status.toLowerCase() == "signed") {
+      showErrorToast("Cannot edit signed document");
+      return;
     }
-  }
 
-  const handleRightLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    try {
-      const publicUrl = await handleImageUpload(files);
-      if(publicUrl){
-        updateTemplate({
-          data: {
-            logo_right: publicUrl
-          },
-          type: 'AR'  
-        })
-      }
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  const errorFeedback = () => {
-    toast("Failed to change signer. Please try again.", {
-      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      style: {
-        border: '1px solid rgb(225, 193, 193)',
-        padding: '16px',
-        color: '#b91c1c',
-        background: '#fef2f2',
-      },
-      action: {
-        label: <X size={14} className="bg-transparent"/>,
-        onClick: () => toast.dismiss(),
+    navigate("/report/acknowledgement/form", {
+      state: {
+        params: {
+          ARInfo: completeData,
+        },
       },
     });
-  }
+  };
+
+  const handleLeftLogoChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if (publicUrl) {
+        updateTemplate({
+          data: {
+            logo_left: publicUrl,
+          },
+          type: "AR",
+        });
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleRightLogoChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if (publicUrl) {
+        updateTemplate({
+          data: {
+            logo_right: publicUrl,
+          },
+          type: "AR",
+        });
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
 
   const getName = (value: string) => {
     const name = value.split("-")[1];
     const array = name.split(" ");
-    return (`${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`);
+    return `${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`;
   };
 
   const changePreparedBy = (value: string) => {
     const name = getName(value);
-    if(name) {
-      updateTemplate({
-        data: {
-          rte_prepared_by: name.toUpperCase()
+    if (name) {
+      updateTemplate(
+        {
+          data: {
+            rte_prepared_by: name.toUpperCase(),
+          },
+          type: "AR",
         },
-        type: 'AR'
-      }, {
-        onError: ()  => {
-          errorFeedback();
+        {
+          onError: () => {
+            showErrorToast("Failed to change signer. Please try again.");
+          },
         }
-      })
+      );
     }
-  } 
+  };
 
   const changeRecommendedBy = (value: string) => {
     const name = getName(value);
-    if(name) {
-      updateTemplate({
-        data: {
-          rte_recommended_by: name.toUpperCase()
+    if (name) {
+      updateTemplate(
+        {
+          data: {
+            rte_recommended_by: name.toUpperCase(),
+          },
+          type: "AR",
         },
-        type: 'AR'
-      }, {
-        onError: ()  => {
-          errorFeedback();
+        {
+          onError: () => {
+            showErrorToast("Failed to change signer. Please try again.");
+          },
         }
-      })
+      );
     }
-  }
+  };
 
   const changeApprovedBy = (value: string) => {
     const name = getName(value);
-    if(name) {
-      updateTemplate({
-        data: {
-          rte_approved_by: name.toUpperCase()
+    if (name) {
+      updateTemplate(
+        {
+          data: {
+            rte_approved_by: name.toUpperCase(),
+          },
+          type: "AR",
         },
-        type: 'AR'
-      }, {
-        onError: ()  => {
-          errorFeedback();
+        {
+          onError: () => {
+            showErrorToast("Failed to change signer. Please try again.");
+          },
         }
-      })
+      );
     }
-  }
+  };
 
   // Logo component
-  const LogoUpload = ({ 
-    logoUrl, 
-    onLogoChange, 
-    inputId, 
-  }: { 
-    logoUrl?: string; 
-    onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
-    inputId: string; 
-    alt: string; 
+  const LogoUpload = ({
+    logoUrl,
+    onLogoChange,
+    inputId,
+  }: {
+    logoUrl?: string;
+    onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    inputId: string;
+    alt: string;
   }) => (
     <div className="flex flex-col items-center relative">
       <Input
@@ -220,21 +248,28 @@ export const ARDocTemplate = ({
           </>
         ) : (
           <div className="w-[70px] h-[70px] rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center group-hover:border-gray-500 group-hover:bg-gray-200 transition-all duration-200">
-            <Upload size={20} className="text-gray-500 group-hover:text-gray-600 mb-1" />
-            <span className="text-gray-600 text-xs font-medium group-hover:text-gray-700">Logo</span>
+            <Upload
+              size={20}
+              className="text-gray-500 group-hover:text-gray-600 mb-1"
+            />
+            <span className="text-gray-600 text-xs font-medium group-hover:text-gray-700">
+              Logo
+            </span>
           </div>
         )}
       </label>
-      
+
       {!logoUrl && (
         <div className="mt-2 text-center">
-          <p className="text-xs font-medium text-gray-600">Click to upload logo</p>
+          <p className="text-xs font-medium text-gray-600">
+            Click to upload logo
+          </p>
         </div>
       )}
     </div>
   );
 
-  if(isLoading) {
+  if (isLoading) {
     return (
       <div className="w-full flex flex-col gap-4">
         <Card className="rounded-none">
@@ -257,7 +292,7 @@ export const ARDocTemplate = ({
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -265,13 +300,14 @@ export const ARDocTemplate = ({
       <section className="relative w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center p-[30px]">
         <TooltipLayout
           trigger={
-            <div className="absolute top-2 right-2 bg-black/50 p-2 rounded-sm cursor-pointer"
+            <div
+              className="absolute top-2 right-2 bg-black/50 p-2 rounded-sm cursor-pointer"
               onClick={handlePrintClick}
             >
               <Printer size={20} className="text-white" />
             </div>
           }
-          content={"Print/Pdf"}
+          content={"Print/Save"}
         />
         <div className="w-full h-full flex flex-col items-center gap-1">
           <div className="w-[53%] flex justify-between ">
@@ -281,7 +317,7 @@ export const ARDocTemplate = ({
               inputId="logo-1"
               alt="Left Logo"
             />
-            
+
             <div className="flex flex-col gap-2 text-center">
               <Label>REPUBLIC OF THE PHILIPPINES</Label>
               <Label>CITY OF CEBU</Label>
@@ -289,7 +325,7 @@ export const ARDocTemplate = ({
               <Label>BARANGAY BASE RESPONDERS</Label>
               <Label>BARANGAY SAN ROQUE (CIUDAD) </Label>
             </div>
-            
+
             <LogoUpload
               logoUrl={reportTemplate?.rte_logoRight}
               onLogoChange={handleRightLogoChange}
@@ -297,19 +333,41 @@ export const ARDocTemplate = ({
               alt="Right Logo"
             />
           </div>
-          <Separator className="bg-black mt-4"/>
+          <Separator className="bg-black mt-4" />
           <div className="w-full flex flex-col items-center">
             <Label className="my-2">ACTION PHOTO REPORTS</Label>
-            <div className="w-full flex flex-col space-y-2">
-              <Label>NAME OF INCIDENT OR ACTIVITY: <span>{incident}</span></Label>
-              <Label>DATE & TIME: <span>{dateTime}</span></Label>
-              <Label>LOCATION: <span>{location}</span></Label>
-              <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
-            </div>
-            <div className="flex gap-8 mt-6">
-              {images?.map((image: any, index: number) => (
-                <img key={index} src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
-              ))}
+            <div className="w-full flex flex-col items-center relative">
+              <div className="w-full flex flex-col space-y-2">
+                <Label>
+                  NAME OF INCIDENT OR ACTIVITY: <span>{incident}</span>
+                </Label>
+                <Label>
+                  DATE & TIME: <span>{dateTime.toUpperCase()}</span>
+                </Label>
+                <Label>
+                  LOCATION: <span>{location}</span>
+                </Label>
+                <Label>
+                  ACTIONS TAKEN: <span>{act_taken}</span>
+                </Label>
+              </div>
+              <div className="flex gap-8 mt-6">
+                {images?.map((image: any, index: number) => (
+                  <img
+                    key={index}
+                    src={image.url}
+                    className="w-[300px] h-[220px] bg-gray"
+                  />
+                ))}
+              </div>
+              <div
+                className="absolute rounded-lg flex items-center justify-center w-full h-full bg-black/40 
+              transition-opacity duration-300 cursor-pointer opacity-0 hover:opacity-100"
+                onClick={handleEdit}
+              >
+                <Pen size={20} className="text-white/80" />{" "}
+                <p className="ml-2 text-white/80 text-lg">Edit</p>
+              </div>
             </div>
             <div className="w-[85%] flex justify-between mt-12">
               <div className="flex flex-col gap-2">
@@ -317,11 +375,17 @@ export const ARDocTemplate = ({
                 <div className="relative">
                   <Combobox
                     variant="modal"
-                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    customTrigger={
+                      <Pen
+                        size={16}
+                        className="absolute right-0 top-0 cursor-pointer"
+                      />
+                    }
                     value=""
                     onChange={(value) => changePreparedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
+                    modalTitle="Select a signer"
                   />
                   <Label className="w-full text-center">{prepared_by}</Label>
                 </div>
@@ -332,11 +396,17 @@ export const ARDocTemplate = ({
                 <div className="relative">
                   <Combobox
                     variant="modal"
-                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    customTrigger={
+                      <Pen
+                        size={16}
+                        className="absolute right-0 top-0 cursor-pointer"
+                      />
+                    }
                     value=""
                     onChange={(value) => changeRecommendedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
+                    modalTitle="Select a signer"
                   />
                   <Label className="w-full text-center">{recommended_by}</Label>
                 </div>
@@ -347,15 +417,23 @@ export const ARDocTemplate = ({
                 <div className="relative">
                   <Combobox
                     variant="modal"
-                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    customTrigger={
+                      <Pen
+                        size={16}
+                        className="absolute right-0 top-0 cursor-pointer"
+                      />
+                    }
                     value=""
                     onChange={(value) => changeApprovedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
+                    modalTitle="Select a signer"
                   />
                   <Label className="w-full text-center">{approved_by}</Label>
                 </div>
-                <Label className="w-full text-center">ASST. DEPARTMENT HEAD</Label>
+                <Label className="w-full text-center">
+                  ASST. DEPARTMENT HEAD
+                </Label>
               </div>
             </div>
           </div>

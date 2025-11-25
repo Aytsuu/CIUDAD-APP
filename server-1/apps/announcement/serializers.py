@@ -7,6 +7,7 @@ from apps.profiling.models import ResidentProfile
 from apps.administration.models import *
 from .models import Announcement, AnnouncementFile, AnnouncementRecipient
 from utils.supabase_client import upload_to_storage
+from apps.notification.utils import create_notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
     
     def get_staff(self, obj):
         info = obj.staff.rp.per
-        name = f"{info.per_lname}{f" {info.per_mname[0]}." if info.per_mname else ""} {info.per_fname}"
+        name = f"{info.per_lname}{' ' + info.per_mname[0] + '.' if info.per_mname else ''} {info.per_fname}"
 
         return {
             "id": obj.staff.staff_id,
@@ -163,6 +164,16 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
             else:
                 residents = ResidentProfile.objects.all()
                 rec_list.extend(residents)
+
+        if rec_list:
+            create_notification(
+                title="New Announcement",
+                message=f"A new announcement has been posted: {created_recipients[0].ann.ann_title}",
+                # sender=self.context['request'].user,
+                recipients=rec_list,
+                notif_type="announcement",
+                target_obj=created_recipients[0].ann
+            )
 
         # Send emails
         for rec in rec_list:

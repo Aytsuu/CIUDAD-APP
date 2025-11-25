@@ -17,7 +17,6 @@ export const updateGADBudgetFile = async (
 ) => {
   try {
     if (isDelete) {
-      console.log('Sending delete request with files:', files); // Debug log
       const response = await api.post('/gad/gad-budget-files/', {
         gbud_num: gbud_num,
         filesToDelete: files.map(file => ({
@@ -25,7 +24,6 @@ export const updateGADBudgetFile = async (
           path: file.path,
         })),
       });
-      console.log('Delete response:', response.data); // Debug log
       return response.data;
     } else {
       const validFiles = files.filter(file => 
@@ -35,7 +33,6 @@ export const updateGADBudgetFile = async (
         console.warn('No valid files to upload');
         return { success: true, message: 'No valid files to upload' };
       }
-      console.log('Sending upload request with files:', validFiles); // Debug log
       const response = await api.post('/gad/gad-budget-files/', {
         gbud_num: gbud_num,
         files: validFiles.map(file => ({
@@ -45,11 +42,9 @@ export const updateGADBudgetFile = async (
           path: file.path || `uploads/${file.name || `file_${Date.now()}`}`,
         })),
       });
-      console.log('Upload response:', response.data); // Debug log
       return response.data;
     }
   } catch (err) {
-    console.error('File operation error:', err); // Debug log
     throw new Error(isDelete ? 'Failed to delete files from server' : 'Failed to upload files to server');
   }
 };

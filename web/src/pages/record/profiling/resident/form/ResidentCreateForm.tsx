@@ -11,10 +11,6 @@ import {
 } from "../../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import {
-  MapPin,
-  User,
-  FileText,
-  Shield,
   UserRoundPlus,
   MoveRight,
 } from "lucide-react";
@@ -43,7 +39,6 @@ export default function ResidentCreateForm({ params }: {
     form,
     defaultValues,
     populateFields,
-    checkDefaultValues,
   } = useResidentForm("", params?.origin);
    const [addresses, setAddresses] = React.useState<any[]>(DEFAULT_ADDRESS);
   const [isSubmitting] = React.useState<boolean>(false);
@@ -79,28 +74,15 @@ export default function ResidentCreateForm({ params }: {
 
   const isLoading = isLoadingResidents || isLoadingSitio
 
-  // ================== SIDE EFFECTS ==================
-  React.useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+  // ==================== CALLBACKS ====================
+  const validateForm = React.useCallback(async () => {
+    const isFormValid = await form.trigger();
+    const areAddressesValid = validateAddresses(addresses);
+    setIsAllowSubmit(isFormValid && areAddressesValid);
+    form.clearErrors();
+    setValidAddresses([true, true, true, true, true]);
+  }, [form, addresses]);
 
-  React.useEffect(() => {
-    const subscription = form.watch(async (value) => {
-      setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
-    });
-    return () => subscription.unsubscribe();
-  }, [form, defaultValues]);
-
-  React.useEffect(() => {
-    const per_addresses = params?.form?.getValues().personalSchema.per_addresses
-    if(per_addresses?.length > 0) setAddresses(per_addresses)
-  }, [params?.form])
-
-  // ==================== HANDLERS ====================
   const validateAddresses = React.useCallback(
     (addresses: any[]) => {
       const validity = addresses.map(
@@ -108,7 +90,7 @@ export default function ResidentCreateForm({ params }: {
           address.add_province !== "" &&
           address.add_city !== "" &&
           address.add_barangay !== "" &&
-          (address.add_barangay !== ""
+          (address.add_barangay === "SAN ROQUE (CIUDAD)"
             ? address.sitio !== ""
             : address.add_external_sitio !== "")
       );
@@ -136,6 +118,32 @@ export default function ResidentCreateForm({ params }: {
     }
   }, [form, residentsList, populateFields, addresses]);
 
+  // ================== SIDE EFFECTS ==================
+  React.useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  React.useEffect(() => {
+    const subscription = form.watch(() => validateForm());
+    return () => subscription.unsubscribe();
+  }, [form, validateForm]);
+
+  // Also validate when addresses change
+  React.useEffect(() => {
+    validateForm();
+  }, [addresses, validateForm]);
+
+
+  React.useEffect(() => {
+    const per_addresses = params?.form?.getValues().personalSchema.per_addresses
+    if(per_addresses?.length > 0) setAddresses(per_addresses)
+  }, [params?.form])
+
+  // ==================== HANDLERS ====================
   // Continue for complete resident profiling
   const handleContinue = async () => {
     params?.form.setValue("personalSchema.per_addresses", addresses)
@@ -225,37 +233,6 @@ export default function ResidentCreateForm({ params }: {
               <Button onClick={handleContinue}>
                 Continue <MoveRight/>
               </Button>
-            </div>
-          </div>
-
-          {/* Help Section */}
-          <div className="text-center pt-4 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-2">
-              All resident information is
-              securely stored and encrypted. Access is restricted to authorized
-              personnel only.
-            </p>
-            <p className="text-xs text-gray-500 mb-2">
-              Need assistance with resident registration? Contact your system
-              administrator for help.
-            </p>
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                Personal Info
-              </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                Address Details
-              </span>
-              <span className="flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                Documentation
-              </span>
-              <span className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                Secure Storage
-              </span>
             </div>
           </div>
         </CardContent>

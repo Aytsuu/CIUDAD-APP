@@ -12,33 +12,66 @@ import ClerkDonateViewSchema from "@/form-schema/donate-view-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useUpdateDonation } from "./queries/donationUpdateQueries";
 import {
-  useGetDonations,
   useGetPersonalList,
+  useGetDonationById,
+  useGetStaffList,
 } from "./queries/donationFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/context/AuthContext"; 
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
+  const { user } = useAuth();
+  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
-  const { data: donations } = useGetDonations();
-  const { data: personalList = [], isLoading: isPersonalLoading } =
-    useGetPersonalList();
+  const {
+    data: donation,
+    isLoading: isDonationLoading,
+    isFetching: isDonationFetching,
+  } = useGetDonationById(don_num);
+  const {
+    data: personalList = [],
+    isLoading: isPersonalLoading,
+    isFetching: isPersonalFetching,
+  } = useGetPersonalList();
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const { mutate: updateDonation, isPending } = useUpdateDonation();
 
-  const donation = donations?.find((d) => d.don_num === don_num);
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
-      don_donor: donation?.don_donor || "",
-      per_id: donation?.per_id || null,
-      don_item_name: donation?.don_item_name || "",
-      don_qty: donation?.don_qty || "",
-      don_description: donation?.don_description || "",
-      don_category: donation?.don_category || "",
-      don_date: donation?.don_date || new Date().toISOString().split("T")[0],
+      don_donor: "",
+      don_item_name: "",
+      don_qty: "",
+      don_description: "",
+      don_category: "",
+      don_date: new Date().toISOString().split("T")[0],
+      don_status: "Stashed",
+      don_dist_head: null,
+      don_dist_date: new Date().toISOString().split("T")[0],
     },
   });
+
+  // Reset form when donation data is loaded
+  useEffect(() => {
+    if (donation) {
+      form.reset({
+        don_donor: donation.don_donor || "",
+        don_item_name: donation.don_item_name || "",
+        don_qty: donation.don_qty || "",
+        don_description: donation.don_description || "",
+        don_category: donation.don_category || "",
+        don_date: donation.don_date || new Date().toISOString().split("T")[0],
+        don_status:
+          (donation.don_status as "Stashed" | "Allotted") || "Stashed",
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
+      });
+    }
+  }, [donation, form]);
 
   const categoryWatch = form.watch("don_category");
   useEffect(() => {
@@ -61,14 +94,73 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     );
   };
 
+  // Show loading spinner while data is being fetched
+  if (isDonationLoading || isPersonalLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <Spinner size="lg" />
+        <p className="mt-4 text-gray-600">Loading donation details...</p>
+      </div>
+    );
+  }
+
+  // Show loading spinner while data is refetching/updating
+  if (isDonationFetching || isPersonalFetching) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <Spinner size="lg" />
+        <p className="mt-4 text-gray-600">Updating donation information...</p>
+      </div>
+    );
+  }
+
   if (!donation) {
-    return <div className="text-center py-8">Loading donation details...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <div className="text-center">
+          <p className="text-gray-600 mb-2">Donation not found</p>
+          <p className="text-sm text-gray-400">
+            The donation record you're looking for doesn't exist.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+    <div className="flex flex-col min-h-0 h-auto p-2 rounded-lg overflow-auto">
       <Form {...form}>
         <form className="flex flex-col gap-4">
+          {/* Show loading overlay when saving */}
+          {isPending && (
+            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+              <div className="flex flex-col items-center gap-2">
+                <Spinner size="lg" />
+                <p className="text-gray-600">Saving changes...</p>
+              </div>
+            </div>
+          )}
+
+          <FormSelect
+            control={form.control}
+            name="don_status"
+            label="Status"
+            options={[
+              { id: "Stashed", name: "Stashed" },
+              { id: "Allotted", name: "Allotted" },
+            ]}
+            readOnly={!isEditing}
+          />
+
+          {/* Donation Date */}
+          <FormDateTimeInput
+            control={form.control}
+            name="don_date"
+            type="date"
+            label="Donation Date"
+            readOnly={!isEditing}
+          />
+          
           {/* Donor Name */}
           <FormField
             control={form.control}
@@ -161,42 +253,73 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             readOnly={!isEditing}
           />
 
-          {/* Donation Date */}
+          <FormField
+            control={form.control}
+            name="don_dist_head"
+            render={({ field }) => (
+              <ComboboxInput
+                value={field.value || ""}
+                options={staffList}
+                isLoading={isStaffLoading}
+                label="Distribution Head"
+                placeholder="Select distribution head..."
+                emptyText="No staff found."
+                onSelect={(value, _item) => {
+                  field.onChange(value);
+                }}
+                displayKey="full_name"
+                valueKey="staff_id"
+                additionalDataKey="position_title"
+                readOnly={!isEditing}
+              />
+            )}
+          />
+          <div className="mb-5">
           <FormDateTimeInput
             control={form.control}
-            name="don_date"
+            name="don_dist_date"
             type="date"
-            label="Donation Date"
+            label="Distributed Date"
             readOnly={!isEditing}
           />
+        </div>
 
-          {/* Edit/Save Button */}
-          <div className="mt-8 flex justify-end gap-3">
-            {isEditing ? (
-              <>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    form.reset();
-                    setIsEditing(false);
-                  }}
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-                <ConfirmationModal
-                  trigger={
-                    <Button type="button" className="" disabled={isPending}>
-                      {isPending ? "Saving..." : "Save Changes"}
-                    </Button>
-                  }
-                  title="Confirm Save"
-                  description="Are you sure you want to save the changes?"
-                  actionLabel="Confirm"
-                  onClick={handleConfirmSave}
-                />
-              </>
-            ) : (
+          {/* Edit/Save Button - Only show if user is secretary */}
+          {isSecretary && (
+            <div className="flex justify-end gap-3 mb-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      form.reset();
+                      setIsEditing(false);
+                    }}
+                    variant="outline"
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <ConfirmationModal
+                    trigger={
+                      <Button type="button" className="" disabled={isPending}>
+                        {isPending ? (
+                          <>
+                            <Spinner size="sm" className="mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Changes"
+                        )}
+                      </Button>
+                    }
+                    title="Confirm Save"
+                    description="Are you sure you want to save the changes?"
+                    actionLabel="Confirm"
+                    onClick={handleConfirmSave}
+                  />
+                </>
+              ) : (
                 <Button
                   type="button"
                   onClick={() => setIsEditing(true)}
@@ -204,9 +327,9 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 >
                   Edit
                 </Button>
-              )
-            }
-          </div>
+              )}
+            </div>
+          )}
         </form>
       </Form>
     </div>

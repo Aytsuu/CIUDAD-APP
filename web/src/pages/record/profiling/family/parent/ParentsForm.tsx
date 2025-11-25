@@ -74,7 +74,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
     <div className="bg-white rounded-lg">
       <div className="mb-4">
         <h2 className="font-semibold text-lg">{title}</h2>
-        <p className="text-xs text-black/50">Review all fields before proceeding</p>
+        <p className="text-sm text-black/50">Review all fields before proceeding</p>
       </div>
 
       <Form {...form}>

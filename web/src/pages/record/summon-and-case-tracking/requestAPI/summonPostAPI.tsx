@@ -1,107 +1,5 @@
 import { api } from "@/api/api";
 
-export const addSchedule = async (schedule: Record<string, any>) => {
-    try{
-        console.log('data:', {
-            sd_id: schedule.sd_id,
-            st_id: schedule.st_id,
-            ss_mediation_level: schedule.ss_mediation_level,
-            ss_reason: "Ongoing Mediation",
-            ss_is_rescheduled: false,
-            sr_id: schedule.sr_id
-        })
-   
-        const res = await api.post('clerk/create-summon-sched/', {
-            sd_id: schedule.sd_id,
-            st_id: schedule.st_id,
-            ss_mediation_level: schedule.ss_mediation_level,
-            ss_reason: "Ongoing Mediation",
-            ss_is_rescheduled: false,
-            sr_id: schedule.sr_id
-        })
-
-        if(res){
-            await api.put(`clerk/update-summon-request/${schedule.sr_id}/`, {
-                sr_case_status: "Ongoing",
-            })
-
-            await api.put(`clerk/update-summon-time-availability/${schedule.st_id}/`, {
-                st_is_booked: true,
-            })
-
-        }
-
-        return res.data
-    }catch(err){
-        console.error(err)
-        throw err;
-    }
-}
-
-// export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
-    // try{
-
-    //     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-    //         throw new Error('File upload incomplete: missing URL or path');
-    //     }
-
- 
-
-    //     const formData = new FormData();
-    //     formData.append('file', media.file);
-    //     formData.append('ca_id', ca_id);
-    //     formData.append('csd_name', media.file.name);
-    //     formData.append('csd_type', media.file.type || 'application/octet-stream');
-    //     formData.append('csd_path', media.storagePath);
-    //     formData.append('csd_url', media.publicUrl);
-    //     formData.append('csd_upload_date', new Date().toISOString());
-    //     formData.append('csd_description', description);
-
-    //     console.log(formData)
-
-    //     const res = await api.post('clerk/case-supp-doc/', formData)
-
-    //     return res.data
-    // }catch(err){
-    //     console.error(err)
-    // }
-// }
-
-export const addSuppDoc = async ( ss_id: string, sr_id: string, files: { name: string; type: string; file: string | undefined }[], reason: string
-) => {
-    try {
-        const data = {
-            ss_id,
-            files: files.map(file => ({
-                name: file.name,
-                type: file.type,
-                file: file.file  
-            }))
-        };
-
-        console.log(data)
-
-        const response = await api.post('clerk/summon-supp-doc/', data);
-
-        if(response){
-            await api.put(`clerk/update-summon-sched/${ss_id}/`, {
-                ss_is_rescheduled: true,
-                ss_reason: reason
-            })
-
-            await api.put(`clerk/update-summon-request/${sr_id}/`, {
-                sr_case_status: "Waiting for Schedule"
-            })
-            
-        }
-
-        return response.data;
-    } catch (error: any) {
-        console.error('Upload failed:', error.response?.data || error);
-        throw error;
-    }
-};
-
 
 export const addSummonDate = async (newDates: string[], oldDates: {
     sd_id: number;
@@ -145,3 +43,146 @@ export const addSummonTimeSlots = async (timeSlots: Array<{
         throw err; 
     }
 }
+
+
+export const addSchedule = async (schedule: Record<string, any>, status_type: string) => {
+    try{
+        console.log('data:', {
+            sd_id: schedule.sd_id,
+            st_id: schedule.st_id,
+            hs_level: schedule.hs_level,
+            hs_is_closed: false,
+            sc_id: schedule.sc_id
+        })
+   
+        const res = await api.post('clerk/hearing-schedule/', {
+            sd_id: schedule.sd_id,
+            st_id: schedule.st_id,
+            hs_level: schedule.hs_level,
+            hs_is_closed: false,
+            sc_id: schedule.sc_id
+        })
+
+        if(res){
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
+                    sc_mediation_status: "Ongoing",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
+                    sc_conciliation_status: "Ongoing",
+                })
+            }
+
+            await api.put(`clerk/update-summon-time-availability/${schedule.st_id}/`, {
+                st_is_booked: true,
+            })
+
+        }
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err;
+    }
+}
+
+
+export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
+    try{
+        const data = {
+            hs_id,
+            files: files.map(file => ({
+                name: file.name,
+                type: file.type,
+                file: file.file  
+            }))
+        };
+
+        const response = await api.post('clerk/hearing-minutes/', data);
+
+        if(response){
+            await api.put(`clerk/update-hearing-schedule/${hs_id}/`, {
+                hs_is_closed: true,
+            })
+
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_mediation_status: "Waiting for Schedule",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_conciliation_status: "Waiting for Schedule",
+                })
+            }
+
+        }
+
+        return response.data;
+
+    }catch(err){
+        console.error(err)
+        throw err;
+    }
+}
+
+
+export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string; type: string; file: string | undefined }[], staff_id: string) => {
+    try{
+
+        // insert the remark
+        const response = await api.post('clerk/remark/', {
+            rem_date: new Date().toISOString(),
+            rem_remarks: remarks,
+            hs_id: hs_id,
+            staff_id: staff_id
+        })
+
+        // extract the rem_id
+        const rem_id = response.data.rem_id
+
+        // prepare payload for suppdocs
+        const data = {
+            rem_id,
+            files: files.map(file => ({
+                name: file.name,
+                type: file.type,
+                file: file.file  
+            }))
+        };
+
+        //add supp doc
+        if(rem_id){
+            await api.post('clerk/remark-supp-docs/', data)
+        }
+
+        // if close checkbox is checked, close the hearing schedule and re-open the timeslot
+        if(close){
+            await api.put(`clerk/update-hearing-schedule/${hs_id}/`, {
+                hs_is_closed: true,
+            })
+            await api.put(`clerk/update-summon-time-availability/${st_id}/`, {
+                st_is_booked: false,
+            })
+
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_mediation_status: "Waiting for Schedule",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_conciliation_status: "Waiting for Schedule",
+                })
+            }
+            
+        }
+
+        return response.data
+    }catch(err){
+        console.error(err)
+        throw err
+    }
+}
+
+
+
+

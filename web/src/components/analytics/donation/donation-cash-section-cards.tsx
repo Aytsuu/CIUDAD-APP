@@ -1,30 +1,80 @@
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import React from "react";
+import { ArrowUpRight} from "lucide-react";
+import { useNavigate } from "react-router";
 import { useGetDonCardAnalytics } from "./donation-analytics-queries";
 
-const sections = [
-  {
-    title: "Total Cash Donation",
-    description: ""
-  }
-]
+const DonationCard = React.memo(({ 
+  title, 
+  value, 
+  isLoading,
+  description,
+  onClick,
+  isCurrency = false
+}: { 
+  title: string; 
+  value?: number | string; 
+  isLoading: boolean;
+  description?: string;
+  onClick?: () => void;
+  isCurrency?: boolean;
+}) => (
+  <Card 
+    className="relative cursor-pointer transition-all duration-300 hover:shadow-md group overflow-hidden"
+    onClick={onClick}
+  >
+    <CardHeader>
+      <CardDescription className="truncate">{title}</CardDescription>
+      <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+        {!isLoading && value !== undefined ? (
+          isCurrency ? `₱${value}` : value
+        ) : "..."}
+      </CardTitle>
+    </CardHeader>
+    <CardFooter className="flex-col items-start gap-1.5 text-sm">
+      {description && (
+        <div className="text-sm text-gray-600">
+          {description}
+        </div>
+      )}
+    </CardFooter>
+    
+    {/* Animated Arrow */}
+    <div className="absolute top-4 right-4 opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-300">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <ArrowUpRight className="w-4 h-4 text-primary" />
+      </div>
+    </div>
+  </Card>
+));
+
+DonationCard.displayName = "DonationCard";
+
+export const useDonationSectionCards = () => {
+  const navigate = useNavigate();
+  const { data: donationAnalytics, isLoading } = useGetDonCardAnalytics();
+
+  return {
+    cashDonations: (
+      <DonationCard 
+        title="Total Cash Donation" 
+        value={donationAnalytics?.total_monetary_donations}
+        isLoading={isLoading}
+        isCurrency={true}
+        onClick={() => {
+          navigate("/donation-record") 
+        }}
+      />
+    )
+  };
+};
 
 export const DonationSectionCards = () => {
-  const { data, isLoading } = useGetDonCardAnalytics();
+  const donationCards = useDonationSectionCards();
   
   return (
     <>
-      {sections.map((sec) => (
-        <Card key={sec.title}>
-          <CardHeader>
-            <CardDescription>{sec.title}</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              ₱{!isLoading ? data?.total_monetary_donations : "..."}
-            </CardTitle>
-          </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            </CardFooter>
-        </Card>
-      ))}
+      {Object.values(donationCards)}
     </>
   )
 }

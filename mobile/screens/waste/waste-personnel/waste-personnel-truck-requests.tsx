@@ -1,7 +1,7 @@
 import { api } from "@/api/api";
-import { Truck, TruckData, PersonnelItem, TruckFormValues } from "./waste-personnel-types";
+import { Trucks, TruckData, WastePersonnel, TruckFormValues } from "./waste-personnel-types";
 
-function isTruck(data: any): data is Truck {
+function isTruck(data: any): data is Trucks {
   const isValid = data &&
     typeof data.truck_id === "number" &&
     typeof data.truck_plate_num === "string" &&
@@ -12,7 +12,7 @@ function isTruck(data: any): data is Truck {
   return isValid;
 }
 
-export const getTruckById = async (truck_id: string): Promise<Truck> => {
+export const getTruckById = async (truck_id: any): Promise<Trucks> => {
   try {
     const response = await api.get(`waste/waste-trucks/${truck_id}/`);
 
@@ -29,30 +29,79 @@ export const getTruckById = async (truck_id: string): Promise<Truck> => {
   }
 };
 
-// Truck API functions
-export const fetchTrucks = async (): Promise<TruckData[]> => {
-  const response = await api.get("/waste/waste-trucks/");
-  return response.data.map((truck: any) => ({
-    truck_id: truck.truck_id.toString(),
-    truck_plate_num: truck.truck_plate_num,
-    truck_model: truck.truck_model,
-    truck_capacity: truck.truck_capacity.toString(),
-    truck_status: truck.truck_status,
-    truck_last_maint: truck.truck_last_maint,
-    truck_is_archive: truck.truck_is_archive,
-  }));
+export const getAllTrucks = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  isArchive?: boolean
+): Promise<{ results: Trucks[]; count: number }> => {
+  try {
+    const params: any = {
+      page,
+      page_size: pageSize
+    };
+    
+    if (searchQuery) params.search = searchQuery;
+    if (isArchive !== undefined) params.is_archive = isArchive;
+    
+    const response = await api.get("waste/waste-trucks/", { params });
+    const trucksData = response.data.results || response.data;
+    
+    if (!Array.isArray(trucksData)) {
+      throw new Error("Expected array of trucks");
+    }
+    
+    return {
+      results: trucksData
+        .filter(isTruck)
+        .map(truck => ({
+          ...truck,
+          truck_last_maint: formatDate(truck.truck_last_maint)
+        })),
+      count: response.data.count || trucksData.length
+    };
+  } catch (error) {
+    throw new Error("Failed to fetch trucks");
+  }
 };
 
-export const fetchPersonnel = async (): Promise<PersonnelItem[]> => {
-  const response = await api.get("/waste/waste-personnel/");
-  return response.data.map((person: any) => ({
-    id: person.wstp_id.toString(),
-    name: `${person.staff.profile.personal.fname} ${person.staff.profile.personal.lname}`,
-    position: person.staff.position.title,
-    contact: person.staff.profile.personal.contact,
-  }));
-};
+export const getAllPersonnel = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  position?: string
+): Promise<{ results: WastePersonnel[]; count: number }> => {
+  try {
+    const params: any = {
+      page,
+      page_size: pageSize
+    };
+    
+    if (searchQuery) params.search = searchQuery;
+    if (position) params.position = position;
+    
+    const response = await api.get("waste/waste-personnel/", { params });
+    
+    // Handle paginated response
+    if (response.data.results !== undefined) {
+      const returnData = {
+        results: response.data.results || [],
+        count: response.data.count || 0
+      };
 
+      return returnData;
+    }
+    
+    // Handle non-paginated response
+    const fallbackData = {
+      results: response.data || [],
+      count: response.data?.length || 0
+    };
+    return fallbackData;
+  } catch (error) {
+    throw error;
+  }
+};
 export const addTruck = async (data: TruckFormValues): Promise<TruckData> => {
   const response = await api.post("/waste/waste-trucks/", data);
   return {
@@ -62,6 +111,7 @@ export const addTruck = async (data: TruckFormValues): Promise<TruckData> => {
     truck_capacity: response.data.truck_capacity.toString(),
     truck_status: response.data.truck_status,
     truck_last_maint: response.data.truck_last_maint,
+    staff: response.data.staff,
   };
 };
 

@@ -1,6 +1,6 @@
-import { api } from "@/api/api";
+import api from "@/api/api";
+import { showSuccessToast } from "@/components/ui/toast";
 import supabase from "@/supabase/supabase";
-import { toast } from "sonner";
 
 export const updateProfilePicture = async (file: File) => {
   if (!file) throw "No file selected";
@@ -55,7 +55,7 @@ export const updateProfilePicture = async (file: File) => {
     });
 
     console.log("Backend update response:", response.data);
-    toast.success("Profile picture updated successfully");
+    showSuccessToast("Profile picture updated successfully");
     return `${urlData.publicUrl}?t=${Date.now()}`;
   } catch (error: any) {
     throw error.message || "Image upload failed. Please try again.";

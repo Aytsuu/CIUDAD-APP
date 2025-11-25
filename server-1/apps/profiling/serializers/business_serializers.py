@@ -7,6 +7,8 @@ from utils.supabase_client import upload_to_storage, remove_from_storage
 from datetime import datetime
 from ..utils import *
 import logging
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +166,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
   @transaction.atomic
   def create(self, validated_data):
+    # Create business record
     try:
         create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
@@ -182,6 +185,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
             staff = validated_data["staff"]
           )
 
+          # Create notification
+          create_notification(
+            title="New Business Respondent",
+            message=(
+                f"A new business respondent has been registered."
+            ),
+            recipients=general_recipients(True, br.staff.staff_id),
+            notif_type="REGISTRATION",
+            web_route="profiling/business/record",
+            web_params={},
+            mobile_route="/(profiling)/business/records",
+            mobile_params={},
+          )
+
         # Handle respondent/rp/br logic
         business_instance = self.create_business_instance(
             validated_data, rp, br
@@ -190,6 +207,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         # Handle file uploads
         if create_files:
             self.upload_files(business_instance, create_files)
+
+        # Create notification
+        create_notification(
+          title="New Business Record",
+          message=(
+              f"A new business has been registered."
+          ),
+          recipients=general_recipients(True, business_instance.staff.staff_id),
+          notif_type="REGISTRATION",
+          web_route="profiling/business/record",
+          web_params={},
+          mobile_route="/(profiling)/business/records",
+          mobile_params={},
+        )
 
         return business_instance
 
@@ -231,6 +262,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   
   @transaction.atomic
   def update(self, instance, validated_data):
+    # Update business details
     modification_request_files = validated_data.pop('modification_files', [])
     edit_files = validated_data.pop('edit_files', [])
     staff = validated_data.pop('staff', None)

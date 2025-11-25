@@ -147,11 +147,11 @@ export function AppSidebar() {
   const [activeItem, setActiveItem] = useState<string>("");
 
   const featureValidator = (requiredFeature?: string) => {
-    if (!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin";
+    if (!requiredFeature) return user?.staff?.pos.toLowerCase() == "admin";
 
     return (
       user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) ||
-      user?.staff?.pos?.toLowerCase() == "admin"
+      user?.staff?.pos.toLowerCase() == "admin"
     );
   };
 
@@ -159,10 +159,14 @@ export function AppSidebar() {
   const barangayItems: BaseMenuItem[] = [
     {
       title: "Calendar",
-      url: "/waste-calendar-scheduling",
+      url: "/calendar-page",
     },
     ...(featureValidator("report")
       ? [
+          {
+            title: "Team",
+            url: "/team",
+          },
           {
             title: "Report",
             url: "/",
@@ -182,36 +186,50 @@ export function AppSidebar() {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
               },
-              // { title: "Securado", url: "/report/securado" },
             ],
-          },
+          }
         ]
       : []),
     ...(featureValidator("complaint")
       ? [
           {
-            title: "Complaint",
-            url: "/complaint",
+            title: "Blotter",
+            url: "/",
+            items: [
+              {title: "Process", url: "/complaint"},
+              {title: "Record", url: "/record"}
+            ]
           },
         ]
       : []),
-    {
-      title: "Team",
-      url: "/team",
-    },
-    ...(featureValidator("summon & case tracker")
+    ...(featureValidator("council mediation")
       ? [
           {
-            title: "Summon & Case Tracker",
+            title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Request List", url: "/request-list" },
-              { title: "Summon Calendar", url: "/summon-calendar" },
+              { title: "Date & Time Availability", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
         ]
       : []),
+    ...(featureValidator("summon remarks")
+      ? [
+          {
+            title: "Summon Remarks",
+            url: "/summon-remarks",
+          },
+        ]
+      : []),
+    ...(featureValidator("conciliation proceedings")
+    ? [
+        {
+          title: "Conciliation Proceedings",
+          url: "/conciliation-proceedings",
+        },
+      ]
+    : []),
     ...(featureValidator("gad")
       ? [
           {
@@ -235,7 +253,7 @@ export function AppSidebar() {
             title: "Council",
             url: "/",
             items: [
-              { title: "Council Events", url: "/calendar-page" },
+              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
@@ -257,8 +275,8 @@ export function AppSidebar() {
                 url: "/treasurer-income-expense-main",
               },
               {
-                title: "Income & Disbursement",
-                url: "/treasurer-income-and-disbursement",
+                title: "Disbursement Voucher",
+                url: "/treasurer-disbursement",
               },
               {
                 title: "Payment Request",
@@ -278,6 +296,32 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("waste")
+    ? [
+        {
+          title: "Waste",
+          url: "/", 
+          items: [
+            {
+              title: "Illegal Dumping Reports",
+              url: "/waste-illegaldumping-report",
+            },
+            {
+              title: "Garbage Pickup Request",
+              url: "/garbage-pickup-request",
+            },
+            {
+              title: "Waste Collection",
+              url: "/waste-collection",
+            },
+            {
+              title: "Waste Personnel & Collection Vehicle",
+              url: "/waste-personnel",
+            },
+          ]
+        }
+      ]
+    : []),
     ...(featureValidator("certificate & clearances")
       ? [
           {
@@ -291,6 +335,10 @@ export function AppSidebar() {
               {
                 title: "Business Permits",
                 url: "record/clearances/businesspermit",
+              },
+              {
+                title: "Service Charge",
+                url: "record/clearances/servicecharge",
               },
               {
                 title: "Issued Certificates",
@@ -308,22 +356,6 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("waste")
-      ? [
-          {
-            title: "Illegal Dumping Reports",
-            url: "/waste-illegaldumping-report",
-          },
-          {
-            title: "Garbage Pickup Request",
-            url: "/garbage-pickup-request",
-          },
-          {
-            title: "Waste Personnel & Collection Vehicle",
-            url: "/waste-personnel",
-          },
-        ]
-      : []),
     {
       title: "Activity Log",
       url: "/record/activity-log",
@@ -332,7 +364,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -345,10 +377,6 @@ export function AppSidebar() {
         {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
-        },
-        {
-          title: "Maternal",
-          url: "/",
         },
       ],
     }] : []),
@@ -382,8 +410,8 @@ export function AppSidebar() {
 
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
@@ -406,7 +434,6 @@ export function AppSidebar() {
             title: "Profiling",
             url: "/",
             items: [
-              // { title: "All", url: "/profiling/all" },
               {
                 title: "Resident",
                 url: "/profiling/resident",

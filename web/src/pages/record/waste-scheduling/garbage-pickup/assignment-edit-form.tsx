@@ -13,7 +13,6 @@ import { useGetCollectors } from "./queries/GarbageRequestFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateAssignmentCollectorsAndSchedule } from "./queries/GarbageRequestUpdateQueries";
 
-
 function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
 }: {
     pick_id: string;
@@ -28,6 +27,8 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
     };
 }){
 
+    console.log('Assignment Collectors:', assignment?.collectors)
+    console.log('acl_ids', acl_id)
     const { mutate: updateAssignmentAndSchedule, isPending} = useUpdateAssignmentCollectorsAndSchedule()
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
@@ -58,7 +59,7 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
                 truck: values.truck,
                 date: values.date,
                 time: values.time,
-                collectors: values.loaders
+                collectors: values.loaders // This matches the schema field name
             }
         }, {
             onSuccess: () => {
@@ -67,12 +68,11 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
         });
     };
 
-
-   const form = useForm<z.infer<typeof EditAcceptPickupRequestSchema>>({
+    const form = useForm<z.infer<typeof EditAcceptPickupRequestSchema>>({
         resolver: zodResolver(EditAcceptPickupRequestSchema),
         defaultValues: {
             driver: assignment?.driver ? String(assignment.driver) : "",
-            loaders: assignment?.collectors?.map(id => String(id)) || [],
+            loaders: assignment?.collectors?.map(id => String(id)) || [], 
             truck: assignment?.truck ? String(assignment.truck) : "",
             date: assignment?.pick_date || "",
             time: assignment?.pick_time || "",
@@ -107,7 +107,7 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
 
                     <FormComboCheckbox
                         control={form.control}
-                        name="collectors"
+                        name="loaders"  
                         label="Collector(s)"
                         options={collectorOptions}
                     />

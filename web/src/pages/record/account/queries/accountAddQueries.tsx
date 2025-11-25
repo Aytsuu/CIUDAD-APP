@@ -32,7 +32,7 @@ export const useVerifyAccountReg = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
-        const res = await api.post("authentication/verify/web-registration/", data);
+        const res = await api.post("authentication/signup/otp-verification/", data);
         return res.data;
       } catch (err) { 
         throw err;

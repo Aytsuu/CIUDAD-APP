@@ -10,10 +10,9 @@ import ComplaintPagination from "./ComplaintPagination";
 import { useBulkArchiveComplaints } from "../api-operations/queries/complaintPostQueries";
 
 export default function ComplaintRecord() {
-  const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<string | null>(null);
-  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
   const bulkArchiveComplaints = useBulkArchiveComplaints();
@@ -22,16 +21,15 @@ export default function ComplaintRecord() {
     setCurrentPage(1);
   }, [searchQuery, pageSize]);
 
-  // Filter for Filed and Raised complaints that are not archived
-  const filedAndRaisedComplaints = useMemo(() => {
+  // Filter for Accepted and Raised complaints that are not archived
+  const acceptedAndRaisedComplaints = useMemo(() => {
     return complaints.filter((c: Complaint) => 
-      (c.comp_status === 'Filed' || c.comp_status === 'Raised') && !c.comp_is_archive
-    );
+      (c.comp_status === 'Accepted' || c.comp_status === 'Raised'));
   }, [complaints]);
 
   const filteredData = useMemo(() => {
-    return filterComplaints(filedAndRaisedComplaints, searchQuery);
-  }, [filedAndRaisedComplaints, searchQuery, timeFilter]);
+    return filterComplaints(acceptedAndRaisedComplaints, searchQuery);
+  }, [acceptedAndRaisedComplaints, searchQuery, timeFilter]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -40,18 +38,13 @@ export default function ComplaintRecord() {
 
   const buttonCounts = useMemo(() => {
     const requestCount = complaints.filter((c: Complaint) => 
-      c.comp_status === 'Pending' && !c.comp_is_archive
-    ).length;
-    
-    const archivedCount = complaints.filter((c: Complaint) => 
-      c.comp_is_archive === true
+      c.comp_status === 'Pending'
     ).length;
     
     const rejectedCount = complaints.filter((c: Complaint) => 
-      c.comp_status === 'Rejected' && !c.comp_is_archive
-    ).length;
+      c.comp_status === 'Rejected').length;
 
-    return { requestCount, archivedCount, rejectedCount };
+    return { requestCount, rejectedCount };
   }, [complaints]);
 
   if (error) return <div>Error: {error.message}</div>;
@@ -65,7 +58,7 @@ export default function ComplaintRecord() {
           Blotter 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view filed and raised complaint
+          Manage and view accepted and raised complaints
         </p>
       </div>
       <hr className="pb-4" />
@@ -82,7 +75,6 @@ export default function ComplaintRecord() {
           newReport: true,
           rejected: false, 
           requestCount: buttonCounts.requestCount,
-          archivedCount: buttonCounts.archivedCount,
           rejectedCount: buttonCounts.rejectedCount,
         }}
       />

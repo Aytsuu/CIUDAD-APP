@@ -1,3 +1,4 @@
+
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +15,9 @@ class FamilyTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
+        search_query = self.request.query_params.get('search', '').strip()
+        occupancy = self.request.query_params.get('occupancy', 'all')
+
         # Prefetch family compositions with related person data
         family_compositions = FamilyComposition.objects.select_related(
             'rp__per' 
@@ -76,7 +80,11 @@ class FamilyTableView(generics.ListCreateAPIView):
             'hh__add__sitio__sitio_name',
         )
 
-        search_query = self.request.query_params.get('search', '').strip()
+        if occupancy != 'all':
+           queryset = queryset.filter(
+              Q(fam_building__iexact=occupancy)
+           )
+
         if search_query:
             queryset = queryset.filter(
                 Q(fam_id__icontains=search_query) |
@@ -87,8 +95,8 @@ class FamilyTableView(generics.ListCreateAPIView):
                 Q(family_compositions__rp__per__per_mname__icontains=search_query) |
                 Q(family_compositions__rp__rp_id__icontains=search_query)
             ).distinct()
-
-        return queryset
+        
+        return queryset.order_by('-fam_id')
   
 class FamilyDataView(generics.RetrieveAPIView):
   permission_classes = [AllowAny]

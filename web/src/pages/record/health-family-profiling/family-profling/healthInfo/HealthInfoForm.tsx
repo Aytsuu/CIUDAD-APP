@@ -28,35 +28,30 @@ export default function HealthInfoForm({
   // Watch the method field with proper type safety
   const selectedMethods = form.watch(`${prefix}.method`) as string[] || []
   
-  // Memoize the noFamilyPlanningSelected check (checking lowercase since FormComboCheckbox stores lowercase)
+  // Check if "No Family Planning" is selected (values are stored in lowercase by FormComboCheckbox)
   const noFamilyPlanningSelected = useMemo(
-    () => selectedMethods.includes("nofamplanning"), // lowercase to match FormComboCheckbox behavior
+    () => selectedMethods.includes("nofamplanning"),
     [selectedMethods]
   )
 
+  // Clear source field when "No Family Planning" is selected
   useEffect(() => {
-    // If "No Family Planning" is selected, clear any other methods and clear the source
     if (noFamilyPlanningSelected) {
-      if (selectedMethods.length > 1) {
-        form.setValue(`${prefix}.method`, ["nofamplanning"]) // lowercase
-      }
-      // Clear the source field when no family planning is selected
       form.setValue(`${prefix}.source`, "")
-      // Also clear LMP date if no family planning is selected
-      form.setValue(`${prefix}.lmpDate`, "")
     }
-    // If other family planning methods are selected and "No Family Planning" gets added, 
-    // remove "No Family Planning" to allow multiple selections
-    else if (selectedMethods.length > 1 && selectedMethods.includes("nofamplanning")) {
-      const filteredMethods = selectedMethods.filter(method => method !== "nofamplanning")
-      form.setValue(`${prefix}.method`, filteredMethods)
-    }
-  }, [noFamilyPlanningSelected, selectedMethods, form, prefix])
+  }, [noFamilyPlanningSelected, form, prefix])
 
-  // Memoize the show condition - only show if methods are selected AND it's not "No Family Planning"
+  // Show family planning source field only when methods are selected AND it's not "No Family Planning"
   const showFamilyPlanningSource = useMemo(() => {
-    return selectedMethods.length > 0 && !selectedMethods.includes("nofamplanning") // lowercase
-  }, [selectedMethods])
+    return selectedMethods.length > 0 && !noFamilyPlanningSelected
+  }, [selectedMethods, noFamilyPlanningSelected])
+
+  // Debug logging (remove after testing)
+  useEffect(() => {
+    console.log("Selected Methods:", selectedMethods)
+    console.log("No Family Planning Selected:", noFamilyPlanningSelected)
+    console.log("Show Family Planning Source:", showFamilyPlanningSource)
+  }, [selectedMethods, noFamilyPlanningSelected, showFamilyPlanningSource])
 
   return (
     <div className="bg-white rounded-lg">
@@ -110,28 +105,26 @@ export default function HealthInfoForm({
               type="date"
               max={new Date().toISOString().split('T')[0]}
             />
-            <div className={showFamilyPlanningSource ? "sm:col-span-3 lg:col-span-1" : "sm:col-span-2 lg:col-span-2"}>
-              <FormComboCheckbox
-                control={form.control}
-                name={`${prefix}.method`}
-                label="Family Planning Method"
-                placeholder="Select Method"
-                maxDisplayValues={5}
-                options={[
-                  { id: "pills", name: "Pills" },
-                  { id: "dmpa", name: "DMPA" },
-                  { id: "condom", name: "Condom" },
-                  { id: "iud-i", name: "IUD-I" },
-                  { id: "iud-pp", name: "IUD-PP" },
-                  { id: "implant", name: "Implant" },
-                  { id: "cervicalMucus", name: "Cervical Mucus Method" },
-                  { id: "basalBodyTemp", name: "Basal Body Temp" },
-                  { id: "vasectomy", name: "Vasectomy" },
-                  { id: "noFamPlanning", name: "No Family Planning" },
-                ]}
- 
-              />
-            </div>
+            <FormComboCheckbox
+              control={form.control}
+              name={`${prefix}.method`}
+              label="Family Planning Method"
+              placeholder="Select Method"
+              maxDisplayValues={5}
+              exclusiveOptionId="noFamPlanning"
+              options={[
+                { id: "pills", name: "Pills" },
+                { id: "dmpa", name: "DMPA" },
+                { id: "condom", name: "Condom" },
+                { id: "iud-i", name: "IUD-I" },
+                { id: "iud-pp", name: "IUD-PP" },
+                { id: "implant", name: "Implant" },
+                { id: "cervicalMucus", name: "Cervical Mucus Method" },
+                { id: "basalBodyTemp", name: "Basal Body Temp" },
+                { id: "vasectomy", name: "Vasectomy" },
+                { id: "noFamPlanning", name: "No Family Planning" },
+              ]}
+            />
            
             {showFamilyPlanningSource && (
               <FormSelect

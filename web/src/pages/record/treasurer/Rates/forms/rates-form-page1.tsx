@@ -24,7 +24,7 @@ function RatesFormPage1({onSuccess, lastMaxRange} : {
             maxRange: "",
             minRange: initialMinRange,
             amount: "",
-            staff_id: user?.staff?.staff_id
+            staff_id: user?.staff?.staff_id 
         }
     })
     

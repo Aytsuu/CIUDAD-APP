@@ -197,16 +197,26 @@ export const generateDisbursementPdf = async (
   const headerText = [
     { text: "Republic of the Philippines", bold: true, size: 12 },
     { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-    { text: "", size: 14 },
+    { text: "", drawLine: true, size: 14 },
     { text: "Office of the Barangay Captain", bold: false, size: 13 },
     { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-    { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
+    // { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
   ];
 
   const centerX = pageWidth / 2;
   let headerY = yPos + 15;
 
   headerText.forEach((line) => {
+    if (line.drawLine) {
+    // Draw a horizontal line with normal weight
+    const lineWidth = 220;
+    const lineX = centerX - (lineWidth / 2);
+    doc.setLineWidth(1);
+    doc.line(lineX, headerY, lineX + lineWidth, headerY);
+    headerY += 20;
+    return;
+  }
+
     if (line.text === "") {
       headerY += 10;
       return;
@@ -476,10 +486,10 @@ export const generateDisbursementPdf = async (
 
   // Right side payment details
   const paymentRightX = margin + containerWidth - 200;
-  doc.text(`Check No.: ${data.dis_checknum || "________________"}`, paymentRightX, paymentY + 20);
-  doc.text(`Bank Name: ${data.dis_bank || "________________"}`, paymentRightX, paymentY + 35);
-  doc.text(`Date: ${data.dis_paydate || "________________"}`, paymentRightX + 100, paymentY + 20);
-  doc.text(`O.R No.: ${data.dis_or_num || "________________"}`, paymentRightX, paymentY + 50);
+  doc.text(`Check No.: ${data.dis_checknum }`, paymentRightX, paymentY + 20);
+  doc.text(`Bank Name: ${data.dis_bank }`, paymentRightX, paymentY + 35);
+  doc.text(`Date: ${data.dis_paydate }`, paymentRightX + 100, paymentY + 20);
+  doc.text(`O.R No.: ${data.dis_or_num }`, paymentRightX, paymentY + 50);
 
   // Accounting entries section
   const accountingY = paymentY + paymentHeight;

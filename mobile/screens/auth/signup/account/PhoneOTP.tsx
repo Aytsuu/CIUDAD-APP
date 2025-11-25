@@ -9,6 +9,7 @@ import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useSendOTP } from "../../queries/authPostQueries";
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 
 export default function PhoneOTP({ params }: { params: Record<string, any> }) {
@@ -138,6 +139,7 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
                 onPress={() => {
                   setModalVisible(false);
                   setOtpValue("");
+                  setOtpInput(["", "", "", "", "", ""]);
                 }}
               >
                 <Text className="text-center text-primaryBlue text-sm font-medium">

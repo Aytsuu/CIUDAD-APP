@@ -168,11 +168,11 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
   },
   {
     accessorKey: "br_fname",
-    header: "Last Name",
+    header: "First Name",
   },
   {
     accessorKey: "br_mname",
-    header: "Last Name",
+    header: "Middle Name",
   },
   {
     accessorKey: "br_dob",

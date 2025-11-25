@@ -1,13 +1,11 @@
 
 
 import { useState } from "react";
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
+import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form } from '@/components/ui/form/form';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -18,17 +16,18 @@ import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
-import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
+import { useGetWasteTrucks, type Trucks  } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useAuth } from "@/context/AuthContext";
 
 
 
 interface UpdateWasteColProps {
     wc_num: number;
-    wc_date: string;
+    wc_day: string;
     wc_time: string;
     wc_add_info: string;
     wc_is_archive: boolean;
@@ -39,18 +38,20 @@ interface UpdateWasteColProps {
     onSuccess?: () => void; 
 }
 
-const announcementOptions = [
-    { id: "all", label: "All" },
-    { id: "allbrgystaff", label: "All Barangay Staff" },
-    { id: "residents", label: "Residents" },
-    { id: "wmstaff", label: "Waste Management Staff" },
-    { id: "drivers", label: "Drivers" },
-    { id: "collectors", label: "Collectors" },
-    { id: "watchmen", label: "Watchmen" },
-];
 
 
-function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
+const dayOptions = [
+    { id: "Monday", name: "Monday" },
+    { id: "Tuesday", name: "Tuesday" },
+    { id: "Wednesday", name: "Wednesday" },
+    { id: "Thursday", name: "Thursday" },
+    { id: "Friday", name: "Friday" },
+    { id: "Saturday", name: "Saturday" },
+    { id: "Sunday", name: "Sunday" },
+]
+
+
+function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
     
     const { user } = useAuth();
 
@@ -59,9 +60,13 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
     const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];    
 
     //UPDATE QUERY MUTATIONS
     const { mutate: updateSchedule } = useUpdateWasteSchedule();
@@ -78,9 +83,11 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
         name: `${driver.firstname} ${driver.lastname}`  
     }));
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: String(truck.truck_id),
-        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            id: String(truck.truck_id),
+            name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`
     }));
 
     const sitioOptions = sitios.map(sitio => ({
@@ -92,14 +99,13 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: wc_date,
+            day: wc_day,
             time: wc_time,
             additionalInstructions: wc_add_info,
             selectedSitios: String(sitio_id),
             selectedCollectors: collector_ids.map(String),
             driver: String(driver_id),
             collectionTruck: String(truck_id),
-            selectedAnnouncements: [],
         },
     });
 
@@ -111,6 +117,54 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
 
+            //checks for sitio with the same day
+            const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
+            
+
+            const hasSameSitioSameDay = wasteSchedules.some(schedule => 
+                schedule.wc_day === values.day &&
+                schedule.sitio_name === selectedSitioName &&
+                schedule.wc_num !== Number(wc_num)   
+            );            
+
+            //checks for overlapping day and time
+            const hasDuplicateSchedule = wasteSchedules.some(schedule => 
+                schedule.wc_day === values.day && 
+                schedule.wc_time === formattedTime &&
+                schedule.wc_num !== Number(wc_num)   
+            );  
+            
+            //return if there is overlapping schedule
+            if (hasDuplicateSchedule) {
+                
+                form.setError("day", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });          
+                
+                form.setError("time", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });  
+
+                return; 
+            }           
+
+            //return if the sitio has already a schedule for that day
+            if (hasSameSitioSameDay) {
+                form.setError("day", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+
+                form.setError("selectedSitios", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+                return;
+            }        
+      
+      
             if(!values.additionalInstructions){
                 values.additionalInstructions = "None";
             }
@@ -182,7 +236,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -191,7 +245,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -206,12 +260,11 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
 
 
                     {/* Date and Time */}
-                    <FormDateTimeInput
+                    <FormSelect
                         control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                        name="day"
+                        label="Collection Day"
+                        options={dayOptions}
                     />
 
                     <FormDateTimeInput
@@ -235,41 +288,6 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
                 </div>
 
 
-
-                {/* Announcement Audience Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedAnnouncements"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="announcements">
-                                    <AccordionTrigger>Select Audience</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {announcementOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value?.includes(option.id) || false}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                        ? [...(field.value || []), option.id]
-                                                        : (field.value || []).filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
                     <ConfirmationModal
@@ -278,7 +296,14 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
                                 type="button"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Updating..." : "Update"}
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update"
+                                )}
                             </Button>
                         }
                         title="Confirm Update"

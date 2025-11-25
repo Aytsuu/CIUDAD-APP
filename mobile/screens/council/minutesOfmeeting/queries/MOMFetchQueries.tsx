@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMinutesOfMeeting, getMinutesOfMeetingDetails } from "../restful-API/MOMGetAPI";
+import { getActiveMinutesOfMeeting, getInactiveMinutesOfMeeting, getMinutesOfMeetingDetails } from "../restful-API/MOMGetAPI";
 
 export type SupportingDoc = {
   momsp_id: number;
@@ -25,10 +25,19 @@ export type MinutesOfMeetingRecords = {
   supporting_docs: SupportingDoc[];
 };
 
-export const useGetMinutesOfMeetingRecords = () => {
-    return useQuery<MinutesOfMeetingRecords[]>({
-        queryKey: ["momRecords"],
-        queryFn: getMinutesOfMeeting,
+export const useGetActiveMinutesOfMeetingRecords = (page: number, pageSize: number, searchQuery: string,) => {
+    return useQuery<{results: MinutesOfMeetingRecords[], count: number}>({
+        queryKey: ["ActivemomRecords", page, pageSize, searchQuery],
+        queryFn:() => getActiveMinutesOfMeeting(page, pageSize, searchQuery),
+        staleTime: 1000 * 60 * 30, 
+    })
+}
+
+
+export const useGetInactiveMinutesOfMeetingRecords = (page: number, pageSize: number, searchQuery: string,) => {
+    return useQuery<{results: MinutesOfMeetingRecords[], count: number}>({
+        queryKey: ["InactivemomRecords", page, pageSize, searchQuery],
+        queryFn:() => getInactiveMinutesOfMeeting(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
     })
 }

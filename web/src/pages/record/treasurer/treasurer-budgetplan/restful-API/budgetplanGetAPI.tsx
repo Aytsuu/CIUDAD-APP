@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import api from "@/api/api";
 import { BudgetPlan } from "../budgetPlanInterfaces";
 
 export const getBudgetDetails = async (planId: string): Promise<BudgetPlan> => {
@@ -12,9 +12,30 @@ export const getBudgetDetails = async (planId: string): Promise<BudgetPlan> => {
 }
 
 
-export const getBudgetPlan = async () => {
+export const getBudgetPlanActive = async (page: number, pageSize: number, searchQuery: string) => {
     try{
-        const res = await api.get('treasurer/budget-plan/');
+        const res = await api.get('treasurer/budget-plan-active/', {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        });
+        return res.data
+    } catch(error){
+        console.error(error);
+    }
+}
+
+export const getBudgetPlanInactive = async (page: number, pageSize: number, searchQuery: string) => {
+    try{
+        const res = await api.get('treasurer/budget-plan-inactive/', {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        });
         return res.data
     } catch(error){
         console.error(error);
@@ -55,5 +76,27 @@ export const getBudgetPlanDetailFromPreviousYear = async () => {
         return res.data
     }catch(err){
         console.error(err)
+    }
+}
+
+export const getExpenseParticulars = async (year?: number) => {
+    try {
+        const params = year ? { params: { year } } : {};
+        const res = await api.get('treasurer/get-expense_particular/', params);
+        return res.data;
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+};
+
+
+export const getBudgetYear = async(year: number) => {
+    try{
+        const res = await api.get(`treasurer/gad-budget-year/${year}`)
+        return res.data
+    }catch(err){
+        console.error(err)
+        throw err
     }
 }

@@ -7,7 +7,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SignIn from "@/pages/landing/signin/signin";
 import CebuCitySeal from "@/assets/images/cebucity_seal.svg";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
-import { BadgeCheck, Check, SquarePen } from "lucide-react";
+import { BadgeCheck, Check, Download, Menu, SquarePen } from "lucide-react";
 import Home from "@/pages/landing/Home";
 import About from "@/pages/landing/About";
 import Announcements from "@/pages/landing/Announcements";
@@ -31,6 +31,8 @@ import { Form } from "@/components/ui/form/form";
 import LandingEditForm from "@/pages/landing/LandingEditForm";
 import { Separator } from "@/components/ui/separator";
 import { MediaUploadType } from "@/components/ui/media-upload";
+import supabase from "@/supabase/supabase";
+import Featured from "@/pages/landing/Featured";
 
 export default function LandingLayout() {
   const { user } = useAuth();
@@ -38,6 +40,7 @@ export default function LandingLayout() {
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const announcementRef = React.useRef<HTMLDivElement>(null);
   const mobileAppRef = React.useRef<HTMLDivElement>(null);
+  const barangayConnectRef = React.useRef<HTMLDivElement>(null);
   const [hideEditButton, setHideEditButton] = React.useState<boolean>(false);
   const [carousel, setCarousel] = React.useState<MediaUploadType>([]);
 
@@ -45,6 +48,7 @@ export default function LandingLayout() {
     { path: homeRef, title: "Home" },
     { path: aboutRef, title: "Our Barangay" },
     { path: announcementRef, title: "Announcement" },
+    { path: barangayConnectRef, title: "BarangayConnect"},
     { path: mobileAppRef, title: "Mobile App" },
   ];
 
@@ -75,7 +79,7 @@ export default function LandingLayout() {
         values: landingData.values,
       });
 
-      setCarousel(landingData.files)
+      setCarousel(landingData.files);
     }
   }, [landingData, form]);
 
@@ -91,6 +95,21 @@ export default function LandingLayout() {
     ref.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleDownloadApp = async () => {
+    try {
+      const { data } = supabase.storage
+        .from("APK")
+        .getPublicUrl("app-release.apk");
+
+      const link = document.createElement("a");
+      link.href = data.publicUrl;
+      link.download = "app-release.apk";
+      link.click();
+    } catch (err) {
+      throw err;
+    }
+  };
+
   const update = async () => {
     if (!(await form.trigger())) {
       return;
@@ -101,12 +120,12 @@ export default function LandingLayout() {
       const { cpt_photo, ...restVal } = values as any;
       const { url, ...restCptPhoto } = cpt_photo;
 
-      if(landingData.files.length !== carousel.length) {
+      if (landingData.files.length !== carousel.length) {
         restVal.carousel = carousel.map((media) => ({
           name: media.name,
           type: media.type,
-          file: media.file
-        }))
+          file: media.file,
+        }));
       }
 
       await updateLandingPage({
@@ -121,13 +140,15 @@ export default function LandingLayout() {
       {/* Fixed Headers Container */}
       <div className="fixed top-0 left-0 right-0 z-50">
         {/* Top Header */}
-        <header className="w-full bg-darkBlue1 flex justify-center px-4 py-3">
-          <div className="w-[90%] text-white/80 flex items-center gap-5">
-            <Label className="font-poppins border-r-2 pr-4 flex items-center gap-1">
-              <BadgeCheck size={16} className="fill-green-600" /> The Official
-              Website of Barangay San Roque (Ciudad)
-            </Label>
-            <div className="flex gap-3">
+        <header className="w-full bg-[#17294A] flex justify-between items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-5 text-white/80 text-xs sm:text-sm overflow-hidden">
+            <div className="flex items-center gap-1 whitespace-nowrap border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
+              <BadgeCheck size={14} className="fill-green-600 flex-shrink-0" />
+              <span className="truncate">
+                Official Website
+              </span>
+            </div>
+            <div className="flex gap-2 sm:gap-3 flex-shrink-0">
               <FaFacebook
                 className="hover:text-white cursor-pointer"
                 onClick={() => {
@@ -153,26 +174,27 @@ export default function LandingLayout() {
             className="w-[30px] h-[30px]"
           />
         </header>
+
         {/* Main Header */}
-        <header className="w-full bg-white flex justify-center shadow-lg">
-          <div className="w-full h-full flex justify-between items-center">
-            <div className="w-1/3 h-full flex items-center slope-right p-3 bg-[#1273B8]">
+        <header className="w-full bg-white shadow-lg">
+          <div className="flex justify-between items-center">
+            <div className="w-full md:w-1/2 lg:w-1/3 h-full flex items-center slope-right p-3 bg-[#1273B8]">
               <div className="w-full flex justify-center items-center gap-3">
                 <img
                   src={SanRoqueLogo}
                   alt="San Roque Logo"
-                  className="w-[50px] h-[50px]"
+                  className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px]"
                 />
                 <div className="grid text-white">
-                  <Label className="text-[15px]">
+                  <Label className="text-xs sm:text-[15px]">
                     BARANGAY SAN ROQUE (CIUDAD)
                   </Label>
-                  <Label className="font-poppins">Cebu City</Label>
+                  <Label className="text-xs font-normal sm:text-[15px]">Cebu City</Label>
                 </div>
               </div>
             </div>
             {/* Navigation */}
-            <nav className="w-1/2 flex items-center gap-3">
+            <nav className="w-full items-center hidden lg:flex lg:justify-center gap-5">
               {NavItemList.map(({ path, title }) => (
                 <div key={title} onClick={() => scrollTo(path)}>
                   <Label className="p-[10px] rounded-lg hover:bg-lightBlue cursor-pointer">
@@ -192,6 +214,34 @@ export default function LandingLayout() {
                 />
               )}
             </nav>
+            <SheetLayout
+              trigger={
+                <div className="lg:hidden flex px-5 sm:px-10">
+                  <Menu className="text-black w-5 h-5" />
+                </div>
+              }
+              content={
+                <div className="w-full h-full flex flex-col justify-between">
+                  <div className="flex flex-col gap-5">
+                    <Label className="text-sm text-gray-600 font-normal">
+                      Menu
+                    </Label>
+                    <nav className="w-full flex flex-col gap-8">
+                      {NavItemList.map(({ path, title }) => (
+                        <div key={title} onClick={() => scrollTo(path)}>
+                          <Label className="rounded-lg cursor-pointer">
+                            {title}
+                          </Label>
+                        </div>
+                      ))}
+                    </nav>
+                  </div>
+                  <Button className="h-[45px]" onClick={handleDownloadApp}>
+                    <Download /> Download App
+                  </Button>
+                </div>
+              }
+            />
           </div>
         </header>
       </div>
@@ -207,7 +257,7 @@ export default function LandingLayout() {
             }}
             trigger={
               !hideEditButton && (
-                <button className="fixed bottom-8 right-8 z-[100] w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group">
+                <button className="fixed bottom-8 right-8 z-[10] w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group">
                   <SquarePen className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 </button>
               )
@@ -223,7 +273,8 @@ export default function LandingLayout() {
                       Configure your landing page content here.
                     </p>
                   </div>
-                  {(form.formState.isDirty || carousel.length !== landingData?.files.length) && (
+                  {(form.formState.isDirty ||
+                    carousel.length !== landingData?.files.length) && (
                     <Button
                       className="mt-6 rounded-full"
                       type="button"
@@ -252,32 +303,41 @@ export default function LandingLayout() {
         )}
 
       {/* Scrollable Page Content - Added pt-[120px] to account for fixed headers */}
-      <main className="w-full pt-[120px]">
+      <main className="w-full bg-white overflow-hidden">
         <section
           ref={homeRef}
-          className="w-full h-screen flex justify-center items-center"
         >
           <Home carousel={carousel} />
         </section>
-        <section
+        <section 
           ref={aboutRef}
-          className="w-full h-[150vh] flex justify-center items-center"
+          className="pt-16"
         >
           <About data={landingData} />
         </section>
-        <section
+        <section 
           ref={announcementRef}
-          className="w-full flex justify-center items-center"
+          className="pt-16"
         >
           <Announcements />
         </section>
         <section
-          ref={mobileAppRef}
-          className="w-full min-h-screen flex justify-center items-center"
+          ref={barangayConnectRef}
+          className="pt-16"
         >
+          <Featured/>
+        </section>
+        <section ref={mobileAppRef}>
           <MobileApp />
         </section>
-        <Footer data={landingData} />
+        <Footer
+          data={landingData}
+          homeRef={homeRef}
+          aboutRef={aboutRef}
+          mobileAppRef={mobileAppRef}
+          announcementRef={announcementRef}
+          scrollTo={scrollTo}
+        />
       </main>
     </div>
   );

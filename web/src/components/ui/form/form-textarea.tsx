@@ -18,6 +18,7 @@ interface FormTextareaProps {
   className?: string;
   rows?: number;
   maxLength?: number;
+  required?: boolean;
 }
 
 export const FormTextarea = React.memo(({ 
@@ -28,14 +29,18 @@ export const FormTextarea = React.memo(({
   readOnly, 
   className,
   rows = 3,
-  maxLength
+  maxLength,
+  required = false
 }: FormTextareaProps) => (
   <FormField
     control={control}
     name={name}
     render={({ field }) => (
       <FormItem className={className}>
-        {label && <FormLabel className="text-black/70">{label}</FormLabel>}
+        {label && <FormLabel className="text-black/70">
+          {label}
+          {required && <span className="ml-1 text-red-500">*</span>}
+        </FormLabel>}
         <FormControl>
           <Textarea 
             className={cn("", className)} 

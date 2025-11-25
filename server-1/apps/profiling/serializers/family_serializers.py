@@ -4,6 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -90,6 +92,21 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
       except ValueError:
           error_detail = response.text
       raise serializers.ValidationError({"error": error_detail})
+    
+    # Create notification
+    create_notification(
+      title="New Family Record",
+      message=(
+          f"A new family has been registered."
+      ),
+      recipients=general_recipients(False, family.staff.staff_id),
+      notif_type="REGISTRATION",
+      web_route="profiling/family",
+      web_params={},
+      mobile_route="/(profiling)/family/records",
+      mobile_params={},
+    )
+      
     return family
   
   def generate_fam_no(self, building_type):

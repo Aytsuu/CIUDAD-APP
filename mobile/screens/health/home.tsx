@@ -3,10 +3,11 @@ import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { router, Href } from "expo-router"; // Import Href
-import { Archive,Baby,Calendar,Dog,Heart,Pill,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, ChevronLeft, UserRoundPlus, Venus, BriefcaseMedical, SyringeIcon, NotebookPen } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import PageLayout from "../_PageLayout";
 
 const { width } = Dimensions.get("window");
 
@@ -36,10 +37,10 @@ interface Module {
 }
 
 const Homepage = () => {
-  const { user, hasCheckedAuth } = useAuth(); 
+  const { user, hasCheckedAuth } = useAuth();
 
   // Determine user role
-  const isAdmin = !!user?.staff;
+  const isAdmin = user?.staff?.staff_type.toLowerCase() === "health staff";
   const isResident = !!user?.rp;
 
   // Wait for auth check to complete
@@ -54,21 +55,20 @@ const Homepage = () => {
   // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
 
   const modules: Module[] = [
-  { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus }, 
-  { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
-  // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
-  { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
-  { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
-  { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
-  
-  { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
-  { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
-  { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
-  { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
-  { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
-  { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
-  { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
-];
+    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
+    // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+    { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
+    { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
+    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
+    { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus },
+    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
+    { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
+    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
+    { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
+    { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
+    { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
+    { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
+  ];
 
   const quickActions: QuickAction[] = [
     { title: "Request Medicine", route: "/medicine-request/med-request" as Href, icon: Pill, color: "#1E40AF", bgColor: "#1e40af" },
@@ -104,14 +104,26 @@ const Homepage = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
-      <Button
-        onPress={() => router.back()}
-        className="grid rounded-none bg-blue-800 pl-5 align-left items-start"
-      >
-        <ChevronLeft size={24} color="white" />
-      </Button>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)")}
+          className="w-10 h-10 items-center justify-center"
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <ChevronLeft size={24} className="text-white" />
+        </TouchableOpacity>
+      }
+      headerTitle={
+        <Text className=""></Text>
+      }
+      rightAction={<View className="w-10 h-10" />}
+      backgroundColor="bg-blue-800"
+      wrapScroll={false}
+    >
+
+
 
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
@@ -125,9 +137,9 @@ const Homepage = () => {
         />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
         {/* Today's Schedule Widget (Admin Only) */}
-        {isResident && (  <View className="px-6 mt-5 mb-3"> <TodayScheduleWidget /> </View> )}
+        {isResident && (<View className="px-6 mt-5 mb-3"> <TodayScheduleWidget /> </View>)}
 
         {/* Featured Services */}
         <View className="mt-3">
@@ -268,9 +280,10 @@ const Homepage = () => {
               })}
             </View>
           </View>
-         )}
+        )}
       </ScrollView>
-    </SafeAreaView>
+
+    </PageLayout>
   );
 };
 

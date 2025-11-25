@@ -570,6 +570,7 @@ interface Template {
   temp_filename: string;
   temp_applicantName?: string;
   temp_summon?: boolean;
+  temp_file_action?: boolean;
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
   temp_w_sign_applicant: boolean;
@@ -581,9 +582,11 @@ interface Template {
 interface TemplatePreviewProps {
   templates: Template[]; // Changed from individual props to array of templates
   signatory?: string | null;
+  pangkatSecretary?: string | null; 
+  pangkatChairman?: string | null;
 }
 
-function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
+function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MAE GANSON", pangkatChairman = "FLORANTE T. NAVARRO III" }: TemplatePreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [_barangayLogoData, setBarangayLogoData] = useState<string | null>(null);
@@ -648,7 +651,7 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     if (imagesLoaded) {
       generateMultiPagePDF();
     }
-  }, [imagesLoaded, templates, signatory]);
+  }, [imagesLoaded, templates, signatory, pangkatSecretary, pangkatChairman]);
 
   const generateHeader = (doc: jsPDF, template: Template, yPos: number, pageWidth: number, marginValue: number) => {
     const logoWidth = 90;
@@ -709,9 +712,23 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
       { text: "Republic of the Philippines", bold: true, size: 12 },
       { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
       { text: "____________________________________", bold: true, size: 14 },
-      { text: "Office of the Barangay Captain", bold: false, size: 13 },
+      { 
+        text: template.temp_file_action 
+          ? "Office of the Lupong Tagapamayapa" 
+          : "Office of the Barangay Captain", 
+        bold: false, 
+        size: 13 
+      },
       { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-      { text: `${template.temp_email} | ${template.temp_telNum}`, bold: false, size: 11 }
+      { text: `${template.temp_email} | ${template.temp_telNum}`, bold: false, size: 11 },
+      { text: "", bold: false, size: 11 },
+      { 
+        text: template.temp_file_action 
+          ? "OFFICE OF THE LUPONG TAGAPAMAYAPA" 
+          : "", 
+        bold: true, 
+        size: 13 
+      },
     ];
 
     const centerX = pageWidth / 2;
@@ -823,6 +840,59 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     const textBelowSealOffset = 20;
 
     let currentY = footerY;
+
+    if (template.temp_file_action) {
+      // Right side - Pangkat Secretary - PROPERLY ALIGNED TO RIGHT
+      const rightX = pageWidth - marginValue - 170;
+      
+      doc.setFont("times", "bold");
+      doc.setFontSize(10);
+      const secretaryName = pangkatSecretary;
+      const secretaryWidth = doc.getTextWidth(String(secretaryName));
+      
+      // Add underline for secretary name - RIGHT ALIGNED
+      doc.text(String(secretaryName), rightX, currentY);
+      doc.setLineWidth(0.5);
+      doc.line(rightX, currentY + 2, rightX + secretaryWidth, currentY + 2);
+      
+      currentY += 15;
+      
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      // Right align the title too
+      const secretaryTitle = "Pangkat Secretary";
+      const titleWidth = doc.getTextWidth(secretaryTitle);
+      doc.text(secretaryTitle, rightX + (secretaryWidth - titleWidth) / 2, currentY); // Center the title under the name
+      
+      // Reset currentY for left side (Attested section)
+      currentY = footerY;
+
+      currentY += 40;
+      
+      // Left side - Attested
+      doc.setFont("times", "normal");
+      doc.setFontSize(10);
+      doc.text("ATTESTED:", signatureX, currentY);
+      
+      currentY += 40; // Space for signature
+      
+      doc.setFont("times", "bold");
+      doc.setFontSize(10);
+      const chairmanName = pangkatChairman;
+      const chairmanWidth = doc.getTextWidth(String(chairmanName));
+      
+      // Add underline for chairman name
+      doc.text(String(chairmanName), signatureX, currentY);
+      doc.setLineWidth(0.5);
+      doc.line(signatureX, currentY + 2, signatureX + chairmanWidth, currentY + 2);
+      
+      currentY += 15;
+      
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      doc.text("Pangkat Chairman", signatureX + 25, currentY);
+      
+    }
 
     if (template.temp_summon) {
       const captainX = pageWidth - marginValue - 170;

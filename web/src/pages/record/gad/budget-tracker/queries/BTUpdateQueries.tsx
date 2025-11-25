@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
@@ -24,25 +23,22 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         throw new Error("Budget entry number is required for update");
       }
 
-      // Validate remaining balance (existing logic)
-      if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
+      if (data.budgetData.gbud_remaining_bal !== undefined) {
         const currentYearBudget = yearBudgets.find(
           (b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString()
         );
         if (!currentYearBudget) throw new Error("No budget found for the selected year");
+        
         const remainingBalance = data.remainingBalance;
-        if (data.budgetData.gbud_actual_expense > remainingBalance) {
-          throw new Error(`Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`);
-        }
-        if (data.budgetData.gbud_remaining_bal !== undefined) {
-          const expectedRemaining = remainingBalance - data.budgetData.gbud_actual_expense;
-          if (Math.abs(data.budgetData.gbud_remaining_bal - expectedRemaining) > 0.01) {
-            throw new Error(`Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`);
-          }
+        const expectedRemaining = remainingBalance - (data.budgetData.gbud_actual_expense || 0);
+        
+        // Only check for significant discrepancies (server-side consistency)
+        if (Math.abs(data.budgetData.gbud_remaining_bal - expectedRemaining) > 0.01) {
+          throw new Error(`Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`);
         }
       }
 
-      // // Delete removed files
+      // Delete removed files
       if (data.filesToDelete.length > 0) {
         await deleteGADBudgetFiles(data.filesToDelete, data.gbud_num);
       }
@@ -70,17 +66,13 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.gbud_num] });
       queryClient.invalidateQueries({ queryKey: ['gadYearBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
 
-      toast.success('Budget entry updated successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
+      showSuccessToast('Budget entry updated successfully');
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
-    onError: (error: any, _variables) => {
-      console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
-      toast.error('Failed to update budget entry', { description: errorMessage });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to update budget entry");
     },
   });
 };

@@ -58,21 +58,17 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
-
-  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
-    useGADBudgets(new Date().getFullYear().toString());
-  const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
+  const { data: budgetData, isLoading } =  useGADBudgets(currentYear);
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const currentYearBudget = yearBudgetsArray.find(
+    (budget: any) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
   
-
-  const latestExpenseWithBalance = budgetEntries
-    .filter(
-      (entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null
-    )
-    .sort(
+  const latestExpenseWithBalance = budgetData?.results
+    ?.filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    ?.sort(
       (a, b) =>
         new Date(b.gbud_datetime).getTime() -
         new Date(a.gbud_datetime).getTime()
@@ -701,7 +697,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span>Available Funds:</span>
-                  {isBudgetLoading ? (
+                  {isLoading ? (
                     <span className="text-gray-500">Loading...</span>
                   ) : (
                     <span className="font-mono text-red-500">

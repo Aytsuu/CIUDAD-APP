@@ -12,7 +12,7 @@ export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
             toast.loading("Deleting record ...", { id: "deleteMOM" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['momRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
 
             toast.success('Record is deleted successfully', {
                 id: "deleteMOM",

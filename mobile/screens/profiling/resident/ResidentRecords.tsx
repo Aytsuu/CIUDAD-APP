@@ -112,19 +112,19 @@ export default function ResidentRecords() {
         }}
         activeOpacity={0.7}
       >
-        <View className="py-5 bg-white border-t border-gray-100">
+        <View className="p-4 bg-white border-t border-gray-100">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <View className="flex-row items-center mb-2">
                 <View className="flex-1">
                   <Text
-                    className="text-gray-700 font-semibold text-base"
+                    className="text-gray-900 font-semibold text-base"
                     numberOfLines={1}
                   >
                     {fullName}
                   </Text>
-                  <Text className="text-muted-foreground text-sm">
-                    {item.rp_id}
+                  <Text className="text-gray-500 text-sm">
+                    ID: {item.rp_id}
                   </Text>
                 </View>
               </View>

@@ -41,6 +41,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_suffix',
           'per__per_dob',
           'per__per_disability',
+          'per__per_is_deceased',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -68,7 +69,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                     Q(per__personal_addresses__add__sitio__sitio_name__icontains=search_query)
                 ).distinct()
 
-        return queryset.order_by('rp_id')
+        return queryset.order_by('-rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]
@@ -90,9 +91,14 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
         is_staff = self.request.query_params.get('is_staff', "false").lower() == "true"
         exclude_independent = self.request.query_params.get('exclude_independent', "false").lower() == "true"
         search = self.request.query_params.get('search', '').strip()
-        is_search_only = self.request.query_params.get('is_search_only', False)
+        is_search_only = self.request.query_params.get('is_search_only', "false").lower() == "true"
+        deceased_only = self.request.query_params.get('deceased_only', "false").lower() == "true"
 
         queryset = ResidentProfile.objects.all()
+        
+        # Filter for deceased residents only if requested
+        if deceased_only:
+            queryset = queryset.filter(per__per_is_deceased=True).select_related('per')
 
         # Search functionality
         if search:

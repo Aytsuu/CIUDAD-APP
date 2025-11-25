@@ -1,204 +1,98 @@
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/api";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import React from "react";
+import { ArrowUpRight } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useGetAllPersonnel, useGetTrucks } from "@/pages/record/waste-scheduling/waste-personnel/queries/truckFetchQueries";
 
-// Helper Functions
-function formatDate(dateString: string): string {
-  return new Date(dateString).toISOString().split('T')[0];
-}
+const WasteCard = React.memo(({ 
+  title, 
+  value, 
+  isLoading,
+  description,
+  onClick
+}: { 
+  title: string; 
+  value?: number | string; 
+  isLoading: boolean;
+  description?: string;
+  onClick?: () => void;
+}) => (
+  <Card 
+    className="relative cursor-pointer transition-all duration-300 hover:shadow-md group overflow-hidden"
+    onClick={onClick}
+  >
+    <CardHeader>
+      <CardDescription className="truncate">{title}</CardDescription>
+      <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+        {!isLoading && value !== undefined ? value : "..."}
+      </CardTitle>
+    </CardHeader>
+    <CardFooter className="flex-col items-start gap-1.5 text-sm">
+      {description && (
+        <div className="text-sm text-gray-600">
+          {description}
+        </div>
+      )}
+    </CardFooter>
+    
+    {/* Animated Arrow */}
+    <div className="absolute top-4 right-4 opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-300">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <ArrowUpRight className="w-4 h-4 text-primary" />
+      </div>
+    </div>
+  </Card>
+));
 
-export interface Personal {
-  per_id: number;
-  lname: string; 
-  fname: string;
-  mname: string | null;
-  suffix: string | null;
-  dob: string; 
-  sex: string;
-  status: string;
-  address: string; 
-  education: string | null;
-  religion: string;
-  contact: string;
-}
+WasteCard.displayName = "WasteCard";
 
+export const useWastePersonnelSectionCards = () => {
+  const navigate = useNavigate();
+  
+  // Queries for waste personnel data
+  const { data: driverLoaderData, isLoading: isLoadingDrivers } = useGetAllPersonnel(1, 1, "", "DRIVER LOADER", { enabled: true });
+  const { data: loaderData, isLoading: isLoadingLoaders } = useGetAllPersonnel(1, 1, "", "LOADER", { enabled: true });
+  const { data: trucksData, isLoading: isLoadingTrucks } = useGetTrucks(1, 1000, "", false, { enabled: true });
 
-export interface Position {
-  pos_id: number;
-  title: string;
-  max: number;
-}
+  // Calculate counts
+  const driverLoaderCount = driverLoaderData?.count || 0;
+  const loaderCount = loaderData?.count || 0;
+  const operationalTrucksCount = trucksData?.results?.filter(
+    (truck: any) => truck.truck_status === "Operational"
+  ).length || 0;
 
-export interface ResidentProfile {
-  rp_id: string;
-  rp_date_registered: string; 
-  personal: Personal; 
-}
+  const isLoading = isLoadingDrivers || isLoadingLoaders || isLoadingTrucks;
 
-export interface Staff {
-  staff_id: string;
-  assign_date: string; 
-  profile: ResidentProfile; 
-  position: Position; 
-  manager?: Staff | null;
-}
-
-export interface WastePersonnel {
-  wstp_id: number;
-  staff: Staff; 
-}
-
-export interface Truck {
-  truck_id: number;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: string;
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
-
-function isPersonal(data: any): data is Personal {
-  const isValid = data && (typeof data.per_id === "number" || typeof data.per_id === "string");
-  if (!isValid) {
-    console.log('Rejected personal: Invalid per_id', data);
-  }
-  return isValid;
-}
-
-function isPosition(data: any): data is Position {
-  const isValid = data && (typeof data.pos_id === "number" || typeof data.pos_id === "string");
-  if (!isValid) {
-    console.log('Rejected position: Invalid pos_id', data);
-  }
-  return isValid;
-}
-
-function isResidentProfile(data: any): data is ResidentProfile {
-  const isValid = data && isPersonal(data.personal);
-  if (!isValid) {
-    console.log('Rejected profile: Invalid personal', data);
-  }
-  return isValid;
-}
-
-function isStaff(data: any): data is Staff {
-  if (!data) {
-    console.log('Rejected staff: No data');
-    return false;
-  }
-  if (typeof data.staff_id !== "string") {
-    console.log('Rejected staff: Invalid staff_id', data.staff_id);
-    return false;
-  }
-  if (!isResidentProfile(data.profile)) {
-    console.log('Rejected staff: Invalid profile', data.profile);
-    return false;
-  }
-  if (!isPosition(data.position)) {
-    console.log('Rejected staff: Invalid position', data.position);
-    return false;
-  }
-  return true;
-}
-
-function isWastePersonnel(data: any): data is WastePersonnel {
-  if (!data) {
-    console.log('Rejected: No data');
-    return false;
-  }
-  if (typeof data.wstp_id !== "number") {
-    console.log('Rejected: Invalid wstp_id', data.wstp_id);
-    return false;
-  }
-  if (!isStaff(data.staff)) {
-    console.log('Rejected: Invalid staff', data.staff);
-    return false;
-  }
-  return true;
-}
-
-function isTruck(data: any): data is Truck {
-  const isValid = data &&
-    typeof data.truck_id === "number" &&
-    typeof data.truck_plate_num === "string" &&
-    typeof data.truck_model === "string" &&
-    (typeof data.truck_capacity === "string" || typeof data.truck_capacity === "number") &&
-    typeof data.truck_status === "string" &&
-    typeof data.truck_last_maint === "string";
-  if (!isValid) {
-    console.log('Rejected truck:', data);
-  }
-  return isValid;
-}
-
-export const getAllTrucks = async (): Promise<Truck[]> => {
-  try {
-    const response = await api.get("waste/waste-trucks/"); // Use a custom value or remove the parameter
-    const trucksData = response.data?.data || response.data;
-    if (!Array.isArray(trucksData)) {
-      throw new Error("Expected array of trucks");
-    }
-    return trucksData
-      .filter(isTruck)
-      .map(truck => ({
-        ...truck,
-        truck_last_maint: formatDate(truck.truck_last_maint)
-      }));
-  } catch (error) {
-    throw new Error("Failed to fetch trucks");
-  }
-};
-
-export const useGetTrucks = (options = {}) => {
-  return useQuery<Truck[], Error>({
-    queryKey: ["trucks"],
-    queryFn: getAllTrucks,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    ...options
-  });
-};
-
-
-export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
-  try {
-    const response = await api.get(
-      "waste/waste-personnel/?expand=staff.profile.personal,staff.position,staff.manager.profile.personal/"
-    );
-    const personnelData = response.data;
-    console.log('Raw personnel data:', JSON.stringify(personnelData, null, 2));
-    console.log('Raw position titles:', personnelData.map((p: WastePersonnel) => p.staff?.position?.title || 'Missing'));
-    if (!Array.isArray(personnelData)) {
-      throw new Error(`Expected array of personnel, got: ${JSON.stringify(personnelData)}`);
-    }
-    const filteredData = personnelData.filter(isWastePersonnel);
-    console.log('Filtered personnel:', filteredData);
-    console.log('Rejected personnel:', personnelData.filter(item => !isWastePersonnel(item)));
-    return filteredData.map(person => ({
-      ...person,
-      wstp_id: person.wstp_id,
-      staff: {
-        ...person.staff,
-        profile: {
-          ...person.staff.profile,
-          personal: {
-            ...person.staff.profile.personal,
-            dob: formatDate(person.staff.profile.personal?.dob)
-          }
-        }
-      }
-    }));
-  } catch (error) {
-    console.error('Error fetching personnel:', error);
-    throw error;
-  }
-};
-
-
-export const useGetAllPersonnel = (options = {}) => {
-  return useQuery<WastePersonnel[], Error>({
-    queryKey: ["wastePersonnel"],
-    queryFn: getAllPersonnel,
-    staleTime: 1000 * 60 * 5,
-    ...options
-  });
+  return {
+    driverLoaders: (
+      <WasteCard 
+        title="Driver Loaders" 
+        value={driverLoaderCount}
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/waste-personnel")
+        }}
+      />
+    ),
+    wasteLoaders: (
+      <WasteCard 
+        title="Loaders" 
+        value={loaderCount}
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/waste-personnel")
+        }}
+      />
+    ),
+    collectionVehicles: (
+      <WasteCard 
+        title="Collection Vehicles" 
+        value={operationalTrucksCount}
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/waste-personnel")
+        }}
+      />
+    )
+  };
 };

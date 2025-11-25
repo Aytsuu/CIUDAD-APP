@@ -10,7 +10,20 @@ export const getPerAddressesList = async () => {
   }
 }
 
-// ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
+// ==================== FETCH RESIDENT ====================
+export const getDeceasedResidentsList = async () => {
+  try {
+    const res = await api.get("profiling/resident/", {
+      params: {
+        deceased_only: true
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const getResidentsList = async (
   is_staff: boolean = false, 
   exclude_independent: boolean = false,
@@ -75,7 +88,7 @@ export const getPersonalInfo = async (residentId: string) => {
   }
 }
 
-// ==================== FETCH FAMILY ==================== (Status: Optimizing....)
+// ==================== FETCH FAMILY ==================== 
 export const getFamilies = async () => {
   try {
     const res = await api.get("profiling/family/");
@@ -85,13 +98,14 @@ export const getFamilies = async () => {
   }
 };
 
-export const getFamiliesTable = async (page: number, pageSize: number, searchQuery: string) => {
+export const getFamiliesTable = async (page: number, pageSize: number, searchQuery: string, occupancy: string) => {
   try {
     const res = await api.get("profiling/family/list/table/", {
       params: {
         page,
         page_size: pageSize,
-        search: searchQuery
+        search: searchQuery,
+        occupancy
       }
     })
 
@@ -148,14 +162,15 @@ export const getFamilyComposition = async () => {
   }
 }
 
-// ==================== FETCH HOUSEHOLD ==================== (Status: Optimizing....)
-export const getHouseholdTable = async (page: number, pageSize: number, searchQuery: string) => {
+// ==================== FETCH HOUSEHOLD ====================
+export const getHouseholdTable = async (page: number, pageSize: number, searchQuery: string, nhts: string) => {
   try {
     const res = await api.get("profiling/household/list/table/", {
       params: {
         page,
         page_size: pageSize,
-        search: searchQuery
+        search: searchQuery,
+        nhts
       }
     });
     return res.data
@@ -188,7 +203,7 @@ export const getHouseholdData = async (householdId: string) => {
 }
 
 
-// ==================== FETCH SITIO ==================== (Status: Optimizing....)
+// ==================== FETCH SITIO ====================
 export const getSitioList = async () => {
   try {
     const res = await api.get("profiling/sitio/list/");
@@ -198,7 +213,7 @@ export const getSitioList = async () => {
   }
 };
 
-// ==================== FETCH REGISTRATION REQUEST ==================== (Status: Optimizing....)
+// ==================== FETCH REGISTRATION REQUEST ====================
 export const getRequests = async (page: number, pageSize: number, searchQuery: string, selectedRequestType: string) => {
   try {
     const res = await api.get("profiling/request/list/table/", {
@@ -215,7 +230,7 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
   }
 };
 
-// ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
+// ==================== FETCH BUSINESS ====================
 export const getActiveBusinesses = async (page: number, pageSize: number, searchQuery: string, size?: string) => {
   try {
     const res = await api.get("profiling/business/active/list/table/", {

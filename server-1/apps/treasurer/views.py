@@ -2,24 +2,152 @@ from rest_framework import generics
 from .serializers import *
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from datetime import datetime
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
+from apps.act_log.utils import ActivityLogMixin
 from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 import logging
+from apps.pagination import StandardResultsPagination
+from django.db.models.functions import ExtractYear
+from apps.gad.serializers import GADBudgetYearSerializer
+from apps.gad.models import GAD_Budget_Year
+
 logger = logging.getLogger(__name__)
 
-class BudgetPlanView(generics.ListCreateAPIView):
+class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
-    queryset = Budget_Plan.objects.all()
 
-class BudgetPlanDetailView(generics.ListCreateAPIView):
+    def get_object(self):
+        current_year = str(timezone.now().year)
+        
+        budget_plan = Budget_Plan.objects.filter(
+            plan_year=current_year
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',  
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        ).first()
+        
+        if not budget_plan:
+            raise Http404("No budget plan found for the current year")
+            
+        return budget_plan
+
+class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BudgetPlanSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Budget_Plan.objects.filter(plan_is_archive=False).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_actual_income',
+            'plan_rpt_income',
+            'plan_balance',
+            'plan_tax_share',
+            'plan_tax_allotment',
+            'plan_cert_fees',
+            'plan_other_income',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(plan_id__icontains=search_query) |
+                Q(plan_year__icontains=search_query) |
+                Q(plan_actual_income__icontains=search_query) |
+                Q(plan_rpt_income__icontains=search_query) |
+                Q(plan_balance__icontains=search_query) |
+                Q(plan_tax_share__icontains=search_query) |
+                Q(plan_tax_allotment__icontains=search_query) |
+                Q(plan_cert_fees__icontains=search_query) |
+                Q(plan_other_income__icontains=search_query) |
+                Q(plan_budgetaryObligations__icontains=search_query) |
+                Q(plan_balUnappropriated__icontains=search_query) |
+                Q(plan_issue_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('plan_id')
+    
+class BudgetPlanInactiveView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BudgetPlanSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Budget_Plan.objects.filter(plan_is_archive=True).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_actual_income',
+            'plan_rpt_income',
+            'plan_balance',
+            'plan_tax_share',
+            'plan_tax_allotment',
+            'plan_cert_fees',
+            'plan_other_income',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(plan_id__icontains=search_query) |
+                Q(plan_year__icontains=search_query) |
+                Q(plan_actual_income__icontains=search_query) |
+                Q(plan_rpt_income__icontains=search_query) |
+                Q(plan_balance__icontains=search_query) |
+                Q(plan_tax_share__icontains=search_query) |
+                Q(plan_tax_allotment__icontains=search_query) |
+                Q(plan_cert_fees__icontains=search_query) |
+                Q(plan_other_income__icontains=search_query) |
+                Q(plan_budgetaryObligations__icontains=search_query) |
+                Q(plan_balUnappropriated__icontains=search_query) |
+                Q(plan_issue_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('plan_id')
+
+class BudgetPlanDetailView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
@@ -35,7 +163,7 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
             return super().create(request, *args, **kwargs) 
         
 
-class BudgetPlanHistoryView(generics.ListCreateAPIView):
+class BudgetPlanHistoryView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanHistorySerializer
     queryset = Budget_Plan_History.objects.all()
@@ -123,6 +251,7 @@ class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
     permission_classes = [AllowAny]
     queryset = Budget_Plan.objects.all()
     serializer_class = BudgetPlanSerializer
+    
     lookup_field = 'plan_id'
 
 class UpdateBudgetPlan(generics.UpdateAPIView):
@@ -151,6 +280,19 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class GADBudgetYearByYearView(generics.RetrieveAPIView):
+    serializer_class = GADBudgetYearSerializer
+    lookup_field = 'gbudy_year'
+    lookup_url_kwarg = 'year'
+
+    def get_object(self):
+        year = self.kwargs.get('year')
+        try:
+            return GAD_Budget_Year.objects.get(gbudy_year=year)
+        except GAD_Budget_Year.DoesNotExist:
+            raise NotFound(f"GAD budget record for year {year} not found")
     
 # -------------------------------- DISBURSEMENT ------------------------------------
 class DisbursementArchiveMixin:
@@ -193,19 +335,49 @@ class DisbursementRestoreView(generics.UpdateAPIView):
 class DisbursementVoucherView(generics.ListCreateAPIView):
     serializer_class = Disbursement_VoucherSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         queryset = Disbursement_Voucher.objects.select_related('staff').order_by('-dis_num')
         
-        archive = self.request.query_params.get('archive')
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(dis_payee__icontains=search) |
+                Q(dis_particulars__icontains=search) |
+                Q(dis_num__icontains=search)
+            )
+        
+        # Year filter
+        year = self.request.query_params.get('year', None)
+        if year and year != 'all':
+            queryset = queryset.filter(dis_date__year=year)
+        
+        # Archive filter
+        archive = self.request.query_params.get('archive', None)
         if archive in ['true', 'false']:
             queryset = queryset.filter(dis_is_archive=archive == 'true')
-        
-        year = self.request.query_params.get('year')
-        if year:
-            queryset = queryset.filter(dis_date__year=year)
             
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in DisbursementVoucherView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class DisbursementVoucherDetailView(DisbursementArchiveMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Disbursement_Voucher.objects.select_related('staff')
@@ -224,8 +396,23 @@ class DisbursementVoucherRestoreView(DisbursementRestoreView):
     queryset = Disbursement_Voucher.objects.filter(dis_is_archive=True)
     serializer_class = Disbursement_VoucherSerializer
     lookup_field = 'dis_num'
-
-# Disbursement File Views
+    
+class DisbursementVoucherYearsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            years = Disbursement_Voucher.objects.filter(
+                dis_date__isnull=False
+            ).annotate(
+                year=ExtractYear('dis_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            return Response(list(years))
+        except Exception as e:
+            logger.error(f"Error fetching disbursement years: {str(e)}")
+            return Response([], status=status.HTTP_200_OK)
+        
 class DisbursementFileView(generics.ListCreateAPIView):
     serializer_class = Disbursement_FileSerializers
     permission_classes = [AllowAny]
@@ -383,13 +570,50 @@ class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Income_Expense_Tracking.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        is_archive = self.request.query_params.get('is_archive', None)
+        
+        queryset = Income_Expense_Tracking.objects.filter(
             Q(iet_datetime__year=year)
         ).select_related('exp_id').prefetch_related('files')
+        
+        # Filter by archive status if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(iet_is_archive=is_archive_bool)
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(exp_id__exp_budget_item__icontains=search_query) |
+                Q(iet_serial_num__icontains=search_query) |
+                Q(iet_check_num__icontains=search_query) |
+                Q(iet_additional_notes__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(iet_datetime__month=month)
+        
+        return queryset.order_by('-iet_datetime')
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
@@ -414,21 +638,6 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class GetParticularsView(generics.ListAPIView):
-#     serializer_class = Budget_Plan_DetailSerializer
-
-#     def get_queryset(self):
-#         current_year = timezone.now().year
-#         # Get the current year's budget plan
-#         current_plan = Budget_Plan.objects.filter(plan_year=str(current_year)).first()
-        
-#         if current_plan:
-#             # Return all details for the current year's plan
-#             return Budget_Plan_Detail.objects.filter(plan=current_plan)
-#         return Budget_Plan_Detail.objects.none()
-    
 
 class GetParticularsView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -469,32 +678,84 @@ class GetExpenseParticularsView(generics.ListAPIView):
 class Expense_LogView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Expense_LogSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
 
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Expense_Log.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        
+        queryset = Expense_Log.objects.filter(
             Q(el_datetime__year=year)
         ).select_related('iet_num')
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(iet_num__exp_id__exp_budget_item__icontains=search_query) |
+                Q(el_proposed_budget__icontains=search_query) |
+                Q(el_actual_expense__icontains=search_query) |
+                Q(el_return_amount__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(el_datetime__month=month)
+        
+        return queryset.order_by('-el_datetime')  # Add ordering
 
 # ------------------------- INCOME --------------------------------------
-
- 
-
-# class Income_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_TrackingSerializers
-#     queryset = Income_Tracking.objects.all().select_related('incp_id')
-
-
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
+    
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Income_Tracking.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        is_archive = self.request.query_params.get('is_archive', None)  # Add archive filter
+        
+        queryset = Income_Tracking.objects.filter(
             Q(inc_datetime__year=year)
         ).select_related('incp_id')
+        
+        # Filter by archive status if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(inc_is_archive=is_archive_bool)
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(incp_id__incp_item__icontains=search_query) |
+                Q(inc_serial_num__icontains=search_query) |
+                Q(inc_transac_num__icontains=search_query) |
+                Q(inc_additional_notes__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(inc_datetime__month=month)
+        
+        return queryset.order_by('-inc_datetime')  # Add ordering
 
 
 class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
@@ -545,8 +806,24 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 class Income_Expense_MainView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
-    # queryset = Income_Expense_Main.objects.all()
-    queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
+    pagination_class = StandardResultsPagination  # Add pagination
+    
+    def get_queryset(self):
+        search_query = self.request.query_params.get('search', '')
+        
+        queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(ie_main_year__icontains=search_query) |
+                Q(ie_main_tot_budget__icontains=search_query) |
+                Q(ie_remaining_bal__icontains=search_query) |
+                Q(ie_main_inc__icontains=search_query) |
+                Q(ie_main_exp__icontains=search_query)
+            )
+        
+        return queryset.order_by('-ie_main_year') 
 
 
 class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
@@ -606,10 +883,79 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 
 #---------------RATES
 
-class Annual_Gross_SalesView(generics.ListCreateAPIView):
+class Annual_Gross_SalesActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = Annual_Gross_Sales.objects.all().order_by('-ags_date')
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Annual_Gross_Sales.objects.filter(
+            ags_is_archive=False  
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'ags_id',
+            'ags_minimum',
+            'ags_maximum',
+            'ags_rate',
+            'ags_date',
+            'ags_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(ags_id__icontains=search_query) |
+                Q(ags_minimum__icontains=search_query) |
+                Q(ags_maximum__icontains=search_query) |
+                Q(ags_rate__icontains=search_query) |
+                Q(ags_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-ags_date')
+
+class All_Annual_Gross_SalesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Annual_Gross_SalesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Annual_Gross_Sales.objects.filter(
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'ags_id',
+            'ags_minimum',
+            'ags_maximum',
+            'ags_rate',
+            'ags_date',
+            'ags_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(ags_id__icontains=search_query) |
+                Q(ags_minimum__icontains=search_query) |
+                Q(ags_maximum__icontains=search_query) |
+                Q(ags_rate__icontains=search_query) |
+                Q(ags_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-ags_date')
+
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
@@ -624,12 +970,234 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class Purpose_And_RatesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
-    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')
+    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')   
+
+class Purpose_And_RatesPersonalActiveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Personal',
+            pr_is_archive=False  
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_category',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+
+class Purpose_And_RatesAllPersonalView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Personal',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+
+class Purpose_And_RatesServiceChargeActiveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Service Charge',
+            pr_is_archive=False  # Assuming you want active records
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+class Purpose_And_RatesAllServiceChargeView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Service Charge',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+class Purpose_And_RatesBarangayPermitActiveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Barangay Permit',
+            pr_is_archive=False  # Assuming you want active records
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+
+class Purpose_And_RatesAllBarangayPermitView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Barangay Permit',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
@@ -667,26 +1235,57 @@ class PurposeAndRatesByPurposeView(generics.RetrieveAPIView):
 #     serializer_class = InvoiceSerializers
 #     queryset = Invoice.objects.all()
 
-class InvoiceView(generics.ListCreateAPIView):
+class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
     
-    # Use the correct field names that exist in your Invoice model
-    queryset = Invoice.objects.select_related(
-        'bpr_id__rp_id__per',  # For business permit requests
-        'nrc_id',              # For non-resident certificate requests
-        'cr_id__rp_id__per'       # For resident certificates
-    ).all()
+    def get_queryset(self):
+        queryset = Invoice.objects.select_related(
+            'bpr_id__rp_id__per',
+            'nrc_id',
+            'cr_id__rp_id__per',
+            'pay_id__comp_id'
+        ).prefetch_related(
+            'pay_id__comp_id__complainant'
+        ).all()
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        nature_filter = self.request.query_params.get('nature', '')
+        
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(inv_serial_num__icontains=search_query) |
+                Q(inv_nat_of_collection__icontains=search_query) |
+                Q(inv_discount_reason__icontains=search_query) |
+                Q(bpr_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(bpr_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(bpr_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(cr_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(nrc_id__nrc_requester__icontains=search_query) |
+                Q(pay_id__comp_id__complainant__cpnt_name__icontains=search_query)
+            ).distinct()
+        
+        # Apply nature of collection filter
+        if nature_filter and nature_filter != "all":
+            queryset = queryset.filter(inv_nat_of_collection=nature_filter)
+        
+        return queryset.order_by('-inv_date') 
 
 
 # Clearance Request Views
 class ClearanceRequestListView(generics.ListAPIView):
     serializer_class = ClearanceRequestSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        queryset = ClerkCertificate.objects.select_related('rp_id').all()
+        queryset = ClerkCertificate.objects.select_related('rp_id', 'pr_id').all()
         
         # Search functionality
         search_query = self.request.query_params.get('search', None)
@@ -695,10 +1294,32 @@ class ClearanceRequestListView(generics.ListAPIView):
                 Q(cr_id__icontains=search_query) |
                 Q(rp_id__per__per_fname__icontains=search_query) |
                 Q(rp_id__per__per_lname__icontains=search_query) |
-                Q(req_type__icontains=search_query)
+                Q(req_type__icontains=search_query) |
+                Q(pr_id__pr_purpose__icontains=search_query) |
+                Q(cr_req_status__icontains=search_query) |
+                Q(cr_req_payment_status__icontains=search_query)
             )
+
+        # Status filter
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(cr_req_status=status_filter)
+
+        # Payment status filter
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(cr_req_payment_status=payment_status)
+
+        # Date range filters
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
         
-        return queryset
+        if start_date:
+            queryset = queryset.filter(cr_req_request_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(cr_req_request_date__lte=end_date)
+        
+        return queryset.order_by('-cr_req_request_date')
 
 
 class ClearanceRequestDetailView(generics.RetrieveAPIView):
@@ -711,7 +1332,7 @@ class ClearanceRequestDetailView(generics.RetrieveAPIView):
         return ClerkCertificate.objects.select_related('rp_id').all()
 
 
-class UpdatePaymentStatusView(generics.UpdateAPIView):
+class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = PaymentStatusUpdateSerializer
     lookup_field = 'cr_id'
     permission_classes = [AllowAny]
@@ -722,15 +1343,111 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_payment_status = instance.cr_req_payment_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         
         if serializer.is_valid():
-            instance.req_payment_status = serializer.validated_data['payment_status']
+            instance.cr_req_payment_status = serializer.validated_data['payment_status']
             instance.save()
+            
+            # Log payment status change activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{instance.cr_req_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for payment status change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No staff found for payment status change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            # Check if payment status changed to "Paid" and create automatic income entry
+            new_payment_status = instance.cr_req_payment_status
+            if old_payment_status != "Paid" and new_payment_status == "Paid":
+                try:
+                    from apps.treasurer.utils import create_automatic_income_entry
+                    
+                    # Get purpose from the certificate
+                    purpose = "Unknown"
+                    if instance.pr_id:
+                        purpose = instance.pr_id.pr_purpose
+                    
+                    # Get amount from purpose and rates
+                    amount = 0.0
+                    if instance.pr_id:
+                        amount = float(instance.pr_id.pr_rate)
+                    
+                    # Get staff from certificate record (primary source) or request data
+                    staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                    
+                    # Get invoice discount reason if available
+                    invoice_discount_reason = None
+                    try:
+                        from apps.treasurer.models import Invoice
+                        invoice = Invoice.objects.filter(cr_id=instance).first()
+                        if invoice:
+                            invoice_discount_reason = invoice.inv_discount_reason
+                    except Exception as e:
+                        logger.warning(f"Could not get invoice discount reason for certificate {instance.cr_id}: {str(e)}")
+                    
+                    # Create automatic income entry
+                    create_automatic_income_entry(
+                        request_type='CERT',
+                        request_id=instance.cr_id,
+                        purpose=purpose,
+                        amount=amount,
+                        staff_id=staff_id,
+                        discount_notes=getattr(instance, 'cr_discount_reason', None),
+                        invoice_discount_reason=invoice_discount_reason
+                    )
+                    logger.info(f"Created automatic income entry for certificate {instance.cr_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create automatic income entry for certificate {instance.cr_id}: {str(e)}")
+                    # Don't fail the request if income tracking fails
 
             # --- AUTO CREATE RECEIPT FOR ANY PAID ---
             try:
-                if instance.req_payment_status == "Paid":
+                if instance.cr_req_payment_status == "Paid":
                     from apps.treasurer.models import Invoice
                     if not Invoice.objects.filter(cr_id=instance).exists():
                         # Generate next available inv_num
@@ -744,12 +1461,17 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
                             import time
                             next_num = int(time.time())
                         
+                        # Get the purpose name from the related pr_id if available
+                        purpose_name = instance.req_type or ""
+                        if hasattr(instance, 'pr_id') and instance.pr_id:
+                            purpose_name = instance.pr_id.pr_purpose
+                        
                         Invoice.objects.create(
                             inv_num=next_num,
                             cr_id=instance,
                             inv_serial_num=f"INV-{instance.cr_id}",  # You can improve this serial logic
                             inv_amount=0,  # Set correct amount if available
-                            inv_nat_of_collection=instance.req_type or "",
+                            inv_nat_of_collection=purpose_name,
                             inv_status="Paid",  # Set status to Paid since payment is complete
                         )
                         
@@ -759,7 +1481,10 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
                             from apps.administration.models import Staff
                             
                             # Get staff member from the clearance request
-                            staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            staff_id = getattr(instance.ra_id, 'staff_id', None) if instance.ra_id else None
+                            # Format staff_id properly (pad with leading zeros if needed)
+                            if len(str(staff_id)) < 11:
+                                staff_id = str(staff_id).zfill(11)
                             staff = Staff.objects.filter(staff_id=staff_id).first()
                             
                             if staff:
@@ -768,8 +1493,7 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
                                     act_type="Auto-Invoice Created",
                                     act_description=f"Auto-generated invoice INV-{instance.cr_id} created for {instance.req_type} payment",
                                     staff=staff,
-                                    record_id=f"INV-{instance.cr_id}",
-                                    feat_name="Payment Processing"
+                                    record_id=f"INV-{instance.cr_id}"
                                 )
                                 logger.info(f"Activity logged for auto-invoice creation: INV-{instance.cr_id}")
                             else:

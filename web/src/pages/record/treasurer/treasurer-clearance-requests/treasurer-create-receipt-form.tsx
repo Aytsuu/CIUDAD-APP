@@ -7,11 +7,12 @@ import { useForm } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
-import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
+import { useAddPersonalReceipt, useAddReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
 import { Loader2 } from "lucide-react";
+
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
    function ReceiptForm({
@@ -29,7 +30,7 @@ import { Loader2 } from "lucide-react";
     onRequestDiscount,
     discountedAmount,
     discountReason,
-    spay_id
+    pay_id
 }: {
     id: string;
     purpose: string | undefined;
@@ -45,22 +46,23 @@ import { Loader2 } from "lucide-react";
     onRequestDiscount: () => void;
     discountedAmount?: string;
     discountReason?: string;
-    spay_id?: number;
+    pay_id?: number;
 }){
    const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
    const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
+    
+   const { mutate: addReceiptMutation, isPending: isAddReceiptPending} = useAddReceipt(onComplete)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
     const { data: scRate } = useServiceChargeRate();
     const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
-    const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
+    const { mutateAsync: _acceptSummon } = useAcceptSummonRequest();
     const { mutateAsync: updateServiceChargeStatus } = useUpdateServiceChargeStatus();
 
    console.log('stat', pay_status, 'staffId', staffId)
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
-   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
    const isFree = Boolean(
      effectiveIsResident && (
        voter_id !== null && voter_id !== undefined ||
@@ -68,16 +70,28 @@ import { Loader2 } from "lucide-react";
        hasDisabilityEligible
      )
    );
+   
+   // Check if resident is eligible for free service (voter_id, senior, or disabled)
+   // These residents don't need discounts since they already get free service
+   const isEligibleForFreeService = Boolean(
+     effectiveIsResident && (
+       voter_id !== null && voter_id !== undefined ||
+       isSeniorEligible ||
+       hasDisabilityEligible
+     )
+   );
     const ReceiptSchema = useMemo(() => {
-        return createReceiptSchema(discountedAmount || rate);
-    }, [discountedAmount, rate]);
+        // For free services, pass undefined to skip rate validation
+        const effectiveRate = (effectiveIsResident && isEligibleForFreeService) ? undefined : (discountedAmount || rate);
+        return createReceiptSchema(effectiveRate, effectiveIsResident && isEligibleForFreeService);
+    }, [discountedAmount, rate, effectiveIsResident, isEligibleForFreeService]);
 
 
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: effectiveIsResident ? "N/A" : "", 
-            inv_amount: effectiveIsResident ? (isFree ? "0" : (rate || "0")) : "",
+            inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
+            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : "", // Always empty, don't pre-fill with rate
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
             cr_id: effectiveIsResident ? id.toString() : undefined,
@@ -90,16 +104,18 @@ import { Loader2 } from "lucide-react";
         try {
             console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
             
+            let newPayId; // Declare newPayId in the outer scope
+            
             if (nat_col === 'Service Charge'){
                 // Check if payment request already exists
-                if (spay_id) {
-                    console.log('[Receipt onSubmit] Payment request already exists with spay_id:', spay_id);
+                if (pay_id) {
+                    console.log('[Receipt onSubmit] Payment request already exists with pay_id:', pay_id);
                     // Just update the existing payment request status to Paid
                     console.log('[Receipt onSubmit] updating service charge status to Paid');
                     await updateServiceChargeStatus({ 
-                        sr_id: id, 
+                        pay_id: pay_id, 
                         data: { 
-                            status: "Paid" 
+                            pay_status: "Paid" 
                         } 
                     });
                 } else {
@@ -110,16 +126,18 @@ import { Loader2 } from "lucide-react";
                         console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
                     } else {
                         console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                        await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
-                        // Auto-mark summon as Accepted
-                        await acceptSummon(id.toString());
-                        
-                        // Update status to "Paid" - backend will generate sr_code automatically
+                        const newPaymentRequest = await createScPayReq({ 
+                            sr_id: id.toString(), 
+                            pr_id: prId, 
+                            spay_amount: amount,
+                            pay_sr_type: purpose || 'File Action'
+                        });
+                        newPayId = newPaymentRequest?.pay_id || newPaymentRequest?.spay_id;
                         console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
-                            sr_id: id, 
+                            pay_id: newPayId, 
                             data: { 
-                                status: "Paid" 
+                                pay_status: "Paid" 
                             } 
                         });
                     }
@@ -139,30 +157,55 @@ import { Loader2 } from "lucide-react";
             const values = form.getValues();
             const payload: any = {
                 inv_date: new Date().toISOString(),
-                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
+                // For free services, use 0 as amount
+                inv_amount: (effectiveIsResident && isEligibleForFreeService) 
+                    ? 0 
+                    : parseFloat(values.inv_amount || (discountedAmount || rate || '')),
                 inv_nat_of_collection: values.inv_nat_of_collection,
                 inv_serial_num: values.inv_serial_num || 'N/A',
             };
             
             // Add the appropriate ID field based on the type
+            let effectivePayId; // Declare in outer scope for logging
             if (nat_col === 'Service Charge') {
-                if (!spay_id) {
-                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without spay_id');
+                // Use newPayId if available (from newly created payment request), otherwise use the original pay_id
+                effectivePayId = typeof newPayId !== 'undefined' ? newPayId : pay_id;
+                if (!effectivePayId) {
+                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without pay_id');
                     return;
                 }
-                payload.spay_id = spay_id;
-                console.log('[Receipt onSubmit] Added spay_id to payload:', spay_id);
+                payload.pay_id = effectivePayId;
+                console.log('[Receipt onSubmit] Added pay_id to payload:', effectivePayId);
             } else if (effectiveIsResident) {
                 payload.cr_id = id.toString();
+                console.log('DEBUG: Set cr_id to:', id.toString());
             } else {
-                payload.nrc_id = Number(id);
+                payload.nrc_id = id; // nrc_id is now a string like "NRC001-25"
+                console.log('DEBUG: Set nrc_id to:', id, 'type:', typeof id);
             }
             
-            // Clean up undefined/empty values
-            Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
+            // Clean up undefined/empty values, but preserve pay_id even if it's 0
+            Object.keys(payload).forEach((k) => {
+                if (k === 'pay_id') {
+                    // Don't delete pay_id even if it's 0, as it's a valid ID
+                    return;
+                }
+                if (payload[k] === undefined || payload[k] === '') {
+                    delete payload[k];
+                }
+            });
             console.log('[Receipt onSubmit] Final payload before sending:', payload);
-            console.log('[Receipt onSubmit] spay_id value:', spay_id, 'type:', typeof spay_id);
-            await receipt(payload as any);
+            console.log('[Receipt onSubmit] pay_id value:', pay_id, 'type:', typeof pay_id);
+            console.log('[Receipt onSubmit] effectivePayId:', effectivePayId, 'type:', typeof effectivePayId);
+            console.log('[Receipt onSubmit] newPayId:', newPayId, 'type:', typeof newPayId);
+            console.log('[Receipt onSubmit] payload.pay_id:', payload.pay_id, 'type:', typeof payload.pay_id);
+            
+            // Use the appropriate mutation based on the type
+            if (nat_col === 'Service Charge') {
+                await addReceiptMutation(payload as any);
+            } else {
+                await receipt(payload as any);
+            }
 
             console.log('Receipt mutation called successfully');
             
@@ -182,7 +225,7 @@ import { Loader2 } from "lucide-react";
         if (!amountPaid) return false;
         const amount = Number(amountPaid);
         
-        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "0");
+        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "");
         return amount > 0 && amount < targetAmount;
     };
 
@@ -209,12 +252,8 @@ import { Loader2 } from "lucide-react";
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
                     <div>
-                        <label className="text-sm font-medium text-gray-600">Resident Name</label>
+                        <label className="text-sm font-medium text-gray-600">{is_resident ? 'Resident Name' : 'Name'}</label>
                         <p className="text-base text-gray-900 font-medium mt-1">{requester}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Request Type</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col === 'Service Charge' ? 'Summon' : nat_col}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Purpose</label>
@@ -222,11 +261,18 @@ import { Loader2 } from "lucide-react";
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                        <p className="text-base text-green-600 font-semibold mt-1">{isFree ? 'Free (Registered Voter)' : pay_status}</p>
+                        <p className="text-base text-green-600 font-semibold mt-1">
+                            {isFree ? (
+                                voter_id ? 'Free (Registered Voter)' : 
+                                isSeniorEligible ? 'Free (Senior Citizen)' : 
+                                hasDisabilityEligible ? 'Free (PWD)' : 
+                                'Free'
+                            ) : pay_status}
+                        </p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-base text-primary font-semibold mt-1">{`₱${isFree ? '0' : rate}`}</p>
+                        <p className="text-base text-primary font-semibold mt-1">{isFree ? 'Free' : `₱${rate}`}</p>
                     </div>
                     </div>
                 </CardContent>
@@ -245,15 +291,15 @@ import { Loader2 } from "lucide-react";
                         )}
                     </div>
                     
-                    {/* Discount Button (hidden for free/voter requests) */}
-                    {!isFree && !isAlreadyPaid && (
+                    {/* Discount Button (disabled for residents with free service eligibility) */}
+                    {!isAlreadyPaid && (
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={nat_col === "Service Charge"}
+                            disabled={nat_col === "Service Charge" || isEligibleForFreeService}
                             className={`
                                 flex items-center gap-2 border-green-500 
-                                ${nat_col === "Service Charge" 
+                                ${nat_col === "Service Charge" || isEligibleForFreeService
                                 ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
                                 : "text-green-600 hover:bg-green-50 hover:text-green-700"}
                             `}
@@ -264,8 +310,8 @@ import { Loader2 } from "lucide-react";
                     )}
                 </div>
 
-                {/* Only show these fields if NOT resident */}
-                {!is_resident && (
+                {/* Show these fields if NOT resident OR if resident but not eligible for free service */}
+                {(!is_resident || (is_resident && !isEligibleForFreeService)) && (
                 <>
                     <FormField
                     control={form.control}
@@ -305,8 +351,7 @@ import { Loader2 } from "lucide-react";
                             }}
                             />
                         </FormControl>
-                        <FormMessage/>
-
+                        {/* <FormMessage/> */}
                         {isAmountInsufficient() && (
                             <div className="text-sm text-red-600 mt-1">
                             Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{discountedAmount || rate})
@@ -316,15 +361,15 @@ import { Loader2 } from "lucide-react";
                     )}
                     />
 
-                    {purpose && (discountedAmount || rate) && Number(form.watch("inv_amount")) > 0 && 
-                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "0") && (
+                    {purpose && (discountedAmount || rate) && form.watch("inv_amount") && Number(form.watch("inv_amount")) > 0 && 
+                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "") && (
                     <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                         <div className="flex justify-between text-sm border-t pt-2">
                         <span className="font-semibold">Change:</span>
                         <span className="text-green-600 font-semibold">
                             ₱{(
-                            (Number(form.watch("inv_amount")) || 0) - 
-                            parseFloat(discountedAmount || rate || "0")
+                            Number(form.watch("inv_amount")) - 
+                            parseFloat(discountedAmount || rate || "")
                             ).toLocaleString('en-US', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
@@ -340,17 +385,17 @@ import { Loader2 } from "lucide-react";
                 <div className="flex justify-end gap-3 mt-6">
                 <Button 
                     type="submit" 
-                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
+                    disabled={isPending || isAddReceiptPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
-                    {isPending || isAcceptPending || isAcceptNonResPending ? (
+                    {isPending || isAddReceiptPending || isAcceptPending || isAcceptNonResPending ? (
                         <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
+                            <span>Creating...</span>
                         </div>
                     ) : isAlreadyPaid ? (
                         "Cannot Proceed"
-                    ) : is_resident ? (
+                    ) : (is_resident && isEligibleForFreeService) ? (
                         "Accept"
                     ) : (
                         "Create Receipt"
@@ -365,6 +410,3 @@ import { Loader2 } from "lucide-react";
 }
 
 export default ReceiptForm;
-
-
-

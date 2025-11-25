@@ -11,7 +11,7 @@ export const postBusiness = async (businessData: {
   req_bsnss_name: string;
   req_bsnss_address: string;
   req_type: string;
-  req_sales_proof: string;
+  // req_sales_proof field removed
   req_status: string;
   req_payment_status: string;
   ags_id?: string;

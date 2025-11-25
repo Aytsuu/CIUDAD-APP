@@ -29,6 +29,12 @@ const recordMenuItem = [
     route: "/(report)/securado/map",
     user: [User.brgyStaff],
   },
+  {
+    title: 'Illegal Dumping',
+    description: '',
+    route: '/(waste)/illegal-dumping/resident/illegal-dump-res-main',
+    user: [User.resident, User.brgyStaff]
+  },
 ];
 
 export default function ReportRecord() {

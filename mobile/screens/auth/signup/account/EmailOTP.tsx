@@ -7,10 +7,11 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { SubmitButton } from "@/components/ui/button/submit-button";
+import { useVerifyAccountReg } from "../../queries/authPostQueries";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
-  const { control, getValues, trigger, setValue, setError } =
+  const { control, getValues, trigger, setValue, setError, watch} =
     useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
@@ -24,7 +25,8 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
     "",
   ]);
   const { toast } = useToastContext();
-  const { sendEmailOTP, verifyEmailOTP } = useAuth();
+  const { sendEmailOTP } = useAuth();
+  const { mutateAsync: verifyAccountReg } = useVerifyAccountReg();
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
@@ -43,16 +45,13 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
     const otp = otpInput.join("");
     try {
       const email = getValues("accountFormSchema.email");
-      const response = await verifyEmailOTP(email, otp);
-      console.log("response:", response);
-      if (response) {
-        toast.success("Email verified successfully!");
-        setModalVisible(false);
-        params.next();
-      } else {
-        setOtpInput(["", "", "", "", "", ""]);
-        setInvalidOTP(true);
-      }
+      await verifyAccountReg({
+        otp: otp,
+        email: email
+      });
+      toast.success("Email verified successfully!");
+      setModalVisible(false);
+      params.next();
     } catch (err) {
       toast.error("Something went wrong while verifying OTP");
     }
@@ -158,8 +157,23 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
         description={
           <View className="mb-4">
             <Text className="text-center text-gray-600 text-sm leading-relaxed">
-              Enter the 6-digit code sent to your email address
+              Enter the 6-digit code sent to your email{" "}
+              <Text className="font-medium text-gray-600 text-sm">
+                {watch("accountFormSchema.email")}
+              </Text>
             </Text>
+            <View className="flex-row gap-1 items-center justify-center my-3">
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  setOtpInput(["", "", "", "", "", ""]);
+                }}
+              >
+                <Text className="text-center text-primaryBlue text-sm font-medium">
+                  Change Email
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         }
         setModalVisible={setModalVisible}

@@ -3,19 +3,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
-import {
-  Form,
-} from "@/components/ui/form/form";
+import { Form } from "@/components/ui/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import PhoneOTP from "./phoneOTP";
-import EmailOTP from "./emailOTP";
-import PasswordEntry from "./passwordEntry";
+import OTPVerification from "./OTPVerification";
 import { useSendOTP } from "../queries/authPostQueries";
 import { FormInput } from "@/components/ui/form/form-input";
 import axios from "axios";
 import { useSendEmailOTPMutation } from "@/redux/auth-redux/useAuthMutation";
+import {MdLogin, MdSwapHoriz } from "react-icons/md";
 
 const PhoneSchema = z.object({
   phone: z
@@ -33,12 +30,11 @@ const EmailSchema = z.object({
     }),
 });
 
-type SignInMethod = "phone" | "email" | "google";
-type SignInStep = "phone-login" | "email-login" | "otp" | "password";
+type SignInMethod = "phone" | "email";
+type SignInStep = "phone-login" | "email-login" | "otp";
 
 export default function SignIn() {
   const navigate = useNavigate();
-  // const { sendEmailOTP, error } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [signInMethod, setSignInMethod] = useState<SignInMethod>("phone");
@@ -46,7 +42,6 @@ export default function SignIn() {
   const [verificationData, setVerificationData] = useState<{
     phone?: string;
     email?: string;
-    userId?: string;
     serverOtp?: string;
   }>({});
 
@@ -117,16 +112,11 @@ export default function SignIn() {
     }
   };
 
-  const handleOTPSuccess = (userId: string) => {
-    setVerificationData((prev) => ({ ...prev, userId }));
-    setCurrentStep("password");
-  };
-
-  const handlePasswordSuccess = () => {
+  const handleOTPSuccess = () => {
     phoneForm.reset();
     emailForm.reset();
     setVerificationData({});
-    navigate("/home");
+    navigate("/");
   };
 
   const switchToEmailLogin = () => {
@@ -147,6 +137,7 @@ export default function SignIn() {
     try {
       const response = await sendOTPMutation.mutateAsync({
         pv_phone_num: verificationData.phone,
+        pv_type: "login"
       });
 
       setVerificationData((prev) => ({
@@ -186,16 +177,24 @@ export default function SignIn() {
     }
   };
 
+  const handleEmailOTPResend = async () => {
+    if (!verificationData.email) return;
+    await handleEmailSubmit({ email: verificationData.email });
+  };
+
   // ---------- Render Helpers ----------
   const renderPhoneLoginContent = () => (
     <div className="space-y-6">
+      {/* Header without Icon */}
       <div className="text-center">
-        <h2 className="text-xl font-medium text-gray-900">
-          Login to your account
-        </h2>
-        <p className="text-gray-600">
-          Enter your credentials to login to your account
-        </p>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Welcome Back
+          </h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Login with your phone number
+          </p>
+        </div>
       </div>
 
       <Form {...phoneForm}>
@@ -206,13 +205,13 @@ export default function SignIn() {
           <FormInput
             control={phoneForm.control}
             name="phone"
-            type="number"
+            type="tel" 
             label="Phone Number"
             placeholder="09XXXXXXXXX"
           />
 
           {errorMessage && (
-            <Alert variant="destructive" className="border-red-200 bg-red-50">
+            <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
               <AlertDescription className="text-red-700 text-sm">
                 {errorMessage}
               </AlertDescription>
@@ -222,96 +221,130 @@ export default function SignIn() {
           <Button
             type="submit"
             disabled={loading || sendOTPMutation.isPending}
-            className="w-full bg-blue-500 hover:bg-blue-800 text-white h-10 rounded-md font-medium"
+            className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold shadow-lg shadow-green-200 hover:shadow-xl transition-all duration-200 disabled:opacity-50"
           >
             {loading || sendOTPMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Sending OTP...
-              </>
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <span>Sending OTP...</span>
+              </div>
             ) : (
-              "Login"
+              <div className="flex items-center justify-center gap-2">
+                <MdLogin className="w-5 h-5" />
+                <span>Continue with Phone</span>
+              </div>
             )}
           </Button>
         </form>
       </Form>
 
-      <div className="space-y-4">
-        <Button
-          type="button"
-          onClick={switchToEmailLogin}
-          variant="link"
-          className="w-full h-10"
-        >
-          Login via Email
-        </Button>
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-4 bg-white text-gray-500 font-medium">or</span>
+        </div>
       </div>
+
+      {/* Switch Method Button */}
+      <Button
+        type="button"
+        onClick={switchToEmailLogin}
+        variant="outline"
+        className="w-full h-12 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 rounded-xl font-semibold text-gray-700 hover:text-blue-700 transition-all duration-200"
+      >
+        <div className="flex items-center justify-center gap-2">
+          <MdSwapHoriz className="w-5 h-5" />
+          <span>Login via Email</span>
+        </div>
+      </Button>
     </div>
   );
 
   const renderEmailLoginContent = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-medium text-gray-900">
-          Login to your account
+  <div className="space-y-6">
+    {/* Header without Icon */}
+    <div className="text-center">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Welcome Back
         </h2>
-        <p className="text-gray-600">
-          Enter your credentials to login to your account
+        <p className="text-sm text-gray-500 mt-2">
+          Login with your email address
         </p>
       </div>
+    </div>
 
-      <Form {...emailForm}>
-        <form
-          onSubmit={emailForm.handleSubmit(handleEmailSubmit)}
-          className="space-y-6"
-        >
-          <div className="relative">
-            <FormInput
-              control={emailForm.control}
-              name="email"
-              type="email"
-              label="Email"
-              placeholder="m@example.com"
-            />
-          </div>
+    <Form {...emailForm}>
+      <form
+        onSubmit={emailForm.handleSubmit(handleEmailSubmit)}
+        className="space-y-6"
+      >
+        {/* Make sure the FormInput is properly positioned */}
+        <div className="relative z-10"> {/* Add z-10 to ensure it's above other elements */}
+          <FormInput
+            control={emailForm.control}
+            name="email"
+            type="email"
+            label="Email Address"
+            placeholder="name@gmail.com"
+          />
+        </div>
 
-          {errorMessage && (
-            <Alert variant="destructive" className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700 text-sm">
-                {errorMessage}
-              </AlertDescription>
-            </Alert>
-          )}
+        {errorMessage && (
+          <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
+            <AlertDescription className="text-red-700 text-sm">
+              {errorMessage}
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full h-10 bg-blue-500 hover:bg-blue-800 text-white rounded-md font-medium"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Sending OTP...
-              </>
-            ) : (
-              "Login"
-            )}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="space-y-4">
         <Button
-          type="button"
-          onClick={switchToPhoneLogin}
-          variant="link"
-          className="w-full h-10 "
+          type="submit"
+          disabled={loading || sendEmailOTP.isPending}
+          className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold shadow-lg shadow-blue-200 hover:shadow-xl transition-all duration-200 relative z-10"
         >
-          Login via Phone
+          {loading || sendEmailOTP.isPending ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <span>Sending OTP...</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <MdLogin className="w-5 h-5" />
+              <span>Continue with Email</span>
+            </div>
+          )}
         </Button>
+      </form>
+    </Form>
+
+    {/* Divider */}
+    <div className="relative">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-gray-200"></div>
+      </div>
+      <div className="relative flex justify-center text-sm">
+        <span className="px-4 bg-white text-gray-500 font-medium">or</span>
       </div>
     </div>
-  );
+
+    {/* Switch Method Button */}
+    <Button
+      type="button"
+      onClick={switchToPhoneLogin}
+      variant="outline"
+      className="w-full h-12 border-2 border-gray-200 hover:border-green-300 hover:bg-green-50 rounded-xl font-semibold text-gray-700 hover:text-green-700 transition-all duration-200 relative z-10"
+    >
+      <div className="flex items-center justify-center gap-2">
+        <MdSwapHoriz className="w-5 h-5" />
+        <span>Login via Phone </span>
+      </div>
+    </Button>
+  </div>
+);
 
   // ---------- Main Renderer ----------
   const renderDialogContent = () => {
@@ -321,29 +354,15 @@ export default function SignIn() {
       case "email-login":
         return renderEmailLoginContent();
       case "otp":
-        return signInMethod === "phone" ? (
-          <PhoneOTP
-            phone={verificationData.phone!}
-            serverOtp={verificationData.serverOtp || ""}
-            onSuccess={handleOTPSuccess}
-            onResend={handlePhoneOTPResend}
-          />
-        ) : (
-          <EmailOTP
-            email={verificationData.email!}
-            onSuccess={handleOTPSuccess}
-            onResend={() =>
-              handleEmailSubmit({ email: verificationData.email! })
-            }
-          />
-        );
-      case "password":
         return (
-          <PasswordEntry
-            userId={verificationData.userId!}
-            method={signInMethod as "phone" | "email"}
-            contact={verificationData.phone || verificationData.email!}
-            onSuccess={handlePasswordSuccess}
+          <OTPVerification
+            method={signInMethod}
+            phone={verificationData.phone}
+            email={verificationData.email}
+            // serverOtp={verificationData.serverOtp}
+            onSuccess={handleOTPSuccess}
+            onResend={signInMethod === "phone" ? handlePhoneOTPResend : handleEmailOTPResend}
+            isResending={sendOTPMutation.isPending || sendEmailOTP.isPending}
           />
         );
       default:
@@ -355,8 +374,6 @@ export default function SignIn() {
     switch (currentStep) {
       case "otp":
         return "Enter Verification Code";
-      case "password":
-        return "Complete Sign In";
       default:
         return "";
     }
@@ -366,24 +383,22 @@ export default function SignIn() {
     switch (currentStep) {
       case "otp":
         return signInMethod === "phone"
-          ? `Verify your code to proceed`
-          : `Verify your email to proceed`;
-      case "password":
-        return "Enter your password to complete sign in";
+          ? "Verify your code to proceed"
+          : "Verify your email to proceed";
       default:
         return "";
     }
   };
 
   return (
-    <div className="w-full h-full p-6 bg-white border rounded-lg">
-      {(currentStep === "otp" || currentStep === "password") && (
-        <div className="mb-4 text-center">
-          <h2 className="text-lg font-semibold">{getDialogTitle()}</h2>
-          <p className="text-sm text-gray-600">{getDialogDescription()}</p>
+    <div className="w-96 mx-auto p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
+      {currentStep === "otp" && (
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl font-bold text-gray-900">{getDialogTitle()}</h2>
+          <p className="text-sm text-gray-500 mt-1">{getDialogDescription()}</p>
         </div>
       )}
-
+      
       {renderDialogContent()}
     </div>
   );

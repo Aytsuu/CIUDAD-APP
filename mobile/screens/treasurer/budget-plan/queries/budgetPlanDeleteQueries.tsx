@@ -1,19 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { deleteBudgetPlan } from "../restful-API/budgetPlanDeleteAPI";
+import { deleteBudgetPlan, deleteBudgetPlanFile } from "../restful-API/budgetPlanDeleteAPI";
 
 export const useDeleteBudgetPlan = () => {
     const queryClient = useQueryClient();
-    const {toast} = useToastContext();
+    const {toast} = useToastContext()
 
     return useMutation({
         mutationFn: deleteBudgetPlan,
-        onMutate: async (plan_id) => {
-            await queryClient.cancelQueries({ queryKey: ['budgetPlan'] });
+        onMutate: async () => {
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-            toast.success("Budget Plan deleted successfully")
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
+            toast.success("Budget Plan deleted successfully",)
         },
         onError: (err) => {
             toast.error("Failed to delete budget plan")
@@ -21,3 +21,22 @@ export const useDeleteBudgetPlan = () => {
         }
     });
 };
+
+export const useDeleteBudgetPlanFile = () => {
+    const queryClient = useQueryClient();
+     const {toast} = useToastContext();
+      return useMutation({
+        mutationFn: deleteBudgetPlanFile,
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ['budgetPlanFiles'] });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
+            toast.success("Document deleted successfully")
+        },
+        onError: (err) => {
+            toast.error("Failed to delete document")
+            console.error("Failed to delete file:", err);
+        }
+    });
+}

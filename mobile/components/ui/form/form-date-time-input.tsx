@@ -96,7 +96,8 @@ export const FormDateAndTimeInput = ({
                 disabled={!editable}
               >
                 <Text 
-                  className={`native:text-sm
+                  className={`
+                    font-PoppinsRegular
                     ${!dateValue ? 'text-[#888]' : 'text-black'}
                   `}
                 >
@@ -123,7 +124,8 @@ export const FormDateAndTimeInput = ({
                 disabled={!editable}
               >
                 <Text 
-                  className={`native:text-sm
+                  className={`
+                    font-PoppinsRegular
                     ${!dateValue ? 'text-[#888]' : 'text-black'}
                   `}
                 >

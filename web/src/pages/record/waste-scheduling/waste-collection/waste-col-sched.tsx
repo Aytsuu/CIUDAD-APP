@@ -1,10 +1,8 @@
-
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form } from '@/components/ui/form/form';
+import { Loader2 } from "lucide-react";
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -13,9 +11,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
-import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
+import { useGetWasteTrucks, type Trucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
 import { useAssignCollectors } from './queries/wasteColAddQueries';
@@ -27,15 +26,16 @@ interface WasteColSchedProps {
     onSuccess?: () => void;
 }
 
-const announcementOptions = [
-    { id: "all", label: "All" },
-    { id: "allbrgystaff", label: "All Barangay Staff" },
-    { id: "residents", label: "Residents" },
-    { id: "wmstaff", label: "Waste Management Staff" },
-    { id: "drivers", label: "Drivers" },
-    { id: "collectors", label: "Collectors" },
-    { id: "watchmen", label: "Watchmen" },
-];
+
+const dayOptions = [
+    { id: "Monday", name: "Monday" },
+    { id: "Tuesday", name: "Tuesday" },
+    { id: "Wednesday", name: "Wednesday" },
+    { id: "Thursday", name: "Thursday" },
+    { id: "Friday", name: "Friday" },
+    { id: "Saturday", name: "Saturday" },
+    { id: "Sunday", name: "Sunday" },
+]
 
 
 function WasteColSched({ onSuccess }: WasteColSchedProps) {
@@ -44,11 +44,12 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors, isPending } = useAssignCollectors();
+    const { mutate: assignCollectors } = useAssignCollectors();
 
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     //FETCH QUERY MUTATIONS
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetWasteCollectors();
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
@@ -56,6 +57,10 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+    console.log("WASTE COLLECTORS: ", collectors)
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];
 
     const collectorOptions = collectors.map(collector => ({
         id: collector.id,  
@@ -67,9 +72,11 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         name: `${driver.firstname} ${driver.lastname}`  
     }));
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: String(truck.truck_id),
-        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            id: String(truck.truck_id),
+            name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`
     }));
 
     const sitioOptions = sitios.map(sitio => ({
@@ -81,24 +88,63 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: '',
+            day: '',
             time: '',
             additionalInstructions: '',
             selectedSitios: '',
             selectedCollectors: [],
             driver: '',
             collectionTruck: '',
-            selectedAnnouncements: [],
         },
     });
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+        setIsSubmitting(true);
+
         const [hour, minute] = values.time.split(":");
         const formattedTime = `${hour}:${minute}:00`;
 
         if(!values.additionalInstructions){
             values.additionalInstructions = "None";
         }
+
+        //checks for sitio with the same day
+        const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
+        
+        const hasSameSitioSameDay = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day &&
+            schedule.sitio_name === selectedSitioName
+        );
+
+
+        //checks for overlapping day and time
+        const hasDuplicateSchedule = wasteSchedules.some(schedule => 
+            schedule.wc_day === values.day && 
+            schedule.wc_time === formattedTime
+        );
+
+
+        if (hasDuplicateSchedule) {
+            form.setError("day", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });          
+            
+            form.setError("time", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });  
+            return; // Stop form submission
+        }
+
+        
+        if (hasSameSitioSameDay) {
+            form.setError("day", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+            return;
+        }        
 
         createSchedule({
             ...values,
@@ -150,7 +196,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -159,7 +205,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -173,20 +219,19 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                     />
 
 
-                    {/* Date and Time */}
-                    <FormDateTimeInput
+                    {/* Day and Time */}
+                    <FormSelect
                         control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
+                        name="day"
+                        label="Collection Day"
+                        options={dayOptions}
                     />
 
                     <FormDateTimeInput
                         control={form.control}
                         name="time"
                         type="time"
-                        label="Time"
+                        label="Collection Time"
                     />
 
                 </div>
@@ -203,45 +248,17 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
                 </div>
 
 
-
-                {/* Announcement Audience Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedAnnouncements"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="announcements">
-                                    <AccordionTrigger>Select Audience</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {announcementOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value?.includes(option.id) || false}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                        ? [...(field.value || []), option.id]
-                                                        : (field.value || []).filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending}>
-                        {isPending ? "Submitting..." : "Schedule"}
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Save"
+                        )}
                     </Button>
                 </div>
             </form>

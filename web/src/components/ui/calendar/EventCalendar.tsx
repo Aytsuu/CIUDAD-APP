@@ -90,20 +90,37 @@ const EventCalendar = ({
         }
 
         try {
+          // Validate date and time strings
+          if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || 
+              !timeStr || timeStr === 'undefined' || timeStr === 'null') {
+            console.warn("Skipping event with invalid date/time:", { dateStr, timeStr, item });
+            return null;
+          }
+
           const start = new Date(`${dateStr}T${timeStr}`);
-          if (isNaN(start.getTime())) throw new Error("Invalid date");
+          if (isNaN(start.getTime())) {
+            console.warn("Invalid date format:", { dateStr, timeStr, item });
+            return null;
+          }
           
           let end: Date;
           if (endTimeAccessor) {
             const endTimeStr = String(item[endTimeAccessor]);
-            end = new Date(`${dateStr}T${endTimeStr}`);
+            if (endTimeStr && endTimeStr !== 'undefined' && endTimeStr !== 'null') {
+              end = new Date(`${dateStr}T${endTimeStr}`);
+              if (isNaN(end.getTime())) {
+                end = new Date(start.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+              }
+            } else {
+              end = new Date(start.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+            }
           } else {
             end = new Date(start.getTime() + 60 * 60 * 1000);
           }
 
           return {
             _id: generateId(),
-            title: String(item[titleAccessor]),
+            title: String(item[titleAccessor] || 'Untitled Event'),
             start,
             end,
             color: colorAccessor ? String(item[colorAccessor]) : defaultColor,
@@ -134,7 +151,7 @@ const EventCalendar = ({
     : events.filter(event => event.sourceName === activeSource);
 
   const sourceOptions = [
-    { id: 'all', name: 'All Sources' },
+    { id: 'all', name: 'All' },
     ...sources.map((source, index) => ({
       id: source.name || `source-${index}`,
       name: source.name || `Source ${index + 1}`
@@ -153,11 +170,12 @@ const EventCalendar = ({
             title="Calendar"
             action={
               sourceOptions.length > 1 && (
-                <div className="w-64">
+                <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
                   <SelectLayout
-                    className="w-full"
+                    className="gap-2"
                     label=""
-                    placeholder="Filter by Source"
+                    placeholder=""
+                    valueLabel="Filter by Source"
                     options={sourceOptions}
                     value={activeSource}
                     onChange={handleSourceChange}

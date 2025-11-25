@@ -133,6 +133,8 @@ export default function RegistrationLayout() {
     business: Record<string, any>,
     files: Record<string, any>[]
   ) => {
+
+    console.log(accountSchema)
     try {
       // Insertion Query
       await addAllProfile({
@@ -228,7 +230,7 @@ export default function RegistrationLayout() {
 
     const {per_id, ...personal} = personalSchema
     const {files, ...business} = businessSchema
-    const {confirm_password, ...account} = accountSchema
+    const {isVerifiedEmail, isVerifiedPhone, email, ...account} = accountSchema;
     
     const newFiles = files?.map((media: any) => ({
       name: media.name,
@@ -245,7 +247,7 @@ export default function RegistrationLayout() {
           noFamily,
           noBusiness,
           capitalizeAllFields(personal),
-          account,
+          {...account, ...(email != '' && {email: email})},
           houseSchema,
           {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,

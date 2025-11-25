@@ -33,7 +33,7 @@ class PersonalHistoryBaseSerializer(serializers.ModelSerializer):
         return [
             {
                 'street': pa.add.add_street,
-                'sitio': pa.add.sitio.sitio_name,
+                'sitio': pa.add.sitio.sitio_name if pa.add.sitio else pa.add.add_external_sitio,
                 'barangay': pa.add.add_barangay,
                 'city': pa.add.add_city,
                 'province': pa.add.add_province
@@ -133,37 +133,37 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
 
         return instance
 
-class PersonalAddressModifSerializer(serializers.ModelSerializer):
-    address = serializers.SerializerMethodField()
-    class Meta:
-        model = PersonalAddressModification
-        fields = ['address']
+# class PersonalAddressModifSerializer(serializers.ModelSerializer):
+#     address = serializers.SerializerMethodField()
+#     class Meta:
+#         model = PersonalAddressModification
+#         fields = ['address']
     
-    def get_address(self, obj):
-        return AddressBaseSerializer(Address.objects.filter(add_id=obj.add.add_id).first()).data
+#     def get_address(self, obj):
+#         return AddressBaseSerializer(Address.objects.filter(add_id=obj.add.add_id).first()).data
 
-class PersonalModificationBaseSerializer(serializers.ModelSerializer):
-    modified_addresses = serializers.SerializerMethodField()
-    current_details = serializers.SerializerMethodField()
-    rp_id = serializers.SerializerMethodField()
-    fam_id = serializers.SerializerMethodField()
-    class Meta:
-        model = PersonalModification
-        fields = '__all__'
+# class PersonalModificationBaseSerializer(serializers.ModelSerializer):
+#     modified_addresses = serializers.SerializerMethodField()
+#     current_details = serializers.SerializerMethodField()
+#     rp_id = serializers.SerializerMethodField()
+#     fam_id = serializers.SerializerMethodField()
+#     class Meta:
+#         model = PersonalModification
+#         fields = '__all__'
     
-    def get_modified_addresses(self, obj):
-        instances = PersonalAddressModification.objects.filter(pm=obj.pm_id)
-        return PersonalAddressModifSerializer(instances, many=True).data
+#     def get_modified_addresses(self, obj):
+#         instances = PersonalAddressModification.objects.filter(pm=obj.pm_id)
+#         return PersonalAddressModifSerializer(instances, many=True).data
     
-    def get_current_details(self, obj):
-        return PersonalBaseSerializer(Personal.objects.filter(per_id=obj.per.per_id).first()).data
+#     def get_current_details(self, obj):
+#         return PersonalBaseSerializer(Personal.objects.filter(per_id=obj.per.per_id).first()).data
     
-    def get_rp_id(self, obj):
-        return ResidentProfile.objects.filter(per=obj.per).first().rp_id
+#     def get_rp_id(self, obj):
+#         return ResidentProfile.objects.filter(per=obj.per).first().rp_id
     
-    def get_fam_id(self, obj):
-        rp = ResidentProfile.objects.filter(per=obj.per).first().rp_id
-        fam = FamilyComposition.objects.filter(rp=rp).first()
-        if fam:
-            fam = fam.fam
-        return fam
+#     def get_fam_id(self, obj):
+#         rp = ResidentProfile.objects.filter(per=obj.per).first().rp_id
+#         fam = FamilyComposition.objects.filter(rp=rp).first()
+#         if fam:
+#             fam = fam.fam
+#         return fam

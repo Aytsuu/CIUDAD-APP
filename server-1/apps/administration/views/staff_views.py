@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
 from ..serializers.staff_serializers import *
-from pagination import *
 from ..double_queries import *
+from pagination import *
+from apps.notification.utils import create_notification
 
 class StaffCreateView(generics.CreateAPIView):
   serializer_class = StaffCreateSerializer
@@ -42,7 +43,7 @@ class StaffTableView(generics.ListCreateAPIView):
         Q(staff_type__icontains=search_query)
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-staff_id')
   
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
@@ -60,17 +61,30 @@ class StaffUpdateView(generics.UpdateAPIView):
       serializer = self.get_serializer(instance, data=request.data, partial=True)
 
       if serializer.is_valid():
-          serializer.save()
+        serializer.save()
 
-          double_queries = UpdateQueries()
-          response = double_queries.staff(request.data, instance.staff_id)
-          if not response.ok:
-            try:
-                error_detail = response.json()
-            except ValueError:
-                error_detail = response.text
-            raise serializers.ValidationError({"error": error_detail})        
-          return Response(serializer.data, status=status.HTTP_200_OK)
+        double_queries = UpdateQueries()
+        response = double_queries.staff(request.data, instance.staff_id)
+        if not response.ok:
+          try:
+              error_detail = response.json()
+          except ValueError:
+              error_detail = response.text
+          raise serializers.ValidationError({"error": error_detail}) 
+
+        create_notification(
+          title="Staff Assignment",
+          message=(
+              f"You've been assigned to a new position ({register.pos.pos_title})"
+          ),
+          recipients=[instance.staff_id],
+          notif_type="",
+          web_route="",
+          web_params={},
+          # mobile_route="",
+          # mobile_params={},
+        )  
+        return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
   
 class StaffDeleteView(generics.DestroyAPIView):
@@ -91,21 +105,34 @@ class StaffDeleteView(generics.DestroyAPIView):
       except ValueError:
         error_detail = response.text
       raise serializers.ValidationError({'error': error_detail})
+    
+    create_notification(
+      title="Staff Assignment",
+      message=(
+          f"Your assignment to the position {register.pos.pos_title} has been removed"
+      ),
+      recipients=[staff_id],
+      notif_type="",
+      web_route="",
+      web_params={},
+      # mobile_route="",
+      # mobile_params={},
+    )
+    
     return Response(status=status.HTTP_200_OK)
 
 
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):
     title = request.query_params.get('pos_title', None)
+    type = request.query_params.get('staff_type', 'BARANGAY STAFF')
 
     if title == "all":
-      staff = Staff.objects.all()
+      staff = Staff.objects.filter(staff_type__iexact=type)
       return Response(StaffTableSerializer(staff, many=True).data)
     
     req_position = Position.objects.get(pos_title=title)
-    staff = Staff.objects.filter(pos=req_position.pos_id)
+    staff = Staff.objects.filter(pos=req_position.pos_id, staff_type__iexact=type)
     return Response(StaffTableSerializer(staff, many=True).data)
 
-class StaffLandingPageView(generics.ListAPIView):
-  serializer_class = StaffLandingPageSerializer
-  queryset = Staff.objects.filter(~Q(pos__pos_title='Admin') & Q(staff_type='Barangay Staff'))
+

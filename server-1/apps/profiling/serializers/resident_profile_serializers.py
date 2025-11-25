@@ -8,6 +8,11 @@ from apps.account.serializers import UserAccountSerializer
 from apps.administration.models import Staff
 from datetime import datetime
 from ..utils import *
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
+from ..double_queries import PostQueries
+import json
+import copy
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,7 +42,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
-                  'age', 'sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
+                   'age','sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else ''
@@ -116,6 +121,41 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             per = personal,
             staff = staff
         )
+
+        # Double Query
+        request = self.context.get('request')
+        double_query = PostQueries()
+        response = double_query.resident_personal(request.data)
+
+        if not response.ok:
+            try:
+                error_details = response.json()
+            except ValueError:
+                error_details = response.text
+            raise serializers.ValidationError({'error': error_details})
+
+        # Create notification
+        resident_name = f"{resident_profile.per.per_fname}{f' {resident_profile.per.per_mname[0]}.' if resident_profile.per.per_mname else ''} {resident_profile.per.per_lname}"
+        staff_name = f"{staff.rp.per.per_lname} {staff.rp.per.per_fname[0]}."
+        residentId = resident_profile.rp_id
+            
+        json_data = json.dumps(
+        ResidentProfileTableSerializer(resident_profile).data,
+            default=str
+        )
+
+        create_notification(
+            title="New Resident",
+            message=(
+                f"{resident_name} has been registered as resident by {staff_name}"
+            ),
+            recipients=general_recipients(False, resident_profile.staff),
+            notif_type="REGISTRATION",
+            web_route="profiling/resident/view/personal",
+            web_params={"type": "viewing", "data": {"residentId": residentId, "familyId": ""}},
+            mobile_route="/(profiling)/resident/details",
+            mobile_params={"resident": json_data},
+        )
         
         return resident_profile
 
@@ -139,6 +179,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
     per_disability = serializers.CharField(source="per.per_disability")
+    per_is_deceased = serializers.CharField(source="per.per_is_deceased")
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
@@ -147,7 +188,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = ['rp_id','per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability', 'per_is_deceased',
                     'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by']
         read_only_fields = fields
 
@@ -214,8 +255,8 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.staff_serializers import StaffFullSerializer
-        return StaffFullSerializer(obj.staff).data
+        from apps.administration.serializers.staff_serializers import StaffBaseSerializer
+        return StaffBaseSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
         return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    

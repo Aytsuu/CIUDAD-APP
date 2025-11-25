@@ -1,32 +1,61 @@
 import { api } from "@/api/api";
 
-export const getProjectProposals = async (status?: string) => {
+export const getProjectProposalYears = async (): Promise<number[]> => {
   try {
-    const url = status 
-      ? `gad/project-proposals/?status=${status}&is_archive=false`
-      : 'gad/project-proposals/?is_archive=false';
-    const res = await api.get(url);
-    const data = res.data?.data ?? res.data ?? [];
-    
-    const proposalsWithData = await Promise.all(
-      (Array.isArray(data) ? data : []).map(async (proposal: any) => {
-        const gprId = proposal.gpr_id || proposal.gprId;
-        try {
-          const [suppDocsRes] = await Promise.all([
-            api.get(`gad/project-proposals/${gprId}/support-docs/`, {
-              params: { is_archive: false }
-            })
-          ]);
-          return transformProposalWithData(proposal, suppDocsRes.data);
-        } catch (err) {
-          return transformProposalWithData(proposal, []);
-        }
-      })
-    );
-    
-    return proposalsWithData;
+    const res = await api.get('gad/project-proposal-years/');
+    return res.data || [];
   } catch (err) {
+    console.error('Error fetching proposal years:', err);
     return [];
+  }
+};
+
+export const getProjectProposals = async (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  archive?: boolean,
+  year?: string
+): Promise<{ results: any[]; count: number }> => {
+  try {
+    const params: any = {
+      page,
+      page_size: pageSize,
+      is_archive: archive !== undefined ? archive : false
+    };
+    
+    if (searchQuery) params.search = searchQuery;
+    if (year && year !== "All") params.year = year;
+    const res = await api.get('gad/project-proposals/', { params });
+    
+    // Handle paginated response
+    if (res.data.results) {
+      const proposalsWithData = await Promise.all(
+        res.data.results.map(async (proposal: any) => {
+          const gprId = proposal.gpr_id || proposal.gprId;
+          try {
+            const [suppDocsRes] = await Promise.all([
+              api.get(`gad/project-proposals/${gprId}/support-docs/`, {
+                params: { is_archive: false }
+              })
+            ]);
+            return transformProposalWithData(proposal, suppDocsRes.data);
+          } catch (err) {
+            return transformProposalWithData(proposal, []);
+          }
+        })
+      );
+      
+      return {
+        results: proposalsWithData,
+        count: res.data.count || 0
+      };
+    }
+    
+    return { results: [], count: 0 };
+  } catch (err) {
+    console.error('Error fetching project proposals:', err);
+    return { results: [], count: 0 };
   }
 };
 
@@ -145,4 +174,9 @@ export const getAvailableDevPlanProjects = async (year?: string) => {
     console.error('Error fetching available development plan projects:', err);
     return [];
   }
+};
+
+export const getProjectProposalGrandTotal = async () => {
+  const response = await api.get(`/gad/project-proposals-grand-total/`);
+  return response.data;
 };
