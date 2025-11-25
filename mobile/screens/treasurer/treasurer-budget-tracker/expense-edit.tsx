@@ -287,6 +287,7 @@ function ExpenseEdit() {
       totalExpense,
       proposedBud,
       returnAmount,
+      prevAmount,
       particularId,
       staff_id: user?.staff?.staff_id    
     });

@@ -46,6 +46,7 @@ export const getApprovedProposals = async () => {
         return res.data;
         
     } catch (err) {
-        console.error(err);
+        // console.error(err);
+        throw new Error("Error getting approved proposal: " + err);
     }
 };

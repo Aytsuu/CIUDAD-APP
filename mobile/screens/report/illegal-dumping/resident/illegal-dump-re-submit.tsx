@@ -48,8 +48,6 @@ export default function IllegalDumpResubmitForm() {
     waste_report_rslv_file
   } = params;
 
-  console.log('waste_report_file:', waste_report_file);
-
 
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
 

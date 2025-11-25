@@ -22,7 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const { user } = useAuth(); 
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);

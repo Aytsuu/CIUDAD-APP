@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { getbudgetyearreq } from "../request/btracker-getYear";
-import { GADBudgetYearEntry } from "../gad-btracker-types";
 
 export const useGetGADYearBudgets = (page: number = 1, pageSize: number = 10, searchQuery?: string) => {
   return useQuery({

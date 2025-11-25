@@ -70,8 +70,6 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;    
     
-    console.log("REMAINING BAL: ", totBud)
-    console.log("TOWTAL EXP: ", totExp)
 
     const particularSelector = budgetItems.map(item => ({
         id: `${item.id} ${item.name}`,
@@ -303,7 +301,6 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
                         }
                         else{
                             if(amount != prevAmount){ // checks if theres difference between the value of amount
-                                console.log("SAKTOOOO HEREER YEYEYSYS")
                                 totalBudget = (totBUDGET + prevAmount) - amount;      
                                 totalExpense = (totEXP - prevAmount) + amount;   
                                 proposedBud = (propBudget + prevAmount) - amount;  
@@ -327,8 +324,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
         }
 
         
-        updateEntry({ ...values, files, years, totalBudget, totalExpense, proposedBud, returnAmount, particularId, staff: user?.staff?.staff_id });
-        console.log("CONSOLE EXP: ", values,  totalExpense, totalBudget)
+        updateEntry({ ...values, files, years, totalBudget, totalExpense, proposedBud, returnAmount, prevAmount, particularId, staff: user?.staff?.staff_id });
         setIsEditing(false);
         };
 
@@ -427,6 +423,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
                                         placeholder="Select Particulars"
                                         emptyMessage="No particulars found"
                                         contentClassName="w-full"
+                                        triggerClassName="w-full"
                                     />
                                 </FormControl>
                             <FormMessage/>

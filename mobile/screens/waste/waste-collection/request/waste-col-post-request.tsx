@@ -3,16 +3,16 @@ import { api } from "@/api/api";
 
 export const wasteColData = async (collectionInfo: Record<string, any>) => {
     try {
-        console.log({
-            wc_day: collectionInfo.day,
-            wc_time: collectionInfo.time,
-            wc_add_info: collectionInfo.additionalInstructions,
-            wc_is_archive: false,
-            staff: collectionInfo.staff,
-            sitio: collectionInfo.selectedSitios,
-            truck: collectionInfo.collectionTruck,
-            wstp: collectionInfo.driver  // Store driver directly here
-        });
+        // console.log({
+        //     wc_day: collectionInfo.day,
+        //     wc_time: collectionInfo.time,
+        //     wc_add_info: collectionInfo.additionalInstructions,
+        //     wc_is_archive: false,
+        //     staff: collectionInfo.staff,
+        //     sitio: collectionInfo.selectedSitios,
+        //     truck: collectionInfo.collectionTruck,
+        //     wstp: collectionInfo.driver  // Store driver directly here
+        // });
 
         const res = await api.post('waste/waste-collection-sched/', {
             wc_day: collectionInfo.day,
@@ -27,7 +27,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
         
         return res.data.wc_num;
     } catch (err) {
-        console.error("Error creating waste schedule:", err);
+        // console.error("Error creating waste schedule:", err);
         throw err;
     }
 };
@@ -36,13 +36,13 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
 
 export const wasteAssData = async (assInfo: Record<string, any>) => {
     try {
-        console.log({
-            wc_num: assInfo.wc_num,
-            sitio_id: assInfo.sitio_id,
-            wstp_id: assInfo.wstp_id,
-            truck_id: parseInt(assInfo.truck_id),
-            staff_id: assInfo.staff_id
-        });
+        // console.log({
+        //     wc_num: assInfo.wc_num,
+        //     sitio_id: assInfo.sitio_id,
+        //     wstp_id: assInfo.wstp_id,
+        //     truck_id: parseInt(assInfo.truck_id),
+        //     staff_id: assInfo.staff_id
+        // });
 
         const res = await api.post('waste/waste-collection-assignment/', {
             wc_num: assInfo.wc_num,
@@ -54,7 +54,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
 
         return res.data.was_id;
     } catch (err) {
-        console.error("Error creating waste collection assignment:", err);
+        // console.error("Error creating waste collection assignment:", err);
         throw err;
     }
 };
@@ -69,7 +69,7 @@ export const addAssCollector = async (wc_num: number, wstp_id: string) => {
         });
         return res.data.wasc_id;
     } catch (err) {
-        console.error("Error assigning collector:", err);
+        // console.error("Error assigning collector:", err);
         throw err;
     }
 }
@@ -82,7 +82,7 @@ export const createCollectionReminders = async () => {
     const res = await api.post('waste/create-collection-reminders/');
     return res.data;
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     throw err;
   }
 };

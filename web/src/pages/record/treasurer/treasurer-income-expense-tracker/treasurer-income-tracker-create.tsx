@@ -31,8 +31,6 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
     const { handleAddParticular } = useAddParticular();
     const { handleDeleteConfirmation, ConfirmationDialogs } = useDeleteParticular();
 
-    console.log("INCOMMMME YEEAAARRRRRRR: ", year)
-    console.log("INCOMMMME  TYPEE  YEEAAARRRRRRR: ", typeof year)
 
     const form = useForm<z.infer<typeof IncomeFormSchema>>({
         resolver: zodResolver(IncomeFormSchema),
@@ -62,7 +60,6 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
         const yearIncome = Number(year)
         let totalIncome = 0.0
 
-        console.log("YEAR NUMBERRRR: ", typeof inputYear)
 
         const totIncome = Number(totInc);
         const inc_amount = Number(values.inc_amount)
@@ -139,9 +136,9 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
                                     onChange={field.onChange}
                                     onAdd={(newParticular) => {
                                         handleAddParticular(newParticular, (newId) => {
-                                            console.log('New ID:', newId);
+                                            // console.log('New ID:', newId);
                                             field.onChange(newId);
-                                            console.log('Current form value:', form.getValues('inc_particulars'));
+                                            // console.log('Current form value:', form.getValues('inc_particulars'));
                                         });
                                     }}
                                     onDelete={(id) => handleDeleteConfirmation(Number(id))}

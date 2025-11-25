@@ -15,6 +15,7 @@ interface WasteReportDetailsProps {
   rep_violator: string;
   rep_contact: string;
   rep_status: string;
+  rep_anonymous: boolean;
   rep_date: string;
   rep_date_resolved: string;
   rep_date_cancelled: string;
@@ -42,6 +43,7 @@ function WasteIllegalDumpingDetails({
   rep_violator,
   rep_date,
   rep_contact,
+  rep_anonymous,
   rep_date_resolved,
   rep_date_cancelled,
   sitio_name,
@@ -250,7 +252,7 @@ function WasteIllegalDumpingDetails({
             <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold">Complainant</p>
-                <p>{rep_complainant || "Unknown"}</p>
+                <p>{rep_anonymous ? "Anonymous" : rep_complainant || "Unknown"}</p>
               </div>              
               <div>
                 <p className="font-semibold">Violator</p>

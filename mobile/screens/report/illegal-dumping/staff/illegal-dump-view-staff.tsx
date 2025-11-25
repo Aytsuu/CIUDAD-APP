@@ -43,6 +43,7 @@ export default function WasteIllegalDumpingDetails() {
   const rep_date = report?.rep_date || '';
   const rep_add_details = report?.rep_add_details || '';
   const rep_status = report?.rep_status || '';
+  const rep_anonymous = report?.rep_anonymous
   const rep_date_resolved = report?.rep_date_resolved || '';
   const rep_date_cancelled = report?.rep_date_cancelled || '';
   const sitio_name = report?.sitio_name || '';
@@ -225,7 +226,7 @@ export default function WasteIllegalDumpingDetails() {
                 <View className="flex-row justify-between mb-4">
                   <View className="w-[48%]">
                     <Text className="font-semibold text-gray-600 mb-1">Complainant</Text>
-                    <Text>{rep_complainant || "Unknown"}</Text>
+                    <Text>{rep_anonymous ? "Anonymous" : rep_complainant || "Unknown"}</Text>
                   </View>
                   <View className="w-[48%]">
                     <Text className="font-semibold text-gray-600 mb-1">Violator</Text>

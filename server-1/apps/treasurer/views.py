@@ -655,9 +655,6 @@ class DisbursementFileCreateView(generics.CreateAPIView):
             dis_num_id = self.kwargs.get('dis_num') or request.data.get('dis_num')
             files = request.data.get('files', [])
             
-            print(f"Received file upload request for dis_num: {dis_num_id}")
-            print(f"Number of files: {len(files)}")
-            
             if not dis_num_id:
                 return Response({"error": "dis_num is required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -686,7 +683,7 @@ class DisbursementFileCreateView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            print(f"ERROR in DisbursementFileCreateView: {str(e)}")
+            # print(f"ERROR in DisbursementFileCreateView: {str(e)}")
             import traceback
             traceback.print_exc()
             

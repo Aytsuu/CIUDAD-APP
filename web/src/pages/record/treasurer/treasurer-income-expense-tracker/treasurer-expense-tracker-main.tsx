@@ -182,7 +182,6 @@ function IncomeandExpenseTracking() {
             proposedBud    
         }
         archiveRestore(allValues);
-        console.log("ARCHIVE EXP: ", allValues)
     };
 
 
@@ -229,7 +228,6 @@ function IncomeandExpenseTracking() {
         }
 
         archiveRestore(allValues);
-        console.log("RESTORE EXP: ", allValues)
     };
 
 

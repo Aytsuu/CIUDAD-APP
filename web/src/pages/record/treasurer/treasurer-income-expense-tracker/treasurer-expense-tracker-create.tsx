@@ -68,7 +68,6 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;
 
-    console.log("EXP REMAIN BAL CREATE: ", totBud)
 
 
     const selectedParticularId = form.watch("iet_particulars");
@@ -94,9 +93,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
         //current Expenses and Total Budget
         const totEXP = Number(totExp);
         const totBUDGET = Number(totBud);
-
-        console.log("CURRENT EXPENSEEEEE: ", totEXP)
-        console.log("CURRENT BUDGETTTTTTTT: ", totBUDGET)        
+   
 
         //dtl_id
         const particularid = selectedParticularId?.split(' ')[0] || '';
@@ -142,7 +139,6 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
         }
         else{
             if(amount){
-                console.log("HERRRRRRRRRRRRRREEEEEEEEEEEEEERRRRRRR ONLLLYY AMOUNTTT")
                 totalBudget = totBUDGET - amount;
                 totalExpense = totEXP + amount;
                 proposedBud = propBudget - amount;                
@@ -153,8 +149,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                 proposedBud = propBudget - actualAmount;                
             }
         }
-
-        console.log("TOTAL EXPENSEEEEEEEEEEEEEEEEE: ", totalExpense);   
+ 
         const allValues = {
             ...values,
             years,
@@ -166,7 +161,6 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             files,
             staff: user?.staff?.staff_id
         };
-        console.log("TANANNNNNNNNNNNNNNNN: ", allValues)
 
         createExpense(allValues);
     };
@@ -258,6 +252,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                                             placeholder="Select Particulars"
                                             emptyMessage="No particulars found"
                                             contentClassName="w-full"
+                                            triggerClassName="w-full"
                                         />                                 
                                     </FormControl>
                                     <FormMessage />

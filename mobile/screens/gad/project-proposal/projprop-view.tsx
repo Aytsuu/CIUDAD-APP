@@ -115,7 +115,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       setSelectedImages([]);
       refetchSupportDocs();
     } catch (error) {
-      console.error("Error uploading files:", error);
+      // console.error("Error uploading files:", error);
     }
   };
 
@@ -162,7 +162,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     try {
       await Linking.openURL(doc.psd_url);
     } catch (error) {
-      console.error("Error opening file:", error);
+      // console.error("Error opening file:", error);
     }
   };
 

@@ -43,7 +43,7 @@ export const getbudgetyearreq = async (page: number = 1, pageSize: number = 10, 
             previous: null
         };
     } catch (err) {
-        console.error('Error fetching budget years:', err);
+        // console.error('Error fetching budget years:', err);
         return {
             results: [],
             count: 0,

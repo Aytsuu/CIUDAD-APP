@@ -9,7 +9,7 @@ export const getSitio = async () => {
         const res = await api.get('waste/sitio/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -22,7 +22,7 @@ export const getWasteResReport = async (rp_id?: string) => {
         const res = await api.get('waste/waste-report/', config);
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err; // Important: re-throw the error so React Query can handle it
     }
 };
@@ -65,8 +65,8 @@ export const getWasteReport = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };

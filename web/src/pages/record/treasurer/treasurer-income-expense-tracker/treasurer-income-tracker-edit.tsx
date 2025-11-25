@@ -123,7 +123,6 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
         
         updateIncome(allValues);
         setIsEditing(false);
-        console.log("VALUES: ", allValues)
     };
 
     const handleSaveClick = () => {
