@@ -25,18 +25,16 @@ export default function RegistrationRequests() {
   const debouncedPageSize = useDebounce(pageSize, 100)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: requests, isLoading: isLoadingRequests } = useRequests(
+  const { data: registrationRequests, isLoading: isLoadingRequests } = useRequests(
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
     selectedRequestType,
   )
 
-  const requestList = requests?.results || []
-  const totalCount = requests?.count || 0
+  const requestList = registrationRequests?.results || []
+  const totalCount = registrationRequests?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
-
-  console.log("requestlist:", requestList)
 
   const sidebarItems = [
     {

@@ -78,10 +78,8 @@ export default function Page3({ onBack, onNext }: PageProps) {
   ];
 
   return (
-    <div className="min-h-[500px] flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 3:  Prenatal Care Services and Postpartum and Newborn Care Section</h2>
-      </div>
+    <div className=" flex flex-col">
+      
 
       <div className="flex-1 overflow-auto">
         <div className="border overflow-hidden">

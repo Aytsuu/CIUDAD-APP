@@ -291,10 +291,11 @@ const prepareExportData = () => {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
+                setPageSize(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
                 setCurrentPage(1);
               }}
               min="1"
+              max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>

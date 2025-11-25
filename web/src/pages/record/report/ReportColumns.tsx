@@ -100,9 +100,7 @@ export const ARColumns = (
       }
     },
     cell: ({ row }) => {
-      const files = row.original.ar_files;
-      const docs = files.filter((file: any) => file?.type?.startsWith('application/'))
-      const unsigned = docs.length === 0
+      const unsigned = row.original.status?.toLowerCase() == "unsigned"
 
       if (isCreatingWeeklyAR) {
         React.useEffect(() => {

@@ -59,9 +59,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const renderTrigger = () => {
     if (isValidElement(trigger)) {
-      return cloneElement(trigger as React.ReactElement<any>, {
+      const element = trigger as React.ReactElement<{ onPress?: () => void }>
+      return cloneElement(element, {
         onPress: () => {
-          trigger.props?.onPress?.()
+          element.props?.onPress?.()
           openModal()
         },
       })

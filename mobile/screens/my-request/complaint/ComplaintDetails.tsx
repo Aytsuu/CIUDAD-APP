@@ -163,50 +163,6 @@ const renderPerson = (person: PersonType) => {
   return (
     <ScrollView className="flex-1 bg-slate-50" showsVerticalScrollIndicator={false}>
       <View className="p-4">
-        {/* Header */}
-        <View className="bg-blue-500 rounded-xl p-2 mb-5">
-          <View className="flex-col items-start">
-            <View className={`px-4 py-2 rounded-lg border w-full items-center ${getStatusColor(data.comp_status)} mb-2`}>
-              <Text className={`text-lg font-bold ${getStatusColor(data.comp_status).split(" ")[0]}`}>
-                {data.comp_status?.toUpperCase() || "UNKNOWN"}
-              </Text>
-            </View>
-            <View>
-              <Text className="text-white text-sm">Date Filed: {formatDateTime(data.comp_created_at)}</Text>
-              <Text className="text-white text-sm">Confirmed by: {data.staff}</Text>
-            </View>
-          </View>
-
-          {canRequestSummon(data.comp_status) && (
-            <TouchableOpacity
-              onPress={handleRequestSummon}
-              activeOpacity={0.7}
-              className="bg-teal-600 rounded-lg p-4 flex-row items-center justify-center mt-4"
-            >
-              <FileText size={20} color="#ffffff" />
-              <Text className="text-white font-bold pl-2">
-                {isSummonRequested ? "Summon Requested" : "Request Summon"}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {data.comp_status?.toLowerCase() === "pending" && (
-            <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-              <Text className="text-amber-700 text-sm font-medium text-center">
-                Complaint is still pending for review. Summon request will be available once confirmed.
-              </Text>
-            </View>
-          )}
-
-          {(data.comp_status?.toLowerCase() === "resolved" || data.comp_status?.toLowerCase() === "closed") && (
-            <View className="bg-slate-100 border border-slate-200 rounded-lg p-3 mt-4">
-              <Text className="text-slate-600 text-sm font-medium text-center">
-                Summon request unavailable for {data.comp_status?.toLowerCase()} complaints
-              </Text>
-            </View>
-          )}
-        </View>
-
         <View className="bg-white">
           {/* Complaint Details */}
           <View className="bg-white rounded-xl p-4 w-full my-4">

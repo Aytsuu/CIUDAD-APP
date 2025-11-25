@@ -20,10 +20,11 @@ import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analy
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
 import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
-import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
-import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
-import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
-import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+// import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
+// import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
+// import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
+// import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+import { InventoryAlertsSidebar } from "@/components/analytics/health/inventory-alerts-sidebar";
 
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
@@ -40,6 +41,7 @@ import { CertificatePurposeChart } from "@/components/analytics/certificate/cert
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
 import { ReactElement } from "react";
 
 type DashboardItem = {
@@ -61,6 +63,8 @@ import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sideba
 import { PopulationAnalyticsTabs } from "@/components/analytics/health/health-profiling/population-analytics-tabs";
 // import { NutritionalStatusSummaryChart } from "@/components/analytics/health/health-profiling/nutritional-status-summary-chart";
 import { PendingAppointmentsSidebar } from "@/components/analytics/health/pending-appointments-sidebar";
+
+
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -143,10 +147,6 @@ export const getItemsConfig = (
         ],
       },
       {
-        dashboard: "COMPLAINT",
-        card: []
-      },
-      {
         dashboard: "CONCILIATION PROCEEDINGS",
         card: [waiting, ongoing, escalated, resolved], 
       },
@@ -157,6 +157,15 @@ export const getItemsConfig = (
       {
         dashboard: "SUMMON REMARKS",
         card: [noRemark]
+      },
+      {
+        dashboard: "COMPLAINT",
+        sidebar: [
+          {
+            title: "Blotter Request",
+            element: <ComplaintSidebar/>
+          }
+        ]
       },
       {
         dashboard: "GAD",
@@ -344,22 +353,30 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          
-          {
-            title: "Medicine Alerts",
-            element: <MedicineAlertsSidebar />,
-          },
-          {
-            title: "Antigen Alerts",
-            element: <AntigenAlertsSidebar />,
-          },
-          { title: "First Aid Alerts",
-            element: <FirstAidAlertsSidebar />,
-          },
-          { title: "Commodity Alerts",
-            element: <CommodityAlertsSidebar />,
-          }
+          // {
+          //   title: "Weekly Schedule",
+          //   element: <SchedulerSidebar />,
+          // },
+          // {
+          //   title: "Medicine Alerts",
+          //   element: <MedicineAlertsSidebar />,
+          // },
+          // {
+          //   title: "Antigen Alerts",
+          //   element: <AntigenAlertsSidebar />,
+          // },
+          // { title: "First Aid Alerts",
+          //   element: <FirstAidAlertsSidebar />,
+          // },
+          // { title: "Commodity Alerts",
+          //   element: <CommodityAlertsSidebar />,
+          // }
        
+          {
+            title: "Inventory Alerts",
+            element: <InventoryAlertsSidebar />,
+          },
+
         ],
       },
       {

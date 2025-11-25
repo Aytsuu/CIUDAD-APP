@@ -83,7 +83,7 @@ export function ComplaintViewRecord() {
           }
           await updateComplaintMutation.mutateAsync({
             compId,
-            payload: { comp_status: "Rejected", rejection_reason: reason },
+            payload: { comp_status: "Rejected", comp_rejection_reason: reason },
           });
           toast.success("Complaint rejected successfully");
           navigate("/complaint");
