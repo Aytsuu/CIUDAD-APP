@@ -27,6 +27,21 @@ from ..utils import (
     get_spouse_info,
     get_child_dependents_for_mother
 )
+from ..utils import (
+    extract_personal_info, 
+    extract_address, 
+    get_personal_info, 
+    get_address, 
+    get_family, 
+    get_family_head_info,
+    get_additional_info,
+    get_family_planning_method,
+    get_mother_tt_status,
+    get_family_head_address,
+    check_medical_records_for_spouse,
+    get_spouse_info,
+    get_child_dependents_for_mother
+)
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):
@@ -149,6 +164,10 @@ class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = '__all__'
+
+    def get_family_planning_method(self, obj):
+        """Use utility function from utils.py"""
+        return get_family_planning_method(obj)
     
     def get_registered_by(self, obj):
         """Format registered_by info similar to ResidentProfile"""
@@ -247,4 +266,3 @@ class PatientRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientRecord 
         fields = '__all__'
-

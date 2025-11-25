@@ -11,9 +11,98 @@ from django.db.models import Count, Q
 from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
 from datetime import date, timedelta
+from django.utils import timezone
+
+
+def _convert_age_to_days(value, unit):
+    """Convert an age value expressed in various units into days."""
+    if value is None or unit is None:
+        return None
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    normalized = unit.strip().lower()
+    if "day" in normalized:
+        return value
+    if "week" in normalized:
+        return value * 7
+    if "month" in normalized:
+        return value * 30  # Approximate months to 30 days for comparisons
+    if "year" in normalized:
+        return value * 365  # Approximate years to 365 days for comparisons
+    return None
+
+
+def _get_patient_age_in_days(pat_id):
+    """Return patient's age in days or None if DOB is unavailable."""
+    try:
+        patient = Patient.objects.select_related("rp_id__per", "trans_id").get(pat_id=pat_id)
+    except Patient.DoesNotExist:
+        print(f"Patient {pat_id} not found")
+        return None
+
+    dob = None
+    if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
+        dob = patient.rp_id.per.per_dob
+    elif patient.pat_type == "Transient" and patient.trans_id:
+        dob = patient.trans_id.tran_dob
+
+    if not dob:
+        print(f"No date of birth found for patient {pat_id}")
+        return None
+
+    return (date.today() - dob).days
+
+
+def _should_include_vaccine_for_patient(patient_age_days, vaccine):
+    """Determine if a vaccine should be presented based on the patient's age."""
+    if patient_age_days is None:
+        return True
+
+    age_group = getattr(vaccine, "ageGroup", None)
+    if not age_group:
+        return True
+
+    # Check if age group has valid restrictions
+    time_unit = getattr(age_group, "time_unit", None)
+    min_age = getattr(age_group, "min_age", None)
+    max_age = getattr(age_group, "max_age", None)
+
+    # If time_unit is "NA" or no valid age restrictions, include the vaccine
+    if time_unit == "NA" or min_age is None or max_age is None:
+        return True
+
+    min_age_days = _convert_age_to_days(min_age, time_unit)
+    max_age_days = _convert_age_to_days(max_age, time_unit)
+
+    if min_age_days is None or max_age_days is None:
+        return True
+
+    six_years_in_days = 6 * 365
+
+    # Children within 0-6 years should see vaccines they can catch up on
+    if patient_age_days <= six_years_in_days:
+        # Show vaccines where:
+        # 1. Patient has reached minimum age (can start the vaccine)
+        # 2. Patient is still within 6 years (catch-up period)
+        # This ensures babies/toddlers see all age-appropriate vaccines they haven't completed yet
+        if patient_age_days >= min_age_days:
+            # If vaccine max age is also within 0-6 years range, always show it
+            if max_age_days <= six_years_in_days:
+                return True
+            # If vaccine extends beyond 6 years, only show if patient is within reasonable range
+            return patient_age_days <= max_age_days
+        return False
+
+    # For patients older than 6 years, only show vaccines they are currently eligible for
+    return patient_age_days >= min_age_days and patient_age_days <= max_age_days
 
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
+    patient_age_days = _get_patient_age_in_days(pat_id)
+
     # Get all vaccine IDs that patient has completed (from both fields)
     completed_vaccines = set()
     
@@ -34,10 +123,12 @@ def get_unvaccinated_vaccines_for_patient(pat_id):
     print(f"Completed vaccine IDs: {completed_vaccines}")
 
     # Get all vaccines
-    all_vaccines = VaccineList.objects.all()
+    all_vaccines = VaccineList.objects.select_related("ageGroup").all()
     unvaccinated_vaccines = []
     
     for vaccine in all_vaccines:
+        if patient_age_days is not None and not _should_include_vaccine_for_patient(patient_age_days, vaccine):
+            continue
         # For non-routine vaccines, use simple completion check
         if vaccine.vac_type_choices != 'routine':
             if vaccine.vac_id not in completed_vaccines:

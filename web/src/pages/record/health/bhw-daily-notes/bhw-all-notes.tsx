@@ -47,8 +47,8 @@ export default function BHWAllNotes() {
    const filteredResults = staffPositionTitle === 'ADMIN'
       ? allResults
       : staffPositionTitle === 'BARANGAY HEALTH WORKERS'
-         ? allResults.filter((r:any) => r.staff_id === staffUserId)
-         : allResults;
+         ? allResults.filter((r: any) => r.staff_id === staffUserId)
+         : [];
 
    const displayCount = filteredResults.length; 
    const totalPages = Math.ceil((bhwNotesData?.count || 0) / pageSize);

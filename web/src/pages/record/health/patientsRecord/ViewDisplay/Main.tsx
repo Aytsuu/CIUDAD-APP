@@ -45,7 +45,7 @@ import { useMedConCount, useChildHealthRecordCount, useFamplanCount, useAnimalbi
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
-import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
+import { useCompletedFollowUpVisits, usePendingFollowUpVisits, useMissedFollowUpVisits } from "../queries/followv";
 import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
 import { ProtectedComponent} from "@/ProtectedComponent";
 
@@ -91,6 +91,7 @@ export default function ViewPatientRecord() {
 
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+  const { data: missedData } = useMissedFollowUpVisits(patientId ?? "");
 
   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
   const postpartumCount = postpartumCountData;
@@ -683,7 +684,7 @@ export default function ViewPatientRecord() {
             />
           )}
 
-          {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
+          {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} missedData={missedData} />}
         </Tabs>
 
         {/* Status Update Dialog */}

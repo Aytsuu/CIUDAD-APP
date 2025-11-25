@@ -30,6 +30,7 @@ import { PendingFollowupsSection } from "./followupPending";
 import { useUpdateFollowupStatus } from "../queries/update";
 import IndivMedicineRecords from "@/pages/healthServices/medicineservices/tables/IndivMedicineRecord";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog/dialog";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function LastPage({
   onPrevious,
@@ -57,6 +58,7 @@ export default function LastPage({
   const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
   const [pendingFollowupUpdates, setPendingFollowupUpdates] = useState<Record<number, string>>({});
   const updateFollowupMutation = useUpdateFollowupStatus();
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   // Fixed logic: allow notes edit when passed_status is NOT immunization
   useEffect(() => {
@@ -812,21 +814,60 @@ export default function LastPage({
               </div>
             </div>
           )}
+
+
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-700 mt-0.5" />
+              <div>
+              <p className="font-medium text-yellow-800">Please review before submitting</p>
+              <p className="mt-1 text-sm text-yellow-700">
+                Once this record is submitted it cannot be edited. Confirm all information are correct before you proceed.
+              </p>
+              </div>
+            </div>
+            </div>
           <div className="flex w-full justify-end gap-2">
             <Button type="button" variant="outline" onClick={onPrevious} className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent">
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button type="submit" className="flex items-center gap-2 px-6" disabled={!canSubmit}>
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
+            <ConfirmationModal
+              open={isConfirmModalOpen}
+              onOpenChange={setIsConfirmModalOpen}
+              trigger={
+                <Button 
+                  type="button" 
+                  className="flex items-center gap-2 px-6" 
+                  disabled={!canSubmit || isSubmitting}
+                  onClick={() => setIsConfirmModalOpen(true)}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </div>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              }
+              title="Confirm Submission"
+              description={
+                <div className="space-y-2">
+                  <p>You are about to submit this child health record. Once submitted, it cannot be edited.</p>
+                  <p className="font-semibold">Please confirm that all information is correct</p>
+                  
                 </div>
-              ) : (
-                "Submit"
-              )}
-            </Button>
+              }
+              actionLabel="Confirm & Submit"
+              cancelLabel="Cancel"
+              onClick={() => {
+                setIsConfirmModalOpen(false);
+                handleFormSubmit();
+              }}
+              onCancel={() => setIsConfirmModalOpen(false)}
+            />
           </div>
         </form>
       </Form>
