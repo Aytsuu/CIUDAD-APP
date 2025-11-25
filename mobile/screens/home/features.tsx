@@ -14,7 +14,6 @@ import GAD from '@/assets/icons/features/GAD.svg'
 import CouncilMediation from '@/assets/icons/features/council mediation.svg'
 import Conciliation from '@/assets/icons/features/conciliation.svg'
 import { Feature, User } from "../_Enums";
-import { Circle } from "react-native-svg";
 
 type FeatureType = {
   name: string;
