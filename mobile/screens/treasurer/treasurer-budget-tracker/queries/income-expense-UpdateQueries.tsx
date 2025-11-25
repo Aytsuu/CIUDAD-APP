@@ -24,6 +24,7 @@ type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseFormSchema>
   totalBudget: number;
   totalExpense: number;
   returnAmount: number;
+  prevAmount: number;
   proposedBud: number;
   particularId: number;
   staff_id: string;
@@ -64,7 +65,7 @@ export const useUpdateIncomeExpense = (
       });
 
       //5. add new expense log
-      if(values.returnAmount > 0){
+      if(values.returnAmount > 0 || values.prevAmount!=Number(values.iet_actual_amount)){
         await expense_log(iet_num, {
           returnAmount: values.returnAmount,
           el_proposed_budget: values.iet_amount,
