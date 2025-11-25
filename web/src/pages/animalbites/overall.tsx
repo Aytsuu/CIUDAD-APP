@@ -473,7 +473,7 @@ const Overall: React.FC = () => {
           mainContent={
             <ReferralFormModal
               onClose={handleReferralFormClose}
-              onAddPatient={(newPatient) => {
+              onAddPatient={() => {
                 fetchAnimalBiteRecords();
                 fetchStats().then(setStats);
               }}

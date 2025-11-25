@@ -39,14 +39,13 @@ export default function MedicineList() {
 
   // Debug: Log API response
   useEffect(() => {
-    console.log("Medicine Data Response:", medicineData);
-    console.log("API Error:", error);
+    
   }, [medicineData, error]);
 
   const deleteMutation = useDeleteMedicine();
 
   const formatMedicineData = useCallback((): any[] => {
-    console.log("Formatting medicine data:", medicineData);
+    
 
     // Handle different response formats
     let medicineResults = [];

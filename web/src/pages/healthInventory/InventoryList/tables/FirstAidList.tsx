@@ -49,14 +49,13 @@ export default function FirstAidList() {
 
   // Debug: Log API response
   useEffect(() => {
-    console.log("First Aid Data Response:", firstAidData);
-    console.log("API Error:", error);
+    
   }, [firstAidData, error]);
 
   const deleteFirstAidMutation = useDeleteFirstAid();
 
   const formatFirstAidData = useCallback((): FirstAidRecords[] => {
-    console.log("Formatting first aid data:", firstAidData);
+    
 
     // Handle different response formats
     let firstAidResults = [];

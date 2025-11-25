@@ -92,7 +92,7 @@ export default function SoapFormFields({
 
           {/* Physical Exam with Skeleton Loading */}
           <div className="space-y-3">
-            <h2 className="text-lg font-medium text-darkBlue2">Physical Exam</h2>
+            <h2 className="text-lg font-medium text-darkBlue2">Physical Exam(Objective)</h2>
 
             {isPhysicalExamLoading ? (
               // Skeleton Loading for Physical Exam
@@ -158,7 +158,17 @@ export default function SoapFormFields({
 
             <div className="bg-white rounded-lg shadow-sm p-4 border">
               <h2 className="text-lg font-medium text-darkBlue2">Assessment/Diagnoses Summary</h2>
-              <FormTextArea label="Clinical Impressions" control={form.control} name="assessment_summary" placeholder="Enter clinical impressions, diagnosis, etc." className="min-h-[180px] text-sm w-full" rows={7} />
+              <div className="mb-2 text-sm text-red-600">
+              <span className="font-semibold">Note:</span> Please select diagnoses first, then add any additional notes or impressions below.
+              </div>
+              <FormTextArea
+              label="Clinical Impressions / Additional Notes"
+              control={form.control}
+              name="assessment_summary"
+              placeholder="Enter clinical impressions, diagnosis, or any additional notes here."
+              className="min-h-[180px] text-sm w-full"
+              rows={7}
+              />
             </div>
           </div>
 
@@ -189,6 +199,9 @@ export default function SoapFormFields({
             </div>
             <div>
               <h2 className="text-lg font-medium text-darkBlue2">Plan Treatment Summary</h2>
+              <div className="mb-2 text-sm text-red-600">
+              <span className="font-semibold">Note:</span> Please select medicine/s first before adding any additional plantreatment below.
+              </div>
               <FormTextArea control={form.control} name="plantreatment_summary" label="Detailed plan" placeholder="Specify medications, therapies, follow-up plan, etc." rows={10} className="w-full" />
             </div>
           </div>
