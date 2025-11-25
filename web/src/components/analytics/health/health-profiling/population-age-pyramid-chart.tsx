@@ -7,7 +7,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { usePopulationStructureReport } from "../../../../pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
+import { usePopulationStructureReport } from "@/pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Users, Loader2 } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
