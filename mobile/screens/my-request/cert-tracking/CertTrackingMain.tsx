@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from '@/screens/_PageLayout';
 import { useRouter } from "expo-router";
@@ -18,7 +18,7 @@ export default function CertTrackingMain() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToastContext();
 
-  const { data, isLoading, isError } = useCertTracking(user?.rp || "");
+  const { data, isLoading, isError, refetch } = useCertTracking(user?.rp || "");
   const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.rp || "");
   const { mutate: cancelBusiness, isPending: isCancellingBusiness } = useCancelBusinessPermit(user?.rp || "");
   const { mutate: cancelService, isPending: isCancellingService } = useCancelServiceCharge(user?.rp || "");
@@ -29,6 +29,7 @@ export default function CertTrackingMain() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showSearch, setShowSearch] = React.useState(false);
   const [cancellingItemId, setCancellingItemId] = React.useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   
   // Check if any cancellation is in progress
   const isCancellingAny = isCancelling || isCancellingBusiness || isCancellingService;
@@ -120,6 +121,15 @@ export default function CertTrackingMain() {
                           '';
     return paymentStatus.toString().trim();
   }
+
+  const canShowCancelButton = (item: any) => {
+    const normalizedStatus = getNormalizedStatus(extractStatus(item));
+    const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
+    const isActionableStatus = !['completed', 'cancelled', 'declined'].includes(normalizedStatus);
+    const hasCancelableId = Boolean(item?.cr_id || item?.bpr_id || item?.pay_id);
+    const isPaymentPending = paymentStatus === 'pending' || paymentStatus === 'unpaid' || paymentStatus === '';
+    return isActionableStatus && hasCancelableId && isPaymentPending;
+  };
 
   const getDeclineReason = (item: any): string => {
     const declineReason = item?.cr_reason ?? item?.bus_reason ?? item?.pay_reason ?? '';
@@ -237,6 +247,12 @@ export default function CertTrackingMain() {
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
     setShowSearch(false);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   if (authLoading) {
@@ -403,12 +419,25 @@ export default function CertTrackingMain() {
             </View>
 
             {/* Tab Content */}
-            <ScrollView showsVerticalScrollIndicator={false} className="p-6">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              className="p-6"
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+              contentContainerStyle={{ flexGrow: 1, minHeight: '100%' }}
+              nestedScrollEnabled={true}
+            >
               {activeTab === 'personal' ? (
                 <>
                   {data?.personal?.filter((i: any) => {
                     const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = getPaymentStatus(i).toLowerCase();
+                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                     // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -433,7 +462,7 @@ export default function CertTrackingMain() {
                     data.personal
                       .filter((i: any) => {
                         const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = getPaymentStatus(i).toLowerCase();
+                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                         // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -478,7 +507,9 @@ export default function CertTrackingMain() {
                         const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
                         return dateB.getTime() - dateA.getTime();
                       })
-                      .map((item: any, idx: number) => (
+                      .map((item: any, idx: number) => {
+                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
+                        return (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center mb-2">
                           <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
@@ -491,7 +522,7 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                        {paymentStatus === 'unpaid' && (() => {
                           const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
                           const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
                           return (
@@ -505,7 +536,7 @@ export default function CertTrackingMain() {
                             </Text>
                           );
                         })()}
-                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.cr_pay_date || item?.invoice?.inv_date) && (
+                        {paymentStatus === 'paid' && (item?.cr_pay_date || item?.invoice?.inv_date) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.cr_pay_date || item?.invoice?.inv_date)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
@@ -522,13 +553,7 @@ export default function CertTrackingMain() {
                             )}
                           </>
                         )}
-                       {getNormalizedStatus(extractStatus(item)) !== 'completed' &&
-                        getNormalizedStatus(extractStatus(item)) !== 'cancelled' &&
-                        getNormalizedStatus(extractStatus(item)) !== 'declined' &&
-                        (item?.cr_id || item?.bpr_id) &&
-                        item.cr_req_payment_status.toLowerCase() !== "paid" &&
-                        item.pay_status.toLowerCase() !== "paid" &&
-                        item.req_payment_status.toLowerCase() !== "paid" && (
+                       {canShowCancelButton(item) && (
                           <View className="mt-3">
                             <ConfirmationModal
                               trigger={
@@ -556,7 +581,7 @@ export default function CertTrackingMain() {
                         )}
 
                       </View>
-                      ))
+                      )})
                   ) : (
                     <View className="flex-1 items-center justify-center py-12">
                       <View className="items-center">
@@ -574,7 +599,7 @@ export default function CertTrackingMain() {
                 <>
                   {data?.business?.filter((i: any) => {
                     const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = getPaymentStatus(i).toLowerCase();
+                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                     // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -598,7 +623,7 @@ export default function CertTrackingMain() {
                     data.business
                       .filter((i: any) => {
                         const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = getPaymentStatus(i).toLowerCase();
+                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                         // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -643,7 +668,9 @@ export default function CertTrackingMain() {
                         const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
                         return dateB.getTime() - dateA.getTime();
                       })
-                      .map((item: any, idx: number) => (
+                      .map((item: any, idx: number) => {
+                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
+                        return (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center mb-2">
                           <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
@@ -656,7 +683,7 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                        {paymentStatus === 'unpaid' && (() => {
                           const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
                           const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
                           return (
@@ -670,7 +697,7 @@ export default function CertTrackingMain() {
                             </Text>
                           );
                         })()}
-                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
+                        {paymentStatus === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
@@ -687,7 +714,7 @@ export default function CertTrackingMain() {
                             )}
                           </>
                         )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && getNormalizedStatus(extractStatus(item)) !== 'declined' && (item?.cr_id || item?.bpr_id) && (
+                        {canShowCancelButton(item) && (
                           <View className="mt-3">
                             <ConfirmationModal
                               trigger={
@@ -712,7 +739,7 @@ export default function CertTrackingMain() {
                           </View>
                         )}
                       </View>
-                      ))
+                      )})
                   ) : (
                     <View className="flex-1 items-center justify-center py-12">
                       <View className="items-center">
@@ -730,7 +757,7 @@ export default function CertTrackingMain() {
                 <>
                   {(data as any)?.serviceCharge?.filter((i: any) => {
                     const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = getPaymentStatus(i).toLowerCase();
+                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                     
                     const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                     // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -754,7 +781,7 @@ export default function CertTrackingMain() {
                     (data as any).serviceCharge
                       .filter((i: any) => {
                         const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = getPaymentStatus(i).toLowerCase();
+                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
                         
                         const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
                         // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
@@ -799,7 +826,9 @@ export default function CertTrackingMain() {
                         const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
                         return dateB.getTime() - dateA.getTime();
                       })
-                      .map((item: any, idx: number) => (
+                      .map((item: any, idx: number) => {
+                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
+                        return (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center mb-2">
                           <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose ?? "Service Charge")}</Text>
@@ -812,7 +841,7 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
-                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                        {paymentStatus === 'unpaid' && (() => {
                           const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
                           const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
                           return (
@@ -826,7 +855,7 @@ export default function CertTrackingMain() {
                             </Text>
                           );
                         })()}
-                        {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid) && (
+                        {paymentStatus === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'completed' && (
@@ -843,7 +872,7 @@ export default function CertTrackingMain() {
                             )}
                           </>
                         )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && getNormalizedStatus(extractStatus(item)) !== 'declined' && (item?.cr_id || item?.bpr_id) && (
+                        {canShowCancelButton(item) && (
                           <View className="mt-3">
                             <ConfirmationModal
                               trigger={
@@ -868,7 +897,7 @@ export default function CertTrackingMain() {
                           </View>
                         )}
                       </View>
-                      ))
+                      )})
                   ) : (
                     <View className="flex-1 items-center justify-center py-12">
                       <View className="items-center">

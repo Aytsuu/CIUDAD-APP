@@ -17,6 +17,7 @@ export type Certificate = {
       add_barangay?: string;
       add_city?: string;
       add_province?: string;
+      sitio?: string;
     }>;
     per_is_deceased?: boolean;
   } | null;

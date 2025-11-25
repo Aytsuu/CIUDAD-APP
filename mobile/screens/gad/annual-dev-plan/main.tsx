@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getAnnualDevPlanYears } from './restful-api/annualDevPlanGetAPI';
@@ -17,6 +17,7 @@ const AnnualDevPlanMain = () => {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'main' | 'archive'>('main');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get archived plans count
   const { data: archivedData } = useGetArchivedAnnualDevPlans(1, 1);
@@ -50,6 +51,12 @@ const AnnualDevPlanMain = () => {
     });
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchYears();
+    setIsRefreshing(false);
+  };
+
   const renderContent = () => {
     if (activeTab === 'archive') {
       return <ArchivePlanContent />;
@@ -60,7 +67,19 @@ const AnnualDevPlanMain = () => {
     }
 
     return (
-      <View className="flex-1 p-6">
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#00a8f0']}
+            tintColor="#00a8f0"
+          />
+        }
+        contentContainerStyle={{ padding: 24 }}
+      >
         <View className="flex-row flex-wrap justify-between">
           {folders.map((folder, index) => (
           <TouchableOpacity
@@ -86,7 +105,7 @@ const AnnualDevPlanMain = () => {
           </TouchableOpacity>
         ))}
         </View>
-      </View>
+      </ScrollView>
     );
   };
 

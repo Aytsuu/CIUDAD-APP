@@ -20,6 +20,7 @@ import { useGetTemplateRecord } from "../council/templates/queries/template-Fetc
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
@@ -66,6 +67,22 @@ function CertificatePage() {
   const { data: staffList = []} = useGetStaffList();
   const { data: residentsList = [] } = useResidentsList();
   const { data: deceasedResidentsList = [] } = useDeceasedResidentsList();
+
+  // Fetch purposes for filter dropdown
+  const { data: allPurposes = [] } = useQuery<Purpose[]>({
+    queryKey: ["allPurposes"],
+    queryFn: getAllPurposes,
+  });
+
+  // Filter purposes to show only Personal category purposes
+  const personalPurposes = useMemo(() => {
+    return allPurposes
+      .filter(purpose => purpose.pr_category === "Personal" && !purpose.pr_is_archive)
+      .map(purpose => ({
+        id: purpose.pr_purpose.toLowerCase(),
+        name: purpose.pr_purpose
+      }));
+  }, [allPurposes]);
 
   //template details fetch
   const { data: templates = [] } = useGetTemplateRecord();
@@ -273,6 +290,7 @@ function CertificatePage() {
           const address = resident.per_addresses[0];
           const addressParts = [
             address.add_street,
+            address.sitio,  // Include sitio from the Sitio model
             address.add_external_sitio,
             address.add_barangay,
             address.add_city,
@@ -306,6 +324,7 @@ function CertificatePage() {
         const address = personalInfo.per_addresses[0];
         const addressParts = [
           address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
           address.add_external_sitio,
           address.add_barangay,
           address.add_city,
@@ -332,13 +351,56 @@ function CertificatePage() {
     }
   };
 
+  // Helper function to extract address from certificate
+  const getAddressFromCertificate = (certificate: Certificate): string => {
+    // For non-residents, use nrc_address
+    if (certificate.is_nonresident && certificate.nrc_address) {
+      return certificate.nrc_address;
+    }
+    
+    // For residents, check per_addresses array first, then per_address
+    if (certificate.resident_details) {
+      const resident = certificate.resident_details;
+      
+      // Try to construct address from per_addresses array
+      if (resident.per_addresses && resident.per_addresses.length > 0) {
+        const address = resident.per_addresses[0];
+        const addressParts = [
+          address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
+          address.add_external_sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ].filter(part => part && part.trim() !== "");
+        
+        if (addressParts.length > 0) {
+          return addressParts.join(", ");
+        }
+      }
+      
+      // Fallback to per_address if available
+      if (resident.per_address) {
+        return resident.per_address;
+      }
+    }
+    
+    return "";
+  };
+
   const handleViewFile2 = () => {
     setIsDialogOpen(false); 
 
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+  
       const custodies = custody
-        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
+        .map(lowercaseId => {
+          const resident = residentOptions.find((resident: any) => 
+            resident.id.toLowerCase() === lowercaseId
+          );
+          return resident?.displayName;
+        })
         .filter(Boolean) as string[];
       
       // Create certificate details with both certificate and staff data
@@ -657,9 +719,7 @@ function CertificatePage() {
             className="bg-white"
             options={[
               { id: "all", name: "All Purposes" },
-              { id: "employment", name: "Employment" },
-              { id: "bir", name: "BIR" },
-              { id: "burial", name: "Burial" },
+              ...personalPurposes
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}
@@ -716,7 +776,7 @@ function CertificatePage() {
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
           birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
-          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
+          address={getAddressFromCertificate(selectedCertificate) || ""}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
           Custodies={selectedCertificate.custodyChildren}
@@ -948,7 +1008,7 @@ function CertificatePage() {
                       options={residentOptions}
                       placeholder="Select child/children"
                       showBadges={true}
-                      maxDisplayValues={2}
+                      maxDisplayValues={Infinity}
                     />
                   </div>
                 )}                  

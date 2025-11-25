@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -19,6 +19,7 @@ const CertificateClearanceList = () => {
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
   const [residentTypeFilter, setResidentTypeFilter] = useState<'all' | 'resident' | 'nonresident'>('all')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch certificates from API (fetch all, filter client-side like web)
   useEffect(() => {
@@ -84,6 +85,19 @@ const CertificateClearanceList = () => {
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await getUnpaidCertificates(searchQuery, 1, 1000)
+      setCertificates(data.results)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter certificates based on payment status, resident type, and search (like web does)
   const filteredCertificates = useMemo(() => {
@@ -240,7 +254,18 @@ const CertificateClearanceList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredCertificates.length ? (
                 filteredCertificates.map((certificate, idx) => {
                   const isNonResident = certificate.is_nonresident || false;

@@ -295,6 +295,7 @@ const GADActivityCalendar = () => {
         <Text className="text-gray-900 text-[13px]">GAD Activity Calendar</Text>
       }
       rightAction={<View />}
+      wrapScroll={false}
     >
       {/* Calendar Header */}
       <View className="bg-white shadow-sm py-4 px-6">
@@ -350,7 +351,12 @@ const GADActivityCalendar = () => {
             contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#00a8f0']}
+                tintColor="#00a8f0"
+              />
             }
           />
         ) : (

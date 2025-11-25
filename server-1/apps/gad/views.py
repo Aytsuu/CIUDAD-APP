@@ -50,7 +50,7 @@ def create_gad_announcement(development_plan, staff, reason="mandated"):
         
         # Build announcement title and details
         if reason == "mandated":
-            ann_title = f"GAD Mandated Development Plan: {project_title}"
+            ann_title = f"GAD Development Plan: {project_title}"
         else:  # proposal_resolution
             ann_title = f"GAD Development Plan Approved: {project_title}"
         

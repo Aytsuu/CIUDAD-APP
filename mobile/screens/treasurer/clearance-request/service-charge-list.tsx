@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -18,6 +18,7 @@ const ServiceChargeClearanceList = () => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch service charges from API (use tab parameter like web)
   useEffect(() => {
@@ -76,6 +77,20 @@ const ServiceChargeClearanceList = () => {
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
+      const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
+      setServiceCharges(data.results)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter service charges based on search (backend already filters by tab)
   const filteredServiceCharges = useMemo(() => {
@@ -165,7 +180,18 @@ const ServiceChargeClearanceList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredServiceCharges.length ? (
                 filteredServiceCharges.map((serviceCharge, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-5 mb-4 shadow-md border border-gray-200">

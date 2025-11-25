@@ -268,18 +268,35 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             if obj.rp_id and getattr(obj.rp_id, "per", None):
                 # Get the primary address for this person
                 address_str = None
+                per_addresses_list = []
                 try:
                     personal_address = obj.rp_id.per.personal_addresses.first()
                     if personal_address and personal_address.add:
                         addr = personal_address.add
+                        # Get sitio name if available
+                        sitio_name = None
+                        if addr.sitio:
+                            sitio_name = addr.sitio.sitio_name
+                        
                         address_parts = [
                             addr.add_street,
+                            sitio_name,  # Include sitio name
                             addr.add_external_sitio,
                             addr.add_barangay,
                             addr.add_city,
                             addr.add_province
                         ]
                         address_str = ", ".join(filter(None, address_parts))
+                        
+                        # Build per_addresses array for frontend
+                        per_addresses_list = [{
+                            'add_street': addr.add_street,
+                            'add_external_sitio': addr.add_external_sitio,
+                            'add_barangay': addr.add_barangay,
+                            'add_city': addr.add_city,
+                            'add_province': addr.add_province,
+                            'sitio': sitio_name
+                        }]
                 except Exception as addr_e:
                     logger.error(f"Error getting address: {str(addr_e)}")
                 
@@ -318,6 +335,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     'per_lname': obj.rp_id.per.per_lname,
                     'per_dob': dob_value,
                     'per_address': address_str,
+                    'per_addresses': per_addresses_list,  # Include addresses array for frontend
                     'per_is_deceased': getattr(obj.rp_id.per, 'per_is_deceased', False),
                     'voter_id': getattr(obj.rp_id, 'voter_id', None),
                     # Eligibility fields for instant frontend rendering
@@ -545,8 +563,12 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_requestor(self, obj):
         try:
+            # If rp_id exists, get resident name
             if obj.rp_id and getattr(obj.rp_id, 'per', None):
                 return f"{obj.rp_id.per.per_fname} {obj.rp_id.per.per_lname}"
+            # If rp_id is null, check for non-resident name
+            elif getattr(obj, 'bus_nonresident_name', None):
+                return obj.bus_nonresident_name
             return ''
         except Exception:
             return ''
@@ -586,6 +608,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'bus_permit_name',  
             'bus_permit_address',  
             'bus_clearance_gross_sales',
+            'bus_nonresident_name',
         ]
         extra_kwargs = {
             'bpr_id': {'required': False, 'read_only': True},
@@ -598,9 +621,14 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'rp_id': {'required': False, 'allow_null': True},
             'req_amount': {'required': False},  # Make req_amount optional
             'bus_clearance_gross_sales': {'required': False, 'allow_null': True},
+            'bus_nonresident_name': {'required': False, 'allow_null': True},
         }
 
     def create(self, validated_data):
+        # Convert bus_nonresident_name to uppercase if provided
+        if 'bus_nonresident_name' in validated_data and validated_data['bus_nonresident_name']:
+            validated_data['bus_nonresident_name'] = validated_data['bus_nonresident_name'].upper().strip()
+        
         # Generate bpr_id if not provided (format: BPR001-25)
         if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
             year_suffix = timezone.now().year % 100

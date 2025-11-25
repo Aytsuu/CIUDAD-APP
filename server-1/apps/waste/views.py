@@ -13,7 +13,8 @@ from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 from django.db.models import OuterRef, Subquery
 from django.db.models import Q
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 from rest_framework.views import APIView
 from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
@@ -95,7 +96,7 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         # Create the waste event first
         response = super().create(request, *args, **kwargs)
         
-        # Get the created event data
+        # Get the created event data (serialized)
         event_data = response.data
         
         # Check if announcements were requested
@@ -104,11 +105,74 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         
         if selected_announcements and len(selected_announcements) > 0:
             try:
+                # Calculate announcement start and end times
+                ann_start_at = timezone.now()
+                ann_end_at = None
+                
+                # Get date and time from event data
+                # Note: response.data contains serialized data, so dates/times are strings
+                we_date = event_data.get('we_date')
+                we_time = event_data.get('we_time')
+                
+                if we_date and we_time:
+                    try:
+                        # Parse date - DRF serializes DateField as "YYYY-MM-DD" string
+                        if isinstance(we_date, str):
+                            # Handle ISO date format: "2025-11-23" or "2025-11-23T00:00:00Z"
+                            event_date = datetime.strptime(we_date.split('T')[0], '%Y-%m-%d').date()
+                        elif hasattr(we_date, 'year') and hasattr(we_date, 'month') and hasattr(we_date, 'day'):
+                            # If it's already a date object
+                            event_date = we_date
+                        else:
+                            # Try to convert if it's a datetime object
+                            from datetime import date as dt_date
+                            if isinstance(we_date, datetime):
+                                event_date = we_date.date()
+                            else:
+                                event_date = we_date
+                        
+                        # Parse time - DRF serializes TimeField as "HH:MM:SS" or "HH:MM" string
+                        if isinstance(we_time, str):
+                            # Handle time string formats: "14:30:00" or "14:30" or "14:30:00.000000"
+                            time_str = we_time.split('.')[0]  # Remove microseconds if present
+                            time_parts = time_str.split(':')
+                            from datetime import time as dt_time
+                            
+                            hour = int(time_parts[0])
+                            minute = int(time_parts[1]) if len(time_parts) > 1 else 0
+                            second = int(time_parts[2]) if len(time_parts) > 2 else 0
+                            
+                            event_time = dt_time(hour=hour, minute=minute, second=second)
+                        elif hasattr(we_time, 'hour'):
+                            # If it's already a time object
+                            event_time = we_time
+                        else:
+                            event_time = we_time
+                        
+                        # Combine date and time, make timezone-aware
+                        local_tz = ZoneInfo("Asia/Manila")
+                        naive_event_dt = datetime.combine(event_date, event_time)
+                        local_event_dt = timezone.make_aware(naive_event_dt, local_tz)
+                        
+                        # Set ann_end_at to event datetime + 1 day to keep it active until after the event
+                        ann_end_at = local_event_dt + timedelta(days=1)
+                        logger.info(f"Set announcement end time to: {ann_end_at} (event datetime: {local_event_dt})")
+                    except (ValueError, AttributeError, TypeError) as e:
+                        logger.warning(f"Error parsing event date/time for announcement: {str(e)}. we_date={we_date}, we_time={we_time}")
+                        # Fallback: set end_at to 2 days from now
+                        ann_end_at = ann_start_at + timedelta(days=2)
+                else:
+                    # If no date/time, set end_at to 2 days from now
+                    ann_end_at = ann_start_at + timedelta(days=2)
+                    logger.info(f"No event date/time provided, setting announcement end to 2 days from now: {ann_end_at}")
+                
                 # Create announcement for the event
                 announcement = Announcement.objects.create(
                     ann_title=f"WASTE EVENT: {event_data.get('we_name', 'Waste Management Event')}",
                     ann_details=event_subject or f"Event: {event_data.get('we_name')}\nLocation: {event_data.get('we_location')}\nDate: {event_data.get('we_date')} at {event_data.get('we_time')}\nOrganizer: {event_data.get('we_organizer')}\n\n{event_data.get('we_description', '')}",
                     ann_created_at=timezone.now(),
+                    ann_start_at=ann_start_at,
+                    ann_end_at=ann_end_at,
                     ann_type="event",
                     ann_to_email=True,
                     ann_to_sms=True,
