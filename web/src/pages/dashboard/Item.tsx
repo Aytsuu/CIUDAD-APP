@@ -128,15 +128,6 @@ export const getItemsConfig = (
         ],
       },
       {
-        dashboard: "COMPLAINT",
-        sidebar: [
-          {
-            title: "Blotter Request",
-            element: <ComplaintSidebar/>
-          }
-        ]
-      },
-      {
         dashboard: "CONCILIATION PROCEEDINGS",
         card: [waiting, ongoing, escalated, resolved], 
       },
@@ -147,6 +138,15 @@ export const getItemsConfig = (
       {
         dashboard: "SUMMON REMARKS",
         card: [noRemark]
+      },
+      {
+        dashboard: "COMPLAINT",
+        sidebar: [
+          {
+            title: "Blotter Request",
+            element: <ComplaintSidebar/>
+          }
+        ]
       },
       {
         dashboard: "GAD",

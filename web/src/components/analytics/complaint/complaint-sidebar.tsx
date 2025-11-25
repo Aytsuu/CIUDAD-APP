@@ -1,8 +1,14 @@
 import { useGetComplaint } from "@/pages/record/complaint/api-operations/queries/complaintGetQueries";
 import { useEffect, useRef } from "react";
-import { AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle, ChevronRight, UsersRound } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button/button";
+import { Link, useNavigate } from "react-router";
+import { formatTimeAgo } from "@/helpers/dateHelper";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 export default function ComplaintSidebar() {
+  const navigate = useNavigate();
   const { data: complaints, isLoading, error } = useGetComplaint();
   const previousDataRef = useRef<string | null>(null);
 
@@ -14,7 +20,6 @@ export default function ComplaintSidebar() {
     const previousData = previousDataRef.current;
 
     if (previousData && currentData !== previousData) {
-      // Data changed - detect what changed
       detectChanges(previousData, currentData);
     }
 
@@ -30,7 +35,6 @@ export default function ComplaintSidebar() {
       const exists = currData.find((c: any) => c.id === prevComplaint.id);
       if (!exists) {
         console.log("DELETED:", prevComplaint);
-        // Trigger notification, animation, etc.
       }
     });
 
@@ -40,7 +44,6 @@ export default function ComplaintSidebar() {
 
       if (!prevComplaint) {
         console.log("ADDED:", currComplaint);
-        // Trigger notification, animation, etc.
       } else if (JSON.stringify(prevComplaint) !== JSON.stringify(currComplaint)) {
         console.log("UPDATED:", {
           before: prevComplaint,
@@ -50,72 +53,121 @@ export default function ComplaintSidebar() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 m-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-semibold text-red-900">Error</h3>
-          <p className="text-sm text-red-700">Failed to fetch complaints</p>
-        </div>
-      </div>
-    );
-  }
+  const handleClick = (complaint: any) => {
+    navigate("/complaint/view/", {
+      state: {
+        params: {
+          title: "Complaint Details",
+          description: "Review the complaint details and take appropriate action.",
+          data: complaint,
+        },
+      },
+    });
+  };
 
   const pendingComplaints = complaints
-    ?.filter(
-      (complaint: any) => complaint.comp_status?.toLowerCase() === "pending"
-    )
+    ?.filter((complaint: any) => complaint.comp_status?.toLowerCase() === "pending")
     .slice(0, 3);
 
+  const totalPending = complaints?.filter(
+    (complaint: any) => complaint.comp_status?.toLowerCase() === "pending"
+  ).length || 0;
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
+    <Card className="w-full bg-white h-full flex flex-col border-none">
+      {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {pendingComplaints && pendingComplaints.length > 0 ? (
-          <div className="divide-y">
-            {pendingComplaints.map((complaint: any) => (
-              <div
-                key={complaint.id}
-                className="p-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer group border-l-4 border-transparent hover:border-blue-500"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm group-hover:text-blue-700 truncate">
-                      {complaint.comp_incident_type || "Unknown"}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1 truncate">
-                      {complaint.complainant?.[0]?.cpnt_name || "Unknown Complainant"}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
-                        <Clock className="w-3 h-3" />
-                        Pending
-                      </span>
-                    </div>
-                  </div>
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="h-4 bg-black/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-black/20 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-900 text-sm">Error</h3>
+                <p className="text-sm text-red-700">Failed to fetch complaints</p>
+              </div>
+            </div>
+          </div>
+        ) : totalPending > 0 ? (
+          <div className="p-4 space-y-3">
+            {pendingComplaints.map((complaint: any, index: number) => (
+              <Card
+                key={complaint.id || index}
+                className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
+                onClick={() => handleClick(complaint)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-14">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-700 truncate mb-1">
+                        {complaint.comp_incident_type || "Unknown Incident Type"}
+                      </h3>
+
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span>{formatTimeAgo(complaint.created_at || complaint.comp_created_at)}</span>
+                        <p className="text-orange-500 font-semibold">
+                          Pending Complaint
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-gray-600 mt-1 truncate">
+                        Complainant: {complaint.complainant?.[0]?.cpnt_name || "Unknown"}
+                      </p>
+                    </div>
+
+                    {complaint.complainant?.length > 1 && (
+                      <TooltipLayout 
+                        trigger={
+                          <div className="flex gap-1">
+                            <UsersRound size={18} className="text-blue-600"/>
+                            <p className="text-sm font-medium text-blue-700">+{complaint.complainant.length - 1}</p>
+                          </div>
+                        }
+                        content={`Complaint with ${complaint.complainant.length} complainants`}
+                      />
+                    )}
+                  </div>
+
+                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                </div>
+              </Card>
+            ))}
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center p-8 text-gray-500">
-            <CheckCircle className="w-12 h-12 text-green-400 mb-3 opacity-50" />
-            <p className="text-sm font-medium">No pending complaints</p>
-            <p className="text-xs text-gray-400 mt-1">Great job!</p>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-blue-500" />
+            </div>
+            <h3 className="text-sm font-medium text-blue-700 mb-1">
+              No pending complaints
+            </h3>
+            <p className="text-sm text-gray-500">
+              Pending complaints will appear here
+            </p>
           </div>
         )}
       </div>
-    </div>
+
+      {/* Footer */}
+      {totalPending > 0 && (
+        <div className="p-4 border-t border-gray-100">
+          <Link to="/complaint/request">
+            <Button variant={"link"}>
+              View All Complaints ({totalPending > 100 ? "100+" : totalPending})
+            </Button>
+          </Link>
+        </div>
+      )}
+    </Card>
   );
 }

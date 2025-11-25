@@ -137,14 +137,16 @@ export const NotificationBell: React.FC = () => {
             console.error("Failed to parse web params:", e);
           }
         }
+        
         const notifTitle = payload.notification?.title || "No title";
         const notifMessage = payload.notification?.body || "No message";
+        const notifType = payload.data?.notif_type || "";
 
         const newNotif: Notification = {
           notif_id: payload.data?.notification_id || Date.now().toString(),
-          notif_title: payload.notification?.title || "No title",
-          notif_message: payload.notification?.body || "No message",
-          notif_type: payload.data?.notif_type || "",
+          notif_title: notifTitle,
+          notif_message: notifMessage,
+          notif_type: notifType,
           is_read: false,
           notif_created_at: new Date().toISOString(),
           redirect_url: redirectUrl,
@@ -157,22 +159,25 @@ export const NotificationBell: React.FC = () => {
         });
         setUnreadCount((prev) => prev + 1);
 
-        // Show toast notification
+        // Show toast notification with navigation support
         showNotificationToast({
           title: notifTitle,
           description: notifMessage,
           avatarSrc: ciudadLogo,
           timestamp: "just now",
+          notif_type: notifType, // Pass the notification type for proper icon display
           onClick: redirectUrl ? () => {
-
-            const { path, params } = redirectUrl
+            const { path, params } = redirectUrl;
+            console.log('🔗 Navigating to:', path, 'with params:', params);
             navigate(path, {
               state: {
                 params: params
               }
-            })
+            });
           } : undefined,
         });
+        
+        // Refetch to sync with server
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
@@ -218,13 +223,13 @@ export const NotificationBell: React.FC = () => {
     
     // Navigate using the redirect_url
     if (notification.redirect_url) {
-
-      const { path, params } = notification.redirect_url
+      const { path, params } = notification.redirect_url;
+      console.log('🔗 Navigating to:', path, 'with params:', params);
       navigate(path, {
         state: {
           params: params
         }
-      })
+      });
     }
     
     setOpen(false);
@@ -239,14 +244,13 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          
-          const { path, params } = notification.redirect_url
+          const { path, params } = notification.redirect_url;
+          console.log('🔗 Navigating to:', path, 'with params:', params);
           navigate(path, {
             state: {
               params: params
             }
-          })
-
+          });
         }
         setOpen(false);
         break;

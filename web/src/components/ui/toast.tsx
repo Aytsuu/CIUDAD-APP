@@ -114,6 +114,12 @@ const getTypeConfig = (type?: string) => {
           <AlertTriangle className="w-5 h-5 text-red-600" />
         </div>
       );
+    case "SUCCESS":
+      return (
+        <div className={`${baseClass} bg-green-100`}>
+          <CheckCircle className="w-5 h-5 text-green-600" />
+        </div>
+      );
     default:
       return (
         <div className={`${baseClass} bg-gray-100`}>
