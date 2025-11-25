@@ -39,7 +39,8 @@ export const useDeleteResolution = () => {
         id: "deleteToast",
         duration: 1000
       });
-      console.error("Failed to delete resolution:", err);
+      // console.error("Failed to delete resolution:", err);
+      throw new Error("Error creating file entry: " + err.message);
     }
   });
 };
@@ -84,7 +85,7 @@ export const useArchiveOrRestoreResolution = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any, data) => {
-        console.error(`Error ${data.res_is_archive ? 'archiving' : 'restoring'} resolution:`, err);
+        // console.error(`Error ${data.res_is_archive ? 'archiving' : 'restoring'} resolution:`, err);
         toast.error(err.message || `Failed to ${data.res_is_archive ? 'archive' : 'restore'} resolution`);
     },
   });

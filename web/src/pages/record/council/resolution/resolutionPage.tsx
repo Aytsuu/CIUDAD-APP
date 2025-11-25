@@ -131,7 +131,8 @@ function ResolutionPage() {
                         years.add(date.getFullYear());
                     }
                 } catch (error) {
-                    console.error('Error parsing date:', record.res_date_approved, error);
+                    // console.error('Error parsing date:', record.res_date_approved, error);
+                    throw new Error("Error parsing date: " + error);
                 }
             }
         });
