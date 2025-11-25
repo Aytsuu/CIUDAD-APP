@@ -6,9 +6,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
-import { useHealthProfilingSummary } from "@/pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
+import { useHealthProfilingSummary } from "../../../../pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Activity, Loader2 } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";

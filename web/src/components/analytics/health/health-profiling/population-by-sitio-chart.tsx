@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { usePopulationBySitio } from "@/pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
+import { usePopulationBySitio } from "../../../../pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, MapPin, Loader2, Home, Users } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
