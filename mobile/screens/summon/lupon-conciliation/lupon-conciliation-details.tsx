@@ -469,6 +469,14 @@ export default function LuponConciliationDetails() {
 
         return (
             <View className="flex-1">
+                {hasResidentBool && !isCaseClosed && (
+                    <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mx-6 mt-4 mb-2">
+                        <Text className="text-blue-800 text-sm">
+                            <Text className="font-bold">Resident Case:</Text> As the complainant is a resident, they can choose their preferred date and time for the hearing schedule.
+                        </Text>
+                    </View>
+                )}
+                
                 {hearingSchedules.length === 0 ? (
                     <ScrollView 
                         className="flex-1"

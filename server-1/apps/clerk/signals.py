@@ -679,3 +679,59 @@ def schedule_business_permit_payment_reminder(business_permit):
         
     except Exception as e:
         return False
+
+
+# ============================ QUARTERLY REMINDER FOR ADDING DATE AND TIMESLOTS =================================
+def schedule_quarterly_hearing_reminders():
+    """
+    Schedule quarterly reminders for adding summon dates and time slots
+    """
+    try:
+        recipient_list = mediation_recipient()
+        
+        # Schedule for current quarter and recurring quarterly
+        now = timezone.now()
+        
+        # Calculate next quarter (January, April, July, October)
+        current_month = now.month
+        if current_month <= 3:
+            next_quarter_month = 4  # April
+            quarter_name = "Q2 (April-June)"
+        elif current_month <= 6:
+            next_quarter_month = 7  # July
+            quarter_name = "Q3 (July-September)"
+        elif current_month <= 9:
+            next_quarter_month = 10  # October
+            quarter_name = "Q4 (October-December)"
+        else:
+            next_quarter_month = 1  # January (next year)
+            quarter_name = "Q1 (January-March)"
+        
+        # Set reminder for 1st day of the quarter at 9:00 AM
+        if next_quarter_month == 1:  # January (next year)
+            reminder_date = datetime(now.year + 1, next_quarter_month, 1, 9, 0)
+        else:
+            reminder_date = datetime(now.year, next_quarter_month, 1, 9, 0)
+        
+        reminder_time = timezone.make_aware(reminder_date)
+        
+        # Schedule the quarterly reminder
+        reminder_notification(
+            title=f'Quarterly Hearing Schedule - {quarter_name}',
+            message=f'Time to add summon dates and time availability slots for {quarter_name}. Please add available dates and time slots in the Date & Time Availability feature.',
+            recipients=recipient_list,
+            notif_type='REMINDER',
+            send_at=reminder_time,
+            web_route="/summon-calendar"
+        )
+        
+        print(f"✓ Quarterly hearing reminder scheduled for {quarter_name} on {reminder_time.strftime('%B %d, %Y')}")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error scheduling quarterly hearing reminders: {e}")
+        return False
+
+# Initialize quarterly scheduling
+def initialize_quarterly_hearing_reminders():
+    schedule_quarterly_hearing_reminders()

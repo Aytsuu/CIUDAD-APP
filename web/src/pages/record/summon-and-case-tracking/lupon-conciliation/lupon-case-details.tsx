@@ -1030,7 +1030,7 @@ export default function LuponCaseDetails() {
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 text-blue-600 mt-0.5" />
               <AlertDescription className="text-blue-800">
-                <strong>Resident Case:</strong> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule. Please coordinate with the complainant to determine their availability.
+                <strong>Resident Case:</strong> As the complainant is a resident, they can choose their preferred date and time for the hearing schedule. 
               </AlertDescription>
             </div>
           </Alert>
