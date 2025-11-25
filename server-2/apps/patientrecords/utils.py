@@ -521,10 +521,11 @@ def get_family_head_info(obj, context=None):
 
 
                     # Get address information for this family head
-                    address_info = None
+                    # Try custom address getter, else fallback to get_family_head_address utility
                     if hasattr(obj, '_get_family_head_address'):
                         address_info = obj._get_family_head_address(composition.rp)
-                    # If not, you can implement a utility for address as well
+                    else:
+                        address_info = get_family_head_address(composition.rp)
 
 
                     family_heads[role] = {

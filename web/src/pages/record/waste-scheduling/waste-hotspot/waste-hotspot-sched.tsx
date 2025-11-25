@@ -58,7 +58,6 @@ function WasteHotSched({onSuccess}: {
     });
 
     const onSubmit = (values: z.infer<typeof WasteHotspotSchema>) => {
-        console.log('Values:', values)
         addHotspotAssignment(values)    
     };
 

@@ -40,14 +40,10 @@ export default function ChildImmunization() {
 
   useEffect(() => {
     const fetchVaccineHistory = async () => {
-      try {
         if (pat_id) {
           const response = await getVaccinationRecordById(pat_id);
           setVaccineHistory(response);
         }
-      } catch (error) {
-        console.error("Error fetching vaccine history:", error);
-      }
     };
 
     fetchVaccineHistory();

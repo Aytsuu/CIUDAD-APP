@@ -236,7 +236,7 @@ export default function Immunization({
     }
 
     if (!selectedVaccine) {
-      console.error("Selected vaccine not found. Available vaccines:", vaccinesData?.default);
+      // console.error("Selected vaccine not found. Available vaccines:", vaccinesData?.default);
       return;
     }
 
