@@ -246,9 +246,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   if (!budgetEntry)
     return <div className="text-center py-8">No budget entry found.</div>;
 
-  const currentYearBudget = yearBudgets?.results?.find(
-    (budget: BudgetYear) => budget.gbudy_year === gbudy_year
-  );
+  // const currentYearBudget = yearBudgets?.results?.find(
+  //   (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+  // );
 
   const selectedProject = projectProposals?.find(
     (p) =>
@@ -412,7 +412,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
               </>
             </div>
 
-            {currentYearBudget && (
+            {/* {currentYearBudget && (
               <div className="p-4 border rounded bg-gray-50">
                 <div className="flex justify-between">
                   <span className="font-medium">Current Budget:</span>
@@ -434,7 +434,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                   <span>₱{remainingBalance.toLocaleString()}</span>
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className="mt-4 flex justify-end gap-3">
               {Object.keys(form.formState.errors).length > 0 && (

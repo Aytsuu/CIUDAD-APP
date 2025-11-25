@@ -469,7 +469,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
               />
               {currentYearBudget && (
                 <div className="p-4 border rounded bg-gray-50">
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <span className="font-medium">Current Budget:</span>
                     <span>
                       ₱{currentYearBudget.gbudy_budget?.toLocaleString()}
@@ -485,20 +485,20 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                   <div className="flex justify-between font-bold">
                     <span>Remaining Balance:</span>
                     <span>₱{remainingBalance.toLocaleString()}</span>
-                  </div>
-                  {actualExpenseWatch && (
+                  </div> */}
+                  {actualExpenseWatch && actualExpenseWatch > 0 && (
                     <div className="flex justify-between mt-2">
                       <span className="font-medium">After This Entry:</span>
                       <span
                         className={
-                          (actualExpenseWatch || 0) > remainingBalance
+                          actualExpenseWatch > remainingBalance
                             ? "text-red-500"
                             : ""
                         }
                       >
                         ₱
                         {(
-                          remainingBalance - (actualExpenseWatch || 0)
+                          remainingBalance - actualExpenseWatch
                         ).toLocaleString()}
                       </span>
                     </div>

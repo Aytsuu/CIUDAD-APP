@@ -182,6 +182,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
   yPos += sectionGap;
 
   yPos = addSectionTitle("Budgetary Requirements:", yPos);
+  yPos += sectionGap;
   const tableCols = [200, 80, 80, 80];
   const tableStartX = margin;
 
