@@ -95,10 +95,11 @@ class PregnancyCompleteStatusSerializer(serializers.ModelSerializer):
 # for completing pregnancy status
 class PregnancyPregLossStatusSerializer(serializers.ModelSerializer):
     pat_id = serializers.CharField(write_only=True, required=True)
+    pregnancyloss_reason = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta: 
         model = Pregnancy
-        fields = ['pat_id', 'pregnancy_id', 'status', 'prenatal_end_date']
+        fields = ['pat_id', 'pregnancy_id', 'status', 'prenatal_end_date', 'pregnancyloss_reason']
 
     def validate_pat_id(self, value):
         if not value or value.lower() == 'nan' or value.strip() == '':
@@ -113,9 +114,10 @@ class PregnancyPregLossStatusSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f'Error validating patient ID {value}: {str(e)}')
 
     def update(self, instance, validated_data):
-        # Only update status and prenatal_end_date
+        # Update status, prenatal_end_date, and pregnancyloss_reason
         instance.status = 'pregnancy loss'  # must match model choices
         instance.prenatal_end_date = date.today()
+        instance.pregnancyloss_reason = validated_data.get('pregnancyloss_reason', '')
         instance.save()
         return instance
     

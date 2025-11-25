@@ -207,7 +207,8 @@ ALLOWED_HOSTS = [
     'ciudad-app-server-2.onrender.com',
     'localhost',
     '192.168.1.12',
-    '127.0.0.1'
+    '127.0.0.1',
+    '192.168.1.11'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True

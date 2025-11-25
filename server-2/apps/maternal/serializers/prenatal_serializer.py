@@ -1206,15 +1206,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         try:
             patient = patient_record.pat_id
             
-            # STEP 1: Create a separate PatientRecord with patrec_type='Vaccination Record'
-            # This separates the vaccination service from the prenatal service
-            vaccination_patrec = PatientRecord.objects.create(
-                pat_id=patient,
-                patrec_type='Vaccination Record'
-            )
-            print(f"✓ Created new PatientRecord for Vaccination: patrec_id={vaccination_patrec.patrec_id}, patrec_type='Vaccination Record'")
-            
-            # Separate TT records by vaccine type
+            # Separate TT records by vaccine type FIRST before creating any records
             tt_conditional = []
             tt_primary = []
             tt_routine = []
@@ -1268,9 +1260,18 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             print(f"  Routine:     {len(tt_routine)}")
             print()
             
+            # Validate BEFORE creating any PatientRecord
             if not (tt_conditional or tt_primary or tt_routine):
-                print("✗ No valid vaccines to process")
+                print("✗ No valid vaccines to process - skipping PatientRecord creation")
                 return None
+            
+            # STEP 1: Create a separate PatientRecord with patrec_type='Vaccination Record'
+            # Only create this AFTER validating that we have valid vaccines to process
+            vaccination_patrec = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type='Vaccination Record'
+            )
+            print(f"✓ Created new PatientRecord for Vaccination: patrec_id={vaccination_patrec.patrec_id}, patrec_type='Vaccination Record'")
             
             # CONDITIONAL VACCINES: Reuse existing vacrec_id, handle dose progression
             if tt_conditional:

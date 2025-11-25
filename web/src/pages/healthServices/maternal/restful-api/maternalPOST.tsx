@@ -269,6 +269,7 @@ export const addCompletePregnancy = async (data: CompletePregnancyData) => {
 export interface PregnancyLossData {
   pat_id: string;
   pregnancy_id: string;
+  pregnancyloss_reason?: string;
 }
 
 export const addPregnancyLoss = async (data: PregnancyLossData) => {

@@ -65,7 +65,17 @@ export default function PrenatalFormFourthPq({
   const staffOptions = 
     staffsData && Array.isArray(staffsData.staff)
       ? staffsData.staff
-          .filter((staff: any) => String(staff.staff_id || "") !== String(currentUserStaffId)) // Exclude logged-in user
+          .filter((staff: any) => {
+            // Exclude logged-in user
+            if (String(staff.staff_id || "") === String(currentUserStaffId)) return false
+            
+            // Only include HEALTH STAFF
+            if (staff.staff_type !== "HEALTH STAFF") return false
+            
+            // Only include ADMIN or DOCTOR positions
+            const position = (staff.position || "").toUpperCase()
+            return position === "ADMIN" || position === "DOCTOR"
+          })
           .map((staff: any) => {
             const fullName = staff.full_name || `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
             const position = staff.position || staff.pos || ""

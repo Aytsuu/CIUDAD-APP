@@ -265,7 +265,6 @@ export function PregnancyAccordion({
                                           if (record.recordType === "Prenatal" && onPregnancyLossRecord) {
                                             onPregnancyLossRecord(record.pregnancyId, "Prenatal")
                                           }
-                                          handlePregnancyLossRecord(record.id, "Prenatal")
                                         }}
                                       >
                                         <HeartHandshake className="w-3 h-3" />

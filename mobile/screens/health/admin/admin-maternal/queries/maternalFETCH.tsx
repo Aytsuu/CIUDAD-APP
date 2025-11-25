@@ -45,9 +45,9 @@ export const useMaternalCount = () => {
 }
 
 // for getPregnancyDetails
-export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string, search: string) => {
+export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string) => {
 	return useQuery({
-		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status, search }],
+		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status }],
 		queryFn: async () => {
 			try {
 				const res = await api2.get(`maternal/pregnancy/${patientId}/details/`, {
@@ -55,7 +55,6 @@ export const usePregnancyDetails = (patientId: string, page: number, pageSize: n
 						page,
 						pageSize,
 						status,
-						search,
 					}
 				})
 				return res.data

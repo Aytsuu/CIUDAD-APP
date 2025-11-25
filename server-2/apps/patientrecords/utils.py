@@ -1104,10 +1104,11 @@ def get_additional_info(obj):
 
 
                     if latest_prenatal:
-                        # Build latest_pregnancy structure with pregnancy_id, pf_id, and ppr_id
+                        # Build latest_pregnancy structure with pregnancy_id, pf_id, pregnancy_status, and ppr_id
                         pregnancy_data = {
                             'pregnancy_id': latest_pregnancy.pregnancy_id,
                             'pf_id': latest_prenatal.pf_id,
+                            'pregnancy_status': latest_pregnancy.status,  # Add pregnancy status
                         }
                        
                         # Fetch ppr_id from PostpartumRecord if exists
@@ -1227,21 +1228,36 @@ def get_additional_info(obj):
 
             # Check for latest pregnancy and AOG data
             try:
+                print(f"🔍 Checking pregnancy for transient patient: {obj.pat_id}")
+                
+                # First try to get completed pregnancy
                 latest_pregnancy = Pregnancy.objects.filter(
                     pat_id=obj,
                     status='completed'
                 ).order_by('-created_at').first()
+                
+                # If no completed pregnancy, try active pregnancy
+                if not latest_pregnancy:
+                    latest_pregnancy = Pregnancy.objects.filter(
+                        pat_id=obj,
+                        status='active'
+                    ).order_by('-created_at').first()
+                
+                print(f"🔍 Found pregnancy: {latest_pregnancy}")
                
                 if latest_pregnancy:
                     latest_prenatal = Prenatal_Form.objects.filter(
                         pregnancy_id=latest_pregnancy
                     ).order_by('-created_at').first()
+                    
+                    print(f"🔍 Found prenatal form: {latest_prenatal}")
 
 
                     if latest_prenatal:
                         pregnancy_data = {
                             'pregnancy_id': latest_pregnancy.pregnancy_id,
                             'pf_id': latest_prenatal.pf_id,
+                            'pregnancy_status': latest_pregnancy.status,  # Add pregnancy status
                         }
                        
                         # fetch ppr_id from PostpartumRecord if exists
@@ -1261,10 +1277,17 @@ def get_additional_info(obj):
                         if latest_prenatal_care:
                             additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
                             additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+                    else:
+                        print(f"❌ No prenatal form found for pregnancy {latest_pregnancy.pregnancy_id}")
+                else:
+                    print(f"❌ No pregnancy record found for patient {obj.pat_id}")
             except Exception as e:
                 print(f"Error fetching AOG data for transient: {str(e)}")
+                import traceback
+                traceback.print_exc()
 
 
+            print(f"🔍 Final additional_info for transient {obj.pat_id}: {additional_info}")
             return additional_info if additional_info else None
 
 

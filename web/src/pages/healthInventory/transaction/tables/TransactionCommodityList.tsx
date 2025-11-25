@@ -45,75 +45,16 @@ export default function CommodityTransactionTable() {
     setCurrentPage(1)
   }
 
-  // Prepare export data for commodity transactions
+  // Prepare export data for commodity transactions (EXACT table columns)
   const prepareExportData = () => {
-    return transactionData.map((commodity: any) => {
-      const expired = commodity.isExpired;
-      const isLow = commodity.isLowStock;
-      const isOutOfStock = commodity.isOutOfStock;
-      const isNear = commodity.isNearExpiry;
-      const unit = commodity.cinv_qty_unit || "";
-      const pcs = commodity.qty?.cinv_pcs || 1;
-
-      // Format Total Qty
-      let totalQtyDisplay = "";
-      if (unit.toLowerCase() === "boxes" && pcs > 1) {
-        totalQtyDisplay = `${commodity.qty_number} boxes (${commodity.qty_number * pcs} pcs)`;
-      } else {
-        totalQtyDisplay = `${commodity.qty_number} ${unit}`;
-      }
-      if (expired) totalQtyDisplay += " (Expired)";
-
-      // Format Available Stock
-      let availableStockDisplay = "";
-      if (unit.toLowerCase() === "boxes" && pcs > 1) {
-        const availablePcs = commodity.availableStock;
-        const fullBoxes = Math.floor(availablePcs / pcs);
-        const remainingPcs = availablePcs % pcs;
-        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
-        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
-      } else {
-        availableStockDisplay = `${commodity.availableStock} ${unit}`;
-      }
-      if (expired) {
-        availableStockDisplay += " (Expired)";
-      } else {
-        if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
-        if (isLow) availableStockDisplay += " (Low Stock)";
-      }
-
-      // Status
-      let status = "Normal";
-      if (expired) status = "Expired";
-      else if (isOutOfStock) status = "Out of Stock";
-      else if (isLow) status = "Low Stock";
-      else if (isNear) status = "Near Expiry";
-
-      // Details
-      const commodityName = commodity.item?.com_name || "Unknown Commodity";
-      const commodityDetails = `${commodityName}${expired ? " (Expired)" : ""}`;
-
-      // Expiry Date
-      let expiryDateDisplay = commodity.expiryDate ? new Date(commodity.expiryDate).toLocaleDateString() : "N/A";
-      if (expired) expiryDateDisplay += " (Expired)";
-      else if (isNear) expiryDateDisplay += " (Near Expiry)";
-
+    return transactionData.map((item: any) => {
       return {
-        Date: commodity.created_at
-          ? new Date(commodity.created_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric"
-            })
-          : "N/A",
-        ID: commodity.inv_id || "N/A",
-        "Commodity Details": commodityDetails,
-        Category: commodity.category || "N/A",
-        "Total Qty": totalQtyDisplay,
-        "Available Stock": availableStockDisplay,
-        "Qty Used": commodity.administered || 0,
-        "Expiry Date": expiryDateDisplay,
-        Status: status
+        '#': item.comt_id ?? 'N/A',
+        'Commodity Name': item.com_name ?? 'N/A',
+        'Quantity': item.comt_qty ?? 'N/A',
+        'Action': item.comt_action ?? 'N/A',
+        'Staff': item.staff ? item.staff : 'N/A',
+        'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A'
       };
     });
   };
