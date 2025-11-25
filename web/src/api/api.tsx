@@ -15,7 +15,7 @@ export const mapApi = axios.create({
 // });
 
 export const api = axios.create({
-  baseURL: "http://localhost:8002",
+  baseURL: "http://localhost:8000",
   withCredentials: true, 
   headers: {
     "Content-Type": "application/json",
@@ -29,9 +29,9 @@ export const api = axios.create({
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
-//     "Accept": "application/json",
 //   },
 // });
+
 
 
 export const api2 = axios.create({
@@ -43,6 +43,7 @@ export const api2 = axios.create({
   },
 });
 
-setupApiInterceptor(api)
 
-export default api
+setupApiInterceptor(api);
+
+export default api;

@@ -102,38 +102,38 @@ export default function MyFpRecordsScreen() {
   const isFetching = isPatientFetching || isRecordsFetching;
 
   // ... (Event Handlers: handleCheckboxChange, handleCompareRecords, handleRefresh remain the same) ...
-  const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
-    setSelectedRecords((prevSelected) => {
-      if (isChecked) {
-        if (prevSelected.length >= 2) return prevSelected;
-        return [...prevSelected, record];
-      } else {
-        return prevSelected.filter((r) => r.fprecord !== record.fprecord);
-      }
-    });
-  };
+  // const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
+  //   setSelectedRecords((prevSelected) => {
+  //     if (isChecked) {
+  //       if (prevSelected.length >= 2) return prevSelected;
+  //       return [...prevSelected, record];
+  //     } else {
+  //       return prevSelected.filter((r) => r.fprecord !== record.fprecord);
+  //     }
+  //   });
+  // };
 
-  const handleCompareRecords = async () => {
-    if (selectedRecords.length !== 2) {
-      alert("Please select exactly two records to compare.");
-      return;
-    }
-    setIsComparing(true);
-    try {
-      router.push({
-        pathname: "/(health)/admin/familyplanning/comparison", 
-        params: { 
-          record1: JSON.stringify(selectedRecords[0]),
-          record2: JSON.stringify(selectedRecords[1])
-        }
-      });
-    } catch (error) {
-      console.error("Error preparing records for comparison:", error);
-      alert("Failed to prepare records for comparison. Please try again.");
-    } finally {
-      setIsComparing(false);
-    }
-  };
+  // const handleCompareRecords = async () => {
+  //   if (selectedRecords.length !== 2) {
+  //     alert("Please select exactly two records to compare.");
+  //     return;
+  //   }
+  //   setIsComparing(true);
+  //   try {
+  //     router.push({
+  //       pathname: "/(health)/admin/familyplanning/comparison", 
+  //       params: { 
+  //         record1: JSON.stringify(selectedRecords[0]),
+  //         record2: JSON.stringify(selectedRecords[1])
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error("Error preparing records for comparison:", error);
+  //     alert("Failed to prepare records for comparison. Please try again.");
+  //   } finally {
+  //     setIsComparing(false);
+  //   }
+  // };
 
   const handleRefresh = () => {
     refetchPatient();
@@ -168,7 +168,7 @@ export default function MyFpRecordsScreen() {
                 </View>
                 
                 {/* Selection Checkbox */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
                     handleCheckboxChange(item, !isSelected);
@@ -178,7 +178,7 @@ export default function MyFpRecordsScreen() {
                   }`}
                 >
                   {isSelected && <Text className="text-white text-xs font-bold">✓</Text>}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <ChevronRight size={20} color="#64748b" />
               </View>
@@ -340,7 +340,7 @@ export default function MyFpRecordsScreen() {
       />
 
         {/* Compare Button */}
-        {filteredRecords.length > 0 && (
+        {/* {filteredRecords.length > 0 && (
           <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
             <Button
               onPress={handleCompareRecords}
@@ -355,7 +355,7 @@ export default function MyFpRecordsScreen() {
               </Text>
             </Button>
           </View>
-        )}
+        )} */}
       </View>
     </PageLayout>
   );

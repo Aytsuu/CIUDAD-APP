@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react";
 import { useMedicinesList } from "../queries/medicine/MedicineFetchQueries";
 import { formOptions, formMedOptions, dosageUnitOptions } from "./types";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import {useAuth} from "@/context/AuthContext";
+
 
 export const isDuplicateMedicine = (medicines: any[], newMedicine: string, medDsg: number, medDsgUnit: string, medForm: string) => {
     return medicines.some((med) => {
@@ -35,6 +37,9 @@ interface MedicineModalProps {
 }
 
 export default function MedicineModal({ mode = "add", initialData, onClose }: MedicineModalProps) {
+
+    const { user } = useAuth();
+  const staff = user?.staff?.staff_id;
   const [medicineName, setMedicineName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
@@ -52,6 +57,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
       med_dsg: initialData?.med_dsg || undefined,
       med_dsg_unit: initialData?.med_dsg_unit || "",
       med_form: initialData?.med_form || "",
+      staff: staff || ""
     },
     mode: "onChange",
   });

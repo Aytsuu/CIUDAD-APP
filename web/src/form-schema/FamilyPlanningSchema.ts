@@ -233,7 +233,50 @@ const FamilyPlanningBaseSchema = z.object({
       message: "Height is unrealistically high.",
     }),
 
-  bloodPressure: z.string().nonempty("Blood pressure is required (e.g., 120/80)"),
+  bloodPressure: z.string()
+    .min(1, "Blood pressure is required")
+    .regex(/^\d{2,3}\/\d{2,3}$/, "Format must be Systolic/Diastolic (e.g., 120/80)")
+    .superRefine((val, ctx) => {
+      const [systolicStr, diastolicStr] = val.split('/');
+      const systolic = Number(systolicStr);
+      const diastolic = Number(diastolicStr);
+
+      // Validate Systolic (Upper number) - Standard Range approx 60-250
+      if (systolic < 60) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Systolic (upper) reading is dangerously low.",
+        });
+      }
+      if (systolic > 250) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Systolic (upper) reading is unrealistically high.",
+        });
+      }
+
+      // Validate Diastolic (Lower number) - Standard Range approx 40-140
+      if (diastolic < 40) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Diastolic (lower) reading is dangerously low.",
+        });
+      }
+      if (diastolic > 140) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Diastolic (lower) reading is unrealistically high.",
+        });
+      }
+
+      // Logical Check: Systolic should always be higher than Diastolic
+      if (systolic <= diastolic) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Systolic must be higher than Diastolic.",
+        });
+      }
+    }),
   pulseRate: z.coerce
     .number({ invalid_type_error: "Pulse rate must be a number" })
     .min(80, {

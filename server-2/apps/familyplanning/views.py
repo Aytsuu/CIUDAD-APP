@@ -190,122 +190,10 @@ def get_or_create_illness(illname, ill_description="", ill_code_prefix="FP"):
             except IntegrityError:
                 # If another process created it first, just fetch it now
                 return Illness.objects.get(illname=illname)
-    
 
-class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = OverallFPRecordSerializer
-    pagination_class = StandardResultsSetPagination
-    
-    def get_queryset(self):
-        # Start with FP_type objects since that's where the main data is
-        queryset = FP_type.objects.select_related(
-            "fprecord",
-            "fprecord__pat",
-            "fprecord__pat__rp_id__per", 
-            "fprecord__pat__trans_id",
-        ).order_by("-fprecord__created_at")
-        
-        # Apply search filter if 'search' query parameter is present
-        search_query = self.request.query_params.get('search', None)
-        if search_query:
-            queryset = queryset.filter(
-                Q(fprecord__pat__rp_id__per__per_lname__icontains=search_query) |
-                Q(fprecord__pat__rp_id__per__per_fname__icontains=search_query) |
-                Q(fprecord__pat__trans_id__tran_lname__icontains=search_query) |
-                Q(fprecord__pat__trans_id__tran_fname__icontains=search_query) |
-                Q(fprecord__client_id__icontains=search_query) |
-                Q(fpt_client_type__icontains=search_query) |
-                Q(fpt_method_used__icontains=search_query)
-            ).distinct()
-        
-        # Apply client_type filter if 'client_type' query parameter is present
-        client_type_filter = self.request.query_params.get('client_type', None)
-        if client_type_filter and client_type_filter != "all":
-            queryset = queryset.filter(fpt_client_type__iexact=client_type_filter).distinct()
-        
-        # NEW: Apply patient_type filter if 'patient_type' query parameter is present
-        patient_type_filter = self.request.query_params.get('patient_type', None)
-        if patient_type_filter and patient_type_filter != "all":
-            queryset = queryset.filter(fprecord__pat__pat_type__iexact=patient_type_filter).distinct()
-        
-        return queryset
-    
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        
-        # Get distinct patients with their latest record
-        patient_data_map = {}
-        for fp_type in queryset:
-            record = fp_type.fprecord
-            patient_id = record.pat.pat_id
-            
-            # Only take the latest record per patient
-            if patient_id not in patient_data_map:
-                patient_entry = self._build_patient_entry(record, fp_type)
-                patient_data_map[patient_id] = patient_entry
-        
-        # Convert to list for pagination
-        patient_list = list(patient_data_map.values())
-        
-        # Manual pagination since we transformed the data
-        page = self.paginate_queryset(patient_list)
-        if page is not None:
-            return self.get_paginated_response(page)
-        
-        return Response(patient_list)
-    
-    def _build_patient_entry(self, record, fp_type):
-        """Helper method to build patient entry data"""
-        patient_id = record.pat.pat_id
-        patient_type = record.pat.pat_type
-        
-        raw_subtype = fp_type.fpt_subtype if fp_type else "N/A"
-        subtype = map_subtype_display(raw_subtype)
-        
-        # Count distinct methods instead of total records
-        from django.db.models import Count
-        
-        # Get distinct method count for this patient
-        method_count = FP_type.objects.filter(
-            fprecord__pat=record.pat
-        ).values('fpt_method_used').distinct().count()
-        
-        # Get total visits count (optional - for reference)
-        total_visits = FP_Record.objects.filter(pat=record.pat).count()
-        
-        # Build basic patient entry
-        patient_entry = {
-            "patient_id": patient_id,
-            "patient_name": "",
-            "patient_age": None,
-            "sex": "",
-            "client_type": map_client_type(fp_type.fpt_client_type) if fp_type else "N/A",
-            "subtype": subtype,
-            "patient_type": patient_type,
-            "method_used": fp_type.fpt_method_used if fp_type else "N/A",
-            "created_at": record.created_at.isoformat() if record.created_at else None,
-            "fprecord_id": record.fprecord_id,
-            "record_count": method_count,  # Use distinct method count instead of total visits
-            "total_visits": total_visits,  # Keep this for reference if needed
-        }
-        
-        # Add patient details based on type
-        if patient_type == "Resident" and record.pat.rp_id and record.pat.rp_id.per:
-            personal = record.pat.rp_id.per
-            patient_entry["patient_name"] = f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
-            patient_entry["patient_age"] = calculate_age_from_dob(personal.per_dob.isoformat()) if personal.per_dob else None
-            patient_entry["sex"] = personal.per_sex
-        
-        elif patient_type == "Transient" and record.pat.trans_id:
-            transient = record.pat.trans_id
-            patient_entry["patient_name"] = f"{transient.tran_lname}, {transient.tran_fname} {transient.tran_mname or ''}".strip()
-            patient_entry["patient_age"] = calculate_age_from_dob(transient.tran_dob.isoformat()) if transient.tran_dob else None
-            patient_entry["sex"] = transient.tran_sex
-        
-        return patient_entry
-    
-    
 
+    
+    
 @api_view(["GET"])
 def get_fp_records_for_patient(request, patient_id):
     try:
@@ -2821,6 +2709,31 @@ class RiskStiDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = FP_RiskSti.objects.all()
     lookup_field = "sti_id"
 
+@api_view(['GET'])
+def get_risk_sti_by_patient(request, patient_id):
+    try:
+        # 1. Find the latest FP Record for this patient
+        # We filter by pat__pat_id because FP_Record links to Patient via 'pat'
+        latest_record = FP_Record.objects.filter(pat__pat_id=patient_id).order_by('-created_at').first()
+        
+        if not latest_record:
+            # No FP record found for this patient, return empty (so form remains blank)
+            return Response({}, status=status.HTTP_200_OK)
+
+        # 2. Find the Risk STI record linked to this specific FP Record
+        risk_sti = FP_RiskSti.objects.filter(fprecord=latest_record).first()
+        
+        if risk_sti:
+            serializer = FPRiskStiSerializer(risk_sti)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            # FP record exists, but no STI risk data filled yet
+            return Response({}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Risk VAW CRUD
 class RiskVawListCreateView(generics.ListCreateAPIView):

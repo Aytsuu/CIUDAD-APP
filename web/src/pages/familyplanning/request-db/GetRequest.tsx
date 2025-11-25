@@ -64,6 +64,7 @@ export interface GetFPRecordsParams {
   search?: string;
   client_type?: string;
   patient_type?: string;
+  sitio?: string;
 }
 
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {

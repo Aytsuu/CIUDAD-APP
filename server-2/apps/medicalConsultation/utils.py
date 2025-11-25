@@ -178,7 +178,8 @@ def _get_resident_name_and_rp_id(rp):
 
 def _medical_staff_rp_ids():
     staff = Staff.objects.filter(
-        pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']
+        staff_type="HEALTH STAFF",
+        pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS', 'MIDWIFE', 'NURSE']
     ).select_related('rp')
     return [str(s.rp.rp_id) for s in staff if s.rp and s.rp.rp_id]
 
@@ -204,7 +205,7 @@ def send_appointment_status_notifications(appointment, status: str):
                 "Please reschedule if needed."
             )
             notif_type = "MISSED"
-            web_route = "/services/medical-consultation/appointments/missed"
+            # web_route = "/services/medical-consultation/appointments/missed"
             
         elif status == "rejected":
             title = "Appointment Request Rejected"
@@ -213,25 +214,24 @@ def send_appointment_status_notifications(appointment, status: str):
                 f"Reason: {reason}\n"
             )
             notif_type = "REJECTED"
-            web_route = "/services/medical-consultation/appointments/rejected"
+            # web_route = "/services/medical-consultation/appointments/rejected"
         
         elif status == "confirmed":
             title = "Appointment Request Approved"
             message = (
-                f"Your appointment request has been confirmed by Health Center\n"
-                f"See you on {scheduled}"
+                f"Your appointment request for {scheduled} has been confirmed\nSee you."
             )
             notif_type = "CONFIRMED"
-            web_route = "/services/medical-consultation/appointments/confirmed"
+            # web_route = "/services/medical-consultation/appointments/confirmed"
             
         elif status == "referred":
-            title = "Appointment Request Reffered"
+            title = "Appointment Request Referred"
             message = (
                 f"Your appointment request has been referred\n"
                 f"Reason: {reason}\n"
             )
             notif_type = "REFERRED"
-            web_route = "/services/medical-consultation/appointments/referred"
+            # web_route = "/services/medical-consultation/appointments/referred"
             
         else:
             title = "Appointment Cancelled"
@@ -241,14 +241,14 @@ def send_appointment_status_notifications(appointment, status: str):
                 f"Chief Complaint: {complaint}"
             )
             notif_type = "CANCELLED"
-            web_route
+            
 
         notifier.create_notification(
             title=title,
             message=message,
             recipients=[resident_rp_id],
             notif_type=notif_type,
-            web_route=web_route,
+            web_route="",
             web_params={},
             mobile_route="/(health)/medconsultation/my-medappointments",
             mobile_params={},
@@ -262,16 +262,16 @@ def send_appointment_status_notifications(appointment, status: str):
                 f"{resident_name} missed their appointment.\n"
                 f"Date: {scheduled} ({meridiem})\n"
                 f"Complaint: {complaint}\n"
-                f"ID: {app_id}"
+                # f"ID: {app_id}"
             )
             notif_type = "MISSED"
             web_route = "/services/medical-consultation/appointments/missed"
         elif status == "confirmed":
             title = "New Upcoming Appointment"
             message = (
-                f"Patient {resident_name} has an upcoming appointment on {scheduled} ({meridiem}).\n"
+                f"{resident_name} has an upcoming appointment on {scheduled} ({meridiem}).\n"
                 f"Chief complaint: {complaint}\n"
-                f"ID: {app_id}"
+                # f"ID: {app_id}"
             )
             notif_type = "APPOINTMENT_CONFIRMED_ADMIN"
             web_route = "/referred-patients/upcoming-consultations"
@@ -282,7 +282,7 @@ def send_appointment_status_notifications(appointment, status: str):
                 f"Date: {scheduled} ({meridiem})\n"
                 f"Reason: {appointment.archive_reason or '–'}\n"
                 f"Complaint: {complaint}\n"
-                f"ID: {app_id}"
+                # f"ID: {app_id}"
             )
             notif_type = "CANCELLED"
             web_route = "/services/medical-consultation/appointments/cancelled"

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle,CircleAlertIcon,CalendarOff,LoaderCircle,Ban,Repeat,FileCheck } from "lucide-react";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle  } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
@@ -46,8 +46,6 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
         </div>
       );
     case "REMINDER":
-    case "NEAR_EXPIRY":
-    case "PENDING":
       return (
         <div className={`${baseClass} bg-amber-100 ${className}`}>
           <Clock className="w-5 h-5 text-amber-600" />
@@ -65,48 +63,6 @@ const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type,
           <AlertTriangle className="w-5 h-5 text-red-600" />
         </div>
       )
-    case "CANCELLED":
-    case "OUT_OF_STOCK":
-    case "REJECTED":
-      return (
-      <div className={`${baseClass} bg-red-100 ${className}`}>
-        <CircleAlertIcon className="w-5 h-5 text-red-600" />
-      </div>
-      );
-    case "EXPRIED":
-      return (
-      <div className={`${baseClass} bg-red-100 ${className}`}>
-        <CalendarOff className="w-5 h-5 text-red-600" />
-      </div>
-      );
-    case "LOW_STOCK":
-      return (
-      <div className={`${baseClass} bg-yellow-100 ${className}`}>
-        <LoaderCircle className="w-5 h-5 text-yellow-600" />
-      </div>
-      );
-    case "MISSED":
-      return (
-      <div className={`${baseClass} bg-red-100 ${className}`}>
-        <Ban className="w-5 h-5 text-red-600" />
-      </div>
-      );
-    case "REFERRED":
-      return (
-      <div className={`${baseClass} bg-yellow-100 ${className}`}>
-        <Repeat className="w-5 h-5 text-yellow-600" />
-      </div>
-      );
-    case "CONFIRMED":
-      return (
-      <div className={`${baseClass} bg-green-100 ${className}`}>
-        <FileCheck className="w-5 h-5 text-green-600" />
-      </div>
-      );
-  
-
-    
-      
     default:
       return (
         <div className={`${baseClass} bg-gray-100 ${className}`}>
@@ -177,51 +133,51 @@ export const NotificationBell: React.FC = () => {
               path: payload.data.web_route,
               params: params
             };
-            
-            console.log('📍 Parsed redirect URL:', redirectUrl);
           } catch (e) {
             console.error("Failed to parse web params:", e);
           }
         }
+        
         const notifTitle = payload.notification?.title || "No title";
         const notifMessage = payload.notification?.body || "No message";
+        const notifType = payload.data?.notif_type || "";
 
-        // const newNotif: Notification = {
-        //   notif_id: payload.data?.notification_id || Date.now().toString(),
-        //   notif_title: payload.notification?.title || "No title",
-        //   notif_message: payload.notification?.body || "No message",
-        //   notif_type: payload.data?.notif_type || "",
-        //   is_read: false,
-        //   notif_created_at: new Date().toISOString(),
-        //   redirect_url: redirectUrl,
-        // };
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: notifTitle,
+          notif_message: notifMessage,
+          notif_type: notifType,
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
 
-        // // Update state first
-        // setNotifications((prev) => {
-        //   console.log('📝 Adding notification to state. Current count:', prev.length);
-        //   return [newNotif, ...prev];
-        // });
-        // setUnreadCount((prev) => prev + 1);
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
 
-        // Show toast notification
+        // Show toast notification with navigation support
         showNotificationToast({
           title: notifTitle,
           description: notifMessage,
           avatarSrc: ciudadLogo,
           timestamp: "just now",
+          notif_type: notifType, // Pass the notification type for proper icon display
           onClick: redirectUrl ? () => {
-
-            const { path, params } = redirectUrl
+            const { path, params } = redirectUrl;
+            console.log('🔗 Navigating to:', path, 'with params:', params);
             navigate(path, {
               state: {
                 params: params
               }
-            })
+            });
           } : undefined,
         });
         
-        // Also refetch to ensure we're in sync with backend
-        console.log('🔄 Refetching notifications from backend...');
+        // Refetch to sync with server
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
@@ -267,13 +223,13 @@ export const NotificationBell: React.FC = () => {
     
     // Navigate using the redirect_url
     if (notification.redirect_url) {
-
-      const { path, params } = notification.redirect_url
+      const { path, params } = notification.redirect_url;
+      console.log('🔗 Navigating to:', path, 'with params:', params);
       navigate(path, {
         state: {
           params: params
         }
-      })
+      });
     }
     
     setOpen(false);
@@ -288,14 +244,13 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          
-          const { path, params } = notification.redirect_url
+          const { path, params } = notification.redirect_url;
+          console.log('🔗 Navigating to:', path, 'with params:', params);
           navigate(path, {
             state: {
               params: params
             }
-          })
-
+          });
         }
         setOpen(false);
         break;
@@ -305,12 +260,21 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
+  /* 
+    Main Options navigation
+  */
+
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
     if(action === "view_notification") {
       navigate("/notification");
+      setOpen(false);
+    }
+    if(action === "notification_settings"){
+      navigate("/manage/preferences");
+      setOpen(false);
     }
   };
 

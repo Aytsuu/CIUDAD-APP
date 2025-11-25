@@ -113,19 +113,24 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         return expiryDate === "N/A" ? "N/A" : new Date(expiryDate).toLocaleDateString();
       },
     },
-    {
-      accessorKey: "reason",
-      header: "Reason",
-      cell: ({ row }) => {
-        const reason = row.original.reason;
-        return (
-          <div className="text-center">
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              {reason}
-            </span>
-          </div>
-        );
-      },
+   
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            reason === "Expired" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {reason}
+          </span>
+        </div>
+      );
+    },
     },
   ];
 }
