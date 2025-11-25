@@ -468,7 +468,7 @@ export function ResidentListSection() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
               <Input
-                placeholder="Search by name, ID, address, contact, or status..."
+                placeholder="Search by name and address.."
                 className="pl-10 bg-white w-full"
                 value={searchQuery}
                 onChange={(e) => {

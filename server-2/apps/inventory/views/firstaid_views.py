@@ -21,7 +21,7 @@ class FirstAidListView(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = FirstAidList.objects.all()
+        queryset = FirstAidList.objects.all().order_by('-updated_at')
         
         # Add search functionality
         search_query = self.request.GET.get('search', '').strip()

@@ -68,7 +68,7 @@ class ImmunizationSuppliesListTable(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = ImmunizationSupplies.objects.all()
+        queryset = ImmunizationSupplies.objects.all().order_by('-updated_at')
         search_query = self.request.GET.get('search', '').strip()
         
         if search_query:
@@ -256,7 +256,7 @@ class ImmunizationStockCreate(APIView):
 # =======================VACCINES================================#
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
-    queryset = VaccineList.objects.all()
+    queryset = VaccineList.objects.all().order_by('-updated_at')
 
     def create(self, request, *args, **kwargs):
         vac_name = request.data.get('vac_name')

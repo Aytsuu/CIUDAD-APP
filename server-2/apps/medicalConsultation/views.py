@@ -135,6 +135,8 @@ class CheckPendingStatusView(APIView):
         }, status=status.HTTP_200_OK)
         
 #================== MEDICAL CONSULTAION FORWARDED TABLE==================
+
+#================== MEDICAL CONSULTAION FORWARDED TABLE==================
 class CombinedHealthRecordsView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -213,20 +215,23 @@ class CombinedHealthRecordsView(APIView):
             serializer = ChildHealthHistoryFullSerializer(record)
             serialized_data = serializer.data
             
-            # Extract patient details using your existing method
+            # Extract patient details using get_address utility
             chrec = record.chrec
             patrec = chrec.patrec
             patient = patrec.pat_id
+            from apps.patientrecords.utils import get_address
             patient_details = self._get_patient_details(patient)
-            
-            # Add patient details to the serialized data
+            address_details = get_address(patient)
+
+            # Add patient details and address to the serialized data
             if 'chrec_details' not in serialized_data:
                 serialized_data['chrec_details'] = {}
             if 'patrec_details' not in serialized_data['chrec_details']:
                 serialized_data['chrec_details']['patrec_details'] = {}
-            
+
             serialized_data['chrec_details']['patrec_details']['pat_details'] = patient_details
-            
+            serialized_data['chrec_details']['patrec_details']['address'] = address_details
+
             combined_data.append({
                 'record_type': 'child-health',
                 'data': serialized_data
@@ -238,47 +243,23 @@ class CombinedHealthRecordsView(APIView):
             patient = patrec.pat_id
             serializer = MedicalConsultationRecordSerializer(record)
             serialized_data = serializer.data
-            # Get patient details
+            
+            # Get patient details (which includes address from _get_patient_details)
             patient_details = self._get_patient_details(patient)
             
-            # Get staff details
-            staff_details = None
-            if record.staff and hasattr(record.staff, 'rp') and record.staff.rp:
-                staff_details = {
-                    'rp': {
-                        'per': {
-                            'per_fname': record.staff.rp.per.per_fname if hasattr(record.staff.rp.per, 'per_fname') else '',
-                            'per_lname': record.staff.rp.per.per_lname if hasattr(record.staff.rp.per, 'per_lname') else '',
-                            'per_mname': record.staff.rp.per.per_mname if hasattr(record.staff.rp.per, 'per_mname') else '',
-                            'per_suffix': record.staff.rp.per.per_suffix if hasattr(record.staff.rp.per, 'per_suffix') else '',
-                            'per_dob': record.staff.rp.per.per_dob.isoformat() if hasattr(record.staff.rp.per, 'per_dob') and record.staff.rp.per.per_dob else ''
-                        }
-                    }
-                }
+            # CRITICAL FIX: Use ONLY _get_patient_details which already includes address
+            # Don't call get_address separately to avoid redundancy
+            if 'patrec_details' not in serialized_data:
+                serialized_data['patrec_details'] = {}
             
-            # Get vital signs
-            vital_data = {}
-            if record.vital:
-                vital_data = {
-                    'vital_bp_systolic': record.vital.vital_bp_systolic,
-                    'vital_bp_diastolic': record.vital.vital_bp_diastolic,
-                    'vital_temp': record.vital.vital_temp,
-                    'vital_pulse': record.vital.vital_pulse,
-                    'vital_RR': record.vital.vital_RR
-                }
+            serialized_data['patrec_details']['patient_details'] = patient_details
             
-            # Get BMI details
-            bmi_data = {}
-            if record.bm:
-                bmi_data = {
-                    'height': record.bm.height,
-                    'weight': record.bm.weight
-                }
-            
+            # Don't add separate address field since it's already in patient_details
+            # The address is at: patrec_details.patient_details.address
+
             combined_data.append({
                 'record_type': 'medical-consultation',
-                'data': serialized_data  # This contains ALL attributes from your serializer
-
+                'data': serialized_data
             })
         
         # Sort by created_at (most recent first)
@@ -299,6 +280,7 @@ class CombinedHealthRecordsView(APIView):
             if record['record_type'] == 'child-health':
                 pat_details = record['data'].get('chrec_details', {}).get('patrec_details', {}).get('pat_details', {})
             else:
+                # FIXED: Access patient_details correctly
                 pat_details = record['data'].get('patrec_details', {}).get('patient_details', {})
             
             if pat_details and pat_details.get('pat_type') == 'Resident':
@@ -338,10 +320,28 @@ class CombinedHealthRecordsView(APIView):
             # Sitio name logic
             sitio_name = ''
             if address:
-                if address.sitio:
+                if hasattr(address, 'sitio') and address.sitio:
                     sitio_name = address.sitio.sitio_name
-                elif address.add_external_sitio:
+                elif hasattr(address, 'add_external_sitio') and address.add_external_sitio:
                     sitio_name = address.add_external_sitio
+
+            # Build address dictionary
+            address_dict = None
+            if address:
+                address_dict = {
+                    'add_street': getattr(address, 'add_street', '') or '',
+                    'add_sitio': sitio_name,
+                    'add_barangay': getattr(address, 'add_barangay', '') or '',
+                    'add_city': getattr(address, 'add_city', '') or '',
+                    'add_province': getattr(address, 'add_province', '') or '',
+                    'full_address': ', '.join(filter(None, [
+                        getattr(address, 'add_street', ''),
+                        sitio_name,
+                        getattr(address, 'add_barangay', ''),
+                        getattr(address, 'add_city', ''),
+                        getattr(address, 'add_province', '')
+                    ]))
+                }
 
             return {
                 'pat_id': patient.pat_id,
@@ -353,20 +353,7 @@ class CombinedHealthRecordsView(APIView):
                     'per_sex': per.per_sex,
                     'per_dob': per.per_dob.isoformat() if per.per_dob else None
                 },
-                'address': {
-                    'add_street': address.add_street if address else '',
-                    'add_sitio': sitio_name,
-                    'add_barangay': address.add_barangay if address else '',
-                    'add_city': address.add_city if address else '',
-                    'add_province': address.add_province if address else '',
-                    'full_address': ', '.join(filter(None, [
-                        address.add_street if address else '',
-                        sitio_name,
-                        address.add_barangay if address else '',
-                        address.add_city if address else '',
-                        address.add_province if address else ''
-                    ]))
-                },
+                'address': address_dict,  # Address is now inside patient_details
                 'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
             }
 
@@ -378,10 +365,38 @@ class CombinedHealthRecordsView(APIView):
             # Sitio name logic for transient
             sitio_name = ''
             if address:
-                if address.sitio:
+                if hasattr(address, 'sitio') and address.sitio:
                     sitio_name = address.sitio.sitio_name
-                elif address.add_external_sitio:
+                elif hasattr(address, 'add_external_sitio') and address.add_external_sitio:
                     sitio_name = address.add_external_sitio
+
+            # Build address dictionary
+            address_dict = None
+            if address:
+                address_dict = {
+                    'add_street': getattr(address, 'tradd_street', '') or '',
+                    'add_sitio': sitio_name,
+                    'add_barangay': getattr(address, 'tradd_barangay', '') or '',
+                    'add_city': getattr(address, 'tradd_city', '') or '',
+                    'add_province': getattr(address, 'tradd_province', '') or '',
+                    'full_address': ', '.join(filter(None, [
+                        getattr(address, 'tradd_street', ''),
+                        sitio_name,
+                        getattr(address, 'tradd_barangay', ''),
+                        getattr(address, 'tradd_city', ''),
+                        getattr(address, 'tradd_province', '')
+                    ]))
+                }
+            else:
+                # Return empty address structure if no address found
+                address_dict = {
+                    'add_street': '',
+                    'add_sitio': '',
+                    'add_barangay': '',
+                    'add_city': '',
+                    'add_province': '',
+                    'full_address': ''
+                }
 
             return {
                 'pat_id': patient.pat_id,
@@ -393,31 +408,14 @@ class CombinedHealthRecordsView(APIView):
                     'per_sex': trans.tran_sex,
                     'per_dob': trans.tran_dob.isoformat() if trans.tran_dob else None
                 },
-                'address': {
-                    'add_street': address.tradd_street if address else '',
-                    'add_sitio': sitio_name,
-                    'add_barangay': address.tradd_barangay if address else '',
-                    'add_city': address.tradd_city if address else '',
-                    'add_province': address.tradd_province if address else '',
-                    'full_address': ', '.join(filter(None, [
-                        address.tradd_street if address else '',
-                        sitio_name,
-                        address.tradd_barangay if address else '',
-                        address.tradd_city if address else '',
-                        address.tradd_province if address else ''
-                    ]))
-                } if address else {
-                    'add_street': '',
-                    'add_sitio': '',
-                    'add_barangay': '',
-                    'add_city': '',
-                    'add_province': '',
-                    'full_address': ''
-                },
+                'address': address_dict,  # Address is now inside patient_details
                 'households': []  # Transients typically don't have households
             }
         
         return {}
+
+
+
 
 # # USE FOR ADDING MEDICAL RECORD
 # class MedicalConsultationRecordView(generics.CreateAPIView):

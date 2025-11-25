@@ -33,7 +33,12 @@ const TemperatureInputWithValidation = ({ control, name, label, readOnly = false
   const [temperatureWarning, setTemperatureWarning] = useState<string | null>(null);
 
   useEffect(() => {
-    const warning = validateTemperature(tempValue);
+    // If tempValue is an object (e.g., { temp: 36.5 }), extract the value
+    const temp =
+      typeof tempValue === "object" && tempValue !== null
+        ? tempValue.temp
+        : tempValue;
+    const warning = validateTemperature(temp);
     setTemperatureWarning(warning);
   }, [tempValue]);
 
@@ -47,10 +52,12 @@ const TemperatureInputWithValidation = ({ control, name, label, readOnly = false
           <FormControl>
             <FormInput
               {...field}
+              control={control}
               type="number"
-              step="0.1"
+              step={0.1}
               placeholder="Enter temperature"
               readOnly={readOnly}
+              
             />
           </FormControl>
           {temperatureWarning && (
