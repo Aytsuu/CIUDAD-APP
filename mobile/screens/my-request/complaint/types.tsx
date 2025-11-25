@@ -73,6 +73,17 @@ export interface ComplaintData {
   rp_id: string;
 }
 
+export interface ComplaintItem {
+  comp_id: string;
+  comp_allegation: string;
+  cpnt_name: string;
+  comp_location: string;
+  comp_status: "Pending" | "Resolved" | "Raised" | "Cancelled" | "Rejected";
+  comp_datetime: string;
+  comp_created_at: string;
+  comp_incident_type: string;
+}
+
 
 
 // ================ SUMMON RELEATED TYPES =================

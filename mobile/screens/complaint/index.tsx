@@ -20,6 +20,7 @@ import {
   ArrowUp,
   Search,
   Plus,
+  MoreVertical,
 } from "lucide-react-native";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -34,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmationModal } from "../my-request/complaint/components/ComplaintConfirmationModal";
+import { Button } from "@/components/ui/button";
 
 interface ModalConfig {
   visible: boolean;
@@ -153,9 +155,19 @@ const ComplaintCard = ({
     >
       {/* Information Section */}
       <View className="p-4 bg-gray-50">
-        <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-3">
-          Blotter #{item.comp_id}
-        </Text>
+        <View className="flex-row justify-between items-center">
+          <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-3">
+            Blotter #{item.comp_id}
+          </Text>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 p-0 items-center justify-center"
+          >
+            <MoreVertical size={15} />
+          </Button>
+        </View>
 
         <View>
           <View className="flex-row justify-between py-2">
@@ -563,7 +575,7 @@ export default function ComplaintLists() {
   };
 
   const renderFilterBar = () => (
-    <View className="px-4 py-3 flex-row gap-2 justify-end bg-white border-b border-gray-200 flex-wrap">
+    <View className="px-4 py-3 flex-row gap-2 justify-end bg-white flex-wrap">
       <DropdownMenu>
         <DropdownMenuTrigger>
           <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
@@ -835,8 +847,8 @@ export default function ComplaintLists() {
         complaintList.length === 0 ||
         filteredComplaints.length === 0 ? (
           <View className="flex-1">
-            {renderTabBar()}
             {renderFilterBar()}
+            {renderTabBar()}
             {renderEmptyState()}
           </View>
         ) : (
@@ -860,8 +872,8 @@ export default function ComplaintLists() {
             keyExtractor={(item) => item.comp_id.toString()}
             ListHeaderComponent={() => (
               <View>
-                                {renderTabBar()}
                 {renderFilterBar()}
+                {renderTabBar()}
               </View>
             )}
             contentContainerStyle={{ paddingBottom: 24 }}
