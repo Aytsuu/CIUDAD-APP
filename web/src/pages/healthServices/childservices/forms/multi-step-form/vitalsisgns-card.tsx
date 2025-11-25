@@ -5,8 +5,64 @@ import { UseFormHandleSubmit, Control, useWatch } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form";
+import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { isToday } from "@/helpers/isToday";
+import { useState, useEffect } from "react";
+
+// Temperature validation function
+const validateTemperature = (temp: number | undefined): string | null => {
+  if (temp === undefined || temp === null) return null;
+  
+  const tempNum = Number(temp);
+  if (isNaN(tempNum)) return null;
+  
+  if (tempNum < 25) {
+    return "Warning: Temperature indicates critical hypothermia risk";
+  } else if (tempNum > 43) {
+    return "Warning: Temperature indicates critical hyperthermia risk";
+  } else if (tempNum < 36.1 || tempNum > 37.2) {
+    return "Note: Temperature outside normal range (36.1°C - 37.2°C)";
+  }
+  
+  return null;
+};
+
+// Custom temperature input component with validation
+const TemperatureInputWithValidation = ({ control, name, label, readOnly = false }: any) => {
+  const tempValue = useWatch({ control, name });
+  const [temperatureWarning, setTemperatureWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    const warning = validateTemperature(tempValue);
+    setTemperatureWarning(warning);
+  }, [tempValue]);
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <FormInput
+              {...field}
+              type="number"
+              step="0.1"
+              placeholder="Enter temperature"
+              readOnly={readOnly}
+            />
+          </FormControl>
+          {temperatureWarning && (
+            <FormMessage className="text-amber-600 font-medium">
+              {temperatureWarning}
+            </FormMessage>
+          )}
+        </FormItem>
+      )}
+    />
+  );
+};
 
 // Reusable Form Component
 interface VitalSignFormCardProps {
@@ -77,12 +133,10 @@ export const VitalSignFormCard = ({
             placeholder="Enter weight" 
             readOnly={isReadOnly}
           />
-          <FormInput 
+          <TemperatureInputWithValidation 
             control={control} 
             name="temp" 
             label="Temperature (°C)" 
-            type="number" 
-            placeholder="Enter temperature" 
             readOnly={isReadOnly}
           />
         </div>
@@ -163,6 +217,7 @@ export const VitalSignFormCard = ({
 export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; index: number; onEdit: () => void; allowNotesEdit?: boolean }) => {
   const isTodayDate = isToday(data.date);
   const canEdit = allowNotesEdit;
+  const temperatureWarning = validateTemperature(data.temp);
 
   return (
     <div className="space-y-3">
@@ -188,7 +243,14 @@ export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; 
         </div>
         <div className="space-y-1">
           <div className="text-gray-600">Temperature</div>
-          <div className="font-medium">{data.temp ? `${data.temp} °C` : "-"}</div>
+          <div className="font-medium">
+            {data.temp ? `${data.temp} °C` : "-"}
+            {temperatureWarning && (
+              <div className="text-xs text-amber-600 mt-1 font-medium">
+                {temperatureWarning}
+              </div>
+            )}
+          </div>
         </div>
         <div className="space-y-1">
           <div className="text-gray-600">Height</div>

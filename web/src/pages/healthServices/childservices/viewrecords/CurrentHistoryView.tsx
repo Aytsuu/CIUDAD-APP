@@ -128,8 +128,7 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
 
       // Clean up the URL object after use
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+    
     } finally {
       setIsGeneratingPDF(false);
     }

@@ -31,6 +31,7 @@ import { useUpdateFollowupStatus } from "../queries/update";
 import IndivMedicineRecords from "@/pages/healthServices/medicineservices/tables/IndivMedicineRecord";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog/dialog";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function LastPage({
   onPrevious,
@@ -253,8 +254,11 @@ export default function LastPage({
   }, [hasSevereMalnutrition]);
 
   const canSubmit = useMemo(() => {
+    if (currentStatus === "recorded" && newVitalSigns && newVitalSigns.length > 0) {
+      return true;
+    }
     return newVitalSigns && newVitalSigns.length > 0 && hasFormChanges;
-  }, [newVitalSigns, hasFormChanges]);
+  }, [newVitalSigns, hasFormChanges, currentStatus]);
 
   useEffect(() => {
     if (!initialFormData) {
@@ -363,18 +367,14 @@ export default function LastPage({
       reason: string;
     }[]
   ) => {
-    console.log("Raw medicine selection:", selectedMedicines);
     
     // Filter out invalid medicines that don't have required fields
     const validMedicines = selectedMedicines.filter(med => {
       const isValid = med.minv_id && med.minv_id.trim() !== "" && med.medrec_qty && med.medrec_qty >= 1;
-      if (!isValid) {
-        console.log("Filtering out invalid medicine:", med);
-      }
+    
       return isValid;
     });
 
-    console.log("Valid medicines after filtering:", validMedicines);
 
     const updatedMedicines = validMedicines.map((med) => ({
       ...med,
@@ -466,20 +466,19 @@ export default function LastPage({
   // UPDATE: Make handleFormSubmit async and update followups on submit
   const handleFormSubmit = handleSubmit(
     async (data) => {
-      console.log("Submitting form data:", data);
-      if (!canSubmit) {
-        console.error("Cannot submit: No vital signs added or no changes detected");
-        return;
-      }
+    // if (!canSubmit) {
+    //     console.error("Cannot submit: No vital signs added or no changes detected");
+    //     return;
+    //   }
       try {
         await submitFollowupUpdates();
-      } catch (error: any) {
-        console.error("Error updating followups:", error.message);
+      } catch  {
+        showErrorToast("Error updating followups:");
       }
       onSubmit(data);
     },
-    (errors) => {
-      console.error("Form validation failed:", errors);
+    () => {
+      showErrorToast("Form validation failed");
     }
   );
 
@@ -513,7 +512,6 @@ export default function LastPage({
       mode: "view_history",
     },
   };
-  console.log("shit", medicineHistory);
 
   return (
     <>
@@ -675,14 +673,7 @@ export default function LastPage({
           <div className="mb-10 rounded-lg border p-4">
             <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
-              {isMedicinesLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                    <p className="text-sm text-gray-600">Loading medicines...</p>
-                  </div>
-                </div>
-              ) : (
+          
                 <>
                   <div>
                     <div>
@@ -726,7 +717,7 @@ export default function LastPage({
                     isLoading={isMedicinesLoading}
                   />
                 </>
-              )}
+              
             </div>
           </div>
           {passed_status !== "immunization" ? (

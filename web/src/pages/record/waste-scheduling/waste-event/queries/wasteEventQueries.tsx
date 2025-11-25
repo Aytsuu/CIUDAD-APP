@@ -22,7 +22,6 @@ export interface Staff {
 
 export const createWasteEvent = async (eventData: Omit<WasteEvent, 'we_num'>) => {
     try {
-        console.log("Waste Event Data:", eventData);
         const response = await api.post('/waste/waste-event/', eventData);
         return response.data;
     } catch (error: any) {

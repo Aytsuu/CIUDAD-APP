@@ -49,12 +49,7 @@ export function NotesDialog({ isOpen, onClose, form, isLoading, onSave, editingD
       form.setValue("followUpVisit", formData.followUpVisit);
       form.setValue("followv_status", formData.followv_status);
 
-      console.log("Autofill data:", {
-        currentFormValues,
-        latestHistoricalNote,
-        editingData,
-        finalFormData: formData
-      });
+    
     }
   }, [isOpen, editingData, form, historicalNotes]);
 
@@ -62,7 +57,6 @@ export function NotesDialog({ isOpen, onClose, form, isLoading, onSave, editingD
 
   const handleSave = () => {
     const formValues = form.getValues();
-    console.log("Saving notes with values:", formValues);
     onSave(formValues);
   };
 

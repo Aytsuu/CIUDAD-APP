@@ -32,7 +32,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
   }
 
   try {
-    console.log("Sending child health update data to comprehensive API endpoint...");
 
     // Transform the data to match what the backend expects
     const requestData = {
@@ -114,7 +113,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
       originalRecord: originalRecord,
     };
 
-    console.log("Hey", requestData);
     // Make API call to the comprehensive update endpoint
     const response = await api2.post("child-health/create-update-new-chhistory/", requestData);
 
@@ -135,7 +133,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
       throw new Error(`Unexpected response status: ${response.status}`);
     }
   } catch (error: any) {
-    console.error("Failed to update child health record:", error);
 
     // Handle different types of errors
     if (error.response?.data?.error) {
@@ -243,7 +240,6 @@ export const useUpdateChildHealthRecordMutation = () => {
       navigate(-1);
     },
     onError: (error: unknown) => {
-      console.error("Child health record update mutation with validation failed:", error);
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
 

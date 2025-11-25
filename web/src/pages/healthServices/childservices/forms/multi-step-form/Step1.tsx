@@ -168,7 +168,6 @@ Page1Props) {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Submitting form step1...", form.getValues());
     handleSubmit(onSubmitForm, (errors) => {
       console.error("Form validation errors:", errors);
     })(e);

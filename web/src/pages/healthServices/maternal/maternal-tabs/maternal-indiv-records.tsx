@@ -429,7 +429,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
   let mode: string | undefined = undefined;
   let specificPregnancyId: string | undefined = undefined;
 
-  if (patientDataProps?.patientData?.mode === "maternal") {
+  if (patientDataProps?.patientData?.mode === "maternal" ) {
     patientData = patientDataProps?.patientData;
     mode = "maternal";
     specificPregnancyId = patientData?.pregnancy_id;
@@ -437,6 +437,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     patientData = params.patientData;
     mode = patientData?.mode;
     specificPregnancyId = patientData?.pregnancy_id;
+    console.log(patientData)
   }
 
   // console.log("PapatientDataProps:", patientDataProps);

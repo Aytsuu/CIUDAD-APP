@@ -29,7 +29,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
   }
 
   try {
-    console.log("Sending comprehensive child health data to single API endpoint...");
 
     // Transform the data to match what the backend expects
     const requestData = {
@@ -91,20 +90,12 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
       originalRecord: originalRecord
     };
 
-    console.log("Request payload:", {
-      pat_id: requestData.submittedData.pat_id,
-      residenceType: requestData.submittedData.residenceType,
-      hasVitalSigns: !!requestData.submittedData.vitalSigns?.length,
-      hasMedicines: !!requestData.submittedData.medicines?.length,
-      hasBFdates: !!requestData.submittedData.BFchecks?.length,
-      isUpdate: !!todaysHistoricalRecord
-    });
+  
 
     // Make single API call to comprehensive endpoint
     const response = await api2.post("child-health/create-new-record/", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      console.log("Child health record processed successfully:", response.data);
       return {
         success: response.data.success,
         message: response.data.message,
@@ -119,7 +110,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
       throw new Error(`Unexpected response status: ${response.status}`);
     }
   } catch (error: any) {
-    console.error("Failed to process child health record:", error);
 
     // Handle different types of errors
     if (error.response?.data?.error) {
@@ -202,7 +192,6 @@ export const useChildHealthRecordMutation = () => {
       navigate(-1);
     },
     onError: (error: unknown) => {
-      console.error("Child health record mutation with validation failed:", error);
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
 
