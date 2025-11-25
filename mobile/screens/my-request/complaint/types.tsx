@@ -27,7 +27,7 @@ export interface PersonType {
   rp_id?: string | number;
 }
 
-interface Complainant {
+export interface Complainant {
   cpnt_id: number;
   res_profile: ResidentProfile;
   cpnt_name: string;
@@ -78,10 +78,11 @@ export interface ComplaintItem {
   comp_allegation: string;
   cpnt_name: string;
   comp_location: string;
-  comp_status: "Pending" | "Resolved" | "Raised" | "Cancelled" | "Rejected";
+  comp_status: "Pending" | "Resolved" | "Raised" | "Cancelled" | "Rejected" | "Accepted";
   comp_datetime: string;
   comp_created_at: string;
   comp_incident_type: string;
+  comp_rejection_reason: string;
 }
 
 
