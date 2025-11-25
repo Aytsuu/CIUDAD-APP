@@ -54,7 +54,7 @@ export const addReceipt = async (data: Record<string, any>) => {
             console.log('Non-resident personal request status updated:', updateStatus.data);
         } else if (data.cr_id && String(data.cr_id).trim() !== "") {
             // Update resident certificate status
-            const updateStatus = await api.put(`/clerk/certificate-update-status/${data.cr_id}/`, {
+            await api.put(`/clerk/certificate-update-status/${data.cr_id}/`, {
                 cr_req_status: "In Progress",
                 cr_req_payment_status: "Paid",
                 cr_pay_date: new Date().toISOString()
