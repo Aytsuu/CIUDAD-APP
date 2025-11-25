@@ -13,7 +13,7 @@ import { Home } from "@/lib/icons/Home";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
-import api2 from "@/api/api";
+import { api2, api }from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 // @ts-ignore - TypeScript cache issue, file exists and works at runtime
 import { CustomDropdown } from "@/components/ui/custom-dropdown";
@@ -40,10 +40,10 @@ export default function HouseholdRegistration() {
   });
 
   // Fetch residents list (only residents without households)
-  const { data: residentsData, isLoading: loadingResidents } = useQuery({
+  const { data: residentsData, isLoading: loadingResidents, refetch: refetchResidents } = useQuery({
     queryKey: ["residents-list", searchQuery],
     queryFn: async () => {
-      const response = await api2.get("profiling/resident/", {
+      const response = await api.get("profiling/resident/", {
         params: {
           is_staff: false,
           exclude_independent: true,
@@ -51,6 +51,7 @@ export default function HouseholdRegistration() {
           search: searchQuery,
         },
       });
+      // // console.log("Fetched residents:", response.data?.length || 0, "residents");
       return response.data;
     },
   });
@@ -59,7 +60,7 @@ export default function HouseholdRegistration() {
   const { data: allAddressesData, isLoading: loadingAddresses } = useQuery({
     queryKey: ["per-addresses-list"],
     queryFn: async () => {
-      const response = await api2.get("profiling/per_address/list/");
+      const response = await api.get("profiling/per_address/list/");
       return response.data;
     },
   });
@@ -72,9 +73,9 @@ export default function HouseholdRegistration() {
       (address: any) => address.per === selectedResident.personal_info.per_id
     );
     
-    console.log('Selected resident per_id:', selectedResident.personal_info.per_id);
-    console.log('Filtered addresses:', filteredAddresses);
-    console.log('Sample address structure:', filteredAddresses[0]);
+    // // console.log('Selected resident per_id:', selectedResident.personal_info.per_id);
+    // // console.log('Filtered addresses:', filteredAddresses);
+    // // console.log('Sample address structure:', filteredAddresses[0]);
     
     return filteredAddresses;
   }, [selectedResident, allAddressesData]);
@@ -134,6 +135,13 @@ export default function HouseholdRegistration() {
       // Extract resident ID from householdHead value
       const residentId = data.householdHead.split(" ")[0];
       
+      // Validate that the selected resident exists in the fetched list
+      if (!selectedResident || selectedResident.rp_id !== residentId) {
+        toast.error("Please select a valid household head from the list.");
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Extract address ID - should be the numeric ID
       const addressId = data.add_id || data.address.split("-")[0];
 
@@ -144,18 +152,19 @@ export default function HouseholdRegistration() {
         staff: user?.staff?.staff_id,
       };
 
-      console.log("=== Household Submission Debug ===");
-      console.log("Form data:", data);
-      console.log("Resident ID:", residentId);
-      console.log("Address ID (raw):", addressId);
-      console.log("Address ID (parsed):", parseInt(addressId));
-      console.log("Staff ID:", user?.staff?.staff_id);
-      console.log("Payload:", JSON.stringify(payload, null, 2));
-      console.log("=================================");
+      // // console.log("=== Household Submission Debug ===");
+      // // console.log("Form data:", data);
+      // // console.log("Selected resident:", selectedResident);
+      // // console.log("Resident ID:", residentId);
+      // // console.log("Address ID (raw):", addressId);
+      // // console.log("Address ID (parsed):", parseInt(addressId));
+      // // console.log("Staff ID:", user?.staff?.staff_id);
+      // // console.log("Payload:", JSON.stringify(payload, null, 2));
+      // // console.log("=================================");
 
-      const response = await api2.post("profiling/household/create/", payload);
+      const response = await api.post("profiling/household/create/", payload);
 
-      console.log("Success response:", response.data);
+      // // console.log("Success response:", response.data);
       toast.success("Household registered successfully!");
 
       form.reset();
@@ -168,12 +177,47 @@ export default function HouseholdRegistration() {
       console.error("Error message:", error.message);
       console.error("=================================");
 
-      const errorMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        JSON.stringify(error.response?.data) ||
-        "Failed to register household. Please try again.";
+      // Handle nested error objects from backend
+      let errorMessage = "Failed to register household. Please try again.";
+      
+      if (error.response?.data?.error) {
+        const errorData = error.response.data.error;
+        
+        // If error is an object with field-specific errors
+        if (typeof errorData === 'object' && !Array.isArray(errorData)) {
+          const firstField = Object.keys(errorData)[0];
+          const firstError = errorData[firstField];
+          
+          // Extract the actual error message
+          if (Array.isArray(firstError)) {
+            const message = firstError[0];
+            // Make error messages more user-friendly
+            if (message.includes("does not exist")) {
+              if (firstField === "rp") {
+                errorMessage = "The selected resident no longer exists. Please refresh the list and try again.";
+              } else if (firstField === "add") {
+                errorMessage = "The selected address is invalid. Please choose a different address.";
+              } else {
+                errorMessage = `${firstField}: ${message}`;
+              }
+            } else {
+              errorMessage = `${firstField}: ${message}`;
+            }
+          } else {
+            errorMessage = `${firstField}: ${firstError}`;
+          }
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else {
+          errorMessage = JSON.stringify(errorData);
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data) {
+        errorMessage = JSON.stringify(error.response.data);
+      }
 
       toast.error(errorMessage);
     } finally {
@@ -239,6 +283,17 @@ export default function HouseholdRegistration() {
                         <Text className="text-gray-500 text-sm mb-2">
                           No resident without household found
                         </Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // // console.log("Refreshing residents list...");
+                            refetchResidents();
+                          }}
+                          className="mb-2"
+                        >
+                          <Text className="text-blue-600 text-sm">
+                            Refresh List
+                          </Text>
+                        </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() =>
                             router.push("/(health)/admin/health-profiling/resident-registration")
@@ -387,3 +442,4 @@ export default function HouseholdRegistration() {
     </PageLayout>
   );
 }
+

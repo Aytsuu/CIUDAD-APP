@@ -105,7 +105,7 @@ export default function DependentsInfoLayout({
             fam: famId
           };
           
-          console.log(`Submitting respondent info:`, respondentPayload);
+          // console.log(`Submitting respondent info:`, respondentPayload);
           await addRespondent(respondentPayload);
         }
         
@@ -122,7 +122,7 @@ export default function DependentsInfoLayout({
             rp: residentId
           };
           
-          console.log(`Submitting health details for ${parent.type}:`, healthDetailsPayload);
+          // console.log(`Submitting health details for ${parent.type}:`, healthDetailsPayload);
           await addPerAdditionalDetails(healthDetailsPayload);
         }
         
@@ -145,13 +145,13 @@ export default function DependentsInfoLayout({
             fam: famId
           };
           
-          console.log('Submitting mother health info:', motherHealthPayload);
+          // console.log('Submitting mother health info:', motherHealthPayload);
           await addMotherHealthInfoMutation(motherHealthPayload);
         }
       }
     }
     
-    console.log("Parent health information and respondent data submitted successfully!");
+    // console.log("Parent health information and respondent data submitted successfully!");
   }, [addRespondent, addPerAdditionalDetails, addMotherHealthInfoMutation]);
 
   React.useEffect(() => {
@@ -254,9 +254,9 @@ export default function DependentsInfoLayout({
         setFamId(familyId);
         
         // Get existing family members to check for duplicates
-        console.log(`Fetching existing family compositions for family ${familyId}...`);
+        // console.log(`Fetching existing family compositions for family ${familyId}...`);
         existingMembers = await getFamilyMembersHealth(familyId);
-        console.log('Existing members:', existingMembers);
+        // console.log('Existing members:', existingMembers);
       } else {
         // Create new family and retrieve fam_id
         const demographicInfo = form.getValues().demographicInfo;
@@ -269,13 +269,45 @@ export default function DependentsInfoLayout({
       }
 
       // Create family compositions for parents first
-      const parentCompositions = selectedParents
-        .filter(parentId => parentId) // Filter out empty parent IDs
-        .map((parentId, index) => ({
+      // Get actual parent IDs from form data to ensure correct role mapping
+      const formData = form.getValues();
+      const parentCompositions = [];
+      
+      // Add mother if selected
+      if (formData.motherInfo?.id) {
+        const motherId = formData.motherInfo.id.split(' ')[0];
+        parentCompositions.push({
           fam: familyId,
-          rp: parentId,
-          fc_role: PARENT_ROLES[index], // "Mother", "Father", "Guardian"
-        }));
+          rp: motherId,
+          fc_role: 'Mother'
+        });
+      }
+      
+      // Add father if selected
+      if (formData.fatherInfo?.id) {
+        const fatherId = formData.fatherInfo.id.split(' ')[0];
+        parentCompositions.push({
+          fam: familyId,
+          rp: fatherId,
+          fc_role: 'Father'
+        });
+      }
+      
+      // Add respondent if different from mother/father (future guardian support)
+      if (formData.respondentInfo?.id) {
+        const respondentId = formData.respondentInfo.id.split(' ')[0];
+        const motherId = formData.motherInfo?.id?.split(' ')[0];
+        const fatherId = formData.fatherInfo?.id?.split(' ')[0];
+        
+        // Only add as separate composition if respondent is not already added as mother or father
+        if (respondentId !== motherId && respondentId !== fatherId) {
+          parentCompositions.push({
+            fam: familyId,
+            rp: respondentId,
+            fc_role: 'Guardian'
+          });
+        }
+      }
 
       // Create family compositions for dependents
       const dependentCompositions = dependentsList.map(dep => ({
@@ -294,9 +326,9 @@ export default function DependentsInfoLayout({
         compositionsToAdd = allCompositions.filter(comp => !existingRpIds.has(comp.rp));
         
         if (compositionsToAdd.length === 0) {
-          console.log('No new family members to add - all members already exist');
+          // console.log('No new family members to add - all members already exist');
         } else {
-          console.log(`Adding ${compositionsToAdd.length} new family member(s)`);
+          // console.log(`Adding ${compositionsToAdd.length} new family member(s)`);
         }
       }
       
@@ -307,7 +339,6 @@ export default function DependentsInfoLayout({
       }
 
       // Submit parent health data and respondents info
-      const formData = form.getValues();
       await submitParentHealthData(formData, familyId);
 
       // Map created family compositions by rp for easy lookup of fc_id

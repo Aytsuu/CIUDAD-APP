@@ -217,7 +217,7 @@ export default function ContinueHealthProfiling() {
   // Pre-populate family member selections and dependents when data is loaded
   React.useEffect(() => {
     if (familyMembersHealth && familyMembersHealth.length > 0 && residentsListHealth && !isDataPrePopulated) {
-      console.log("Pre-populating family members...", familyMembersHealth);
+      // console.log("Pre-populating family members...", familyMembersHealth);
       
       // Find mother and father by fc_role
       const mother = familyMembersHealth.find((member: any) => 
@@ -235,7 +235,7 @@ export default function ContinueHealthProfiling() {
 
       // Set mother ID and form value
       if (mother && mother.rp_id) {
-        console.log("Setting mother ID:", mother.rp_id);
+        // console.log("Setting mother ID:", mother.rp_id);
         const motherFullName = `${mother.rp_id} - ${mother.per?.per_fname || ''} ${mother.per?.per_lname || ''}`.trim();
         setSelectedMotherId(mother.rp_id);
         form.setValue('motherInfo.id', motherFullName);
@@ -243,7 +243,7 @@ export default function ContinueHealthProfiling() {
 
       // Set father ID and form value
       if (father && father.rp_id) {
-        console.log("Setting father ID:", father.rp_id);
+        // console.log("Setting father ID:", father.rp_id);
         const fatherFullName = `${father.rp_id} - ${father.per?.per_fname || ''} ${father.per?.per_lname || ''}`.trim();
         setSelectedFatherId(father.rp_id);
         form.setValue('fatherInfo.id', fatherFullName);
@@ -251,7 +251,7 @@ export default function ContinueHealthProfiling() {
 
       // Set dependents list
       if (dependents.length > 0) {
-        console.log("Setting dependents:", dependents);
+        // console.log("Setting dependents:", dependents);
         // Map dependents to DependentRecord format
         const formattedDependents: DependentRecord[] = dependents.map((dep: any) => ({
           id: dep.rp_id || '',
@@ -641,3 +641,4 @@ export default function ContinueHealthProfiling() {
     </LayoutWithBack>
   );
 }
+

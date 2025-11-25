@@ -521,3 +521,159 @@ class HealthProfilingSummaryView(APIView):
                 'success': False,
                 'message': f'Error generating health profiling summary: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PopulationBySitioReportView(APIView):
+    """
+    Generate population analytics grouped by sitio
+    Shows population distribution, demographics, and household statistics per sitio
+    """
+    
+    def get(self, request):
+        try:
+            # Get filter parameters
+            year = request.query_params.get('year', None)
+            
+            # Get all sitios
+            from ..models import Sitio
+            sitios = Sitio.objects.all().order_by('sitio_name')
+            
+            sitio_data = []
+            total_population = 0
+            total_households = 0
+            total_families = 0
+            
+            for sitio in sitios:
+                sitio_name = sitio.sitio_name
+                
+                # Base queryset for residents in this sitio
+                residents_query = ResidentProfile.objects.select_related('per').filter(
+                    per__isnull=False,
+                    household__add__sitio=sitio
+                )
+                
+                # Apply year filter if specified
+                if year and year != 'all':
+                    try:
+                        year_int = int(year)
+                        residents_query = residents_query.filter(
+                            Q(rp_date_registered__year=year_int) |
+                            Q(per__per_dob__year__lte=year_int)
+                        )
+                    except ValueError:
+                        pass
+                
+                # Count population
+                population = residents_query.count()
+                
+                # Count male and female
+                male_count = residents_query.filter(
+                    Q(per__per_sex='M') | Q(per__per_sex='MALE')
+                ).count()
+                
+                female_count = residents_query.filter(
+                    Q(per__per_sex='F') | Q(per__per_sex='FEMALE')
+                ).count()
+                
+                # Count households in this sitio
+                household_query = Household.objects.filter(add__sitio=sitio)
+                if year and year != 'all':
+                    try:
+                        year_int = int(year)
+                        household_query = household_query.filter(hh_date_registered__year=year_int)
+                    except ValueError:
+                        pass
+                
+                households = household_query.count()
+                
+                # Count families in this sitio (only families with members)
+                family_query = Family.objects.annotate(
+                    member_count=Count('family_compositions')
+                ).filter(
+                    member_count__gt=0,
+                    hh__add__sitio=sitio
+                )
+                
+                if year and year != 'all':
+                    try:
+                        year_int = int(year)
+                        family_query = family_query.filter(fam_date_registered__year=year_int)
+                    except ValueError:
+                        pass
+                
+                families = family_query.count()
+                
+                # Calculate age distribution
+                today = date.today()
+                age_groups = {
+                    '0-5': 0,
+                    '6-12': 0,
+                    '13-19': 0,
+                    '20-39': 0,
+                    '40-59': 0,
+                    '60+': 0
+                }
+                
+                for resident in residents_query:
+                    if resident.per and resident.per.per_dob:
+                        age = relativedelta(today, resident.per.per_dob).years
+                        if age <= 5:
+                            age_groups['0-5'] += 1
+                        elif age <= 12:
+                            age_groups['6-12'] += 1
+                        elif age <= 19:
+                            age_groups['13-19'] += 1
+                        elif age <= 39:
+                            age_groups['20-39'] += 1
+                        elif age <= 59:
+                            age_groups['40-59'] += 1
+                        else:
+                            age_groups['60+'] += 1
+                
+                # Average household size
+                avg_household_size = round(population / households, 2) if households > 0 else 0
+                
+                # Add to totals
+                total_population += population
+                total_households += households
+                total_families += families
+                
+                sitio_data.append({
+                    'sitioId': sitio.sitio_id,
+                    'sitioName': sitio_name,
+                    'population': population,
+                    'male': male_count,
+                    'female': female_count,
+                    'households': households,
+                    'families': families,
+                    'avgHouseholdSize': avg_household_size,
+                    'ageDistribution': age_groups
+                })
+            
+            # Sort by population (highest first)
+            sitio_data.sort(key=lambda x: x['population'], reverse=True)
+            
+            # Compile response data
+            response_data = {
+                'sitios': sitio_data,
+                'summary': {
+                    'totalPopulation': total_population,
+                    'totalHouseholds': total_households,
+                    'totalFamilies': total_families,
+                    'totalSitios': len(sitio_data)
+                }
+            }
+            
+            return Response({
+                'success': True,
+                'message': 'Population by sitio report generated successfully',
+                'data': response_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error generating population by sitio report: {str(e)}")
+            return Response({
+                'success': False,
+                'message': f'Error generating population by sitio report: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -1,3 +1,3 @@
-import HealthFamilyProfilingWizard from '@/screens/health/admin/health-profiling/family-profiling/HealthFamilyProfilingWizard';
+import HealthFamilyProfiling from '@/screens/health/admin/health-profiling/family-profiling/HealthFamilyProfiling';
 
-export default HealthFamilyProfilingWizard;
+export default HealthFamilyProfiling;

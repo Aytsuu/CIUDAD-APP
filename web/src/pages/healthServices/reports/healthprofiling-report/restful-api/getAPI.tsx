@@ -43,3 +43,17 @@ export const fetchPopulationYearlyRecords = async () => {
     throw error;
   }
 };
+
+// Fetch population by sitio report
+export const fetchPopulationBySitio = async (year?: string) => {
+  try {
+    const params: Record<string, string> = {};
+    if (year && year !== "all") params.year = year;
+
+    const response = await api2.get(`/health-profiling/population-by-sitio/`, { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching population by sitio:", error);
+    throw error;
+  }
+};
