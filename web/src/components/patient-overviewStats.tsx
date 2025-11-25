@@ -19,7 +19,7 @@ export const PatientOverviewStats: React.FC<PatientOverviewStatsProps> = ({ reco
   const getStats = () => {
     const totalRecords = records.length;
     let completedFollowUps = 0;
-    let pendingFollowUps = 0;
+    const pendingFollowUps = 0;
     let missedFollowUps = 0;
     let dueTodayFollowUps = 0;
     

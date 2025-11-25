@@ -8,6 +8,7 @@ import { useSubmitSoapForm } from "../queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../../types";
 import SoapFormFields from "@/components/ui/soap-form";
+import { showErrorToast } from "@/components/ui/toast";
 
 interface SoapFormProps {
   patientData: any;
@@ -141,9 +142,29 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
         followv: initialData.followv || undefined,
+        is_cbc: initialData.is_cbc || false,
+        is_urinalysis: initialData.is_urinalysis || false,
+        is_fecalysis: initialData.is_fecalysis || false,
+        is_sputum_microscopy: initialData.is_sputum_microscopy || false,
+        is_creatine: initialData.is_creatine || false,
+        is_hba1c: initialData.is_hba1c || false,
+        is_chestxray: initialData.is_chestxray || false,
+        is_papsmear: initialData.is_papsmear || false,
+        is_fbs: initialData.is_fbs || false,
+        is_oralglucose: initialData.is_oralglucose || false,
+        is_lipidprofile: initialData.is_lipidprofile || false,
+        is_ecg: initialData.is_ecg || false,
+        is_fecal_occult_blood: initialData.is_fecal_occult_blood || false,
+        others: initialData.others || "",
+        is_phrecord: initialData.is_phrecord || false,
+        phil_id: initialData.phil_id || MedicalConsultation?.philhealth_details?.phil_id || "",
+        staff_id: initialData.staff_id || "",
+        medrec_id: initialData.medrec_id || MedicalConsultation?.medrec_id || "",
+        patrec_id: initialData.patrec_id || MedicalConsultation?.patrec || "",
+        app_id: initialData.app_id || "",
       });
     }
-  }, [initialData, form, patientData?.pat_id, selectedMedicines]);
+  }, [initialData, form, patientData?.pat_id, selectedMedicines, MedicalConsultation]);
 
   // Cleanup effect for form data updates
   useEffect(() => {
@@ -157,6 +178,26 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       }
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
+
+  // FIX: Validation function to check required SOAP fields before submission
+  const validateRequiredFields = (data: SoapFormType): boolean => {
+    const requiredFields = [
+      { field: data.subj_summary, name: "Subjective Summary" },
+      { field: data.obj_summary, name: "Objective Summary" },
+      { field: data.assessment_summary, name: "Assessment Summary" },
+      { field: data.plantreatment_summary, name: "Plan/Treatment Summary" },
+    ];
+
+    const emptyFields = requiredFields.filter(({ field }) => !field || field.trim() === "");
+
+    if (emptyFields.length > 0) {
+      const fieldNames = emptyFields.map(f => f.name).join(", ");
+      showErrorToast(`Please fill in the following required fields: ${fieldNames}`);
+      return false;
+    }
+
+    return true;
+  };
 
   // FIX 3: Improved medicine update handler with better change detection
   const handleSelectedMedicinesChange = useCallback(
@@ -259,7 +300,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
 
   const handleAssessmentUpdate = useCallback(
     (text: string) => {
-      form.setValue("assessment_summary", text);
+      form.setValue("assessment_summary", text );
       form.trigger("assessment_summary");
 
       if (onFormDataUpdate) {
@@ -308,8 +349,14 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     onBack();
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
+  // FIX: Updated onSubmit with validation
   const onSubmit = useCallback(
     (data: any) => {
+      // Validate required SOAP fields are not empty
+      if (!validateRequiredFields(data)) {
+        return; // Stop submission if validation fails
+      }
+
       // Create clean submission data with only the necessary fields
       const submissionData: any = {
         subj_summary: data.subj_summary,

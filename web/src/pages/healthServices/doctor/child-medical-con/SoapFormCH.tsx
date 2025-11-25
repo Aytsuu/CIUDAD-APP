@@ -11,6 +11,7 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
+import { showErrorToast } from "@/components/ui/toast";
 
 interface SoapFormProps {
   patientData: any;
@@ -86,12 +87,12 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       plantreatment_summary: initialData?.plantreatment_summary || "",
       medicineRequest: {
         pat_id: patientData?.pat_id || "",
-        medicines: selectedMedicines, // Use the state directly
+        medicines: selectedMedicines,
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
       followv: initialData?.followv || undefined,
-       is_cbc: initialData?.is_cbc || false,
+      is_cbc: initialData?.is_cbc || false,
       is_urinalysis: initialData?.is_urinalysis || false,
       is_fecalysis: initialData?.is_fecalysis || false,
       is_sputum_microscopy: initialData?.is_sputum_microscopy || false,
@@ -130,6 +131,20 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
         followv: initialData.followv || undefined,
+        is_cbc: initialData.is_cbc || false,
+        is_urinalysis: initialData.is_urinalysis || false,
+        is_fecalysis: initialData.is_fecalysis || false,
+        is_sputum_microscopy: initialData.is_sputum_microscopy || false,
+        is_creatine: initialData.is_creatine || false,
+        is_hba1c: initialData.is_hba1c || false,
+        is_chestxray: initialData.is_chestxray || false,
+        is_papsmear: initialData.is_papsmear || false,
+        is_fbs: initialData.is_fbs || false,
+        is_oralglucose: initialData.is_oralglucose || false,
+        is_lipidprofile: initialData.is_lipidprofile || false,
+        is_ecg: initialData.is_ecg || false,
+        is_fecal_occult_blood: initialData.is_fecal_occult_blood || false,
+        others: initialData.others || "",
       });
     }
   }, [initialData, form, patientData, selectedMedicines]);
@@ -146,6 +161,26 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       }
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
+
+  // FIX: Validation function to check required fields before submission
+  const validateRequiredFields = (data: SoapFormType): boolean => {
+    const requiredFields = [
+      { field: data.subj_summary, name: "Subjective Summary" },
+      { field: data.obj_summary, name: "Objective Summary" },
+      { field: data.assessment_summary, name: "Assessment Summary" },
+      { field: data.plantreatment_summary, name: "Plan/Treatment Summary" },
+    ];
+
+    const emptyFields = requiredFields.filter(({ field }) => !field || field.trim() === "");
+
+    if (emptyFields.length > 0) {
+      const fieldNames = emptyFields.map(f => f.name).join(", ");
+      showErrorToast(`Please fill in the following required fields: ${fieldNames}`);
+      return false;
+    }
+
+    return true;
+  };
 
   // FIX: Improved medicine update handler with better change detection
   const handleSelectedMedicinesChange = useCallback(
@@ -288,7 +323,13 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
     onBack();
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
+  // FIX: Updated onSubmit with validation
   const onSubmit = async (data: SoapFormType) => {
+    // Validate required fields are not empty
+    if (!validateRequiredFields(data)) {
+      return; // Stop submission if validation fails
+    }
+
     // Ensure the latest selectedMedicines are included in submission
     const submissionData = {
       ...data,

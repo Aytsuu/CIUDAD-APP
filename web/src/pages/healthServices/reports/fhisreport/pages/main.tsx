@@ -55,14 +55,9 @@ export default function MultiPageFormFHIS() {
     >
       {/* Page Indicator & Dropdown */}
       <div className="w-full mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentPage / totalPages) * 100}%` }} />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
-          <select
+      
+        <div className="flex flex-col sm:flex-row  justify-start gap-2">
+            <select
             className="ml-2 px-2 py-1 rounded border border-gray-300 text-sm bg-white shadow"
             value={currentPage}
             onChange={e => setCurrentPage(Number(e.target.value))}
@@ -72,12 +67,16 @@ export default function MultiPageFormFHIS() {
               <option key={idx + 1} value={idx + 1}>{`Page ${idx + 1}: ${desc}`}</option>
             ))}
           </select>
+          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            Page {currentPage} of {totalPages}
+          </span>
+        
         </div>
       </div>
 
       {/* Page Content with styled header */}
       <Card className="p-6">
-        <h2 className="text-xl font-bold text-blue-900 mb-4 text-center bg-blue-50 rounded-lg py-2 shadow">
+        <h2 className="text-xl font-bold  mb-4 t">
           {`Page ${currentPage}: ${pageDescriptions[currentPage - 1]}`}
         </h2>
         {currentPage === 1 && <Page1 onNext={nextPage} />}
