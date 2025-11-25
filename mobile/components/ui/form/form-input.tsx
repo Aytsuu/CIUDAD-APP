@@ -13,6 +13,7 @@ interface FormInputProps {
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
   editable?: boolean;
   maxInput?: number;
+  upper?: boolean;
 }
 
 export const FormInput = ({
@@ -26,6 +27,7 @@ export const FormInput = ({
   submitBehavior = 'newline',
   editable = true,
   maxInput,
+  upper = false
 }: FormInputProps) => {
   return (
     <Controller
@@ -43,7 +45,7 @@ export const FormInput = ({
           <View className="mb-4">
             {label && <Text className="text-sm mb-2">{label}</Text>}
             <Input
-              autoCapitalize={'characters'}
+              autoCapitalize={upper ? 'characters' : 'none'}
               className={`
                 h-[45px]
                 bg-white

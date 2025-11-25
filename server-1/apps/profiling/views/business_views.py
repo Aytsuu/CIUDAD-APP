@@ -7,6 +7,7 @@ from ..models import Business, BusinessFile
 from apps.account.models import Account
 from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
+from ..utils import generate_busrespondent_no
 
 
 class BusinessCreateView(generics.CreateAPIView):
@@ -14,26 +15,29 @@ class BusinessCreateView(generics.CreateAPIView):
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
 
-class BRCreateUpdateView(generics.CreateAPIView):
-  permission_classes = [AllowAny]
-  serializer_class = BusinessRespondentBaseSerializer
-  queryset = BusinessRespondent.objects.all()
+class BRCreateView(APIView):
+  @transaction.atomic
+  def post(self, request, *args, **kwargs):
+    data = request.data
+    acc = data.pop("acc", None)
+    
+    respondent = BusinessRespondent.objects.create(
+      **data,
+      br_id=generate_busrespondent_no(),
+    )
 
-  def create(self, request, *args, **kwargs):
-    acc = request.data.pop("acc", None)
-    serializer = self.get_serializer(data=request.data)
-    
-    if serializer.is_valid():
-      respondent = serializer.save()
-    
     if acc and respondent:
-      Account.objects.create_user(
-        **acc,
-        br = respondent,
-        username=acc['phone']
+      account = Account.objects.create_user(
+        phone=acc.get('phone'),
+        email=acc.get('email',None),
+        br=respondent,
+        username=acc.get('phone'),
+        password='!'
       )
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+      if account:
+        return Response(BusinessRespondentBaseSerializer(respondent).data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class ActiveBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
