@@ -213,13 +213,9 @@ AUTH_USER_MODEL = 'account.Account'
 # ========================
 
 ALLOWED_HOSTS = [
-    'securado.onrender.com',
     'localhost',
     '127.0.0.1',
     'ciudad-app-server-1.onrender.com',
-    'ciudad-app.onrender.com',
-    'www.sanroqueciudad.com',
-    'sanroqueciudad.com'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
