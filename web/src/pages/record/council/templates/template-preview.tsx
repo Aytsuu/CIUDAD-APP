@@ -807,7 +807,7 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
     let boldIndex = 0;
     
     // Extract bold text and replace with placeholders that won't be split
-    processedBody = processedBody.replace(/\/\*(.*?)\*\//g, (match, text) => {
+    processedBody = processedBody.replace(/\/\*(.*?)\*\//g, (_match, text) => {
       const placeholder = `__BOLD${boldIndex}__`;
       boldParts.push({ placeholder, text });
       boldIndex++;
