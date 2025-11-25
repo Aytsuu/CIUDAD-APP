@@ -2,7 +2,7 @@ export enum User {
   admin = "ADMIN",
   resident = "RESIDENT",
   brgyStaff = "BARANGAY STAFF",
-  healthStaff = "HEALTH STAFF"
+  healthStaff = "HEALTH STAFF",
 }
 
 export enum Feature {
@@ -12,11 +12,13 @@ export enum Feature {
   complaint = "COMPLAINT",
   gad = "GAD",
   finance = "FINANCE",
-  summonAndCaseTracker = "SUMMON AND CASE TRACKER",
   council = "COUNCIL",
-  certificateAndClearances = "CERTIFICATE AND CLEARANCES",
+  certificateAndClearances = "CERTIFICATE & CLEARANCES",
   donation = "DONATION",
   waste = "WASTE",
+  summonRemarks = "SUMMON REMARKS",
+  conciliationProceedings = "CONCILIATION PROCEEDINGS",
+  councilMediation = "COUNCIL MEDIATION",
 
   // HEALTH
   patientRecords = "PATIENT RECORDS",

@@ -5,6 +5,7 @@ from .models import *
 import logging
 from apps.notification.utils import create_notification
 from apps.administration.models import Staff
+from .notif_recipients import conciliation_recipient, mediation_recipient, payment_req_recipient
 
 logger = logging.getLogger(__name__)
 
@@ -51,22 +52,15 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                     )
                     logger.info(f'Successfully created summon case with code: {sc_code}')
 
-                       # Create notification for admin staff
-                    admin_staff = Staff.objects.filter(
-                        pos__pos_title__iexact='ADMIN'
-                    ).select_related('rp__account')
+
+                    # Get the recipients for mediation
+                    recipient_list = mediation_recipient()
                     
-                    # Get the account IDs of admin staff
-                    admin_accounts = []
-                    for staff in admin_staff:
-                        if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                            admin_accounts.append(staff.rp.account)
-                    
-                    if admin_accounts and summoncase:
+                    if recipient_list and summoncase:
                         create_notification(
                             title='New Case Opened', 
                             message=f'Case No. {summoncase.sc_code} has been opened and waiting for schedule.',
-                            recipients=admin_accounts,
+                            recipients=recipient_list,
                             notif_type='CASE_UPDATE',
                             mobile_route="/(summon)/council-mediation-main",
                             web_route="/summon-case",
@@ -92,7 +86,7 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                    
                     seq += 1
 
-
+# =================== CASE STATUS UPDATE NOTIF (RESOLVED OR ESCALATED and CASE FORWARD) ==============
 @receiver(pre_save, sender=SummonCase)
 def store_previous_statuses(sender, instance, **kwargs):
     if instance.pk:
@@ -175,20 +169,12 @@ def create_case_status_notification(sender, instance, created, **kwargs):
         elif (previous_mediation != current_mediation and 
               current_mediation.lower() == 'forwarded to lupon'):
             
-            admin_staff = Staff.objects.filter(
-                pos__pos_title__iexact='ADMIN'
-            ).select_related('rp__account')
-            
-            admin_accounts = []
-            for staff in admin_staff:
-                if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                    admin_accounts.append(staff.rp.account)
-            
-            if admin_accounts:
+            recipient_list = conciliation_recipient()
+            if recipient_list:
                 create_notification(
                     title='New Case Forwarded', 
                     message=f'Case No. {instance.sc_code} has been forwarded and is waiting for schedule.',
-                    recipients=admin_accounts,
+                    recipients=recipient_list,
                     notif_type='CASE_UPDATE',
                     mobile_route="/(summon)/lupon-conciliation-main", 
                     web_route="/conciliation-proceedings",
@@ -253,17 +239,11 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
             has_complainant_with_rp = complaint.complainant.filter(rp_id__isnull=False).exists()
             
             if has_complainant_with_rp:
-                admin_staff = Staff.objects.filter(
-                    pos__pos_title__iexact='ADMIN'
-                ).select_related('rp__account')
-                
                 # Get the account IDs of admin staff
-                admin_accounts = []
-                for staff in admin_staff:
-                    if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                        admin_accounts.append(staff.rp.account)
-                
-                if admin_accounts:
+                conciliation_rec_list = conciliation_recipient()
+                mediation_rec_list = mediation_recipient()
+              
+                if conciliation_rec_list and mediation_rec_list:
                     # Get date and time from the schedule
                     date_time_info = ""
                     if instance.sd_id and instance.st_id:
@@ -277,14 +257,16 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
                     if 'conciliation' in instance.hs_level.lower():
                         mobile_route = "/(summon)/lupon-conciliation-main"
                         web_route = "/conciliation-proceedings"
+                        recipient = conciliation_rec_list
                     else:  
                         mobile_route = "/(summon)/council-mediation-main"
                         web_route = "/summon-case"
+                        recipient = mediation_rec_list
                     
                     create_notification(
                         title=f'{instance.hs_level} Hearing Schedule', 
                         message=f'{instance.hs_level} for Case No. {summon_case.sc_code} has been scheduled{date_time_info}.',
-                        recipients=admin_accounts,
+                        recipients=recipient,
                         notif_type='CASE_UPDATE',
                         mobile_route=mobile_route, 
                         web_route=web_route,
@@ -301,28 +283,23 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
         
         if complaint:
 
-            # for admin
-            admin_staff = Staff.objects.filter(
-                pos__pos_title__iexact='ADMIN'
-            ).select_related('rp__account')
+            conciliation_rec_list = conciliation_recipient()
+            mediation_rec_list = mediation_recipient()
             
-            admin_accounts = []
-            for staff in admin_staff:
-                if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                    admin_accounts.append(staff.rp.account)
-            
-            if admin_accounts:
+            if conciliation_rec_list and mediation_rec_list:
                 if 'conciliation' in hearing_schedule.hs_level.lower():
                     mobile_route = "/(summon)/lupon-conciliation-main"
                     web_route = "/conciliation-proceedings"
+                    recipient = conciliation_rec_list
                 else: 
                     mobile_route = "/(summon)/council-mediation-main"
                     web_route = "/summon-case"
+                    recipient = mediation_rec_list
                 
                 create_notification(
                     title='New Remarks Added', 
                     message=f'New remarks have been posted for {hearing_schedule.hs_level} - Case No. {summon_case.sc_code}.',
-                    recipients=admin_accounts,
+                    recipients=recipient,
                     notif_type='CASE_UPDATE',
                     mobile_route=mobile_route, 
                     web_route=web_route,
@@ -359,22 +336,13 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
 @receiver(post_save, sender=ServiceChargePaymentRequest)
 def create_service_charge_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
+        recipient_list = payment_req_recipient()
         
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        if recipient_list:
             create_notification(
                 title='New Certificate Request', 
                 message=f'Request {instance.pay_id} for {instance.pay_sr_type} is waiting for review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/service-charge-list", 
                 web_route="/treasurer-service-charge",  
@@ -384,22 +352,13 @@ def create_service_charge_notification_on_create(sender, instance, created, **kw
 @receiver(post_save, sender=ClerkCertificate)
 def create_clerk_certificate_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
-        
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        recipient_list = payment_req_recipient()
+    
+        if recipient_list:
             create_notification(
                 title='New Certificate Request', 
                 message=f'Request {instance.cr_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/certificate-list",  
                 web_route="/treasurer-personal-and-others",  
@@ -409,22 +368,13 @@ def create_clerk_certificate_notification_on_create(sender, instance, created, *
 @receiver(post_save, sender=BusinessPermitRequest)
 def create_clerk_business_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
+        recipient_list = payment_req_recipient()
         
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        if recipient_list:
             create_notification(
                 title='New Clearance Request', 
                 message=f'Request {instance.bpr_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/business-list",  
                 web_route="/treasurer-permit",  
