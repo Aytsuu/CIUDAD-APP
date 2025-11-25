@@ -30,7 +30,8 @@ def auto_decline_overdue_requests():
             
             updated_count = overdue_service_charges.update(
                 pay_req_status='Declined',
-                pay_status='Declined'
+                pay_status='Declined',
+                pay_reason='Auto-declined due to overdue'
             )
             declined_count += updated_count
             logger.info(f'Auto-declined {updated_count} overdue service charge requests')
@@ -46,7 +47,8 @@ def auto_decline_overdue_requests():
             updated_count = overdue_personal_clearances.update(
                 cr_req_payment_status='Declined',
                 cr_req_status='Declined',
-                cr_date_rejected=timezone.now()
+                cr_date_rejected=timezone.now(),
+                cr_reason='Auto-declined due to overdue'
             )
             declined_count += updated_count
             logger.info(f'Auto-declined {updated_count} overdue personal clearance requests')
@@ -62,7 +64,8 @@ def auto_decline_overdue_requests():
             updated_count = overdue_nonresident.update(
                 nrc_req_payment_status='Declined',
                 nrc_req_status='Declined',
-                nrc_date_rejected=timezone.now()
+                nrc_date_rejected=timezone.now(),
+                nrc_reason='Auto-declined due to overdue'
             )
             declined_count += updated_count
             logger.info(f'Auto-declined {updated_count} overdue non-resident certificate requests')
@@ -78,7 +81,8 @@ def auto_decline_overdue_requests():
             updated_count = overdue_permits.update(
                 req_payment_status='Declined',
                 req_status='Declined',
-                req_date_completed=timezone.now().date()
+                req_date_completed=timezone.now().date(),
+                bus_reason='Auto-declined due to overdue'
             )
             declined_count += updated_count
             logger.info(f'Auto-declined {updated_count} overdue business permit requests')

@@ -144,16 +144,35 @@ export default function CertTrackingMain() {
   }
 
   const calculateDueDate = (requestDate?: string) => {
-    if (!requestDate) return '—';
+    if (!requestDate) return null;
     try {
       const dt = new Date(requestDate);
-      if (isNaN(dt.getTime())) return '—';
+      if (isNaN(dt.getTime())) return null;
       // Add 7 days to the request date
       dt.setDate(dt.getDate() + 7);
-      return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+      return dt;
     } catch {
-      return '—';
+      return null;
     }
+  }
+
+  const formatDueDate = (requestDate?: string) => {
+    const dueDate = calculateDueDate(requestDate);
+    if (!dueDate) return '—';
+    return dueDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  }
+
+  const getDueDateStatus = (requestDate?: string): 'normal' | 'warning' => {
+    const dueDate = calculateDueDate(requestDate);
+    if (!dueDate) return 'normal';
+    
+    const now = new Date();
+    const diffTime = dueDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Only show warning if within 2 days (past due dates will be auto-declined)
+    if (diffDays <= 2 && diffDays >= 0) return 'warning';
+    return 'normal';
   }
 
   const wrapPurpose = (text?: string, maxFirstLine: number = 24) => {
@@ -472,7 +491,20 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        <Text className="text-gray-500 text-xs mt-1">Due Date: {calculateDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
+                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
+                          return (
+                            <Text className={`text-xs mt-1 ${
+                              dueDateStatus === 'warning' 
+                                ? 'text-orange-600 font-medium' 
+                                : 'text-gray-500'
+                            }`}>
+                              Due Date: {dueDateText}
+                              {dueDateStatus === 'warning' && ' (Due Soon)'}
+                            </Text>
+                          );
+                        })()}
                         {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.cr_pay_date || item?.invoice?.inv_date) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.cr_pay_date || item?.invoice?.inv_date)}</Text>
                         )}
@@ -615,7 +647,20 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        <Text className="text-gray-500 text-xs mt-1">Due Date: {calculateDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
+                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
+                          return (
+                            <Text className={`text-xs mt-1 ${
+                              dueDateStatus === 'warning' 
+                                ? 'text-orange-600 font-medium' 
+                                : 'text-gray-500'
+                            }`}>
+                              Due Date: {dueDateText}
+                              {dueDateStatus === 'warning' && ' (Due Soon)'}
+                            </Text>
+                          );
+                        })()}
                         {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date)}</Text>
                         )}
@@ -758,7 +803,20 @@ export default function CertTrackingMain() {
                           {getPaymentBadge(getPaymentStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
-                        <Text className="text-gray-500 text-xs mt-1">Due Date: {calculateDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
+                        {getPaymentStatus(item).toLowerCase() === 'unpaid' && (() => {
+                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
+                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
+                          return (
+                            <Text className={`text-xs mt-1 ${
+                              dueDateStatus === 'warning' 
+                                ? 'text-orange-600 font-medium' 
+                                : 'text-gray-500'
+                            }`}>
+                              Due Date: {dueDateText}
+                              {dueDateStatus === 'warning' && ' (Due Soon)'}
+                            </Text>
+                          );
+                        })()}
                         {getPaymentStatus(item).toLowerCase() === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid) && (
                           <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid)}</Text>
                         )}
