@@ -53,11 +53,12 @@ import { useConciliationSectionCards } from "@/components/analytics/summon/conci
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
 
-import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
+// import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
-import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
 import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+import { PendingAppointmentsSidebar } from "@/components/analytics/health/pending-appointments-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -303,13 +304,17 @@ export const getItemsConfig = (
         ],
 
         sidebar: [
+          // {
+          //   title: "Pending Medical Appointments",
+          //   element: <PendingMedicalAppointmentsSidebar />,
+          // },
+          // {
+          //   title: "Pending Prenatal Appointments",
+          //   element: <PendingPrenatalAppSidebar />,
+          // },
           {
-            title: "Pending Medical Appointments",
-            element: <PendingMedicalAppointmentsSidebar />,
-          },
-          {
-            title: "Pending Prenatal Appointments",
-            element: <PendingPrenatalAppSidebar />,
+            title: "Pending Appointments",
+            element: <PendingAppointmentsSidebar />,
           },
           {
             title: "Pending Medicine Requests",

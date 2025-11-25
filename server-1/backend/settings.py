@@ -17,9 +17,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # SECURITY CONFIGURATION
 # ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
-
-# DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG=config('DEBUG', False)
+DEBUG=config('DEBUG', default=False)
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -212,7 +210,12 @@ AUTH_USER_MODEL = 'account.Account'
 # CORS SETTINGS
 # ========================
 
-ALLOWED_HOSTS = ['*'] 
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'ciudad-app-server-1.onrender.com',
+]
+
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
 CORS_ALLOWED_ORIGINS=[
     # Production Hosts
