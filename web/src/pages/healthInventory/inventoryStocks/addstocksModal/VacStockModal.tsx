@@ -15,7 +15,7 @@ import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQue
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
-import { fetchVaccines } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
+import { useFetchVaccines } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
 import { useVacBatchNumber } from "../REQUEST/Antigen/restful-api/get";
 
 export default function AddVaccineStock() {
@@ -35,7 +35,7 @@ export default function AddVaccineStock() {
     }
   });
 
-  const { data: vaccineOptions, isLoading: isVaccinesLoading } = fetchVaccines();
+  const { data: vaccineOptions, isLoading: isVaccinesLoading } = useFetchVaccines();
   const { mutate: submit, isPending } = useSubmitVaccineStock();
   const navigate = useNavigate();
   const solvent = form.watch("solvent");

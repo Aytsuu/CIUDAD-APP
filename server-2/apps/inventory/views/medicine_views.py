@@ -160,14 +160,20 @@ class MedicineListAvailableTable(APIView):
 class MedicineListTable(generics.ListAPIView):
     serializer_class = MedicineListSerializers
     pagination_class = StandardResultsPagination
-    
+
     def get_queryset(self):
         queryset = Medicinelist.objects.all().order_by('med_id')
         search_query = self.request.GET.get('search', '').strip()
-        
+
         if search_query:
-            queryset = queryset.filter(med_name__icontains=search_query)
-        
+            queryset = queryset.filter(
+                Q(med_name__icontains=search_query) |
+                Q(med_type__icontains=search_query) |
+                Q(med_dsg_unit__icontains=search_query) |
+                Q(med_form__icontains=search_query) |
+                Q(cat__cat_name__icontains=search_query)
+            )
+
         return queryset
 
 

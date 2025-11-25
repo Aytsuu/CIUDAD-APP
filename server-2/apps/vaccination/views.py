@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
-from datetime import datetime
+from datetime import datetime, date
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F, Prefetch
 from django.db.models.functions import TruncMonth,Coalesce
 from apps.patientrecords.models import Patient,PatientRecord
@@ -19,7 +19,11 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 from apps.patientrecords.models import *
-from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory
+from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory, ImmunizationStock
+from django.utils import timezone
+from django.db import transaction
+import logging
+from collections import defaultdict
 from pagination import *
 from apps.healthProfiling.models import ResidentProfile, PersonalAddress
 from apps.medicalConsultation.utils import *
@@ -938,6 +942,7 @@ class VaccinationCompletionAPIView(APIView):
             follow_up_data = data.get('followUpData')  # This will be None if not provided
             patient_id = data.get('patientId')
             patrec_id = data.get('patrec_id')
+            imz_stock_id = data.get('imzStck_id')  # Immunization stock ID
             
             if not vaccination_id:
                 return Response(
@@ -948,7 +953,7 @@ class VaccinationCompletionAPIView(APIView):
             # Get the vaccination history record
             try:
                 vaccination = VaccinationHistory.objects.select_related(
-                    'followv', 'vacrec', 'vacrec__patrec_id', 'vacStck_id', 'vacStck_id__vac_id'
+                    'followv', 'vacrec', 'vacrec__patrec_id', 'vacStck_id', 'vacStck_id__vac_id', 'staff'
                 ).get(vachist_id=vaccination_id)
             except VaccinationHistory.DoesNotExist:
                 return Response(
@@ -1018,7 +1023,76 @@ class VaccinationCompletionAPIView(APIView):
                         # If date parsing fails, just log it and continue without follow-up
                         logger.warning("Invalid date format in follow-up data, skipping follow-up processing")
                 
-                # 3. Update vaccination status to completed (this always happens if not routine missed)
+                # 3. Handle immunization stock deduction if imzStck_id is provided
+                antigen_transaction_id = None
+                if imz_stock_id:
+                    try:
+                        imz_stock = ImmunizationStock.objects.select_related('inv_id').get(imzStck_id=imz_stock_id)
+                        
+                        # Check if there's enough stock
+                        if imz_stock.imzStck_avail <= 0:
+                            transaction.savepoint_rollback(sid)
+                            return Response(
+                                {"error": "Insufficient immunization stock available"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        
+                        # Deduct stock based on unit type
+                        unit_lower = imz_stock.imzStck_unit.lower()
+                        
+                        if 'box' in unit_lower or 'boxes' in unit_lower:
+                            # For boxes, deduct 1 piece from available pcs
+                            if imz_stock.imzStck_pcs <= 0:
+                                transaction.savepoint_rollback(sid)
+                                return Response(
+                                    {"error": "No pieces available in boxes"},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
+                            
+                            imz_stock.imzStck_pcs -= 1
+                            imz_stock.imzStck_used += 1
+                            imz_stock.imzStck_avail -= 1
+                            transaction_qty = "1 pcs"
+                        else:
+                            # For other units (vials, doses, etc.), deduct based on unit
+                            imz_stock.imzStck_qty = max(0, imz_stock.imzStck_qty - 1)
+                            imz_stock.imzStck_used += 1
+                            imz_stock.imzStck_avail = max(0, imz_stock.imzStck_avail - 1)
+                            transaction_qty = f"1 {imz_stock.imzStck_unit}"
+                        
+                        imz_stock.save()
+                        logger.info(f"Immunization stock updated: {imz_stock_id}, Available: {imz_stock.imzStck_avail}")
+                        
+                        # Update inventory updated_at timestamp
+                        if imz_stock.inv_id:
+                            imz_stock.inv_id.updated_at = timezone.now()
+                            imz_stock.inv_id.save()
+                        
+                        # Create antigen transaction record
+                        antigen_transaction = AntigenTransaction.objects.create(
+                            antt_qty=transaction_qty,
+                            antt_action="Administered",
+                            imzStck_id=imz_stock,
+                            staff=vaccination.staff
+                        )
+                        antigen_transaction_id = antigen_transaction.antt_id
+                        logger.info(f"Antigen transaction created: {antigen_transaction_id}")
+                        
+                    except ImmunizationStock.DoesNotExist:
+                        transaction.savepoint_rollback(sid)
+                        return Response(
+                            {"error": f"Immunization stock with id {imz_stock_id} not found"},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        logger.error(f"Error processing immunization stock: {str(e)}")
+                        return Response(
+                            {"error": f"Failed to process immunization stock: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                
+                # 4. Update vaccination status to completed (this always happens if not routine missed)
                 logger.info(f"Updating vaccination status to completed: {vaccination_id}")
                 vaccination.vachist_status = 'completed'
                 if follow_up_visit:
@@ -1033,7 +1107,8 @@ class VaccinationCompletionAPIView(APIView):
                     "success": True,
                     "patientId": patient_id,
                     "vaccinationId": vaccination_id,
-                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None
+                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None,
+                    "antigenTransactionId": antigen_transaction_id
                 }, status=status.HTTP_200_OK)
                 
             except Exception as e:

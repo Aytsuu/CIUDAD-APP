@@ -28,7 +28,7 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
       <div className="space-y-6 p-6">
-        <div className="flex justify-end gap-4 mb-4">
+        {/* <div className="flex justify-end gap-4 mb-4">
           
 
           <Link
@@ -48,7 +48,7 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
               Edit
             </Button>
           </Link>
-        </div>
+        </div> */}
         <PatientSummarySection recordsToDisplay={[fullHistoryData[currentIndex]]} fullHistoryData={fullHistoryData} chhistId={chhistId} />
       </div>
 

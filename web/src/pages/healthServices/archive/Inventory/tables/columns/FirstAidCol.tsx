@@ -4,6 +4,15 @@ import { ColumnDef } from "@tanstack/react-table"
 
 export const getArchiveFirstAidStocks = (): ColumnDef<any>[] => {
   return [
+
+    {
+      accessorKey: "archivedDate",
+      header: "Archived Date",
+      cell: ({ row }) => {
+        const archivedDate = row.original.archivedDate
+        return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"
+      }
+    },
     {
       accessorKey: "item.fa_name",
       header: "First Aid Item Name",
@@ -36,17 +45,24 @@ export const getArchiveFirstAidStocks = (): ColumnDef<any>[] => {
         return expiryDate === "N/A" ? "N/A" : new Date(expiryDate).toLocaleDateString()
       }
     },
-    {
-      accessorKey: "archivedDate",
-      header: "Archived Date",
-      cell: ({ row }) => {
-        const archivedDate = row.original.archivedDate
-        return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"
-      }
+  
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            reason === "Expired" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {reason}
+          </span>
+        </div>
+      );
     },
-    {
-      accessorKey: "reason",
-      header: "Reason",
-    },
+  },
   ]
 }

@@ -156,6 +156,15 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       )
     },
     {
+      accessorKey: "imzStck_name",
+      header: "Immunization Supply",
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-600">
+          {row.original.imzStck_name || "N/A"}
+        </div>
+      )
+    },
+    {
       accessorKey: "nextdose",
       header: "Next Dose",
       cell: ({ row }) => (
@@ -167,12 +176,30 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
     {
       accessorKey: "date",
       header: "Date Administered",
-      cell: ({ row }) => (
-        <div className="flex justify-center items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{row.original.date ? new Date(row.original.date).toLocaleDateString() : "N/A"}</span>
-        </div>
-      )
+      cell: ({ row }) => {
+        const dateStr = row.original.date;
+        if (!dateStr) return <span>N/A</span>;
+        
+        // Handle DD-MM-YYYY format
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          // If it's DD-MM-YYYY, display as is
+          return (
+            <div className="flex justify-center items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{dateStr}</span>
+            </div>
+          );
+        }
+        
+        // Otherwise try to parse as date
+        return (
+          <div className="flex justify-center items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{new Date(dateStr).toLocaleDateString()}</span>
+          </div>
+        );
+      }
     },
     {
       id: "actions",
@@ -214,12 +241,30 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
     {
       accessorKey: "date",
       header: "Date Administered",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{row.original.date ? new Date(row.original.date).toLocaleDateString() : "N/A"}</span>
-        </div>
-      )
+      cell: ({ row }) => {
+        const dateStr = row.original.date;
+        if (!dateStr) return <span>N/A</span>;
+        
+        // Handle DD-MM-YYYY format
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          // If it's DD-MM-YYYY, display as is
+          return (
+            <div className="flex justify-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{dateStr}</span>
+            </div>
+          );
+        }
+        
+        // Otherwise try to parse as date
+        return (
+          <div className="flex justify-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{new Date(dateStr).toLocaleDateString()}</span>
+          </div>
+        );
+      }
     },
     {
       id: "actions",

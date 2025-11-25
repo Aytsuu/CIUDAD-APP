@@ -28,8 +28,7 @@ class FirstAidListView(generics.ListCreateAPIView):
         if search_query:
             queryset = queryset.filter(
                 models.Q(fa_name__icontains=search_query) |
-                models.Q(fa_id__icontains=search_query) |
-                models.Q(cat__cat_name__icontains=search_query)
+                models.Q(fa_id__icontains=search_query) 
             )
         
         return queryset.order_by('fa_name')
@@ -192,7 +191,6 @@ class FirstAidStockTableView(APIView):
                     'type': 'first_aid',
                     'id': stock.finv_id,
                     'batchNumber': stock.inv_id.inv_id if stock.inv_id else "N/A",
-                    'category': stock.fa_id.cat.cat_name if stock.fa_id and stock.fa_id.cat else "N/A",
                     'item': {
                         'fa_name': stock.fa_id.fa_name if stock.fa_id else "Unknown First Aid",
                     },

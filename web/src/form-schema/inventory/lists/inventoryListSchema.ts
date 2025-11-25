@@ -8,6 +8,7 @@ export const MedicineListSchema = z.object({
   med_dsg: positiveNumberSchema.pipe(z.number().min(1, "Dosage must be at least 1")),
     med_dsg_unit: z.string().min(1, "Dosage unit is required"),
     med_form: z.string().min(1, "Form is required"),
+  staff: z.string().optional(),
 
 
 });
@@ -15,7 +16,8 @@ export const MedicineListSchema = z.object({
 export const CommodityListSchema = z.object({
   com_name: z.string().min(1, "Enter Commodity Name").default(""),
   user_type: z.string().min(1, "User type is required"),
-  gender_type: z.string().min(1,"Gender is required")
+  gender_type: z.string().min(1,"Gender is required"),
+  staff: z.string().optional(),
 
 });
 
@@ -62,20 +64,23 @@ export const CommodityListSchema = z.object({
 
 export const FirstAidSchema = z.object({
   fa_name: z.string().min(1, "Item name is Required").default(""),
-  cat_id: z.string().min(1, "Category is required"),
-  staff_id: z.string().optional(),
+  // cat_id: z.string().min(1, "Category is required"),
+  staff: z.string().optional()
 
 });
 
 export const ImmunizationSchema = z.object({
   imz_name: z.string().min(1, "Required").default(""),
- 
+
+   staff: z.string().optional()
+
 });
 
 
 // Fixed VaccineSchema with conditional dose handling
 export const VaccineSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required"),
+    staff: z.string().optional(),
   noOfDoses: z.union([
     z.string()
       .refine(val => val === "" || !isNaN(Number(val)), "Must be a number or empty")
