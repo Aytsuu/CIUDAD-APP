@@ -3,9 +3,10 @@ from django.dispatch import receiver
 from django.utils import timezone
 from .models import *
 import logging
-from apps.notification.utils import create_notification
+from apps.notification.utils import create_notification, reminder_notification
 from apps.administration.models import Staff
 from .notif_recipients import conciliation_recipient, mediation_recipient, payment_req_recipient
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -336,6 +337,9 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
 @receiver(post_save, sender=ServiceChargePaymentRequest)
 def create_service_charge_notification_on_create(sender, instance, created, **kwargs):
     if created:
+        if instance.pay_status == 'Unpaid':
+            schedule_service_charge_payment_reminder(instance)
+        
         recipient_list = payment_req_recipient()
         
         if recipient_list:
@@ -352,6 +356,8 @@ def create_service_charge_notification_on_create(sender, instance, created, **kw
 @receiver(post_save, sender=ClerkCertificate)
 def create_clerk_certificate_notification_on_create(sender, instance, created, **kwargs):
     if created:
+        if instance.cr_req_payment_status == 'Unpaid':
+            schedule_certificate_payment_reminder(instance)
         recipient_list = payment_req_recipient()
     
         if recipient_list:
@@ -368,6 +374,8 @@ def create_clerk_certificate_notification_on_create(sender, instance, created, *
 @receiver(post_save, sender=BusinessPermitRequest)
 def create_clerk_business_notification_on_create(sender, instance, created, **kwargs):
     if created:
+        if instance.req_payment_status == 'Unpaid':
+            schedule_business_permit_payment_reminder(instance)
         recipient_list = payment_req_recipient()
         
         if recipient_list:
@@ -534,3 +542,140 @@ def notify_business_permit_payment_change(sender, instance, **kwargs):
             notif_type="REQUEST",
             mobile_route="/(my-request)/business-permit/tracking",
         )
+
+# ============================ SERVICE CHARGE PAYMENT REQUEST REMINDER =================================
+def schedule_service_charge_payment_reminder(service_charge_payment):
+    try:
+        # Check if payment status is unpaid
+        if service_charge_payment.pay_status != 'Unpaid':
+            return False
+            
+        # Get complainants from the complaint
+        complainants = service_charge_payment.comp_id.complainant.filter(rp_id__isnull=False)
+        
+        # Collect all recipient accounts
+        recipient_accounts = []
+        for complainant in complainants:
+            if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                recipient_accounts.append(complainant.rp_id.account)
+        
+        if not recipient_accounts:
+            print(f"✗ No valid recipients found for service charge payment {service_charge_payment.pay_id}")
+            return False
+        
+        due_date = service_charge_payment.pay_due_date
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {service_charge_payment.pay_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=recipient_accounts,
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'pay_id': service_charge_payment.pay_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Payment Due Tomorrow',
+            message=f'Your payment for {service_charge_payment.pay_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=recipient_accounts,
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'pay_id': service_charge_payment.pay_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False
+    
+# ============================ PERSONAL PURPOSE PAYMENT REQUEST REMINDER =================================
+def schedule_certificate_payment_reminder(certificate):
+    try:
+        if not certificate.rp_id or not hasattr(certificate.rp_id, 'account') or not certificate.rp_id.account:
+            return False
+    
+        if certificate.cr_req_payment_status != 'Unpaid':
+            return False
+        
+        resident_account = certificate.rp_id.account
+        
+        # Calculate due date (7 days after request date)
+        due_date = certificate.cr_req_request_date.date() + timedelta(days=7)
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {certificate.cr_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'cr_id': certificate.cr_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Certificate Payment Due Tomorrow',
+            message=f'Your payment for {certificate.cr_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'cr_id': certificate.cr_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False
+    
+# ============================ BARANGAY/BUSINESS CLEARANCE PAYMENT REQUEST REMINDER =================================
+def schedule_business_permit_payment_reminder(business_permit):
+    try:
+        if not business_permit.rp_id or not hasattr(business_permit.rp_id, 'account') or not business_permit.rp_id.account:
+            return False
+        
+        if business_permit.req_payment_status != 'Unpaid':
+            return False
+        
+        resident_account = business_permit.rp_id.account
+        
+        # Calculate due date (7 days after request date)
+        due_date = business_permit.req_request_date + timedelta(days=7)
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {business_permit.bpr_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/business-permit/tracking",
+            mobile_params={'bpr_id': business_permit.bpr_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Payment Due Tomorrow',
+            message=f'Your payment for {business_permit.bpr_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/business-permit/tracking",
+            mobile_params={'bpr_id': business_permit.bpr_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False

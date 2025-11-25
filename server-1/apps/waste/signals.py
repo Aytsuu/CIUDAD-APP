@@ -94,23 +94,22 @@ def create_garbage_pickup_notification_on_create(sender, instance, created, **kw
 
 # =========================== GARB PICKUP CONFIRMATION REMINDER ===========================================
 def schedule_pickup_confirmation_reminder(garbage_request, garb_id_str):
-    """
-    Schedule a reminder for resident to confirm pickup completion
-    """
     try:
-        reminder_time = timezone.now() + timedelta(minutes=1)
-        
         recipient_account = garbage_request.rp.account
         
-        reminder_notification(
-            title='Reminder: Confirm Pickup Completion',
-            message=f'Remember to confirm the completion of your garbage pickup request {garbage_request.garb_id}. Your confirmation helps us improve our service.',
-            recipients=[recipient_account],  # Must be a list of Account objects
-            notif_type='REMINDER',
-            send_at=reminder_time,
-            mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
-            mobile_params={'garb_id': garb_id_str},
-        )
+        for day in range(1, 8):  # Days 1 through 7
+            reminder_time = timezone.now() + timedelta(days=day)
+            
+            reminder_notification(
+                title='Reminder: Confirm Pickup Completion',
+                message=f'Remember to confirm the completion of your garbage pickup request {garbage_request.garb_id}. Your confirmation helps us improve our service.',
+                recipients=[recipient_account],
+                notif_type='REMINDER',
+                send_at=reminder_time,
+                mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
+                mobile_params={'garb_id': garb_id_str},
+            )
+        
         return True
         
     except Exception as e:
