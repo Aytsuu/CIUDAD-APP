@@ -131,33 +131,49 @@ function WasteEventSched() {
             if (values.selectedAnnouncements && values.selectedAnnouncements.length > 0) {
                 const eventDetails: string[] = [];
                 
+                // Always include location, date, and time in the announcement
                 if (sitioName) {
                     eventDetails.push(`Location: ${sitioName}`);
                 }
                 
                 if (formattedDate) {
                     // Format date to be more readable (e.g., "January 15, 2024")
-                    const dateObj = new Date(formattedDate);
-                    const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                    });
-                    eventDetails.push(`Date: ${formattedDateStr}`);
+                    try {
+                        const dateObj = new Date(formattedDate + 'T00:00:00'); // Add time to avoid timezone issues
+                        const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        eventDetails.push(`Date: ${formattedDateStr}`);
+                    } catch (e) {
+                        // Fallback to original date format if formatting fails
+                        eventDetails.push(`Date: ${formattedDate}`);
+                    }
                 }
                 
                 if (formattedTime) {
                     // Format time to be more readable (e.g., "2:30 PM")
-                    const [hours, minutes] = formattedTime.split(':');
-                    const hour = parseInt(hours, 10);
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    const displayHour = hour % 12 || 12;
-                    const formattedTimeStr = `${displayHour}:${minutes} ${ampm}`;
-                    eventDetails.push(`Time: ${formattedTimeStr}`);
+                    try {
+                        const [hours, minutes] = formattedTime.split(':');
+                        const hour = parseInt(hours, 10);
+                        if (!isNaN(hour)) {
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const displayHour = hour % 12 || 12;
+                            const formattedTimeStr = `${displayHour}:${minutes || '00'} ${ampm}`;
+                            eventDetails.push(`Time: ${formattedTimeStr}`);
+                        } else {
+                            eventDetails.push(`Time: ${formattedTime}`);
+                        }
+                    } catch (e) {
+                        // Fallback to original time format if formatting fails
+                        eventDetails.push(`Time: ${formattedTime}`);
+                    }
                 }
                 
                 // Combine user's subject with event details
-                if (formattedEventSubject) {
+                // Always include location, date, and time even if user provided a subject
+                if (formattedEventSubject.trim()) {
                     formattedEventSubject = `${formattedEventSubject}\n\n${eventDetails.join('\n')}`;
                 } else {
                     formattedEventSubject = eventDetails.join('\n');
