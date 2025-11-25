@@ -14,6 +14,8 @@ class ClerkConfig(AppConfig):
     
     def ready(self):
         import apps.clerk.signals
+        from apps.clerk.signals import initialize_quarterly_hearing_reminders
+        initialize_quarterly_hearing_reminders()
         
         # Start scheduler only when Django is fully loaded
         if settings.SCHEDULER_AUTOSTART:

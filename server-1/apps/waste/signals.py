@@ -2,12 +2,15 @@ from datetime import datetime
 from email.mime import message
 from zoneinfo import ZoneInfo
 from django.utils import timezone
+from datetime import timedelta
 from .models import WasteHotspot, WasteEvent
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
 from apps.notification.utils import create_notification, reminder_notification
 from apps.administration.models import Staff
+from .notif_recipients import waste_recipient
+
 
 
 def archive_completed_hotspots():
@@ -61,22 +64,12 @@ def archive_passed_waste_events():
 @receiver(post_save, sender=WasteReport)
 def create_waste_report_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
-        
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        recipients_list = waste_recipient()
+        if recipients_list:
             create_notification(
                 title='New Waste Report Filed', 
                 message=f'Report {instance.rep_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipients_list,
                 notif_type='REPORT',
                 mobile_route="/(waste)/illegal-dumping/staff/illegal-dump-view-staff",
                 mobile_params={'rep_id': instance.rep_id},
@@ -87,27 +80,40 @@ def create_waste_report_notification_on_create(sender, instance, created, **kwar
 @receiver(post_save, sender=Garbage_Pickup_Request)
 def create_garbage_pickup_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
-        
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        recipients_list = waste_recipient()
+        if recipients_list:
             create_notification(
                 title='New Garbage Pickup Request', 
                 message=f'Garbage Pickup Request {instance.garb_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipients_list,
                 notif_type='REQUEST',
                 mobile_route="/(waste)/garbage-pickup/staff/view-pending-details",
                 mobile_params={'garb_id': instance.garb_id},
                 web_route="/garbage-pickup-request",
             )
+
+# =========================== GARB PICKUP CONFIRMATION REMINDER ===========================================
+def schedule_pickup_confirmation_reminder(garbage_request, garb_id_str):
+    try:
+        recipient_account = garbage_request.rp.account
+        
+        for day in range(1, 8):  # Days 1 through 7
+            reminder_time = timezone.now() + timedelta(days=day)
+            
+            reminder_notification(
+                title='Reminder: Confirm Pickup Completion',
+                message=f'Remember to confirm the completion of your garbage pickup request {garbage_request.garb_id}. Your confirmation helps us improve our service.',
+                recipients=[recipient_account],
+                notif_type='REMINDER',
+                send_at=reminder_time,
+                mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
+                mobile_params={'garb_id': garb_id_str},
+            )
+        
+        return True
+        
+    except Exception as e:
+        return False
 
 #===================================== GARBAGE PICKUP REQUEST STATUS UDPATE ================================
 @receiver(pre_save, sender=Garbage_Pickup_Request)
@@ -182,7 +188,9 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
                 mobile_params={'garb_id': garb_id_str}
             )
-    
+
+            schedule_pickup_confirmation_reminder(garbage_request, garb_id_str)
+
     # Full completion - both staff and resident confirmed
     elif instance.conf_staff_conf and instance.conf_resident_conf:
         # Notify resident that request is fully completed
@@ -195,22 +203,14 @@ def create_completion_notifications(sender, instance, created, **kwargs):
                 mobile_route="/(my-request)/garbage-pickup/view-completed-details",
                 mobile_params={'garb_id': garb_id_str}
             )
+
+        recipients_list = waste_recipient()
         
-        # Notify admin staff that request is fully completed
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
-        
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        if recipients_list:
             create_notification(
                 title='Request Completed',
                 message=f'Garbage pickup request {garbage_request.garb_id} has been completed and confirmed by resident.',
-                recipients=admin_accounts,
+                recipients=recipients_list,
                 notif_type='REQUEST',
                 mobile_route="/(waste)/garbage-pickup/staff/view-completed-details",
                 mobile_params={'garb_id': garb_id_str},

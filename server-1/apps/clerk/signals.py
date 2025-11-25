@@ -3,8 +3,10 @@ from django.dispatch import receiver
 from django.utils import timezone
 from .models import *
 import logging
-from apps.notification.utils import create_notification
+from apps.notification.utils import create_notification, reminder_notification
 from apps.administration.models import Staff
+from .notif_recipients import conciliation_recipient, mediation_recipient, payment_req_recipient
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -51,22 +53,15 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                     )
                     logger.info(f'Successfully created summon case with code: {sc_code}')
 
-                       # Create notification for admin staff
-                    admin_staff = Staff.objects.filter(
-                        pos__pos_title__iexact='ADMIN'
-                    ).select_related('rp__account')
+
+                    # Get the recipients for mediation
+                    recipient_list = mediation_recipient()
                     
-                    # Get the account IDs of admin staff
-                    admin_accounts = []
-                    for staff in admin_staff:
-                        if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                            admin_accounts.append(staff.rp.account)
-                    
-                    if admin_accounts and summoncase:
+                    if recipient_list and summoncase:
                         create_notification(
                             title='New Case Opened', 
                             message=f'Case No. {summoncase.sc_code} has been opened and waiting for schedule.',
-                            recipients=admin_accounts,
+                            recipients=recipient_list,
                             notif_type='CASE_UPDATE',
                             mobile_route="/(summon)/council-mediation-main",
                             web_route="/summon-case",
@@ -92,7 +87,7 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                    
                     seq += 1
 
-
+# =================== CASE STATUS UPDATE NOTIF (RESOLVED OR ESCALATED and CASE FORWARD) ==============
 @receiver(pre_save, sender=SummonCase)
 def store_previous_statuses(sender, instance, **kwargs):
     if instance.pk:
@@ -175,20 +170,12 @@ def create_case_status_notification(sender, instance, created, **kwargs):
         elif (previous_mediation != current_mediation and 
               current_mediation.lower() == 'forwarded to lupon'):
             
-            admin_staff = Staff.objects.filter(
-                pos__pos_title__iexact='ADMIN'
-            ).select_related('rp__account')
-            
-            admin_accounts = []
-            for staff in admin_staff:
-                if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                    admin_accounts.append(staff.rp.account)
-            
-            if admin_accounts:
+            recipient_list = conciliation_recipient()
+            if recipient_list:
                 create_notification(
                     title='New Case Forwarded', 
                     message=f'Case No. {instance.sc_code} has been forwarded and is waiting for schedule.',
-                    recipients=admin_accounts,
+                    recipients=recipient_list,
                     notif_type='CASE_UPDATE',
                     mobile_route="/(summon)/lupon-conciliation-main", 
                     web_route="/conciliation-proceedings",
@@ -253,17 +240,11 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
             has_complainant_with_rp = complaint.complainant.filter(rp_id__isnull=False).exists()
             
             if has_complainant_with_rp:
-                admin_staff = Staff.objects.filter(
-                    pos__pos_title__iexact='ADMIN'
-                ).select_related('rp__account')
-                
                 # Get the account IDs of admin staff
-                admin_accounts = []
-                for staff in admin_staff:
-                    if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                        admin_accounts.append(staff.rp.account)
-                
-                if admin_accounts:
+                conciliation_rec_list = conciliation_recipient()
+                mediation_rec_list = mediation_recipient()
+              
+                if conciliation_rec_list and mediation_rec_list:
                     # Get date and time from the schedule
                     date_time_info = ""
                     if instance.sd_id and instance.st_id:
@@ -277,14 +258,16 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
                     if 'conciliation' in instance.hs_level.lower():
                         mobile_route = "/(summon)/lupon-conciliation-main"
                         web_route = "/conciliation-proceedings"
+                        recipient = conciliation_rec_list
                     else:  
                         mobile_route = "/(summon)/council-mediation-main"
                         web_route = "/summon-case"
+                        recipient = mediation_rec_list
                     
                     create_notification(
                         title=f'{instance.hs_level} Hearing Schedule', 
                         message=f'{instance.hs_level} for Case No. {summon_case.sc_code} has been scheduled{date_time_info}.',
-                        recipients=admin_accounts,
+                        recipients=recipient,
                         notif_type='CASE_UPDATE',
                         mobile_route=mobile_route, 
                         web_route=web_route,
@@ -301,28 +284,23 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
         
         if complaint:
 
-            # for admin
-            admin_staff = Staff.objects.filter(
-                pos__pos_title__iexact='ADMIN'
-            ).select_related('rp__account')
+            conciliation_rec_list = conciliation_recipient()
+            mediation_rec_list = mediation_recipient()
             
-            admin_accounts = []
-            for staff in admin_staff:
-                if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                    admin_accounts.append(staff.rp.account)
-            
-            if admin_accounts:
+            if conciliation_rec_list and mediation_rec_list:
                 if 'conciliation' in hearing_schedule.hs_level.lower():
                     mobile_route = "/(summon)/lupon-conciliation-main"
                     web_route = "/conciliation-proceedings"
+                    recipient = conciliation_rec_list
                 else: 
                     mobile_route = "/(summon)/council-mediation-main"
                     web_route = "/summon-case"
+                    recipient = mediation_rec_list
                 
                 create_notification(
                     title='New Remarks Added', 
                     message=f'New remarks have been posted for {hearing_schedule.hs_level} - Case No. {summon_case.sc_code}.',
-                    recipients=admin_accounts,
+                    recipients=recipient,
                     notif_type='CASE_UPDATE',
                     mobile_route=mobile_route, 
                     web_route=web_route,
@@ -359,22 +337,16 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
 @receiver(post_save, sender=ServiceChargePaymentRequest)
 def create_service_charge_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
+        if instance.pay_status == 'Unpaid':
+            schedule_service_charge_payment_reminder(instance)
         
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
+        recipient_list = payment_req_recipient()
         
-        if admin_accounts:
+        if recipient_list:
             create_notification(
                 title='New Certificate Request', 
                 message=f'Request {instance.pay_id} for {instance.pay_sr_type} is waiting for review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/service-charge-list", 
                 web_route="/treasurer-service-charge",  
@@ -384,22 +356,15 @@ def create_service_charge_notification_on_create(sender, instance, created, **kw
 @receiver(post_save, sender=ClerkCertificate)
 def create_clerk_certificate_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
-        
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        if instance.cr_req_payment_status == 'Unpaid':
+            schedule_certificate_payment_reminder(instance)
+        recipient_list = payment_req_recipient()
+    
+        if recipient_list:
             create_notification(
                 title='New Certificate Request', 
                 message=f'Request {instance.cr_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/certificate-list",  
                 web_route="/treasurer-personal-and-others",  
@@ -409,22 +374,15 @@ def create_clerk_certificate_notification_on_create(sender, instance, created, *
 @receiver(post_save, sender=BusinessPermitRequest)
 def create_clerk_business_notification_on_create(sender, instance, created, **kwargs):
     if created:
-        # Get all staff with ADMIN position
-        admin_staff = Staff.objects.filter(
-            pos__pos_title__iexact='ADMIN'
-        ).select_related('rp__account')
+        if instance.req_payment_status == 'Unpaid':
+            schedule_business_permit_payment_reminder(instance)
+        recipient_list = payment_req_recipient()
         
-        # Get the account IDs of admin staff
-        admin_accounts = []
-        for staff in admin_staff:
-            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
-                admin_accounts.append(staff.rp.account)
-        
-        if admin_accounts:
+        if recipient_list:
             create_notification(
                 title='New Clearance Request', 
                 message=f'Request {instance.bpr_id} is waiting for your review.',
-                recipients=admin_accounts,
+                recipients=recipient_list,
                 notif_type='REQUEST',
                 mobile_route="/(treasurer)/clearance-request/business-list",  
                 web_route="/treasurer-permit",  
@@ -584,3 +542,196 @@ def notify_business_permit_payment_change(sender, instance, **kwargs):
             notif_type="REQUEST",
             mobile_route="/(my-request)/business-permit/tracking",
         )
+
+# ============================ SERVICE CHARGE PAYMENT REQUEST REMINDER =================================
+def schedule_service_charge_payment_reminder(service_charge_payment):
+    try:
+        # Check if payment status is unpaid
+        if service_charge_payment.pay_status != 'Unpaid':
+            return False
+            
+        # Get complainants from the complaint
+        complainants = service_charge_payment.comp_id.complainant.filter(rp_id__isnull=False)
+        
+        # Collect all recipient accounts
+        recipient_accounts = []
+        for complainant in complainants:
+            if complainant.rp_id and hasattr(complainant.rp_id, 'account') and complainant.rp_id.account:
+                recipient_accounts.append(complainant.rp_id.account)
+        
+        if not recipient_accounts:
+            print(f"✗ No valid recipients found for service charge payment {service_charge_payment.pay_id}")
+            return False
+        
+        due_date = service_charge_payment.pay_due_date
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {service_charge_payment.pay_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=recipient_accounts,
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'pay_id': service_charge_payment.pay_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Payment Due Tomorrow',
+            message=f'Your payment for {service_charge_payment.pay_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=recipient_accounts,
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'pay_id': service_charge_payment.pay_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False
+    
+# ============================ PERSONAL PURPOSE PAYMENT REQUEST REMINDER =================================
+def schedule_certificate_payment_reminder(certificate):
+    try:
+        if not certificate.rp_id or not hasattr(certificate.rp_id, 'account') or not certificate.rp_id.account:
+            return False
+    
+        if certificate.cr_req_payment_status != 'Unpaid':
+            return False
+        
+        resident_account = certificate.rp_id.account
+        
+        # Calculate due date (7 days after request date)
+        due_date = certificate.cr_req_request_date.date() + timedelta(days=7)
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {certificate.cr_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'cr_id': certificate.cr_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Certificate Payment Due Tomorrow',
+            message=f'Your payment for {certificate.cr_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/certification-tracking/certificate-request-tracker",
+            mobile_params={'cr_id': certificate.cr_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False
+    
+# ============================ BARANGAY/BUSINESS CLEARANCE PAYMENT REQUEST REMINDER =================================
+def schedule_business_permit_payment_reminder(business_permit):
+    try:
+        if not business_permit.rp_id or not hasattr(business_permit.rp_id, 'account') or not business_permit.rp_id.account:
+            return False
+        
+        if business_permit.req_payment_status != 'Unpaid':
+            return False
+        
+        resident_account = business_permit.rp_id.account
+        
+        # Calculate due date (7 days after request date)
+        due_date = business_permit.req_request_date + timedelta(days=7)
+        
+        # Schedule 3 days before reminder
+        reminder_3_days = due_date - timedelta(days=3)
+        reminder_notification(
+            title='Payment Due Reminder',
+            message=f'Your payment for {business_permit.bpr_id} is due in 3 days on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_3_days,
+            mobile_route="/(my-request)/business-permit/tracking",
+            mobile_params={'bpr_id': business_permit.bpr_id},
+        )
+        
+        # Schedule 1 day before reminder
+        reminder_1_day = due_date - timedelta(days=1)
+        reminder_notification(
+            title='Payment Due Tomorrow',
+            message=f'Your payment for {business_permit.bpr_id} is due tomorrow on {due_date.strftime("%B %d, %Y")}. Please visit the barangay hall to settle your payment.',
+            recipients=[resident_account],
+            notif_type='REMINDER',
+            send_at=reminder_1_day,
+            mobile_route="/(my-request)/business-permit/tracking",
+            mobile_params={'bpr_id': business_permit.bpr_id},
+        )
+        
+        return True
+        
+    except Exception as e:
+        return False
+
+
+# ============================ QUARTERLY REMINDER FOR ADDING DATE AND TIMESLOTS =================================
+def schedule_quarterly_hearing_reminders():
+    """
+    Schedule quarterly reminders for adding summon dates and time slots
+    """
+    try:
+        recipient_list = mediation_recipient()
+        
+        # Schedule for current quarter and recurring quarterly
+        now = timezone.now()
+        
+        # Calculate next quarter (January, April, July, October)
+        current_month = now.month
+        if current_month <= 3:
+            next_quarter_month = 4  # April
+            quarter_name = "Q2 (April-June)"
+        elif current_month <= 6:
+            next_quarter_month = 7  # July
+            quarter_name = "Q3 (July-September)"
+        elif current_month <= 9:
+            next_quarter_month = 10  # October
+            quarter_name = "Q4 (October-December)"
+        else:
+            next_quarter_month = 1  # January (next year)
+            quarter_name = "Q1 (January-March)"
+        
+        # Set reminder for 1st day of the quarter at 9:00 AM
+        if next_quarter_month == 1:  # January (next year)
+            reminder_date = datetime(now.year + 1, next_quarter_month, 1, 9, 0)
+        else:
+            reminder_date = datetime(now.year, next_quarter_month, 1, 9, 0)
+        
+        reminder_time = timezone.make_aware(reminder_date)
+        
+        # Schedule the quarterly reminder
+        reminder_notification(
+            title=f'Quarterly Hearing Schedule - {quarter_name}',
+            message=f'Time to add summon dates and time availability slots for {quarter_name}. Please add available dates and time slots in the Date & Time Availability feature.',
+            recipients=recipient_list,
+            notif_type='REMINDER',
+            send_at=reminder_time,
+            web_route="/summon-calendar"
+        )
+        
+        print(f"✓ Quarterly hearing reminder scheduled for {quarter_name} on {reminder_time.strftime('%B %d, %Y')}")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error scheduling quarterly hearing reminders: {e}")
+        return False
+
+# Initialize quarterly scheduling
+def initialize_quarterly_hearing_reminders():
+    schedule_quarterly_hearing_reminders()
