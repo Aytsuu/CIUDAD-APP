@@ -1,4 +1,4 @@
-import React, { useEffect, useState,} from "react";
+import React, { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,12 @@ import ViewButton from "@/components/ui/view-button";
 import { LoadingState } from "@/components/ui/health-component/loading-state";
 import { ProtectedComponent } from "@/ProtectedComponent";
 
-// Type definition for table display
+// NEW IMPORTS FOR SITIO
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
+
+// TYPES
 type UniquePatientDisplay = {
   id: string;
   fname: string;
@@ -47,13 +52,6 @@ type PatientCountStats = {
   transientPercentage: number;
 };
 
-// type ApiResponse = {
-//   count: number;
-//   next: string | null;
-//   previous: string | null;
-//   results: UniquePatientDisplay[];
-// };
-
 const Overall: React.FC = () => {
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -69,13 +67,18 @@ const Overall: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
 
+  // SITIO STATE
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
+
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchQuery, filterValue]);
+  }, [debouncedSearchQuery, filterValue, selectedSitios]);
 
   const fetchAnimalBiteRecords = async () => {
     setLoading(true);
@@ -87,19 +90,20 @@ const Overall: React.FC = () => {
         limit: pageSize,
       };
 
-      // Add search parameter if search query exists
       if (debouncedSearchQuery) {
         params.search = debouncedSearchQuery;
       }
 
-      // Add filter parameter if not "all"
       if (filterValue !== "all") {
         params.filter = filterValue;
       }
 
-      console.log("Fetching records with params:", params);
+      // Pass Sitio Param
+      if (selectedSitios.length > 0) {
+        params.sitio = selectedSitios.join(",");
+      }
+
       const response = await getUniqueAnimalbitePatients(params);
-      console.log("Backend response:", response);
 
       if (response && response.results) {
         setPatients(response.results);
@@ -110,7 +114,7 @@ const Overall: React.FC = () => {
       }
     } catch (err) {
       console.error("Fetch error:", err);
-      setError("Failed to load animal bite records. Please try again.");
+      setError("Failed to load animal bite records.");
       toast.error("Failed to load animal bite records.");
     } finally {
       setLoading(false);
@@ -123,7 +127,6 @@ const Overall: React.FC = () => {
       const stats = await getAnimalBiteStats();
       return stats;
     } catch (err) {
-      console.error("Stats fetch error:", err);
       return {
         total: 0,
         residents: 0,
@@ -135,19 +138,14 @@ const Overall: React.FC = () => {
   };
 
   const [stats, setStats] = useState<PatientCountStats>({
-    total: 0,
-    residents: 0,
-    transients: 0,
-    residentPercentage: 0,
-    transientPercentage: 0
+    total: 0, residents: 0, transients: 0, residentPercentage: 0, transientPercentage: 0
   });
 
-  // Fetch data when dependencies change
+  // Fetch data
   useEffect(() => {
     fetchAnimalBiteRecords();
-  }, [currentPage, pageSize, debouncedSearchQuery, filterValue]);
+  }, [currentPage, pageSize, debouncedSearchQuery, filterValue, selectedSitios]);
 
-  // Fetch stats on component mount
   useEffect(() => {
     const loadStats = async () => {
       const statsData = await fetchStats();
@@ -156,15 +154,29 @@ const Overall: React.FC = () => {
     loadStats();
   }, []);
 
-  // Refresh stats when new records are added
   const handleReferralFormClose = () => {
     setIsReferralFormOpen(false);
     fetchAnimalBiteRecords();
-    // Refresh stats as well
     fetchStats().then(setStats);
   };
 
-  // Table columns with sorting and ViewButton
+  // SITIO HANDLERS
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+
   const columns: ColumnDef<UniquePatientDisplay>[] = [
     {
       accessorKey: "patient",
@@ -200,32 +212,6 @@ const Overall: React.FC = () => {
         </div>
       )
     },
-    // {
-    //   accessorKey: "exposure",
-    //   header: ({ column }) => (
-    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-    //       Exposure Type <ArrowUpDown size={15} />
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[100px] px-2">
-    //       <div className="text-center w-full">{row.original.exposure}</div>
-    //     </div>
-    //   )
-    // },
-    // {
-    //   accessorKey: "siteOfExposure",
-    //   header: ({ column }) => (
-    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-    //       Site of Exposure <ArrowUpDown size={15} />
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.siteOfExposure}</div>
-    //     </div>
-    //   )
-    // },
     {
       accessorKey: "bitingAnimal",
       header: ({ column }) => (
@@ -251,15 +237,6 @@ const Overall: React.FC = () => {
         );
       }
     },
-    // {
-    //   accessorKey: "referredby",
-    //   header: "Referred by",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.referredby}</div>
-    //     </div>
-    //   )
-    // },
     {
       accessorKey: "norecords",
       header: ({ column }) => (
@@ -278,10 +255,10 @@ const Overall: React.FC = () => {
       header: "Action",
       cell: ({ row }) => {
         const p = row.original;
-
         return (
           <ViewButton
             onClick={() => {
+              // 1. Prepare data - Include address if available in 'p' (update getUniqueAnimalbitePatients serializer to return address if needed)
               const patientData = {
                 pat_id: p.id,
                 pat_type: p.patientType,
@@ -292,7 +269,6 @@ const Overall: React.FC = () => {
                   per_sex: p.gender
                 }
               };
-
               navigate("/services/animalbites/records", {
                 state: {
                   patientId: p.id,
@@ -306,7 +282,6 @@ const Overall: React.FC = () => {
     }
   ];
 
-  // Export columns
   const exportColumns = [
     { key: "fname", header: "First Name" },
     { key: "lname", header: "Last Name" },
@@ -322,33 +297,6 @@ const Overall: React.FC = () => {
   ];
 
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  // Handle export - fetch all data for export
-  // const handleExport = async () => {
-  //   try {
-  //     showLoading();
-  //     const params: any = {
-  //       export: true,
-  //     };
-
-  //     if (debouncedSearchQuery) {
-  //       params.search = debouncedSearchQuery;
-  //     }
-
-  //     if (filterValue !== "all") {
-  //       params.filter = filterValue;
-  //     }
-
-  //     const exportData = await getUniqueAnimalbitePatients(params);
-  //     return exportData;
-  //   } catch (err) {
-  //     console.error("Export error:", err);
-  //     toast.error("Failed to export data");
-  //     return [];
-  //   } finally {
-  //     hideLoading();
-  //   }
-  // };
 
   return (
     <MainLayoutComponent title="Animal Bite Records" description="Manage and view animal bite records">
@@ -366,7 +314,6 @@ const Overall: React.FC = () => {
               headerClassName="pb-2"
               contentClassName="pt-0"
             />
-
             <EnhancedCardLayout
               title="Resident Cases"
               description="Permanent residents with animal bites"
@@ -377,7 +324,6 @@ const Overall: React.FC = () => {
               headerClassName="pb-2"
               contentClassName="pt-0"
             />
-
             <EnhancedCardLayout
               title="Transient Cases"
               description="Temporary patients with animal bites"
@@ -417,6 +363,16 @@ const Overall: React.FC = () => {
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
+
+            {/* SITIO FILTER */}
+            <FilterSitio 
+              sitios={sitios} 
+              isLoading={isLoadingSitios} 
+              selectedSitios={selectedSitios} 
+              onSitioSelection={handleSitioSelection} 
+              onSelectAll={handleSelectAllSitios} 
+              manualSearchValue="" 
+            />
           </div>
 
           <ProtectedComponent exclude={["DOCTOR"]}>
@@ -427,6 +383,18 @@ const Overall: React.FC = () => {
             </div>
           </ProtectedComponent>
         </div>
+
+        {/* SITIO CHIPS */}
+        {selectedSitios.length > 0 && (
+          <SelectedFiltersChips 
+            items={selectedSitios} 
+            onRemove={(sitio: any) => handleSitioSelection(sitio, false)} 
+            onClearAll={() => setSelectedSitios([])} 
+            label="Filtered by sitios" 
+            chipColor="bg-blue-100" 
+            textColor="text-blue-800" 
+          />
+        )}
 
         <div className="h-full w-full rounded-md">
           {/* Table Controls */}
@@ -460,11 +428,6 @@ const Overall: React.FC = () => {
                       data={patients} 
                       filename="animal-bite-records" 
                       columns={exportColumns} 
-                      // onClick={async () => {
-                      //   const exportData = await handleExport();
-                      //   // Update the data with full export results
-                      //   return exportData.results || [];
-                      // }}
                     />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -511,7 +474,6 @@ const Overall: React.FC = () => {
             <ReferralFormModal
               onClose={handleReferralFormClose}
               onAddPatient={(newPatient) => {
-                console.log("New patient added:", newPatient);
                 fetchAnimalBiteRecords();
                 fetchStats().then(setStats);
               }}

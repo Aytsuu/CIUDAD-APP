@@ -26,7 +26,8 @@ export const updateVaccineDetails = async (vaccineId: number, formData: any) => 
       ageGroup: Number(formData.ageGroup.split(",")[0]) || 0, // Ensure ageGroup is a number
       specify_age: formData.ageGroup === "0-5" ? String(formData.specifyAge) : formData.ageGroup,
       vaccat_id: 1,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      staff: formData.staff
     };
 
     const res = await api2.patch(`inventory/vac_list/${vaccineId}/`, updatePayload);

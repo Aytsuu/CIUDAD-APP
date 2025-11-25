@@ -23,10 +23,7 @@ export const FirstAidColumns = ({
     accessorKey: "fa_name",
     header: "Item Name",
   },
-  {
-    accessorKey: "cat_name",
-    header: "Category",
-  },
+  
   {
     accessorKey: "action",
     header: "Action",

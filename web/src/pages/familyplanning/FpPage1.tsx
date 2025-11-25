@@ -242,7 +242,7 @@ const { setValue, getValues } = form
         api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
       const [bodyMeasurementsResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
-      console.log("Body measurement: ", bodyMeasurementsResponse)
+      // console.log("Body measurement: ", bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
@@ -293,8 +293,8 @@ const { setValue, getValues } = form
         lastDeliveryDate: lastPrevPregResponse.data?.last_delivery_date || "",
         typeOfLastDelivery: lastPrevPregResponse.data?.last_delivery_type || "",
       };
-      console.log("New form data:", newFormData); // Debug log
-      console.log("Final form data address:", newFormData.address); // Debug log
+      // console.log("New form data:", newFormData); // Debug log
+      // console.log("Final form data address:", newFormData.address); // Debug log
 
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);
@@ -388,7 +388,7 @@ const { setValue, getValues } = form
         const pageSize = firstPageData.results.length;
         const totalPages = Math.ceil(totalCount / pageSize);
 
-        console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
+        // console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
 
         // Create array of promises for all pages
         const pagePromises = [Promise.resolve(firstPageResponse)];
@@ -405,10 +405,9 @@ const { setValue, getValues } = form
           response.data.results || []
         );
 
-        console.log("All commodities fetched:", allCommodities);
-        console.log("Total commodities count:", allCommodities.length);
+        // console.log("All commodities fetched:", allCommodities);
+        // console.log("Total commodities count:", allCommodities.length);
 
-        // ... rest of the filtering and formatting logic remains the same
         let filteredCommodities = allCommodities;
 
         // Apply filters (same as above)

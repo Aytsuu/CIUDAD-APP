@@ -1,24 +1,13 @@
 import React, { useMemo, useState, useCallback } from "react"
 import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native"
-import {
-  ChevronLeft,
-  User,
-  FileText,
-  AlertCircle,
-  Package,
-  Clock,
-  Shield,
-  Activity,
-  // ChevronRight is no longer needed here as it's in PaginationControls
-} from "lucide-react-native"
+import { ChevronLeft,User,FileText,AlertCircle,Package,Clock,Shield,Activity } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
 import { usePatientRecordsByPatId } from "./db-request/get-query"
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-// ADDED: Import the component you provided
-import { PaginationControls } from "../components/pagination-layout" // <-- Adjust path if needed
+import { PaginationControls } from "../components/pagination-layout" 
 
 export default function AnimalBiteIndividualScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>()

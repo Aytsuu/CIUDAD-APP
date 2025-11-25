@@ -53,13 +53,14 @@ import { useConciliationSectionCards } from "@/components/analytics/summon/conci
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
 
-import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
+// import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
 import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
-import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
 import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 import { PopulationAnalyticsTabs } from "@/components/analytics/health/health-profiling/population-analytics-tabs";
 // import { NutritionalStatusSummaryChart } from "@/components/analytics/health/health-profiling/nutritional-status-summary-chart";
+import { PendingAppointmentsSidebar } from "@/components/analytics/health/pending-appointments-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -275,6 +276,10 @@ export const getItemsConfig = (
 
         chart: [
           {
+            title: "Population Structure",
+            element: <PopulationAnalyticsTabs />
+          },
+          {
             title: "0-72 mos Nutritional Status",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
@@ -286,10 +291,7 @@ export const getItemsConfig = (
             title: "Maternal",
             element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
           },
-          {
-            title: "Population Structure",
-            element: <PopulationAnalyticsTabs />
-          },
+         
           // {
           //   title: "Health Profiling Summary",
           //   element: <NutritionalStatusSummaryChart />
@@ -314,12 +316,20 @@ export const getItemsConfig = (
 
         sidebar: [
           {
-            title: "Pending Medical Appointments",
-            element: <PendingMedicalAppointmentsSidebar />,
+            title: "Weekly Schedule",
+            element: <SchedulerSidebar />,
           },
+          // {
+          //   title: "Pending Medical Appointments",
+          //   element: <PendingMedicalAppointmentsSidebar />,
+          // },
+          // {
+          //   title: "Pending Prenatal Appointments",
+          //   element: <PendingPrenatalAppSidebar />,
+          // },
           {
-            title: "Pending Prenatal Appointments",
-            element: <PendingPrenatalAppSidebar />,
+            title: "Pending Appointments",
+            element: <PendingAppointmentsSidebar />,
           },
           {
             title: "Pending Medicine Requests",
@@ -334,10 +344,7 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          {
-            title: "Weekly Schedule",
-            element: <SchedulerSidebar />,
-          },
+          
           {
             title: "Medicine Alerts",
             element: <MedicineAlertsSidebar />,

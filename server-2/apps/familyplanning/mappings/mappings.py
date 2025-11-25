@@ -40,15 +40,20 @@ class PatientListForOverallTable(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
-        # Start with FP_type objects since that's where the main data is
         queryset = FP_type.objects.select_related(
             "fprecord",
             "fprecord__pat",
-            "fprecord__pat__rp_id__per", 
+            "fprecord__pat__rp_id",
+            "fprecord__pat__rp_id__per",
             "fprecord__pat__trans_id",
+            "fprecord__pat__trans_id__tradd_id", 
+        ).prefetch_related(
+            "fprecord__pat__rp_id__per__personal_addresses", 
+            "fprecord__pat__rp_id__per__personal_addresses__add",
+            "fprecord__pat__rp_id__per__personal_addresses__add__sitio"
         ).order_by("-fprecord__created_at")
         
-        # Apply search filter if 'search' query parameter is present
+        # 2. Apply Standard Filters
         search_query = self.request.query_params.get('search', None)
         if search_query:
             queryset = queryset.filter(
@@ -61,92 +66,117 @@ class PatientListForOverallTable(generics.ListAPIView):
                 Q(fpt_method_used__icontains=search_query)
             ).distinct()
         
-        # Apply client_type filter if 'client_type' query parameter is present
         client_type_filter = self.request.query_params.get('client_type', None)
         if client_type_filter and client_type_filter != "all":
             queryset = queryset.filter(fpt_client_type__iexact=client_type_filter).distinct()
         
-        # NEW: Apply patient_type filter if 'patient_type' query parameter is present
         patient_type_filter = self.request.query_params.get('patient_type', None)
         if patient_type_filter and patient_type_filter != "all":
             queryset = queryset.filter(fprecord__pat__pat_type__iexact=patient_type_filter).distinct()
-        
+
         return queryset
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         
-        # Get distinct patients with their latest record
+        # 3. Get Sitio Filter
+        sitio_filter = self.request.query_params.get('sitio', None)
+        target_sitios = []
+        if sitio_filter:
+            target_sitios = [s.strip().lower() for s in sitio_filter.split(',') if s.strip()]
+            print(f"🔎 [DEBUG] Filtering for Sitios: {target_sitios}")
+
         patient_data_map = {}
+        
         for fp_type in queryset:
             record = fp_type.fprecord
+            if not record.pat:
+                continue
+            
             patient_id = record.pat.pat_id
             
-            # Only take the latest record per patient
             if patient_id not in patient_data_map:
-                patient_entry = self._build_patient_entry(record, fp_type)
+                # Debug flag true if we are filtering
+                debug_mode = len(target_sitios) > 0
+                patient_entry = self._build_patient_entry(record, fp_type, debug=debug_mode)
+                
+                # --- 4. STRICT FILTERING (Python Side) ---
+                if target_sitios:
+                    current_sitio = patient_entry.get("current_sitio", "").lower()
+                    
+                    match_found = False
+                    for target in target_sitios:
+                        if target in current_sitio:
+                            match_found = True
+                            break
+                    
+                    if not match_found:
+                        # print(f"   ❌ SKIP: {patient_entry['patient_name']} - Address: {current_sitio}")
+                        continue 
+                    else:
+                        print(f"   ✅ KEEP: {patient_entry['patient_name']} - Address: {current_sitio}")
+                
                 patient_data_map[patient_id] = patient_entry
         
-        # Convert to list for pagination
         patient_list = list(patient_data_map.values())
         
-        # Manual pagination since we transformed the data
         page = self.paginate_queryset(patient_list)
         if page is not None:
             return self.get_paginated_response(page)
         
         return Response(patient_list)
     
-    def _build_patient_entry(self, record, fp_type):
-        """Helper method to build patient entry data"""
+    def _build_patient_entry(self, record, fp_type, debug=False):
         patient_id = record.pat.pat_id
         patient_type = record.pat.pat_type
-        
-        raw_subtype = fp_type.fpt_subtype if fp_type else "N/A"
-        subtype = map_subtype_display(raw_subtype)
-        
-        # Count distinct methods instead of total records
-        from django.db.models import Count
-        
-        # Get distinct method count for this patient
-        method_count = FP_type.objects.filter(
-            fprecord__pat=record.pat
-        ).values('fpt_method_used').distinct().count()
-        
-        # Get total visits count (optional - for reference)
+        subtype = fp_type.fpt_subtype if fp_type else "N/A"
+
+        method_count = FP_type.objects.filter(fprecord__pat=record.pat).values('fpt_method_used').distinct().count()
         total_visits = FP_Record.objects.filter(pat=record.pat).count()
         
-        # Build basic patient entry
         patient_entry = {
             "patient_id": patient_id,
             "patient_name": "",
             "patient_age": None,
             "sex": "",
-            "client_type": map_client_type(fp_type.fpt_client_type) if fp_type else "N/A",
+            "current_sitio": "N/A", 
+            "client_type": fp_type.fpt_client_type if fp_type else "N/A",
             "subtype": subtype,
             "patient_type": patient_type,
             "method_used": fp_type.fpt_method_used if fp_type else "N/A",
             "created_at": record.created_at.isoformat() if record.created_at else None,
             "fprecord_id": record.fprecord_id,
-            "record_count": method_count,  # Use distinct method count instead of total visits
-            "total_visits": total_visits,  # Keep this for reference if needed
+            "record_count": method_count,
+            "total_visits": total_visits,
         }
         
-        # Add patient details based on type
         if patient_type == "Resident" and record.pat.rp_id and record.pat.rp_id.per:
             personal = record.pat.rp_id.per
             patient_entry["patient_name"] = f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
-            patient_entry["patient_age"] = calculate_age_from_dob(personal.per_dob.isoformat()) if personal.per_dob else None
             patient_entry["sex"] = personal.per_sex
-        
+            patient_entry["patient_age"] = calculate_age_from_dob(personal.per_dob.isoformat()) if personal.per_dob else None
+            # Explicitly fetch the latest address
+            if hasattr(personal, 'personal_addresses'):
+                latest_pa = personal.personal_addresses.select_related('add', 'add__sitio').order_by('-pa_id').first()
+                
+                if latest_pa and latest_pa.add:
+                    if latest_pa.add.sitio:
+                        patient_entry["current_sitio"] = latest_pa.add.sitio.sitio_name
+                    elif latest_pa.add.add_external_sitio:
+                        patient_entry["current_sitio"] = latest_pa.add.add_external_sitio
+            
+            if debug:
+                 print(f"   --- 🏠 Address Check for {patient_entry['patient_name']}: Found '{patient_entry['current_sitio']}'")
+
         elif patient_type == "Transient" and record.pat.trans_id:
             transient = record.pat.trans_id
             patient_entry["patient_name"] = f"{transient.tran_lname}, {transient.tran_fname} {transient.tran_mname or ''}".strip()
-            patient_entry["patient_age"] = calculate_age_from_dob(transient.tran_dob.isoformat()) if transient.tran_dob else None
             patient_entry["sex"] = transient.tran_sex
+            patient_entry["patient_age"] = calculate_age_from_dob(transient.tran_dob.isoformat()) if transient.tran_dob else None
+            if transient.tradd_id and transient.tradd_id.tradd_sitio:
+                patient_entry["current_sitio"] = transient.tradd_id.tradd_sitio
         
         return patient_entry
-    
     
 @api_view(["GET"])
 def get_fp_methods_count_for_patient(request, patient_id):
@@ -299,9 +329,9 @@ def get_detailed_monthly_fp_report(request, year, month):
 
         today = timezone.now().date()
         
-        print(f"--- Generating Report for {year}-{month} (Corrected 1-15/16-31 Logic) ---")
-        print(f"BOM (1-15) Range: {bom_start_date} to {bom_end_date}")
-        print(f"EOM (16-31) Range: {eom_start_date} to {eom_end_date}")
+        # print(f"--- Generating Report for {year}-{month} (Corrected 1-15/16-31 Logic) ---")
+        # print(f"BOM (1-15) Range: {bom_start_date} to {bom_end_date}")
+        # print(f"EOM (16-31) Range: {eom_start_date} to {eom_end_date}")
 
         for method in methods_to_loop:
             is_one_time_method = method in ONE_TIME_METHODS
@@ -471,6 +501,7 @@ def map_subtype_display(subtype):
         # Add more mappings as needed
     }
     return subtype_map.get(subtype)  # Fallback to title case
+
 
 def map_reason_display(reason):
     """Map reason IDs to human-readable labels"""

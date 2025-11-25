@@ -20,6 +20,10 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Form } from "@/components/ui/form/form";
 import { useVaccinationMutation } from "../queries/adminsitered";
+import { useFetchImmunizationSuppliesWithStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/queries/AntigenFetchQueries";
+import { Combobox } from "@/components/ui/combobox";
+import { Label } from "@/components/ui/label";
+import { showErrorToast } from "@/components/ui/toast";
 
 const followUpSchema = z.object({
   followv_date: z.string().min(1, "Follow-up date is required"),
@@ -40,6 +44,19 @@ export default function ScheduledVaccine() {
   
   const isLoading = isUnvaccinatedLoading || isFollowVaccineLoading || isVachistLoading || isCompleteVaccineLoading;
   const [currentVaccination, setCurrentVaccination] = useState<VaccinationRecord | null>(null);
+
+  // Fetch immunization supplies with stock filtering
+  const { data: immunizationSupplies, isLoading: isSuppliesLoading } = useFetchImmunizationSuppliesWithStock();
+  const [selectedSupplyId, setSelectedSupplyId] = useState("");
+  const [selectedSupplyDisplay, setSelectedSupplyDisplay] = useState("");
+  const [selectedSupplyData, setSelectedSupplyData] = useState<any>(null);
+
+  // Debug immunization supplies
+  useEffect(() => {
+    console.log("Immunization Supplies Data:", immunizationSupplies);
+    console.log("Is Loading:", isSuppliesLoading);
+    console.log("Formatted supplies:", immunizationSupplies?.formatted);
+  }, [immunizationSupplies, isSuppliesLoading]);
 
   // Use the mutation hook
   const { mutate: submitVaccination, isPending: isSubmitting } = useVaccinationMutation();
@@ -123,6 +140,14 @@ export default function ScheduledVaccine() {
     );
   }, [vaccinationHistory, Vaccination]);
 
+  useEffect(() => {
+    console.log("Prev:", previousVaccination);
+    console.log("Current:", currentVaccination);
+    console.log("Active vaccination:", activeVaccination);
+    console.log("Form values:", form.getValues());
+    
+  }, [previousVaccination, currentVaccination, activeVaccination, form]);
+
   if (!patientData || !Vaccination) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -131,28 +156,27 @@ export default function ScheduledVaccine() {
     );
   }
 
-  useEffect(() => {
-    console.log("Prev:", previousVaccination);
-    console.log("Current:", currentVaccination);
-    console.log("Active vaccination:", activeVaccination);
-    console.log("Form values:", form.getValues());
-  }, [previousVaccination, currentVaccination, activeVaccination, form]);
-
   const handleSubmit = () => {
     const formData = form.getValues();
     console.log("Submitting vaccination with:", {
       vaccination: activeVaccination,
       previousVaccination,
       followUpData: activeVaccination?.follow_up_visit ? formData : undefined,
-      patientId
+      patientId,
     });
+
+    if(selectedSupplyData=="" || !selectedSupplyData){
+      showErrorToast("Please select an immunization supply from the list.");
+      return;
+    }
     
     submitVaccination({ 
       vaccination: activeVaccination,
       previousVaccination, // This is the key fix - passing previousVaccination
       followUpData: activeVaccination?.follow_up_visit ? formData : undefined,
       patientId ,
-      patrec_id: patientData.patrec_id || ""
+      patrec_id: patientData.patrec_id || "",
+      imzStck_id: selectedSupplyId
     })
   };
 
@@ -221,6 +245,64 @@ export default function ScheduledVaccine() {
                         </Form>
                       </div>
                     )}
+
+                    {/* Immunization Supplies Combobox */}
+                    <div className="mt-6 p-4 border rounded-lg bg-white">
+                      <Label className="block mb-2 font-semibold">Select Immunization Supply</Label>
+                      <Combobox
+                        options={immunizationSupplies?.formatted || []}
+                        value={selectedSupplyDisplay}
+                        onChange={(value) => {
+                          console.log("Selected immunization supply:", value);
+                          if (value) {
+                            // Find the selected supply to get all its data
+                            const selectedSupply = immunizationSupplies?.formatted?.find(
+                              (supply: any) => supply.id === value
+                            );
+                            
+                            if (selectedSupply) {
+                              console.log("Selected supply data:", selectedSupply);
+                              console.log("Extracted imzStck_id:", selectedSupply.imzStck_id);
+                              console.log("Extracted inv_id:", selectedSupply.inv_id);
+                              console.log("Available qty:", selectedSupply.availableQty);
+                              console.log("Batch number:", selectedSupply.batchNumber);
+
+                              setSelectedSupplyDisplay(value);
+                              setSelectedSupplyId(selectedSupply.imzStck_id);
+                              setSelectedSupplyData(selectedSupply);
+                            }
+                          } else {
+                            setSelectedSupplyDisplay("");
+                            setSelectedSupplyId("");
+                            setSelectedSupplyData(null);
+                          }
+                        }}
+                        placeholder={isSuppliesLoading ? "Loading supplies..." : "Select immunization supply"}
+                        emptyMessage="No immunization supplies available in stock"
+                        triggerClassName="w-full"
+                      />
+                      {selectedSupplyData && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-md space-y-1">
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Stock ID:</span> {selectedSupplyData.imzStck_id}
+                          </p>
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Inventory ID:</span> {selectedSupplyData.inv_id}
+                          </p>
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Batch Number:</span> {selectedSupplyData.batchNumber}
+                          </p>
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Available:</span> {selectedSupplyData.availableQty} {selectedSupplyData.unit}
+                          </p>
+                        </div>
+                      )}
+                      {!isSuppliesLoading && immunizationSupplies?.formatted && immunizationSupplies.formatted.length === 0 && (
+                        <p className="text-sm text-yellow-600 mt-2">
+                          No immunization supplies available in stock
+                        </p>
+                      )}
+                    </div>
 
                     <VaccinationHistoryRecord 
                       relevantHistory={relevantHistory} 

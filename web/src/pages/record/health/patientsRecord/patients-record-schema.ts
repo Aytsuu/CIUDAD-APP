@@ -1,6 +1,12 @@
 import * as z from "zod"
 
 export const patientRecordSchema = z.object({
+  isTransferredFrom: z.boolean().default(false),
+  location: z.object({
+    sitio: z.string().optional(),
+    brgy: z.string().optional(),
+    city: z.string().optional(),
+  }),
   lastName: z.string().min(1, "Last name is required"),
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
@@ -8,6 +14,7 @@ export const patientRecordSchema = z.object({
   contact: z.string().min(1, "Contact is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   patientType: z.string().min(1, "Patient type is required"),
+  patientStatus: z.string().optional(),
   houseNo: z.string().min(1, "House number is required"),
   philhealthId: z.string().optional().default(""),
   address: z.object({

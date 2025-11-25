@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, SafeAreaView, StatusBar, Platform, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, SafeAreaView, StatusBar, Platform, RefreshControl } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Calendar, Clock, AlertCircle, ChevronDown, ChevronLeft } from 'lucide-react-native';
+import { Calendar, Clock, AlertCircle, ChevronDown, ChevronLeft, Info } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { api2 } from '@/api/api';
 import { format, isWeekend } from 'date-fns';
@@ -28,6 +28,10 @@ const SetSchedule = () => {
   const [pmAvailable, setPmAvailable] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  
+  // CHANGED: Store an array of pending dates strings instead of a boolean
+  const [pendingDates, setPendingDates] = useState<string[]>([]);
+
   const { user } = useAuth();
   const rpId = user?.rp;
 
@@ -35,16 +39,28 @@ const SetSchedule = () => {
     return format(date, 'yyyy-MM-dd');
   };
 
+  // NEW: Helper to check if the currently selected date is in the pending list
+  const isCurrentDatePending = pendingDates.includes(formatDateToISO(selectedDate));
+
   const getCurrentSlot = (date: Date): Slot | undefined => {
     const dateStr = formatDateToISO(date);
     return availableSlots.find((s: Slot) => s.date === dateStr);
   };
 
-  // Filter out weekends and only show available dates
-  const availableDates = availableSlots.filter(slot => {
-    const date = new Date(slot.date);
-    return !isWeekend(date) && (slot.am_available || slot.pm_available);
-  });
+  // UPDATED: Fetch list of pending dates
+  const checkPendingStatus = useCallback(async () => {
+    if (!rpId) return;
+    try {
+      const response = await api2.get(`/medical-consultation/check-pending-status/?rp_id=${rpId}`);
+      if (response.data && Array.isArray(response.data.pending_dates)) {
+        setPendingDates(response.data.pending_dates);
+      } else {
+        setPendingDates([]);
+      }
+    } catch (error) {
+      console.error('Failed to check pending status:', error);
+    }
+  }, [rpId]);
 
   const fetchAvailableSlots = useCallback(async (showLoader = true) => {
     if (showLoader) {
@@ -55,57 +71,31 @@ const SetSchedule = () => {
 
     try {
       const response = await api2.get('/medical-consultation/available-slots/');
-
-      if (!Array.isArray(response.data)) {
-        throw new Error('Expected an array of slots, but received: ' + typeof response.data);
-      }
+      if (!Array.isArray(response.data)) throw new Error('Invalid response');
 
       const slots: Slot[] = response.data;
-
-      // Filter out weekends and validate slots
       const validSlots = slots.filter(slot => {
-        if (!slot.date || !slot.day_name || typeof slot.am_available !== 'boolean' || typeof slot.pm_available !== 'boolean') {
-          console.warn('Invalid slot format:', slot);
-          return false;
-        }
-
         const date = new Date(slot.date);
-        return !isWeekend(date); // Exclude weekends
+        return !isWeekend(date);
       });
 
       setAvailableSlots(validSlots);
 
-      // Auto-select first available date
+      // Initialize with valid data if not set
       const firstAvailableSlot = validSlots.find((slot: Slot) => {
         try {
-          return new Date(slot.date) >= new Date() && (slot.am_available || slot.pm_available);
-        } catch (e) {
-          console.warn('Invalid date in slot:', slot.date);
-          return false;
-        }
+          return new Date(slot.date) >= new Date();
+        } catch (e) { return false; }
       });
 
-      if (firstAvailableSlot) {
+      if (firstAvailableSlot && !selectedDate) {
         const initialDate = new Date(firstAvailableSlot.date);
         setSelectedDate(initialDate);
         setAmAvailable(firstAvailableSlot.am_available);
         setPmAvailable(firstAvailableSlot.pm_available);
-      } else {
-        setAmAvailable(false);
-        setPmAvailable(false);
-        if (showLoader) {
-          Alert.alert('No Slots', 'No available slots, or check the service scheduler.');
-        }
       }
     } catch (error: any) {
-      console.error('Fetch Slots Error:', {
-        message: error.message,
-        response: error.response,
-        config: error.config,
-      });
-      if (showLoader) {
-        Alert.alert('Error', `Failed to load available slots: ${error.message || 'Network error. Please check your connection.'}`);
-      }
+      if (showLoader) Alert.alert('Error', 'Failed to load slots.');
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -114,48 +104,59 @@ const SetSchedule = () => {
 
   useEffect(() => {
     fetchAvailableSlots();
-  }, [fetchAvailableSlots]);
+    checkPendingStatus();
+  }, [fetchAvailableSlots, checkPendingStatus]);
 
-  // Auto-refresh slots every 30 seconds to show updated slot counts
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isLoading && !refreshing) {
         fetchAvailableSlots(false);
+        checkPendingStatus();
       }
-    }, 30000); // Refresh every 30 seconds
-
+    }, 30000); 
     return () => clearInterval(interval);
-  }, [isLoading, refreshing, fetchAvailableSlots]);
+  }, [isLoading, refreshing, fetchAvailableSlots, checkPendingStatus]);
 
   const onDateChange = (event: any, selected?: Date) => {
     setShowDatePicker(false);
     if (selected) {
-      // Check if selected date is weekend
       if (isWeekend(selected)) {
-        Alert.alert('Weekend', 'Appointments are not available on weekends. Please select a weekday.');
+        Alert.alert('Weekend', 'No appointments on weekends.');
         return;
       }
 
+      // Allow selection even if pending, logic is handled in render
+      setSelectedDate(selected); 
+      
       const slot = getCurrentSlot(selected);
-      if (slot && (slot.am_available || slot.pm_available)) {
-        setSelectedDate(selected);
-        setSelectedMeridiem('');
+      if (slot) {
+        // Only clear meridiem if the availability changed significantly
+        if (!slot.am_available && selectedMeridiem === 'AM') setSelectedMeridiem('');
+        if (!slot.pm_available && selectedMeridiem === 'PM') setSelectedMeridiem('');
+        
         setAmAvailable(slot.am_available);
         setPmAvailable(slot.pm_available);
       } else {
-        Alert.alert('No slot', 'This date is not available for booking. Please check the scheduler.');
+        setAmAvailable(false);
+        setPmAvailable(false);
       }
     }
   };
 
   const handleSubmit = async () => {
     if (!rpId) {
-      Alert.alert('Authentication Error', 'User ID is missing. Please log in again.');
+      Alert.alert('Error', 'User ID missing.');
       return;
+    }
+    
+    // Block submission if current date is pending
+    if (isCurrentDatePending) {
+        Alert.alert('Pending Request', 'You already have a pending appointment on this date.');
+        return;
     }
 
     if (!selectedDate || !selectedMeridiem || !chiefComplaint.trim()) {
-      Alert.alert('Required Fields', 'Please select a date, an AM/PM slot, and describe your complaint.');
+      Alert.alert('Required Fields', 'Please fill all fields.');
       return;
     }
 
@@ -177,36 +178,20 @@ const SetSchedule = () => {
           {
             text: 'OK',
             onPress: () => {
-              // Reset form
               setSelectedDate(new Date());
               setSelectedMeridiem('');
               setChiefComplaint('');
-              setAmAvailable(false);
-              setPmAvailable(false);
-              
-              // Refresh slots
               fetchAvailableSlots(false);
-              
-              // Navigate to home AFTER user taps OK
+              checkPendingStatus();
               router.replace('/home');
             },
           },
         ],
-        { cancelable: false } // Prevents dismissing by tapping outside
+        { cancelable: false }
       );
     }
     } catch (error: any) {
-      let errorMessage = 'Failed to book appointment. Please check the date/time slot.';
-      if (error.response?.data) {
-        if (typeof error.response.data.error === 'string') {
-          errorMessage = error.response.data.error;
-        } else if (error.response.data.error) {
-          errorMessage = Object.values(error.response.data.error).join(', ');
-        } else {
-          errorMessage = JSON.stringify(error.response.data);
-        }
-      }
-      Alert.alert('Booking Error', errorMessage);
+      Alert.alert('Booking Error', error.response?.data?.error || 'Failed to book.');
     } finally {
       setIsLoading(false);
     }
@@ -217,60 +202,30 @@ const SetSchedule = () => {
     const selected = selectedMeridiem === meridiem;
     const currentSlot = getCurrentSlot(selectedDate);
     const availableCount = meridiem === 'AM' ? currentSlot?.am_available_count : currentSlot?.pm_available_count;
-    const countDisplay = availableCount !== undefined ? `(${availableCount} slots left)` : '';
-
+    
     return (
       <TouchableOpacity
         className={`flex-1 rounded-xl p-3 items-center mx-1 ${selected ? 'bg-blue-600' : 'bg-gray-100'} ${!available ? 'opacity-50' : ''}`}
-        onPress={() => available ? setSelectedMeridiem(meridiem) : Alert.alert('Unavailable', 'This slot is not available.')}
-        disabled={!available}
+        onPress={() => available ? setSelectedMeridiem(meridiem) : null}
+        // Disable interaction if not available OR if date is pending
+        disabled={!available || isCurrentDatePending}
       >
         <Clock size={20} color={selected ? '#fff' : '#2563EB'} />
         <Text className={`font-bold mt-1 ${selected ? 'text-white' : 'text-blue-600'}`}>{meridiem}</Text>
-        <Text className={`text-xs ${selected ? 'text-blue-100' : 'text-gray-500'}`}>{countDisplay}</Text>
-      </TouchableOpacity>
-    );
-  };
-
-  // FlatList item for date selection
-  const DateItem = ({ item }: { item: Slot }) => {
-    const date = new Date(item.date);
-    const isSelected = formatDateToISO(selectedDate) === item.date;
-
-    return (
-      <TouchableOpacity
-        className={`mx-2 p-4 rounded-xl border-2 ${isSelected ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-200'}`}
-        onPress={() => {
-          setSelectedDate(date);
-          setSelectedMeridiem('');
-          setAmAvailable(item.am_available);
-          setPmAvailable(item.pm_available);
-        }}
-      >
-        <Text className={`font-bold ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
-          {format(date, 'EEE, MMM d')}
+        <Text className={`text-xs ${selected ? 'text-blue-100' : 'text-gray-500'}`}>
+            {availableCount !== undefined ? `(${availableCount} left)` : ''}
         </Text>
-        <View className="flex-row justify-between mt-2">
-          <Text className={`text-xs ${item.am_available ? 'text-green-600' : 'text-red-500'}`}>
-            AM: {item.am_available_count} slots
-          </Text>
-          <Text className={`text-xs ${item.pm_available ? 'text-green-600' : 'text-red-500'}`}>
-            PM: {item.pm_available_count} slots
-          </Text>
-        </View>
       </TouchableOpacity>
     );
   };
 
-  const isSubmitDisabled = isLoading || !rpId || !selectedDate || !selectedMeridiem || !chiefComplaint.trim();
+  // Submit is disabled if loading, missing data, OR current date is pending
+  const isSubmitDisabled = isLoading || !rpId || !selectedDate || !selectedMeridiem || !chiefComplaint.trim() || isCurrentDatePending;
 
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
-        >
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
@@ -284,58 +239,72 @@ const SetSchedule = () => {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => fetchAvailableSlots(false)}
-              colors={['#2563EB']}
-              tintColor="#2563EB"
+              onRefresh={() => { fetchAvailableSlots(false); checkPendingStatus(); }}
+              colors={['#2563EB']} tintColor="#2563EB"
             />
           }
         >
+            {/* Warning Banner: Only show if the SELECTED date is pending */}
+            {isCurrentDatePending && (
+            <View className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex-row items-center">
+                <Info size={24} color="#ea580c" />
+                <View className="ml-3 flex-1">
+                <Text className="text-orange-800 font-bold text-md">Date Unavailable</Text>
+                <Text className="text-orange-600 text-sm mt-1">
+                    You already have a pending request on this date. Please select another date.
+                </Text>
+                </View>
+            </View>
+            )}
+
           {isLoading && availableSlots.length === 0 ? (
             <LoadingState/>
           ) : (
             <>
-              <Text className='text-lg font-semibold text-gray-700 mb-3'>1. Select Date</Text>
+                <Text className='text-lg font-semibold text-gray-700 mb-3'>1. Select Date</Text>
 
-              <View className='flex-row items-center justify-between bg-gray-100 rounded-xl p-4 mb-4'>
-                <Calendar size={20} color="#374151" />
-                <Text className='text-md font-medium text-gray-800 flex-1 ml-3'>
-                  {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                </Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(true)} className='p-2 bg-white rounded-full' disabled={isLoading}>
-                  <ChevronDown size={20} color="#2563EB" />
-                </TouchableOpacity>
-              </View>
+                {/* Date Picker is ALWAYS active */}
+                <View className='flex-row items-center justify-between bg-gray-100 rounded-xl p-4 mb-4'>
+                    <Calendar size={20} color="#374151" />
+                    <Text className='text-md font-medium text-gray-800 flex-1 ml-3'>
+                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                    </Text>
+                    <TouchableOpacity onPress={() => setShowDatePicker(true)} className='p-2 bg-white rounded-full' disabled={isLoading}>
+                    <ChevronDown size={20} color="#2563EB" />
+                    </TouchableOpacity>
+                </View>
 
-              {showDatePicker && (
-                <DateTimePicker
-                  value={selectedDate}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  minimumDate={new Date()}
-                  onChange={onDateChange}
-                // Note: filterWeekends prop might not be available on all platforms
-                // You may need to handle this differently based on platform
+                {showDatePicker && (
+                    <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minimumDate={new Date()}
+                    onChange={onDateChange}
+                    />
+                )}
+
+              {/* Only dim the inputs below if the current date is pending */}
+              <View className={isCurrentDatePending ? 'opacity-50' : ''} pointerEvents={isCurrentDatePending ? 'none' : 'auto'}>
+                <Text className='text-lg font-semibold text-gray-700 mb-3'>2. Select Time Slot</Text>
+                <View className='flex-row justify-between mb-6'>
+                    <MeridiemButton meridiem="AM" available={amAvailable} />
+                    <MeridiemButton meridiem="PM" available={pmAvailable} />
+                </View>
+
+                <Text className='text-lg font-semibold text-gray-700 mb-3'>3. Chief Complaint</Text>
+                <TextInput
+                    className='bg-gray-100 rounded-xl p-4 mb-4 h-24'
+                    placeholder="Briefly describe your symptoms or reason for visit"
+                    placeholderTextColor="gray"
+                    value={chiefComplaint}
+                    onChangeText={setChiefComplaint}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    editable={!isLoading && !isCurrentDatePending}
                 />
-              )}
-
-              <Text className='text-lg font-semibold text-gray-700 mb-3'>2. Select Time Slot</Text>
-              <View className='flex-row justify-between mb-6'>
-                <MeridiemButton meridiem="AM" available={amAvailable} />
-                <MeridiemButton meridiem="PM" available={pmAvailable} />
               </View>
-
-              <Text className='text-lg font-semibold text-gray-700 mb-3'>3. Chief Complaint</Text>
-              <TextInput
-                className='bg-gray-100 rounded-xl p-4 mb-4 h-24'
-                placeholder="Briefly describe your symptoms or reason for visit"
-                placeholderTextColor="gray"
-                value={chiefComplaint}
-                onChangeText={setChiefComplaint}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                editable={!isLoading}
-              />
 
               <View className='bg-yellow-100 border border-yellow-300 rounded-xl p-4 mb-8'>
                 <View className='flex-row items-center mb-2'>
@@ -369,7 +338,10 @@ const SetSchedule = () => {
                 onPress={handleSubmit}
                 disabled={isSubmitDisabled}
               >
-                {isLoading ? (
+                {/* Dynamic Button Text */}
+                {isCurrentDatePending ? (
+                   <Text className='text-white font-bold text-lg'>Pending Request on Date</Text>
+                ) : isLoading ? (
                   <Text className='text-white font-bold text-lg'>Booking...</Text>
                 ) : (
                   <Text className='text-white font-bold text-lg'>Schedule Appointment</Text>

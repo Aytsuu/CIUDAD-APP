@@ -18,7 +18,7 @@ export const getCombinedStock = async (page: number, pageSize: number, search?: 
 
 export const getImmunizationStocks = async () => {
   try {
-    const res = await api2.get("inventory/immunization_stock/");
+    const res = await api2.get("inventory/immunization_supplies-stocks/");
     if (res.status == 200) {
       return res.data;
     }

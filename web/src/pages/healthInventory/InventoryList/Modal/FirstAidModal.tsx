@@ -1,26 +1,28 @@
 import { useState, useEffect } from "react";
-import { FormField, FormItem, FormMessage, FormControl, FormLabel, Form } from "@/components/ui/form/form";
+import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { FirstAidType, FirstAidSchema } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAddFirstAid } from "../queries/firstAid/post-queries";
 import { useUpdateFirstAid } from "../queries/firstAid/put-queries";
 import { FormInput } from "@/components/ui/form/form-input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
-import { toast } from "sonner";
+// import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+// import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
+// import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { useFirstAid } from "../queries/firstAid/fetch-queries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useAuth } from "@/context/AuthContext";
 
 interface FirstAidData {
   id: string;
+  fa_id?: string; // Django model uses fa_id as primary key
   fa_name: string;
-  cat_name: string;
-  cat_id: string;
+  // cat_name: string;
+  // cat_id: string;
 }
 
 interface FirstAidModalProps {
@@ -30,10 +32,13 @@ interface FirstAidModalProps {
 }
 
 export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidModalProps) {
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
+  
   const [firstAidName, setFirstAidName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
-  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
+  // const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
   const { mutateAsync: addFirstAidMutation } = useAddFirstAid();
   const { mutateAsync: updateFirstAidMutation } = useUpdateFirstAid();
   const { data: firstAids } = useFirstAid();
@@ -42,26 +47,27 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
       fa_name: initialData?.fa_name || "",
-      cat_id: String(initialData?.cat_id) || ""
+      // cat_id: String(initialData?.cat_id) || ""
+      staff:staff_id
     }
   });
 
-  useEffect(() => {
-    if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
-      const catIdString = String(initialData.cat_id);
-      const categoryExists = categories.some((cat) => String(cat.id) === catIdString);
-      if (categoryExists) {
-        form.setValue("cat_id", catIdString);
-      } else {
-        console.warn(
-          "Category not found in options:",
-          catIdString,
-          "Available:",
-          categories.map((c) => c.id)
-        );
-      }
-    }
-  }, [categories, mode, initialData, form]);
+  // useEffect(() => {
+  //   if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
+  //     const catIdString = String(initialData.cat_id);
+  //     const categoryExists = categories.some((cat) => String(cat.id) === catIdString);
+  //     if (categoryExists) {
+  //       form.setValue("cat_id", catIdString);
+  //     } else {
+  //       console.warn(
+  //         "Category not found in options:",
+  //         catIdString,
+  //         "Available:",
+  //         categories.map((c) => c.id)
+  //       );
+  //     }
+  //   }
+  // }, [categories, mode, initialData, form]);
 
   useEffect(() => {
     const subscription = form.watch(() => {
@@ -74,17 +80,19 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
     const formData = form.getValues();
-    formData.cat_id = String(formData.cat_id);
+    // formData.cat_id = String(formData.cat_id);
 
     try {
       if (mode === "add" || (mode === "edit" && formData.fa_name !== initialData?.fa_name)) {
-        const existingFirstAids = firstAids || [];
+        // Handle both array and paginated response formats
+        const existingFirstAids = Array.isArray(firstAids) 
+          ? firstAids 
+          : (firstAids?.results || []);
 
-        if (!Array.isArray(existingFirstAids)) {
-          throw new Error("Invalid API response - expected an array");
-        }
-
-        if (isDuplicateFirstAid(existingFirstAids, formData.fa_name, mode === "edit" ? initialData?.id : undefined)) {
+        // Use fa_id if available, otherwise fallback to id
+        const currentId = mode === "edit" ? (initialData?.fa_id || initialData?.id) : undefined;
+        
+        if (isDuplicateFirstAid(existingFirstAids, formData.fa_name, currentId)) {
           form.setError("fa_name", {
             type: "manual",
             message: "First Aid name already exists"
@@ -95,7 +103,9 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
       }
 
       if (mode === "edit" && initialData) {
-        await updateFirstAidMutation({ fa_id: initialData.id, data: formData });
+        // Use fa_id if available, otherwise fallback to id
+        const faId = initialData.fa_id || initialData.id;
+        await updateFirstAidMutation({ fa_id: faId, data: formData });
         showSuccessToast("First Aid updated successfully");
       } else {
         await addFirstAidMutation({ data: formData });
@@ -112,39 +122,43 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
   };
 
   const isDuplicateFirstAid = (firstAids: any[], newFirstAid: string, currentId?: string) => {
-    return firstAids.some((fa) => fa.id !== currentId && fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase());
+    return firstAids.some((fa) => {
+      // Compare using fa_id (from Django model) not id
+      const faId = fa.fa_id || fa.id;
+      return faId !== currentId && fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase();
+    });
   };
 
   const onSubmit = (data: FirstAidType) => {
-    if (!data.cat_id) {
-      toast.error("Please select a category");
-      form.setError("cat_id", {
-        type: "manual",
-        message: "Category is required"
-      });
-      return;
-    }
+    // if (!data.cat_id) {
+    //   toast.error("Please select a category");
+    //   form.setError("cat_id", {
+    //     type: "manual",
+    //     message: "Category is required"
+    //   });
+    //   return;
+    // }
     setFirstAidName(data.fa_name);
   };
 
-  const getCurrentCategoryName = () => {
-    if (mode === "add") return "Select category";
+  // const getCurrentCategoryName = () => {
+  //   if (mode === "add") return "Select category";
 
-    const currentId = form.watch("cat_id") || initialData?.cat_id;
-    if (!currentId) return "Select category";
+  //   const currentId = form.watch("cat_id") || initialData?.cat_id;
+  //   if (!currentId) return "Select category";
 
-    const currentIdString = String(currentId);
-    const foundCategory = categories.find((cat) => String(cat.id) === currentIdString);
-    if (foundCategory) return foundCategory.name;
+  //   const currentIdString = String(currentId);
+  //   const foundCategory = categories.find((cat) => String(cat.id) === currentIdString);
+  //   if (foundCategory) return foundCategory.name;
 
-    if (initialData?.cat_name) return initialData.cat_name;
+  //   if (initialData?.cat_name) return initialData.cat_name;
 
-    return "Select category";
-  };
+  //   return "Select category";
+  // };
 
   const formValues = form.watch();
   const isEditMode = mode === "edit";
-  const hasFormChanges = isEditMode && initialData ? formValues.fa_name !== initialData.fa_name || String(formValues.cat_id) !== String(initialData.cat_id) : true;
+  const hasFormChanges = isEditMode && initialData ? formValues.fa_name !== initialData.fa_name /* || String(formValues.cat_id) !== String(initialData.cat_id) */ : true;
 
   if (mode === "edit" && !initialData) {
     return null;
@@ -160,7 +174,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
 
             <FormInput control={form.control} name="fa_name" label="First Aid Name" placeholder="Enter first aid name" />
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="cat_id"
               render={({ field }) => (
@@ -201,7 +215,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
           </div>
 
           <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
@@ -233,7 +247,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
         </form>
       </Form>
 
-      <ConfirmationDialogs />
+      {/* <ConfirmationDialogs /> */}
     </div>
   );
 }

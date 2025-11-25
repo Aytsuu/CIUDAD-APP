@@ -208,7 +208,7 @@ const PrenatalBookingPage: React.FC = () => {
   const proceedWithAppointment = (patientId: string): void => {
     const payload = {
       requested_at: new Date().toISOString(), 
-      requested_date: formatDate(selectedDate), 
+      requested_date: formatDate(selectedDate), // Backend expects YYYY-MM-DD format
       approved_at: null,
       cancelled_at: null,
       completed_at: null,

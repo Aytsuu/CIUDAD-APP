@@ -34,6 +34,7 @@ export const formMedOptions = [
   { id: "Ointment", name: "Ointment" },
   { id: "Cream", name: "Cream" },
   { id: "Gel", name: "Gel" },
+  {id: "Paste", name: "Paste" },
   { id: "Lotion", name: "Lotion" },
   { id: "Solution", name: "Solution" },
   { id: "Suspension", name: "Suspension" },

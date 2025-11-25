@@ -215,7 +215,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "address",
-      size: 300,
+      size: 280,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -268,19 +268,19 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "pregnancy_status",
-      header: "Pregnancy Status",
+      header: "Current Pregnancy Status",
       cell: ({ row }) => {
         const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
         
         return (
           <div className="flex justify-center">
-            {status === "Active" ? (
+            {capitalize(status) === "Active" ? (
               <div className="bg-pink-500 rounded-xl w-24 text-white px-2 py-1">
-              {status}
+              {capitalize(status)}
             </div>
             ) : ( 
               <div className="bg-green-500 rounded-xl w-24 text-white px-2 py-1">
-                {status}
+                {capitalize(status)}
               </div>
             )}
           </div>

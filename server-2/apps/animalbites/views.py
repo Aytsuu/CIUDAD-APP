@@ -23,7 +23,6 @@ class StandardPagination(PageNumberPagination):
     page_size_query_param = 'limit'  # Matches your frontend pageSize
     max_page_size = 100
 
-
 class UniqueAnimalBitePatientsView(generics.ListAPIView):
     serializer_class = AnimalBiteUniquePatientSerializer
     pagination_class = StandardPagination
@@ -56,7 +55,7 @@ class UniqueAnimalBitePatientsView(generics.ListAPIView):
             ),
         )
 
-        # Apply filter
+        # --- FILTERS ---
         filter_value = self.request.query_params.get('filter', 'all')
         if filter_value != 'all':
             if filter_value == 'bite':
@@ -68,10 +67,25 @@ class UniqueAnimalBitePatientsView(generics.ListAPIView):
             elif filter_value == 'transient':
                 queryset = queryset.filter(pat_id__pat_type='Transient')
 
-        # Apply search - CORRECTED RELATIONSHIP PATHS
+        # --- SITIO FILTER (Database Level) ---
+        sitio_filter = self.request.query_params.get('sitio', '')
+        if sitio_filter:
+            sitios = [s.strip() for s in sitio_filter.split(',') if s.strip()]
+            
+            if sitios:
+                sitio_query = Q()
+                for sitio in sitios:
+                    # 1. Resident Address Path
+                    sitio_query |= Q(pat_id__rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=sitio)
+                    
+                    # 2. Transient Address Path
+                    sitio_query |= Q(pat_id__trans_id__tradd_id__tradd_sitio__icontains=sitio)
+                
+                queryset = queryset.filter(sitio_query).distinct()
+
+        # --- SEARCH ---
         search = self.request.query_params.get('search', '')
         if search:
-            # Create Q objects for both resident and transient patient name searches
             resident_name_q = Q(
                 Q(pat_id__rp_id__per__per_fname__icontains=search) |
                 Q(pat_id__rp_id__per__per_lname__icontains=search) |
@@ -84,10 +98,8 @@ class UniqueAnimalBitePatientsView(generics.ListAPIView):
                 Q(pat_id__trans_id__tran_mname__icontains=search)
             )
             
-            # Combine resident and transient name searches
             name_q = resident_name_q | transient_name_q
             
-            # Other field searches
             other_fields_q = Q(
                 Q(pat_id__rp_id__per__per_sex__icontains=search) |
                 Q(pat_id__trans_id__tran_sex__icontains=search) |
@@ -97,14 +109,12 @@ class UniqueAnimalBitePatientsView(generics.ListAPIView):
                 Q(latest_animal__icontains=search)
             )
             
-            # Combine all search conditions
-            queryset = queryset.filter(name_q | other_fields_q)
+            queryset = queryset.filter(name_q | other_fields_q).distinct()
 
-        # Apply ordering (for sorting)
+        # --- ORDERING ---
         ordering = self.request.query_params.get('ordering')
         if ordering:
             if ordering == 'patient':
-                # Order by resident last name first, then transient last name
                 queryset = queryset.annotate(
                     resident_lname=F('pat_id__rp_id__per__per_lname'),
                     resident_fname=F('pat_id__rp_id__per__per_fname'),
@@ -137,17 +147,9 @@ class UniqueAnimalBitePatientsView(generics.ListAPIView):
             elif ordering == '-recordCount':
                 queryset = queryset.order_by(F('bite_count').desc())
         else:
-            # Default ordering
             queryset = queryset.order_by('-latest_date')
 
         return queryset
-    
-    def list(self, request, *args, **kwargs):
-        if request.query_params.get('export'):
-            queryset = self.filter_queryset(self.get_queryset())
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-        return super().list(request, *args, **kwargs)
     
 class AnimalBiteStatsView(APIView):
     def get(self, request):

@@ -264,7 +264,7 @@ export function NutritionalStatusCalculator({ weight, height, age, muac, onStatu
                 onChange={(e) => setManualMuac(e.target.value ? Number.parseFloat(e.target.value) : undefined)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <p className="mt-1 text-xs text-gray-500">* Manual input required (valid for children 6-59 months)</p>
+              <p className="mt-1 text-xs text-gray-500">* Manual input  (valid for children 6-59 months)</p>
             </div>
           </div>
         </div>

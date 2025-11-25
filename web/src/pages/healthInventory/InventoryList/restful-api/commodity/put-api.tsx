@@ -8,6 +8,7 @@ export const updateCommodity = async (com_id: string, data:Record<string,string>
       const res = await api2.patch(`inventory/update_commoditylist/${com_id}/`, {
         com_name: toTitleCase(data.com_name),
         user_type: data.user_type,
+        staff: data.staff,
         updated_at: new Date().toISOString(),
         gender_type: data.gender_type
       });

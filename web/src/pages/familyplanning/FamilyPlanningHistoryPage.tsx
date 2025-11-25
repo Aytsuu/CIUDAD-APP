@@ -63,7 +63,7 @@ const FamilyPlanningHistoryPage: React.FC = () => {
           setSelectedRecords((prev) => [...prev, fullRecord]);
         } catch (err) {
           toast.error("Failed to load full record for comparison.");
-          console.error("Error fetching full record:", err);
+          // console.error("Error fetching full record:", err);
         }
       } else {
         toast.info("You can select up to 2 records for comparison.");

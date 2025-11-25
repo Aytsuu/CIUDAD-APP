@@ -17,6 +17,7 @@ import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useLocalStorage } from "@/helpers/useLocalStorage";
+import { useFetchImmunizationSuppliesWithStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/queries/AntigenFetchQueries";
 // Your existing useLocalStorage hook remains the same
 
 
@@ -83,6 +84,13 @@ export default function Immunization({
   const [, setVaccineAlreadyExists] = useState<boolean>(false);
   const [, setExistingVaccineAlreadyExists] = useState<boolean>(false);
 
+  // Immunization supplies state
+  const { data: immunizationSupplies, isLoading: isSuppliesLoading } = useFetchImmunizationSuppliesWithStock();
+  const [selectedSupplyId, setSelectedSupplyId] = useState(""); // This will store imzStck_id
+  const [selectedSupplyComboValue, setSelectedSupplyComboValue] = useState(""); // This will store the full id for Combobox
+  const [selectedSupplyDisplay, setSelectedSupplyDisplay] = useState(""); // This will store just the name
+  const [selectedSupplyData, setSelectedSupplyData] = useState<any>(null);
+
   console.log("eadadd", ChildHealthRecord);
 
   // Get the single vital signs record
@@ -127,7 +135,21 @@ export default function Immunization({
   // Helper function to get today's date in DD-MM-YYYY format
   const getTodayDate = () => {
     const today = new Date();
-    return `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
+    // Return YYYY-MM-DD format for HTML5 date input compatibility
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  };
+  
+  // Helper function to format date to DD-MM-YYYY for display
+  const formatDateForDisplay = (dateStr: string) => {
+    if (!dateStr) return "";
+    // If already in DD-MM-YYYY format, return as is
+    if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) return dateStr;
+    // If in YYYY-MM-DD format, convert to DD-MM-YYYY
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateStr.split('-');
+      return `${day}-${month}-${year}`;
+    }
+    return dateStr;
   };
 
   const form = useForm<ImmunizationFormData>({
@@ -452,8 +474,10 @@ export default function Immunization({
 
     const formValues = form.getValues();
 
-    // Get today's date in DD-MM-YYYY format for the new vaccine
-    const formattedDate = getTodayDate();
+    // Get date from form input (in YYYY-MM-DD format)
+    const dateInput = formValues.vaccines?.[0]?.date || getTodayDate();
+    // Convert to DD-MM-YYYY for storage and display
+    const formattedDate = formatDateForDisplay(dateInput);
 
     const vaccineToAdd: VaccineRecord = {
       vacStck_id: vacStck_id.trim(),
@@ -467,6 +491,8 @@ export default function Immunization({
       nextFollowUpDate: formValues.vaccines?.[0]?.nextFollowUpDate || nextVisitDate || "",
       vacrec: formValues.vaccines?.[0]?.vacrec || "",
       existingFollowvId: formValues.vaccines?.[0]?.existingFollowvId || "",
+      imzStck_id: selectedSupplyId || "", // Add immunization supply ID
+      imzStck_name: selectedSupplyDisplay || "", // Add immunization supply name for display
     };
 
     const newVaccines = [...vaccines, vaccineToAdd];
@@ -490,6 +516,10 @@ export default function Immunization({
     setNextVisitDate(null);
     setNextVisitDescription(null);
     setVaccineAlreadyExists(false);
+    setSelectedSupplyId("");
+    setSelectedSupplyComboValue("");
+    setSelectedSupplyDisplay("");
+    setSelectedSupplyData(null);
     
     toast.success(`Added ${vac_name} - Dose ${vaccineToAdd.dose}`);
   };
@@ -518,8 +548,10 @@ export default function Immunization({
 
     const formValues = form.getValues();
 
-    // Get today's date in DD-MM-YYYY format
-    const formattedDate = getTodayDate();
+    // Get date from form input (in YYYY-MM-DD format)
+    const dateInput = formValues.existingVaccines?.[0]?.date || getTodayDate();
+    // Convert to DD-MM-YYYY for storage and display
+    const formattedDate = formatDateForDisplay(dateInput);
 
     const vaccineToAdd: ExistingVaccineRecord = {
       vac_id: vac_id.trim(),
@@ -710,7 +742,7 @@ export default function Immunization({
       ChildHealthRecord,
       vital_id,
       staff_id,
-      pat_id,
+      pat_id
     });
 
     // Clear localStorage after successful submission
@@ -801,9 +833,15 @@ export default function Immunization({
             existingVaccineColumns={existingVaccineColumns}
             vaccines={vaccines}
             vaccineColumns={vaccineColumns}
-            // NEW: Pass the already exists states to VaccinationSection
-            // vaccineAlreadyExists={vaccineAlreadyExists}
-            // existingVaccineAlreadyExists={existingVaccineAlreadyExists}
+            immunizationSupplies={immunizationSupplies}
+            isSuppliesLoading={isSuppliesLoading}
+            selectedSupplyDisplay={selectedSupplyDisplay}
+            selectedSupplyComboValue={selectedSupplyComboValue}
+            setSelectedSupplyDisplay={setSelectedSupplyDisplay}
+            setSelectedSupplyComboValue={setSelectedSupplyComboValue}
+            setSelectedSupplyId={setSelectedSupplyId}
+            setSelectedSupplyData={setSelectedSupplyData}
+            selectedSupplyData={selectedSupplyData}
           />
           <NotesDialog
             isOpen={isNotesDialogOpen}

@@ -207,6 +207,7 @@ export const getHouseholdData = async (householdId: string) => {
 export const getSitioList = async () => {
   try {
     const res = await api.get("profiling/sitio/list/");
+    console.log(res.data);
     return res.data;
   } catch (err) {
     throw err;

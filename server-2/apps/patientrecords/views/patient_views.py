@@ -10,6 +10,7 @@ from django.db.models import Count, Prefetch, Q
 from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
+from apps.administration.models import Staff
 from ..serializers.patients_serializers import *
 from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
@@ -100,6 +101,15 @@ class PatientView(generics.ListCreateAPIView):
         # Validate required fields
         pat_type = request.data.get('pat_type')
         rp_id = request.data.get('rp_id')
+        staff_id = request.data.get('staff_id')
+        
+        # Get staff object if staff_id provided
+        registered_by_staff = None
+        if staff_id:
+            try:
+                registered_by_staff = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                pass
         
         if not pat_type:
             return Response(
@@ -134,7 +144,8 @@ class PatientView(generics.ListCreateAPIView):
                 patient_data = {
                     'pat_type': pat_type,
                     'rp_id': resident_profile,
-                    'pat_status': 'Active' 
+                    'pat_status': 'Active',
+                    'registered_by': registered_by_staff
                 }
 
                 patient = Patient.objects.create(**patient_data)
@@ -175,7 +186,7 @@ class PatientView(generics.ListCreateAPIView):
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
-        ).filter(pat_status='Active')
+        )
 
         params = self.request.query_params
         status = params.get('status')
@@ -193,33 +204,42 @@ class PatientView(generics.ListCreateAPIView):
         if search:
             search = search.strip()
             if search:
+                # Check if search contains comma-separated values (for sitio filtering)
+                search_terms = [term.strip() for term in search.split(',') if term.strip()]
+                
                 search_filters = Q()
+                
+                for term in search_terms:
+                    term_filters = Q()
+                    
+                    # Resident name fields
+                    term_filters |= (
+                        Q(rp_id__per__per_fname__icontains=term) |
+                        Q(rp_id__per__per_mname__icontains=term) |
+                        Q(rp_id__per__per_lname__icontains=term)
+                    )
 
-                # Resident name fields
-                search_filters |= (
-                    Q(rp_id__per__per_fname__icontains=search) |
-                    Q(rp_id__per__per_mname__icontains=search) |
-                    Q(rp_id__per__per_lname__icontains=search)
-                )
+                    # Resident address fields (sitio name and street)
+                    term_filters |= (
+                        Q(rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=term) |
+                        Q(rp_id__per__personal_addresses__add__add_street__icontains=term)
+                    )
 
-                # Resident address fields (sitio name and street)
-                search_filters |= (
-                    Q(rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=search) |
-                    Q(rp_id__per__personal_addresses__add__add_street__icontains=search)
-                )
+                    # Transient name fields
+                    term_filters |= (
+                        Q(trans_id__tran_fname__icontains=term) |
+                        Q(trans_id__tran_mname__icontains=term) |
+                        Q(trans_id__tran_lname__icontains=term)
+                    )
 
-                # Transient name fields
-                search_filters |= (
-                    Q(trans_id__tran_fname__icontains=search) |
-                    Q(trans_id__tran_mname__icontains=search) |
-                    Q(trans_id__tran_lname__icontains=search)
-                )
-
-                # Transient address fields (street and sitio)
-                search_filters |= (
-                    Q(trans_id__tradd_id__tradd_street__icontains=search) |
-                    Q(trans_id__tradd_id__tradd_sitio__icontains=search)
-                )
+                    # Transient address fields (street and sitio)
+                    term_filters |= (
+                        Q(trans_id__tradd_id__tradd_street__icontains=term) |
+                        Q(trans_id__tradd_id__tradd_sitio__icontains=term)
+                    )
+                    
+                    # OR each term together (match ANY term)
+                    search_filters |= term_filters
 
                 filters &= search_filters
 
@@ -287,10 +307,36 @@ class PatientView(generics.ListCreateAPIView):
             patient = Patient.objects.get(trans_id=transient)
             print(f'Found existing patient: {patient.pat_id} for transient: {transient.trans_id}')
         except Patient.DoesNotExist:
+            # Extract location and is_transferred_from from transient_data
+            is_transferred = transient_data.get('is_transferred_from', False)
+            location_data = transient_data.get('location', {})
+            
+            # Combine location fields into single string
+            location_str = ""
+            if location_data:
+                location_parts = [
+                    location_data.get('sitio', ''),
+                    location_data.get('barangay', ''),
+                    location_data.get('city', '')
+                ]
+                location_str = ', '.join(filter(None, location_parts))
+            
+            # Get registered_by staff from transient_data if available
+            staff_id = transient_data.get('staff_id')
+            registered_by_staff = None
+            if staff_id:
+                try:
+                    registered_by_staff = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    pass
+            
             patient_data = {
                 'pat_type': 'Transient',
                 'trans_id': transient,
-                'pat_status': 'Active'
+                'pat_status': 'Active',
+                'is_transferred_from': is_transferred,
+                'location': location_str,
+                'registered_by': registered_by_staff
             }
             patient = Patient.objects.create(**patient_data)
             print(f'Created new patient: {patient.pat_id} for transient: {transient.trans_id}')
@@ -470,7 +516,78 @@ class PatientUpdateView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         try: 
             patient = self.get_object()
+            new_pat_type = request.data.get('pat_type')
+            # Get staff_id from request to track who made the change
+            staff_id = request.data.get('staff_id')
+            
+            # Check if this is a patient status/location update
+            if 'pat_status' in request.data or 'location' in request.data:
+                has_status_changes = False
+                change_reason = "Updated Patient Status"
+                
+                # Update patient status fields
+                if 'pat_status' in request.data and patient.pat_status != request.data['pat_status']:
+                    patient.pat_status = request.data['pat_status']
+                    has_status_changes = True
+                    
+                if 'location' in request.data and patient.location != request.data['location']:
+                    patient.location = request.data['location']
+                    has_status_changes = True
+                    if request.data['location']:
+                        change_reason = f"Transfer of Residency - Moving to {request.data['location']}"
+                    else:
+                        change_reason = "Updated Patient Status - Active"
+                
+                if has_status_changes:
+                    # Add staff information to change reason
+                    if staff_id:
+                        try:
+                            staff_obj = Staff.objects.select_related('rp__per').get(staff_id=staff_id)
+                            staff_name = f"{staff_obj.rp.per.per_lname}, {staff_obj.rp.per.per_fname}"
+                        except (Staff.DoesNotExist, AttributeError):
+                            staff_name = None
+                        change_reason = f"{change_reason} | STAFF:{staff_id}{f' | NAME:{staff_name}' if staff_name else ''}"
+                    
+                    setattr(patient, '_change_reason', change_reason)
+                    patient.save()
+                    
+                    serializer = self.get_serializer(patient)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
 
+            # Handle conversion from Transient to Resident
+            if patient.pat_type == 'Transient' and new_pat_type == 'Resident':
+                rp_id = request.data.get('rp_id')
+                if not rp_id:
+                    return Response(
+                        {'error': 'rp_id is required when converting transient to resident'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                try:
+                    resident = ResidentProfile.objects.get(rp_id=rp_id)
+                    patient.pat_type = 'Resident'
+                    patient.rp_id = resident
+                    patient.trans_id = None
+                    # Compose change reason with staff markers for reliable fallback parsing
+                    change_reason = "Converted to Resident"
+                    if staff_id:
+                        try:
+                            staff_obj = Staff.objects.select_related('rp__per').get(staff_id=staff_id)
+                            staff_name = f"{staff_obj.rp.per.per_lname}, {staff_obj.rp.per.per_fname}"
+                        except (Staff.DoesNotExist, AttributeError):
+                            staff_name = None
+                        change_reason = f"{change_reason} | STAFF:{staff_id}{f' | NAME:{staff_name}' if staff_name else ''}"
+                    setattr(patient, '_change_reason', change_reason)
+                    patient.save()
+                    
+                    serializer = self.get_serializer(patient)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                except ResidentProfile.DoesNotExist:
+                    return Response(
+                        {'error': f'Resident with rp_id {rp_id} does not exist'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
             if patient.pat_type == 'Transient' and patient.trans_id:
                 transient_data = request.data.get('transient_data', {})
                 transient = patient.trans_id
@@ -519,7 +636,16 @@ class PatientUpdateView(generics.RetrieveUpdateAPIView):
                 if has_changes:
                     transient.save()
                     
-                    # Explicitly save the patient to trigger updated_at update
+                    # Explicitly save the patient with simple-history attribution
+                    change_reason = "Updated Transient Info"
+                    if staff_id:
+                        try:
+                            staff_obj = Staff.objects.select_related('rp__per').get(staff_id=staff_id)
+                            staff_name = f"{staff_obj.rp.per.per_lname}, {staff_obj.rp.per.per_fname}"
+                        except (Staff.DoesNotExist, AttributeError):
+                            staff_name = None
+                        change_reason = f"{change_reason} | STAFF:{staff_id}{f' | NAME:{staff_name}' if staff_name else ''}"
+                    setattr(patient, '_change_reason', change_reason)
                     patient.save()
                     
                     # Return updated patient data
@@ -599,6 +725,89 @@ def get_patient_by_resident_id(request, rp_id):
             {"detail": f"An error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+class PatientHistoryView(APIView):
+    """
+    Retrieve historical records for a specific patient.
+    Returns all history entries with user info and formatted dates.
+    """
+    def get(self, request):
+        pat_id = request.query_params.get('pat_id')
+        
+        if not pat_id:
+            return Response(
+                {'error': 'pat_id query parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            patient = Patient.objects.get(pat_id=pat_id)
+        except Patient.DoesNotExist:
+            return Response(
+                {'error': f'Patient with pat_id {pat_id} does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get all historical records for this patient, ordered by date descending
+        history = patient.history.all().order_by('-history_date')
+        
+        # Format history data
+        history_data = []
+        for record in history:
+            # Get user name from registered_by if available
+            user_name = 'Unknown user'
+            staff_id_val = None
+            
+            # In historical records, ForeignKey fields are stored with _id suffix
+            # So registered_by becomes registered_by_id in the historical table
+            registered_by_id = record.__dict__.get('registered_by_id', None)
+            
+            if registered_by_id:
+                try:
+                    staff = Staff.objects.select_related('rp__per').get(staff_id=str(registered_by_id))
+                    user_name = f"{staff.rp.per.per_lname}, {staff.rp.per.per_fname}"
+                    staff_id_val = staff.staff_id
+                except (Staff.DoesNotExist, AttributeError, ValueError):
+                    staff_id_val = str(registered_by_id)
+                    user_name = f"STAFF {registered_by_id}"
+            
+            # Fallback: try to extract staff info from history_change_reason
+            if user_name == 'Unknown user':
+                reason = getattr(record, 'history_change_reason', '') or ''
+                if 'STAFF:' in reason:
+                    try:
+                        # Expect pattern like: "... STAFF:0000123 | NAME:Last, First"
+                        staff_id_val = reason.split('STAFF:')[1].split('|')[0].strip()
+                        try:
+                            staff = Staff.objects.select_related('rp__per').get(staff_id=staff_id_val)
+                            user_name = f"{staff.rp.per.per_lname}, {staff.rp.per.per_fname}"
+                        except (Staff.DoesNotExist, AttributeError):
+                            # If name was embedded, try to use it
+                            if 'NAME:' in reason:
+                                user_name = reason.split('NAME:')[1].strip()
+                            else:
+                                user_name = f"STAFF {staff_id_val}"
+                    except Exception:
+                        pass
+            
+            history_data.append({
+                'history_id': record.history_id,
+                'history_date': record.history_date.isoformat() if record.history_date else None,
+                'history_type': record.history_type,
+                'history_user_name': user_name,
+                'staff_id': staff_id_val,
+                'history_change_reason': getattr(record, 'history_change_reason', None),
+                'pat_id': record.pat_id,
+                'pat_type': record.pat_type,
+                'pat_status': record.pat_status,
+                'rp_id': record.rp_id_id if hasattr(record, 'rp_id_id') else None,
+                'trans_id': record.trans_id_id if hasattr(record, 'trans_id_id') else None,
+                'location': getattr(record, 'location', None),
+                'is_transferred_from': getattr(record, 'is_transferred_from', None),
+                'registered_by': record.__dict__.get('registered_by_id', None),  # Use registered_by_id
+            })
+        
+        return Response(history_data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def check_or_create_patient(request):

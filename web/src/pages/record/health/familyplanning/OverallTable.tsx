@@ -14,6 +14,9 @@ import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
 import { api2 } from "@/api/api";
 import { ProtectedComponent } from "@/ProtectedComponent";
+import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { useSitioList } from "../../profiling/queries/profilingFetchQueries";
 
 interface FPRecord {
   fprecord_id: number;
@@ -27,14 +30,17 @@ interface FPRecord {
   created_at: string;
   sex: string;
   record_count?: number;
+  current_sitio?: string;
 }
 
-const getFPRecordsList = async (params: GetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
+interface ExtendedGetFPRecordsParams extends GetFPRecordsParams {
+  sitio?: string;
+}
+const getFPRecordsList = async (params: ExtendedGetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
   try {
     const response = await api2.get("familyplanning/overall-records/", { params });
     return response.data;
   } catch (err) {
-    console.error("Error fetching FP records for overall table:", err);
     return { count: 0, next: null, previous: null, results: [] };
   }
 };
@@ -47,6 +53,11 @@ export default function FamPlanningTable() {
   const [selectedClientType, setSelectedClientType] = useState("all");
   const [selectedPatientType, setSelectedPatientType] = useState("all"); 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  
+  // --- FETCH SITIO DATA ---
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
   // Debounce search input to avoid excessive API calls
   useEffect(() => {
@@ -59,6 +70,10 @@ export default function FamPlanningTable() {
     };
   }, [searchQuery]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedClientType, selectedPatientType, selectedSitios, debouncedSearchQuery]);
+
   // Use useQuery to fetch paginated FP records
   const {
     data: paginatedFpRecords,
@@ -66,7 +81,7 @@ export default function FamPlanningTable() {
     isError,
     error
   } = useQuery({
-    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType],
+    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType,selectedSitios],
     queryFn: () =>
       getFPRecordsList({
         page: currentPage,
@@ -74,6 +89,7 @@ export default function FamPlanningTable() {
         search: debouncedSearchQuery,
         client_type: selectedClientType === "all" ? undefined : selectedClientType,
         patient_type: selectedPatientType === "all" ? undefined : selectedPatientType,
+        sitio: selectedSitios.length > 0 ? selectedSitios.join(",") : undefined,
       })
   });
 
@@ -88,7 +104,8 @@ export default function FamPlanningTable() {
     error: errorCounts
   } = useQuery<FPPatientsCount, Error>({
     queryKey: ["fpPatientCounts"],
-    queryFn: getFPPatientsCounts
+    queryFn: getFPPatientsCounts,
+    staleTime: 0,
   });
 
   const totalPages = Math.ceil(totalRecordsCount / pageSize);
@@ -112,6 +129,21 @@ export default function FamPlanningTable() {
     setSelectedPatientType(value);
     setCurrentPage(1);
   };
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
 
   // Filter options - use backend values for filtering
   const clientTypeOptions = [
@@ -126,17 +158,6 @@ export default function FamPlanningTable() {
     { id: "transient", name: "Transient" },
   ];
 
-  // // Helper function to map backend client_type to display name
-  // const getClientTypeDisplayName = (clientType: string) => {
-  //   switch (clientType) {
-  //     case "newacceptor":
-  //       return "New Acceptor";
-  //     case "currentuser":
-  //       return "Current User";
-  //     default:
-  //       return clientType || "N/A";
-  //   }
-  // };
 
   const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [
@@ -214,15 +235,15 @@ export default function FamPlanningTable() {
             day: "numeric"
           })
       },
-      {
-        accessorKey: "record_count",
-        header: "Records",
-        cell: ({ row }) => (
-          <span className="font-semibold text-gray-700">
-            {row.original.record_count || 0} records
-          </span>
-        )
-      },
+      // {
+      //   accessorKey: "record_count",
+      //   header: "Records",
+      //   cell: ({ row }) => (
+      //     <span className="font-semibold text-gray-700">
+      //       {row.original.record_count || 0} records
+      //     </span>
+      //   )
+      // },
       {
         id: "action",
         header: "Action",
@@ -396,6 +417,16 @@ export default function FamPlanningTable() {
             value={selectedPatientType}
             onChange={handlePatientTypeChange}
           />
+
+          <FilterSitio 
+              sitios={sitios} 
+              isLoading={isLoadingSitios} 
+              selectedSitios={selectedSitios} 
+              onSitioSelection={handleSitioSelection} 
+              onSelectAll={handleSelectAllSitios} 
+              manualSearchValue="" 
+          />
+
         </div>
 
         <ProtectedComponent exclude={["DOCTOR"]}>
@@ -407,10 +438,21 @@ export default function FamPlanningTable() {
             </Link>
           </div>
         </ProtectedComponent>
-        
       </div>
 
-      {/* Table Controls */}
+      {selectedSitios.length > 0 && (
+          <div className="mb-4">
+            <SelectedFiltersChips 
+              items={selectedSitios} 
+              onRemove={(sitio: any) => handleSitioSelection(sitio, false)} 
+              onClearAll={() => setSelectedSitios([])} 
+              label="Filtered by sitios" 
+              chipColor="bg-blue-100" 
+              textColor="text-blue-800" 
+            />
+          </div>
+      )}
+     
       <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-lg">
         <div className="flex gap-x-2 items-center">
           <p className="text-xs sm:text-sm">Show</p>

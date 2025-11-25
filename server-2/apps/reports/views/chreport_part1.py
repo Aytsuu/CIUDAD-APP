@@ -153,7 +153,7 @@ class MonthlyVaccinationStatisticsAPIView(generics.GenericAPIView):
 
             # Check if this is a special vaccine (BCG or HepB)
             is_bcg = 'bcg' in vaccine_name_lower
-            is_hepb = 'hep' in vaccine_name_lower and 'b' in vaccine_name_lower
+            is_hepb = 'hepb' in vaccine_name_lower
             
             # BCG vaccines - only count in special section
             if is_bcg:
@@ -346,6 +346,8 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
             created_at__year=year,
             created_at__month=month_num,
             status_type='birthwt',
+        ).exclude(
+            Q(date_complete__isnull=True) | Q(date_complete__exact='')
         ).select_related(
             'chhist__chrec__patrec__pat_id__rp_id__per',
             'chhist__chrec__patrec__pat_id__trans_id'
@@ -375,53 +377,60 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
                
 
         # 4. Infants 6-11 months given 1 dose of Vitamin A
-        if vitamin_a_category:
-            # Get all child health supplements with Vitamin A for the specific month
-            vit_a_supplements = ChildHealthSupplements.objects.filter(
-                chhist__created_at__year=year,
-                chhist__created_at__month=month_num,
-                medreq__isnull=False
-            ).select_related(
-                'chhist__chrec__patrec__pat_id__rp_id__per',
-                'chhist__chrec__patrec__pat_id__trans_id',
-                'medreq'
-            ).prefetch_related('medreq__items__med__cat')
+        # Get all child health supplements for the specific month
+        vit_a_supplements = ChildHealthSupplements.objects.filter(
+            chhist__created_at__year=year,
+            chhist__created_at__month=month_num,
+            medreq__isnull=False
+        ).select_related(
+            'chhist__chrec__patrec__pat_id__rp_id__per',
+            'chhist__chrec__patrec__pat_id__trans_id',
+            'medreq'
+        ).prefetch_related('medreq__items__med')
 
-            # Track patients who received Vitamin A by age group
-            vit_a_6_11_patients = set()
-            vit_a_12_59_count = {}  # {patient_id: count}
+        # Track patients who received Vitamin A by age group
+        vit_a_6_11_patients = set()
+        vit_a_12_59_count = {}  # {patient_id: count}
 
-            for supplement in vit_a_supplements:
-                # Check if any medicine item has Vitamin A category and is fulfilled
-                has_vit_a = supplement.medreq.items.filter(
-                    med__cat=vitamin_a_category,
-                ).exists()
-                
-                if has_vit_a:
-                    dob, sex = get_patient_info(supplement.chhist.chrec)
-                    if dob and sex:
-                        age_months = get_age_in_months(dob, supplement.chhist.created_at.date())
-                        patient_id = supplement.chhist.chrec.patrec.pat_id.pat_id
-                        gender = sex.lower()
-                        
-                        if gender not in ['male', 'female']:
-                            continue
-                        
-                        # 6-11 months - count first dose only
-                        if 6 <= age_months <= 11:
-                            if patient_id not in vit_a_6_11_patients:
-                                stats['vit_a_6_11_months'][gender] += 1
-                                vit_a_6_11_patients.add(patient_id)
-                        
-                        # 12-59 months - count if received 2 doses
-                        elif 12 <= age_months <= 59:
-                            key = (patient_id, gender)
-                            vit_a_12_59_count[key] = vit_a_12_59_count.get(key, 0) + 1
+        for supplement in vit_a_supplements:
+            # Check for Vitamin A by medicine properties
+            has_vit_a_100k = supplement.medreq.items.filter(
+                med__med_name='Vitamin A',
+                med__med_dsg=100000,
+                med__med_dsg_unit__iexact='iu'
+            ).exists()
+            
+            has_vit_a_200k = supplement.medreq.items.filter(
+                med__med_name='Vitamin A',
+                med__med_dsg=200000,
+                med__med_dsg_unit__iexact='iu'
+            ).exists()
+            
+            if has_vit_a_100k or has_vit_a_200k:
+                dob, sex = get_patient_info(supplement.chhist.chrec)
+                if dob and sex:
+                    age_months = get_age_in_months(dob, supplement.chhist.created_at.date())
+                    patient_id = supplement.chhist.chrec.patrec.pat_id.pat_id
+                    gender = sex.lower()
+                    
+                    if gender not in ['male', 'female']:
+                        continue
+                    
+                    # 6-11 months - count first dose only (100000 IU)
+                    if 6 <= age_months <= 11 and has_vit_a_100k:
+                        if patient_id not in vit_a_6_11_patients:
+                            stats['vit_a_6_11_months'][gender] += 1
+                            vit_a_6_11_patients.add(patient_id)
+                    
+                    # 12-59 months - count if received 2 doses (200000 IU)
+                    elif 12 <= age_months <= 59 and has_vit_a_200k:
+                        key = (patient_id, gender)
+                        vit_a_12_59_count[key] = vit_a_12_59_count.get(key, 0) + 1
 
-            # Count patients with 2 doses of Vitamin A (12-59 months)
-            for (patient_id, gender), count in vit_a_12_59_count.items():
-                if count >= 2:
-                    stats['vit_a_12_59_months_2doses'][gender] += 1
+        # Count patients with 2 doses of Vitamin A (12-59 months)
+        for (patient_id, gender), count in vit_a_12_59_count.items():
+            if count >= 2:
+                stats['vit_a_12_59_months_2doses'][gender] += 1
 
         # 6. Children 6-11 months who completed MNP supplements
         # 7. Children 12-23 months who completed MNP supplements

@@ -19,7 +19,7 @@ year = str(today.year)
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
     requested_at = models.DateTimeField(auto_now_add=True)
-    requested_date = models.DateTimeField(null=True, blank=True) 
+    requested_date = models.DateField(null=True, blank=True)  
     approved_at = models.DateField(null=True, blank=True)
     cancelled_at = models.DateField(null=True, blank=True)
     completed_at = models.DateField(null=True, blank=True)
@@ -99,6 +99,7 @@ class Pregnancy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     prenatal_end_date = models.DateField(null=True, blank=True)
     postpartum_end_date = models.DateField(null=True, blank=True)
+    pregnancyloss_reason = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.pregnancy_id:

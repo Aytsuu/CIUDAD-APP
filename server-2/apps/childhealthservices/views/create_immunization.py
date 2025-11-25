@@ -239,11 +239,61 @@ class SaveImmunizationDataAPIView(APIView):
             # Create antigen transaction
             antigen_transaction = AntigenTransaction.objects.create(
                 antt_qty='1',
-                antt_action='dispensed',
+                antt_action='Administered',
                 vacStck_id=vaccine_stock,
                 staff=staff_instance
             )
             created_records['antigen_transaction_ids'].append(antigen_transaction.antt_id)
+        
+        # Handle immunization stock deduction if imzStck_id is provided
+        imz_stock_id = vaccine.get('imzStck_id')
+        if imz_stock_id:
+            try:
+                imz_stock = ImmunizationStock.objects.select_related('inv_id').get(imzStck_id=imz_stock_id)
+                
+                # Check if there's enough stock
+                if imz_stock.imzStck_avail <= 0:
+                    raise ValueError(f"Insufficient immunization stock available for {imz_stock.imz_detail.imz_name if imz_stock.imz_detail else 'supply'}")
+                
+                # Deduct stock based on unit type
+                unit_lower = imz_stock.imzStck_unit.lower()
+                
+                if 'box' in unit_lower or 'boxes' in unit_lower:
+                    # For boxes, deduct 1 piece from available pcs
+                    if imz_stock.imzStck_pcs <= 0:
+                        raise ValueError("No pieces available in boxes")
+                    
+                    imz_stock.imzStck_pcs -= 1
+                    imz_stock.imzStck_used += 1
+                    imz_stock.imzStck_avail -= 1
+                    transaction_qty = "1 pcs"
+                else:
+                    # For other units (vials, doses, etc.), deduct based on unit
+                    imz_stock.imzStck_qty = max(0, imz_stock.imzStck_qty - 1)
+                    imz_stock.imzStck_used += 1
+                    imz_stock.imzStck_avail = max(0, imz_stock.imzStck_avail - 1)
+                    transaction_qty = f"1 {imz_stock.imzStck_unit}"
+                
+                imz_stock.save()
+                
+                # Update inventory updated_at timestamp
+                if imz_stock.inv_id:
+                    imz_stock.inv_id.updated_at = timezone.now()
+                    imz_stock.inv_id.save()
+                
+                # Create antigen transaction record for immunization supply
+                imz_antigen_transaction = AntigenTransaction.objects.create(
+                    antt_qty=transaction_qty,
+                    antt_action="Administered",
+                    imzStck_id=imz_stock,
+                    staff=staff_instance
+                )
+                created_records['antigen_transaction_ids'].append(imz_antigen_transaction.antt_id)
+                
+            except ImmunizationStock.DoesNotExist:
+                raise ValueError(f"Immunization stock with ID {imz_stock_id} not found")
+            except Exception as e:
+                raise ValueError(f"Failed to process immunization stock: {str(e)}")
         
         # Create new records if needed
         vacrec_id = vaccine.get('vacrec')
