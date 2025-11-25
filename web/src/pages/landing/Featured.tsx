@@ -66,7 +66,7 @@ export default function Featured() {
             <Carousel setApi={setApi}>
               <CarouselContent>
                 {slide.map((image: any, index: number) => (
-                <CarouselItem className="relative pl-0 md:basis-1/2 lg:basis-1/2">
+                <CarouselItem key={index} className="relative pl-0 md:basis-1/2 lg:basis-1/2">
                   <div className={`absolute bg-black w-full h-full transition-opacity duration-300 ${index == current ? 'opacity-0' : 'opacity-70'}`}/>
                   <img 
                     src={image}
@@ -81,6 +81,7 @@ export default function Featured() {
             <div className="flex mt-8 overflow-hidden gap-2">
               {slide.map((image: any, index: number) => (
                 <img 
+                  key={index}
                   src={image}
                   className={`w-[100] h-[100px] cursor-pointer ${index == current ? 'border-2 border-blue-500' : ''}`}
                   onClick={() => handleImageSelect(index)}

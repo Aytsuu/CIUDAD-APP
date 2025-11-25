@@ -53,6 +53,7 @@ urlpatterns = [
     # path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),
     # path("family/composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
     path("family/composition/delete/<str:fam>/<str:rp>/", FamilyMemberDeleteView.as_view(), name="member-deletion"),
+    path("family/registration-request/approve/", FamilyRegistrationRequestView.as_view(), name="family-registration-request"),
 
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
