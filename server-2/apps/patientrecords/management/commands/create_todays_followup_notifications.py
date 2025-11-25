@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta, datetime
-from apps.patientrecords.models import FollowUpVisit, FamilyComposition
+from apps.patientrecords.models import FollowUpVisit
 from apps.administration.models import Staff
-from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.models import ResidentProfile, FamilyComposition
 from utils.create_notification import NotificationQueries
 import traceback
 import logging
@@ -47,7 +47,7 @@ class Command(BaseCommand):
         # Get today's follow-up visits
         todays_followups = FollowUpVisit.objects.filter(
             followv_date=today,
-            followv_status__in=['pending', 'scheduled']
+            followv_status='pending',
         ).select_related(
             'patrec',
             'patrec__pat_id',
@@ -55,14 +55,13 @@ class Command(BaseCommand):
             'patrec__pat_id__rp_id__per'
         )
         
-        # 🚨 FIXED: Use consistent days for query and notification
         MAX_MISSED_NOTIFICATION_DAYS = 2  # Stop notifying after 2 days
         missed_cutoff = today - timedelta(days=MAX_MISSED_NOTIFICATION_DAYS)
         
         missed_followups = FollowUpVisit.objects.filter(
             followv_date__lt=today,
             followv_date__gte=missed_cutoff,
-            followv_status__in=['pending', 'scheduled']
+            followv_status='missed'
         ).select_related(
             'patrec',
             'patrec__pat_id',
@@ -131,12 +130,12 @@ class Command(BaseCommand):
         """Automatically close follow-ups that have been missed for too long"""
         from apps.patientrecords.models import FollowUpVisit
         
-        AUTO_CLOSE_DAYS = 5  # Close after 5 days of being missed
+        AUTO_CLOSE_DAYS = 2 
         cutoff_date = timezone.now().date() - timedelta(days=AUTO_CLOSE_DAYS)
         
         old_missed_followups = FollowUpVisit.objects.filter(
             followv_date__lt=cutoff_date,
-            followv_status__in=['pending', 'scheduled']
+            followv_status='pending',
         )
         
         count_closed = old_missed_followups.update(followv_status='cancelled')
@@ -157,7 +156,7 @@ class Command(BaseCommand):
                 # 🚨 FIXED: Only one check for missed follow-ups
                 if followup_type == "missed":
                     days_missed = (timezone.now().date() - followup.followv_date).days
-                    MAX_MISSED_NOTIFICATION_DAYS = 3  # Stop notifying after 3 days
+                    MAX_MISSED_NOTIFICATION_DAYS = 2
                     
                     # Skip if missed for too long (redundant but safe since query already filters)
                     if days_missed > MAX_MISSED_NOTIFICATION_DAYS:
@@ -199,7 +198,7 @@ class Command(BaseCommand):
                     message_staff = f"A follow-up visit is scheduled for {patient_name}{description_text}"
                     title_resident = "Your Follow-Up Visit Today"
                     message_resident = f"Your follow-up visit is scheduled for today{description_text}"
-                elif followup_type == "missed":  # missed
+                else:  # missed
                     days_missed = (timezone.now().date() - followup.followv_date).days
                     title_staff = "Missed Follow-Up Visit"
                     message_staff = f"Follow-up visit for {patient_name} was scheduled {days_missed} day(s) ago but is still pending{description_text}"
@@ -212,7 +211,7 @@ class Command(BaseCommand):
                     message=message_staff,
                     recipients=staff_recipients,
                     notif_type="REQUEST",
-                    web_route="",
+                    web_route="/scheduled/follow-ups",
                     web_params="",
                     mobile_route="",
                     mobile_params="",

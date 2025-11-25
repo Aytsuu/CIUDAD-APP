@@ -13,7 +13,7 @@ urlpatterns = [
     path('commodity-stock/<str:commodity_name>/', get_commodity_stock, name='get_commodity_stock'),
     path('complete-fp-record/<int:fprecord_id>/', get_complete_fp_record, name='get_complete_fp_record'),
     path('latest-fp-record-by-patient/<str:patient_id>/', get_latest_fp_record_for_patient, name='get_latest_fp_record_for_patient'),
-    path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'), # Overall table with counts
+    path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'), 
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='get_fp_records_by_patient'), # All records for one patient
     path('patient-counts/', get_fp_patient_counts, name='fp-patient-counts'),
     # Individual FP Record CRUD (if needed separately from composite)
@@ -38,7 +38,7 @@ urlpatterns = [
     # Risk VAW CRUD
     path('risk_vaw/', RiskVawListCreateView.as_view(), name='risk_vaw_list_create'),
     path('risk_vaw/<int:vaw_id>/', RiskVawDetailView.as_view(), name='risk_vaw_detail'),
-    
+    path('risk_sti/by-patient/<str:patient_id>/', get_risk_sti_by_patient, name='get_risk_sti_by_patient'),
     # Physical Exam CRUD
     path('physical_exam/', PhysicalExamListCreateView.as_view(), name='physical_exam_list_create'),
     path('physical_exam/<int:fp_pe_id>/', PhysicalExamDetailView.as_view(), name='physical_exam_detail'),
@@ -71,7 +71,6 @@ urlpatterns = [
     # NEW: Path for submitting record
     path('submit-full-form/', submit_full_family_planning_form, name='submit_full_family_planning_form'),
     path('submit-follow-up-form/', submit_follow_up_family_planning_form, name='submit_follow_up_family_planning_form'),
-    path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'),
     path('fp-records/', PatientListForOverallTable.as_view(), name='fp-records-paginated'),
     
     

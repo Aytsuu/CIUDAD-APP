@@ -115,12 +115,7 @@ class MedicineListAvailableTable(APIView):
                 
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': ' '.join(filter(None, [
-                        medicine.med_name,
-                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
-                        medicine.med_dsg_unit,
-                        medicine.med_form
-                    ])).strip(),
+                    'med_name':medicine.med_name,
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -131,12 +126,7 @@ class MedicineListAvailableTable(APIView):
             else:
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': ' '.join(filter(None, [
-                        medicine.med_name,
-                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
-                        medicine.med_dsg_unit,
-                        medicine.med_form
-                    ])).strip(),
+                    'med_name': medicine.med_name,
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),

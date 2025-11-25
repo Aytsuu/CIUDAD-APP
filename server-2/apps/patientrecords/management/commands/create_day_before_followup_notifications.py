@@ -125,7 +125,7 @@ class Command(BaseCommand):
                     message=f"{description_text} is scheduled for tomorrow for {patient_name}",
                     recipients=staff_recipient_rp_ids,
                     notif_type="REMINDER",
-                    web_route="",
+                    web_route="/scheduled/follow-ups",
                     web_params="",
                     mobile_route="",
                     mobile_params="",

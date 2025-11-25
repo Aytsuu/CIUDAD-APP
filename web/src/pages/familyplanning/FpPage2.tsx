@@ -295,7 +295,7 @@ const { setValue, getValues } = form
       customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
     }
 
-    console.log("PAGE 2 Data:", updatedData)
+    // console.log("PAGE 2 Data:", updatedData)
     updateFormData(updatedData)
     onNext3()
   }
@@ -309,7 +309,7 @@ const { setValue, getValues } = form
       selectedIllnessIds: selectedIllnesses.join(","),
     }
 
-    console.log("Saving current form data:", dataToSave)
+    // console.log("Saving current form data:", dataToSave)
     updateFormData(dataToSave)
   }
 
