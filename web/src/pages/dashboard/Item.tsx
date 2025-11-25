@@ -41,6 +41,7 @@ import { CertificatePurposeChart } from "@/components/analytics/certificate/cert
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
 import { ReactElement } from "react";
 
 type DashboardItem = {
@@ -146,10 +147,6 @@ export const getItemsConfig = (
         ],
       },
       {
-        dashboard: "COMPLAINT",
-        card: []
-      },
-      {
         dashboard: "CONCILIATION PROCEEDINGS",
         card: [waiting, ongoing, escalated, resolved], 
       },
@@ -160,6 +157,15 @@ export const getItemsConfig = (
       {
         dashboard: "SUMMON REMARKS",
         card: [noRemark]
+      },
+      {
+        dashboard: "COMPLAINT",
+        sidebar: [
+          {
+            title: "Blotter Request",
+            element: <ComplaintSidebar/>
+          }
+        ]
       },
       {
         dashboard: "GAD",
