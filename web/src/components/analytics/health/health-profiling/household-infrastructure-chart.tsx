@@ -6,7 +6,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { useHealthProfilingSummary } from "@/pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
+import { useHealthProfilingSummary } from "../../../../pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Home, Loader2 } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
@@ -259,7 +259,7 @@ export function HouseholdInfrastructureChart({
                     <Legend
                       verticalAlign="bottom"
                       height={36}
-                      formatter={(value, entry: any) => {
+                      formatter={(value) => {
                         const item = currentData.find((d) => d.name === value);
                         return `${value}: ${item?.value?.toLocaleString() || 0}`;
                       }}

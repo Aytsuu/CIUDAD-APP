@@ -7,7 +7,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { usePopulationStructureReport } from "@/pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
+import { usePopulationStructureReport } from "../../../../pages/healthServices/Reports/healthprofiling-report/queries/fetchQueries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Users, Loader2 } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
@@ -58,11 +58,16 @@ export function PopulationAgePyramidChart({
   }
 
   // Transform data for grouped bar chart
-  const pyramidData = data?.data?.ageGroups?.map((group) => ({
+  const pyramidData = data?.data?.ageGroups?.map((group: any) => ({
     ageGroup: group.ageGroup,
     Male: group.male,
     Female: group.female,
   })) || [];
+
+  // Calculate total population from pyramid data
+  const totalMale = pyramidData.reduce((sum: number, d: any) => sum + d.Male, 0);
+  const totalFemale = pyramidData.reduce((sum: number, d: any) => sum + d.Female, 0);
+  const totalFromData = totalMale + totalFemale;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -124,7 +129,7 @@ export function PopulationAgePyramidChart({
             <div className="flex items-center justify-center h-[400px]">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
-          ) : !data?.data || pyramidData.length === 0 ? (
+          ) : !data?.data || totalFromData === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center h-[400px]">
               <Users className="h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 mb-2">
@@ -151,9 +156,7 @@ export function PopulationAgePyramidChart({
                     Male Population
                   </p>
                   <p className="text-2xl font-bold text-cyan-900">
-                    {pyramidData
-                      .reduce((sum, d) => sum + d.Male, 0)
-                      .toLocaleString()}
+                    {totalMale.toLocaleString()}
                   </p>
                 </div>
                 <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
@@ -161,9 +164,7 @@ export function PopulationAgePyramidChart({
                     Female Population
                   </p>
                   <p className="text-2xl font-bold text-pink-900">
-                    {pyramidData
-                      .reduce((sum, d) => sum + d.Female, 0)
-                      .toLocaleString()}
+                    {totalFemale.toLocaleString()}
                   </p>
                 </div>
               </div>

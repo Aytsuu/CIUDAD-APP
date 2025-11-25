@@ -48,7 +48,7 @@ export default function DependentsInfoLayout({
   existingFamId?: string | null;
 }) {
 
-  const PARENT_ROLES = ["Mother", "Father", "Guardian"];
+  // const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
   
   // Main database hooks
