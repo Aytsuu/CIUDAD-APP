@@ -152,7 +152,7 @@ export default function FamilyPlanningPage() {
   const patrecIdParam = searchParams.get("patrecId") // patrec_id for follow-up submission
   // const prefillFromFpRecordParam = searchParams.get("prefillFromFpRecord") // fprecord_id to prefill from for follow-up
   const staff_id = user?.staff?.staff_id
-  console.log("Staff id",staff_id)
+  // console.log("Staff id",staff_id)
 
   // Prefer state values over URL params
   const currentMode = (stateMode || modeParam || "create") as "create" | "edit" | "view" | "followup"
@@ -188,11 +188,11 @@ const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormD
   enabled: !!internalPatientId && 
     (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup")})
 
-  console.log("=== LATEST RECORD DEBUG ===");
-console.log("latestRecord:", latestRecord);
-console.log("num_of_children from backend:", latestRecord?.num_of_children);
-console.log("numOfLivingChildren from backend:", latestRecord?.numOfLivingChildren);
-console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
+//   console.log("=== LATEST RECORD DEBUG ===");
+// console.log("latestRecord:", latestRecord);
+// console.log("num_of_children from backend:", latestRecord?.num_of_children);
+// console.log("numOfLivingChildren from backend:", latestRecord?.numOfLivingChildren);
+// console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
 
   // Effect to update internalPatientId when fetchedRecord changes (for view/edit modes)
   useEffect(() => {
@@ -222,11 +222,11 @@ console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
   }, [fetchedRecord])
 
   // In main.tsx, add these logs:
-console.log("Current Mode:", currentMode);
-console.log("isNewMethod:", isNewMethod);
-console.log("shouldPrefill:", shouldPrefill);
-console.log("internalPatientId:", internalPatientId);
-console.log("Query enabled:", !!internalPatientId && (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup"));
+// console.log("Current Mode:", currentMode);
+// console.log("isNewMethod:", isNewMethod);
+// console.log("shouldPrefill:", shouldPrefill);
+// console.log("internalPatientId:", internalPatientId);
+// console.log("Query enabled:", !!internalPatientId && (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup"));
 
   // Effect to set formData when latestRecord changes ('create' mode with prefill or new method)
   useEffect(() => {
@@ -263,6 +263,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         avg_monthly_income: latestRecord.avg_monthly_income,
         numOfLivingChildren: latestRecord.num_of_children || latestRecord.numOfLivingChildren || 0,
         // Reset method-related fields for new method selection
+        serviceProvisionRecords: [],
         typeOfClient: "currentuser",
         subTypeOfClient: "changingmethod",
         reasonForFP: "",
@@ -274,6 +275,8 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         acknowledgement: {
           ...initialFormData.acknowledgement,
           clientName: `${latestRecord.lastName}, ${latestRecord.givenName} ${latestRecord.middleInitial}`.trim(),
+          clientSignature: "",
+        guardianSignature: "",
         },
       } : {
         // For regular prefill - use existing logic
@@ -288,7 +291,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
           guardianSignature: "",
           guardianSignatureDate: new Date().toISOString().split("T")[0],
         },
-        serviceProvisionRecords: [], // Clear service provision records for new visit
+        serviceProvisionRecords: [], 
         plan_more_children: latestRecord.plan_more_children, // Keep this from previous record
         pat_id: internalPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
@@ -397,53 +400,53 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
   }, [])
 
 
-  useEffect(() => {
-  console.log("=== BODY MEASUREMENT DEBUG ===");
-  console.log("Latest Record bodyMeasurementRecordedAt:", latestRecord?.bodyMeasurementRecordedAt);
-  console.log("Current FormData bodyMeasurementRecordedAt:", formData.bodyMeasurementRecordedAt);
-  console.log("Current FormData weight:", formData.weight);
-  console.log("Current FormData height:", formData.height);
-}, [latestRecord, formData.bodyMeasurementRecordedAt, formData.weight, formData.height]);
+//   useEffect(() => {
+//   console.log("=== BODY MEASUREMENT DEBUG ===");
+//   console.log("Latest Record bodyMeasurementRecordedAt:", latestRecord?.bodyMeasurementRecordedAt);
+//   console.log("Current FormData bodyMeasurementRecordedAt:", formData.bodyMeasurementRecordedAt);
+//   console.log("Current FormData weight:", formData.weight);
+//   console.log("Current FormData height:", formData.height);
+// }, [latestRecord, formData.bodyMeasurementRecordedAt, formData.weight, formData.height]);
 
 
-  const reviewFormData = () => {
-    console.log("=== CURRENT FORM DATA REVIEW ===")
-    console.log("pat_id:", formData.pat_id);
-    console.log("patrec_id:", formData.patrec_id);
-    console.log("Current Mode:", currentMode);
-    console.log("Is New Method:", isNewMethod);
-    console.log("General Information:", {
-      client_id: formData.client_id,
-      philhealthNo: formData.philhealthNo,
-      lastName: formData.lastName,
-      givenName: formData.givenName,
-      occupation: formData.occupation,
-    })
-    console.log("Method Information:", {
-      typeOfClient: formData.typeOfClient,
-      subTypeOfClient: formData.subTypeOfClient,
-      methodCurrentlyUsed: formData.methodCurrentlyUsed,
-      previousMethod: formData.previousMethod,
-    })
-    console.log("=== END OF REVIEW ===")
-  }
+  // const reviewFormData = () => {
+  //   console.log("=== CURRENT FORM DATA REVIEW ===")
+  //   console.log("pat_id:", formData.pat_id);
+  //   console.log("patrec_id:", formData.patrec_id);
+  //   console.log("Current Mode:", currentMode);
+  //   console.log("Is New Method:", isNewMethod);
+  //   console.log("General Information:", {
+  //     client_id: formData.client_id,
+  //     philhealthNo: formData.philhealthNo,
+  //     lastName: formData.lastName,
+  //     givenName: formData.givenName,
+  //     occupation: formData.occupation,
+  //   })
+  //   console.log("Method Information:", {
+  //     typeOfClient: formData.typeOfClient,
+  //     subTypeOfClient: formData.subTypeOfClient,
+  //     methodCurrentlyUsed: formData.methodCurrentlyUsed,
+  //     previousMethod: formData.previousMethod,
+  //   })
+  //   console.log("=== END OF REVIEW ===")
+  // }
 
   const handleNext = () => {
-    reviewFormData()
+    // reviewFormData()
     if (currentPage < 6) {
       setCurrentPage((prevPage) => prevPage + 1)
     }
   }
 
   const handlePrevious = () => {
-    reviewFormData()
+    // reviewFormData()
     if (currentPage > 1) {
       setCurrentPage((prevPage) => prevPage - 1)
     }
   }
 
   const handleSubmit = async () => {
-    reviewFormData()
+    // reviewFormData()
     try {
       const finalFormData = {
         ...formData,
@@ -469,7 +472,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
       }
     } catch (error) {
       toast.error("Failed to submit record. Please try again.")
-      console.error("Submission error:", error)
+      // console.error("Submission error:", error)
     }
   }
 

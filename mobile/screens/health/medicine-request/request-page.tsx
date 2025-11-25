@@ -16,10 +16,11 @@ export type MedicineDisplay = {
   med_name: string;
   med_type: string;
   total_qty_available: number;
-  inventory_items: {
-    minv_id: number;
     dosage: string;
     form: string;
+  inventory_items: {
+    minv_id: number;
+  
     quantity_available: number;
     quantity_unit: string;
     expiry_date: string;
@@ -108,7 +109,7 @@ export default function MedicineRequestScreen() {
     let filtered = meds.filter((medicine: { total_qty_available: number; med_id: string; }) => {
       const isOutOfStock = medicine.total_qty_available <= 0;
       const hasPending = pendingRequests.has(medicine.med_id);
-      
+        
       switch (selectedFilter) {
         case "available":
           return !isOutOfStock;
@@ -175,7 +176,7 @@ const categories = useMemo(() => {
     med_id: medicine.med_id,
     name: medicine.med_name,
     med_type: medicine.med_type,
-    dosage: firstInventory?.dosage || "Not specified",
+    dosage: medicine.dosage || "",
     availableStock: medicine.total_qty_available,
   });
 
@@ -334,37 +335,33 @@ const categories = useMemo(() => {
                         </View>
 
                         <View className="flex-1 ml-4">
-                          <View className="flex-row items-center justify-between gap-2">
-                            <Text className={`text-base font-semibold flex-1 ${
-                              isDisabled ? "text-gray-400" : "text-gray-900"
-                            }`}>
-                              {medicine.med_name || "Unknown Medicine"}
-                            </Text>
-                            {isOutOfStock && (
-                              <View className="bg-red-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
-                                <Ban size={12} color="#DC2626" />
-                                <Text className="text-red-600 text-xs font-semibold">Out of stock</Text>
-                              </View>
-                            )}
-                            {hasPendingRequest && !isOutOfStock && (
-                              <View className="bg-amber-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
-                                <Clock size={12} color="#B45309" />
-                                <Text className="text-amber-700 text-xs font-semibold">Pending</Text>
-                              </View>
-                            )}
-                          </View>
+  <View className="flex-row items-center justify-between gap-2">
+    <Text className={`text-base font-semibold flex-1 ${
+      isDisabled ? "text-gray-400" : "text-gray-900"
+    }`}>
+      {medicine.med_name || "Unknown Medicine"}
+    </Text>
+    {isOutOfStock && (
+      <View className="bg-red-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
+        <Ban size={12} color="#DC2626" />
+        <Text className="text-red-600 text-xs font-semibold">Out of stock</Text>
+      </View>
+    )}
+    {hasPendingRequest && !isOutOfStock && (
+      <View className="bg-amber-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
+        <Clock size={12} color="#B45309" />
+        <Text className="text-amber-700 text-xs font-semibold">Pending</Text>
+      </View>
+    )}
+  </View>
 
-                          <View className="mt-2 gap-1">
-                            {medicine.inventory_items[0]?.dosage && (
-                              <Text className={`text-xs ${
-                                isDisabled ? "text-gray-400" : "text-gray-500"
-                              }`}>
-                                {medicine.inventory_items[0].dosage}
-                                {medicine.inventory_items[0]?.form && ` • ${medicine.inventory_items[0].form}`}
-                              </Text>
-                            )}
-                          </View>
-                        </View>
+  {/* This is the correct way now */}
+  {(medicine.dosage || medicine.form) && (
+    <Text className={`text-xs mt-1 ${isDisabled ? "text-gray-400" : "text-gray-600"}`}>
+      {[medicine.dosage, medicine.form].filter(Boolean).join(" • ")}
+    </Text>
+  )}
+</View>
                       </View>
 
                       {!isDisabled && (

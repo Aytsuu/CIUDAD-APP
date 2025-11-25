@@ -39,17 +39,16 @@ export const PatientOverviewStats: React.FC<PatientOverviewStatsProps> = ({ reco
 
         if (record.followv_status.toLowerCase() === 'completed') {
           completedFollowUps++;
-        } else if (record.followv_status.toLowerCase() === 'pending') {
-          if (followUpDate < today) {
-            missedFollowUps++;
-          } else if (followUpDate.getTime() === today.getTime()) {
-            dueTodayFollowUps++;
-          } else {
-            pendingFollowUps++;
-          }
         }
+        else if (record.followv_status.toLowerCase() === 'missed') {
+          missedFollowUps++;
+        }
+        else if (followUpDate.getTime() === today.getTime()) {
+            dueTodayFollowUps++;
+          } 
       }
     });
+
 
     return {
       totalRecords,

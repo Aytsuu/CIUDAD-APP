@@ -117,7 +117,23 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         return Response(serializer.data)
     
     
-    
+class CheckPendingStatusView(APIView):
+    def get(self, request):
+        rp_id = request.query_params.get('rp_id')
+        
+        if not rp_id:
+            return Response({'error': 'rp_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get all scheduled_dates where the status is 'pending' for this user
+        pending_dates = MedConsultAppointment.objects.filter(
+            rp__rp_id=rp_id, 
+            status='pending'
+        ).values_list('scheduled_date', flat=True)
+
+        return Response({
+            'pending_dates': list(pending_dates)
+        }, status=status.HTTP_200_OK)
+        
 #================== MEDICAL CONSULTAION FORWARDED TABLE==================
 class CombinedHealthRecordsView(APIView):
     pagination_class = StandardResultsPagination
@@ -1821,7 +1837,8 @@ class MedicalConsultationBookingView(APIView):
             # )
             
             # 2. Notify Staff (all active medical staff)
-            medical_staff = Staff.objects.filter(pos__pos_title__in=['ADMIN', 'DOCTOR', 'BARANGAY HEALTH WORKER', 'MIDWIFE', 'NURSE']).select_related('rp', 'pos')
+            medical_staff = Staff.objects.filter(staff_type="HEALTH STAFF",
+                                                 pos__pos_title__in=['ADMIN', 'DOCTORS', 'BARANGAY HEALTH WORKERS', 'MIDWIFE']).select_related('rp')
             print(f"Found {medical_staff.count()} medical staff members")
     
             staff_recipients = [str(staff.rp.rp_id) for staff in medical_staff if staff.rp and staff.rp.rp_id]
@@ -1830,18 +1847,13 @@ class MedicalConsultationBookingView(APIView):
             if staff_recipients:
                 staff_success = notifier.create_notification(
                     title="New Medical Consultation Appointment",
-                    message=f"Patient: {resident_name} on {formatted_date} ({meridiem}). Complaint: {chief_complaint}",
+                    message=f"{resident_name} on {formatted_date} ({meridiem}). Complaint: {chief_complaint}",
                     recipients=staff_recipients,
                     notif_type="NEW_MEDICAL_APPOINTMENT",
                     web_route="/services/medical-consultation/appointments/pending",
                     web_params="",
-                    mobile_route="/(health)/medconsultation/my-records",
-                    mobile_params={
-                        # "appointment_id": str(appt.id),
-                        # "pat_id": resident_rp_id,  # ✅ Add patient ID
-                        # "mode": "admin",
-                        # "focus_tab": "consultations"  # ✅ Optional: specify which tab to focus on
-                    },
+                    mobile_route="/(health)/admin/schedules/all-appointment",
+                    mobile_params={},
                 )
             return Response({
                 'success': True,

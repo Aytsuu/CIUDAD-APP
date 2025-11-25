@@ -1,17 +1,16 @@
-import React, { useMemo, useState, useCallback } from "react" // MODIFIED: Added useState and useCallback
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
+import React, { useMemo, useState} from "react" 
+import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native"
+import { User, FileText, Package, Clock, Shield,  ChevronLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
-import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
 import { getPatientByResidentId, getPatientRecordsByPatId } from "./api/get-api"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
-import { LoadingState } from "@/components/ui/loading-state"
 import { getPatientById } from "../admin/admin-animalbites/api/get-api"
 import { calculateAge } from "@/helpers/ageCalculator"
+import { PaginationControls } from "../admin/components/pagination-layout"
 
 type PatientRecordDetail = {
   bite_id: number
@@ -202,7 +201,6 @@ export default function MyAnimalBiteRecordsScreen() {
           {/* Patient Information Card */}
           {patientInfo && (
             <View className="p-4">
-              {/* ... (Patient Info Card JSX remains the same) ... */}
               <View className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Patient Header */}
                 <View className="bg-blue-600 p-6">

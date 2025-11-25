@@ -63,13 +63,7 @@ const IndividualFamPlanningTable: React.FC = () => {
 
   const handleAddFollowUp = (record: IndividualFPRecordDetail) => {
     const { showWarning } = shouldShowFollowUpWarning(record);
-    console.log("🔄 [Individual] Adding follow-up with state:", {
-      patientId,
-      patrecId: record.patrec_id,
-      prefillFromFpRecord: record.fprecord,
-      gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown",
-      timestamp: Date.now() // CRITICAL: Add timestamp
-    });
+ 
     if (showWarning) {
       setSelectedRecordForFollowUp(record);
       setShowFollowUpConfirm(true);
@@ -115,15 +109,7 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Patient ID not found");
       return;
     }
-    console.log("🔄 [Individual] Creating new record with state:", {
-      patientId,
-      isNewMethod: true,
-      prefill: true,
-      gender: patientInfoForCard?.personal_info.per_sex || "Unknown",
-      patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined,
-      timestamp: Date.now() // CRITICAL: Add timestamp to force re-render
-    });
-    
+
     navigate("/services/familyplanning/new-record", {
       state: {
         mode: "create",
