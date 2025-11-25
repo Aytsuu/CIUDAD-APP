@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 function BarangayServiceForm(){
 
-    const onSubmit = (values: z.infer<typeof BarangayServiceFormSchema>) => {
+    const onSubmit = (_values: z.infer<typeof BarangayServiceFormSchema>) => {
         // Form submission handled
     };
 

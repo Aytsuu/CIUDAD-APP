@@ -9,7 +9,6 @@ import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt, useAddReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
-import { useAuth } from '@/context/AuthContext';
 import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
 import { Loader2 } from "lucide-react";
 
@@ -48,8 +47,6 @@ import { Loader2 } from "lucide-react";
     discountReason?: string;
     pay_id?: number;
 }){
-   const { user } = useAuth();
-    const staffId = user?.staff?.staff_id;
    const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
     
    const { mutate: addReceiptMutation, isPending: isAddReceiptPending} = useAddReceipt(onComplete)
