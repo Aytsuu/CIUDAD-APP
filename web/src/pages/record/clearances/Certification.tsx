@@ -20,6 +20,7 @@ import { useGetTemplateRecord } from "../council/templates/queries/template-Fetc
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
@@ -67,6 +68,22 @@ function CertificatePage() {
   const { data: residentsList = [] } = useResidentsList();
   const { data: deceasedResidentsList = [] } = useDeceasedResidentsList();
 
+  // Fetch purposes for filter dropdown
+  const { data: allPurposes = [] } = useQuery<Purpose[]>({
+    queryKey: ["allPurposes"],
+    queryFn: getAllPurposes,
+  });
+
+  // Filter purposes to show only Personal category purposes
+  const personalPurposes = useMemo(() => {
+    return allPurposes
+      .filter(purpose => purpose.pr_category === "Personal" && !purpose.pr_is_archive)
+      .map(purpose => ({
+        id: purpose.pr_purpose.toLowerCase(),
+        name: purpose.pr_purpose
+      }));
+  }, [allPurposes]);
+
   //template details fetch
   const { data: templates = [] } = useGetTemplateRecord();
   const [isTempDialogOpen, setIsTempDialogOpen] = useState(false); 
@@ -99,6 +116,10 @@ function CertificatePage() {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
   const [childBirthdate, setChildBirthdate] = useState("");
+  
+  // Proof of Custody manual input
+  const [isManualCustodyInput, setIsManualCustodyInput] = useState(false);
+  const [manualCustodyNames, setManualCustodyNames] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -190,10 +211,19 @@ function CertificatePage() {
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
 
-
-
-  // Since we're now using backend filtering, we don't need frontend filtering
-  const filteredCertificates = certificates;
+  // Sort certificates by request date (latest first) and apply filters
+  const filteredCertificates = useMemo(() => {
+    let result = [...certificates];
+    
+    // Sort by request date descending (latest first)
+    result.sort((a, b) => {
+      const dateA = new Date(a.req_request_date || 0).getTime();
+      const dateB = new Date(b.req_request_date || 0).getTime();
+      return dateB - dateA; // Descending order (latest first)
+    });
+    
+    return result;
+  }, [certificates]);
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
@@ -258,6 +288,8 @@ function CertificatePage() {
     setChildAge("");
     setChildBirthdate("");
     setCustody([]);
+    setIsManualCustodyInput(false);
+    setManualCustodyNames("");
     
     // Auto-populate burial fields if the person is deceased and purpose is burial
     if (certificate.req_purpose?.toLowerCase() === "burial" && 
@@ -273,6 +305,7 @@ function CertificatePage() {
           const address = resident.per_addresses[0];
           const addressParts = [
             address.add_street,
+            address.sitio,  // Include sitio from the Sitio model
             address.add_external_sitio,
             address.add_barangay,
             address.add_city,
@@ -306,6 +339,7 @@ function CertificatePage() {
         const address = personalInfo.per_addresses[0];
         const addressParts = [
           address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
           address.add_external_sitio,
           address.add_barangay,
           address.add_city,
@@ -332,14 +366,64 @@ function CertificatePage() {
     }
   };
 
+  // Helper function to extract address from certificate
+  const getAddressFromCertificate = (certificate: Certificate): string => {
+    // For non-residents, use nrc_address
+    if (certificate.is_nonresident && certificate.nrc_address) {
+      return certificate.nrc_address;
+    }
+    
+    // For residents, check per_addresses array first, then per_address
+    if (certificate.resident_details) {
+      const resident = certificate.resident_details;
+      
+      // Try to construct address from per_addresses array
+      if (resident.per_addresses && resident.per_addresses.length > 0) {
+        const address = resident.per_addresses[0];
+        const addressParts = [
+          address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
+          address.add_external_sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ].filter(part => part && part.trim() !== "");
+        
+        if (addressParts.length > 0) {
+          return addressParts.join(", ");
+        }
+      }
+      
+      // Fallback to per_address if available
+      if (resident.per_address) {
+        return resident.per_address;
+      }
+    }
+    
+    return "";
+  };
+
   const handleViewFile2 = () => {
     setIsDialogOpen(false); 
 
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
-      const custodies = custody
-        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
-        .filter(Boolean) as string[];
+  
+      // Handle custody names - either from selection or manual input
+      let custodies: string[] = [];
+      if (isManualCustodyInput && manualCustodyNames.trim()) {
+        // Split manual input by comma and trim each name
+        custodies = manualCustodyNames.split(',').map(name => name.trim()).filter(Boolean);
+      } else {
+        custodies = custody
+          .map(lowercaseId => {
+            const resident = residentOptions.find((resident: any) => 
+              resident.id.toLowerCase() === lowercaseId
+            );
+            return resident?.displayName;
+          })
+          .filter(Boolean) as string[];
+      }
       
       // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
@@ -368,6 +452,8 @@ function CertificatePage() {
       
       // Reset for next use
       setCustody([]);
+      setIsManualCustodyInput(false);
+      setManualCustodyNames("");
       setDeceasedName("");
       setDeceasedBirthdate("");
       setDeceasedAddress("");
@@ -657,9 +743,7 @@ function CertificatePage() {
             className="bg-white"
             options={[
               { id: "all", name: "All Purposes" },
-              { id: "employment", name: "Employment" },
-              { id: "bir", name: "BIR" },
-              { id: "burial", name: "Burial" },
+              ...personalPurposes
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}
@@ -716,7 +800,7 @@ function CertificatePage() {
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
           birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
-          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
+          address={getAddressFromCertificate(selectedCertificate) || ""}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
           Custodies={selectedCertificate.custodyChildren}
@@ -744,6 +828,8 @@ function CertificatePage() {
           setIsDialogOpen(open);
           if (!open) {
             setCustody([]);
+            setIsManualCustodyInput(false);
+            setManualCustodyNames("");
             setDeceasedName("");
             setDeceasedBirthdate("");
             setDeceasedAddress("");
@@ -940,17 +1026,53 @@ function CertificatePage() {
 
                 {/* PROOF OF CUSTODY FIELDS */}
                 {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
-                  <div className="w-full pb-3">
-                    <ComboCheckboxStandalone
-                      value={custody}
-                      onChange={setCustody}
-                      label="Custodies"
-                      options={residentOptions}
-                      placeholder="Select child/children"
-                      showBadges={true}
-                      maxDisplayValues={2}
-                    />
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label className="pb-1">Children under Custody</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsManualCustodyInput(!isManualCustodyInput);
+                          if (!isManualCustodyInput) {
+                            // Switching to manual input - clear dropdown selection
+                            setCustody([]);
+                          } else {
+                            // Switching back to dropdown - clear manual input
+                            setManualCustodyNames("");
+                          }
+                        }}
+                        className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        {isManualCustodyInput ? "Select from List" : "Manual Input"}
+                      </Button>
+                    </div>
+                    
+                    {!isManualCustodyInput ? (
+                      <div className="w-full pb-3">
+                        <ComboCheckboxStandalone
+                          value={custody}
+                          onChange={setCustody}
+                          options={residentOptions}
+                          placeholder="Select child/children"
+                          showBadges={true}
+                          maxDisplayValues={Infinity}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full pb-3">
+                        <Input 
+                          placeholder="Enter names separated by commas (e.g., John Doe, Jane Doe)"
+                          value={manualCustodyNames}
+                          onChange={(e) => setManualCustodyNames(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Separate multiple names with commas
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}                  
 
                 <div className="flex justify-end">

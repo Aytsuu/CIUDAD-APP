@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -20,6 +20,7 @@ const CertList = () => {
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch all certificates (without purpose filter) to extract all available purposes
   useEffect(() => {
@@ -111,6 +112,39 @@ const CertList = () => {
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Refetch all certificates
+      const purposeParam = purposeFilter === 'all' ? undefined : purposeFilter
+      const data = await getCertificates(
+        searchQuery || undefined,
+        1,
+        1000,
+        undefined,
+        'Paid',
+        purposeParam
+      )
+      setCertificates(data.results)
+      
+      // Refetch all certificates for purposes
+      const allData = await getCertificates(
+        undefined,
+        1,
+        1000,
+        undefined,
+        'Paid',
+        undefined
+      )
+      setAllCertificates(allData.results)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Extract unique purposes from all certificates (not filtered) for dropdown
   // This ensures all purposes are always available in the dropdown
@@ -225,7 +259,18 @@ const CertList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredCertificates.length ? (
                 filteredCertificates.map((certificate, idx) => {
                   const isNonResident = certificate.is_nonresident || false;

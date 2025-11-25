@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -22,6 +22,7 @@ const ViewPlan = () => {
   const { year } = useLocalSearchParams();
   const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch GAD Project Proposals and Resolutions to determine status
   const { data: proposalsRaw = [] } = useGetApprovedProposals();
@@ -141,6 +142,12 @@ const ViewPlan = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPlans();
+    setIsRefreshing(false);
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
@@ -174,7 +181,18 @@ const ViewPlan = () => {
             </Text>
           </View>
         ) : (
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            className="flex-1" 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#00a8f0']}
+                tintColor="#00a8f0"
+              />
+            }
+          >
             <View className="p-6">
               {plans.map((plan) => (
                 <View 

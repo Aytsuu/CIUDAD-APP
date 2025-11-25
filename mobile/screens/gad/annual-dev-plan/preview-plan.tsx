@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getAnnualDevPlanById } from './restful-api/annualDevPlanGetAPI';
 import PageLayout from '@/screens/_PageLayout';
@@ -55,6 +54,7 @@ const PreviewPlan = () => {
   const { devId, year } = useLocalSearchParams();
   const [plan, setPlan] = useState<DevelopmentPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch GAD Project Proposals and Resolutions to determine status
   const { data: proposalsRaw = [] } = useGetApprovedProposals();
@@ -158,6 +158,12 @@ const PreviewPlan = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPlan();
+    setIsRefreshing(false);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', { 
       month: 'long', 
@@ -243,7 +249,18 @@ const PreviewPlan = () => {
       rightAction={<View className="w-10 h-10" />}
     >
       <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          className="flex-1" 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+              tintColor="#00a8f0"
+            />
+          }
+        >
           <View className="p-6">
             <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-4">
               {/* Plan Header */}

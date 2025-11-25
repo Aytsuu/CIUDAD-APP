@@ -62,7 +62,7 @@ export async function getServiceChargeRate(): Promise<PurposeRate | null> {
   );
   // Filter for Service Charge purpose and return the first match
   const serviceChargeRate = data?.find(item => 
-    item.pr_purpose === 'Summons' && 
+    item.pr_purpose === 'Summon' && 
     item.pr_category === 'Service Charge' && 
     !item.pr_is_archive
   );

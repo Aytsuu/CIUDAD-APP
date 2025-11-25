@@ -454,13 +454,25 @@ function PermitClearance(){
     const [pageSize, setPageSize] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     
+    // Map activeTab to API filters
+    const getStatusFilter = () => {
+        if (activeTab === "declined") return "Declined";
+        return "";
+    };
+    
+    const getPaymentStatusFilter = () => {
+        if (activeTab === "paid") return "Paid";
+        if (activeTab === "unpaid") return "Unpaid";
+        return ""; // For declined tab, filter by status instead
+    };
+
     // Fetch data from backend using custom hooks
     const { data: permitClearances, isLoading, error } = useGetPermitClearances(
         currentPage, 
         pageSize, 
         searchTerm, 
-        '', 
-        activeTab === "paid" ? "Paid" : activeTab === "unpaid" ? "Unpaid" : ""
+        getStatusFilter(), 
+        getPaymentStatusFilter()
     );
     const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
     const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
@@ -502,22 +514,21 @@ function PermitClearance(){
         setCurrentPage(1);
     }, [activeTab]);
 
-    const filteredData = permitClearancesData.filter((item: any) => {
+    // Server handles pagination and filtering by payment_status/status
+    // We still need to exclude declined/cancelled from paid/unpaid tabs
+    const filteredData = React.useMemo(() => {
+        if (!permitClearancesData) return [];
+        
+        // For declined tab, server already filters by status=Declined
         if (activeTab === "declined") {
-            // Show only declined/cancelled requests
-            return item.req_status === "Declined" || item.req_status === "Cancelled";
-        } else {
-            // Filter out declined/cancelled requests for paid/unpaid tabs
-            if (item.req_status === "Declined" || item.req_status === "Cancelled") {
-                return false;
-            }
-            
-            // Then filter by payment status
-            return activeTab === "paid" 
-                ? item.req_payment_status === "Paid" 
-                : item.req_payment_status !== "Paid";
+            return permitClearancesData;
         }
-    });
+        
+        // For paid/unpaid tabs, exclude declined/cancelled requests
+        return permitClearancesData.filter((item: any) => {
+            return item.req_status !== "Declined" && item.req_status !== "Cancelled";
+        });
+    }, [permitClearancesData, activeTab]);
 
     // Map backend data to frontend columns
     const mappedData = (filteredData || []).map((item: any) => {

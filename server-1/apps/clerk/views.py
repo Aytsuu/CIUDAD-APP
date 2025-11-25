@@ -803,6 +803,8 @@ class CancelBusinessPermitView(APIView):
                         if permit.rp_id and permit.rp_id.per:
                             per = permit.rp_id.per
                             owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(permit, 'bus_nonresident_name') and permit.bus_nonresident_name:
+                            owner_name = permit.bus_nonresident_name
                         
                         # Get purpose
                         purpose = permit.pr_id.pr_purpose if permit.pr_id else 'N/A'
@@ -1233,6 +1235,8 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
                         if permit_clearance.rp_id and permit_clearance.rp_id.per:
                             per = permit_clearance.rp_id.per
                             owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(permit_clearance, 'bus_nonresident_name') and permit_clearance.bus_nonresident_name:
+                            owner_name = permit_clearance.bus_nonresident_name
                         
                         # Create activity log
                         create_activity_log(
@@ -1455,6 +1459,8 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                     if issued_permit.bpr_id.rp_id and issued_permit.bpr_id.rp_id.per:
                         per = issued_permit.bpr_id.rp_id.per
                         owner_name = f"{per.per_fname} {per.per_lname}"
+                    elif hasattr(issued_permit.bpr_id, 'bus_nonresident_name') and issued_permit.bpr_id.bus_nonresident_name:
+                        owner_name = issued_permit.bpr_id.bus_nonresident_name
                     
                     # Create activity log
                     create_activity_log(
@@ -1644,6 +1650,8 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                         if clearance_request.rp_id and clearance_request.rp_id.per:
                             per = clearance_request.rp_id.per
                             owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(clearance_request, 'bus_nonresident_name') and clearance_request.bus_nonresident_name:
+                            owner_name = clearance_request.bus_nonresident_name
                         
                         # Create activity log
                         create_activity_log(

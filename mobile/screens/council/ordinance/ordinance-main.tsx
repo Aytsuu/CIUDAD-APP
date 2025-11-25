@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {View, Text, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image} from 'react-native';
+import {View, Text, TouchableOpacity, FlatList, Linking, Alert, Modal, ScrollView, Image, RefreshControl} from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -202,8 +202,12 @@ function OrdinancePage() {
     setFolderViewModalVisible(true);
   };
 
-  const handleRefresh = () => {
-    refetch();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
 
@@ -448,7 +452,18 @@ function OrdinancePage() {
               <LoadingState />
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {ordinanceFolders.length ? (
                 ordinanceFolders.map((folder) => (
                   <React.Fragment key={folder.id}>

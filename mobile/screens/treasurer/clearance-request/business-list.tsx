@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -18,6 +18,7 @@ const BusinessClearanceList = () => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch unpaid business permits from API
   useEffect(() => {
@@ -81,6 +82,19 @@ const BusinessClearanceList = () => {
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await getBusinessPermits(searchQuery)
+      setBusinessPermits(data)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter business permits by payment status and request status
   const filteredBusinesses = useMemo(() => {
@@ -181,7 +195,18 @@ const BusinessClearanceList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredBusinesses.length ? (
                 filteredBusinesses.map((business, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
@@ -202,7 +227,6 @@ const BusinessClearanceList = () => {
                           </Text>
                         )}
                         <Text className="text-gray-500 text-xs mt-1">{formatDate(business.req_request_date)}</Text>
-                        <Text className="text-gray-500 text-xs mt-1">{business.req_payment_status}</Text>
                       </View>
                       {getStatusBadge(business)}
                     </View>
