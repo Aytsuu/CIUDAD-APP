@@ -216,6 +216,7 @@ ALLOWED_HOSTS = [
     'securado.onrender.com',
     'localhost',
     '127.0.0.1',
+    'ciudad-app-server-1.onrender.com',
     'ciudad-app.onrender.com',
     'www.sanroqueciudad.com',
     'sanroqueciudad.com'
