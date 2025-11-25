@@ -26,7 +26,7 @@ export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
       
       onSuccess?.();
     },
-    onError: (err) => {
+    onError: () => {
       // console.error("Error updating request status:", err);
       toast.error("Failed to update request status", {
         id: "updateGarbageStatus",

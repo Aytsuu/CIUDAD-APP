@@ -46,7 +46,6 @@ const styles = {
 
 function BudgetPlanMainForm({ 
   headerData, 
-  onBackToPrevious, 
   onNext,
   onBackToHeader,
   formData, 
@@ -279,7 +278,7 @@ function BudgetPlanMainForm({
         onSuccess: () => {
           setIsSubmitting(false);
         },
-        onError: (error) => {
+        onError: () => {
           setIsSubmitting(false);
         }
       });
