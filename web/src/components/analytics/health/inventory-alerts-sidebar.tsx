@@ -5,12 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, XCircle, Package, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAntigenCombineStocks } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/queries/AntigenFetchQueries";
 import { useMedicineStockTable } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicineFetchQueries";
 import { useCommodityStocksTable } from "@/pages/healthInventory/inventoryStocks/REQUEST/Commodity/queries/fetch-queries";
@@ -58,10 +53,7 @@ export function InventoryAlertsSidebar() {
         else if (item.isLowStock) primaryStatus = "low_stock";
         else primaryStatus = "near_expiry";
 
-        const typeLabel = item.type === 'vaccine' ? 'Vaccine' : 'Immunization Supply';
-        const details = item.item?.dosage 
-          ? `${item.item.dosage} ${item.item.unit || ""} • ${typeLabel}`
-          : typeLabel;
+        const details = item.item?.dosage ? `${item.item.dosage} ${item.item.unit || ""}` : "";
 
         alerts.push({
           id: item.inv_id,
@@ -74,7 +66,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry
+          isNearExpiry: item.isNearExpiry,
         });
       }
     });
@@ -87,9 +79,7 @@ export function InventoryAlertsSidebar() {
         else if (item.isLowStock) primaryStatus = "low_stock";
         else primaryStatus = "near_expiry";
 
-        const details = item.item?.dosage 
-          ? `${item.item.dosage} ${item.item.dsgUnit}, ${item.item.form}`
-          : "";
+        const details = item.item?.dosage ? `${item.item.dosage} ${item.item.dsgUnit}, ${item.item.form}` : "";
 
         alerts.push({
           id: item.inv_id,
@@ -102,7 +92,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry
+          isNearExpiry: item.isNearExpiry,
         });
       }
     });
@@ -128,7 +118,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry
+          isNearExpiry: item.isNearExpiry,
         });
       }
     });
@@ -152,7 +142,7 @@ export function InventoryAlertsSidebar() {
           details: item.category || "",
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry
+          isNearExpiry: item.isNearExpiry,
         });
       }
     });
@@ -162,7 +152,7 @@ export function InventoryAlertsSidebar() {
       const priority: Record<StockStatus, number> = {
         out_of_stock: 3,
         low_stock: 2,
-        near_expiry: 1
+        near_expiry: 1,
       };
       return priority[b.status] - priority[a.status];
     });
@@ -171,19 +161,19 @@ export function InventoryAlertsSidebar() {
   const allAlertItems = getCombinedAlertItems();
   const itemsToShow = allAlertItems.slice(0, 10);
 
-  // Calculate total counts
+  // Calculate total counts - count all statuses independently
   const totalCounts = {
-    out_of_stock: allAlertItems.filter(item => item.isOutOfStock).length,
-    low_stock: allAlertItems.filter(item => item.isLowStock && !item.isOutOfStock).length,
-    near_expiry: allAlertItems.filter(item => item.isNearExpiry && !item.isOutOfStock && !item.isLowStock).length,
+    out_of_stock: allAlertItems.filter((item) => item.isOutOfStock).length,
+    low_stock: allAlertItems.filter((item) => item.isLowStock).length,
+    near_expiry: allAlertItems.filter((item) => item.isNearExpiry).length,
   };
 
   // Count by type
   const typeCounts = {
-    antigen: allAlertItems.filter(item => item.type === "antigen").length,
-    medicine: allAlertItems.filter(item => item.type === "medicine").length,
-    commodity: allAlertItems.filter(item => item.type === "commodity").length,
-    firstaid: allAlertItems.filter(item => item.type === "firstaid").length,
+    antigen: allAlertItems.filter((item) => item.type === "antigen").length,
+    medicine: allAlertItems.filter((item) => item.type === "medicine").length,
+    commodity: allAlertItems.filter((item) => item.type === "commodity").length,
+    firstaid: allAlertItems.filter((item) => item.type === "firstaid").length,
   };
 
   const getStatusIcon = (status: StockStatus) => {
@@ -202,13 +192,13 @@ export function InventoryAlertsSidebar() {
   const getStatusColor = (status: StockStatus) => {
     switch (status) {
       case "out_of_stock":
-        return "text-red-700 bg-red-50 border-red-200";
+        return "border-red-500 bg-red-50/50 hover:bg-red-50";
       case "low_stock":
-        return "text-orange-700 bg-orange-50 border-orange-200";
+        return "border-orange-500 bg-orange-50/50 hover:bg-orange-50";
       case "near_expiry":
-        return "text-yellow-700 bg-yellow-50 border-yellow-200";
+        return "border-yellow-500 bg-yellow-50/50 hover:bg-yellow-50";
       default:
-        return "text-gray-700 bg-gray-50 border-gray-200";
+        return "border-gray-300 bg-gray-50 hover:bg-gray-100";
     }
   };
 
@@ -259,43 +249,31 @@ export function InventoryAlertsSidebar() {
 
   const getStatusBadges = (item: StockAlertItem) => {
     const badges = [];
-    
+
     if (item.isOutOfStock) {
       badges.push(
-        <Badge 
-          key="out_of_stock"
-          variant="secondary" 
-          className="text-xs bg-red-50 text-red-700 border-red-200"
-        >
+        <Badge key="out_of_stock" variant="secondary" className="text-[10px] px-2 py-0.5 bg-red-100 text-red-800 border-red-300 font-semibold">
           Out of Stock
         </Badge>
       );
     }
-    
+
     if (item.isLowStock) {
       badges.push(
-        <Badge 
-          key="low_stock"
-          variant="secondary" 
-          className="text-xs bg-orange-50 text-orange-700 border-orange-200"
-        >
+        <Badge key="low_stock" variant="secondary" className="text-[10px] px-2 py-0.5 bg-orange-100 text-orange-800 border-orange-300 font-semibold">
           Low Stock
         </Badge>
       );
     }
-    
+
     if (item.isNearExpiry) {
       badges.push(
-        <Badge 
-          key="near_expiry"
-          variant="secondary" 
-          className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200"
-        >
+        <Badge key="near_expiry" variant="secondary" className="text-[10px] px-2 py-0.5 bg-yellow-100 text-yellow-800 border-yellow-300 font-semibold">
           Near Expiry
         </Badge>
       );
     }
-    
+
     return badges;
   };
 
@@ -304,7 +282,7 @@ export function InventoryAlertsSidebar() {
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-        year: "numeric"
+        year: "numeric",
       });
     } catch {
       return "Invalid Date";
@@ -334,26 +312,29 @@ export function InventoryAlertsSidebar() {
 
   return (
     <Card className="rounded-lg shadow-sm border-0">
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+      <CardHeader className="pb-3 space-y-2">
+        <div className="flex flex-wrap gap-2">
           {totalCounts.out_of_stock > 0 && (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300 text-xs font-semibold px-2.5 py-1">
+              <XCircle className="h-3 w-3 mr-1" />
               {totalCounts.out_of_stock} Out of Stock
             </Badge>
           )}
           {totalCounts.low_stock > 0 && (
-            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+            <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-xs font-semibold px-2.5 py-1">
+              <AlertTriangle className="h-3 w-3 mr-1" />
               {totalCounts.low_stock} Low Stock
             </Badge>
           )}
           {totalCounts.near_expiry > 0 && (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs font-semibold px-2.5 py-1">
+              <Clock className="h-3 w-3 mr-1" />
               {totalCounts.near_expiry} Near Expiry
             </Badge>
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {!hasAlerts ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -361,60 +342,54 @@ export function InventoryAlertsSidebar() {
               <Package className="h-6 w-6 text-green-600" />
             </div>
             <h3 className="text-sm font-semibold mb-1">All Good!</h3>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              No stock alerts at the moment.
-            </p>
+            <p className="text-xs text-muted-foreground max-w-sm">No stock alerts at the moment.</p>
           </div>
         ) : (
           <>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {itemsToShow.map((item) => (
-                <Link
-                  key={`${item.type}-${item.id}`}
-                  to={getTypeRoute(item.type)}
-                  className="block"
-                >
-                  <div
-                    className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-all hover:shadow-sm cursor-pointer`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {getStatusIcon(item.status)}
-                        <span className="text-sm font-medium truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1 flex-shrink-0 ml-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getTypeColor(item.type)}`}
-                        >
-                          {getTypeLabel(item.type)}
-                        </Badge>
-                        {getStatusBadges(item)}
+                <Link key={`${item.type}-${item.id}`} to={getTypeRoute(item.type)} className="block group">
+                  <div className={`p-3.5 rounded-xl border ${getStatusColor(item.status)} transition-all hover:shadow-md cursor-pointer bg-white`}>
+                    <div className="flex items-start gap-3 mb-2.5">
+                      <div className="flex-shrink-0 mt-0.5">{getStatusIcon(item.status)}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                           <div className="flex flex-row items-center gap-1 min-w-0">
+                            <h4 className="text-sm font-semibold  items-center text-gray-900 truncate leading-tight">
+                              {item.name}
+                            </h4>
+                            {/* Item details */}
+                            {item.details && (
+                              <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed truncate">
+                                {item.details}
+                              </p>
+                            )}
+                          </div>
+
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 font-medium ${getTypeColor(item.type)}`}>
+                            {getTypeLabel(item.type)}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="text-xs text-muted-foreground space-y-1">
+
+                    <div className="ml-7 space-y-1.5">
+                      {/* Status badges row */}
+                      <div className="flex flex-wrap gap-1.5">{getStatusBadges(item)}</div>
+
                       {/* Status messages */}
-                      {item.isOutOfStock && (
-                        <p className="font-medium">No available stock</p>
-                      )}
-                      {!item.isOutOfStock && item.isLowStock && (
-                        <p className="font-medium">Only {item.quantity} units remaining</p>
-                      )}
-                      
-                      {/* Expiry information */}
-                      {item.isNearExpiry && item.expiryDate && (
-                        <p className="font-medium">Expires {formatExpiryDate(item.expiryDate)}</p>
-                      )}
-                      
-                      {/* Item details */}
-                      {item.details && (
-                        <p className="text-xs opacity-75">
-                          {item.details}
-                        </p>
-                      )}
+                      <div className="space-y-1">
+                        {item.isOutOfStock && <p className="text-xs font-semibold text-red-700">⚠ No available stock</p>}
+                        {item.isLowStock && <p className="text-xs font-medium text-orange-700">Only {item.quantity} units remaining</p>}
+
+                        {/* Expiry information */}
+                        {item.isNearExpiry && item.expiryDate && (
+                          <p className="text-xs font-medium text-yellow-700 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Expires {formatExpiryDate(item.expiryDate)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -425,13 +400,9 @@ export function InventoryAlertsSidebar() {
             <div className="pt-3 border-t border-gray-100 mt-3">
               <DropdownMenu open={showViewAllDropdown} onOpenChange={setShowViewAllDropdown}>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="link" 
-                    className="w-full flex items-center justify-between text-sm font-medium text-blue-600 hover:text-blue-700"
-                  >
+                  <Button variant="link" className="w-full flex items-center justify-between text-sm font-medium text-blue-600 hover:text-blue-700">
                     <span className="flex items-center gap-2">
-                      View All Stock Alerts ({allAlertItems.length})
-                      {allAlertItems.length > 10 && <span className="text-gray-400 text-xs">• Showing 10 of {allAlertItems.length}</span>}
+                      View All Stock Alerts ({allAlertItems.length}){allAlertItems.length > 10 && <span className="text-gray-400 text-xs">• Showing 10 of {allAlertItems.length}</span>}
                     </span>
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>

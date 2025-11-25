@@ -20,10 +20,11 @@ import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analy
 import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
 import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
 import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
-import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
-import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
-import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
-import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+// import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
+// import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
+// import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
+// import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+import { InventoryAlertsSidebar } from "@/components/analytics/health/inventory-alerts-sidebar";
 
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
@@ -59,6 +60,8 @@ import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/an
 // import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
 import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 import { PendingAppointmentsSidebar } from "@/components/analytics/health/pending-appointments-sidebar";
+
+
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -329,25 +332,30 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
-          {
-            title: "Weekly Schedule",
-            element: <SchedulerSidebar />,
-          },
-          {
-            title: "Medicine Alerts",
-            element: <MedicineAlertsSidebar />,
-          },
-          {
-            title: "Antigen Alerts",
-            element: <AntigenAlertsSidebar />,
-          },
-          { title: "First Aid Alerts",
-            element: <FirstAidAlertsSidebar />,
-          },
-          { title: "Commodity Alerts",
-            element: <CommodityAlertsSidebar />,
-          }
+          // {
+          //   title: "Weekly Schedule",
+          //   element: <SchedulerSidebar />,
+          // },
+          // {
+          //   title: "Medicine Alerts",
+          //   element: <MedicineAlertsSidebar />,
+          // },
+          // {
+          //   title: "Antigen Alerts",
+          //   element: <AntigenAlertsSidebar />,
+          // },
+          // { title: "First Aid Alerts",
+          //   element: <FirstAidAlertsSidebar />,
+          // },
+          // { title: "Commodity Alerts",
+          //   element: <CommodityAlertsSidebar />,
+          // }
        
+          {
+            title: "Inventory Alerts",
+            element: <InventoryAlertsSidebar />,
+          },
+          
         ],
       },
       {
