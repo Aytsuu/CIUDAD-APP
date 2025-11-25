@@ -126,6 +126,44 @@ function WasteEventSched() {
             const selectedStaff = staffOptions.find((o: { id: string; name: string }) => String(o.id) === String(values.organizer));
             const organizerName = selectedStaff?.name || '';
 
+            // Format eventSubject to include location, date, and time
+            let formattedEventSubject = values.eventSubject || '';
+            if (values.selectedAnnouncements && values.selectedAnnouncements.length > 0) {
+                const eventDetails: string[] = [];
+                
+                if (sitioName) {
+                    eventDetails.push(`Location: ${sitioName}`);
+                }
+                
+                if (formattedDate) {
+                    // Format date to be more readable (e.g., "January 15, 2024")
+                    const dateObj = new Date(formattedDate);
+                    const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    eventDetails.push(`Date: ${formattedDateStr}`);
+                }
+                
+                if (formattedTime) {
+                    // Format time to be more readable (e.g., "2:30 PM")
+                    const [hours, minutes] = formattedTime.split(':');
+                    const hour = parseInt(hours, 10);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour % 12 || 12;
+                    const formattedTimeStr = `${displayHour}:${minutes} ${ampm}`;
+                    eventDetails.push(`Time: ${formattedTimeStr}`);
+                }
+                
+                // Combine user's subject with event details
+                if (formattedEventSubject) {
+                    formattedEventSubject = `${formattedEventSubject}\n\n${eventDetails.join('\n')}`;
+                } else {
+                    formattedEventSubject = eventDetails.join('\n');
+                }
+            }
+
             const eventData: Omit<WasteEvent, 'we_num'> & { selectedAnnouncements?: string[]; eventSubject?: string } = {
                 we_name: values.eventName,
                 we_location: sitioName,
@@ -138,7 +176,7 @@ function WasteEventSched() {
                 staff: staffId,
                 // Include announcement data
                 selectedAnnouncements: values.selectedAnnouncements || [],
-                eventSubject: values.eventSubject || ''
+                eventSubject: formattedEventSubject
             };
 
             const response = await createWasteEvent(eventData);
