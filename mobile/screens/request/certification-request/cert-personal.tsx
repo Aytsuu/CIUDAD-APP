@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -11,12 +11,15 @@ import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CertForm: React.FC = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const {user, isLoading} = useAuth();
   const [purpose, setPurpose] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Use RESTful API hook to check voter ID
   const { data: hasVoterId = false } = useResidentVoterId(user?.rp, user?.personal);
@@ -24,8 +27,22 @@ const CertForm: React.FC = () => {
   
   const addPersonalCert = useAddPersonalCertification();
   const { data: purposeData = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
-  
 
+  // Refresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Invalidate and refetch all relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["purpose-and-rates"] }),
+        queryClient.invalidateQueries({ queryKey: ["resident-voter-id", user?.rp] }),
+      ]);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   
   const purposeOptions: DropdownOption[] = purposeData
     .filter((purpose: PurposeAndRate) => {
@@ -105,7 +122,13 @@ const CertForm: React.FC = () => {
         <View className="flex-1 p-6">
           {/* Loading Modal */}
           <LoadingModal visible={addPersonalCert.status === 'pending'} />
-          <>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
             {error && (
               <Text className="text-red-500 mb-2 text-sm">{error}</Text>
             )}
@@ -173,7 +196,7 @@ const CertForm: React.FC = () => {
                 </Text>
               )}
             </TouchableOpacity>
-          </>
+          </ScrollView>
         </View>
     </PageLayout>
   );

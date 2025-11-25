@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId } from "./queries/certificationReqFetchQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
@@ -23,8 +24,10 @@ const CertPermit: React.FC = () => {
   const [businessAddress, setBusinessAddress] = useState("");
   const [grossSales, setGrossSales] = useState("");
   const [inputtedGrossSales, setInputtedGrossSales] = useState("");
+  const [selectedGrossSalesRange, setSelectedGrossSalesRange] = useState<string>("");
 
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Image upload states - using MediaPicker format
   const [previousPermitImages, setPreviousPermitImages] = useState<MediaItem[]>([]);
@@ -35,6 +38,7 @@ const CertPermit: React.FC = () => {
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>("");
 
+  const queryClient = useQueryClient();
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
@@ -42,6 +46,23 @@ const CertPermit: React.FC = () => {
     user?.rp || ""
   );
   const businessData = businessResponse?.results || [];
+
+  // Refresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Invalidate and refetch all relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["purpose-and-rates"] }),
+        queryClient.invalidateQueries({ queryKey: ["annual-gross-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["business-by-resident", user?.rp] }),
+      ]);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   
     useEffect(() => {
@@ -70,14 +91,11 @@ const CertPermit: React.FC = () => {
   
   // Separate permit purposes and barangay clearance
   const permitPurposes = purposeAndRates.filter(purpose => 
-    purpose.pr_category.toLowerCase().includes('permit') &&
-    !purpose.pr_purpose.toLowerCase().includes('clearance') &&
-    !purpose.pr_category.toLowerCase().includes('clearance')
+    purpose.pr_category === 'Barangay Permit'
   );
   
   const barangayClearancePurposes = purposeAndRates.filter(purpose => 
-    purpose.pr_purpose.toLowerCase().includes('clearance') ||
-    purpose.pr_category.toLowerCase().includes('clearance')
+    purpose.pr_category === 'Barangay Clearance'
   );
 
 
@@ -108,43 +126,55 @@ const CertPermit: React.FC = () => {
     }
   }, [isLoadingBusiness, businessData.length, permitPurposes, barangayClearancePurposes]);
 
-  // Helper function to find the closest gross sales range and rate
+  // Helper function to find matching gross sales rate from manual input
+  // EXACTLY matches the logic from web form (treasurer-permitClearance-form.tsx)
   const findMatchingGrossSalesRate = (inputValue: string) => {
-    const numericValue = parseFloat(inputValue);
-    if (isNaN(numericValue)) return null;
+    // Handle empty input
+    if (!inputValue || inputValue.trim() === '') return null;
     
-    // Filter out archived ranges
-    const activeRanges = annualGrossSales.filter(sales => sales.ags_is_archive === false);
+    // Clean input and convert to number (same as web)
+    const cleanInput = inputValue.replace(/,/g, '').trim();
+    const numericValue = parseFloat(cleanInput);
+    if (isNaN(numericValue) || numericValue < 0) return null;
     
-    if (activeRanges.length === 0) return null;
+    // Ensure annualGrossSales is an array
+    if (!Array.isArray(annualGrossSales) || annualGrossSales.length === 0) {
+      return null;
+    }
     
-    // First, try to find exact match within a range
-    const exactMatch = activeRanges.find(sales => 
-      numericValue >= sales.ags_minimum && 
-      numericValue <= sales.ags_maximum
+    // Filter only active (non-archived) rates (same as web)
+    const activeRates = annualGrossSales.filter((sales) => !sales.ags_is_archive);
+    
+    if (activeRates.length === 0) return null;
+    
+    // Sort rates by minimum value to ensure proper matching (EXACTLY like web)
+    const sortedRates = [...activeRates].sort((a, b) => 
+      Number(a.ags_minimum) - Number(b.ags_minimum)
     );
     
-    if (exactMatch) return exactMatch;
+    // Find exact match within a range (EXACTLY like web - using find, not for loop)
+    const exactMatch = sortedRates.find((sales) => 
+      numericValue >= Number(sales.ags_minimum) && 
+      numericValue <= Number(sales.ags_maximum)
+    );
     
-    // If no exact match, find the closest range
-    let closestRange = null;
-    let minDistance = Infinity;
+    if (exactMatch) {
+      return exactMatch;
+    }
     
-    activeRanges.forEach(sales => {
-      const rangeMin = sales.ags_minimum;
-      const rangeMax = sales.ags_maximum;
-      const rangeMid = (rangeMin + rangeMax) / 2;
-      
-      // Calculate distance from input value to range midpoint
-      const distance = Math.abs(numericValue - rangeMid);
-      
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestRange = sales;
-      }
-    });
+    // If value is below lowest range, use lowest range (same as web)
+    const lowestRate = sortedRates[0];
+    if (lowestRate && numericValue < Number(lowestRate.ags_minimum)) {
+      return lowestRate;
+    }
     
-    return closestRange;
+    // If exceeds highest range, use highest available (same as web)
+    const highestRate = sortedRates[sortedRates.length - 1];
+    if (highestRate && numericValue > Number(highestRate.ags_maximum)) {
+      return highestRate;
+    }
+    
+    return null;
   };
 
   // Check if selected type is barangay clearance
@@ -168,6 +198,59 @@ const CertPermit: React.FC = () => {
   const handleGrossSalesChange = (text: string) => {
     if (isBarangayClearance) {
       setInputtedGrossSales(text);
+      // Auto-match gross sales range when input changes
+      if (text.trim()) {
+        const matchingRate = findMatchingGrossSalesRate(text);
+        if (matchingRate) {
+          setSelectedGrossSalesRange(matchingRate.ags_id.toString());
+        }
+      }
+    }
+  };
+
+  // Create dropdown options for annual gross sales ranges
+  const grossSalesDropdownOptions: DropdownOption[] = useMemo(() => {
+    if (!Array.isArray(annualGrossSales) || annualGrossSales.length === 0) {
+      return [];
+    }
+    
+    // Filter only active (non-archived) rates
+    const activeRates = annualGrossSales.filter((sales) => !sales.ags_is_archive);
+    
+    // Sort rates by minimum value
+    const sortedRates = [...activeRates].sort((a, b) => 
+      Number(a.ags_minimum) - Number(b.ags_minimum)
+    );
+    
+    return sortedRates.map((sales) => {
+      // Handle both string and number types from API
+      const min = typeof sales.ags_minimum === 'string' ? parseFloat(sales.ags_minimum) : Number(sales.ags_minimum);
+      const max = typeof sales.ags_maximum === 'string' ? parseFloat(sales.ags_maximum) : Number(sales.ags_maximum);
+      
+      return {
+        label: `₱${min.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ₱${max.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        value: sales.ags_id.toString()
+      };
+    });
+  }, [annualGrossSales]);
+
+  // Handler for gross sales dropdown selection
+  const handleGrossSalesRangeSelect = (agsId: string) => {
+    setSelectedGrossSalesRange(agsId);
+    
+    // For registered businesses, auto-populate input with minimum value of selected range
+    if (businessData.length > 0) {
+      const selectedRange = annualGrossSales.find(
+        (sales) => sales.ags_id.toString() === agsId && !sales.ags_is_archive
+      );
+      if (selectedRange) {
+        const minValue = typeof selectedRange.ags_minimum === 'string' 
+          ? parseFloat(selectedRange.ags_minimum) 
+          : Number(selectedRange.ags_minimum);
+        if (!isNaN(minValue)) {
+          setInputtedGrossSales(minValue.toString());
+        }
+      }
     }
   };
 
@@ -209,17 +292,30 @@ const CertPermit: React.FC = () => {
       setError("Business address is required");
       return;
     }
-    if (isBarangayClearance && !inputtedGrossSales.trim()) {
-      setError("Please enter your annual gross sales amount");
-      return;
-    }
-    
-    // Validate that inputted gross sales can find a closest range
-    if (isBarangayClearance && inputtedGrossSales.trim()) {
-      const matchingRate = findMatchingGrossSalesRate(inputtedGrossSales);
-      if (!matchingRate) {
-        setError("No valid gross sales range found for the entered amount");
-        return;
+    // Validate gross sales based on business type
+    if (isBarangayClearance) {
+      if (businessData.length === 0) {
+        // New business: require dropdown selection
+        if (!selectedGrossSalesRange) {
+          setError("Please select an annual gross sales range");
+          return;
+        }
+      } else {
+        // Registered business: require both dropdown and input
+        if (!selectedGrossSalesRange) {
+          setError("Please select an annual gross sales range");
+          return;
+        }
+        if (!inputtedGrossSales.trim()) {
+          setError("Please enter your annual gross sales amount");
+          return;
+        }
+        // Validate that inputted gross sales can find a closest range
+        const matchingRate = findMatchingGrossSalesRate(inputtedGrossSales);
+        if (!matchingRate) {
+          setError("No valid gross sales range found for the entered amount");
+          return;
+        }
       }
     }
 
@@ -235,11 +331,30 @@ const CertPermit: React.FC = () => {
       }
     }
     
+    // For new businesses, use the minimum value of selected range if no input
+    let grossSalesValue = "";
+    if (isBarangayClearance) {
+      if (businessData.length === 0) {
+        // New business: use minimum of selected range
+        if (selectedGrossSalesRange) {
+          const selectedRange = annualGrossSales.find(
+            (sales) => sales.ags_id.toString() === selectedGrossSalesRange && !sales.ags_is_archive
+          );
+          grossSalesValue = selectedRange ? selectedRange.ags_minimum.toString() : "";
+        }
+      } else {
+        // Registered business: use inputted value
+        grossSalesValue = inputtedGrossSales || "";
+      }
+    } else {
+      grossSalesValue = "N/A";
+    }
+    
     const result = CertificationRequestSchema.safeParse({
       cert_type: "permit",
       business_name: businessName || "",
       business_address: businessAddress || "",
-      gross_sales: isBarangayClearance ? (inputtedGrossSales || "") : "N/A",
+      gross_sales: grossSalesValue,
       rp_id: user?.rp || "",
       permit_image: isBarangayClearance ? (getPreviousPermitImageUri() || undefined) : undefined,
       assessment_image: isBarangayClearance ? (getAssessmentImageUri() || undefined) : undefined,
@@ -263,13 +378,35 @@ const CertPermit: React.FC = () => {
     
     if (isBarangayClearance) {
       // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
-      // Use inputted gross sales for all business clearance requests
-      const matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
-      reqAmount = matchingGrossSales?.ags_rate || 0;
-      agsId = matchingGrossSales?.ags_id || null;
+      let matchingGrossSales = null;
+      
+      if (businessData.length === 0) {
+        // New business: use selected dropdown value
+        if (selectedGrossSalesRange) {
+          matchingGrossSales = annualGrossSales.find(
+            (sales) => sales.ags_id.toString() === selectedGrossSalesRange && !sales.ags_is_archive
+          );
+        }
+      } else {
+        // Registered business: use inputted gross sales to find matching rate
+        if (inputtedGrossSales.trim()) {
+          matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
+        }
+      }
+      
+      if (matchingGrossSales) {
+        // Handle both string and number types from API (same as display logic)
+        const rateValue = matchingGrossSales.ags_rate;
+        reqAmount = typeof rateValue === 'string' ? parseFloat(rateValue) : Number(rateValue);
+        if (isNaN(reqAmount)) reqAmount = 0;
+        agsId = matchingGrossSales.ags_id;
+      }
     } else {
       // For permit types, use rate from purpose and rates
-      reqAmount = selectedPurpose?.pr_rate || 0;
+      if (selectedPurpose?.pr_rate) {
+        // Match web form: use Number() conversion consistently
+        reqAmount = Number(selectedPurpose.pr_rate);
+      }
     }
 
     // Prepare payload
@@ -277,13 +414,28 @@ const CertPermit: React.FC = () => {
       cert_type: "permit",
       business_name: businessName,
       business_address: businessAddress,
-      gross_sales: isBarangayClearance ? inputtedGrossSales : "N/A",
-      business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
-      pr_id: prId,
+      gross_sales: isBarangayClearance 
+        ? (businessData.length === 0 
+          ? (selectedGrossSalesRange 
+            ? (annualGrossSales.find(s => s.ags_id.toString() === selectedGrossSalesRange && !s.ags_is_archive)?.ags_minimum.toString() || "")
+            : "")
+          : (inputtedGrossSales || ""))
+        : "N/A",
+      business_id: businessData.length > 0 ? businessData[0]?.bus_id : null, 
+      pr_id: prId || null,
       rp_id: user?.rp || "",
-      req_amount: reqAmount,
-      ags_id: agsId || undefined,
-      bus_clearance_gross_sales: isBarangayClearance ? parseFloat(inputtedGrossSales) : undefined,
+      req_amount: reqAmount || 0,
+      ags_id: agsId || null,
+      bus_clearance_gross_sales: isBarangayClearance 
+        ? (businessData.length === 0
+          ? (selectedGrossSalesRange
+            ? (() => {
+                const selectedRange = annualGrossSales.find(s => s.ags_id.toString() === selectedGrossSalesRange && !s.ags_is_archive);
+                return selectedRange ? parseFloat(selectedRange.ags_minimum.toString()) : null;
+              })()
+            : null)
+          : (inputtedGrossSales ? parseFloat(inputtedGrossSales) : null))
+        : null,
     };
 
     // Handle file uploads if images are provided - only for barangay clearance
@@ -372,7 +524,13 @@ const CertPermit: React.FC = () => {
         <View className="flex-1 p-6">
           {/* Loading Modal */}
           <LoadingModal visible={addBusinessPermit.status === 'pending' || isUploadingFiles} />
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
             {error && (
               <Text className="text-red-500 mb-2 text-sm">{error}</Text>
             )}
@@ -473,17 +631,33 @@ const CertPermit: React.FC = () => {
                 {/* Annual Gross Sales - Only show for barangay clearance */}
                 {isBarangayClearance && (
                   <>
-                    <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales</Text>
-                    <TextInput
-                      className="rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base bg-white text-gray-900"
-                      placeholder="Enter your annual gross sales amount"
-                      placeholderTextColor="#888"
-                      value={inputtedGrossSales}
-                      onChangeText={handleGrossSalesChange}
-                      keyboardType="numeric"
-                      autoCapitalize="none"
-                      autoCorrect={false}
+                    <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales Range</Text>
+                    <SelectLayout
+                      label=""
+                      options={grossSalesDropdownOptions}
+                      selectedValue={selectedGrossSalesRange}
+                      onSelect={(option) => handleGrossSalesRangeSelect(option.value)}
+                      placeholder="Select annual gross sales range"
+                      disabled={false}
+                      className="mb-3"
                     />
+                    
+                    {/* Input field - Only show for registered businesses */}
+                    {businessData.length > 0 && (
+                      <>
+                        <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales Amount</Text>
+                        <TextInput
+                          className="rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base bg-white text-gray-900"
+                          placeholder="Enter your annual gross sales amount"
+                          placeholderTextColor="#888"
+                          value={inputtedGrossSales}
+                          onChangeText={handleGrossSalesChange}
+                          keyboardType="numeric"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                      </>
+                    )}
                   </>
                 )}
 
@@ -543,13 +717,40 @@ const CertPermit: React.FC = () => {
                     {(() => {
                       if (isBarangayClearance) {
                         // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
-                        // Use inputted gross sales for all business clearance requests
-                        const matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
-                        return matchingGrossSales ? `₱${matchingGrossSales.ags_rate.toLocaleString()}` : '₱0';
+                        let matchingGrossSales = null;
+                        
+                        if (businessData.length === 0) {
+                          // New business: use selected dropdown value
+                          if (selectedGrossSalesRange) {
+                            matchingGrossSales = annualGrossSales.find(
+                              (sales) => sales.ags_id.toString() === selectedGrossSalesRange && !sales.ags_is_archive
+                            );
+                          }
+                        } else {
+                          // Registered business: use inputted gross sales to find matching rate
+                          if (inputtedGrossSales.trim()) {
+                            matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
+                          }
+                        }
+                        
+                        if (matchingGrossSales) {
+                          // Match web form: use Number() conversion consistently
+                          // Handle both string and number types from API
+                          const rateValue = matchingGrossSales.ags_rate;
+                          const rate = typeof rateValue === 'string' ? parseFloat(rateValue) : Number(rateValue);
+                          if (isNaN(rate)) return '₱0.00';
+                          return `₱${rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        }
+                        return '₱0.00';
                       } else {
                         // For permit types, use rate from purpose and rates
                         const selectedPurpose = purposeAndRates.find(p => p.pr_purpose === permitType);
-                        return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
+                        if (selectedPurpose) {
+                          // Match web form: use Number() conversion consistently
+                          const rate = Number(selectedPurpose.pr_rate);
+                          return `₱${rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        }
+                        return '₱0.00';
                       }
                     })()}
                   </Text>

@@ -342,6 +342,7 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                 },
                                 req_payment_status: row.original.req_payment_status || "Pending",
                                 pr_id: row.original.pr_id,
+                                ags_id: row.original.ags_id, // Pass ags_id for barangay clearance
                                 business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
                                 req_amount: (() => {
                                     const grossSalesData = row.original.grossSalesData;
@@ -361,7 +362,8 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                         return row.original.req_amount || 0;
                                     }
                                 })(),
-                                // req_sales_proof field removed
+                                // Pass gross sales amount for display (inputted or from business)
+                                gross_sales_amount: row.original.bus_clearance_gross_sales || row.original.businessGrossSales || 0,
                             }}
                             onSuccess={() => {}}
                         />

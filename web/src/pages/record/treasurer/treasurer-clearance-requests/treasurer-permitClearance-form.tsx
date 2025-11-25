@@ -30,7 +30,8 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const { data: businesses = [], isLoading: businessLoading } = useGetBusinesses();
     const { data: permitPurposes = [], isLoading: purposesLoading } = useGetPermitPurposes();
     const { data: residents = [], isLoading: residentLoading} = useGetResidents();
-    const { data: grossSales = { results: [], count: 0 }, isLoading: _grossSalesLoading } = useGetAnnualGrossSalesActive();
+    // Fetch all gross sales records without pagination limits
+    const { data: grossSalesResponse, isLoading: _grossSalesLoading } = useGetAnnualGrossSalesActive(1, 1000, '');
     
 
     
@@ -88,17 +89,28 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         return selectedPurpose?.pr_rate || null;
     }
 
+    // Extract gross sales array from response (handle both array and object formats)
+    const grossSalesArray: AnnualGrossSales[] = Array.isArray(grossSalesResponse) 
+        ? grossSalesResponse 
+        : grossSalesResponse?.results || [];
+
     // Helper function to find matching gross sales rate from manual input
     const findMatchingGrossSalesRateFromInput = (inputValue: string) => {
         const numericValue = parseFloat(inputValue);
-        if (isNaN(numericValue)) return null;
+        if (isNaN(numericValue) || numericValue < 0) return null;
         
-        const activeRates = grossSales?.results?.filter((rate: AnnualGrossSales) => !rate.ags_is_archive) || [];
+        // Filter only active (non-archived) rates
+        const activeRates = grossSalesArray.filter((rate: AnnualGrossSales) => !rate.ags_is_archive);
         
         if (activeRates.length === 0) return null;
         
+        // Sort rates by minimum value to ensure proper matching
+        const sortedRates = [...activeRates].sort((a, b) => 
+            Number(a.ags_minimum) - Number(b.ags_minimum)
+        );
+        
         // Find exact match within a range
-        const exactMatch = activeRates.find((rate: AnnualGrossSales) => 
+        const exactMatch = sortedRates.find((rate: AnnualGrossSales) => 
             numericValue >= Number(rate.ags_minimum) && 
             numericValue <= Number(rate.ags_maximum)
         );
@@ -111,43 +123,24 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             };
         }
         
-        // Find closest range
-        let closestRange: AnnualGrossSales | null = null;
-        let minDistance = Infinity;
-        
-        for (const rate of activeRates) {
-            const rangeMin = Number(rate.ags_minimum);
-            const rangeMax = Number(rate.ags_maximum);
-            const rangeMid = (rangeMin + rangeMax) / 2;
-            const distance = Math.abs(numericValue - rangeMid);
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestRange = rate;
-            }
-        }
-        
-        if (closestRange) {
+        // If value is below lowest range, use lowest range
+        const lowestRate = sortedRates[0];
+        if (lowestRate && numericValue < Number(lowestRate.ags_minimum)) {
             return {
-                id: closestRange.ags_id.toString(),
-                name: `₱${Number(closestRange.ags_minimum).toLocaleString()} - ₱${Number(closestRange.ags_maximum).toLocaleString()}`,
-                rate: closestRange.ags_rate
+                id: lowestRate.ags_id.toString(),
+                name: `₱${Number(lowestRate.ags_minimum).toLocaleString()} - ₱${Number(lowestRate.ags_maximum).toLocaleString()}`,
+                rate: lowestRate.ags_rate
             };
         }
         
         // If exceeds highest range, use highest available
-        if (activeRates.length > 0) {
-            const highestRate = activeRates.reduce((highest: AnnualGrossSales, current: AnnualGrossSales) => 
-                Number(current.ags_maximum) > Number(highest.ags_maximum) ? current : highest
-            , activeRates[0]);
-            
-            if (highestRate && numericValue > Number(highestRate.ags_maximum)) {
-                return {
-                    id: highestRate.ags_id.toString(),
-                    name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()}`,
-                    rate: highestRate.ags_rate
-                };
-            }
+        const highestRate = sortedRates[sortedRates.length - 1];
+        if (highestRate && numericValue > Number(highestRate.ags_maximum)) {
+            return {
+                id: highestRate.ags_id.toString(),
+                name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()}`,
+                rate: highestRate.ags_rate
+            };
         }
         
         return null;
@@ -181,10 +174,17 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         const businessGrossSales = Number(selectedBusiness.bus_gross_sales);
         
         // Filter only active (non-archived) rates
-        const activeRates = grossSales?.results?.filter((rate: AnnualGrossSales) => !rate.ags_is_archive) || [];
+        const activeRates = grossSalesArray.filter((rate: AnnualGrossSales) => !rate.ags_is_archive);
+        
+        if (activeRates.length === 0) return null;
+        
+        // Sort rates by minimum value to ensure proper matching
+        const sortedRates = [...activeRates].sort((a, b) => 
+            Number(a.ags_minimum) - Number(b.ags_minimum)
+        );
         
         // Find exact matching annual gross sales range
-        const matchingRate = activeRates.find((rate: AnnualGrossSales) => 
+        const matchingRate = sortedRates.find((rate: AnnualGrossSales) => 
             businessGrossSales >= Number(rate.ags_minimum) && 
             businessGrossSales <= Number(rate.ags_maximum)
         );
@@ -197,26 +197,18 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             };
         }
         
-        const sortedRates = [...activeRates].sort((a, b) => Number(a.ags_minimum) - Number(b.ags_minimum));
-        
-        for (const rate of sortedRates) {
-            const min = Number(rate.ags_minimum);
-            const max = Number(rate.ags_maximum);
-            
-            if (businessGrossSales < min && Math.abs(businessGrossSales - min) <= 1) {
-                return {
-                    id: rate.ags_id.toString(),
-                    name: `₱${min.toLocaleString()} - ₱${max.toLocaleString()} (Closest Range)`,
-                    rate: rate.ags_rate
-                };
-            }
+        // If value is below lowest range, use lowest range
+        const lowestRate = sortedRates[0];
+        if (lowestRate && businessGrossSales < Number(lowestRate.ags_minimum)) {
+            return {
+                id: lowestRate.ags_id.toString(),
+                name: `₱${Number(lowestRate.ags_minimum).toLocaleString()} - ₱${Number(lowestRate.ags_maximum).toLocaleString()}`,
+                rate: lowestRate.ags_rate
+            };
         }
         
         // If business exceeds highest range, use highest available
-        const highestRate = activeRates.reduce((highest, current) => 
-            Number(current.ags_maximum) > Number(highest.ags_maximum) ? current : highest
-        , activeRates[0]);
-        
+        const highestRate = sortedRates[sortedRates.length - 1];
         if (highestRate && businessGrossSales > Number(highestRate.ags_maximum)) {
             return {
                 id: highestRate.ags_id.toString(),

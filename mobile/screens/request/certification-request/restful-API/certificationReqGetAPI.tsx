@@ -55,12 +55,56 @@ export const getPurposeAndRates = async () => {
     }
 };
 
-// Annual Gross Sales API
+// Annual Gross Sales API - Fetch ALL records (handles pagination)
 export const getAnnualGrossSales = async () => {
     try {
-        const response = await api.get('/treasurer/annual-gross-sales-active/');
-        // The API returns paginated data with results array
-        return response.data.results || response.data || [];
+        let allResults: any[] = [];
+        let nextUrl: string | null = null;
+        let isFirstRequest = true;
+        
+        // First, try to fetch with large page size
+        let response = await api.get('/treasurer/annual-gross-sales-active/', {
+            params: {
+                page: 1,
+                page_size: 1000 // Large page size to get all records in one go
+            }
+        });
+        
+        let data = response.data;
+        
+        // Handle paginated response with results array
+        if (data.results && Array.isArray(data.results)) {
+            allResults = [...allResults, ...data.results];
+            nextUrl = data.next;
+        } 
+        // Handle non-paginated response (direct array)
+        else if (Array.isArray(data)) {
+            return data;
+        }
+        // Handle response without results array (fallback)
+        else {
+            return data.results || data || [];
+        }
+        
+        // If there are more pages, fetch them using the next URL
+        while (nextUrl) {
+            // Extract path from full URL if needed
+            const urlToFetch = nextUrl.startsWith('http') 
+                ? new URL(nextUrl).pathname + new URL(nextUrl).search
+                : nextUrl;
+            
+            response = await api.get(urlToFetch);
+            data = response.data;
+            
+            if (data.results && Array.isArray(data.results)) {
+                allResults = [...allResults, ...data.results];
+                nextUrl = data.next;
+            } else {
+                nextUrl = null;
+            }
+        }
+        
+        return allResults;
     } catch (error) {
         throw new Error("Failed to fetch annual gross sales");
     }

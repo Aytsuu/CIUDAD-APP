@@ -6,12 +6,21 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@
 import { useForm } from "react-hook-form";
 import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAddReceipt } from "@/pages/record/treasurer/Receipts/queries/receipts-insertQueries";
 import ReceiptSchema from "@/form-schema/receipt-schema";
 import { useAuth } from "@/context/AuthContext";
 
+type AnnualGrossSales = {
+    ags_id: number;
+    ags_minimum: string;
+    ags_maximum: string;
+    ags_rate: string;
+    ags_date: string;
+    ags_is_archive: boolean;
+    staff_id: string;
+};
 
 type CertificateRequest = {
     cr_id?: string;
@@ -24,8 +33,10 @@ type CertificateRequest = {
     };
     req_payment_status: string;
     pr_id?: number; // Purpose and Rate ID
+    ags_id?: number; // Annual Gross Sales ID for business clearance
     business_name?: string; // Business name for permit clearances
     req_amount?: number; // Add req_amount field for business clearance
+    gross_sales_amount?: number; // The actual gross sales value entered
     // req_sales_proof field removed
 };
 
@@ -63,6 +74,32 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
         },
     });
 
+    // Fetch annual gross sales for business clearance (only active rates)
+    // Use same query key and params as permitClearance-form for cache consistency
+    const { data: annualGrossSalesResponse } = useQuery<any>({
+        queryKey: ["grossSalesActive", 1, 1000, ''],
+        queryFn: async () => {
+            const response = await api.get('treasurer/annual-gross-sales-active/', {
+                params: {
+                    page: 1,
+                    page_size: 1000,
+                    search: ''
+                }
+            });
+            return response.data;
+        },
+        // Fetch if ags_id exists OR gross_sales_amount exists (business clearance)
+        enabled: !!certificateRequest.ags_id || !!certificateRequest.gross_sales_amount,
+    });
+
+    // Extract annual gross sales array from response
+    const annualGrossSales: AnnualGrossSales[] = useMemo(() => {
+        if (Array.isArray(annualGrossSalesResponse)) {
+            return annualGrossSalesResponse;
+        }
+        return annualGrossSalesResponse?.results || [];
+    }, [annualGrossSalesResponse]);
+
     // Get purpose and rate details for the certificate request
     const selectedPurposeRate = certificateRequest?.pr_id ? 
         purposeAndRates.find(rate => rate.pr_id === certificateRequest.pr_id) : 
@@ -74,21 +111,85 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
             rate.pr_purpose.toLowerCase().includes(certificateRequest.req_purpose.toLowerCase())
         );
 
+    // Get matching gross sales rate for business clearance
+    const matchingGrossSalesRate = useMemo(() => {
+        if (annualGrossSales.length === 0) return null;
+        
+        // Filter active rates and sort by minimum value
+        const activeRates = annualGrossSales
+            .filter((ags) => !ags.ags_is_archive)
+            .sort((a, b) => parseFloat(a.ags_minimum) - parseFloat(b.ags_minimum));
+        
+        if (activeRates.length === 0) return null;
+        
+        // First try to match by ags_id if available
+        if (certificateRequest?.ags_id) {
+            const matchById = activeRates.find(
+                (ags) => ags.ags_id === certificateRequest.ags_id
+            );
+            if (matchById) return matchById;
+        }
+        
+        // If no ags_id match but has gross_sales_amount, find the range that contains it
+        if (certificateRequest?.gross_sales_amount && certificateRequest.gross_sales_amount > 0) {
+            const grossSalesValue = certificateRequest.gross_sales_amount;
+            
+            // Find exact match within a range
+            const matchByRange = activeRates.find(
+                (ags) => grossSalesValue >= parseFloat(ags.ags_minimum) && 
+                         grossSalesValue <= parseFloat(ags.ags_maximum)
+            );
+            if (matchByRange) return matchByRange;
+            
+            // If below lowest range, use lowest
+            if (grossSalesValue < parseFloat(activeRates[0].ags_minimum)) {
+                return activeRates[0];
+            }
+            
+            // If above highest range, use highest
+            const highestRate = activeRates[activeRates.length - 1];
+            if (grossSalesValue > parseFloat(highestRate.ags_maximum)) {
+                return highestRate;
+            }
+        }
+        
+        return null;
+    }, [certificateRequest?.ags_id, certificateRequest?.gross_sales_amount, annualGrossSales]);
+
+    // Determine if this is a business clearance (uses gross sales rate) or permit (uses pr_rate)
+    const isBusinessClearance = !!certificateRequest?.ags_id || !!certificateRequest?.gross_sales_amount;
+
+    // Calculate the correct amount based on type
+    const calculatedAmount = useMemo(() => {
+        // If ags_id exists, it's a business clearance - use ags_rate
+        if (isBusinessClearance && matchingGrossSalesRate) {
+            return parseFloat(matchingGrossSalesRate.ags_rate);
+        }
+        // If no ags_id but has pr_id and selectedPurposeRate, it's a permit - use pr_rate
+        else if (selectedPurposeRate && !isBusinessClearance) {
+            return selectedPurposeRate.pr_rate;
+        }
+        // Fallback to req_amount from the request
+        return certificateRequest.req_amount || 0;
+    }, [isBusinessClearance, matchingGrossSalesRate, selectedPurposeRate, certificateRequest.req_amount]);
+
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
             inv_serial_num: "", 
-            inv_amount: certificateRequest.req_amount && certificateRequest.req_amount > 0 ? certificateRequest.req_amount.toString() : "0.00",
+            inv_amount: "0.00",
             inv_nat_of_collection: "Permit Clearance", 
         }
     });
 
-    
+    // Update form amount when calculated amount changes
     useEffect(() => {
-        if (certificateRequest.req_amount && certificateRequest.req_amount > 0) {
+        if (calculatedAmount && calculatedAmount > 0) {
+            form.setValue('inv_amount', calculatedAmount.toString());
+        } else if (certificateRequest.req_amount && certificateRequest.req_amount > 0) {
             form.setValue('inv_amount', certificateRequest.req_amount.toString());
         }
-    }, [certificateRequest.req_amount, form]);
+    }, [calculatedAmount, certificateRequest.req_amount, form]);
 
     const onSubmit = (values: z.infer<typeof ReceiptSchema>) => {
         if (!staffId) {
@@ -110,8 +211,8 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
     // Check if request is already paid
     const isAlreadyPaid = certificateRequest.req_payment_status === "Paid";
     
-    // Check if request is incomplete (no business linked or no amount)
-    const isIncomplete = !certificateRequest.req_amount || certificateRequest.req_amount <= 0;
+    // Check if request is incomplete (no amount calculated)
+    const isIncomplete = calculatedAmount <= 0 && (!certificateRequest.req_amount || certificateRequest.req_amount <= 0);
 
     return(
         <Form {...form}>
@@ -167,18 +268,47 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                                    <p className="text-base text-green-600 font-semibold mt-1">{certificateRequest.req_payment_status}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Amount</label>
-                                    <p className="text-base text-blue-600 font-semibold mt-1">
-                                        {certificateRequest.req_amount && certificateRequest.req_amount > 0 
-                                            ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-                                            : "No amount calculated - Business not linked or purpose not selected"
-                                        }
+                                    <p className={`text-base font-semibold mt-1 ${
+                                        certificateRequest.req_payment_status === "Paid" ? "text-green-600" : "text-yellow-600"
+                                    }`}>
+                                        {certificateRequest.req_payment_status}
                                     </p>
                                 </div>
                                 
+                                {/* Show Gross Sales Range for Business Clearance */}
+                                {isBusinessClearance && matchingGrossSalesRate && (
+                                    <>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-600">Gross Sales Range</label>
+                                            <p className="text-base text-gray-900 font-medium mt-1">
+                                                ₱{parseFloat(matchingGrossSalesRate.ags_minimum).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ₱{parseFloat(matchingGrossSalesRate.ags_maximum).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                            </p>
+                                        </div>
+                                        {certificateRequest.gross_sales_amount && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-600">Actual Gross Sales</label>
+                                                <p className="text-base text-gray-900 font-medium mt-1">
+                                                    ₱{certificateRequest.gross_sales_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                
+                                <div className={isBusinessClearance && matchingGrossSalesRate ? "md:col-span-2" : ""}>
+                                    <label className="text-sm font-medium text-gray-600">Amount to Pay</label>
+                                    <p className="text-base text-blue-600 font-semibold mt-1">
+                                        {calculatedAmount > 0 
+                                            ? `₱${calculatedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                            : certificateRequest.req_amount && certificateRequest.req_amount > 0 
+                                                ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                                : "No amount calculated"
+                                        }
+                                        {isBusinessClearance && matchingGrossSalesRate && (
+                                            <span className="text-xs text-gray-500 ml-2">(Based on gross sales range rate)</span>
+                                        )}
+                                    </p>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>    
@@ -251,16 +381,24 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                     />
 
                 {/* Display amount details (only when paid >= rate) */}
-                     {certificateRequest.req_amount && Number(form.watch("inv_amount")) >= certificateRequest.req_amount && (
-                         <div className="space-y-2 p-3 bg-gray-50 rounded-md">
-                             <div className="flex justify-between text-sm border-t pt-2">
-                                 <span className="font-semibold">Change:</span>
-                                 <span className={`font-semibold ${(Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                     ₱{((Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                 </span>
-                             </div>
-                         </div>
-                     )}
+                     {(() => {
+                         const amountToPay = calculatedAmount > 0 ? calculatedAmount : (certificateRequest.req_amount || 0);
+                         const amountPaid = Number(form.watch("inv_amount")) || 0;
+                         
+                         if (amountToPay > 0 && amountPaid >= amountToPay) {
+                             return (
+                                 <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+                                     <div className="flex justify-between text-sm border-t pt-2">
+                                         <span className="font-semibold">Change:</span>
+                                         <span className={`font-semibold ${amountPaid - amountToPay >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                             ₱{(amountPaid - amountToPay).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                         </span>
+                                     </div>
+                                 </div>
+                             );
+                         }
+                         return null;
+                     })()}
 
                     
 
