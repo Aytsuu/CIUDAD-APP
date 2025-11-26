@@ -1,12 +1,3 @@
-export interface Address {
-  add_province: string;
-  add_city: string;
-  add_barangay: string;
-  add_street: string;
-  add_external_sitio?: string;
-  sitio?: number | null;
-}
-
 export interface Complainant {
   cpnt_id: number;
   cpnt_name: string;
@@ -14,7 +5,7 @@ export interface Complainant {
   cpnt_age: string;
   cpnt_number: string;
   cpnt_relation_to_respondent: string;
-  address: Address;
+  cpnt_address: string;
   rp_id: string;
 }
 
@@ -24,7 +15,7 @@ export interface Accused {
   acsd_age: string;
   acsd_gender: string;
   acsd_description: string;
-  address: Address;
+  acsd_address: string;
   rp_id: string;
 }
 
@@ -45,6 +36,8 @@ export interface Complaint {
   comp_category: string;
   comp_created_at: string;
   comp_rejection_reason: string;
+  comp_updated_at?: string;
+  comp_cancel_reason: string;
   comp_status: string;
   staff: Record<string,any>;
   complainant: Complainant[];

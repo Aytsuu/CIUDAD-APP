@@ -6,15 +6,12 @@ import { router } from "expo-router";
 import {
   ChevronLeft,
   MoreVertical,
-  Plus,
   Search,
   AlertCircle,
   XCircle,
   CheckCircle,
   Clock,
   Lock,
-  User,
-  Users,
 } from "lucide-react-native";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -23,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { DrawerView, DrawerTrigger } from "@/components/ui/drawer";
 import { ConfirmationModal } from "./components/ComplaintConfirmationModal";
-import { useRaiseComplaint } from "./queries/ComplaintPostQueries";
+import { useRaiseComplaint, useCancelComplaint } from "./queries/ComplaintPostQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComplaintItem, Accused, Complainant } from "./types";
 import {
@@ -65,12 +62,6 @@ const ComplaintCard = ({
           bgColor: "bg-orange-50",
           iconBg: "bg-orange-400",
           text: "Pending",
-        };
-      case "Resolved":
-        return {
-          bgColor: "bg-green-50",
-          iconBg: "bg-green-400",
-          text: "Resolved",
         };
       case "Accepted":
         return {
@@ -200,8 +191,7 @@ const ComplaintCard = ({
                 <Clock size={26} color="#ed8f2d" strokeWidth={3} />
               )}
 
-              {(item.comp_status === "Resolved" ||
-                item.comp_status === "Accepted") && (
+              {item.comp_status === "Accepted" && (
                 <CheckCircle size={26} color="#00e500" strokeWidth={3} />
               )}
 
@@ -231,6 +221,17 @@ const ComplaintCard = ({
             </Text>
           </View>
         )}
+
+        {statusConfig.text === "Cancelled" && (
+          <View className="mt-3 p-3 bg-red-100 rounded-lg">
+            <Text className="text-xs font-PoppinsSemiBold text-red-800 mb-1">
+              Reason:
+            </Text>
+            <Text className="text-xs font-PoppinsRegular text-red-700">
+              {item.comp_cancel_reason}
+            </Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -252,9 +253,9 @@ export default function ResidentComplaint() {
   });
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [actionType, setActionType] = useState<"raise" | "cancel" | null>(null);
-  const [selectedComplaint, setSelectedComplaint] =
-    useState<ExtendedComplaintItem | null>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<ExtendedComplaintItem | null>(null);
   const { mutate: raiseComplaint, isPending: isRaising } = useRaiseComplaint();
+  const { mutate: cancelComplaint, isPending: isCancelling } = useCancelComplaint(); 
 
   const drawerRef = useRef<BottomSheet>(null);
 
@@ -273,37 +274,51 @@ export default function ResidentComplaint() {
     setConfirmModalVisible(true);
   };
 
-  const handleConfirmAction = () => {
-    if (!selectedComplaint) return;
+  const handleConfirmAction = (cancellationReason?: string) => {
+  if (!selectedComplaint) return;
 
-    if (actionType === "raise") {
-      raiseComplaint(Number(selectedComplaint.comp_id), {
+  if (actionType === "raise") {
+    raiseComplaint(Number(selectedComplaint.comp_id), {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["ResidentComplaintList"],
+        });
+        setConfirmModalVisible(false);
+        setActionType(null);
+        setSelectedComplaint(null);
+        Alert.alert("Success", "Complaint successfully raised!");
+      },
+      onError: (error: any) => {
+        Alert.alert(
+          "Error",
+          error.response?.data?.message || "Failed to raise complaint."
+        );
+        setConfirmModalVisible(false);
+        setActionType(null);
+      },
+    });
+  } else if (actionType === "cancel") {
+    cancelComplaint({ 
+        compId: Number(selectedComplaint.comp_id), 
+        cancellationReason: cancellationReason ?? ""
+      }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["ResidentComplaintList"],
-          });
           setConfirmModalVisible(false);
           setActionType(null);
           setSelectedComplaint(null);
-          Alert.alert("Success", "Complaint successfully raised!");
+          Alert.alert("Success", "Complaint cancelled successfully!");
         },
         onError: (error: any) => {
           Alert.alert(
             "Error",
-            error.response?.data?.message || "Failed to raise complaint."
+            error.response?.data?.message || "Failed to cancel complaint."
           );
           setConfirmModalVisible(false);
           setActionType(null);
         },
       });
-    } else if (actionType === "cancel") {
-      queryClient.invalidateQueries({ queryKey: ["ResidentComplaintList"] });
-      setConfirmModalVisible(false);
-      setActionType(null);
-      setSelectedComplaint(null);
-      Alert.alert("Success", "Complaint cancelled successfully!");
-    }
-  };
+  }
+};
 
   const handleCancelModal = () => {
     setConfirmModalVisible(false);
@@ -365,7 +380,6 @@ export default function ResidentComplaint() {
         accepted: 0,
         rejected: 0,
         cancelled: 0,
-        resolved: 0,
       };
 
     return {
@@ -385,9 +399,6 @@ export default function ResidentComplaint() {
       cancelled: ResidentComplaintList.filter(
         (item: ExtendedComplaintItem) => item.comp_status === "Cancelled"
       ).length,
-      resolved: ResidentComplaintList.filter(
-        (item: ExtendedComplaintItem) => item.comp_status === "Resolved"
-      ).length,
     };
   }, [ResidentComplaintList]);
 
@@ -396,7 +407,6 @@ export default function ResidentComplaint() {
     { id: "pending", label: "Pending", count: statusCounts.pending },
     { id: "accepted", label: "Accepted", count: statusCounts.accepted },
     { id: "raised", label: "Raised", count: statusCounts.raised },
-    { id: "resolved", label: "Resolved", count: statusCounts.resolved },
     { id: "rejected", label: "Rejected", count: statusCounts.rejected },
     { id: "cancelled", label: "Cancelled", count: statusCounts.cancelled },
   ];
@@ -455,10 +465,6 @@ export default function ResidentComplaint() {
 
     return filtered;
   }, [ResidentComplaintList, activeStatus, searchQuery, filters]);
-
-  const handleAddComplaint = () => {
-    router.push("/(request)/complaint/complaint-req-form");
-  };
 
   const toggleIncidentType = (type: string) => {
     setFilters((prev) => ({
@@ -807,12 +813,6 @@ export default function ResidentComplaint() {
         }
         rightAction={
           <View className="flex-row gap-3">
-            {/* <TouchableOpacity
-              onPress={() => handleAddComplaint()}
-              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-            >
-              <Plus size={22} className="text-gray-700" />
-            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => setSearchQuery(searchQuery ? "" : " ")}
               className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -887,23 +887,26 @@ export default function ResidentComplaint() {
       </DrawerView>
 
       <ConfirmationModal
-        visible={confirmModalVisible}
-        onClose={handleCancelModal}
-        onConfirm={handleConfirmAction}
-        type={actionType === "raise" ? "raise" : "cancel"}
-        title={
-          actionType === "raise" ? "Raise Complaint?" : "Cancel Complaint?"
-        }
-        description={
-          actionType === "raise"
-            ? "This will escalate your complaint to higher authorities. Continue?"
-            : "This will cancel and withdraw the complaint. Continue?"
-        }
-        confirmText="Continue"
-        cancelText="Go Back"
-        isLoading={isRaising}
-        showDetails={!!selectedComplaint}
-      />
+    visible={confirmModalVisible}
+    onClose={handleCancelModal}
+    onConfirm={handleConfirmAction}
+    type={actionType === "raise" ? "raise" : "cancel"}
+    title={
+      actionType === "raise" ? "Raise Blotter?" : "Cancel Blotter?"
+    }
+    description={
+      actionType === "raise"
+        ? "This will escalate your complaint to higher authorities. Continue?"
+        : "This will cancel and withdraw the complaint."
+    }
+    confirmText={
+      actionType === "raise" ? "Raise" : "Cancel"
+    }
+    cancelText="Go Back"
+    isLoading={actionType === "raise" ? isRaising : isCancelling} // Update this line
+    showDetails={!!selectedComplaint}
+    showCancellationReason={actionType === "cancel"} 
+  />
     </View>
   );
 }

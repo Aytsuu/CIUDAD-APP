@@ -11,30 +11,38 @@ const optionalPositiveNumber = z.union([
    { message: "Value must be a positive number" }
 )
 
+// Helpers for optional enum/object where empty string should be treated as undefined
+const GenderEnum = z.enum(["Male", "Female"])
+const optionalGender = z.preprocess(
+   (val) => (val === "" || val === null ? undefined : val),
+   GenderEnum
+).optional()
+
+const NutritionalStatusObj = z.object({
+   wfa: z.string().optional().default(""),
+   lhfa: z.string().optional().default(""),
+   wfh: z.string().optional().default(""),
+   muac: optionalPositiveNumber,
+   muac_status: z.string().optional().default(""),
+})
+const optionalNutritionalStatus = z.preprocess(
+   (val) => (val === "" || val === null ? undefined : val),
+   NutritionalStatusObj
+).optional()
+
 export const BHWFormSchema = z.object({
    staffId: z.string().min(1, "Staff ID is required"),
    pat_id: z.string().optional(),
    dateToday: z.string().min(1, "Date is required"),
    description: z.string().optional(),
    age: z.string().optional(),
-   gender: z.enum(["Male", "Female"]).optional(),
+   gender: optionalGender,
    weight: optionalPositiveNumber,
    height: optionalPositiveNumber,
    muac: optionalPositiveNumber, 
-   nutritionalStatus: z.object({ 
-      wfa: z.string(),
-      lhfa: z.string(),
-      wfh: z.string(),
-      muac: optionalPositiveNumber,
-      muac_status: z.string(),
-   }).optional(),
+   nutritionalStatus: optionalNutritionalStatus,
    illnesses: z.array(z.object({
       illnessName: z.string().min(1, "Illness/Disease name is required"),
       count: positiveNumberSchema
    })).optional(),
-   numOfWorkingDays: optionalPositiveNumber,
-   daysPresent: optionalPositiveNumber,
-   daysAbsent: optionalPositiveNumber,
-   notedBy: z.string().optional(),
-   approvedBy: z.string().optional(),
 })

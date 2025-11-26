@@ -39,3 +39,22 @@ export const createBHWDailyNote = async (data: BHWDailyNotePayload) => {
     throw error
   }
 }
+
+export interface BHWAttendanceSummaryPayload {
+  staffId: string
+  numOfWorkingDays?: number
+  daysPresent?: number
+  daysAbsent?: number
+  notedBy?: string
+  approvedBy?: string
+}
+
+export const createBHWAttendanceSummary = async (data: BHWAttendanceSummaryPayload) => {
+  try {
+    const res = await api2.post("/reports/bhw/attendance-summary/create/", data)
+    return res.data
+  } catch (error) {
+    console.error("Failed to create BHW Attendance Summary:", error)
+    throw error
+  }
+}

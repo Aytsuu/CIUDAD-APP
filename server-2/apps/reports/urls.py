@@ -95,5 +95,9 @@ urlpatterns=[
         # BHW DAILY NOTES
         path('bhw/with-notes/', StaffWithBHWDailyNotesView.as_view(), name='staff-with-bhw-notes'),
         path('bhw/daily-notes/create/', CreateBHWDailyNoteView.as_view(), name='create-bhw-daily-note'),
+        path('bhw/daily-notes/<int:bhwdn_id>/', BHWDailyNoteDetailView.as_view(), name='bhw-daily-note-detail'),
+        path('bhw/attendance-summary/create/', CreateBHWAttendanceSummaryView.as_view(), name='create-bhw-attendance-summary'),
+        path('bhw/attendance-summary/check/', CheckBHWAttendanceSummaryView.as_view(), name='check-bhw-attendance-summary'),
+        path('bhw/patients-with-opt-measurements/', PatientsWithOptionalBodyMeasurementsView.as_view(), name='bhw-patients-with-opt-measurements'),
  
 ] 

@@ -78,11 +78,14 @@ urlpatterns = [
 
     path('respondents/create/', RespondentsInfoCreateView.as_view(), name='respondents-create'),
     path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
+    path('per_additional_details/<str:rp_id>/update/', HealthRelatedDetailsUpdateView.as_view(), name='health-details-update'),
     path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
     path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+    path('mother-health-info/<int:mhi_id>/update/', MotherHealthInfoUpdateView.as_view(), name='mother-health-info-update'),
     # Dependents Under Five
     path("dependent-under-five/create/", DependentsUnderFiveCreateView.as_view(), name="dependent-under-five-create"),
     path("dependent-under-five/list/", DependentsUnderFiveListView.as_view(), name="dependent-under-five-list"),
+    path("dependent-under-five/<int:duf_id>/update/", DependentsUnderFiveUpdateView.as_view(), name="dependent-under-five-update"),
 
     #   # Request Urls
     # path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),

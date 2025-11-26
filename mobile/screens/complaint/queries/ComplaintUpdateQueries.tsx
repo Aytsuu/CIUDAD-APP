@@ -4,7 +4,7 @@ import api from '@/api/api';
 interface UpdateComplaintData {
   comp_status: "Pending" | "Accepted" | "Rejected" | "Raised" | "Cancelled";
   comp_rejection_reason?: string;
-  staff_id?: number;
+  staff_id?: string;
 }
 
 interface UpdateComplaintResponse {

@@ -178,7 +178,7 @@ class RegisterFCMTokenView(generics.CreateAPIView):
 class NotificationListView(generics.ListAPIView):
     serializer_class = RecipientSerializer
     permission_classes = [AllowAny]
-
+    
     def get_queryset(self):
         user = self.request.user
         

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, Baby, Clock, CheckCircle, HeartHandshake, Plus, ClockAlert, ChevronLeft, CircleAlert } from "lucide-react";
+import { Heart, Baby, Clock, CheckCircle, HeartHandshake, Plus, ChevronLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,14 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { PregnancyAccordion } from "../maternal-components/pregnancy-accordion";
 import PregnancyChart from "../maternal-components/pregnancy-chart";
 import PregnancyVisitTracker from "../maternal-components/8anc-visit-chart";
+import FollowUpVisitsOverall from "../maternal-components/follow-up-visits-overall";
 import { formatDate } from "./appointments/columns";
 
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TableLoading from "@/components/ui/table-loading";
 
 import { usePregnancyDetails } from "../queries/maternalFetchQueries";
-import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries";
+import { useAddCompletePregnancy, useAddCompletePostpartum, useAddPregnancyLoss } from "../queries/maternalAddQueries";
 // import { useLatestFollowUpVisit } from "../queries/maternalFetchQueries";
 
 interface Patient {
@@ -145,6 +146,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
 
   // mutations
   const { mutate: completePregnancy } = useAddCompletePregnancy();
+  const { mutate: completePostpartum } = useAddCompletePostpartum();
   const { mutate: addPregnancyLoss } = useAddPregnancyLoss();
 
   // fetch hooks
@@ -167,27 +169,6 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     setPage(1);
   };
 
-  const getLatestFollowupVisit = () => {
-    let followUpData = [];
-
-    if (pregnancyData && typeof pregnancyData === "object" && "results" in pregnancyData) {
-      // Handle paginated response structure: { count, next, previous, results: [...] }
-      const results = (pregnancyData as any).results;
-      if (Array.isArray(results) && results.length > 0) {
-        followUpData = results[0]?.follow_up || [];
-      }
-    } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
-      followUpData = pregnancyData[0]?.follow_up || [];
-    }
-
-    return followUpData;
-  };
-
-  const latestFollowupVisit = getLatestFollowupVisit();
-  
-  const nextFollowVisit = [...latestFollowupVisit]
-    .filter((visit) => visit.followv_status === "pending") // Only show pending visits
-    .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
 
   useEffect(() => {
     if (patientDataProps?.patientData.mode === "maternal") {
@@ -219,7 +200,8 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
         grouped[pregnancy.pregnancy_id] = {
           pregnancyId: pregnancy.pregnancy_id,
           status: normalizeStatus(pregnancy.status),
-          startDate: pregnancy.created_at ? pregnancy.created_at.split("T")[0] : "Unknown",
+          // Preserve full timestamp (including time) so newest (including same-day) sorts correctly
+          startDate: pregnancy.created_at || "Unknown",
           expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
           deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
           records: [],
@@ -295,7 +277,11 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
       });
     });
 
-    return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    // Preserve API ordering (already ordered by -pregnancy_id in backend).
+    // If for any reason order is lost, enforce pregnancy_id DESC here.
+    const ordered = Object.values(grouped);
+    ordered.sort((a, b) => (a.pregnancyId < b.pregnancyId ? 1 : a.pregnancyId > b.pregnancyId ? -1 : 0));
+    return ordered;
   };
 
   const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
@@ -396,15 +382,29 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     completePregnancy({ pat_id: selectedPatient.pat_id, pregnancy_id: pregnancyId });
   };
 
-  // mock up
-  const handleCompleteRecord = () => {
-    // Implement as needed
+  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care", pregnancyId?: string) => {
+    if (!selectedPatient?.pat_id) return;
+    
+    if (recordType === "Postpartum Care") {
+      // For postpartum records, find the pregnancy_id from the record
+      const record = pregnancyGroups
+        .flatMap(group => group.records)
+        .find(r => r.id === recordId);
+      
+      if (record?.pregnancyId) {
+        completePostpartum({ 
+          pat_id: selectedPatient.pat_id, 
+          pregnancy_id: record.pregnancyId 
+        });
+      }
+    } else if (recordType === "Prenatal" && pregnancyId) {
+      // For prenatal records, complete the pregnancy
+      completePregnancy({ 
+        pat_id: selectedPatient.pat_id, 
+        pregnancy_id: pregnancyId 
+      });
+    }
   };
-
-  // original
-  // const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
-  //   // Implement as needed
-  // };
 
   const handlePregnancyLossRecord = (pregnancyId: string) => {
     setSelectedPregnancyId(pregnancyId);
@@ -437,7 +437,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
     patientData = params.patientData;
     mode = patientData?.mode;
     specificPregnancyId = patientData?.pregnancy_id;
-    console.log(patientData)
+    // console.log(patientData)
   }
 
   // console.log("PapatientDataProps:", patientDataProps);
@@ -515,6 +515,9 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
               <PregnancyChart pregnancies={pregnancyData?.results || pregnancyData} />
               <PregnancyVisitTracker pregnancies={pregnancyData?.results || pregnancyData} />
             </div>
+            <div className="mt-4">
+              <FollowUpVisitsOverall patientId={selectedPatient?.pat_id} />
+            </div>
           </div>
         ) : (
           <div className="mb-5 rounded">
@@ -522,37 +525,7 @@ export default function MaternalIndivRecords({ patientDataProps }: { patientData
           </div>
         )}
         
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {/* upcoming follow up visit */}
-          <div className="flex rounded-md w-full border border-blue-400 rounded-mb bg-blue-200 shadow-md">
-            {nextFollowVisit ? (
-              <div className="p-3 flex justify-between items-center w-full text-blue-700">
-                <h3 className="flex items-center font-semibold">
-                  <ClockAlert className="mr-2" /> Upcoming follow-up visit
-                </h3>
-                <p className="text-sm italic">
-                  {nextFollowVisit?.followv_description} on <b>{formatDate(nextFollowVisit?.followv_date)}</b>
-                </p>
-              </div>
-            ) : (
-              <div className="p-3">
-                <h3 className="font-semibold text-white">No follow-up visit</h3>
-              </div>
-            )}
-          </div>
-
-          {/* missing follow up */}
-          <div className="flex rounded-md w-full border border-red-400 rounded-mb bg-red-200 shadow-md">
-            <div className="p-3 flex justify-between items-center w-full text-red-700">
-                <h3 className="flex items-center font-semibold">
-                  <CircleAlert className="mr-2" color="red" /> Missed follow-up visit
-                </h3>
-                <p className="text-sm italic">
-                  {nextFollowVisit?.followv_description} on <b>{formatDate(nextFollowVisit?.followv_date)}</b>
-                </p>
-              </div>
-          </div>
-        </div>
+       
         
         <div className="bg-white rounded-md p-4">
           <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">

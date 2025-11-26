@@ -132,3 +132,13 @@ class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthRelatedDetails
         fields = '__all__'
+
+class MotherHealthInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MotherHealthInfo
+        fields = '__all__'
+
+class DependentsUnderFiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dependents_Under_Five
+        fields = '__all__'

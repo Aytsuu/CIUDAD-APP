@@ -309,6 +309,7 @@ export const complaintColumns = (
           const statusStyles: Record<string, string> = {
             resolved: "bg-green-100 text-green-700",
             rejected: "bg-red-100 text-red-700",
+            cancelled: "bg-gray-100 text-gray-700", // ADDED CANCELLED
             ongoing: "bg-yellow-100 text-yellow-700",
             pending: "bg-orange-100 text-orange-700",
             raised: "bg-blue-100 text-blue-700",
@@ -320,6 +321,7 @@ export const complaintColumns = (
           const iconMap: Record<string, React.ReactNode> = {
             resolved: <MdCheckCircle size={18} />,
             rejected: <MdCancel size={18} />,
+            cancelled: <MdCancel size={18} />, // ADDED CANCELLED
             ongoing: <MdTrendingUp size={18} />,
             pending: <MdAccessTimeFilled size={18} />,
             raised: <MdError size={18} />,
@@ -350,16 +352,19 @@ export const complaintColumns = (
         const statusStyles: Record<string, string> = {
           resolved: "bg-green-100 text-green-700",
           rejected: "bg-red-100 text-red-700",
+          cancelled: "bg-gray-100 text-gray-700", // ADDED CANCELLED
           ongoing: "bg-yellow-100 text-yellow-700",
           pending: "bg-orange-100 text-orange-700",
           raised: "bg-blue-100 text-blue-700",
           accepted: "bg-green-100 text-green-700",
           processing: "bg-yellow-100 text-yellow-700",
+          settled: "bg-purple-100 text-purple-700", // ADDED SETTLED
         };
 
         const iconMap: Record<string, React.ReactNode> = {
           resolved: <MdCheckCircle size={18} />,
           rejected: <MdCancel size={18} />,
+          cancelled: <MdCancel size={18} />, // ADDED CANCELLED
           ongoing: <MdTrendingUp size={18} />,
           pending: <MdAccessTimeFilled size={18} />,
           raised: <MdError size={18} />,
@@ -425,6 +430,9 @@ export const resolvedComplaintColumns = () =>
 
 export const rejectedComplaintColumns = () =>
   complaintColumns({ statusFilter: "rejected", showAllStatuses: false });
+
+export const cancelledComplaintColumns = () =>  
+  complaintColumns({ statusFilter: "cancelled", showAllStatuses: false });
 
 export const acceptedComplaintColumns = () =>
   complaintColumns({ statusFilter: "accepted", showAllStatuses: false });

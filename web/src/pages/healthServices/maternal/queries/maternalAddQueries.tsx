@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalRecord, addPostpartumRecord, addIllnessData, addCompletePregnancy, addPregnancyLoss } from "../restful-api/maternalPOST";
+import { addPrenatalRecord, addPostpartumRecord, addIllnessData, addCompletePregnancy, addCompletePostpartum, addPregnancyLoss } from "../restful-api/maternalPOST";
 
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
@@ -90,6 +90,22 @@ export const useAddCompletePregnancy = () => {
     },
     onError: () => {
       showErrorToast("Failed to mark pregnancy as completed");
+    }
+  });
+};
+
+export const useAddCompletePostpartum = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addCompletePostpartum,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pregnancies"] });
+      queryClient.invalidateQueries({ queryKey: ["postpartumRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      showSuccessToast("Postpartum record marked as completed successfully");
+    },
+    onError: () => {
+      showErrorToast("Failed to mark postpartum record as completed");
     }
   });
 };
