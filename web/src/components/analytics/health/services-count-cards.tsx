@@ -70,7 +70,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.medicine_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/medicine")
+          navigate("/services/medicine/records")
         }}
       />
     ),

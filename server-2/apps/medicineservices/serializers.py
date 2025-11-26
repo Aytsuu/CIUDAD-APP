@@ -41,9 +41,9 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         ).order_by('-fulfilled_at').first()
         if latest_item and latest_item.fulfilled_at:
             return latest_item.fulfilled_at.date()
-        return None
-
         return latest_item.fulfilled_at if latest_item else None
+
+        
 
 class MedicineAllocationSerializer(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv', read_only=True)
