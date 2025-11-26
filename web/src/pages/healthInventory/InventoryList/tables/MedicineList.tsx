@@ -39,14 +39,13 @@ export default function MedicineList() {
 
   // Debug: Log API response
   useEffect(() => {
-    console.log("Medicine Data Response:", medicineData);
-    console.log("API Error:", error);
+    
   }, [medicineData, error]);
 
   const deleteMutation = useDeleteMedicine();
 
   const formatMedicineData = useCallback((): any[] => {
-    console.log("Formatting medicine data:", medicineData);
+    
 
     // Handle different response formats
     let medicineResults = [];
@@ -175,9 +174,10 @@ export default function MedicineList() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                handlePageSizeChange(value >= 1 ? value : 1);
+                handlePageSizeChange(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
               }}
               min="1"
+              max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>

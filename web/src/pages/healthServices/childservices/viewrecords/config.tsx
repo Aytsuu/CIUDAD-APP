@@ -480,11 +480,8 @@ export const supplementsFields: any[] = [
     label: "",
     path: ["child_health_supplements"],
     format: (val: any[], record: any, fullHistoryData?: any[]) => {
-      console.log("child_health_supplements data:", val);
-      console.log("current record supplements_statuses:", record?.supplements_statuses);
-
+      
       if (!val || val.length === 0) {
-        console.warn("No supplements data found or empty array.");
         return norecord;
       }
 
@@ -493,7 +490,6 @@ export const supplementsFields: any[] = [
       
       // First, always include direct statuses from current record
       const directStatuses = record?.supplements_statuses && record.supplements_statuses.length > 0 ? record.supplements_statuses : [];
-      console.log("Direct statuses from current record:", directStatuses);
       
       if (fullHistoryData) {
         // Find matching statuses from other records - REMOVED the strict date_completed condition
@@ -514,27 +510,23 @@ export const supplementsFields: any[] = [
             });
           }
         });
-        console.log("Matching statuses from other records:", matchingStatuses);
         supplementStatuses = [...directStatuses, ...matchingStatuses];
       } else {
         // If no fullHistoryData, just use direct statuses
         supplementStatuses = directStatuses;
       }
 
-      console.log("Final supplementStatuses to display:", supplementStatuses);
 
       const supplementItems = val.map((supplement, index) => {
         const medreqitemDetails = supplement.medreqitem_details;
 
         if (!medreqitemDetails || medreqitemDetails.length === 0) {
-          console.warn("No medreqitem_details found for supplement:", supplement);
           return null;
         }
 
         return medreqitemDetails.map((item: any, itemIndex: number) => {
           const medDetails = item?.medicine;
           if (!medDetails) {
-            console.warn("No medicine details found for item:", item);
             return null;
           }
 
@@ -610,7 +602,6 @@ export const supplementsFields: any[] = [
             })
           : [];
 
-      console.log("Generated statusItems count:", statusItems.length);
 
       // Check if we have any items to display
       const allItems = [...supplementItems, ...statusItems];

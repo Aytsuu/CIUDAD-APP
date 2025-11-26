@@ -27,14 +27,18 @@ export interface UnpaidCertificate {
 
 export interface UnpaidBusinessPermit {
   bp_id: string;
+  bpr_id?: string; // Add bpr_id for consistency with web
   business_name: string;
   business_type: string;
+  purpose?: string; // Add purpose field like web version
   owner_name: string;
   business_address: string;
   req_request_date: string;
   req_status: string;
   req_payment_status: string;
   req_transac_id: string;
+  req_amount?: number | string; // Add amount field
+  bus_clearance_gross_sales?: string; // Add gross sales field
   decline_reason?: string;
 }
 
@@ -208,70 +212,133 @@ export const getUnpaidBusinessPermits = async (
   }
 };
 
+// Fetch unpaid business permits (matching web version for unpaid tab)
+export const getBusinessPermits = async (
+  search?: string
+): Promise<UnpaidBusinessPermit[]> => {
+  try {
+    // Fetch from the same endpoint as web version
+    const params = new URLSearchParams();
+    if (search) {
+      params.append('search', search);
+    }
+    const url = `/clerk/business-permit/${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await api.get(url);
+    const payload = res.data as any;
+
+    // Handle paginated or non-paginated responses
+    let rawItems: any[] = [];
+    if (Array.isArray(payload)) {
+      rawItems = payload;
+    } else if (Array.isArray(payload?.results)) {
+      rawItems = payload.results;
+    } else if (Array.isArray(payload?.data)) {
+      rawItems = payload.data;
+    }
+
+    // Normalize and map fields like web version
+    const normalized: UnpaidBusinessPermit[] = rawItems.map((item: any) => ({
+      bp_id: String(item.bpr_id ?? item.bp_id ?? item.id ?? ''),
+      bpr_id: item.bpr_id ? String(item.bpr_id) : undefined,
+      business_name: item.business_name ?? item.bus_permit_name ?? '',
+      business_type: item.business_type || item.purpose || '',
+      purpose: item.purpose || '',
+      owner_name: item.requestor || item.owner_name || '',
+      business_address: item.business_address ?? item.bus_permit_address ?? '',
+      req_request_date: item.req_request_date || '',
+      req_status: item.req_status || 'Pending',
+      req_payment_status: item.req_payment_status || 'Unpaid',
+      req_transac_id: item.req_transac_id || '',
+      req_amount: item.req_amount ?? item.bus_clearance_gross_sales ?? undefined,
+      bus_clearance_gross_sales: item.bus_clearance_gross_sales,
+      decline_reason: item.bus_reason || item.bpr_reason || item.req_declined_reason || item.decline_reason || '',
+    }));
+
+    // Don't filter by payment status here - let the component handle filtering
+    const filtered = normalized;
+
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      return filtered.filter((item) => {
+        return (
+          item.bp_id?.toLowerCase().includes(searchLower) ||
+          item.bpr_id?.toLowerCase().includes(searchLower) ||
+          item.business_name?.toLowerCase().includes(searchLower) ||
+          item.owner_name?.toLowerCase().includes(searchLower) ||
+          item.business_type?.toLowerCase().includes(searchLower) ||
+          item.purpose?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filtered;
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response?.status === 500) {
+      return [];
+    }
+    throw error;
+  }
+};
+
 export const getUnpaidServiceCharges = async (
   search?: string,
   page?: number,
   pageSize?: number,
-  paymentStatus?: string
+  tab?: "unpaid" | "paid" | "declined"
 ): Promise<{results: UnpaidServiceCharge[], count: number, next: string | null, previous: string | null}> => {
   try {
-    // Fetch both "File Action" and "Summon" types
-    const types = ['File Action', 'Summon'];
-    const allResults: any[] = [];
+    // Use the same endpoint as web version
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (page) params.append('page', page.toString());
+    if (pageSize) params.append('page_size', pageSize.toString());
+    if (tab) params.append('tab', tab);
     
-    // Fetch each type separately and combine results
-    for (const type of types) {
-      try {
-        const params = new URLSearchParams();
-        if (search) params.append('search', search);
-        if (page) params.append('page', page.toString());
-        if (pageSize) params.append('page_size', pageSize.toString());
-        params.append('status', 'pending');
-        params.append('sr_type', type);
-        
-        const queryString = params.toString();
-        const url = `/clerk/service-charge-treasurer-list${queryString ? `?${queryString}` : ''}`;
-        const res = await api.get(url);
-        const payload = res.data as any;
+    const queryString = params.toString();
+    const url = `/clerk/treasurer/service-charges/${queryString ? `?${queryString}` : ''}`;
+    const res = await api.get(url);
+    const payload = res.data as any;
 
-        const rawItems: any[] = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload?.results)
-          ? payload.results
-          : Array.isArray(payload?.data)
-          ? payload.data
-          : [];
+    const rawItems: any[] = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.results)
+      ? payload.results
+      : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
 
-        allResults.push(...rawItems);
-      } catch (typeErr) {
-        // If one type fails, continue with the other
-        console.error(`Error fetching service charges for type ${type}:`, typeErr);
-      }
-    }
-
-    const normalized: UnpaidServiceCharge[] = allResults.map((item: any) => ({
-      sr_id: String(item.pay_id ?? item.sr_id ?? ''),
+    const normalized: UnpaidServiceCharge[] = rawItems.map((item: any) => ({
+      sr_id: String(item.sr_id ?? item.pay_id ?? ''),
       sr_code: item.sr_code ?? '',
-      sr_req_date: item.pay_date_req ?? item.sr_req_date ?? '',
-      req_payment_status: item.pay_status ?? 'Unpaid',
-      pay_sr_type: item.pay_sr_type ?? item.sr_type ?? '',
-      complainant_name: Array.isArray(item.complainant_names) && item.complainant_names.length ? item.complainant_names[0] : undefined,
+      sr_req_date: item.sr_req_date ?? item.pay_date_req ?? '',
+      // For declined items, check pay_req_status, otherwise use pay_status
+      req_payment_status: (item.sr_req_status === 'Declined' || item.payment_request?.spay_status === 'Declined') 
+        ? 'Declined' 
+        : (item.payment_request?.spay_status ?? item.pay_status ?? 'Unpaid'),
+      pay_sr_type: item.sr_type ?? item.pay_sr_type ?? '',
+      complainant_name: Array.isArray(item.complainant_names) && item.complainant_names.length ? item.complainant_names[0] : (item.complainant_name ?? undefined),
       complainant_names: item.complainant_names ?? [],
       complainant_addresses: item.complainant_addresses ?? [],
       accused_names: item.accused_names ?? [],
       accused_addresses: item.accused_addresses ?? [],
-      decline_reason: item.decline_reason || item.req_declined_reason || item.sr_reason || '',
+      decline_reason: item.pay_reason ?? item.decline_reason ?? item.req_declined_reason ?? item.sr_reason ?? '',
     }));
+
+    const count = payload?.count ?? normalized.length;
+    const next = payload?.next ?? null;
+    const previous = payload?.previous ?? null;
 
     return { 
       results: normalized, 
-      count: normalized.length, 
-      next: null, 
-      previous: null 
+      count, 
+      next, 
+      previous 
     };
   } catch (err) {
     const error = err as AxiosError;
-    console.error('Error fetching unpaid service charges:', error.response?.data || error.message);
+    console.error('Error fetching service charges:', error.response?.data || error.message);
     if (error.response?.status === 500) {
       return { results: [], count: 0, next: null, previous: null };
     }

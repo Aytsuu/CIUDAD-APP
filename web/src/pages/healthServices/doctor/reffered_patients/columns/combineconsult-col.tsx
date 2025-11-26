@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { calculateAge } from "@/helpers/ageCalculator";
 import ViewButton from "@/components/ui/view-button";
 
-
-
 export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
   const navigate = useNavigate();
 
@@ -127,10 +125,24 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
         const data = row.original.data;
         let address = null;
 
+        // FIXED: Correct address paths for both record types
         if (row.original.record_type === "child-health") {
-          address = data.chrec_details?.patrec_details?.pat_details?.address;
+          // Child health: address is at chrec_details.patrec_details.address
+          address = data.chrec_details?.patrec_details?.address;
         } else {
+          // Medical consultation: address is at patrec_details.patient_details.address
           address = data.patrec_details?.patient_details?.address;
+        }
+
+        // Debug logging (remove after testing)
+        if (!address || !address.full_address) {
+          console.log("❌ Address not found for record:", {
+            record_type: row.original.record_type,
+            data_structure: row.original.data,
+            attempted_path: row.original.record_type === "child-health" 
+              ? "chrec_details.patrec_details.address"
+              : "patrec_details.patient_details.address"
+          });
         }
 
         return <div className="w-[200px] break-words text-sm">{address?.full_address || "No address provided"}</div>;
@@ -155,19 +167,20 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
         if (row.original.record_type === "child-health") {
           const patDetails = data.chrec_details?.patrec_details?.pat_details;
           const personalInfo = patDetails?.personal_info || {};
-          const address = patDetails?.address || {};
+          // FIXED: Get address from correct path for child health
+          const address = data.chrec_details?.patrec_details?.address || {};
 
           patientData = {
             pat_id: patDetails?.pat_id,
             pat_type: patDetails?.pat_type,
             age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
-            addressFull: address.full_address,
+            addressFull: address.full_address || "",
             address: {
-              add_street: address.add_street,
-              add_barangay: address.add_barangay,
-              add_city: address.add_city,
-              add_province: address.add_province,
-              add_sitio: address.add_sitio
+              add_street: address.add_street || "",
+              add_barangay: address.add_barangay || "",
+              add_city: address.add_city || "",
+              add_province: address.add_province || "",
+              add_sitio: address.add_sitio || ""
             },
             households: patDetails?.households || [],
             personal_info: personalInfo
@@ -175,19 +188,20 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
         } else {
           const patDetails = data.patrec_details?.patient_details;
           const personalInfo = patDetails?.personal_info || {};
-          const address = patDetails?.address || {};
+          // FIXED: Get address from correct path for medical consultation
+          const address = data.patrec_details?.patient_details?.address || {};
 
           patientData = {
-            pat_id: data.patrec_details?.pat_id,
+            pat_id: patDetails?.pat_id,
             pat_type: patDetails?.pat_type,
             age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
-            addressFull: address.full_address,
+            addressFull: address.full_address || "",
             address: {
-              add_street: address.add_street,
-              add_barangay: address.add_barangay,
-              add_city: address.add_city,
-              add_province: address.add_province,
-              add_sitio: address.add_sitio
+              add_street: address.add_street || "",
+              add_barangay: address.add_barangay || "",
+              add_city: address.add_city || "",
+              add_province: address.add_province || "",
+              add_sitio: address.add_sitio || ""
             },
             households: patDetails?.households || [],
             personal_info: personalInfo

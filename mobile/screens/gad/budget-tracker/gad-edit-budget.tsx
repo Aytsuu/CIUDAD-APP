@@ -253,11 +253,11 @@ function GADViewEditEntryForm() {
           { gbud_num, budgetData, files, filesToDelete },
           {
             onSuccess: (data) => {
-              console.log("Update successful:", data);
+              // console.log("Update successful:", data);
               resolve(data);
             },
             onError: (error) => {
-              console.error("Update failed:", error);
+              // console.error("Update failed:", error);
               reject(error);
             },
           }
@@ -270,7 +270,7 @@ function GADViewEditEntryForm() {
       setIsEditing(false);
       router.back();
     } catch (error) {
-      console.error("Error details:", error);
+      // console.error("Error details:", error);
     } finally {
       setIsSubmitting(false);
     }

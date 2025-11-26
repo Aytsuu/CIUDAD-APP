@@ -134,7 +134,7 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
         
         for file_data in files:
             if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
-                print(f"Skipping invalid file data for: {file_data.get('name')}")
+                # print(f"Skipping invalid file data for: {file_data.get('name')}")
                 continue
 
             # Validate required fields for each file
@@ -159,32 +159,32 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
                 try:
                     disbursement_image.disf_url = upload_to_storage(file_data, 'disbursement-bucket')
                     successful_uploads += 1
-                    print(f"Successfully uploaded: {file_data['name']}")
+                    # print(f"Successfully uploaded: {file_data['name']}")
                 except UnboundLocalError as e:
                     # This is the specific error from the broken upload function
-                    print(f"Upload function error for {file_data['name']}: {str(e)}")
+                    # print(f"Upload function error for {file_data['name']}: {str(e)}")
                     # Use a placeholder URL instead of failing completely
                     disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
                     failed_uploads += 1
                 except Exception as e:
                     # Handle any other upload errors
-                    print(f"Upload failed for {file_data['name']}: {str(e)}")
+                    # print(f"Upload failed for {file_data['name']}: {str(e)}")
                     disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
                     failed_uploads += 1
                 
                 disbursement_images.append(disbursement_image)
                 
             except Exception as e:
-                print(f"Error processing file {file_data.get('name')}: {str(e)}")
+                # print(f"Error processing file {file_data.get('name')}: {str(e)}")
                 failed_uploads += 1
                 continue  # Skip this file but continue with others
 
         if disbursement_images:
             try:
                 Disbursement_File.objects.bulk_create(disbursement_images)
-                print(f"Successfully saved {successful_uploads} files, {failed_uploads} failed")
+                # print(f"Successfully saved {successful_uploads} files, {failed_uploads} failed")
             except Exception as bulk_error:
-                print(f"Bulk create failed: {str(bulk_error)}")
+                # print(f"Bulk create failed: {str(bulk_error)}")
                 raise bulk_error
         
         return disbursement_images
@@ -479,9 +479,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:
             try:
-                return obj.nrc_id.nrc_requester
-            except AttributeError:
-                return "Unknown Non-Resident"
+                return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+            except Exception:
+                try:
+                    return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+                except Exception:
+                    return "Unknown Non-Resident"
 
         #  If neither cr_id nor nrc_id exists
         return "Unknown"

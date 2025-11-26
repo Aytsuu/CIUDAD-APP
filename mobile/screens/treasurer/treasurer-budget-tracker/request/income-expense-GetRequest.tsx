@@ -27,8 +27,8 @@ export const getIncomeExpenseMainCard = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };
@@ -65,8 +65,8 @@ export const getIncomeExpense = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };
@@ -79,7 +79,7 @@ export const getParticulars = async (year?: number) => {
         const res = await api.get('treasurer/get-particular/', params);
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -100,7 +100,6 @@ export const getExpenseLog = async (
         if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
         
         const res = await api.get('treasurer/expense-log/', { params });
-        console.log("EXPENSE LOG PO: ", res);
         
         // Handle paginated response
         if (res.data.results !== undefined) {
@@ -115,8 +114,8 @@ export const getExpenseLog = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };
@@ -155,8 +154,8 @@ export const getIncomeData = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };

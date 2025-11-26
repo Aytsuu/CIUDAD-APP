@@ -58,9 +58,8 @@ export const useCreateResolution = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error submitting Resolution:", err);
       showErrorToast(
-        "Failed to submit Resolution. Please check the input data and try again."
+        `Failed to submit Resolution: ${err.message}`
       );      
     }
   });

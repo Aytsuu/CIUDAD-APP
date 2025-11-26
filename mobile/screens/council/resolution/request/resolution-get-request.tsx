@@ -32,8 +32,8 @@ export const getResolution = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };
@@ -46,7 +46,7 @@ export const getApprovedProposals = async () => {
         const res = await api.get('council/approved-proposals/');
         return res.data;
         
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
     }
 };

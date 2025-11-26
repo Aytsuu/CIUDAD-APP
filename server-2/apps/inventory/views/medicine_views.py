@@ -152,7 +152,7 @@ class MedicineListTable(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = Medicinelist.objects.all().order_by('med_id')
+        queryset = Medicinelist.objects.all().order_by('-updated_at')
         search_query = self.request.GET.get('search', '').strip()
 
         if search_query:

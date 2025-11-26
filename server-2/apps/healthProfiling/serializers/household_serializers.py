@@ -2,6 +2,18 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.db.models import Count
 from ..models import *
+from datetime import datetime
+
+# Import generate_hh_no from server-1's utils (shared function)
+# Note: In production, this should be imported from a shared utility module
+def generate_hh_no():
+  """Generate household ID in format HH-YYMM-COUNT"""
+  from apps.healthProfiling.models import Household
+  next_val = Household.objects.count() + 1
+  date = datetime.now()
+  year = str(date.year - 2000)
+  month = str(date.month).zfill(2)
+  return f"HH-{year}{month}-{next_val}"
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -86,7 +98,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
 
   def create(self, validated_data):
     household = Household(
-      hh_id = self.generate_hh_no(),
+      hh_id = generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
       add = validated_data['add'],
@@ -96,8 +108,3 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
 
     household.save()
     return household
-
-  def generate_hh_no(self):
-    next_val = Household.objects.count() + 1
-    house_no = f"HH-{next_val:05d}"
-    return house_no

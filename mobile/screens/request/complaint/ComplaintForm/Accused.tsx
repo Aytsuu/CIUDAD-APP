@@ -1,4 +1,11 @@
-import React, { memo, useCallback, useMemo, useState, useEffect } from "react";
+import React, {
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -6,148 +13,40 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from "react-native";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import { Plus, X, ChevronRight, ChevronLeft } from "lucide-react-native";
+import { useFieldArray, useFormContext, Controller } from "react-hook-form";
+import {
+  Plus,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  CheckIcon,
+} from "lucide-react-native";
 import { ComplaintFormData } from "@/form-schema/complaint-schema";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { SearchableSelect } from "../search-layout";
 import { useGetResidentLists } from "../api-operations/queries/ComplaintGetQueries";
+import { useAuth } from "@/contexts/AuthContext";
+import { useResidentSelection } from "@/contexts/ComplaintFormContext";
+import { type DropdownOption,} from "@/components/ui/select-layout";
 
-const GENDER_OPTIONS = [
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
+const GENDER_OPTIONS: DropdownOption[] = [
+  { label: "Male", value: "MALE" },
+  { label: "Female", value: "FEMALE" },
 ];
 
-interface AccusedFormSectionProps {
-  control: any;
-  index: number;
-  onRemove: () => void;
-  showRemoveButton: boolean;
-  isManual: boolean;
-  residentsData: any[];
-  isLoadingResidents: boolean;
-  onResidentSelect: (index: number, residentId: string) => void;
+interface ResidentData {
+  rp_id: number | string;
+  name: string;
+  age: number;
+  gender: string;
+  address?: string;
+  profile_image?: string;
+  number?: string;
 }
-
-const AccusedFormSection = memo<AccusedFormSectionProps>(
-  ({
-    control,
-    index,
-    onRemove,
-    showRemoveButton,
-    isManual,
-    residentsData,
-    isLoadingResidents,
-    onResidentSelect,
-  }) => {
-    const residentOptions = useMemo(() => {
-      if (!residentsData) return [];
-      return residentsData.map((resident: any) => ({
-        label: resident.name,
-        value: resident.rp_id?.toString(),
-        // Store additional data if your FormSelect component supports it
-        ...(resident.profile_image && { profileImage: resident.profile_image }),
-      }));
-    }, [residentsData]);
-
-    return (
-      <View className="bg-white rounded-lg p-4 border border-gray-100">
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-md font-medium text-gray-900">
-            Respondent {index + 1}
-          </Text>
-          {showRemoveButton && (
-            <TouchableOpacity onPress={onRemove} className="p-2">
-              <X size={18} className="text-red-500" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Resident Selector */}
-        <View className="mb-3">
-          <Text className="text-sm font-medium text-gray-900 mb-2">
-            Select Resident
-          </Text>
-          {isLoadingResidents ? (
-            <View className="py-3 items-center bg-gray-50 rounded-lg">
-              <ActivityIndicator size="small" color="#2563EB" />
-              <Text className="text-sm text-gray-500 mt-2">
-                Loading residents...
-              </Text>
-            </View>
-          ) : (
-            <FormSelect
-              control={control}
-              name={`accused.${index}.rp_id`}
-              options={residentOptions}
-              placeholder="Select a resident..."
-              isInModal={false}
-              disabled={isManual}
-            />
-          )}
-        </View>
-
-        <View className="space-y-4">
-          {/* Name */}
-          <FormInput
-            control={control}
-            name={`accused.${index}.acsd_name`}
-            label="Name *"
-            placeholder={isManual ? "Enter name" : "Auto-filled from resident"}
-            editable={isManual}
-          />
-
-          {/* Gender and Age */}
-          <View className="flex-row space-x-3">
-            <View className="flex-1">
-              <FormSelect
-                control={control}
-                name={`accused.${index}.acsd_gender`}
-                label="Gender *"
-                options={GENDER_OPTIONS}
-                disabled={!isManual}
-              />
-            </View>
-            <View className="flex-1">
-              <FormInput
-                control={control}
-                name={`accused.${index}.acsd_age`}
-                label="Age *"
-                placeholder={isManual ? "Enter age" : "Auto-filled"}
-                keyboardType="numeric"
-                editable={isManual}
-              />
-            </View>
-          </View>
-
-          {/* Address */}
-          <FormInput
-            control={control}
-            name={`accused.${index}.acsd_address`}
-            label="Address *"
-            placeholder={
-              isManual ? "Enter address" : "Auto-filled from resident"
-            }
-            editable={isManual}
-          />
-
-          {/* Physical Description */}
-          <FormTextArea
-            control={control}
-            name={`accused.${index}.acsd_description`}
-            label="Physical Description *"
-            placeholder="Describe physical appearance, clothing, distinguishing features..."
-            numberOfLines={3}
-          />
-        </View>
-      </View>
-    );
-  }
-);
-
-AccusedFormSection.displayName = "AccusedFormSection";
 
 interface AccusedProps {
   onNext: () => void;
@@ -156,7 +55,8 @@ interface AccusedProps {
 }
 
 export const Accused: React.FC<AccusedProps> = memo(
-  ({ onNext, onPrev, isSubmitting }) => {
+  ({ onNext, onPrev, isSubmitting = false }) => {
+    const { user } = useAuth();
     const { control, trigger, setValue } = useFormContext<ComplaintFormData>();
     const { fields, append, remove } = useFieldArray({
       control,
@@ -164,7 +64,9 @@ export const Accused: React.FC<AccusedProps> = memo(
     });
 
     const [activeTab, setActiveTab] = useState(0);
-    const [manualEntries, setManualEntries] = useState<Set<number>>(new Set());
+    const initializedRef = useRef(false);
+
+    const isStaff = !!user?.staff;
 
     const {
       data: residentsData,
@@ -172,32 +74,160 @@ export const Accused: React.FC<AccusedProps> = memo(
       error,
     } = useGetResidentLists();
 
+    // Get resident selection tracking
+    const {
+      selectedAccusedResidents,
+      setSelectedAccusedResidents,
+      selectedComplainantResidents,
+    } = useResidentSelection();
+
+    // Track selected residents whenever fields change
+    useEffect(() => {
+      const selectedIds = fields
+        .map((field: any) => field.rp_id)
+        .filter((id: any) => id !== null && id !== "");
+      setSelectedAccusedResidents(selectedIds);
+    }, [fields, setSelectedAccusedResidents]);
+
+    // Prepare resident options for the dropdown
+    const residentOptions = useMemo((): DropdownOption[] => {
+      if (!residentsData) return [];
+
+      return residentsData.map((resident: ResidentData) => {
+        const residentId = resident.rp_id?.toString() || "";
+        const isSelectedInComplainant =
+          selectedComplainantResidents.includes(residentId);
+        const isSelectedInOtherAccused =
+          selectedAccusedResidents.includes(residentId) &&
+          fields[activeTab]?.rp_id !== residentId;
+
+        return {
+          label: (
+            <View className="flex-row items-center">
+              <View className="flex-row items-center flex-1">
+                <View className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-3">
+                  {resident.profile_image ? (
+                    <Image
+                      source={{ uri: resident.profile_image }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-full h-full items-center justify-center bg-gray-300">
+                      <Text className="text-xs text-gray-600">No Img</Text>
+                    </View>
+                  )}
+                </View>
+
+                <Text
+                  className={`text-gray-800 font-medium ${
+                    isSelectedInComplainant || isSelectedInOtherAccused
+                      ? "text-gray-400"
+                      : ""
+                  }`}
+                >
+                  {resident.name}
+                </Text>
+              </View>
+
+              {/* RIGHT SIDE: check icons */}
+              {isSelectedInComplainant && (
+                <View className="rounded-full bg-green-500 p-1 ml-2">
+                  <CheckIcon size={12} color="#ffffff" />
+                </View>
+              )}
+
+              {isSelectedInOtherAccused && (
+                <View className="rounded-full bg-green-500 p-1 ml-2">
+                  <CheckIcon size={12} color="#ffffff" />
+                </View>
+              )}
+            </View>
+          ),
+          value: resident.rp_id?.toString() || "",
+          disabled: isSelectedInComplainant || isSelectedInOtherAccused,
+          data: {
+            name: resident.name,
+            age: resident.age,
+            gender: resident.gender,
+            address: resident.address || "Address not available",
+            profile_image: resident.profile_image,
+            number: resident.number,
+          },
+        };
+      });
+    }, [
+      residentsData,
+      selectedComplainantResidents,
+      selectedAccusedResidents,
+      activeTab,
+      fields,
+    ]);
+
+    // Handle API errors
     useEffect(() => {
       if (error) {
         Alert.alert("Error", "Failed to load residents. Please try again.");
       }
     }, [error]);
 
-    /** Handle selecting a resident for a specific tab */
+    // Initialize with one empty accused for both staff and non-staff
+    useEffect(() => {
+      if (fields.length === 0 && !initializedRef.current) {
+        initializedRef.current = true;
+        append({
+          acsd_name: "",
+          acsd_gender: "",
+          acsd_age: "",
+          acsd_description: "",
+          acsd_address: "",
+          rp_id: null,
+        });
+        setActiveTab(0);
+      }
+    }, [fields.length, append]);
+
+    // Handle resident selection - auto-fill fields
     const handleResidentSelect = useCallback(
       (index: number, residentId: string) => {
         const selected = residentsData?.find(
-          (r: any) => r.rp_id?.toString() === residentId
+          (r: ResidentData) => r.rp_id?.toString() === residentId
         );
         if (!selected) return;
 
-        setValue(`accused.${index}.acsd_name`, selected.name);
-        setValue(`accused.${index}.acsd_age`, selected.age?.toString() || "");
-        setValue(`accused.${index}.acsd_gender`, selected.gender || "");
+        setValue(`accused.${index}.acsd_name`, selected.name || "", {
+          shouldValidate: true,
+        });
+        setValue(`accused.${index}.acsd_age`, selected.age?.toString() || "", {
+          shouldValidate: true,
+        });
+        setValue(`accused.${index}.acsd_gender`, selected.gender, {
+          shouldValidate: true,
+        });
         setValue(
           `accused.${index}.acsd_address`,
-          selected.address || "Address not available"
+          selected.address || "Address not available",
+          { shouldValidate: true }
         );
       },
       [residentsData, setValue]
     );
 
-    /** Remove a respondent */
+    // Add new accused
+    const addAccused = useCallback(() => {
+      const newIndex = fields.length;
+      append({
+        acsd_name: "",
+        acsd_gender: "",
+        acsd_age: "",
+        acsd_description: "",
+        acsd_address: "",
+        rp_id: null,
+      });
+      setActiveTab(newIndex);
+    }, [append, fields.length]);
+
+    // Remove accused
     const removeAccused = useCallback(
       (index: number) => {
         if (fields.length === 1) {
@@ -205,38 +235,16 @@ export const Accused: React.FC<AccusedProps> = memo(
           return;
         }
 
-        setManualEntries((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(index);
-          const adjusted = new Set<number>();
-          newSet.forEach((i) => adjusted.add(i > index ? i - 1 : i));
-          return adjusted;
-        });
-
         remove(index);
         setActiveTab(Math.max(0, index - 1));
       },
       [remove, fields.length]
     );
 
-    /** Add manually */
-    const handleAddManually = useCallback(() => {
-      const newIndex = fields.length;
-      append({
-        acsd_name: "",
-        acsd_age: "",
-        acsd_gender: "",
-        acsd_description: "",
-        acsd_address: "",
-        rp_id: null,
-      });
-      setManualEntries((prev) => new Set([...prev, newIndex]));
-      setActiveTab(newIndex);
-    }, [append, fields.length]);
+    // Handle next
+    const handleNext = useCallback(async () => {
+      const isValid = await trigger("accused");
 
-    /** Next step */
-    const handleNext = async () => {
-      const isValid = await trigger(["accused"]);
       if (!isValid) {
         Alert.alert(
           "Validation Error",
@@ -244,51 +252,52 @@ export const Accused: React.FC<AccusedProps> = memo(
         );
         return;
       }
+
       onNext();
-    };
+    }, [trigger, onNext]);
+
+    // Show loading while initializing
+    if (fields.length === 0) {
+      return (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#2563EB" />
+          <Text className="text-gray-600 mt-4">Initializing form...</Text>
+        </View>
+      );
+    }
 
     return (
       <View className="flex-1 p-4">
-        <View className="bg-white rounded-lg p-4 mb-2 border border-gray-100">
+        <View className="bg-white rounded-lg mb-10">
           <View className="flex-row items-center mb-2">
-            {/* <UserCircle size={20} color="#111111" className="mr-2" /> */}
-            <Text className="text-lg font-semibold text-gray-900">Respondent</Text>
+            <Text className="text-lg font-semibold text-gray-900">
+              Respondent
+            </Text>
           </View>
           <Text className="text-sm text-gray-600">
-            Person identified as involved  in the reported incident.
+            Person identified as involved in the reported incident.
           </Text>
-        </View>
-        {/* Add Respondent Manually */}
-        <View className="flex-row justify-end mb-3">
-        <TouchableOpacity
-          onPress={handleAddManually}
-          disabled={isLoadingResidents}
-          className="bg-blue-600 py-3 px-4 rounded-lg flex-row items-center justify-center mb-6"
-        >
-          <Plus size={20} className="text-white" />
-          <Text className="text-white font-medium ml-2">
-            Add Res.
-          </Text>
-        </TouchableOpacity>
         </View>
 
-        {/* Tabs */}
-        {fields.length > 0 && (
-          <>
+        <View className="border border-gray-100">
+          {/* Tabs Header with Add Button */}
+          <View className="flex-row items-center bg-white rounded-lg p-2 mb-4">
+            {/* Scrollable Respondent Tabs */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className="flex-row space-x-2 bg-white rounded-lg border border-gray-200 p-2 mb-4"
+              className="flex-1"
+              contentContainerStyle={{ alignItems: "center" }}
             >
               {fields.map((field, index) => (
                 <TouchableOpacity
                   key={field.id}
                   onPress={() => setActiveTab(index)}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-4 py-2 rounded-lg flex-row items-center ${
                     activeTab === index
                       ? "bg-blue-600"
                       : "bg-gray-100 border border-gray-200"
-                  }`}
+                  } mr-2`}
                 >
                   <Text
                     className={`font-medium ${
@@ -297,26 +306,148 @@ export const Accused: React.FC<AccusedProps> = memo(
                   >
                     Resp. {index + 1}
                   </Text>
+                  
+                  {fields.length > 1 && (
+                    <TouchableOpacity
+                      onPress={() => removeAccused(index)}
+                      className="ml-2"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <X size={16} color={activeTab === index ? "#fff" : "#EF4444"} />
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            {/* Add button  */}
+            <TouchableOpacity
+              onPress={addAccused}
+              disabled={isLoadingResidents}
+              className="flex-row bg-blue-600 px-4 py-2 rounded-lg shadow-sm ml-2"
+            >
+              <Plus size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Active Respondent Form */}
-            <AccusedFormSection
-              control={control}
-              index={activeTab}
-              onRemove={() => removeAccused(activeTab)}
-              showRemoveButton={fields.length > 1}
-              isManual={manualEntries.has(activeTab)}
-              residentsData={residentsData || []}
-              isLoadingResidents={isLoadingResidents}
-              onResidentSelect={handleResidentSelect}
-            />
-          </>
-        )}
+          {/* Active Accused Form */}
+          {fields[activeTab] && (
+            <View className="bg-white rounded-lg p-4">
+              {/* Resident Selector - Available for both staff and non-staff */}
+              <View className="mb-10">
+                <Text className="text-sm font-medium text-gray-900 mb-2">
+                  Select Resident {isStaff ? "(Optional)" : "*"}
+                </Text>
+                {isLoadingResidents ? (
+                  <View className="py-3 items-center bg-gray-50 rounded-lg">
+                    <ActivityIndicator size="small" color="#2563EB" />
+                    <Text className="text-sm text-gray-500 mt-2">
+                      Loading residents...
+                    </Text>
+                  </View>
+                ) : (
+                  <Controller
+                    control={control}
+                    name={`accused.${activeTab}.rp_id`}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <SearchableSelect
+                        options={residentOptions}
+                        selectedValue={value || ""}
+                        onSelect={(option: any) => {
+                          // Prevent selection if the option is disabled
+                          if (option.disabled) {
+                            return;
+                          }
 
-        {/* Navigation */}
-        <View className="flex-row space-x-3 mt-auto pt-4">
+                          if (option.value === value) {
+                            onChange("");
+                            // Clear fields when deselecting
+                            setValue(`accused.${activeTab}.acsd_name`, "");
+                            setValue(`accused.${activeTab}.acsd_age`, "");
+                            setValue(`accused.${activeTab}.acsd_gender`, "");
+                            setValue(`accused.${activeTab}.acsd_address`, "");
+                          } else {
+                            onChange(option.value);
+                            handleResidentSelect(activeTab, option.value);
+                          }
+                        }}
+                        placeholder="Select a resident..."
+                        searchPlaceholder="Search resident..."
+                        error={error?.message}
+                        disabled={false}
+                        isInModal={false}
+                      />
+                    )}
+                  />
+                )}
+              </View>
+
+              {/* Conditional Fields based on user type */}
+              {isStaff ? (
+                <>
+                  <FormInput
+                    control={control}
+                    name={`accused.${activeTab}.acsd_name`}
+                    label="Full Name *"
+                    placeholder="Enter complete name"
+                    editable={true}
+                  />
+
+                  <View className="flex-row gap-x-3">
+                    <View className="flex-1">
+                      <FormSelect
+                        control={control}
+                        name={`accused.${activeTab}.acsd_gender`}
+                        label="Gender *"
+                        options={GENDER_OPTIONS}
+                        disabled={false}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <FormInput
+                        control={control}
+                        name={`accused.${activeTab}.acsd_age`}
+                        label="Age *"
+                        placeholder="Age"
+                        keyboardType="numeric"
+                        editable={true}
+                      />
+                    </View>
+                  </View>
+
+                  <FormInput
+                    control={control}
+                    name={`accused.${activeTab}.acsd_address`}
+                    label="Complete Address *"
+                    placeholder="Street, Barangay, City, Province"
+                    editable={true}
+                  />
+                </>
+              ) : (
+                <View className="mb-2">
+                  <Text className="text-sm text-gray-500 italic">
+                    Please select a resident from the dropdown above. The
+                    respondent's information will be auto-filled.
+                  </Text>
+                </View>
+              )}
+
+              {/* Physical Description - Always visible for both */}
+              <FormTextArea
+                control={control}
+                name={`accused.${activeTab}.acsd_description`}
+                label="Physical Description *"
+                placeholder="Describe physical appearance, clothing, distinguishing features..."
+                numberOfLines={3}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Navigation Buttons */}
+        <View className="flex-row gap-x-4 mt-6">
           <TouchableOpacity
             onPress={onPrev}
             disabled={isSubmitting}
@@ -326,7 +457,7 @@ export const Accused: React.FC<AccusedProps> = memo(
           >
             <ChevronLeft
               size={20}
-              className={isSubmitting ? "text-gray-400" : "text-gray-700"}
+              color={isSubmitting ? "#9CA3AF" : "#374151"}
             />
             <Text
               className={`font-medium ml-2 ${
@@ -357,10 +488,8 @@ export const Accused: React.FC<AccusedProps> = memo(
             </Text>
             <ChevronRight
               size={20}
-              className={
-                isSubmitting || fields.length === 0
-                  ? "text-gray-500"
-                  : "text-white"
+              color={
+                isSubmitting || fields.length === 0 ? "#9CA3AF" : "#FFFFFF"
               }
             />
           </TouchableOpacity>

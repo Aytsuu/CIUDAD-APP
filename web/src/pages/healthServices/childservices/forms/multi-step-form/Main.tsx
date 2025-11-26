@@ -393,7 +393,6 @@ export default function ChildHealthRecordForm() {
   const handleSubmit = async (submittedData: FormData) => {
     setIsSubmitting(true);
     setError(null);
-    console.log("child display submit:", submittedData);
 
     try {
       const dataToSubmit = {

@@ -362,6 +362,8 @@ class MedicineExpiredOutOfStockSummaryAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -485,6 +487,17 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
 
             # Get medicine details from Medicinelist model
             medicine = minv.med_id
+            if is_expired:
+                status_str = 'Expired'
+            elif is_out_of_stock:
+                status_str = 'Out of Stock'
+            elif is_near_expiry:
+                status_str = 'Near Expiry'
+            elif closing_qty <= 20:
+                status_str = 'Low Stock'
+            else:
+                status_str = 'Active'
+
             item_data = {
                 'med_name': f"{medicine.med_name} {medicine.med_dsg}{medicine.med_dsg_unit} {medicine.med_form}",
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
@@ -497,7 +510,8 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
                 'closing_stock': closing_qty,
                 'date_received': minv.created_at,
                 'unit': minv.minv_qty_unit,
-                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+                'status': status_str,
+                'is_low_stock': closing_qty <= 20
             }
 
             if is_expired and is_out_of_stock:

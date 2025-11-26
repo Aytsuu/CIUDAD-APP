@@ -23,8 +23,8 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
       toast.success("Waste collection scheduled successfully");
       if (onSuccess) onSuccess(wc_num);
     },
-    onError: (err) => {
-      console.error("Error creating schedule:", err);
+    onError: (_err) => {
+      // console.error("Error creating schedule:", err);
       toast.error("Failed to create schedule.");
     }
   });
@@ -47,8 +47,8 @@ export const useAssignCollectors = () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       toast.success("Collectors assigned successfully");
     },
-    onError: (err) => {
-      console.error("Error assigning collectors:", err);
+    onError: (_err) => {
+      // console.error("Error assigning collectors:", err);
       toast.error("Failed to assign collectors.");
     }
   });
@@ -75,8 +75,8 @@ export const useCreateCollectionReminders = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error creating collection reminders:", err);
+    onError: (_err) => {
+      // console.error("Error creating collection reminders:", err);
       toast.error("Failed to create collection reminders. Please try again.");
     }
   });

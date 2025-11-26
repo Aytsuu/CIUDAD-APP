@@ -54,13 +54,8 @@ const incidentSchema = z.object({
 });
 
 export const complaintFormSchema = z.object({
-  complainant: z.array(complainantSchema)
-    .min(1, "At least one complainant is required")
-    .max(5, "Maximum 5 complainants allowed"),
-
-  accused: z.array(accusedSchema)
-    .min(1, "At least one accused person is required")
-    .max(5, "Maximum 5 accused persons allowed"),
+  complainant: z.array(complainantSchema).min(1, "At least one complainant is required"),
+  accused: z.array(accusedSchema) .min(1, "At least one accused person is required"),
   incident: incidentSchema,
   files: z.array(z.object({})).default([]),
 }); 

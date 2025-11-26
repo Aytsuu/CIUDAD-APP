@@ -1137,7 +1137,8 @@ def get_maternal_staff(request):
     """
     try:
         staff_members = Staff.objects.filter(
-            pos__pos_title__in=['BARANGAY HEALTH WORKERS', 'ADMIN', 'DOCTOR']
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'MIDWIFE', 'BARANGAY HEALTH WORKERS']
         ).select_related('rp__per', 'pos').order_by('rp__per__per_lname', 'rp__per__per_fname')
         
         serializer = StaffSerializer(staff_members, many=True)

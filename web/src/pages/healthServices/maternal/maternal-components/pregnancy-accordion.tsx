@@ -109,13 +109,13 @@ export function PregnancyAccordion({
     }
   }
 
-  const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
-    if (onPregnancyLossRecord) {
-      onPregnancyLossRecord(recordId, recordType)
-    } else {
-      console.log(`Marking record: ${recordId} of type ${recordType} as pregnancy loss (no onPregnancyLossRecord prop provided)`)
-    }
-  }
+  // const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
+  //   if (onPregnancyLossRecord) {
+  //     onPregnancyLossRecord(recordId, recordType)
+  //   } else {
+  //     console.log(`Marking record: ${recordId} of type ${recordType} as pregnancy loss (no onPregnancyLossRecord prop provided)`)
+  //   }
+  // }
   
   // determine if a record should have a complete button
   const shouldShowCompleteButton = (record: MaternalRecord, pregnancy: PregnancyGroup, sortedRecords: MaternalRecord[]) => {

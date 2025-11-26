@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchPopulationStructureReport, fetchSitios, fetchPopulationYearlyRecords } from "../restful-api/getAPI";
+import { fetchPopulationStructureReport, fetchSitios, fetchPopulationYearlyRecords, fetchPopulationBySitio } from "../restful-api/getAPI";
 import { fetchHealthProfilingSummary } from "../restful-api/summaryAPI";
 
 // Fetch population structure report
@@ -34,6 +34,15 @@ export const useHealthProfilingSummary = (year?: string, sitio?: string) => {
   return useQuery({
     queryKey: ["healthProfilingSummary", year, sitio],
     queryFn: () => fetchHealthProfilingSummary(year, sitio),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+// Fetch population by sitio
+export const usePopulationBySitio = (year?: string) => {
+  return useQuery({
+    queryKey: ["populationBySitio", year],
+    queryFn: () => fetchPopulationBySitio(year),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

@@ -4,11 +4,9 @@ import {api} from "@/api/api";
 export const deleteIncomeExpense = async (iet_num: number) => {
     try {
         const res = await api.delete(`treasurer/income-expense-tracking/${iet_num}/`);
-        console.log("IETNUM: ", iet_num)
         return res.data; // Return the response data if needed
     } catch (err) {
-        console.error("IETNUM: ", iet_num)
-        console.error("Error deleting entry:", err);
+        // console.error("Error deleting entry:", err);
         throw err; // Rethrow the error to handle it in the component
     }
 };
@@ -24,7 +22,8 @@ export const archiveOrRestoreExpense = async (iet_num: number, incomeExpenseInfo
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }
 
@@ -35,11 +34,9 @@ export const archiveOrRestoreExpense = async (iet_num: number, incomeExpenseInfo
 export const deleteIncome = async (inc_num: number) => {
     try {
         const res = await api.delete(`treasurer/income-tracking/${inc_num}/`);
-        console.log("IETNUM: ", inc_num)
         return res.data; // Return the response data if needed
     } catch (err) {
-        console.error("IETNUM: ", inc_num)
-        console.error("Error deleting entry:", err);
+        // console.error("Error deleting entry:", err);
         throw err; // Rethrow the error to handle it in the component
     }
 };
@@ -56,6 +53,7 @@ export const archiveOrRestoreIncome = async (inc_num: number, incomeInfo: Record
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }

@@ -13,8 +13,6 @@ export const addBudgetPlanSuppDoc = async ( plan_id: number, files: { name: stri
             }))
         };
 
-        console.log(data)
-
         const response = await api.post('treasurer/budget-plan-file/', data);
 
         return response.data;

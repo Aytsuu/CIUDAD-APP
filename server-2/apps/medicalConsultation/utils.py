@@ -179,7 +179,7 @@ def _get_resident_name_and_rp_id(rp):
 def _medical_staff_rp_ids():
     staff = Staff.objects.filter(
         staff_type="HEALTH STAFF",
-        pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS', 'MIDWIFE', 'NURSE']
+        pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS', 'MIDWIFE']
     ).select_related('rp')
     return [str(s.rp.rp_id) for s in staff if s.rp and s.rp.rp_id]
 

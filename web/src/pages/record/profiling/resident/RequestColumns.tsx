@@ -17,7 +17,7 @@ export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Request (#)
+        Request No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -118,7 +118,7 @@ export const FamilyRequestColumns: ColumnDef<FamilyRequestRecord>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Request (#)
+        Request No.
         <ArrowUpDown size={14} />
       </div>
     ),

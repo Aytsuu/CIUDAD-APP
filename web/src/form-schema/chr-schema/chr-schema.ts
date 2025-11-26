@@ -71,9 +71,9 @@ export const SupplementSchema = z.object({
 export const VitalSignSchema = z.object({
   date: z.string().min(1, "Date is required"),
   age: z.string().min(1, "Age is required"),
-  ht: heightSchema.optional(),
-  wt: weightSchema.optional(),
-  temp: temperatureSchema.optional(),
+  ht: heightSchema,
+  wt: weightSchema,
+  temp: temperatureSchema,
   follov_description: z.string().optional(),
   notes: z.string().optional(),
   followUpVisit: z.string().optional(),

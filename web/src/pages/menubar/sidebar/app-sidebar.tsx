@@ -194,11 +194,7 @@ export function AppSidebar() {
       ? [
           {
             title: "Blotter",
-            url: "/",
-            items: [
-              {title: "Process", url: "/complaint"},
-              {title: "Record", url: "/record"}
-            ]
+            url: "/complaint",
           },
         ]
       : []),
@@ -242,7 +238,6 @@ export function AppSidebar() {
                 title: "Annual Development Plan",
                 url: "/gad-annual-development-plan",
               },
-              { title: "Activity", url: "/gad-activity" },
             ],
           },
         ]

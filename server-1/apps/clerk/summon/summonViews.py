@@ -52,7 +52,7 @@ class LuponCasesView(generics.ListAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
 class CouncilMediationCasesView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -89,7 +89,7 @@ class CouncilMediationCasesView(generics.ListAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
 class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -127,7 +127,6 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to log activity for summon case creation: {str(log_error)}")
-            # Don't fail the request if logging fails
         
         return instance
 
@@ -166,7 +165,7 @@ class SummonCasesView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
-        return queryset.order_by('sc_code')
+        return queryset.order_by('-sc_code')
 
     
 class SummonCaseDetailView(generics.RetrieveAPIView):
@@ -340,6 +339,54 @@ class RemarkView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RemarkSerializer
     queryset = Remark.objects.all()
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            staff, _ = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Get related information for detailed logging
+                case_code = "N/A"
+                hearing_level = "N/A"
+                remark_preview = "N/A"
+                
+                if instance.hs_id:
+                    hearing_schedule = instance.hs_id
+                    hearing_level = hearing_schedule.hs_level or "N/A"
+                    
+                    if hearing_schedule.sc_id:
+                        summon_case = hearing_schedule.sc_id
+                        case_code = summon_case.sc_code or "N/A"
+                
+                # Truncate remark content for display
+                if instance.rem_remarks:
+                    remark_preview = instance.rem_remarks[:100] + "..." if len(instance.rem_remarks) > 100 else instance.rem_remarks
+                
+                # Format date
+                remark_date = instance.rem_date.strftime('%Y-%m-%d %I:%M %p') if instance.rem_date else "N/A"
+                
+                # Create detailed activity log
+                create_activity_log(
+                    act_type="Remark Create",
+                    act_description=f"Remark created for Case No. {case_code} - {hearing_level}. Date: {remark_date}. Content: {remark_preview}",
+                    staff=staff,
+                    record_id=str(instance.rem_id)
+                )
+                logger.info(f"Activity logged for remark creation: {instance.rem_id} - Case {case_code}")
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Skipping activity log for Remark create: No valid staff")
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for remark creation: {str(e)}")
+        return instance
 
 class RemarkSuppDocCreateView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -539,3 +586,52 @@ class ComplaintDetailView(APIView):
 
         serializer = ComplaintSerializer(complaint)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+# ============================= FOR CALENDAR ====================================
+class CouncilMediationCalendarView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ForCalendarSerializer
+
+    def get_queryset(self):
+        return SummonCase.objects.filter(
+            ~(Q(sc_mediation_status__iexact='resolved') | Q(sc_mediation_status__iexact='forwarded to lupon')),
+            (Q(sc_conciliation_status__isnull=True) | Q(sc_conciliation_status__exact='')),
+            hearing_schedules__hs_is_closed=False,
+            hearing_schedules__remark__isnull=False  
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            Prefetch(
+                'hearing_schedules',
+                queryset=HearingSchedule.objects.filter(
+                    hs_is_closed=False,
+                    remark__isnull=False 
+                ).select_related('sd_id', 'st_id')  
+            )
+        ).distinct()
+
+class ConciliationProceedingsCalendarView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ForCalendarSerializer
+
+    def get_queryset(self):
+        return SummonCase.objects.filter(
+            Q(sc_mediation_status__iexact='forwarded to lupon') &  
+            ~(Q(sc_conciliation_status__iexact='resolved') | Q(sc_conciliation_status__iexact='escalated')),  
+            hearing_schedules__hs_is_closed=False,
+            hearing_schedules__remark__isnull=False  
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            Prefetch(
+                'hearing_schedules',
+                queryset=HearingSchedule.objects.filter(
+                    hs_is_closed=False,
+                    remark__isnull=False 
+                ).select_related('sd_id', 'st_id')  
+            )
+        ).distinct()

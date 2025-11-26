@@ -26,7 +26,7 @@ export const CustomMarker = ({
             longitude: lng,
           }}
           image={iconUri}
-          anchor={{ x: 0.5, y: 1.0 }}
+          anchor={{ x: 0.5, y: 0.9 }}
           zIndex={999}
         />
       ) : (
@@ -38,6 +38,7 @@ export const CustomMarker = ({
           pinColor="FF0000"
           anchor={{ x: 0.5, y: 1.0 }}
           zIndex={999}
+          
         />
       )}
       {/* Circles for trackers */}

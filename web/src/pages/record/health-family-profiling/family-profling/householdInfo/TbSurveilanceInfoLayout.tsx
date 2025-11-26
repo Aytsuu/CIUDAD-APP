@@ -43,7 +43,7 @@ export default function TbSurveilanceInfoLayout({
   
   // Debug logging
   React.useEffect(() => {
-    console.log('TbSurveilanceInfoLayout - residents:', safeResidents);
+    // console.log('TbSurveilanceInfoLayout - residents:', safeResidents);
   }, [safeResidents]);
   
   // Structure residents data for the form

@@ -1,7 +1,17 @@
 from datetime import datetime
+from email.mime import message
 from zoneinfo import ZoneInfo
 from django.utils import timezone
+from datetime import timedelta
 from .models import WasteHotspot, WasteEvent
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from .models import *
+from apps.notification.utils import create_notification, reminder_notification
+from apps.administration.models import Staff
+from .notif_recipients import waste_recipient
+
+
 
 def archive_completed_hotspots():
     print('Running trigger...')
@@ -49,3 +59,196 @@ def archive_passed_waste_events():
         return updated
     
     return 0
+
+# ============================= WASTE REPORT CREATE ==============================
+@receiver(post_save, sender=WasteReport)
+def create_waste_report_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        recipients_list = waste_recipient()
+        if recipients_list:
+            create_notification(
+                title='New Waste Report Filed', 
+                message=f'Report {instance.rep_id} is waiting for your review.',
+                recipients=recipients_list,
+                notif_type='REPORT',
+                mobile_route="/(waste)/illegal-dumping/staff/illegal-dump-view-staff",
+                mobile_params={'rep_id': instance.rep_id},
+                web_route="/waste-illegaldumping-report",
+            )
+
+# ============================= GARBAGE PICKUP REQUEST CREATE ==============================
+@receiver(post_save, sender=Garbage_Pickup_Request)
+def create_garbage_pickup_notification_on_create(sender, instance, created, **kwargs):
+    if created:
+        recipients_list = waste_recipient()
+        if recipients_list:
+            create_notification(
+                title='New Garbage Pickup Request', 
+                message=f'Garbage Pickup Request {instance.garb_id} is waiting for your review.',
+                recipients=recipients_list,
+                notif_type='REQUEST',
+                mobile_route="/(waste)/garbage-pickup/staff/view-pending-details",
+                mobile_params={'garb_id': instance.garb_id},
+                web_route="/garbage-pickup-request",
+            )
+
+# =========================== GARB PICKUP CONFIRMATION REMINDER ===========================================
+def schedule_pickup_confirmation_reminder(garbage_request, garb_id_str):
+    try:
+        recipient_account = garbage_request.rp.account
+        
+        for day in range(1, 8):  # Days 1 through 7
+            reminder_time = timezone.now() + timedelta(days=day)
+            
+            reminder_notification(
+                title='Reminder: Confirm Pickup Completion',
+                message=f'Remember to confirm the completion of your garbage pickup request {garbage_request.garb_id}. Your confirmation helps us improve our service.',
+                recipients=[recipient_account],
+                notif_type='REMINDER',
+                send_at=reminder_time,
+                mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
+                mobile_params={'garb_id': garb_id_str},
+            )
+        
+        return True
+        
+    except Exception as e:
+        return False
+
+#===================================== GARBAGE PICKUP REQUEST STATUS UDPATE ================================
+@receiver(pre_save, sender=Garbage_Pickup_Request)
+def store_previous_status(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            previous = Garbage_Pickup_Request.objects.get(pk=instance.pk)
+            instance._previous_status = previous.garb_req_status
+        except Garbage_Pickup_Request.DoesNotExist:
+            instance._previous_status = None
+    else:
+        instance._previous_status = None
+
+@receiver(post_save, sender=Garbage_Pickup_Request)
+def create_garbage_request_notification_on_update(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_previous_status'):
+        previous_status = instance._previous_status
+        current_status = instance.garb_req_status
+        
+        notify_statuses = ['accepted', 'rejected']  # Remove 'completed' from here
+        
+        if (previous_status != current_status and 
+            current_status.lower() in notify_statuses and 
+            instance.rp and 
+            hasattr(instance.rp, 'account') and 
+            instance.rp.account):
+            
+            account = instance.rp.account
+                        
+            status_config = {
+                'accepted': {
+                    'title': 'Request Accepted',
+                    'message': f'Your garbage pickup request {instance.garb_id} has been accepted and is scheduled for collection.',
+                    'notif_type': 'REQUEST',
+                    'mobile_route': '/(my-request)/garbage-pickup/view-accepted-details',
+                    'mobile_params': {'garb_id': instance.garb_id}
+                },
+                'rejected': {
+                    'title': 'Request Rejected',
+                    'message': f'Your garbage pickup request {instance.garb_id} has been rejected.',
+                    'notif_type': 'REQUEST',
+                    'mobile_route': '/(my-request)/garbage-pickup/view-rejected-details',
+                    'mobile_params': {'garb_id': instance.garb_id}
+                }
+            }
+            
+            config = status_config.get(current_status.lower())
+            
+            create_notification(
+                title=config['title'],
+                message=config['message'],
+                recipients=[account],
+                notif_type=config['notif_type'],
+                mobile_route=config['mobile_route'],
+                mobile_params=config['mobile_params']
+            )
+
+@receiver(post_save, sender=Pickup_Confirmation)
+def create_completion_notifications(sender, instance, created, **kwargs):
+    garbage_request = instance.garb_id
+    garb_id_str = str(garbage_request.garb_id) if hasattr(garbage_request, 'garb_id') else str(garbage_request.pk)
+    
+    # Partial completion - only staff confirmed
+    if instance.conf_staff_conf and not instance.conf_resident_conf:
+        # Notify resident that staff has completed pickup
+        if garbage_request.rp and hasattr(garbage_request.rp, 'account') and garbage_request.rp.account:
+            create_notification(
+                title='Pickup Done',
+                message=f'Garbage pickup for request {garbage_request.garb_id} is done. Please confirm completion.',
+                recipients=[garbage_request.rp.account],
+                notif_type='REQUEST',
+                mobile_route="/(my-request)/garbage-pickup/view-accepted-details",
+                mobile_params={'garb_id': garb_id_str}
+            )
+
+            schedule_pickup_confirmation_reminder(garbage_request, garb_id_str)
+
+    # Full completion - both staff and resident confirmed
+    elif instance.conf_staff_conf and instance.conf_resident_conf:
+        # Notify resident that request is fully completed
+        if garbage_request.rp and hasattr(garbage_request.rp, 'account') and garbage_request.rp.account:
+            create_notification(
+                title='Request Completed',
+                message=f'Your garbage pickup request {garbage_request.garb_id} has been completed. Thank you!',
+                recipients=[garbage_request.rp.account],
+                notif_type='REQUEST',
+                mobile_route="/(my-request)/garbage-pickup/view-completed-details",
+                mobile_params={'garb_id': garb_id_str}
+            )
+
+        recipients_list = waste_recipient()
+        
+        if recipients_list:
+            create_notification(
+                title='Request Completed',
+                message=f'Garbage pickup request {garbage_request.garb_id} has been completed and confirmed by resident.',
+                recipients=recipients_list,
+                notif_type='REQUEST',
+                mobile_route="/(waste)/garbage-pickup/staff/view-completed-details",
+                mobile_params={'garb_id': garb_id_str},
+                web_route="/garbage-pickup-request"
+            )
+
+
+# ========================= WASTE REPORT STATUS UPDATE ====================
+@receiver(pre_save, sender=WasteReport)
+def store_previous_waste_report_status(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            previous = WasteReport.objects.get(pk=instance.pk)
+            instance._previous_rep_status = previous.rep_status
+        except WasteReport.DoesNotExist:
+            instance._previous_rep_status = None
+    else:
+        instance._previous_rep_status = None
+
+@receiver(post_save, sender=WasteReport)
+def create_waste_report_notification_on_update(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_previous_rep_status'):
+        previous_status = instance._previous_rep_status
+        current_status = instance.rep_status
+        
+        # Only notify when status changes to 'resolved'
+        if (previous_status != current_status and 
+            current_status.lower() == 'resolved' and 
+            instance.rp_id and 
+            hasattr(instance.rp_id, 'account') and 
+            instance.rp_id.account):
+            
+            account = instance.rp_id.account
+            
+            create_notification(
+                title='Report Resolved',
+                message=f'Your waste report {instance.rep_id} has been resolved. Thank you for helping keep our community clean!',                
+                recipients=[account],
+                notif_type='REPORT',
+                mobile_route="/(waste)/illegal-dumping/resident/illegal-dump-res-main",
+            )

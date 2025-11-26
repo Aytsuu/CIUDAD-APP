@@ -1,15 +1,10 @@
 "use client"
 import { useState } from "react"
 import { DataTable } from "@/components/ui/table/data-table"
-import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { Search, FileInput } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
+import { Search } from "lucide-react"
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { getArchiveMedicineStocks } from "./columns/MedicineCol"
 import { useArchivedMedicineStocks } from "../queries/fetch"
@@ -44,13 +39,43 @@ export default function MedicineArchiveTable() {
     setCurrentPage(1) // Reset to first page when searching
   }
 
-  
   // Handle page size change
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = +e.target.value
     setPageSize(value >= 1 ? value : 1)
     setCurrentPage(1) // Reset to first page when page size changes
   }
+
+  // Prepare export data
+  const prepareExportData = () => {
+    return stockData.map((item: any) => ({
+      Date: item.created_at ? new Date(item.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A",
+      ID: item.inv_id || "N/A",
+      "Medicine Name": item.medicine_name || item.item?.medicine_name || "N/A",
+      Category: item.category || "N/A",
+      "Total Qty": item.qty_number + " " + (item.qty_unit || ""),
+      "Available Stock": item.availableStock + " " + (item.qty_unit || ""),
+      "Qty Used": item.administered || 0,
+      "Expiry Date": item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A",
+      Status: item.status || "Normal"
+    }));
+  };
+
+  // Export handlers
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `medicine_archive_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `medicine_archive_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `medicine_archive_${new Date().toISOString().slice(0, 10)}`, "Medicine Archive Report");
+  };
 
   if (error) {
     return (
@@ -93,19 +118,12 @@ export default function MedicineArchiveTable() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown
+              onExportCSV={handleExportCSV}
+              onExportExcel={handleExportExcel}
+              onExportPDF={handleExportPDF}
+              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+            />
           </div>
         </div>
 

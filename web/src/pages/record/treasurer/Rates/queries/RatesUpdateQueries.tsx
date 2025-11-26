@@ -24,8 +24,8 @@ export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
                 showSuccessToast("Record Updated!")
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
+                // console.error("Error submitting record:", err);
                 showErrorToast(
                     "Failed to submit record. Please check the input data and try again."
                 );
@@ -55,8 +55,8 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
                 showSuccessToast("Record Updated!")
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting record:", err);
+            onError: () => {
+                // console.error("Error submitting record:", err);
                 showErrorToast(
                     "Failed to submit record. Please check the input data and try again."
                 );

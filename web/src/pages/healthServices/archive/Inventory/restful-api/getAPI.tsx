@@ -28,8 +28,7 @@ export const getAntigenStocks = async (
       next: null,
       previous: null
     };
-  } catch (err) {
-    console.log(err);
+  } catch {
     return {
       results: [],
       count: 0,
@@ -67,8 +66,7 @@ export const getAntigenStocks = async (
         next: null,
         previous: null
       };
-    } catch (err) {
-      console.log(err);
+    } catch {
       return {
         results: [],
         count: 0,
@@ -108,8 +106,7 @@ export const getAntigenStocks = async (
         next: null,
         previous: null
       };
-    } catch (err) {
-      console.log(err);
+    } catch {
       return {
         results: [],
         count: 0,
@@ -123,8 +120,8 @@ export const getFirstAidInventoryList = async () => {
   try {
     const res = await api2.get("inventory/archive/first-aid-inventory/");
     return res.data || [];
-  } catch (err) {
-    console.error(err);
+  }catch {
+     return [];
   }
 };
 
@@ -156,8 +153,7 @@ export const getFirstAidInventoryList = async () => {
         next: null,
         previous: null
       };
-    } catch (err) {
-      console.log(err);
+    } catch {
       return {
         results: [],
         count: 0,

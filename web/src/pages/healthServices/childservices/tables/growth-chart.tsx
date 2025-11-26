@@ -117,7 +117,7 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center flex-wrap gap-2 mt-2">
             <Button 
               variant={selectedMetrics.height ? "default" : "outline"} 
               size="sm" 

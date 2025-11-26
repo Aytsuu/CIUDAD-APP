@@ -39,7 +39,6 @@ export const updateAgegroup = async (id: string, data: Record<string, any>) => {
 export const deleteAgeroup = async (id: string) => {
   try {
     const res = await api2.delete(`inventory/age_group/${parseInt(id, 10)}/`);
-    console.log(res.data);
     return res.data;
   } catch (err) {
     console.error(err);

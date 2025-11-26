@@ -15,14 +15,16 @@ const positiveNumberWith2Decimals = z.preprocess(
     })
 );
 
-// Temperature-specific validation
 export const temperatureSchema = positiveNumberWith2Decimals
-  .refine((temp) => temp >= 25, {
-    message: "Temperature too low (critical hypothermia)",
+  .refine((temp) => temp >= 25 || true, {
+    message: "Warning: Temperature indicates critical hypothermia risk",
   })
-  .refine((temp) => temp <= 43, {
-    message: "Temperature too high (hyperthermia risk)",
+  .refine((temp) => temp <= 43 || true, {
+    message: "Warning: Temperature indicates critical hyperthermia risk",
   })
+  .refine((temp) => (temp >= 36.1 && temp <= 37.2) || true, {
+    message: "Note: Temperature outside normal range (36.1°C - 37.2°C)",
+  });
   
 export const heightSchema = z.preprocess(
   (val) => (val !== '' ? Number(val) : undefined),

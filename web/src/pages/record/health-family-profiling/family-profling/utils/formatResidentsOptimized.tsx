@@ -36,3 +36,4 @@ export const formatResidentsOptimized = (residents: any) => {
     per_id: resident.personal_info?.per_id || '',
   }));
 };
+

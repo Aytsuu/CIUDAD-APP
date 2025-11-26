@@ -32,13 +32,11 @@ export const addGarbagePickupRequest = async (requestInfo: Record<string, any>, 
             rp: requestInfo.rp_id 
         };
 
-        console.log("Garbage Pickup Request Payload:", payload);
-
         const res = await api.post('waste/garbage-pickup-request-pending/', payload);
         return res.data;
 
     } catch (err) {
-        console.error("Error submitting garbage pickup request");
+        // console.error("Error submitting garbage pickup request");
         throw err;
     }
 };

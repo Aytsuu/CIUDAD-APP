@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Dimensions, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -181,8 +181,9 @@ export const ArchivePlanContent = () => {
   const [selectedPlans, setSelectedPlans] = useState<number[]>([]);
   const [showBulkRestoreDialog, setShowBulkRestoreDialog] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: archivedData, isLoading } = useGetArchivedAnnualDevPlans(1, 1000);
+  const { data: archivedData, isLoading, refetch } = useGetArchivedAnnualDevPlans(1, 1000);
   const restoreMutation = useRestoreAnnualDevPlans();
   const deleteMutation = useDeleteAnnualDevPlans();
 
@@ -209,7 +210,7 @@ export const ArchivePlanContent = () => {
     try {
       await restoreMutation.mutateAsync([planId]);
     } catch (error) {
-      console.error('Failed to restore plan:', error);
+      // Failed to restore plan
     } finally {
       setRestoringPlanId(null);
     }
@@ -220,7 +221,7 @@ export const ArchivePlanContent = () => {
     try {
       await deleteMutation.mutateAsync([planId]);
     } catch (error) {
-      console.error('Failed to delete plan:', error);
+      // Failed to delete plan
     } finally {
       setDeletingPlanId(null);
     }
@@ -232,7 +233,7 @@ export const ArchivePlanContent = () => {
       setSelectedPlans([]);
       setShowBulkRestoreDialog(false);
     } catch (error) {
-      console.error('Failed to restore plans:', error);
+      // Failed to restore plans
     }
   };
 
@@ -242,7 +243,7 @@ export const ArchivePlanContent = () => {
       setSelectedPlans([]);
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error('Failed to delete plans:', error);
+      // Failed to delete plans
     }
   };
 
@@ -271,6 +272,12 @@ export const ArchivePlanContent = () => {
     } catch {
       return plan.total || '0.00';
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   if (isLoading) {
@@ -322,7 +329,18 @@ export const ArchivePlanContent = () => {
             </Text>
           </View>
         ) : (
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            className="flex-1" 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#00a8f0']}
+                tintColor="#00a8f0"
+              />
+            }
+          >
             {/* Select All Header */}
             <View className="mb-4 pb-2 border-b border-gray-200">
               <TouchableOpacity

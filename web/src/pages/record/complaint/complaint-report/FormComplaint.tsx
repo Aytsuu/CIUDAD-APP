@@ -92,7 +92,6 @@ export const ComplaintForm = () => {
         files: data.files || [],
         staff: user?.rp
       };
-      console.log("Payload to submit:", payload);
 
       const response = await postComplaint.mutateAsync(payload);
 
@@ -107,7 +106,6 @@ export const ComplaintForm = () => {
         }, 1000);
       }
     } catch (error) {
-      console.error("Error submitting complaint:", error);
       toast.error("Failed to submit complaint");
     } finally {
       setIsSubmitting(false);

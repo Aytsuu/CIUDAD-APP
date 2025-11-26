@@ -1,4 +1,4 @@
-import { api2 } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import React from "react";
@@ -363,7 +363,7 @@ export const useCreateFamily = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await api2.post("health-profiling/family/create/", data);
+      const res = await api.post("profiling/family/create/", data);
       return res.data;
     },
     onSuccess: () => {
@@ -377,7 +377,7 @@ export const useCreateFamilyCompositionBulk = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await api2.post("health-profiling/family/composition/bulk/create/", data);
+      const res = await api.post("profiling/family/composition/bulk/create/", data);
       return res.data;
     },
     onSuccess: (_, variables: any) => {
@@ -489,5 +489,41 @@ export const useSubmitSurveyIdentification = () => {
         queryClient.invalidateQueries({ queryKey: ['healthSurveyByFamily', variables.fam_id] });
       }
     }
+  });
+};
+
+// GET request for illnesses list
+export const fetchIllnesses = async () => {
+  try {
+    const response = await api2.get("maternal/prenatal/illnesses/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching illnesses:", error);
+    throw error;
+  }
+};
+
+// Illnesses Query Hook
+export const useIllnessesList = () => {
+  return useQuery({
+    queryKey: ['illnessesList'],
+    queryFn: fetchIllnesses,
+    staleTime: Infinity
+  });
+};
+
+// Health Staff Query
+export const useHealthStaffList = () => {
+  return useQuery({
+    queryKey: ['healthStaffList'],
+    queryFn: async () => {
+      try {
+        const res = await api2.get("administration/staff/health/combobox/");
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
   });
 };

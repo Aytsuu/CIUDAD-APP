@@ -77,14 +77,8 @@ export default function Page2({ onBack, onNext }: PageProps) {
   ];
 
   return (
-    <div className="min-h-[500px] flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Page 2:  Prenatal Care Services and Postpartum and Newborn Care Section</h2>
-        {/* <p className="text-gray-600">
-          Reporting for: <strong>{state.monthName}</strong>
-        </p> */}
-      </div>
-
+    <div className=" flex flex-col">
+     
       <div className="flex-1 overflow-auto">
         <div className="border overflow-hidden">
           <div className="overflow-x-auto">

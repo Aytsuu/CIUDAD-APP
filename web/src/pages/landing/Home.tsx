@@ -25,8 +25,8 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
           className="hidden lg:block"
         >
           <CarouselContent>
-            {carousel.map((file: any) => (
-              <CarouselItem key={file.name} className="basis-full p-0">
+            {carousel.map((file: any, index: number) => (
+              <CarouselItem key={index} className="basis-full p-0">
                 <img
                   src={file.url}
                   className="w-full h-full object-cover"

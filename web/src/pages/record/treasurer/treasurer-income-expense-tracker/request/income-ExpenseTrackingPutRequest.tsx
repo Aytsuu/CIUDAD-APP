@@ -12,7 +12,7 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             // iet_date: formatDate(new Date().toISOString().split('T')[0]),
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
             iet_check_num: incomeExpenseInfo.iet_check_num,
-            iet_datetime: incomeExpenseInfo.iet_datetime,
+            iet_datetime: new Date(incomeExpenseInfo.iet_datetime).toISOString(),
             iet_entryType: "Expense",
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
             iet_actual_amount: parseFloatSafe(incomeExpenseInfo.iet_actual_amount),
@@ -28,7 +28,8 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }
 
@@ -53,6 +54,7 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }

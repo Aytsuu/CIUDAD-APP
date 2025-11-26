@@ -514,7 +514,7 @@ class ImmunizationStock(models.Model):
     imzStck_per_pcs = models.PositiveIntegerField(default=0)
     imzStck_pcs = models.PositiveIntegerField(default=0)
     imzStck_unit = models.CharField(max_length=100)
-    imzStck_used = models.PositiveIntegerField(default=0)
+    # imzStck_used = models.PositiveIntegerField(default=0)
     imzStck_avail = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

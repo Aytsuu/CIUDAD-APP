@@ -13,7 +13,8 @@ from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 from django.db.models import OuterRef, Subquery
 from django.db.models import Q
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 from rest_framework.views import APIView
 from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
@@ -21,6 +22,7 @@ from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
 from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
 import logging
+from django.db.models import Prefetch
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +44,59 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         
         return queryset
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            from apps.profiling.models import Sitio
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                if instance.we_location:
+                    # Try to resolve sitio name if we_location is a sitio_id
+                    location_display = instance.we_location
+                    try:
+                        # Check if we_location is a numeric ID
+                        sitio_id = int(instance.we_location)
+                        sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                        if sitio:
+                            location_display = sitio.sitio_name
+                    except (ValueError, TypeError):
+                        # If it's not a number, use it as-is (might already be a name)
+                        pass
+                    description_parts.append(f"Location: {location_display}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                if instance.we_time:
+                    description_parts.append(f"Time: {instance.we_time}")
+                if instance.we_organizer:
+                    description_parts.append(f"Organizer: {instance.we_organizer}")
+                
+                description = ". ".join(description_parts) if description_parts else "WasteEvent record created"
+                
+                create_activity_log(
+                    act_type="WasteEvent Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged for waste event creation: {instance.we_num}")
+            else:
+                logger.debug(f"Skipping activity log for WasteEvent create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for waste event creation: {str(e)}")
+        return instance
+    
     def create(self, request, *args, **kwargs):
         # Create the waste event first
         response = super().create(request, *args, **kwargs)
         
-        # Get the created event data
+        # Get the created event data (serialized)
         event_data = response.data
         
         # Check if announcements were requested
@@ -55,11 +105,74 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         
         if selected_announcements and len(selected_announcements) > 0:
             try:
+                # Calculate announcement start and end times
+                ann_start_at = timezone.now()
+                ann_end_at = None
+                
+                # Get date and time from event data
+                # Note: response.data contains serialized data, so dates/times are strings
+                we_date = event_data.get('we_date')
+                we_time = event_data.get('we_time')
+                
+                if we_date and we_time:
+                    try:
+                        # Parse date - DRF serializes DateField as "YYYY-MM-DD" string
+                        if isinstance(we_date, str):
+                            # Handle ISO date format: "2025-11-23" or "2025-11-23T00:00:00Z"
+                            event_date = datetime.strptime(we_date.split('T')[0], '%Y-%m-%d').date()
+                        elif hasattr(we_date, 'year') and hasattr(we_date, 'month') and hasattr(we_date, 'day'):
+                            # If it's already a date object
+                            event_date = we_date
+                        else:
+                            # Try to convert if it's a datetime object
+                            from datetime import date as dt_date
+                            if isinstance(we_date, datetime):
+                                event_date = we_date.date()
+                            else:
+                                event_date = we_date
+                        
+                        # Parse time - DRF serializes TimeField as "HH:MM:SS" or "HH:MM" string
+                        if isinstance(we_time, str):
+                            # Handle time string formats: "14:30:00" or "14:30" or "14:30:00.000000"
+                            time_str = we_time.split('.')[0]  # Remove microseconds if present
+                            time_parts = time_str.split(':')
+                            from datetime import time as dt_time
+                            
+                            hour = int(time_parts[0])
+                            minute = int(time_parts[1]) if len(time_parts) > 1 else 0
+                            second = int(time_parts[2]) if len(time_parts) > 2 else 0
+                            
+                            event_time = dt_time(hour=hour, minute=minute, second=second)
+                        elif hasattr(we_time, 'hour'):
+                            # If it's already a time object
+                            event_time = we_time
+                        else:
+                            event_time = we_time
+                        
+                        # Combine date and time, make timezone-aware
+                        local_tz = ZoneInfo("Asia/Manila")
+                        naive_event_dt = datetime.combine(event_date, event_time)
+                        local_event_dt = timezone.make_aware(naive_event_dt, local_tz)
+                        
+                        # Set ann_end_at to event datetime + 1 day to keep it active until after the event
+                        ann_end_at = local_event_dt + timedelta(days=1)
+                        logger.info(f"Set announcement end time to: {ann_end_at} (event datetime: {local_event_dt})")
+                    except (ValueError, AttributeError, TypeError) as e:
+                        logger.warning(f"Error parsing event date/time for announcement: {str(e)}. we_date={we_date}, we_time={we_time}")
+                        # Fallback: set end_at to 2 days from now
+                        ann_end_at = ann_start_at + timedelta(days=2)
+                else:
+                    # If no date/time, set end_at to 2 days from now
+                    ann_end_at = ann_start_at + timedelta(days=2)
+                    logger.info(f"No event date/time provided, setting announcement end to 2 days from now: {ann_end_at}")
+                
                 # Create announcement for the event
                 announcement = Announcement.objects.create(
                     ann_title=f"WASTE EVENT: {event_data.get('we_name', 'Waste Management Event')}",
                     ann_details=event_subject or f"Event: {event_data.get('we_name')}\nLocation: {event_data.get('we_location')}\nDate: {event_data.get('we_date')} at {event_data.get('we_time')}\nOrganizer: {event_data.get('we_organizer')}\n\n{event_data.get('we_description', '')}",
                     ann_created_at=timezone.now(),
+                    ann_start_at=ann_start_at,
+                    ann_end_at=ann_end_at,
                     ann_type="event",
                     ann_to_email=True,
                     ann_to_sms=True,
@@ -73,8 +186,18 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     recipient_dict = {'ann': announcement.ann_id}
                     
                     if announcement_type == "all":
-                        recipient_dict['ar_category'] = "all"
-                        recipient_dict['ar_type'] = "ALL"
+                        # Create separate recipients for staff and residents
+                        recipients_data.append({
+                            'ann': announcement.ann_id,
+                            'ar_category': "staff",
+                            'ar_type': "STAFF"
+                        })
+                        recipients_data.append({
+                            'ann': announcement.ann_id,
+                            'ar_category': "resident",
+                            'ar_type': "RESIDENT"
+                        })
+                        continue  # Skip the append at the end since we already added both
                     elif announcement_type == "allbrgystaff":
                         recipient_dict['ar_category'] = "staff"
                         recipient_dict['ar_type'] = "ALL"
@@ -122,7 +245,6 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 
             except Exception as e:
                 # Log error but don't fail the event creation
-                print(f"Error creating announcement for waste event: {str(e)}")
                 response.data['announcement_created'] = False
                 response.data['announcement_error'] = str(e)
         
@@ -147,10 +269,49 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
         instance = self.get_object()
         if not instance:
             return Response(status=status.HTTP_404_NOT_FOUND)
-            
+        
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from apps.profiling.models import Sitio
+        
+        staff, staff_identifier = resolve_staff_from_request(request)
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
         
+        # Helper function to resolve location name
+        def resolve_location_name(location_value):
+            if not location_value:
+                return None
+            try:
+                sitio_id = int(location_value)
+                sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                if sitio:
+                    return sitio.sitio_name
+            except (ValueError, TypeError):
+                pass
+            return location_value
+        
         if permanent:
+            # Log before permanent delete
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                location_display = resolve_location_name(instance.we_location)
+                if location_display:
+                    description_parts.append(f"Location: {location_display}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                description_parts.append("Status: Deleted")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Event Deleted",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged: Waste event {instance.we_num} deleted")
+            
             # Permanent delete
             instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -158,6 +319,29 @@ class WasteEventDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
             # Soft delete (archive)
             instance.we_is_archive = True
             instance.save()
+            
+            # Log archive
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.we_name:
+                    description_parts.append(f"Event: {instance.we_name}")
+                location_display = resolve_location_name(instance.we_location)
+                if location_display:
+                    description_parts.append(f"Location: {location_display}")
+                if instance.we_date:
+                    date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                    description_parts.append(f"Date: {date_str}")
+                description_parts.append("Status: Archived")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Event Archived",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.we_num)
+                )
+                logger.info(f"Activity logged: Waste event {instance.we_num} archived")
+            
             serializer = self.get_serializer(instance)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -168,9 +352,49 @@ class WasteEventRestoreView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from apps.profiling.models import Sitio
+        
         instance = self.get_object()
         instance.we_is_archive = False
         instance.save()
+        
+        # Helper function to resolve location name
+        def resolve_location_name(location_value):
+            if not location_value:
+                return None
+            try:
+                sitio_id = int(location_value)
+                sitio = Sitio.objects.filter(sitio_id=sitio_id).first()
+                if sitio:
+                    return sitio.sitio_name
+            except (ValueError, TypeError):
+                pass
+            return location_value
+        
+        # Log restore
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.we_name:
+                description_parts.append(f"Event: {instance.we_name}")
+            location_display = resolve_location_name(instance.we_location)
+            if location_display:
+                description_parts.append(f"Location: {location_display}")
+            if instance.we_date:
+                date_str = instance.we_date.strftime('%Y-%m-%d') if not isinstance(instance.we_date, str) else instance.we_date
+                description_parts.append(f"Date: {date_str}")
+            description_parts.append("Status: Restored")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Event Restored",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.we_num)
+            )
+            logger.info(f"Activity logged: Waste event {instance.we_num} restored")
+        
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -265,7 +489,35 @@ class WasteCollectorDeleteView(generics.DestroyAPIView):
 
     def get_object(self):
         wasc_id = self.kwargs.get('wasc_id')
-        return get_object_or_404(WasteCollector, wasc_id=wasc_id) 
+        return get_object_or_404(WasteCollector, wasc_id=wasc_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.wc_num:
+                description_parts.append(f"Collection Schedule: {instance.wc_num}")
+            if instance.wstp and instance.wstp.staff:
+                staff_name = f"{instance.wstp.staff.rp.per.per_fname} {instance.wstp.staff.rp.per.per_lname}" if instance.wstp.staff.rp and instance.wstp.staff.rp.per else "N/A"
+                description_parts.append(f"Collector: {staff_name}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Collector Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wasc_id)
+            )
+            logger.info(f"Activity logged: Waste collector {instance.wasc_id} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 # WASTE COLLECTION DELETE
 class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
@@ -275,7 +527,37 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 
     def get_object(self):
         wc_num = self.kwargs.get('wc_num')
-        return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
+        return get_object_or_404(WasteCollectionSched, wc_num=wc_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.sitio:
+                description_parts.append(f"Sitio: {instance.sitio.sitio_name}")
+            if instance.wc_day:
+                description_parts.append(f"Day: {instance.wc_day}")
+            if instance.wc_time:
+                time_str = instance.wc_time.strftime('%I:%M %p') if not isinstance(instance.wc_time, str) else instance.wc_time
+                description_parts.append(f"Time: {time_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Collection Schedule Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wc_num)
+            )
+            logger.info(f"Activity logged: Waste collection schedule {instance.wc_num} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
     def perform_create(self, serializer):
@@ -336,7 +618,7 @@ class CreateCollectionRemindersView(APIView):
             # Check if announcement already exists for today
             existing_announcement = Announcement.objects.filter(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day.upper()} AT {time_str}\nLOCATION: SITIO {sitio_name.upper()}",
                 ann_created_at__date=today,
                 ann_type="GENERAL"
             ).first()
@@ -347,7 +629,7 @@ class CreateCollectionRemindersView(APIView):
             # Create announcement
             announcement = Announcement.objects.create(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_details=f"WHEN: {schedule.wc_day} AT {time_str}\nLOCATION: SITIO {sitio_name}",
                 ann_created_at=timezone.now(),
                 ann_start_at=timezone.now(),
                 ann_end_at=timezone.now() + timedelta(days=2),
@@ -456,7 +738,39 @@ class DeleteHotspotView(generics.DestroyAPIView):
 
     def get_object(self):
         wh_num = self.kwargs.get('wh_num')
-        return get_object_or_404(WasteHotspot, wh_num=wh_num) 
+        return get_object_or_404(WasteHotspot, wh_num=wh_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.sitio_id:
+                description_parts.append(f"Sitio: {instance.sitio_id.sitio_name}")
+            if instance.wh_date:
+                date_str = instance.wh_date.strftime('%Y-%m-%d') if not isinstance(instance.wh_date, str) else instance.wh_date
+                description_parts.append(f"Date: {date_str}")
+            if instance.wh_start_time and instance.wh_end_time:
+                start_str = instance.wh_start_time.strftime('%I:%M %p') if not isinstance(instance.wh_start_time, str) else instance.wh_start_time
+                end_str = instance.wh_end_time.strftime('%I:%M %p') if not isinstance(instance.wh_end_time, str) else instance.wh_end_time
+                description_parts.append(f"Time: {start_str} - {end_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Waste Hotspot Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.wh_num)
+            )
+            logger.info(f"Activity logged: Waste hotspot {instance.wh_num} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
 # ============================ ILLEGAL DUMPING ================================
@@ -539,13 +853,14 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         ).prefetch_related(
             'waste_report_file',
             'waste_report_rslv_file'
-        ).all()
+        ).all()                                                                                                     
         
         # Get filter parameters from request
         search_query = self.request.query_params.get('search', '')
         report_matter = self.request.query_params.get('report_matter', '')
         status = self.request.query_params.get('status', '')
         rp_id = self.request.query_params.get('rp_id')
+        rep_id = self.request.query_params.get('rep_id')                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         
         # Apply status filter
         if status:
@@ -572,8 +887,12 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         # Apply resident profile filter if provided
         if rp_id:
             queryset = queryset.filter(rp_id=rp_id)
+
+        # Apply report ID filter if provided (for fetching specific report)
+        if rep_id:
+            queryset = queryset.filter(rep_id=rep_id)            
         
-        return queryset.order_by('-rep_date')  
+        return queryset.order_by('-rep_id')  
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
@@ -597,7 +916,39 @@ class DeleteWasteReportView(generics.DestroyAPIView):
 
     def get_object(self):
         rep_id = self.kwargs.get('rep_id')
-        return get_object_or_404(WasteReport, rep_id=rep_id) 
+        return get_object_or_404(WasteReport, rep_id=rep_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
+        instance = self.get_object()
+        
+        # Log before delete
+        staff, staff_identifier = resolve_staff_from_request(request)
+        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+            description_parts = []
+            if instance.rep_id:
+                description_parts.append(f"Report ID: {instance.rep_id}")
+            if instance.rep_matter:
+                description_parts.append(f"Matter: {instance.rep_matter}")
+            if instance.rep_location:
+                description_parts.append(f"Location: {instance.rep_location}")
+            if instance.rep_date:
+                date_str = instance.rep_date.strftime('%Y-%m-%d %I:%M %p') if not isinstance(instance.rep_date, str) else instance.rep_date
+                description_parts.append(f"Date: {date_str}")
+            description_parts.append("Status: Deleted")
+            description = ". ".join(description_parts)
+            
+            create_activity_log(
+                act_type="Illegal Dumping Report Deleted",
+                act_description=description,
+                staff=staff,
+                record_id=str(instance.rep_id)
+            )
+            logger.info(f"Activity logged: Illegal dumping report {instance.rep_id} deleted")
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) 
 
 
 class WastePersonnelView(generics.ListAPIView):
@@ -737,9 +1088,32 @@ class WasteTruckView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
         serializer = WasteTruckSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            
+            # Log create
+            staff, staff_identifier = resolve_staff_from_request(request)
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                if instance.truck_status:
+                    description_parts.append(f"Status: {instance.truck_status}")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Created",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} created")
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -796,16 +1170,56 @@ class WasteTruckDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIVi
     #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     def destroy(self, request, pk):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        
         instance = self.get_object(pk)
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
         
+        staff, staff_identifier = resolve_staff_from_request(request)
+        
         if permanent:
+            # Log before permanent delete
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                description_parts.append("Status: Deleted")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Deleted",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} deleted")
+            
             # Permanent delete
             instance.delete()
         else:
             # Soft delete (archive)
             instance.truck_is_archive = True
             instance.save()
+            
+            # Log archive
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.truck_plate_num:
+                    description_parts.append(f"Plate Number: {instance.truck_plate_num}")
+                if instance.truck_model:
+                    description_parts.append(f"Model: {instance.truck_model}")
+                description_parts.append("Status: Archived")
+                description = ". ".join(description_parts)
+                
+                create_activity_log(
+                    act_type="Waste Truck Archived",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.truck_id)
+                )
+                logger.info(f"Activity logged: Waste truck {instance.truck_id} archived")
             
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -898,7 +1312,7 @@ class GarbagePickupFileView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupFileSerializer
     queryset = GarbagePickupRequestFile.objects.all()
      
-class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
+class GarbagePickupRequestPendingView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
     pagination_class = StandardResultsPagination
@@ -906,7 +1320,7 @@ class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = (
             Garbage_Pickup_Request.objects.filter(garb_req_status='pending')
-            .select_related('rp__per', 'sitio_id', 'gprf')
+            .select_related('rp__per', 'sitio_id')
             .only(
                 'garb_id',
                 'garb_location',
@@ -920,7 +1334,6 @@ class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
                 'rp__per__per_fname',
                 'rp__per__per_mname',
                 'sitio_id__sitio_name',
-                'gprf__gprf_url',
             )
         )
 
@@ -945,7 +1358,31 @@ class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
 
         return queryset.order_by('-garb_created_at')
 
-
+class GarbagePickupRequestPendingDetailView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestPendingSerializer
+    lookup_field = 'garb_id'
+    
+    def get_queryset(self):
+        return (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='pending')
+            .select_related('rp__per', 'sitio_id', 'gprf')
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url',
+            )
+        )
 
 class GarbagePickupRequestRejectedView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -958,7 +1395,6 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
             .select_related(
                 'rp__per',
                 'sitio_id',
-                'gprf'
             )
             .prefetch_related(
                 'pickup_decisions__staff_id__rp__per'
@@ -976,7 +1412,6 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
                 'rp__per__per_fname',
                 'rp__per__per_mname',
                 'sitio_id__sitio_name',
-                'gprf__gprf_url'
             )
         )
 
@@ -1004,7 +1439,45 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
             queryset = queryset.filter(sitio_id__sitio_name__iexact=sitio_param)
 
         return queryset.order_by('-garb_created_at')
-
+    
+class GarbagePickupRequestRejectedDetailView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestRejectedSerializer
+    lookup_field = 'garb_id'
+    
+    def get_queryset(self):
+        return (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='rejected')
+            .select_related(
+                'rp__per', 
+                'sitio_id',
+                'gprf'  # ADD THIS for file_url
+            )
+            .prefetch_related(
+                Prefetch(
+                    'pickup_decisions',
+                    queryset=Pickup_Request_Decision.objects.select_related(
+                        'staff_id__rp__per'
+                    )
+                )
+            )
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'rp__per__per_suffix',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url',
+            )
+        )
 
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -1208,11 +1681,147 @@ class PickupRequestDecisionView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                
+                # Add garbage pickup request ID
+                if instance.garb_id:
+                    description_parts.append(f"Request ID: {instance.garb_id}")
+                    
+                    # Add request location if available
+                    try:
+                        if instance.garb_id.garb_location:
+                            description_parts.append(f"Location: {instance.garb_id.garb_location}")
+                        if instance.garb_id.garb_waste_type:
+                            description_parts.append(f"Waste Type: {instance.garb_id.garb_waste_type}")
+                    except Exception:
+                        pass
+                
+                # Add decision reason
+                if instance.dec_reason:
+                    reason_short = (instance.dec_reason[:60] + '…') if len(instance.dec_reason) > 60 else instance.dec_reason
+                    description_parts.append(f"Reason: {reason_short}")
+                
+                # Add decision date
+                if instance.dec_date:
+                    date_str = instance.dec_date.strftime('%Y-%m-%d %H:%M:%S') if not isinstance(instance.dec_date, str) else instance.dec_date
+                    description_parts.append(f"Decision Date: {date_str}")
+                
+                description = ". ".join(description_parts) if description_parts else "Pickup_Request_Decision record created"
+                
+                create_activity_log(
+                    act_type="Pickup Request Decision Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.dec_id)
+                )
+                logger.info(f"Activity logged for pickup request decision creation: {instance.dec_id}")
+            else:
+                logger.debug(f"Skipping activity log for Pickup_Request_Decision create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for pickup request decision creation: {str(e)}")
+        return instance
 
 class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+        from .models import Assignment_Collector
+        
+        response = super().create(request, *args, **kwargs)
+        
+        if response.status_code in [200, 201]:
+            instance_data = response.data
+            pick_id = instance_data.get('pick_id')
+            
+            if pick_id:
+                try:
+                    instance = Pickup_Assignment.objects.select_related(
+                        'garb_id', 'garb_id__rp', 'garb_id__rp__per',
+                        'garb_id__sitio_id',
+                        'truck_id',
+                        'wstp_id', 'wstp_id__staff', 'wstp_id__staff__rp', 'wstp_id__staff__rp__per'
+                    ).prefetch_related(
+                        'collectors', 'collectors__wstp_id', 'collectors__wstp_id__staff',
+                        'collectors__wstp_id__staff__rp', 'collectors__wstp_id__staff__rp__per'
+                    ).get(pick_id=pick_id)
+                    
+                    staff, staff_identifier = resolve_staff_from_request(request)
+                    
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        description_parts = []
+                        
+                        # Garbage pickup request info
+                        if instance.garb_id:
+                            description_parts.append(f"Request ID: {instance.garb_id.garb_id}")
+                            if instance.garb_id.garb_location:
+                                description_parts.append(f"Location: {instance.garb_id.garb_location}")
+                            if instance.garb_id.garb_waste_type:
+                                description_parts.append(f"Waste Type: {instance.garb_id.garb_waste_type}")
+                            if instance.garb_id.rp and instance.garb_id.rp.per:
+                                requester_name = f"{instance.garb_id.rp.per.per_fname} {instance.garb_id.rp.per.per_lname}".strip()
+                                description_parts.append(f"Requester: {requester_name}")
+                            if instance.garb_id.sitio_id:
+                                description_parts.append(f"Sitio: {instance.garb_id.sitio_id.sitio_name}")
+                        
+                        # Truck info
+                        if instance.truck_id:
+                            description_parts.append(f"Truck: {instance.truck_id.truck_plate_num}")
+                        
+                        # Driver info
+                        if instance.wstp_id and instance.wstp_id.staff:
+                            driver_name = instance.wstp_id.get_staff_name()
+                            if driver_name:
+                                description_parts.append(f"Driver: {driver_name}")
+                        
+                        # Date and time
+                        if instance.pick_date:
+                            date_str = instance.pick_date.strftime('%Y-%m-%d') if not isinstance(instance.pick_date, str) else instance.pick_date
+                            description_parts.append(f"Scheduled Date: {date_str}")
+                        if instance.pick_time:
+                            time_str = instance.pick_time.strftime('%I:%M %p') if not isinstance(instance.pick_time, str) else instance.pick_time
+                            description_parts.append(f"Scheduled Time: {time_str}")
+                        
+                        # Collectors
+                        collectors = Assignment_Collector.objects.filter(pick_id=instance).select_related(
+                            'wstp_id__staff__rp__per'
+                        )
+                        if collectors.exists():
+                            collector_names = []
+                            for collector in collectors:
+                                if collector.wstp_id:
+                                    name = collector.wstp_id.get_staff_name()
+                                    if name:
+                                        collector_names.append(name)
+                            if collector_names:
+                                description_parts.append(f"Collectors: {', '.join(collector_names)}")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="Pickup Assignment Created",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(instance.pick_id)
+                        )
+                        logger.info(f"Activity logged: Pickup assignment {instance.pick_id} created")
+                except Pickup_Assignment.DoesNotExist:
+                    logger.debug(f"Pickup assignment {pick_id} not found for logging")
+                except Exception as e:
+                    logger.debug(f"Error logging pickup assignment creation: {str(e)}")
+        
+        return response
 
 class AssignmentCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -1255,12 +1864,10 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
-        print(f"Filtering for rp_id: {rp_id}")  
         queryset = Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='pending'  
         ).order_by('-garb_created_at')  # Most recent first
-        print(f"Found {queryset.count()} records") 
         return queryset
 
 
@@ -1368,4 +1975,18 @@ class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
             .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
             .order_by('-latest_dec_date')  # newest on top
         )
+    
+class GarbagePickupRequestCancelledDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GarbagePickupRequestRejectedSerializer  
+    queryset = Garbage_Pickup_Request.objects.all()
+    lookup_field = 'garb_id'
+
+    def get_queryset(self):
+        # Filter only cancelled requests to prevent accessing non-cancelled ones
+        return Garbage_Pickup_Request.objects.filter(garb_req_status='cancelled')
+    
+    def get_object(self):
+        garb_id = self.kwargs.get('garb_id')
+        return generics.get_object_or_404(self.get_queryset(), garb_id=garb_id)
 

@@ -96,9 +96,12 @@ export const MedicineDisplay = ({
     setInternalSelectedMedicines(initialSelectedMedicines)
   }, [initialSelectedMedicines])
 
+  // Only update local search query when searchQuery prop changes AND we're not currently searching
   useEffect(() => {
-    setLocalSearchQuery(searchQuery)
-  }, [searchQuery])
+    if (!isSearching) {
+      setLocalSearchQuery(searchQuery)
+    }
+  }, [searchQuery, isSearching])
 
   const handleSearchChange = (value: string) => {
     setLocalSearchQuery(value)
@@ -260,6 +263,10 @@ export const MedicineDisplay = ({
 
   const emptyStateColSpan = readonly ? 5 : 7
 
+  // Determine which empty state to show
+  const showNoMedicinesFound = currentMedicines.length === 0 && localSearchQuery && !isLoading && !isSearching
+  const showNoMedicinesAvailable = currentMedicines.length === 0 && !localSearchQuery && !isLoading && !isSearching
+
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -289,7 +296,7 @@ export const MedicineDisplay = ({
                 value={localSearchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 w-full"
-                disabled={isLoading}
+                // REMOVED: disabled={isLoading} - Search field is NEVER disabled
               />
               {isSearching && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
@@ -362,19 +369,29 @@ export const MedicineDisplay = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading ? (
+            {(isLoading || isSearching) ? (
               Array.from({ length: 4 }).map((_, index) => <LoadingRow key={`loading-${index}`} />)
-            ) : currentMedicines.length === 0 ? (
+            ) : showNoMedicinesFound ? (
               <tr>
                 <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
-                    {localSearchQuery ? "No medicines found" : "No medicines available"}
+                    No medicines found
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {localSearchQuery
-                      ? "Try adjusting your search query."
-                      : "There are currently no medicines in the inventory."}
+                    Try adjusting your search query.
+                  </p>
+                </td>
+              </tr>
+            ) : showNoMedicinesAvailable ? (
+              <tr>
+                <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
+                  <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-base font-medium text-gray-900 mb-2">
+                    No medicines available
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    There are currently no medicines in the inventory.
                   </p>
                 </td>
               </tr>

@@ -96,7 +96,7 @@ export default function NonComDiseaseForm({
       
       // Find the resident data from the default residents array
       const residentData = residents.default?.find((res: any) => res.rp_id === memberId);
-      console.log('Selected resident data:', residentData);
+      // console.log('Selected resident data:', residentData);
       
       if (residentData) {
         const personalData = residentData.per || residentData;
@@ -134,7 +134,7 @@ export default function NonComDiseaseForm({
   const handleAddPatient = () => {
     const newPatient = form.getValues(`${prefix}.new`);
     
-    console.log('Attempting to add patient:', newPatient);
+    // console.log('Attempting to add patient:', newPatient);
     
     // Validate that required fields are filled
     if (!newPatient.id || !newPatient.lastName || !newPatient.firstName) {
@@ -143,17 +143,17 @@ export default function NonComDiseaseForm({
     
     // Validate NCD form fields when resident is selected
     const ncdData = newPatient.ncdFormSchema;
-    console.log('NCD Data validation check:', {
-      riskClassAgeGroup: ncdData?.riskClassAgeGroup,
-      comorbidities: ncdData?.comorbidities,
-      lifestyleRisk: ncdData?.lifestyleRisk,
-      inMaintenance: ncdData?.inMaintenance
-    });
+    // console.log('NCD Data validation check:', {
+    //   riskClassAgeGroup: ncdData?.riskClassAgeGroup,
+    //   comorbidities: ncdData?.comorbidities,
+    //   lifestyleRisk: ncdData?.lifestyleRisk,
+    //   inMaintenance: ncdData?.inMaintenance
+    // });
     
     if (!ncdData?.riskClassAgeGroup || !ncdData?.comorbidities || 
         !ncdData?.lifestyleRisk || !ncdData?.inMaintenance) {
       toast.error("Please fill all required NCD fields");
-      console.log('Validation failed - missing fields');
+      // console.log('Validation failed - missing fields');
       return;
     }
 

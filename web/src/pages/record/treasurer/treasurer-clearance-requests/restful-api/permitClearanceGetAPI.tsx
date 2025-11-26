@@ -26,7 +26,6 @@ export const getPermitClearances = async (search?: string, page?: number, pageSi
         const response = await api.get(url);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch permit clearances:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch permit clearances");
     }
 };
@@ -36,7 +35,6 @@ export const getResidents = async () => {
     const response = await api.get('/treasurer/resident-names/');
     return response.data;
   } catch (error) {
-    console.error("Failed to search residents:", error);
     throw new Error("Failed to search residents");
   }
 };
@@ -46,7 +44,6 @@ export const getGrossSales = async () => {
     const response = await api.get('treasurer/annual-gross-sales-active/');
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch gross sales:", error);
     throw new Error("Failed to fetch gross sales");
   }
 };
@@ -62,11 +59,9 @@ export const getBusinesses = async () => {
     });
     
     const businesses = response.data.results || response.data;
-    console.log("Fetched businesses:", businesses);
     
     // The business table already has address data through the 'add' relationship
     // We'll construct addresses directly from the business data
-    console.log("Using business table address data dynamically");
     
     // Fetch business respondents and personal data
     const requestorMapping: { [key: number]: any } = {};
@@ -107,26 +102,18 @@ export const getBusinesses = async () => {
           }
         });
       }
-      
-      console.log("Fetched requestor mapping:", requestorMapping);
     } catch (requestorError) {
-      console.warn("Could not fetch requestor data:", requestorError);
+      // Could not fetch requestor data
     }
     
     const businessesWithAddresses = businesses.map((business: any) => {
-      console.log("Processing business:", business.bus_name, "with add_id:", business.add_id, "br_id:", business.br_id);
-      
       // Prefer backend-provided business location if available
       const fullAddress = business.bus_location || '';
-      if (!fullAddress) {
-        console.log("No bus_location available for:", business.bus_name);
-      }
       
       // Get requestor data
       let requestor = '';
       if (business.br_id && requestorMapping[business.br_id]) {
         requestor = requestorMapping[business.br_id].full_name;
-        console.log("Using dynamic requestor data:", requestor);
       }
       
       return {
@@ -136,10 +123,8 @@ export const getBusinesses = async () => {
       };
     });
     
-    console.log("Final businesses with addresses and requestors:", businessesWithAddresses);
     return businessesWithAddresses;
   } catch (error) {
-    console.error("Failed to search businesses:", error);
     throw new Error("Failed to search businesses");
   }
 };
@@ -149,7 +134,6 @@ export const getPermitPurposes = async () => {
     const response = await api.get('/treasurer/purpose-and-rate/');
     return response.data;
   } catch (error) {
-    console.error("Failed to search permit purposes:", error);
     throw new Error("Failed to search permit purposes");
   }
 };
@@ -160,7 +144,6 @@ export const getAnnualGrossSalesForPermit = async () => {
     const response = await api.get('treasurer/annual-gross-sales-active/');
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch annual gross sales:", error);
     throw new Error("Failed to fetch annual gross sales");
   }
 };
@@ -171,7 +154,6 @@ export const getPurposesAndRates = async () => {
     const response = await api.get('treasurer/purpose-and-rate/');
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch purposes and rates:", error);
     throw new Error("Failed to fetch purposes and rates");
   }
 };
@@ -182,7 +164,6 @@ export const getBusinessPermitFiles = async (bprId: string) => {
     const response = await api.get(`/clerk/business-permit-files/${bprId}/`);
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch business permit files:", error);
     throw new Error("Failed to fetch business permit files");
   }
 };

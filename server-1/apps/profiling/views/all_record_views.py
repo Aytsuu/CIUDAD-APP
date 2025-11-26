@@ -227,7 +227,6 @@ class CompleteRegistrationView(APIView):
   def create_household(self, houses, rp, staff):
     house_instances = []
     for house in houses:
-      print(house["address"])
       data = house["address"].split("-") 
       house_instances.append(Household(
         hh_id = generate_hh_no(),

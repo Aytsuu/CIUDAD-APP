@@ -701,6 +701,8 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
             'garb_waste_type',
             'garb_created_at',
             'garb_requester',
+            'garb_pref_time',
+            'garb_pref_date',
             'garb_additional_notes',
             'garb_req_status',
             'assignment_info',
@@ -859,7 +861,7 @@ class ResidentCompletedPickupRequestSerializer(serializers.ModelSerializer):
 
     def _get_collector_names(self, assignment):
         try:
-            collectors = assignment.assignment_collector_set.all()
+            collectors = assignment.collectors.all()
             return [
                 collector.wstp_id.get_staff_name()
                 for collector in collectors

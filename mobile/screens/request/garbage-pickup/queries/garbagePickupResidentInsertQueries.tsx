@@ -21,7 +21,7 @@ export const useAddaGarbagePickupRequest = (onSuccess?: () => void) => {
                 router.back()
             },
             onError: (err) => {
-                console.error("Error submitting request:", err);
+                // console.error("Error submitting request:", err);
                 toast.error("Failed to submit request. Please check the input data and try again.");
             }
         })

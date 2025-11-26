@@ -128,11 +128,12 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-            {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-2/3 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+           {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
+              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
+                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
               </div>
             )}
             {cardsWithAccess.length > 0 && (

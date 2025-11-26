@@ -6,6 +6,7 @@ from django.db.models import Count
 from ..double_queries import PostQueries
 from apps.notification.utils import create_notification
 from ..notif_recipients import general_recipients
+from ..utils import generate_hh_no
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -91,7 +92,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
 
   def create(self, validated_data):
     household = Household(
-      hh_id = self.generate_hh_no(),
+      hh_id = generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
       add = validated_data['add'],
@@ -127,9 +128,4 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     )
 
     return household
-
-  def generate_hh_no(self):
-    next_val = Household.objects.count() + 1
-    house_no = f"HH-{next_val:05d}"
-    return house_no
-  
+    

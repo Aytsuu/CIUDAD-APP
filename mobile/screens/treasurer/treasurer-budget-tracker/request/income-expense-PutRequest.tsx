@@ -31,8 +31,8 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -59,7 +59,7 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }

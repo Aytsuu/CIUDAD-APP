@@ -20,8 +20,9 @@ def get_health_staff_recipients():
     """Get all staff members in HEALTH STAFFS group or specific positions"""
     try:
         health_staffs = Staff.objects.filter(
-            models.Q(pos__pos_title__in=['BARANGAY HEALTH WORKER', 'MIDWIFE', 'ADMIN'])
-        ).select_related('rp', 'pos').distinct()
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN','BARANGAY HEALTH WORKERS', 'MIDWIFE']
+        )
         recipient_ids = [str(staff.staff_id) for staff in health_staffs]
         logger.info(f"Found {len(recipient_ids)} health staff recipients")
         return recipient_ids

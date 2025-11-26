@@ -3,35 +3,60 @@ import ComplaintTable from "./ComplaintTable";
 import ComplaintPagination from "./complaint-record/ComplaintPagination";
 import { pendingComplaintColumns } from "./complaint-record/ComplaintColumn";
 import { useGetComplaint } from "./api-operations/queries/complaintGetQueries";
-import { filterComplaints } from "./complaint-record/FilterComplaint";
+import {
+  filterComplaints,
+  getUniqueTypes,
+  getUniqueStatuses,
+} from "./complaint-record/FilterComplaint";
 import { Complaint } from "./complaint-type";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
-import ComplaintFilterBar from "./complaint-record/ComplaintFilterBar";
+import ComplaintFilterBar, {
+  FilterState,
+} from "./complaint-record/ComplaintFilterBar";
+
+const initialFilters: FilterState = {
+  types: [],
+  statuses: [],
+  dateRange: { start: null, end: null },
+};
 
 export default function ComplaintRequest() {
   const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeFilter, setTimeFilter] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
 
+  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, pageSize]);
+  }, [searchQuery, filters, pageSize]);
 
-  // Filter for pending complaints that are not archived
+  // Filter for pending complaints
   const pendingComplaints = useMemo(() => {
-    return complaints.filter((c: Complaint) => 
-      c.comp_status === 'Pending'
-    );
+    return complaints.filter((c: Complaint) => c.comp_status === "Pending");
   }, [complaints]);
 
+  // Get unique types for filter dropdown (from pending complaints)
+  const availableTypes = useMemo(
+    () => getUniqueTypes(pendingComplaints),
+    [pendingComplaints]
+  );
+
+  // Since we're already filtering for Pending, status filter may not be needed
+  // But we include it in case you want to use it for sub-statuses later
+  const availableStatuses = useMemo(
+    () => getUniqueStatuses(pendingComplaints),
+    [pendingComplaints]
+  );
+
+  // Apply all filters
   const filteredData = useMemo(() => {
-    return filterComplaints(pendingComplaints, searchQuery);
-  }, [pendingComplaints, searchQuery, timeFilter]);
+    return filterComplaints(pendingComplaints, searchQuery, filters);
+  }, [pendingComplaints, searchQuery, filters]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -39,15 +64,13 @@ export default function ComplaintRequest() {
   }, [filteredData, currentPage, pageSize]);
 
   const rejectedCount = useMemo(() => {
-    return complaints.filter((c: Complaint) => c.comp_status === 'Rejected').length;
+    return complaints.filter((c: Complaint) => c.comp_status === "Rejected")
+      .length;
   }, [complaints]);
 
   if (error) return <div>Error: {error.message}</div>;
 
-  const columns = useMemo(
-    () => pendingComplaintColumns(),
-    []
-  );
+  const columns = useMemo(() => pendingComplaintColumns(), []);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -61,9 +84,7 @@ export default function ComplaintRequest() {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-darkBlue2">
-              Request
-            </h1>
+            <h1 className="text-2xl font-semibold text-darkBlue2">Request</h1>
           </div>
           <p className="text-darkGray text-sm">
             Manage and view pending blotter requests
@@ -71,15 +92,17 @@ export default function ComplaintRequest() {
         </div>
       </div>
       <hr className="pb-4" />
-      
+
       <ComplaintFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        timeFilter={timeFilter}
-        setTimeFilter={setTimeFilter}
+        filters={filters}
+        setFilters={setFilters}
+        availableTypes={availableTypes}
+        availableStatuses={availableStatuses}
         buttons={{
           filter: true,
-          request: false, 
+          request: false,
           archived: false,
           newReport: false,
           rejected: true,

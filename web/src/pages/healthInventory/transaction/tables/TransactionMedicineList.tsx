@@ -6,6 +6,8 @@ import { Search, Loader2 } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { MedTransactioncolumns } from "./columns/MedicineColumsn"
 import { useMedicineTransactions } from "../queries/fetch"
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function MedicineTransactionTable() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -38,10 +40,45 @@ export default function MedicineTransactionTable() {
 
   // Handle page size change
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = +e.target.value
-    setPageSize(value >= 1 ? value : 1)
+      const value = +e.target.value;
+      setPageSize(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
     setCurrentPage(1)
   }
+
+    // Prepare export data for medicine transactions (EXACT table columns)
+    const prepareExportData = () => {
+      return transactionData.map((item: any) => {
+        const medDetail = item.med_detail || {};
+        return {
+          ID: item.mdt_id ?? "N/A",
+          "Medicine Name": medDetail.med_name ?? "N/A",
+          "Dosage": medDetail.minv_dsg ?? "N/A",
+          "Dosage Unit": medDetail.minv_dsg_unit ?? "N/A",
+          "Form": medDetail.minv_form ?? "N/A",
+          Quantity: item.mdt_qty ?? "N/A",
+          Action: item.mdt_action ?? "N/A",
+          Staff: item.staff ? item.staff : "N/A",
+          "Created At": item.created_at
+            ? new Date(item.created_at).toLocaleString()
+            : "N/A"
+        };
+      });
+    };
+
+    const handleExportCSV = () => {
+      const dataToExport = prepareExportData();
+      exportToCSV(dataToExport, `medicine_transactions_${new Date().toISOString().slice(0, 10)}`);
+    };
+
+    const handleExportExcel = () => {
+      const dataToExport = prepareExportData();
+      exportToExcel(dataToExport, `medicine_transactions_${new Date().toISOString().slice(0, 10)}`);
+    };
+
+    const handleExportPDF = () => {
+      const dataToExport = prepareExportData();
+      exportToPDF2(dataToExport, `medicine_transactions_${new Date().toISOString().slice(0, 10)}`, "Medicine Transactions Report");
+    };
 
   if (error) {
     return (
@@ -80,9 +117,13 @@ export default function MedicineTransactionTable() {
               value={pageSize}
               onChange={handlePageSizeChange}
               min="1"
+                max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
+            <div>
+              <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+            </div>
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

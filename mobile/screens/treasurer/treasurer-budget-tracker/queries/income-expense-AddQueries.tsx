@@ -50,8 +50,8 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
                 type: file.type,
                 file: file.file
               }
-            }).catch(error => {
-              console.error("Error creating file entry:", error);
+            }).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )
@@ -93,7 +93,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
         if (onSuccess) onSuccess();
     },
     onError: (err) => {
-        console.error("Failed to submit expense.", err);
+        // console.error("Failed to submit expense.", err);
         toast.error(err.message || 'Failed to submit expense.');
 
     }
@@ -141,8 +141,8 @@ export const useCreateIncome = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error submitting income:", err);
+    onError: (_err) => {
+      // console.error("Error submitting income:", err);
       toast.error("Failed to submit income. Please check the input data and try again.");
     }
   });

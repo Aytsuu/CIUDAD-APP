@@ -7,7 +7,7 @@ export const  useGetDonCardAnalytics = () => {
     queryFn: async () => {
       try {
         const res = await api.get('donation/total-monetary/');
-        console.log(res.data)
+        // console.log(res.data)
         return res.data
       } catch (err) {
         throw err;

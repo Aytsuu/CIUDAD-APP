@@ -14,7 +14,6 @@ from .spouse_serializers import SpouseSerializer
 from apps.childhealthservices.models import ChildHealthrecord
 from ..utils import (
     extract_personal_info, 
-    extract_address, 
     get_personal_info, 
     get_address, 
     get_family, 
@@ -29,7 +28,6 @@ from ..utils import (
 )
 from ..utils import (
     extract_personal_info, 
-    extract_address, 
     get_personal_info, 
     get_address, 
     get_family, 
@@ -95,7 +93,7 @@ class PatientMiniMalSerializer(serializers.ModelSerializer):
         return extract_personal_info(obj)
 
     def get_address(self, obj):
-        return extract_address(obj)
+        return get_address(obj)
     
     class Meta:
         model = Patient
@@ -113,7 +111,7 @@ class PatientMiniMalSerializerWithAddtionalInfo(serializers.ModelSerializer):
         return extract_personal_info(obj)
 
     def get_address(self, obj):
-        return extract_address(obj)
+        return get_address(obj)
     
     def get_additional_info(self, obj):
         return get_additional_info(obj)
@@ -133,7 +131,7 @@ class PatientMChildreniniMalSerializer(serializers.ModelSerializer):
         return extract_personal_info(obj)
 
     def get_address(self, obj):
-        return extract_address(obj)
+        return get_address(obj)
     
     def get_family_head_info(self, obj):
         return get_family_head_info(obj, context=self.context)

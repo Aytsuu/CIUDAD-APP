@@ -40,7 +40,7 @@ export const useImmunizationMutations = () => {
       staff_id,
       pat_id
     };
-    console.log(payload);
+    
 
     // Make API call to Django backend
     const response = await api2.post("child-health/immunization-save/", payload);
@@ -89,7 +89,7 @@ export const useImmunizationMutations = () => {
       showSuccessToast("Immunization data saved successfully!");
     },
     onError: (error: any) => {
-      console.error("Error saving immunization data:", error);
+      
 
       // Extract error message from response
       const errorMessage = error?.response?.data?.error || error?.message || "Failed to save immunization data";

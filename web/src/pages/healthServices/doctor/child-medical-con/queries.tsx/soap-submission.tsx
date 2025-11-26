@@ -11,7 +11,6 @@ export const useSubmitSoapForm = () => {
 
   return useMutation({
     mutationFn: async ({ formData, checkupData, staffId }: any) => {
-      console.log("Submitting SOAP form with data:", formData, checkupData, staffId);
       
       const payload = {
         staff_id: staffId,
@@ -61,7 +60,6 @@ export const useSubmitSoapForm = () => {
         selected_illnesses: formData.selectedIllnesses || [],
       };
 
-      console.log("Payload sent:", payload);
 
       const response = await createchildSoapForm(payload);
       return response;
@@ -81,6 +79,7 @@ export const useSubmitSoapForm = () => {
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthCurrentAndPreviousHistory"] });
 
       navigate(-1);
     },

@@ -43,7 +43,6 @@ export default function ARFormLayout() {
   // ============= SIDE EFFECTS =============
   React.useEffect(() => {
     if (ARInfo) {
-      console.log(ARInfo.ar_files);
       form.reset(
         {
           ar_title: ARInfo.ar_title,

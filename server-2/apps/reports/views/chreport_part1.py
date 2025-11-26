@@ -346,8 +346,7 @@ class MonthlyNutritionStatisticsAPIView(generics.GenericAPIView):
             created_at__year=year,
             created_at__month=month_num,
             status_type='birthwt',
-        ).exclude(
-            Q(date_complete__isnull=True) | Q(date_complete__exact='')
+        ).exclude(Q(date_completed__isnull=True)
         ).select_related(
             'chhist__chrec__patrec__pat_id__rp_id__per',
             'chhist__chrec__patrec__pat_id__trans_id'

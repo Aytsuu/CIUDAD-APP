@@ -41,7 +41,10 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
                 file: file.file
               }
             }).catch(error => {
-              console.error("Error creating file entry:", error);
+              // console.error("Error creating file entry:", error);
+              toast.error(
+                `Error creating file entry: ${error}`,
+              );              
               return null;
             })
           )
@@ -59,8 +62,8 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating waste report:", err);
+    onError: (_err) => {
+      // console.error("Error updating waste report:", err);
       toast.error(
         "Failed to update report. Please try again.",
       );
@@ -98,8 +101,8 @@ export const useUpdateWasteResReport = (rep_id: string, onSuccess?: () => void) 
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error in cancelling waste report:", err);
+    onError: (_err) => {
+      // console.error("Error in cancelling waste report:", err);
       toast.error(
         "Failed to cancel report. Please try again.",
       );

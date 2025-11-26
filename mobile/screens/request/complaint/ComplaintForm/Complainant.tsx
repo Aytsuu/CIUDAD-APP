@@ -1,21 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
-  Image,
-} from "react-native";
+import React, { useState, useEffect, useMemo, useCallback, useRef, } from "react";
+import { View, Text, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Image} from "react-native";
 import { useFieldArray, useFormContext, Controller } from "react-hook-form";
 import type { ComplaintFormData } from "@/form-schema/complaint-schema";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
-import { X, UserPlus, ChevronRight, Info, UserCircle } from "lucide-react-native";
+import { type DropdownOption,} from "@/components/ui/select-layout";
+import { X, Plus, ChevronRight, CheckIcon } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetResidentLists } from "../api-operations/queries/ComplaintGetQueries";
+import { SearchableSelect } from "../search-layout";
+import { useResidentSelection } from "@/contexts/ComplaintFormContext";
 
 interface ComplainantProps {
   onNext: () => void;
@@ -29,12 +23,12 @@ interface ResidentData {
   gender: string;
   address?: string;
   profile_image?: string;
-  phone?: string;
+  number?: string;
 }
 
 const GENDER_OPTIONS: DropdownOption[] = [
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
+  { label: "Male", value: "MALE" },
+  { label: "Female", value: "FEMALE" },
 ];
 
 function calculateAge(dob?: string | Date): string {
@@ -67,8 +61,7 @@ export const Complainant: React.FC<ComplainantProps> = ({
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [showForm, setShowForm] = useState(false);
-  const [manualEntries, setManualEntries] = useState<Set<number>>(new Set());
+  const initializedRef = useRef(false);
 
   const isStaff = !!user?.staff;
 
@@ -78,40 +71,98 @@ export const Complainant: React.FC<ComplainantProps> = ({
     error,
   } = useGetResidentLists();
 
+  // Get resident selection tracking
+  const {
+    selectedComplainantResidents,
+    setSelectedComplainantResidents,
+    selectedAccusedResidents,
+  } = useResidentSelection();
+
+  // Track selected residents whenever fields change
+  useEffect(() => {
+    const selectedIds = fields
+      .map((field: any) => field.rp_id)
+      .filter((id: any) => id !== null && id !== "");
+    setSelectedComplainantResidents(selectedIds);
+  }, [fields, setSelectedComplainantResidents]);
+
   // Prepare resident options for the dropdown
   const residentOptions = useMemo((): DropdownOption[] => {
     if (!residentsData) return [];
-    
-    return residentsData.map((resident: ResidentData) => ({
-      label: (
-        <View className="flex-row items-center">
-          <View className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-3">
-            {resident.profile_image ? (
-              <Image
-                source={{ uri: resident.profile_image }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <View className="w-full h-full items-center justify-center bg-gray-300">
-                <Text className="text-xs text-gray-600">No Img</Text>
+
+    return residentsData.map((resident: ResidentData) => {
+      const residentId = resident.rp_id?.toString() || "";
+      const isSelectedInAccused = selectedAccusedResidents.includes(residentId);
+      const isSelectedInOtherComplainant =
+        selectedComplainantResidents.includes(residentId) &&
+        fields[activeTab]?.rp_id !== residentId;
+
+      return {
+        label: (
+          <View className="flex-row items-center">
+            {/* LEFT SIDE: profile + name */}
+            <View className="flex-row items-center flex-1">
+              <View className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-3">
+                {resident.profile_image ? (
+                  <Image
+                    source={{ uri: resident.profile_image }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-full items-center justify-center bg-gray-300">
+                    <Text className="text-xs text-gray-600">No Img</Text>
+                  </View>
+                )}
+              </View>
+
+              <Text
+                className={`text-gray-800 font-medium ${
+                  isSelectedInAccused || isSelectedInOtherComplainant
+                    ? "text-gray-400"
+                    : ""
+                }`}
+              >
+                {resident.name}
+              </Text>
+            </View>
+
+            {/* RIGHT SIDE: check icons */}
+            {(isSelectedInAccused || isSelectedInOtherComplainant) && (
+              <View className="flex-row items-center space-x-1">
+                {isSelectedInAccused && (
+                  <View className="rounded-full bg-green-500 p-1">
+                    <CheckIcon size={12} color="#ffffff" />
+                  </View>
+                )}
+                {isSelectedInOtherComplainant && (
+                  <View className="rounded-full bg-green-500 p-1">
+                    <CheckIcon size={12} color="#ffffff" />
+                  </View>
+                )}
               </View>
             )}
           </View>
-          <Text className="text-gray-800 font-medium">{resident.name}</Text>
-        </View>
-      ),
-      value: resident.rp_id?.toString() || "",
-      data: {
-        name: resident.name,
-        age: resident.age,
-        gender: resident.gender,
-        address: resident.address || "Address not available",
-        profile_image: resident.profile_image,
-        phone: resident.phone,
-      },
-    }));
-  }, [residentsData]);
+        ),
+        value: resident.rp_id?.toString() || "",
+        disabled: isSelectedInAccused || isSelectedInOtherComplainant,
+        data: {
+          name: resident.name,
+          age: resident.age,
+          gender: resident.gender,
+          address: resident.address || "Address not available",
+          profile_image: resident.profile_image,
+          number: resident.number,
+        },
+      };
+    });
+  }, [
+    residentsData,
+    selectedAccusedResidents,
+    selectedComplainantResidents,
+    activeTab,
+    fields,
+  ]);
 
   // Handle API errors
   useEffect(() => {
@@ -120,9 +171,27 @@ export const Complainant: React.FC<ComplainantProps> = ({
     }
   }, [error]);
 
-  // Auto-fill for non-staff users - silent background fill
+  // Initialize with one empty complainant for staff users
   useEffect(() => {
-    if (!isStaff && fields.length === 0 && user) {
+    if (isStaff && fields.length === 0 && !initializedRef.current) {
+      initializedRef.current = true;
+      append({
+        cpnt_name: "",
+        cpnt_gender: "",
+        cpnt_age: "",
+        cpnt_relation_to_respondent: "",
+        cpnt_number: "",
+        cpnt_address: "",
+        rp_id: null,
+      });
+      setActiveTab(0);
+    }
+  }, [isStaff, fields.length, append]);
+
+  // Auto-fill for non-staff users (residents) - silent background fill
+  useEffect(() => {
+    if (!isStaff && fields.length === 0 && user && !initializedRef.current) {
+      initializedRef.current = true;
       const name = [
         user.personal?.per_lname,
         user.personal?.per_fname,
@@ -161,55 +230,50 @@ export const Complainant: React.FC<ComplainantProps> = ({
     }
   }, [isStaff, fields.length, user, append, onNext]);
 
-  // Handle resident selection
+  // Handle resident selection - auto-fill fields
   const handleResidentSelect = useCallback(
     (index: number, residentId: string) => {
       const selected = residentsData?.find(
         (r: ResidentData) => r.rp_id?.toString() === residentId
       );
-      
       if (!selected) return;
-
-      setValue(`complainant.${index}.cpnt_name`, selected.name || "");
-      setValue(`complainant.${index}.cpnt_age`, selected.age?.toString() || "");
-      setValue(`complainant.${index}.cpnt_gender`, selected.gender || "");
+      console.log(selected.gender);
+      setValue(`complainant.${index}.cpnt_name`, selected.name || "", {
+        shouldValidate: true,
+      });
+      setValue(
+        `complainant.${index}.cpnt_age`,
+        selected.age?.toString() || "",
+        { shouldValidate: true }
+      );
+      setValue(`complainant.${index}.cpnt_gender`, selected.gender || "", {
+        shouldValidate: true,
+      });
       setValue(
         `complainant.${index}.cpnt_address`,
-        selected.address || "Address not available"
+        selected.address || "Address not available",
+        { shouldValidate: true }
       );
-      setValue(`complainant.${index}.cpnt_number`, selected.phone || "");
+      setValue(`complainant.${index}.cpnt_number`, selected.number || "", {
+        shouldValidate: true,
+      });
     },
     [residentsData, setValue]
   );
 
+  // Add new complainant
   const addComplainant = useCallback(() => {
-    append({
-      cpnt_name: "",
-      cpnt_gender: "Male",
-      cpnt_age: "",
-      cpnt_relation_to_respondent: "",
-      cpnt_number: "",
-      cpnt_address: "",
-      rp_id: null,
-    });
-    setActiveTab(fields.length);
-    setShowForm(true);
-  }, [append, fields.length]);
-
-  const addComplainantManually = useCallback(() => {
     const newIndex = fields.length;
     append({
       cpnt_name: "",
-      cpnt_gender: "Male",
+      cpnt_gender: "",
       cpnt_age: "",
       cpnt_relation_to_respondent: "",
       cpnt_number: "",
       cpnt_address: "",
       rp_id: null,
     });
-    setManualEntries((prev) => new Set([...prev, newIndex]));
     setActiveTab(newIndex);
-    setShowForm(true);
   }, [append, fields.length]);
 
   const removeComplainant = useCallback(
@@ -218,14 +282,6 @@ export const Complainant: React.FC<ComplainantProps> = ({
         Alert.alert("Cannot Remove", "At least one complainant is required.");
         return;
       }
-
-      setManualEntries((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(index);
-        const adjusted = new Set<number>();
-        newSet.forEach((i) => adjusted.add(i > index ? i - 1 : i));
-        return adjusted;
-      });
 
       remove(index);
       setActiveTab(Math.max(0, index - 1));
@@ -247,7 +303,7 @@ export const Complainant: React.FC<ComplainantProps> = ({
     onNext();
   }, [trigger, onNext]);
 
-  // For non-staff users, show loading state
+  // For non-staff users (residents), show loading state while auto-filling
   if (!isStaff) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -257,64 +313,49 @@ export const Complainant: React.FC<ComplainantProps> = ({
     );
   }
 
+  // Show loading while initializing
+  if (fields.length === 0) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#2563EB" />
+        <Text className="text-gray-600 mt-4">Initializing form...</Text>
+      </View>
+    );
+  }
+
   // Staff user interface
   return (
     <View className="flex-1 p-4">
-      {!showForm ? (
-        <View className="flex-1 justify-center items-center">
-          <TouchableOpacity
-            onPress={addComplainant}
-            className="bg-blue-500 mt-4 px-6 py-4 rounded-xl shadow-md flex-row items-center justify-center"
-          >
-            <UserPlus size={22} color="#fff" />
-            <Text className="text-white font-semibold ml-2 text-base">
-              Add Complainant
-            </Text>
-          </TouchableOpacity>
-          <View className="flex-row items-center mt-4">
-            <Info size={24} color="gray" />
-            <Text className="ml-2 text-sm text-gray-400">
-              The Process begins by Adding an individual.
-            </Text>
-          </View>
+      <View className="bg-white rounded-lg mb-10">
+        <View className="flex-row items-center mb-2">
+          <Text className="text-lg font-semibold text-gray-900">
+            Complainant
+          </Text>
         </View>
-      ) : (
-        <>
-          <View className="bg-white rounded-lg p-4 mb-2 border border-gray-100">
-            <View className="flex-row items-center mb-2">
-              {/* <UserCircle size={20} color="#111111" className="mr-2" /> */}
-              <Text className="text-lg font-semibold text-gray-900">Complainant</Text>
-            </View>
-            <Text className="text-sm text-gray-600">
-              Information about the person submitting the complaint.
-            </Text>
-          </View>
-          <View className="flex-row justify-end mb-3">
-            <TouchableOpacity
-              onPress={addComplainantManually}
-              disabled={isLoadingResidents}
-              className="bg-blue-600 px-4 py-3 rounded-lg shadow-sm flex-row items-center"
-            >
-              <UserPlus size={20} color="#fff" />
-              <Text className="text-white font-medium ml-2">Add Comp.</Text>
-            </TouchableOpacity>
-          </View>
+        <Text className="text-sm text-gray-600">
+          Information about the person submitting the complaint.
+        </Text>
+      </View>
 
-          {/* Tabs Header */}
+      <View className="border border-gray-100">
+        {/* Tabs Header - Always show */}
+        <View className="flex-row items-center bg-white rounded-lg p-2 mb-4">
+          {/* Scrollable tabs */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="flex-row space-x-2 bg-white rounded-lg border border-gray-200 p-2 mb-4"
+            className="flex-1"
+            contentContainerStyle={{ alignItems: "center" }}
           >
             {fields.map((field, index) => (
               <TouchableOpacity
                 key={field.id}
                 onPress={() => setActiveTab(index)}
-                className={`px-4 py-2 rounded-lg ${
+                className={`px-4 py-2 rounded-lg flex-row items-center ${
                   activeTab === index
                     ? "bg-blue-600"
                     : "bg-gray-100 border border-gray-200"
-                }`}
+                } mr-2`}
               >
                 <Text
                   className={`font-medium ${
@@ -323,32 +364,39 @@ export const Complainant: React.FC<ComplainantProps> = ({
                 >
                   Comp. {index + 1}
                 </Text>
+
+                {fields.length > 1 && (
+                  <TouchableOpacity
+                    onPress={() => removeComplainant(index)}
+                    className="ml-2"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <X
+                      size={16}
+                      color={activeTab === index ? "#fff" : "#EF4444"}
+                    />
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {/* Active Complainant Form */}
-          <View className="bg-white rounded-lg p-4 border border-gray-100">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-md font-medium text-gray-900">
-                Complainant {activeTab + 1}
-              </Text>
-              <TouchableOpacity
-                onPress={() => removeComplainant(activeTab)}
-                className="p-2"
-                disabled={fields.length === 1}
-              >
-                <X
-                  size={18}
-                  color={fields.length === 1 ? "#9CA3AF" : "#EF4444"}
-                />
-              </TouchableOpacity>
-            </View>
+          <TouchableOpacity
+            onPress={addComplainant}
+            disabled={isLoadingResidents}
+            className="flex-row bg-blue-600 px-4 py-2 rounded-lg shadow-sm ml-2"
+          >
+            <Plus size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
-            {/* Resident Selector */}
-            <View className="mb-3">
+        {/* Active Complainant Form */}
+        {fields[activeTab] && (
+          <View className="bg-white rounded-lg p-4">
+            {/* Resident Selector - Always enabled for staff */}
+            <View className="mb-10">
               <Text className="text-sm font-medium text-gray-900 mb-2">
-                Select Resident
+                Select Resident (Optional)
               </Text>
               {isLoadingResidents ? (
                 <View className="py-3 items-center bg-gray-50 rounded-lg">
@@ -361,21 +409,36 @@ export const Complainant: React.FC<ComplainantProps> = ({
                 <Controller
                   control={control}
                   name={`complainant.${activeTab}.rp_id`}
-                  render={({ field: { onChange, value }, fieldState: { error } }) => (
-                    <SelectLayout
+                  render={({
+                    field: { onChange, value },
+                    fieldState: { error },
+                  }) => (
+                    <SearchableSelect
                       options={residentOptions}
                       selectedValue={value || ""}
                       onSelect={(option: any) => {
+                        // Prevent selection if the option is disabled
+                        if (option.disabled) {
+                          return;
+                        }
+
                         if (option.value === value) {
                           onChange("");
+                          // Clear fields when deselecting
+                          setValue(`complainant.${activeTab}.cpnt_name`, "");
+                          setValue(`complainant.${activeTab}.cpnt_age`, "");
+                          setValue(`complainant.${activeTab}.cpnt_gender`, "");
+                          setValue(`complainant.${activeTab}.cpnt_number`, "");
+                          setValue(`complainant.${activeTab}.cpnt_address`, "");
                         } else {
                           onChange(option.value);
                           handleResidentSelect(activeTab, option.value);
                         }
                       }}
-                      placeholder="Select a resident..."
+                      placeholder="Select a resident to auto-fill..."
+                      searchPlaceholder="Search resident..."
                       error={error?.message}
-                      disabled={manualEntries.has(activeTab)}
+                      disabled={false}
                       isInModal={false}
                     />
                   )}
@@ -383,28 +446,22 @@ export const Complainant: React.FC<ComplainantProps> = ({
               )}
             </View>
 
-            {/* Full Name */}
             <FormInput
               control={control}
               name={`complainant.${activeTab}.cpnt_name`}
               label="Full Name"
-              placeholder={
-                manualEntries.has(activeTab)
-                  ? "Enter complete name"
-                  : "Auto-filled from resident"
-              }
-              editable={manualEntries.has(activeTab)}
+              placeholder="Enter complete name"
+              editable={true}
             />
 
-            {/* Gender and Age */}
-            <View className="flex-row space-x-3">
+            <View className="flex-row gap-x-3">
               <View className="flex-1">
                 <FormSelect
                   control={control}
                   name={`complainant.${activeTab}.cpnt_gender`}
                   label="Gender"
                   options={GENDER_OPTIONS}
-                  disabled={!manualEntries.has(activeTab)}
+                  disabled={false}
                 />
               </View>
               <View className="flex-1">
@@ -412,76 +469,64 @@ export const Complainant: React.FC<ComplainantProps> = ({
                   control={control}
                   name={`complainant.${activeTab}.cpnt_age`}
                   label="Age"
-                  placeholder={
-                    manualEntries.has(activeTab) ? "Age" : "Auto-filled"
-                  }
+                  placeholder="Age"
                   keyboardType="numeric"
-                  editable={manualEntries.has(activeTab)}
+                  editable={true}
                 />
               </View>
             </View>
 
-            {/* Contact Number */}
             <FormInput
               control={control}
               name={`complainant.${activeTab}.cpnt_number`}
               label="Contact Number"
               placeholder="09XXXXXXXXX"
               keyboardType="phone-pad"
+              editable={true}
             />
 
-            {/* Address */}
             <FormInput
               control={control}
               name={`complainant.${activeTab}.cpnt_address`}
               label="Complete Address"
-              placeholder={
-                manualEntries.has(activeTab)
-                  ? "Street, Barangay, City, Province"
-                  : "Auto-filled from resident"
-              }
-              editable={manualEntries.has(activeTab)}
+              placeholder="Street, Barangay, City, Province"
+              editable={true}
             />
 
-            {/* Relation */}
             <FormInput
               control={control}
               name={`complainant.${activeTab}.cpnt_relation_to_respondent`}
               label="Relation to Accused *"
               placeholder="e.g., Neighbor, Colleague, Victim, etc."
+              editable={true}
             />
           </View>
-
-          {/* Next Button */}
-          <View className="mt-6">
-            <TouchableOpacity
-              onPress={handleNext}
-              disabled={isSubmitting || fields.length === 0}
-              className={`py-3 px-4 rounded-lg flex-row items-center justify-center ${
-                isSubmitting || fields.length === 0
-                  ? "bg-gray-300"
-                  : "bg-blue-600"
-              }`}
-            >
-              <Text
-                className={`font-medium mr-2 ${
-                  isSubmitting || fields.length === 0
-                    ? "text-gray-500"
-                    : "text-white"
-                }`}
-              >
-                Next
-              </Text>
-              <ChevronRight
-                size={20}
-                color={
-                  isSubmitting || fields.length === 0 ? "#9CA3AF" : "#FFFFFF"
-                }
-              />
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
+        )}
+      </View>
+      {/* Next Button */}
+      <View className="mt-6">
+        <TouchableOpacity
+          onPress={handleNext}
+          disabled={isSubmitting || fields.length === 0}
+          className={`py-3 px-4 rounded-lg flex-row items-center justify-center ${
+            isSubmitting || fields.length === 0 ? "bg-gray-300" : "bg-blue-600"
+          }`}
+        >
+          <Text
+            className={`font-medium mr-2 ${
+              isSubmitting || fields.length === 0
+                ? "text-gray-500"
+                : "text-white"
+            }`}
+          >
+            Next
+          </Text>
+          <ChevronRight
+            size={20}
+            color={isSubmitting || fields.length === 0 ? "#9CA3AF" : "#FFFFFF"}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

@@ -4,12 +4,7 @@ import FPReportDetails from "../../famplanning-report/FPRecordDetails";
 export default function Page1({onNext }: any) {
   return (
     <div className="min-h-[500px] flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
-          Page 1 – Family Planning Report
-        </h2>
-    
-      </div>
+      
 
       {/* The whole FP table lives here */}
       <div className="flex-1 overflow-auto">

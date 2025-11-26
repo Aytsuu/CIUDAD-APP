@@ -1050,13 +1050,13 @@ class VaccinationCompletionAPIView(APIView):
                                 )
                             
                             imz_stock.imzStck_pcs -= 1
-                            imz_stock.imzStck_used += 1
+                            imz_stock.wasted += 1
                             imz_stock.imzStck_avail -= 1
                             transaction_qty = "1 pcs"
                         else:
                             # For other units (vials, doses, etc.), deduct based on unit
                             imz_stock.imzStck_qty = max(0, imz_stock.imzStck_qty - 1)
-                            imz_stock.imzStck_used += 1
+                            imz_stock.wasted += 1
                             imz_stock.imzStck_avail = max(0, imz_stock.imzStck_avail - 1)
                             transaction_qty = f"1 {imz_stock.imzStck_unit}"
                         

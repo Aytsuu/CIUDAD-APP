@@ -21,7 +21,7 @@ class CommodityListView(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = CommodityList.objects.all()
+        queryset = CommodityList.objects.all().order_by('-updated_at')
         
         # Add search functionality
         search_query = self.request.GET.get('search', '').strip()
@@ -37,6 +37,7 @@ class CommodityListView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
 class CommodityCountView(APIView):
   
     def get(self, request):

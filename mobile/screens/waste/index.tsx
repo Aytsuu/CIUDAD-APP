@@ -38,6 +38,12 @@ export default () => {
       icon: "",
       gradient: ['#06b6d4', '#0891b2'],
     },
+    {
+      title: "Waste Event",
+      route: "/(waste)/waste-event/waste-event-main",
+      icon: "",
+      gradient: ['#60a5fa', '#3b82f6'],
+    },
   ];
   
   // ============== SIDE EFFECTS ==============

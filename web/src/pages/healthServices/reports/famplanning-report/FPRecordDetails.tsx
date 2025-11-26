@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { api2 } from '@/api/api';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button/button';
-import { ChevronLeft, Printer } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { exportToCSV, exportToExcel, exportToPDF } from '../export/export-report';
 import { ExportDropdown } from '../export/export-dropdown';
 
@@ -171,8 +171,7 @@ const prepareExportData = (data: ReportData) => {
 /* ---------- MAIN COMPONENT ---------- */
 export default function FPReportDetails() {
   const { state } = useLocation() as { state?: { month: string; monthName: string } };
-  const navigate = useNavigate();
-  const { month = '', monthName = '' } = state ?? {};
+  const { month = '' } = state ?? {};
   const [year, monthNum] = month ? month.split('-') : [new Date().getFullYear().toString(), (new Date().getMonth() + 1).toString()];
 
   const { data, isLoading, isError, error } = useQuery<ReportData>({
@@ -198,11 +197,7 @@ export default function FPReportDetails() {
 
   return (
     <div className="p-4">
-      <div className="flex items-center gap-4 mb-4">
-        <Button variant="outline" onClick={() => navigate(-1)}><ChevronLeft /></Button>
-        <h1 className="text-2xl font-bold">Family Planning Report - {monthName}</h1>
-      </div>
-
+    
       <div className="flex gap-2 mb-4">
         <ExportDropdown
           onExportCSV={() => exportToCSV(prepareExportData(report), `FP_Report_${month}`)}

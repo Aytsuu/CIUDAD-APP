@@ -27,7 +27,7 @@ export interface PersonType {
   rp_id?: string | number;
 }
 
-interface Complainant {
+export interface Complainant {
   cpnt_id: number;
   res_profile: ResidentProfile;
   cpnt_name: string;
@@ -71,6 +71,18 @@ export interface ComplaintData {
   comp_status: string;
   staff: any;
   rp_id: string;
+}
+
+export interface ComplaintItem {
+  comp_id: string;
+  comp_allegation: string;
+  cpnt_name: string;
+  comp_location: string;
+  comp_status: "Pending" | "Resolved" | "Raised" | "Cancelled" | "Rejected" | "Accepted";
+  comp_datetime: string;
+  comp_created_at: string;
+  comp_incident_type: string;
+  comp_rejection_reason: string;
 }
 
 
@@ -134,6 +146,7 @@ export type PaymentRequest = {
     pay_due_date: string;
     pay_req_status: string;
     pay_date_paid: string | null;
+    pay_reason?: string;
     comp_id: number;
     pr_id: number | null;
     pay_amount: number;

@@ -281,22 +281,7 @@ export default function ScheduledVaccine() {
                         emptyMessage="No immunization supplies available in stock"
                         triggerClassName="w-full"
                       />
-                      {selectedSupplyData && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-md space-y-1">
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Stock ID:</span> {selectedSupplyData.imzStck_id}
-                          </p>
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Inventory ID:</span> {selectedSupplyData.inv_id}
-                          </p>
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Batch Number:</span> {selectedSupplyData.batchNumber}
-                          </p>
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Available:</span> {selectedSupplyData.availableQty} {selectedSupplyData.unit}
-                          </p>
-                        </div>
-                      )}
+                    
                       {!isSuppliesLoading && immunizationSupplies?.formatted && immunizationSupplies.formatted.length === 0 && (
                         <p className="text-sm text-yellow-600 mt-2">
                           No immunization supplies available in stock

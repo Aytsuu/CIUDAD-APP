@@ -68,7 +68,7 @@ class ImmunizationSuppliesListTable(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = ImmunizationSupplies.objects.all()
+        queryset = ImmunizationSupplies.objects.all().order_by('-updated_at')
         search_query = self.request.GET.get('search', '').strip()
         
         if search_query:
@@ -213,7 +213,8 @@ class ImmunizationStockCreate(APIView):
             'imzStck_qty': qty,
             'imzStck_per_pcs': 0,  # Always 0 as per your logic
             'imzStck_pcs': pcs_per_box,
-            'imzStck_used': immunization_data.get('imzStck_used', 0)
+            # 'imzStck_used': immunization_data.get('imzStck_used', 0)
+            'wasted': immunization_data.get('imzStck_used', 0)
         })
         
         # Calculate total available pieces
@@ -255,7 +256,7 @@ class ImmunizationStockCreate(APIView):
 # =======================VACCINES================================#
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
-    queryset = VaccineList.objects.all()
+    queryset = VaccineList.objects.all().order_by('-updated_at')
 
     def create(self, request, *args, **kwargs):
         vac_name = request.data.get('vac_name')
@@ -881,7 +882,7 @@ class CombinedStockTable(APIView):
                     'imz_id': stock.imz_id.imz_id if stock.imz_id else None,
                     'imzStck_id': stock.imzStck_id,
                     'imzStck_unit': stock.imzStck_unit,
-                    'imzStck_used': stock.imzStck_used or 0,
+                    # 'imzStck_used': stock.imzStck_used or 0,
                     'imzStck_pcs': stock.imzStck_pcs,
                     'qty_number': stock.imzStck_qty,
                     'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
@@ -1313,7 +1314,7 @@ class ArchivedAntigenTable(APIView):
                     'imz_id': stock.imz_id.imz_id if stock.imz_id else None,
                     'imzStck_id': stock.imzStck_id,
                     'imzStck_unit': stock.imzStck_unit,
-                    'imzStck_used': stock.imzStck_used or 0,
+                    # 'imzStck_used': stock.imzStck_used or 0,
                     'imzStck_pcs': stock.imzStck_pcs,
                     'qty_number': stock.imzStck_qty,
                     'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
@@ -1357,26 +1358,58 @@ class ArchivedAntigenTable(APIView):
 
 class WasteRequestMixin:
     def validate_waste_request(self, request):
+        """
+        Validate waste request data including action_type
+        """
         wasted_amount = request.data.get('wastedAmount')
-        staff_id = request.data.get('staff_id', None)
+        staff_id = request.data.get('staff_id')
+        action_type = request.data.get('action_type', 'wasted')  # Default to 'wasted' for backward compatibility
         
-        if not wasted_amount:
+        # Validate required fields
+        if wasted_amount is None:
             return None, Response(
                 {"error": "wastedAmount is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        try:
-            wasted_amount = int(wasted_amount)
-            if wasted_amount <= 0:
-                raise ValueError
-        except (ValueError, TypeError):
+        if not staff_id:
             return None, Response(
-                {"error": "wastedAmount must be a positive integer"},
+                {"error": "staff_id is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        return (wasted_amount, staff_id), None
+        # Validate action_type
+        if action_type not in ['administered', 'wasted']:
+            return None, Response(
+                {"error": "action_type must be either 'administered' or 'wasted'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate wasted_amount is positive integer
+        try:
+            wasted_amount = int(wasted_amount)
+            if wasted_amount <= 0:
+                return None, Response(
+                    {"error": "wastedAmount must be a positive integer"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError):
+            return None, Response(
+                {"error": "wastedAmount must be a valid integer"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate staff exists
+        try:
+            staff = Staff.objects.get(staff_id=staff_id)
+        except Staff.DoesNotExist:
+            return None, Response(
+                {"error": "Invalid staff_id"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return (wasted_amount, staff_id, action_type), None
+
 
 class VaccineWasteView(APIView, WasteRequestMixin):
     def post(self, request, vacStck_id):
@@ -1393,20 +1426,44 @@ class VaccineWasteView(APIView, WasteRequestMixin):
         if error_response:
             return error_response
         
-        wasted_amount, staff_id = data
+        # Handle both old and new format
+        if len(data) == 2:
+            # Old format: (wasted_amount, staff_id)
+            wasted_amount, staff_id = data
+            action_type = request.data.get('action_type', 'wasted')  # Get from request data
+        else:
+            # New format: (wasted_amount, staff_id, action_type)
+            wasted_amount, staff_id, action_type = data
+        
+        # Validate action_type
+        if action_type not in ['administered', 'wasted']:
+            return Response(
+                {"error": "action_type must be either 'administered' or 'wasted'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Check available quantity
         if vaccine_stock.vacStck_qty_avail < wasted_amount:
             return Response(
-                {"error": f"Cannot waste {wasted_amount} doses, only {vaccine_stock.vacStck_qty_avail} available"},
+                {"error": f"Cannot process {wasted_amount} doses, only {vaccine_stock.vacStck_qty_avail} available"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         try:
             with transaction.atomic():
-                # Update vaccine stock
-                vaccine_stock.wasted_dose += wasted_amount
-                vaccine_stock.vacStck_qty_avail -= wasted_amount
+                # Update vaccine stock based on action type
+                if action_type == "administered":
+                    # For administered vaccines, deduct from available stock only
+                    vaccine_stock.vacStck_qty_avail -= wasted_amount
+                    transaction_action = "Administered"
+                    success_message = f"Successfully recorded {wasted_amount} doses as administered"
+                else:  # action_type == "wasted"
+                    # For wasted vaccines, deduct from available stock and add to wasted count
+                    vaccine_stock.wasted_dose += wasted_amount
+                    vaccine_stock.vacStck_qty_avail -= wasted_amount
+                    transaction_action = "Wasted"
+                    success_message = f"Successfully wasted {wasted_amount} doses"
+                
                 vaccine_stock.save()
                 
                 # Update inventory timestamp - IMPORTANT: This updates the related Inventory object
@@ -1416,9 +1473,9 @@ class VaccineWasteView(APIView, WasteRequestMixin):
                 unit = "container/s" if vaccine_stock.solvent == "diluent" else "dose/s"
                 AntigenTransaction.objects.create(
                     antt_qty=f"{wasted_amount} {unit}",
-                    antt_action="Wasted",
+                    antt_action=transaction_action,
                     vacStck_id=vaccine_stock,
-                    staff_id=staff_id
+                    staff_id=staff_id,
                 )
                 
                 # Return serialized response using your existing serializer
@@ -1426,7 +1483,7 @@ class VaccineWasteView(APIView, WasteRequestMixin):
                 
                 return Response(
                     {
-                        "success": f"Successfully wasted {wasted_amount} {unit} of vaccine",
+                        "success": success_message,
                         "data": serializer.data
                     },
                     status=status.HTTP_200_OK
@@ -1437,7 +1494,6 @@ class VaccineWasteView(APIView, WasteRequestMixin):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
 
 class SupplyWasteView(APIView, WasteRequestMixin):
     def post(self, request, imzStck_id):
@@ -1454,20 +1510,48 @@ class SupplyWasteView(APIView, WasteRequestMixin):
         if error_response:
             return error_response
         
-        wasted_amount, staff_id = data
+        # Handle both old and new format
+        if len(data) == 2:
+            # Old format: (wasted_amount, staff_id)
+            wasted_amount, staff_id = data
+            action_type = request.data.get('action_type', 'wasted')  # Get from request data
+        else:
+            # New format: (wasted_amount, staff_id, action_type)
+            wasted_amount, staff_id, action_type = data
+        
+        # Validate action_type
+        if action_type not in ['administered', 'wasted']:
+            return Response(
+                {"error": "action_type must be either 'administered' or 'wasted'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Check available quantity
         if supply_stock.imzStck_avail < wasted_amount:
             return Response(
-                {"error": f"Cannot waste {wasted_amount} items, only {supply_stock.imzStck_avail} available"},
+                {"error": f"Cannot process {wasted_amount} items, only {supply_stock.imzStck_avail} available"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         try:
             with transaction.atomic():
-                # Update supply stock
-                supply_stock.wasted = (supply_stock.wasted or 0) + wasted_amount
-                supply_stock.imzStck_avail -= wasted_amount
+                # Update supply stock based on action type
+                if action_type == "administered":
+                    # For administered items, deduct from available stock only
+                    supply_stock.imzStck_avail -= wasted_amount
+                    transaction_action = "Administered"
+                    success_message = f"Successfully recorded {wasted_amount} items as administered"
+                elif action_type == "deducted":
+                    supply_stock.imzStck_avail -= wasted_amount
+                    transaction_action = "Deducted"
+                    success_message = f"Successfully recorded {wasted_amount} items as administered"
+                else:  # action_type == "wasted"
+                    # For wasted items, deduct from available stock and add to wasted count
+                    supply_stock.wasted = (supply_stock.wasted or 0) + wasted_amount
+                    supply_stock.imzStck_avail -= wasted_amount
+                    transaction_action = "Wasted"
+                    success_message = f"Successfully wasted {wasted_amount} items"
+                
                 supply_stock.save()
                 
                 # Update inventory timestamp - IMPORTANT: This updates the related Inventory object
@@ -1477,9 +1561,9 @@ class SupplyWasteView(APIView, WasteRequestMixin):
                 unit = "boxes" if supply_stock.imzStck_unit == "boxes" else "pcs"
                 AntigenTransaction.objects.create(
                     antt_qty=f"{wasted_amount} {unit}",
-                    antt_action="Wasted",
+                    antt_action=transaction_action,
                     imzStck_id=supply_stock,
-                    staff_id=staff_id
+                    staff_id=staff_id,
                 )
                 
                 # Return serialized response using your existing serializer
@@ -1487,7 +1571,7 @@ class SupplyWasteView(APIView, WasteRequestMixin):
                 
                 return Response(
                     {
-                        "success": f"Successfully wasted {wasted_amount} {unit} of supply",
+                        "success": success_message,
                         "data": serializer.data
                     },
                     status=status.HTTP_200_OK
@@ -1498,16 +1582,6 @@ class SupplyWasteView(APIView, WasteRequestMixin):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1709,7 +1783,7 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 opening_vials_added = calculate_quantities(
                     transactions.filter(created_at__date__lt=start_date), "added")
                 opening_doses_deducted = calculate_quantities(
-                    transactions.filter(created_at__date__lt=start_date), "deduct")
+                    transactions.filter(created_at__date__lt=start_date), "deducted")
                 opening_doses_wasted = calculate_quantities(
                     transactions.filter(created_at__date__lt=start_date), "wasted")
                 opening_doses_administered = calculate_quantities(
@@ -1721,7 +1795,7 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                     created_at__date__lte=end_date
                 )
                 received_vials = calculate_quantities(monthly_transactions, "added")
-                dispensed_doses = calculate_quantities(monthly_transactions, "deduct")
+                dispensed_doses = calculate_quantities(monthly_transactions, "deducted")
                 wasted_doses = calculate_quantities(monthly_transactions, "wasted")
                 administered_doses = calculate_quantities(monthly_transactions, "administered")
 

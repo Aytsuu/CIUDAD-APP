@@ -35,12 +35,10 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     }
   });
 
-  useEffect(() => {
-    console.log(historicalBFChecks);
-  }, [historicalBFChecks]);
+  
 
   const { handleSubmit, watch, setValue, getValues, formState, control } = form;
-  const { errors, isValid, isSubmitting } = formState;
+  const {  isSubmitting } = formState;
   const BFchecks = watch("BFchecks");
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -65,13 +63,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     return today.toDateString() === checkDate.toDateString();
   };
 
-  // Debug form state
-  useEffect(() => {
-    console.log("Form errors:", errors);
-    console.log("Form is valid:", isValid);
-    console.log("Form values:", getValues());
-    console.log("Historical BF checks:", historicalBFChecks);
-  }, [errors, isValid, getValues, historicalBFChecks]);
 
   // Update parent form data on change
   useEffect(() => {
@@ -83,7 +74,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
 
   const handleNext = async (data: FormData) => {
     try {
-      console.log("Submitting form with data:", data);
       updateFormData(data);
       onNext();
     } catch (error) {
@@ -157,7 +147,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
           shouldDirty: true
         });
 
-        console.log("Historical BF check updated:", updatedBFCheck);
       } else {
         // Create new BF check object
         const newBFCheck = {
@@ -177,7 +166,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
           shouldDirty: true
         });
 
-        console.log("BF date added/updated successfully:", newBFCheck);
       }
 
       setEditingIndex(null);
