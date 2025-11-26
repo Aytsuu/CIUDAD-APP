@@ -265,10 +265,31 @@ export const addCompletePregnancy = async (data: CompletePregnancyData) => {
   }
 };
 
+// for marking postpartum as complete
+export interface CompletePostpartumData {
+  pat_id: string;
+  pregnancy_id: string;
+}
+
+export const addCompletePostpartum = async (data: CompletePostpartumData) => {
+  try {
+    const res = await api2.post("maternal/pregnancy/postpartum/complete/", data);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Complete Postpartum Error: ", error.response?.data || error.message);
+    } else {
+      console.error("Unexpected Error: ", error);
+    }
+    throw error;
+  }
+};
+
 // for marking pregnancy as loss
 export interface PregnancyLossData {
   pat_id: string;
   pregnancy_id: string;
+  pregnancyloss_reason?: string;
 }
 
 export const addPregnancyLoss = async (data: PregnancyLossData) => {

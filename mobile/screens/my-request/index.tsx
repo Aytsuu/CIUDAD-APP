@@ -33,14 +33,14 @@ export default () => {
       gradient: ["#93c5fd", "#60a5fa"],
     },
     {
-      title: "Maternal Appointment",
-      route: "",
+      title: "Prenatal Appointment",
+      route: "/(health)/maternal/my-appointments",
       icon: "",
       gradient: ["#60a5fa", "#3b82f6"],
     },
     {
       title: "Medical Consultation",
-      route: "",
+      route: "/(health)/medconsultation/my-medappointments",
       icon: "",
       gradient: ["#2563eb", "#1e40af"],
     },

@@ -115,12 +115,7 @@ class MedicineListAvailableTable(APIView):
                 
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': ' '.join(filter(None, [
-                        medicine.med_name,
-                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
-                        medicine.med_dsg_unit,
-                        medicine.med_form
-                    ])).strip(),
+                    'med_name':medicine.med_name,
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -131,12 +126,7 @@ class MedicineListAvailableTable(APIView):
             else:
                 medicine_data.append({
                     'med_id': medicine.med_id,
-                    'med_name': ' '.join(filter(None, [
-                        medicine.med_name,
-                        str(medicine.med_dsg) if medicine.med_dsg not in (None, '') else None,
-                        medicine.med_dsg_unit,
-                        medicine.med_form
-                    ])).strip(),
+                    'med_name': medicine.med_name,
                     'med_type': medicine.med_type,
                     'form': medicine.med_form,
                     'dosage': f"{medicine.med_dsg} {medicine.med_dsg_unit}".strip(),
@@ -160,14 +150,20 @@ class MedicineListAvailableTable(APIView):
 class MedicineListTable(generics.ListAPIView):
     serializer_class = MedicineListSerializers
     pagination_class = StandardResultsPagination
-    
+
     def get_queryset(self):
         queryset = Medicinelist.objects.all().order_by('med_id')
         search_query = self.request.GET.get('search', '').strip()
-        
+
         if search_query:
-            queryset = queryset.filter(med_name__icontains=search_query)
-        
+            queryset = queryset.filter(
+                Q(med_name__icontains=search_query) |
+                Q(med_type__icontains=search_query) |
+                Q(med_dsg_unit__icontains=search_query) |
+                Q(med_form__icontains=search_query) |
+                Q(cat__cat_name__icontains=search_query)
+            )
+
         return queryset
 
 

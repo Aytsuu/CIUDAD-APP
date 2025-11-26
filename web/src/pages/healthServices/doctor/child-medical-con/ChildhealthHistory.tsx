@@ -10,7 +10,6 @@ import TableLoading from "../../../../components/ui/table-loading";
 import { HealthHistoryTable } from "../../childservices/viewrecords/health-history-table";
 
 export default function PendingDisplayMedicalConsultation({
-  patientData,
   checkupData,
   onNext,
 }: any) {

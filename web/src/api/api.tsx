@@ -29,7 +29,6 @@ export const api = axios.create({
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
-//     "Accept": "application/json",
 //   },
 // });
 
@@ -44,6 +43,6 @@ export const api2 = axios.create({
   },
 });
 
-setupApiInterceptor(api)
+setupApiInterceptor(api);
 
-export default api
+export default api;

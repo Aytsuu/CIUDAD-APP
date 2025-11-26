@@ -62,7 +62,7 @@ export const CommodityStocksSchema = withPiecesValidation(z.object({
 
 export const FirstAidStockSchema = withPiecesValidation(z.object({
   fa_id: z.string().min(1, "First aid item is required"),
-  category: z.string().min(1, "Category is required"),
+  // category: z.string().min(1, "Category is required"),
   finv_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   finv_qty_unit: z.string().min(1, "Unit is required").default(""),
   finv_pcs: positiveNumberSchema.optional(),
@@ -84,17 +84,19 @@ export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
   imzStck_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   imzStck_pcs: positiveNumberSchema.optional(),
   imzStck_unit: z.string().min(1, "Unit is required").default(""),
-  inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
+  inv_type: z.string().min(1, "Inventory type is required").default("Antigen"),
   staff: z.string().optional(),
-  expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => {
+  expiry_date: z.string().optional().refine(
+    date => {
+      if (!date) return true;
       const now = new Date();
       const expiry = new Date(date);
       const diff = expiry.getTime() - now.getTime();
       return diff > 15 * 24 * 60 * 60 * 1000; // 15 days in ms
-    }, "Expiry date must be at least 15 days in the future")
-}
-));
+    },
+    "Expiry date must be at least 15 days in the future"
+  )
+}));
 
 
 

@@ -74,7 +74,7 @@ export const IllnessComponent = ({
   // Mutation for adding new illness - SIMPLIFIED like PhysicalExam component
   const { mutate: addIllness } = useMutation({
     mutationFn: createIllness,
-    onMutate: (newIllnessName) => {
+    onMutate: () => {
       setIsAdding(true);
       // Just show loading state, don't create optimistic data with fake IDs
     },

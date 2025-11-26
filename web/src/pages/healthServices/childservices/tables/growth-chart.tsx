@@ -116,8 +116,8 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 mt-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center flex-wrap gap-2">
             <Button 
               variant={selectedMetrics.height ? "default" : "outline"} 
               size="sm" 
@@ -168,26 +168,28 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
             <p className="text-sm text-gray-500 max-w-sm">No measurements have been recorded for this patient yet.</p>
           </div>
         ) : (
-          <div className="h-[450px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#666" />
-                <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Height (cm)", angle: -90, position: "insideLeft" }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Weight (kg)", angle: 90, position: "insideRight" }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
+          <div className="h-[450px] w-full overflow-x-auto">
+            <div className="min-w-[600px] h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#666" />
+                  <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Height (cm)", angle: -90, position: "insideLeft" }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Weight (kg)", angle: 90, position: "insideRight" }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
 
-                {selectedMetrics.height && <Line yAxisId="left" type="monotone" dataKey="height" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }} name="Height (cm)" />}
+                  {selectedMetrics.height && <Line yAxisId="left" type="monotone" dataKey="height" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }} name="Height (cm)" />}
 
-                {selectedMetrics.weight && <Line yAxisId="right" type="monotone" dataKey="weight" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#10b981", strokeWidth: 2 }} name="Weight (kg)" />}
-              </LineChart>
-            </ResponsiveContainer>
+                  {selectedMetrics.weight && <Line yAxisId="right" type="monotone" dataKey="weight" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#10b981", strokeWidth: 2 }} name="Weight (kg)" />}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
 
         {chartData.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div className="text-center">
               <p className="text-sm text-gray-500">Latest Height</p>
               <p className="text-lg font-semibold text-blue-600">{chartData[chartData.length - 1]?.height} cm</p>

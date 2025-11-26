@@ -5,8 +5,6 @@ import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle,
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
-"use client";
-
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';

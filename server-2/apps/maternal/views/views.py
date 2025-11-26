@@ -2,7 +2,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from django.db.models import OuterRef, Exists, Prefetch, Q, Count
+from django.db.models import OuterRef, Exists, Prefetch, Q, Count, Case, When, IntegerField
 from rest_framework.response import Response
 
 from apps.maternal.serializers.serializer import *
@@ -78,6 +78,142 @@ class MaternalPatientsListView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PrenatalFormListWithCareView(generics.ListAPIView):
+    """List prenatal forms with embedded prenatal care entries.
+
+    Optional filters:
+        - pregnancy_id: Get forms from a specific pregnancy (overrides default latest behavior)
+
+    Pagination: Disabled (returns full list). Re‑enable if dataset grows.
+    """
+    serializer_class = PrenatalFormListWithCareSerializer
+
+    def get_queryset(self):
+        qs = Prenatal_Form.objects.select_related('pregnancy_id').prefetch_related('pf_prenatal_care').all()
+        pregnancy_id = self.request.query_params.get('pregnancy_id')
+
+        if pregnancy_id:
+            # Explicit pregnancy_id filter
+            qs = qs.filter(pregnancy_id__pregnancy_id=pregnancy_id)
+        else:
+            # Default: Get the latest pregnancy and return only its forms
+            latest_pregnancy = Pregnancy.objects.order_by(
+                Case(
+                    When(status='active', then=0),
+                    default=1,
+                    output_field=IntegerField(),
+                ),
+                '-created_at'
+            ).first()
+            
+            if latest_pregnancy:
+                qs = qs.filter(pregnancy_id__pregnancy_id=latest_pregnancy.pregnancy_id)
+            else:
+                qs = qs.none()
+
+        return qs.order_by('-created_at')
+
+
+class PatientCombinedFollowUpsView(APIView):
+    """Return combined prenatal follow-up visits (FollowUpVisit linked via Prenatal_Form.followv_id)
+    and postpartum assessments (ppa entries) for a patient, flattened into a unified list."""
+    def get(self, request, pat_id):
+        try:
+            patient = Patient.objects.get(pat_id=pat_id)
+        except Patient.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=404)
+
+        status_filter = request.GET.get('status', '').lower().strip()
+        type_filter = request.GET.get('type', '').lower().strip()
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        try:
+            limit = int(request.GET.get('limit', 200))
+        except ValueError:
+            limit = 200
+
+        # Collect pregnancies for patient (active first, then others by created desc)
+        pregnancies = Pregnancy.objects.filter(pat_id=patient).order_by(
+            Case(When(status='active', then=0), default=1, output_field=IntegerField()), '-created_at'
+        )
+
+        combined = []
+        for preg in pregnancies:
+            # Prenatal follow-up visits via Prenatal_Form.followv_id
+            prenatal_forms = Prenatal_Form.objects.filter(pregnancy_id=preg).select_related('followv_id').order_by('-created_at')
+            for pf in prenatal_forms:
+                if pf.followv_id:
+                    fu = pf.followv_id
+                    visit_date = fu.followv_date
+                    # Date filtering
+                    if from_date and visit_date < from_date:
+                        continue
+                    if to_date and visit_date > to_date:
+                        continue
+                    combined.append({
+                        'source': 'prenatal',
+                        'pregnancy_id': preg.pregnancy_id,
+                        'visit_id': fu.followv_id,
+                        'linked_form_id': pf.pf_id,
+                        'status': fu.followv_status,
+                        'description': fu.followv_description,
+                        'visit_date': visit_date,
+                        'created_at': fu.created_at,
+                        'completed_at': fu.completed_at,
+                    })
+
+            # Postpartum assessments as follow-up style entries
+            postpartum_records = PostpartumRecord.objects.filter(pregnancy_id=preg).select_related('followv_id').prefetch_related('postpartum_assessment').order_by('-created_at')
+            for ppr in postpartum_records:
+                assessments = ppr.postpartum_assessment.all() if hasattr(ppr, 'postpartum_assessment') else []
+                for ass in assessments:
+                    visit_date = ass.ppa_date_of_visit
+                    if from_date and visit_date < from_date:
+                        continue
+                    if to_date and visit_date > to_date:
+                        continue
+                    
+                    # Use FollowUpVisit description if available, otherwise use findings
+                    description = 'Postpartum assessment'
+                    if ppr.followv_id:
+                        description = ppr.followv_id.followv_description
+                    elif ass.ppa_findings:
+                        description = ass.ppa_findings
+                    
+                    combined.append({
+                        'source': 'postpartum',
+                        'pregnancy_id': preg.pregnancy_id,
+                        'visit_id': ass.ppa_id,
+                        'linked_record_id': ppr.ppr_id,
+                        'status': 'completed',  # postpartum assessments implicitly completed
+                        'description': description,
+                        'visit_date': visit_date,
+                        'created_at': visit_date,  # use visit date as created date
+                        'completed_at': visit_date,  # use visit date as completed date
+                    })
+
+        # Optional filtering by status/type after aggregation
+        if status_filter:
+            combined = [c for c in combined if c.get('status', '').lower() == status_filter]
+        if type_filter in ('prenatal', 'postpartum'):
+            combined = [c for c in combined if c.get('source') == type_filter]
+
+        # Sort by visit_date descending
+        combined.sort(key=lambda x: x.get('visit_date') or '', reverse=True)
+
+        # Apply limit
+        combined = combined[:limit]
+
+        return Response({
+            'patient_id': pat_id,
+            'count': len(combined),
+            'limit_applied': limit,
+            'results': combined,
+            'has_more': len(combined) == limit  # simple indicator; real pagination would refine
+        })
+
 
 # medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
@@ -637,7 +773,8 @@ class PatientPregnancyRecordsListView(generics.ListAPIView):
         if filters:
             pregnancies = pregnancies.filter(filters)
 
-        pregnancies = pregnancies.order_by('-created_at').prefetch_related(
+        # Order pregnancies by pregnancy_id (string contains zero-padded numeric suffix so lexical desc works for latest first)
+        pregnancies = pregnancies.order_by('-pregnancy_id').prefetch_related(
             Prefetch('prenatal_form', queryset=Prenatal_Form.objects.all().order_by('-created_at')),
             Prefetch('postpartum_record', queryset=PostpartumRecord.objects.prefetch_related('postpartum_delivery_record', 'vital_id').order_by('-created_at'))
         )

@@ -1,6 +1,6 @@
 import PageLayout from "@/screens/_PageLayout";
 import PersonalInformation from "../PersonalInformation";
-import { ScrollView, TouchableOpacity, Text } from "react-native";
+import { TouchableOpacity, Text } from "react-native";
 import { router } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -23,7 +23,7 @@ export default function IndividualInformation() {
 
   const submit = () => {
     router.push("/registration/individual/scan");
-  }
+  };
 
   // ===================== RENDER =====================
   return (
@@ -37,7 +37,9 @@ export default function IndividualInformation() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Personal Information</Text>}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">Personal Information</Text>
+      }
       rightAction={
         <ConfirmationModal
           title="Exit Registration"
@@ -55,23 +57,21 @@ export default function IndividualInformation() {
         />
       }
     >
-      <ScrollView>
-        {type == "individual" ? (
-          <PersonalInformation
-            params={{
-              name: "personalInfoSchema",
-              buttonLabel: "Save and Continue",
-              submit: submit
-            }}
-          />
-        ) : (
-          <BusinessRespondent
-            params={{
-              submit: submit
-            }}
-          />
-        )}
-      </ScrollView>
+      {type == "individual" ? (
+        <PersonalInformation
+          params={{
+            name: "personalInfoSchema",
+            buttonLabel: "Save and Continue",
+            submit: submit,
+          }}
+        />
+      ) : (
+        <BusinessRespondent
+          params={{
+            submit: submit,
+          }}
+        />
+      )}
     </PageLayout>
-  )
+  );
 }

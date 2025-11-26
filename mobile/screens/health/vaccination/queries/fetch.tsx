@@ -126,59 +126,48 @@ export const useFollowupChildHealthandVaccines = (patientId?: string) => {
 
   
 
-
 export const useUnvaccinatedVaccines = (patientId?: string, patientDob?: string) => {
   return useQuery({
-    queryKey: ['unvaccinatedVaccines', patientId, patientDob],
+    queryKey: ["unvaccinatedVaccines", patientId, patientDob],
     queryFn: async () => {
       if (!patientId) return [];
       
-      // 1. First get ALL vaccines the patient hasn't received
-      const allUnvaccinated = await getUnvaccinatedVaccines(patientId);
-      if (!allUnvaccinated) return [];
-      
-      // 2. If no DOB provided, return basic unvaccinated list
-      if (!patientDob) {
-        return allUnvaccinated.map((vaccine:any) => ({
+      try {
+        const allUnvaccinated = await getUnvaccinatedVaccines(patientId);
+        
+        if (!allUnvaccinated || !Array.isArray(allUnvaccinated) || allUnvaccinated.length === 0) {
+          return [];
+        }
+
+        // Map the response to include proper structure
+        return allUnvaccinated.map((vaccine: any) => ({
+          vac_id: vaccine?.vac_id,
           vac_name: vaccine?.vac_name || "Unknown Vaccine",
-          vac_type_choices: vaccine?.vac_type_choices || "Unknown Type"
+          vac_type_choices: vaccine?.vac_type_choices || "Unknown Type",
+          no_of_doses: vaccine?.no_of_doses || 0,
+          // Include age group info for display
+          age_group: vaccine.age_group
+            ? {
+                agegrp_id: vaccine.age_group.agegrp_id,
+                name: vaccine.age_group.agegroup_name,
+                agegroup_name: vaccine.age_group.agegroup_name,
+                min_age: vaccine.age_group.min_age,
+                max_age: vaccine.age_group.max_age,
+                time_unit: vaccine.age_group.time_unit,
+                range: vaccine.age_group.time_unit !== "NA" 
+                  ? `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`
+                  : "No age restriction"
+              }
+            : null
         }));
+      } catch (error) {
+        console.error("Error fetching unvaccinated vaccines:", error);
+        return [];
       }
-      
-      // 3. Filter by age group
-      return allUnvaccinated.filter((vaccine:any) => {
-        const ageGroup = vaccine.age_group;
-        
-        // Include if vaccine has no age group requirements
-        if (!ageGroup) return true;
-        
-        const { min_age, max_age, time_unit } = ageGroup;
-        
-        // Include if age group has no valid restrictions
-        if (time_unit === "NA" || min_age == null || max_age == null) {
-          return true;
-        }
-        
-        try {
-          // Calculate patient's age in the required unit
-          const ageInUnit = getAgeInUnit(patientDob, time_unit);
-          return ageInUnit >= min_age && ageInUnit <= max_age;
-        } catch (error) {
-          console.error("Age calculation error:", error);
-          return false;
-        }
-      }).map((vaccine:any) => ({
-        vac_name: vaccine?.vac_name || "Unknown Vaccine",
-        vac_type_choices: vaccine?.vac_type_choices || "Unknown Type",
-        // Include age group info for display
-        age_group: vaccine.age_group ? {
-          name: vaccine.age_group.agegroup_name,
-          range: `${vaccine.age_group.min_age}-${vaccine.age_group.max_age} ${vaccine.age_group.time_unit}`
-        } : null
-      }));
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!patientId,
+    retry: 3
   });
 };
 

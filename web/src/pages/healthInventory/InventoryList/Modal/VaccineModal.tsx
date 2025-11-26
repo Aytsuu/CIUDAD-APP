@@ -18,7 +18,7 @@ import { fetchAgeGroups } from "@/pages/healthServices/agegroup/queries/fetch";
 import { isDuplicateVaccine, isDuplicateVaccineList } from "./duplicateChecker";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Combobox } from "@/components/ui/combobox";
-
+import { useAuth } from "@/context/AuthContext";
 interface VaccineModalProps {
   mode: "add" | "edit";
   initialData?: any;
@@ -26,6 +26,8 @@ interface VaccineModalProps {
 }
 
 export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) {
+    const { user } = useAuth();
+  const staff = user?.staff?.staff_id;
   const [formData, setFormData] = useState<VaccineType | null>(null);
   const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const { mutateAsync: submitVaccine, isPending: isSubmitting } = useSubmitVaccine();
@@ -53,6 +55,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
             interval: (vaccineData.vaccineType === "Routine" && vaccineData.doseDetails[0]?.interval) || 1,
             unit: (vaccineData.vaccineType === "Routine" && vaccineData.doseDetails[0]?.unit) || "years",
           },
+          staff: staff || ""
         }
       : {
           vaccineName: "",
@@ -65,6 +68,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
             interval: 1,
             unit: "years",
           },
+          staff: staff || ""
         };
 
   const form = useForm<VaccineType>({

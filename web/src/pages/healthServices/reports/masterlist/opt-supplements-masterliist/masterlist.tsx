@@ -93,8 +93,8 @@ export default function ChildHealthSupplementsReport() {
       "Deworming (12-23 months - 2nd dose)": formatSupplementDate(record.supplements.deworming["12-23"]["2nd_dose"]),
       "Deworming (24-59 months - 1st dose)": formatSupplementDate(record.supplements.deworming["24-59"]["1st_dose"]),
       "Deworming (24-59 months - 2nd dose)": formatSupplementDate(record.supplements.deworming["24-59"]["2nd_dose"]),
-      Sitio: record.sitio || "",
-      "Feeding Type": record.type_of_feeding || "",
+      // Sitio: record.sitio || "",
+      // "Feeding Type": record.type_of_feeding || "",
     }));
   };
 
@@ -198,9 +198,9 @@ export default function ChildHealthSupplementsReport() {
                           Deworming
                         </th>
 
-                        <th rowSpan={3} className="px-2 py-2 text-center font-medium min-w-[100px]">
+                        {/* <th rowSpan={3} className="px-2 py-2 text-center font-medium min-w-[100px]">
                           Remarks
-                        </th>
+                        </th> */}
                       </tr>
                       <tr className="border-b border-black">
                         <th colSpan={1} className="border-r border-black px-1 py-1 text-center font-medium text-[10px]">
@@ -252,6 +252,7 @@ export default function ChildHealthSupplementsReport() {
                         <th className="border-r border-black px-1 py-1 text-center font-medium text-[9px]">1st Dose</th>
                         <th className="border-r border-black px-1 py-1 text-center font-medium text-[9px]">2nd Dose</th>
                       </tr>
+                      {/* Removed Remarks column */}
                     </thead>
 
                     <tbody>
@@ -295,10 +296,10 @@ export default function ChildHealthSupplementsReport() {
                           <td className="border-r border-black px-1 py-2 text-center text-[10px]">{formatSupplementDate(record.supplements.deworming["24-59"]["2nd_dose"])}</td>
 
                           {/* Remarks */}
-                          <td className="px-2 py-2 text-left text-[10px]">
+                          {/* <td className="px-2 py-2 text-left text-[10px]">
                             {record.sitio && `Sitio: ${record.sitio}`}
                             {record.type_of_feeding && `, ${record.type_of_feeding}`}
-                          </td>
+                          </td> */}
                         </tr>
                       ))}
                     </tbody>

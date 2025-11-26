@@ -27,6 +27,7 @@ import CommodityTransactionTable from "@/pages/healthInventory/transaction/table
 import FirstAidTransactionTable from "@/pages/healthInventory/transaction/tables/TransactionFirstAidList";
 import InventoryStocksLayout from "@/pages/healthInventory/inventoryStocks/InventoryStocksLayout";
 import FirstAidStocks from "@/pages/healthInventory/inventoryStocks/tables/FirstAidStocks";
+import FirstAidArchiveTable from "@/pages/healthServices/archive/Inventory/tables/FirstAidStocks";
 
 
 export const healthinventory = [
@@ -85,7 +86,7 @@ export const healthinventory = [
               { path: "medicine", element: <MedicineArchiveTable /> },
               { path: "antigen", element: <CombinedStockTableArchive /> },
               { path: "commodity", element: <CommodityArchiveTable /> },
-              { path: "firstaid", element: <MedicineArchiveTable /> }
+              { path: "firstaid", element: <FirstAidArchiveTable /> }
             ]
           },
           {

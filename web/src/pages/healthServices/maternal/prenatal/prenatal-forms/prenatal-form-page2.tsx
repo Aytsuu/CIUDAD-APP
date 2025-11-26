@@ -21,7 +21,6 @@ import { showErrorToast } from "@/components/ui/toast"
 // maternal components
 import LaboratoryResults, {
   createInitialLabResults,
-  getLabResultsSummary,
   validateLabResults,
   convertLabResultsToSchema,
   type LabResults,
@@ -31,7 +30,7 @@ import LaboratoryResults, {
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // hooks
-import { fetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
+import { useFetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
 import { usePrenatalLabResult } from "../../queries/maternalFetchQueries"
 
 // helpers
@@ -64,7 +63,7 @@ export default function PrenatalFormSecPg({
   const patientDob = form.watch("motherPersonalInfo.motherDOB")
   const pregnancyId = form.watch("pregnancy_id")
 
-  const { data: vaccineStocksData, isLoading: isVaccineLoading } = fetchVaccinesWithStock(patientDob)
+  const { data: vaccineStocksData, isLoading: isVaccineLoading } = useFetchVaccinesWithStock(patientDob)
   const { data: prenatalLabResults } = usePrenatalLabResult(pregnancyId || "")
 
   // Check if selected vaccine is conditional
@@ -114,10 +113,10 @@ export default function PrenatalFormSecPg({
   const handleNext = async () => {
     // validate lab results first
     const labValidation = validateLabResults(labResults)
-    console.log("Lab validation result:", labValidation.isValid, "Errors:", labValidation.errors)
+    // console.log("Lab validation result:", labValidation.isValid, "Errors:", labValidation.errors)
 
     if (!labValidation.isValid) {
-      console.log("Lab validation failed, preventing page transition.")
+      // console.log("Lab validation failed, preventing page transition.")
       setLabErrors(labValidation.errors)
       // scroll to lab results section
       const labSection = document.querySelector('[data-section="laboratory-results"]')
@@ -127,19 +126,16 @@ export default function PrenatalFormSecPg({
       return 
     }
 
-    // get lab summary for logging/processing
-    const labSummary = getLabResultsSummary(labResults)
-
     // other form validation on this page
     const isValid = await form.trigger(["previousPregnancy", "prenatalVaccineInfo", "presentPregnancy"])
-    console.log("Page 2 RHF validation result:", isValid, "Errors:", form.formState.errors)
+    // console.log("Page 2 RHF validation result:", isValid, "Errors:", form.formState.errors)
 
     if (isValid) {
-      console.log("Form is valid, proceeding to next page")
-      console.log("Lab Results: ", labSummary)
+      // console.log("Form is valid, proceeding to next page")
+      // console.log("Lab Results: ", labSummary)
       onSubmit()
     } else {
-      console.log("Form validation failed for RHF fields.")
+      // console.log("Form validation failed for RHF fields.")
       // scroll to first error
       const firstError = document.querySelector('[data-error="true"]')
       if (firstError) {
@@ -155,7 +151,7 @@ export default function PrenatalFormSecPg({
     // Clear total dose when vaccine changes
     form.setValue("prenatalVaccineInfo.vacrec_totaldose", undefined)
     
-    console.log("Selected vaccine:", value)
+    // console.log("Selected vaccine:", value)
   }  
 
   // tetanus toxoid history
@@ -182,7 +178,7 @@ export default function PrenatalFormSecPg({
 
     setTTRecords((prev) => {
       const upd = [...prev, newTTData]
-      console.log("Updated TT Records:", upd)
+      // console.log("Updated TT Records:", upd)
       form.setValue("prenatalVaccineInfo.ttRecordsHistory", upd)
       return upd
     })
@@ -198,7 +194,7 @@ export default function PrenatalFormSecPg({
     const existingTTRecords = form.getValues("prenatalVaccineInfo.ttRecordsHistory") || []
     
     if (existingTTRecords.length > 0 && ttRecords.length === 0) {
-      console.log("Loading existing TT records from API:", existingTTRecords)
+      // console.log("Loading existing TT records from API:", existingTTRecords)
       setTTRecords(existingTTRecords)
     }
   }, [ttRecords.length, form])
@@ -219,7 +215,7 @@ export default function PrenatalFormSecPg({
   // Load lab results from API when pregnancy ID changes
   useEffect(() => {
     if (prenatalLabResults?.lab_results && prenatalLabResults.lab_results.length > 0) {
-      console.log("Loading lab results from API:", prenatalLabResults)
+      // console.log("Loading lab results from API:", prenatalLabResults)
       const mappedLabResults = mapApiLabResultsToFormData(prenatalLabResults)
       setLabResults(mappedLabResults)
     }

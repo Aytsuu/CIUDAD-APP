@@ -12,6 +12,7 @@ export const addMedicine = async (data : Record<string, string>) => {
         med_form: data.med_form ? toTitleCase(data.med_form) : null,
         cat: data.cat_id ? parseInt(data.cat_id, 10) : null,
         med_type: data.med_type ? toTitleCase(data.med_type) : null,
+        staff: data.staff,
       });
   
       return res.data;

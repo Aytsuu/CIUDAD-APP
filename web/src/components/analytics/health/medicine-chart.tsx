@@ -67,7 +67,7 @@ export function MedicineDistributionChart({ initialMonth }: MedicineDistribution
   });
 
   // Custom Tooltip
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[]; label?: string }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

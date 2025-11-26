@@ -13,6 +13,9 @@ class MaternalConfig(AppConfig):
     name = 'apps.maternal'
 
     def ready(self):
+        # Import signals
+        import apps.maternal.signals
+        
         # Start scheduler for follow-up checks
         if settings.SCHEDULER_AUTOSTART and os.environ.get("RUN_MAIN") == "true":
             self.start_scheduler()

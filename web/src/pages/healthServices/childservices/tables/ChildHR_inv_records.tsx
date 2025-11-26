@@ -97,7 +97,7 @@ export default function InvChildHealthRecords() {
     const additionalInfo = patDetails?.additional_info || patrecDetails?.additional_info || chrecDetails?.additional_info || {};
 
     const resolvedDob = personalInfo?.per_dob || ChildHealthRecord?.dob || "";
-    const resolvedAge = resolvedDob ? calculateAgeFromDOB(resolvedDob).years.toString() : "";
+    const resolvedAge = resolvedDob ? calculateAgeFromDOB(resolvedDob).ageString : "";
 
     return {
       pat_id: chrecDetails?.patient || patDetails?.pat_id || ChildHealthRecord?.pat_id || patId || "",
@@ -113,7 +113,7 @@ export default function InvChildHealthRecords() {
       mother_occupation: chrecDetails?.mother_occupation || motherInfo?.per_occupation || "",
       mother_dob: motherInfo?.per_dob || familyHeadInfo?.mother?.per_dob || patDetails?.mother_dob || "",
       mother_rp_id: familyHeadInfo?.mother?.rp_id || motherInfo?.rp_id || patDetails?.mother_rp_id || familyHeadInfo?.rp_id || "",
-      mother_pat_id: additionalInfo?.mother_latest_pregnancy?.mother_pat_id || motherInfo?.pat_id || familyHeadInfo?.mother?.pat_id || patDetails?.mother_pat_id || chrecDetails?.mother_pat_id || "",
+      mother_pat_id: additionalInfo?.mother_latest_pregnancy?.mother_pat_id ||  "",
       motherAddress: {
         full_address:
           motherAddress?.full_address ||
@@ -158,6 +158,8 @@ export default function InvChildHealthRecords() {
       chrec_id: chrecDetails?.chrec_id || chrecId || "",
     };
   }, [historyData, ChildHealthRecord, patId, chrecId]);
+
+  console.log("Derived Child Data:", derivedChildData);
 
   // Use paginated array directly for table
   const processedHistoryData = useMemo(() => {

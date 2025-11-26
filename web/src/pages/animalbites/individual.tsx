@@ -11,6 +11,7 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { getPatientDetails } from "../record/health/patientsRecord/restful-api/get";
 
 type PatientRecordDetail = {
   bite_id: number;
@@ -49,7 +50,7 @@ const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string |
   </div>
 );
 
-// --- New Printable Referral Slip Component (Redesigned) ---
+// --- Printable Referral Slip Component ---
 const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => {
   const slipRef = useRef<HTMLDivElement>(null);
 
@@ -154,6 +155,7 @@ const IndividualPatientHistory: React.FC = () => {
     }
   }, [patientId, navigate]);
 
+  // Query for Animal Bite History
   const {
     data: patientRecords = [],
     isLoading,
@@ -166,8 +168,23 @@ const IndividualPatientHistory: React.FC = () => {
     refetchOnWindowFocus: true,
   });
 
+  // 2. Query for Patient Full Details (Fixes the missing address issue)
+  const { data: fetchedPatientInfo } = useQuery({
+    queryKey: ["patientDetails", patientId],
+    queryFn: () => getPatientDetails(patientId),
+    enabled: !!patientId
+  });
+
+  // 3. Updated Patient Info Logic (Prioritizes fetched data)
   const patientInfo = useMemo(() => {
+    // If we have the full details from the API, use them (contains address)
+    if (fetchedPatientInfo) {
+      return fetchedPatientInfo;
+    }
+
+    // Fallback to the partial data passed from the previous screen
     if (!patientData) return null;
+
     return {
       pat_id: patientData.pat_id,
       pat_type: patientData.pat_type,
@@ -182,7 +199,7 @@ const IndividualPatientHistory: React.FC = () => {
         add_street: patientData.address?.add_street || "",
       },
     };
-  }, [patientData]);
+  }, [patientData, fetchedPatientInfo]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -306,8 +323,8 @@ const IndividualPatientHistory: React.FC = () => {
     );
   }
 
-  const patientName = patientData
-    ? `${patientData.personal_info.per_fname} ${patientData.personal_info.per_lname}`
+  const patientName = patientInfo
+    ? `${patientInfo.personal_info.per_fname} ${patientInfo.personal_info.per_lname}`
     : "Patient";
 
   return (
@@ -347,9 +364,6 @@ const IndividualPatientHistory: React.FC = () => {
           />
         </div>
 
-        {/* Charts Section */}
-       
-
         {/* Records Summary Table */}
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-3">
@@ -378,14 +392,13 @@ const IndividualPatientHistory: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {patientRecords.map((record, index) => (
+                {patientRecords.map((record) => (
                   <div key={record.bite_id} className="flex-shrink-0 w-72 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-5 border-2 border-blue-200 shadow-md hover:shadow-xl transition-all">
                     <div className="border-b-2 border-blue-300 pb-3 mb-4 text-center">
                       <div className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md">
                         <Calendar size={18} />
                         {new Date(record.referral_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                      {/* <div className="mt-2 text-xs text-gray-500 font-medium">Incident #{patientRecords.length - index}</div> */}
                     </div>
                     <div className="space-y-4">
                       {historyFields.map((field) => (

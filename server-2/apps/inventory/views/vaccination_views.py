@@ -101,7 +101,10 @@ class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdate
         imzStck_id = self.kwargs.get('imzStck_id')
         obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
         return obj
-     
+class ImmunizationSuppliesStockListView(generics.ListAPIView):
+    serializer_class = ImmnunizationStockSuppliesSerializer
+    queryset = ImmunizationStock.objects.all()
+
 class ImmunizationStockCreate(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -166,11 +169,17 @@ class ImmunizationStockCreate(APIView):
     
     def _prepare_inventory_data(self, data):
         """Prepare inventory data from request"""
-        return {
-            'expiry_date': data.get('expiry_date'),
+        inventory_data = {
             'inv_type': data.get('inv_type', 'Antigen'),  # default type
             'is_Archived': False
         }
+        
+        # Only include expiry_date if it's provided and not empty
+        expiry_date = data.get('expiry_date')
+        if expiry_date:
+            inventory_data['expiry_date'] = expiry_date
+        
+        return inventory_data
     
     def _prepare_immunization_stock_data(self, data, inv_id):
         """Prepare immunization stock data from request"""
@@ -673,11 +682,11 @@ class CombinedStockTable(APIView):
                 if stock.solvent and stock.solvent.lower() == "diluent":
                     available_stock = stock.vacStck_qty_avail
                     # For diluent, low stock threshold is 10 containers
-                    low_stock_threshold = 10
+                    low_stock_threshold = 20
                 else:
                     available_stock = stock.vacStck_qty_avail
                     # For regular vaccines, low stock threshold is 10 vials
-                    low_stock_threshold = 10
+                    low_stock_threshold = 20
                 
                 # Check expiry status
                 expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
@@ -1042,6 +1051,8 @@ class AntigenTransactionView(APIView):
                 item_name = "Unknown Item"
                 item_type = "Unknown"
                 inv_id = "N/A"
+                unit = "N/A"
+                dose_ml = 0
                 
                 if vaccine_stock:
                     vaccine = vaccine_stock.vac_id
@@ -1055,6 +1066,7 @@ class AntigenTransactionView(APIView):
                     immunization = immunization_stock.imz_id
                     inventory = immunization_stock.inv_id
                     item_name = immunization.imz_name if immunization else "Unknown Supply"
+                    unit = immunization_stock.imzStck_unit if immunization_stock.imzStck_unit else "pcs"
                     item_type = "Immunization Supply"
                     inv_id = inventory.inv_id if inventory else "N/A"
                 

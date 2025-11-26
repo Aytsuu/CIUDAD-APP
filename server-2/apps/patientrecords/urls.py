@@ -25,6 +25,7 @@ urlpatterns = [
     path('children/',ChildPatientsWithoutRecordsView.as_view(), name='children-without-records'),
     path('patient/check-or-create/', check_or_create_patient, name='check-or-create-patient'), # for mobile prenatal appointment
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
+    path('patient/history/', PatientHistoryView.as_view(), name='patient-history'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
     path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
@@ -51,8 +52,7 @@ urlpatterns = [
    
     path("findings/", FindingView.as_view(), name="findings"),
 
-    path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
+    path('patient-followup-visits/<str:pat_id>/', GetPatientFollowUpVisits.as_view(), name='patient-followup-visits'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),

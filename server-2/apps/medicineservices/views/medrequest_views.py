@@ -49,7 +49,7 @@ def send_cancellation_notification_to_staff(medicine_request_item, reason):
                 title=title,
                 message=message,
                 recipients=staff_recipients,
-                notif_type="CANCELLED", # Custom type
+                notif_type="MEDICINE_STAFF_CANCELLED", # Custom type
                 web_route="/services/medicine/requests/cancelled", # Or your admin-facing route
                 web_params={},
                 mobile_route="", 
@@ -92,6 +92,7 @@ def send_new_medicine_request_notification_to_staff(medicine_request):
         
         # --- Get Staff Recipients (Admin & BHW) ---
         staff_to_notify = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
             pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
         ).select_related('rp')
         
@@ -106,10 +107,10 @@ def send_new_medicine_request_notification_to_staff(medicine_request):
                 title=title,
                 message=message,
                 recipients=staff_recipients,
-                notif_type="PENDING", # Custom type for staff
+                notif_type="MEDICINE_STAFF_PENDING", 
                 web_route="/services/medicine/requests/pending",
                 web_params={},
-                mobile_route="", # Assumed admin mobile route
+                mobile_route="", 
                 mobile_params={},
             )
             
@@ -368,7 +369,14 @@ class SubmitMedicineRequestView(APIView):
                         pat_instance = Patient.objects.get(rp_id=rp_instance)
                         print(f"✅ DEBUG: Found patient for resident: {pat_instance.pat_id}")
                     except Patient.DoesNotExist:
-                        return Response({"error": f"No patient found for resident ID {rp_id}"}, status=status.HTTP_404_NOT_FOUND)
+                        print(f"⚠️ DEBUG: No patient found for resident {rp_id}. Creating new Patient record...")
+                        # Auto-create the Patient entry for this Resident
+                        pat_instance = Patient.objects.create(
+                            rp_id=rp_instance,
+                            pat_type='Resident',
+                            pat_status='Active' 
+                        )
+                        print(f"✅ DEBUG: Created new Patient ID: {pat_instance.pat_id}")
                         
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -432,24 +440,52 @@ class SubmitMedicineRequestView(APIView):
             print(f"✅ DEBUG: Created {len(medicines)} MedicineRequestItems and MedicineAllocations")
             
             # Handle file uploads
+            # uploaded_files = []
+            # if files:
+            #     try:
+            #         for file in files:
+            #             medicine_file = Medicine_File.objects.create(
+            #                 medf_name=file.name,
+            #                 medf_type=file.content_type,
+            #                 medf_path=f"uploads/{file.name}",
+            #                 medf_url=f"/media/uploads/{file.name}",
+            #                 medreq=medicine_request
+            #             )
+            #             uploaded_files.append(medicine_file.medf_id)
+            #         print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
+            #     except Exception as e:
+            #         print(f"❌ ERROR: File upload failed: {str(e)}")
+            #         # Don't raise exception here, just log it
+            
             uploaded_files = []
             if files:
                 try:
+                    file_data_list = []
                     for file in files:
-                        medicine_file = Medicine_File.objects.create(
-                            medf_name=file.name,
-                            medf_type=file.content_type,
-                            medf_path=f"uploads/{file.name}",
-                            medf_url=f"/media/uploads/{file.name}",
-                            medreq=medicine_request
-                        )
-                        uploaded_files.append(medicine_file.medf_id)
+                        file_content = file.read()
+                        import base64
+                        base64_content = base64.b64encode(file_content).decode('utf-8')
+                        data_url = f"data:{file.content_type};base64,{base64_content}"
+                        
+                        file_data_list.append({
+                            'name': file.name,
+                            'type': file.content_type,
+                            'file': data_url
+                        })
+                    
+                    # Upload files
+                    serializer = Medicine_FileSerializer(context={'request': request})
+                    uploaded_files = serializer._upload_files(
+                        file_data_list, 
+                        medreq_instance=medicine_request
+                    )
+                    
                     print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
+                    
                 except Exception as e:
                     print(f"❌ ERROR: File upload failed: {str(e)}")
                     # Don't raise exception here, just log it
-            
-            
+                    
             notif_sent = False # Default to false
             try:
                 notif_sent = send_new_medicine_request_notification_to_staff(medicine_request)

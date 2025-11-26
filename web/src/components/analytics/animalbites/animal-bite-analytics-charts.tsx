@@ -271,7 +271,7 @@ export const AnimalBiteAnalyticsCharts = ({ months = 12, initialMonth }: AnimalB
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {chartData?.exposureData.map((entry: any, index: number) => (
+                          {chartData?.exposureData.map((_entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS.mixed[index % COLORS.mixed.length]} />
                           ))}
                         </Pie>
@@ -340,7 +340,7 @@ export const AnimalBiteAnalyticsCharts = ({ months = 12, initialMonth }: AnimalB
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {chartData?.patientTypeData.map((entry: any, index: number) => (
+                          {chartData?.patientTypeData.map((_entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS.primary[index % COLORS.primary.length]} />
                           ))}
                         </Pie>

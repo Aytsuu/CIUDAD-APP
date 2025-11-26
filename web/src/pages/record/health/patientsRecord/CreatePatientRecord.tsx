@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
-import { Save, CircleAlert } from "lucide-react"
+import { Save, CircleAlert, MessageCircleQuestion  } from "lucide-react"
 import { toast } from "sonner"
 import CardLayout from "@/components/ui/card/card-layout"
 import { useForm } from "react-hook-form"
@@ -23,6 +23,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { Checkbox } from "@/components/ui/checkbox"
 
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { capitalize } from "@/helpers/capitalize"
@@ -30,6 +31,7 @@ import { capitalize } from "@/helpers/capitalize"
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 
 // typescript interfaces
 interface ResidentProfile {
@@ -59,6 +61,7 @@ interface ResidentProfile {
 interface PatientCreationData {
   pat_type: string;
   rp_id?: string;
+  staff_id?: string;
   transient_data?: {
     tran_lname: string;
     tran_fname: string;
@@ -70,6 +73,7 @@ interface PatientCreationData {
     tran_religion?: string;
     tran_status?: string;
     tradd_id?: number;
+    staff_id?: string;
     address?: {
       tradd_street?: string
       tradd_sitio?: string
@@ -78,6 +82,12 @@ interface PatientCreationData {
       tradd_province?: string
     }
     philhealth_id?: string
+    is_transferred_from?: boolean
+    location?: {
+      sitio?: string
+      barangay?: string
+      city?: string
+    }
   }
 }
 
@@ -85,6 +95,7 @@ interface PatientCreationData {
 export default function CreatePatientRecord() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const defaultValues = generateDefaultValues(patientRecordSchema);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedResidentId, setSelectedResidentId] = useState<string>("");
@@ -102,6 +113,7 @@ export default function CreatePatientRecord() {
   const patientType = form.watch("patientType")
   const phId = form.watch("philhealthId")
   const contact = form.watch("contact")
+  const isFromAnotherBrgy = form.watch("isTransferredFrom")
 
   useEffect(() => {
     if(phId && phId.length != 12) {
@@ -162,15 +174,21 @@ export default function CreatePatientRecord() {
   const persons = {
     default: residentsData || [],
     formatted:
-      residentsData?.map((personal: any) => ({
-        id: personal.rp_id.toString(),
-        name: (
-          <>
-            <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id} </span>
-            {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
-          </>
-        )
-      })) || [],
+      residentsData?.map((personal: any) => {
+        const fullName = `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim();
+        const searchableValue = `${personal.rp_id} ${fullName}`;
+        
+        return {
+          id: searchableValue,
+          lastName: personal.personal_info?.per_lname || "",
+          name: (
+            <>
+              <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id} </span>
+              {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
+            </>
+          )
+        };
+      }).sort((a: any, b: any) => a.lastName.localeCompare(b.lastName)) || [],
   }
 
   const handlePatientSelection = (id: string | undefined) => {
@@ -193,10 +211,13 @@ export default function CreatePatientRecord() {
       
       return;
     }
-    setSelectedResidentId(id);
-    console.log("Selected Resident ID:", id);
+    
+    // Extract the actual resident ID from the searchable value (format: "123 LastName, FirstName MiddleName")
+    const actualId = id.split(' ')[0];
+    setSelectedResidentId(actualId);
+    console.log("Selected Resident ID:", actualId);
     const selectedPatient: ResidentProfile | undefined = persons.default.find(
-      (p: ResidentProfile) => p.rp_id.toString() === id,
+      (p: ResidentProfile) => p.rp_id.toString() === actualId,
     );
 
     if (selectedPatient && selectedPatient.personal_info) {
@@ -313,7 +334,8 @@ export default function CreatePatientRecord() {
       if (patientType === "Resident") {
         patientData = {
           pat_type: patientType,
-          rp_id: selectedResidentId
+          rp_id: selectedResidentId,
+          staff_id: user?.staff?.staff_id
         };
       } else {
         const trPatientData: PatientCreationData["transient_data"] = {
@@ -327,6 +349,13 @@ export default function CreatePatientRecord() {
           tran_ed_attainment: "NOT SPECIFIED",
           tran_religion: "NOT SPECIFIED",
           philhealth_id: formData.philhealthId || "",
+          is_transferred_from: formData.isTransferredFrom || false,
+          staff_id: user?.staff?.staff_id,
+          location: formData.isTransferredFrom ? {
+            sitio: formData.location?.sitio || "",
+            barangay: formData.location?.brgy || "",
+            city: formData.location?.city || ""
+          } : undefined
         }
         if(selectedTrAddtId !== 0) {
           trPatientData.tradd_id = selectedTrAddtId
@@ -388,8 +417,6 @@ export default function CreatePatientRecord() {
                 }}
                 className="space-y-4"
               >
-                
-
                 <CardLayout
                   title=""
                   description=""
@@ -446,18 +473,61 @@ export default function CreatePatientRecord() {
 
                       {patientType === 'transient' && (
                         <div className="flex w-[600px] items-end">
-                          <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <b>TRANSIENT</b> please fill in the needed details below.</label>
+                          <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15} color="red"/> For <b>TRANSIENT</b> please answer the question and fill in the needed details below.</label>
                         </div>
                       )}
                     </div>
 
+                    {patientType === 'transient' && (
+                      <div className="flex gap-10 border rounded-md px-2 py-5 shadow-md w-full mb-5 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="flex flex-col justify-center w-[650px]">
+                          <div className="flex justify-center items-center gap-2">
+                            <MessageCircleQuestion size={35} color="orange"/>
+                            <label className="flex flex-col text-[15px] font-semibold w-full"> 
+                              Has the patient transferred from another barangay?
+                              <p className="text-sm text-black/50 italic">(Ang pasyente ba nibalhin gikan sa laing barangay?)</p>
+                            </label>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mt-4 ml-10">
+                            <Checkbox
+                              id="isTransferredFrom"
+                              checked={isFromAnotherBrgy}
+                              onCheckedChange={(checked) => form.setValue("isTransferredFrom", checked as boolean)}
+                            />
+                            <label
+                              htmlFor="isTransferredFrom"
+                              className="text-sm font-medium mt-3 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              Yes, the patient transferred from another barangay <p className="text-black/50 italic mt-1">(leave uncheck if not)</p>
+                            </label>
+                          </div>
+                        </div>
+
+                        {isFromAnotherBrgy && (
+                          <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="">
+                              <Label className="text-sm text-black/70 italic"> Please provide the previous sitio, barangay, and city of the patient.</Label>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <FormInput control={form.control} name="location.sitio" label="Sitio" placeholder="Enter sitio name"/>
+                              <FormInput control={form.control} name="location.brgy" label="Barangay" placeholder="Enter barangay name"/>
+                              <FormInput control={form.control} name="location.city" label="City" placeholder="Enter city name"/>
+                            </div>
+                            
+                          </div>
+                        )}
+                        
+                      </div>
+                      )}                    
+                      
                     {/* personal information section - read Only if RESIDENT */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-5">
-                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
                       
-                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
                       
-                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isResident() ? true : false} />
                       
                       <FormInput control={form.control} name="philhealthId" label="PhilHealth ID" placeholder="Enter PhilHealth ID (optional)" readOnly={isResident() ? true : false} />
                     </div>
@@ -501,15 +571,15 @@ export default function CreatePatientRecord() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                      <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.street" label="Street" placeholder="Enter street" readOnly={isResident() ? true : false} />
                       
-                      <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
 
-                      <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
+                      
+                      <FormInput upper={true} control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={isResident() ? true : false} />
 
-                      <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={isResident() ? true : false} />
-
-                      <FormInput control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={isResident() ? true : false} />
                     </div>
 
                     {/* Form Actions */}

@@ -5,16 +5,6 @@ import { Archive, Minus } from "lucide-react";
 
 export const getColumns = (handleArchiveInventory: (firstAid: any) => void, onOpenWastedModal?: (record: any) => void): ColumnDef<any>[] => [
   {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
-          {row.original.fat_id}
-        </div>
-      </div>
-    ),
-  }, {
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
@@ -64,18 +54,7 @@ export const getColumns = (handleArchiveInventory: (firstAid: any) => void, onOp
       );
     }
   },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const expired = row.original.isExpired;
-      return (
-        <div className={`flex justify-center min-w-[100px] px-2 ${expired ? "text-red-600" : ""}`}>
-          <div className={`text-center w-full ${expired ? "line-through" : ""}`}>{row.original.category}</div>
-        </div>
-      );
-    }
-  },
+
   {
     accessorKey: "qty",
     header: "Total Qty",

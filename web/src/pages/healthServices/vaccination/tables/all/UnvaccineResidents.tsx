@@ -153,10 +153,9 @@ export default function UnvaccinatedResidents() {
       id: "age_groups",
       header: "Age Groups",
       cell: ({ row }) => {
-        const hasResidents = row.original.age_groups.some((ageGroup) => ageGroup.unvaccinated_count > 0 || ageGroup.partially_vaccinated_count > 0 || ageGroup.fully_vaccinated_count > 0);
 
         return (
-          <div className="flex flex-col items-center gap-2 min-w-[200px]">
+          <div className="flex flex-col items-center justify-center gap-2 ">
             {row.original.age_groups.length === 0 ? (
               <div className="text-sm text-gray-500 italic">No age groups defined</div>
             ) : (
@@ -174,7 +173,6 @@ export default function UnvaccinatedResidents() {
               })
             )}
 
-            {!hasResidents && row.original.age_groups.length > 0 && <div className="text-sm text-gray-500 italic mt-2">No residents</div>}
           </div>
         );
       },

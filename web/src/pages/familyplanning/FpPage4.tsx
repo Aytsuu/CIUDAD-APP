@@ -50,7 +50,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
   // Add form submission handler to update parent form data
   const onSubmit = async (data: FormData) => {
-    console.log("Form Submitted", data)
+    // console.log("Form Submitted", data)
     updateFormData(data)
     onNext5()
   }

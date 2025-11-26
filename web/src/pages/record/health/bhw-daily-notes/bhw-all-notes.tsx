@@ -1,7 +1,7 @@
 "use client"
 
 // react
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import { Plus, Search } from "lucide-react";
 
@@ -18,8 +18,9 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 
 import { noteColumns } from "./bhw-columns";
 import BHWStaffList from "./bdn-staff-list";
+import { AttendanceSummaryDialog } from "./attendance-summary-dialog";
 
-import { useBHWStaffWithNotes } from "./queries/Fetch";
+import { useBHWStaffWithNotes, useCheckAttendanceSummary } from "./queries/Fetch";
 
 interface NoteRow {
    no: number;
@@ -36,22 +37,64 @@ export default function BHWAllNotes() {
 
    const debouncedSearchTerm = useDebounce(searchTerm, 300);
    
-   const { data: bhwNotesData, isLoading } = useBHWStaffWithNotes(page, pageSize, debouncedSearchTerm);
-
    const staffAuth = useAuth();
    const staffUserId = staffAuth.user?.staff?.staff_id;
-   const staffPositionTitle = staffAuth.user?.staff?.pos?.pos_title; 
+   const staffPosition = staffAuth.user?.staff?.pos;
+   
+   // Handle pos as either string or object with pos_title
+   const staffPositionTitle = typeof staffPosition === 'string' 
+      ? staffPosition 
+      : staffPosition?.pos_title;
+   
+   // ADMIN can see all notes, BHW can only see their own notes
+   const isAdmin = staffPositionTitle?.toUpperCase().includes('ADMIN');
+   const staffFilter = !isAdmin ? staffUserId : undefined;
+   
+   // Debug logging
+   console.log('BHW All Notes - User Info:', {
+      staffUserId,
+      staffPosition,
+      staffPositionTitle,
+      isAdmin,
+      staffFilter
+   });
+   
+   const { data: bhwNotesData, isLoading } = useBHWStaffWithNotes(page, pageSize, debouncedSearchTerm, staffFilter);
 
-   // Filter according to role logic
+   // No need to filter on frontend anymore since backend handles it
    const allResults = bhwNotesData?.results || [];
-   const filteredResults = staffPositionTitle === 'ADMIN'
-      ? allResults
-      : staffPositionTitle === 'BARANGAY HEALTH WORKERS'
-         ? allResults.filter((r:any) => r.staff_id === staffUserId)
-         : allResults;
+   const filteredResults = allResults;
 
-   const displayCount = filteredResults.length; 
-   const totalPages = Math.ceil((bhwNotesData?.count || 0) / pageSize);
+   const displayCount = bhwNotesData?.count || 0; 
+   const totalPages = Math.ceil(displayCount / pageSize);
+
+   // Check if today is within 7 days before end of month
+   const isWithinAttendanceWindow = useMemo(() => {
+      const today = new Date();
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const sevenDaysBefore = new Date(lastDay);
+      sevenDaysBefore.setDate(lastDay.getDate() - 7);
+      
+      // Check if today is between 7 days before and the last day of month
+      return today >= sevenDaysBefore && today <= lastDay;
+   }, []);
+
+   // Get current month in YYYY-MM format
+   const currentMonth = useMemo(() => {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      return `${year}-${month}`;
+   }, []);
+
+   // Check if attendance summary already submitted for this month
+   const { data: attendanceCheck } = useCheckAttendanceSummary(
+      staffUserId || "",
+      currentMonth
+   );
+
+   const hasSubmittedThisMonth = attendanceCheck?.exists || false;
+   const canSubmitAttendance = isWithinAttendanceWindow && !hasSubmittedThisMonth;
 
    // searching and pagination handlers
    const handlePageChange = (newPage: number) => {
@@ -110,7 +153,7 @@ export default function BHWAllNotes() {
                <BHWStaffList />
             </div>
             <div className="bg-white p-4 mt-4">
-               <div className="flex flex-col md:flex-row gap-2 w-full justify-between">
+               <div className="flex flex-col md:flex-row gap-2 w-full justify-">
                   {/*  */}
                   <div className="relative flex w-1/4">
                      <Search
@@ -124,13 +167,35 @@ export default function BHWAllNotes() {
                         onChange={(e) => handleSearch(e.target.value)}
                      />
                   </div>
-                  <ProtectedComponent exclude={['ADMIN']}>
-                  <Link to="/bhw/form">
-                     <Button variant="default">
-                        <Plus size={15} /> Create
-                     </Button>
-                  </Link>
-                  </ProtectedComponent>
+                  
+                  
+                  <div className="w-full flex justify-end gap-2">
+                     <ProtectedComponent exclude={['ADMIN']}>
+                        <AttendanceSummaryDialog staffId={staffUserId}>
+                           <Button 
+                              variant="outline"
+                              disabled={!canSubmitAttendance}
+                              title={
+                                 hasSubmittedThisMonth
+                                    ? "You have already submitted attendance summary for this month"
+                                    : !isWithinAttendanceWindow 
+                                       ? "Attendance summary can only be submitted 7 days before the end of the month"
+                                       : "Submit attendance summary"
+                              }
+                           >
+                              Attendance Summary
+                           </Button>
+                        </AttendanceSummaryDialog>
+                     </ProtectedComponent>
+
+                     <ProtectedComponent exclude={['ADMIN']}>
+                        <Link to="/bhw/form">
+                           <Button variant="default">
+                              <Plus size={15} /> Create
+                           </Button>
+                        </Link>
+                     </ProtectedComponent>
+                  </div>
                </div>
 
                <div className="border rounded-md mt-5">
@@ -155,7 +220,7 @@ export default function BHWAllNotes() {
                         {isLoading ? 'Loading...' : (
                            displayCount === 0
                            ? 'No records found'
-                           : `Showing ${((page - 1) * pageSize) + 1}-${Math.min(page * pageSize, (bhwNotesData?.count || 0))} of ${bhwNotesData?.count} rows${staffPositionTitle === 'BARANGAY HEALTH WORKERS' ? ' (filtered to your own records)' : ''}`
+                           : `Showing ${((page - 1) * pageSize) + 1}-${Math.min(page * pageSize, displayCount)} of ${displayCount} rows${!isAdmin ? ' (filtered to your own records)' : ''}`
                         )}
 
                      </p>

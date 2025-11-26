@@ -13,7 +13,7 @@ export default function CompleteddMedicalAppointments() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [meridiemFilter, setMeridiemFilter] = useState<"all" | "AM" | "PM">("all");
+  const [meridiemFilter] = useState<"all" | "AM" | "PM">("all");
 
   // Debounce search query
   useEffect(() => {
@@ -47,17 +47,17 @@ export default function CompleteddMedicalAppointments() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Calculate stats
-  const todayCount = appointments.filter((apt: any) => {
-    const today = new Date().toDateString();
-    return new Date(apt.created_at).toDateString() === today;
-  }).length;
+  // // Calculate stats
+  // const todayCount = appointments.filter((apt: any) => {
+  //   const today = new Date().toDateString();
+  //   return new Date(apt.created_at).toDateString() === today;
+  // }).length;
 
-  const thisWeekCount = appointments.filter((apt: any) => {
-    const today = new Date();
-    const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-    return new Date(apt.created_at) >= startOfWeek;
-  }).length;
+  // const thisWeekCount = appointments.filter((apt: any) => {
+  //   const today = new Date();
+  //   const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+  //   return new Date(apt.created_at) >= startOfWeek;
+  // }).length;
 
   if (error) {
     return (

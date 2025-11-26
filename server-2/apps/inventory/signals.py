@@ -47,9 +47,9 @@ def send_inventory_notification(title, message, inventory_type, item_name, quant
         elif inventory_subtype == "commodity":
             web_route = "/inventory-stocks/list/stocks/commodity"
         elif inventory_subtype == "vaccine":
-            web_route = "/inventory-stocks/list/stocks/commodity"  # Vaccines under commodity
+            web_route = "/inventory-stocks/list/stocks/antigen"  # Vaccines under commodity
         elif inventory_subtype == "immunization":
-            web_route = "/inventory-stocks/list/stocks/commodity"  # Immunization under commodity
+            web_route = "/inventory-stocks/list/stocks/antigen"  # Immunization under commodity
         
         success = notifier.create_notification(
             title=title,
@@ -124,14 +124,25 @@ def _get_available_and_unit(obj):
         return available, unit, f"immunization_{obj.imzStck_id}"
     return 0, "", "unknown"
 
-def _is_low_stock_by_rules(obj, available):
+def _is_low_stock(obj, available):
+    """
+    Check if stock is low (at or below 20 for pcs, 2 for boxes).
+    Returns: True if low stock, False otherwise
+    """
     if isinstance(obj, (MedicineInventory, FirstAidInventory, CommodityInventory, ImmunizationStock)):
         unit = getattr(obj, 'minv_qty_unit', None) or getattr(obj, 'finv_qty_unit', None) or getattr(obj, 'cinv_qty_unit', None) or getattr(obj, 'imzStck_unit', None)
+        
+        # For boxes, low stock is 2 or less
         if unit and str(unit).lower() == 'boxes':
             return available <= 2 and available > 0
+        
+        # For pieces/other units, low stock is 20 or less
         return available <= 20 and available > 0
+    
     if isinstance(obj, VaccineStock):
-        return available <= 10 and available > 0
+        # Vaccines: low stock is 20 or less
+        return available <= 20 and available > 0
+    
     return False
 
 def _get_item_display_name(instance):
@@ -139,8 +150,8 @@ def _get_item_display_name(instance):
     try:
         if isinstance(instance, MedicineInventory) and instance.med_id:
             return getattr(instance.med_id, 'med_name', 'Medicine Item')
-        elif isinstance(instance, FirstAidInventory) and instance.faid_id:
-            return getattr(instance.faid_id, 'faid_name', 'First Aid Item')
+        elif isinstance(instance, FirstAidInventory) and instance.fa_id:
+            return getattr(instance.fa_id, 'fa_name', 'First Aid Item')
         elif isinstance(instance, CommodityInventory) and instance.com_id:
             return getattr(instance.com_id, 'com_name', 'Commodity Item')
         elif isinstance(instance, VaccineStock) and instance.vac_id:
@@ -286,8 +297,7 @@ def _notify_for_instance(instance):
         if not has_been_notified(item_id, "OUT_OF_STOCK"):
             send_inventory_notification(
                 title=f"Out of Stock Alert - {display_name}",
-                message=f"{display_name} is OUT OF STOCK. Please restock.",
-                
+                message=f"{display_name} is OUT OF STOCK. Please restock immediately.",
                 inventory_type="OUT_OF_STOCK",
                 item_name=display_name,
                 inventory_subtype=inventory_subtype
@@ -298,24 +308,21 @@ def _notify_for_instance(instance):
         logger.info(f"⏭️ OUT_OF_STOCK notification already sent for {display_name}")
         return False
 
-    # LOW STOCK (only if not expired and not archived)
-    if _is_low_stock_by_rules(instance, available):
-        if not has_been_notified(item_id, "LOW_STOCK"):
-            send_inventory_notification(
-                title=f"Low Stock Alert - {display_name}",
-                message=f"{display_name} is running low. Current stock: {available} {unit}.",
-                inventory_type="LOW_STOCK",
-                item_name=display_name,
-                quantity=available,
-                inventory_subtype=inventory_subtype
-            )
-            mark_as_notified(item_id, "LOW_STOCK")
-            logger.info(f"✅ Sent ONE-TIME LOW_STOCK notification for {display_name}")
-            return True
-        logger.info(f"⏭️ LOW_STOCK notification already sent for {display_name}")
-        return False
+    # LOW STOCK ALERT - Notify every time stock is updated when at or below 20 (or 2 for boxes)
+    if _is_low_stock(instance, available):
+        # Always notify on low stock, no cache check - notifies on every update
+        send_inventory_notification(
+            title=f"Low Stock Alert - {display_name}",
+            message=f"{display_name} is running low with only {available} {unit} remaining. Please restock soon.",
+            inventory_type="LOW_STOCK",
+            item_name=display_name,
+            quantity=available,
+            inventory_subtype=inventory_subtype
+        )
+        logger.info(f"✅ Sent LOW_STOCK notification for {display_name} - Current: {available} {unit}")
+        return True
 
-    logger.info(f"⏭️ No notifications needed for {display_name}")
+    logger.info(f"⏭️ No notifications needed for {display_name} (stock: {available} {unit})")
     return False
 
 # ---------------------- Signal Handlers ----------------------
