@@ -40,6 +40,17 @@ export default function ComplaintRequest() {
     return complaints.filter((c: Complaint) => c.comp_status === "Pending");
   }, [complaints]);
 
+  // Get counts for all statuses
+  const statusCounts = useMemo(() => {
+    return {
+      pending: complaints.filter((c: Complaint) => c.comp_status === "Pending").length,
+      rejected: complaints.filter((c: Complaint) => c.comp_status === "Rejected").length,
+      cancelled: complaints.filter((c: Complaint) => c.comp_status === "Cancelled").length,
+      accepted: complaints.filter((c: Complaint) => c.comp_status === "Accepted").length,
+      raised: complaints.filter((c: Complaint) => c.comp_status === "Raised").length,
+    };
+  }, [complaints]);
+
   // Get unique types for filter dropdown (from pending complaints)
   const availableTypes = useMemo(
     () => getUniqueTypes(pendingComplaints),
@@ -62,11 +73,6 @@ export default function ComplaintRequest() {
     const start = (currentPage - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, currentPage, pageSize]);
-
-  const rejectedCount = useMemo(() => {
-    return complaints.filter((c: Complaint) => c.comp_status === "Rejected")
-      .length;
-  }, [complaints]);
 
   if (error) return <div>Error: {error.message}</div>;
 
@@ -102,11 +108,13 @@ export default function ComplaintRequest() {
         availableStatuses={availableStatuses}
         buttons={{
           filter: true,
-          request: false,
-          archived: false,
+          request: false, // Current page is already "Request"
           newReport: false,
-          rejected: true,
-          rejectedCount: rejectedCount,
+          rejected: true, // Show rejected button
+          cancelled: true, // Show cancelled button
+          rejectedCount: statusCounts.rejected,
+          cancelledCount: statusCounts.cancelled,
+          requestCount: statusCounts.pending, // Show pending count
         }}
       />
 

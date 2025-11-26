@@ -201,36 +201,16 @@ class ComplaintCreateView(APIView):
                     complaint, context={"request": request}
                 )
 
-
                 # Create notification
                 try:
                     # Get all staff with ADMIN position
-                    admin_staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
-                    
+                    staff = Staff.objects.filter(staff_staff_type="BARANGAY STAFF", pos__pos_title="ADMIN").select_related("rp")
                     recipients = []
                     
-                    for staff in admin_staff:
+                    for staff in staff:
                         if staff.rp:
                             print(f"Staff RP ID: {staff.rp.rp_id}")
                             recipients.append(staff.rp)
-                    
-                    print(f"Complaint Data: {complaint.comp_incident_type}, {complaint.comp_location}")
-
-                    if recipients:
-                        # Get rp_id from request (as string)
-                        sender = request.data.get('rp_id')
-                        
-                        if sender:
-                            sender = str(sender)  # Ensure it's a string
-                            logger.info(f"Using rp_id as sender: {sender}")
-                        
-                        # Fallback: try to get rp_id from authenticated user
-                        if not sender:
-                            if request.user and request.user.is_authenticated:
-                                if hasattr(request.user, 'rp') and request.user.rp:
-                                    sender = str(request.user.rp.rp_id) 
-                            else:
-                                logger.warning("No rp_id provided and no authenticated user")
                         
                         complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
                         
@@ -246,26 +226,7 @@ class ComplaintCreateView(APIView):
                             mobile_route="/(my-request)/complaint-tracking/compMainView",
                             mobile_params={"comp_id": str(complaint.comp_id)},
                         )
-                        
-                        # Schedule reminder notification in 1 minute
-                        send_time = timezone.now() + timedelta(minutes=1)
-                        # reminder = reminder_notification(
-                        #     title="Reminder: Complaint Awaiting Review",
-                        #     message=(
-                        #         f"A {complaint.comp_incident_type} complaint is still awaiting your review. "
-                        #     ),
-                        #     recipients=recipients,
-                        #     notif_type="REMINDER",
-                        #     send_at=send_time,
-                        #     web_route="complaint/view/",
-                        #     web_params={"comp_id": str(complaint.comp_id)},
-                        #     mobile_route="/(my-request)/complaint-tracking/compMainView",
-                        #     mobile_params={"comp_id": str(complaint.comp_id)},
-                        # )
-                        
-                        logger.info(
-                            f"Notifications sent to {len(recipients)} ADMIN staff members with sender rp_id: {sender}"
-                        )
+
                     else:
                         logger.warning("No ADMIN staff found to notify.")
 

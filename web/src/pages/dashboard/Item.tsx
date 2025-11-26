@@ -3,6 +3,7 @@ import { useProfilingSectionCards } from "@/components/analytics/profiling/profi
 import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sidebar";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
+import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-section-chart";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 
 // HEALTH SERVICES
@@ -42,7 +43,11 @@ import { CertificateSidebar } from "@/components/analytics/certificate/certifica
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
 import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
+import { useComplaintSectionCards } from "@/components/analytics/complaint/complaint-card";
 import { ReactElement } from "react";
+import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
 type DashboardItem = {
   dashboard: string;
@@ -50,9 +55,7 @@ type DashboardItem = {
   sidebar?: { title: string; element: ReactElement }[];
   chart?: { title: string; element: ReactElement }[];
   upcomingEvents?: ReactElement;
-};import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
-import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
-import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+};
 
 
 // import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
@@ -80,6 +83,7 @@ export const getItemsConfig = (
   mediationCards: ReturnType<typeof useMediationSectionCards>,
   remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
   councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
+  complaintCards: ReturnType<typeof useComplaintSectionCards>,
 ): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -91,9 +95,16 @@ export const getItemsConfig = (
 
   const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
-  const { accepted, rejected, completed, pending } = garbCards;
-  const { waiting, ongoing, escalated, resolved} = conciliationCards;
-  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved} = mediationCards;
+  const {  
+    pending: complaintPending, 
+    cancelled: complaintCancelled, 
+    accepted: complaintAccepted, 
+    rejected: complaintRejected, 
+    raised: complaintRaised 
+  } = complaintCards;
+  const { accepted, rejected: garbRejected, completed, pending: garbPending  } = garbCards;
+  const { waiting, ongoing, escalated, resolved } = conciliationCards;
+  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved } = mediationCards;
   const { cashDonations } = donationCards;
   const { noRemark } = remarkCard;
   const { 
@@ -147,6 +158,28 @@ export const getItemsConfig = (
         ],
       },
       {
+        dashboard: "COMPLAINT",
+        card: [
+          complaintPending, 
+          complaintCancelled, 
+          complaintAccepted, 
+          complaintRejected, 
+          complaintRaised
+        ],
+        sidebar: [
+          {
+            title: "Blotter Request",
+            element: <ComplaintSidebar/>
+          }
+        ],
+        chart: [
+        {
+          title: "Blotter Overview",
+          element: <ComplaintSectionCharts/>
+        }
+      ],
+      },
+      {
         dashboard: "CONCILIATION PROCEEDINGS",
         card: [waiting, ongoing, escalated, resolved], 
       },
@@ -157,15 +190,6 @@ export const getItemsConfig = (
       {
         dashboard: "SUMMON REMARKS",
         card: [noRemark]
-      },
-      {
-        dashboard: "COMPLAINT",
-        sidebar: [
-          {
-            title: "Blotter Request",
-            element: <ComplaintSidebar/>
-          }
-        ]
       },
       {
         dashboard: "GAD",
@@ -258,7 +282,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
+        card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed],
       },
     ]
   }
@@ -349,7 +373,6 @@ export const getItemsConfig = (
           },
         ],
       },
-
       {
         dashboard: "INVENTORY",
         sidebar: [

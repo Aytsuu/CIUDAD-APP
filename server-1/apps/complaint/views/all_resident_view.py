@@ -7,6 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AllResidentsView(APIView):
+    
     def get(self, request):
         try:
             # Fetch residents with related person, addresses, and account

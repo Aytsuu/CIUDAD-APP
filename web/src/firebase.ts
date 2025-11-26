@@ -29,7 +29,6 @@ export const generateToken = async () => {
 
 export const listenForMessages = (callback: (payload: any) => void) => {
   return onMessage(messaging, (payload) => {
-    console.log("Message received in foreground: ", payload);
     callback(payload);
   });
 };

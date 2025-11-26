@@ -90,7 +90,7 @@ export const ComplaintForm = () => {
         comp_location: data.incident.comp_location,
         comp_datetime: data.incident.comp_datetime,
         files: data.files || [],
-        staff: user?.rp
+        staff: user?.staff?.staff_id,
       };
 
       const response = await postComplaint.mutateAsync(payload);

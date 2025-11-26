@@ -36,7 +36,7 @@ function checkSearchQuery(c: Complaint, query: string): boolean {
   const q = query.toLowerCase();
   const firstComplainant = c.complainant?.[0];
   const accusedNames = c.accused?.map((a) => a.acsd_name) || [];
-  const accusedAddresses = c.accused?.flatMap((a) => [a?.address]) || [];
+  const accusedAddresses = c.accused?.map((a) => a.acsd_address) || [];
 
   const fields = [
     c.comp_id?.toString(),
@@ -45,7 +45,6 @@ function checkSearchQuery(c: Complaint, query: string): boolean {
     c.comp_status,
     firstComplainant?.cpnt_name,
     new Date(c.comp_datetime).toLocaleString(),
-    firstComplainant?.address,
     ...accusedNames,
     ...accusedAddresses,
   ];

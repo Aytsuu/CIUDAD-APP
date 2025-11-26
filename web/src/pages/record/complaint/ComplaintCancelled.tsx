@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ComplaintTable from "./ComplaintTable";
 import ComplaintPagination from "./complaint-record/ComplaintPagination";
-import { pendingComplaintColumns } from "./complaint-record/ComplaintColumn";
+import { cancelledComplaintColumns } from "./complaint-record/ComplaintColumn";
 import { useGetComplaint } from "./api-operations/queries/complaintGetQueries";
 import {
   filterComplaints,
@@ -22,7 +22,7 @@ const initialFilters: FilterState = {
   dateRange: { start: null, end: null },
 };
 
-export default function ComplaintArchive() {
+export default function ComplaintCancelled() {
   const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(initialFilters);
@@ -35,42 +35,48 @@ export default function ComplaintArchive() {
     setCurrentPage(1);
   }, [searchQuery, filters, pageSize]);
 
-  // Filter for pending complaints
-  const archivedComplaints = useMemo(() => {
-    return complaints.filter((c: Complaint) => c.comp_status === "Archived");
+  // Filter for CANCELLED complaints only
+  const cancelledComplaints = useMemo(() => {
+    return complaints.filter((c: Complaint) => c.comp_status === "Cancelled");
   }, [complaints]);
 
-  // Get unique types for filter dropdown (from pending complaints)
+  // Get counts for all statuses
+  const statusCounts = useMemo(() => {
+    return {
+      pending: complaints.filter((c: Complaint) => c.comp_status === "Pending").length,
+      rejected: complaints.filter((c: Complaint) => c.comp_status === "Rejected").length,
+      cancelled: complaints.filter((c: Complaint) => c.comp_status === "Cancelled").length,
+      accepted: complaints.filter((c: Complaint) => c.comp_status === "Accepted").length,
+      raised: complaints.filter((c: Complaint) => c.comp_status === "Raised").length,
+    };
+  }, [complaints]);
+
+  // Get unique types for filter dropdown (from CANCELLED complaints)
   const availableTypes = useMemo(
-    () => getUniqueTypes(archivedComplaints),
-    [archivedComplaints]
+    () => getUniqueTypes(cancelledComplaints),
+    [cancelledComplaints]
   );
 
-  // Since we're already filtering for Pending, status filter may not be needed
-  // But we include it in case you want to use it for sub-statuses later
+  // Get unique statuses (from CANCELLED complaints)
   const availableStatuses = useMemo(
-    () => getUniqueStatuses(archivedComplaints),
-    [archivedComplaints]
+    () => getUniqueStatuses(cancelledComplaints),
+    [cancelledComplaints]
   );
 
-  // Apply all filters
+  // Apply all filters to CANCELLED complaints
   const filteredData = useMemo(() => {
-    return filterComplaints(archivedComplaints, searchQuery, filters);
-  }, [archivedComplaints, searchQuery, filters]);
+    return filterComplaints(cancelledComplaints, searchQuery, filters);
+  }, [cancelledComplaints, searchQuery, filters]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, currentPage, pageSize]);
 
-  const rejectedCount = useMemo(() => {
-    return complaints.filter((c: Complaint) => c.comp_status === "Rejected")
-      .length;
-  }, [complaints]);
-
   if (error) return <div>Error: {error.message}</div>;
 
-  const columns = useMemo(() => pendingComplaintColumns(), []);
+  // Use cancelled complaint columns
+  const columns = useMemo(() => cancelledComplaintColumns(), []);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -84,10 +90,10 @@ export default function ComplaintArchive() {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-darkBlue2">Archive</h1>
+            <h1 className="text-2xl font-semibold text-darkBlue2">Cancelled Complaints</h1>
           </div>
           <p className="text-darkGray text-sm">
-            View all resolved or past complaints that are no longer active.
+            View and manage cancelled blotter requests
           </p>
         </div>
       </div>
@@ -102,10 +108,13 @@ export default function ComplaintArchive() {
         availableStatuses={availableStatuses}
         buttons={{
           filter: true,
-          request: false,
+          request: true, // Show request button to navigate back
           newReport: false,
-          rejected: true,
-          rejectedCount: rejectedCount,
+          rejected: true, // Show rejected button
+          cancelled: false, // Current page is already "Cancelled"
+          rejectedCount: statusCounts.rejected,
+          cancelledCount: statusCounts.cancelled,
+          requestCount: statusCounts.pending,
         }}
       />
 

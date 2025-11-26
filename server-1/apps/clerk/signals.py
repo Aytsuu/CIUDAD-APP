@@ -65,7 +65,7 @@ def create_summon_case_on_payment(sender, instance, created, **kwargs):
                             recipients=recipient_list,
                             notif_type='CASE_UPDATE',
                             mobile_route="/(summon)/council-mediation-main",
-                            web_route="/summon-case",
+                            web_route="/summon-cases",
                         )
                     
                     # FIX: Use the correct way to get complainants through ComplaintComplainant
@@ -271,7 +271,7 @@ def create_notification_on_hearing_schedule(sender, instance, created, **kwargs)
                         recipient = conciliation_rec_list
                     else:  
                         mobile_route = "/(summon)/council-mediation-main"
-                        web_route = "/summon-case"
+                        web_route = "/summon-cases"
                         recipient = mediation_rec_list
                     
                     create_notification(
@@ -304,7 +304,7 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                     recipient = conciliation_rec_list
                 else: 
                     mobile_route = "/(summon)/council-mediation-main"
-                    web_route = "/summon-case"
+                    web_route = "/summon-cases"
                     recipient = mediation_rec_list
                 
                 create_notification(
