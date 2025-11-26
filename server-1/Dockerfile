@@ -19,10 +19,7 @@ RUN pip install --upgrade pip
 
 COPY requirements.txt .
 
-RUN sed -i '1s/^\xef\xbb\xbf//' requirements.txt
-
 RUN pip install --no-cache-dir -r requirements.txt
-
 
 COPY . .
 
