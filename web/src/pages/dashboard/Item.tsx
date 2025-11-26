@@ -48,7 +48,6 @@ import { ReactElement } from "react";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
-import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 
 type DashboardItem = {
@@ -57,9 +56,7 @@ type DashboardItem = {
   sidebar?: { title: string; element: ReactElement }[];
   chart?: { title: string; element: ReactElement }[];
   upcomingEvents?: ReactElement;
-};import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
-import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
-import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+};
 
 
 // import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
@@ -286,7 +283,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
+        card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed],
       },
     ]
   }
