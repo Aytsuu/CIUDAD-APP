@@ -304,7 +304,7 @@ def create_notification_on_remark_added(sender, instance, created, **kwargs):
                     recipient = conciliation_rec_list
                 else: 
                     mobile_route = "/(summon)/council-mediation-main"
-                    web_route = "/summon-case"
+                    web_route = "/summon-cases"
                     recipient = mediation_rec_list
                 
                 create_notification(
