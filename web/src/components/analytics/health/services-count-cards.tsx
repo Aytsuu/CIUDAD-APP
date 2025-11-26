@@ -131,7 +131,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.completed_consultations_by_doctor || 0} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/doctor-consultations");
+          navigate("/services/medical-consultation/records");
         }}
       />
     ),
@@ -141,7 +141,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.completed_childconsultations_by_doctor || 0}
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/doctor-child-consultations");
+          navigate("/services/childhealthrecords");
         }}
       />
     )
