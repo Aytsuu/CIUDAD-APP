@@ -17,7 +17,6 @@ import copy
 logger = logging.getLogger(__name__)
 
 class RequestTableView(generics.ListAPIView):
-  permission_classes = [AllowAny]
   serializer_class = RequestTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -52,7 +51,6 @@ class RequestTableView(generics.ListAPIView):
     return queryset.filter(req_is_archive=False)
 
 class RequestCreateView(APIView):
-  permission_classes = [AllowAny]
 
   @transaction.atomic
   def post(self, request, *args, **kwargs):
@@ -172,12 +170,10 @@ class RequestCreateView(APIView):
     return per_instance
 
 class RequestDeleteView(generics.DestroyAPIView):
-  permission_classes = [AllowAny]
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
 
 class RequestCountView(APIView):
-  permission_classes = [AllowAny]
   def get(self, request, *args, **kwargs):
     return Response(RequestRegistration.objects.filter(~Q(req_is_archive=True)).count())

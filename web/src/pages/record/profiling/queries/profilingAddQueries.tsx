@@ -69,6 +69,23 @@ export const useAddResidentAndPersonal = () => { // For registration from the we
   })
 }
 
+export const useApproveFamilyRegistration = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try{
+        const res = await api.post('profiling/family/registration-request/approve/', data);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationRequests']})
+    }
+  })
+}
+
 export const useAddFamily = () => {
   const queryClient = useQueryClient();
   return useMutation({

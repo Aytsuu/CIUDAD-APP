@@ -52,6 +52,7 @@ urlpatterns = [
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
     path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
     path("family/data/resident-specific/", FamilyDataResidentSpecificView.as_view(), name="family-data-resident-specific"),
+    path("family/registration-request/approve/", FamilyRegistrationRequestView.as_view(), name="family-registration-request"),
 
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),

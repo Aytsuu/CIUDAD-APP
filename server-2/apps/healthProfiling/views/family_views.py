@@ -7,6 +7,7 @@ from ..serializers.family_serializers import *
 from ..serializers.resident_profile_serializers import *
 from apps.pagination import *
 from rest_framework.permissions import AllowAny
+from ..utils import *
 
 
 class FamilyTableView(generics.ListCreateAPIView):
@@ -140,3 +141,86 @@ class VerifyFamily(APIView):
          return Response(status=status.HTTP_200_OK)
       
       return Response(status=status.HTTP_404_NOT_FOUND)
+
+class FamilyRegistrationRequestView(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        compositions = request.data.get('compositions', [])
+        family_data = request.data.get('family', None)
+        hh_id = request.data.get('hh_id', None)
+        house = request.data.get('house', None)
+        staff_id = request.data.get('staff_id', None)
+
+        if staff_id:
+           staff = Staff.objects.filter(staff_id=staff_id).first()
+        
+        if len(compositions) > 0:
+            house_owner = None
+            new_composition = []
+            
+            # Register each member as resident
+            for member in compositions:
+                member.pop('per_addresses', None)
+                member.pop('acc', None)
+                per = member.pop('per_id', None)
+                role = member.pop('role', None)
+
+                if per:
+                    personal = Personal.objects.filter(per_id=per).first()
+                else:
+                    # Create Personal record
+                    personal = Personal(**member)
+                    personal._history_user = staff
+                    personal.save()
+                
+                # Create ResidentProfile record
+                resident_profile = ResidentProfile.objects.create(
+                    rp_id = generate_resident_no(),
+                    per = personal,
+                    staff = staff
+                )
+
+                # Set house owner for new house registration
+                if house and int(resident_profile.per.per_id) == int(house['householdHead']):
+                   house_owner = resident_profile
+
+                new_composition.append({
+                   'rp': resident_profile,
+                   'fc_role': role 
+                })
+            
+            # Register house if applicable
+            if house:
+                address = house["address"].split("-") 
+                hh = Household.objects.create(
+                    hh_id = generate_hh_no(),
+                    hh_nhts = house['nhts'],
+                    add=Address.objects.get_or_create(
+                        add_province="CEBU",
+                        add_city="CEBU CITY",
+                        add_barangay="SAN ROQUE (CIUDAD)",
+                        sitio=Sitio.objects.filter(sitio_name=address[1]).first(),
+                        add_street=address[2]
+                    )[0],
+                    rp=house_owner,
+                    staff=staff
+                )
+
+            # Register family
+            family = Family.objects.create(
+                fam_id=generate_fam_no(family_data['building']),
+                fam_indigenous=family_data['indigenous'],
+                fam_building=family_data['building'],
+                hh=hh if house else Household.objects.filter(hh_id=hh_id).first(),
+                staff=staff
+            )
+
+            # Add all family members
+            for comp in new_composition:
+                FamilyComposition.objects.create(
+                    fc_role=comp['fc_role'],
+                    rp=comp['rp'],
+                    fam=family
+                )
+
+            return Response(status=status.HTTP_200_OK)

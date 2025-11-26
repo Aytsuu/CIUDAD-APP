@@ -141,7 +141,7 @@ export const useRequests = (
   selectedRequestType: string
 ) => {
   return useQuery({
-    queryKey: ["requests", page, pageSize, searchQuery, selectedRequestType],
+    queryKey: ["registrationRequests", page, pageSize, searchQuery, selectedRequestType],
     queryFn: () =>
       getRequests(page, pageSize, searchQuery, selectedRequestType),
     staleTime: 5000,
