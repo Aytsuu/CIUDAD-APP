@@ -1783,7 +1783,7 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 opening_vials_added = calculate_quantities(
                     transactions.filter(created_at__date__lt=start_date), "added")
                 opening_doses_deducted = calculate_quantities(
-                    transactions.filter(created_at__date__lt=start_date), "deduct")
+                    transactions.filter(created_at__date__lt=start_date), "deducted")
                 opening_doses_wasted = calculate_quantities(
                     transactions.filter(created_at__date__lt=start_date), "wasted")
                 opening_doses_administered = calculate_quantities(
@@ -1795,7 +1795,7 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                     created_at__date__lte=end_date
                 )
                 received_vials = calculate_quantities(monthly_transactions, "added")
-                dispensed_doses = calculate_quantities(monthly_transactions, "deduct")
+                dispensed_doses = calculate_quantities(monthly_transactions, "deducted")
                 wasted_doses = calculate_quantities(monthly_transactions, "wasted")
                 administered_doses = calculate_quantities(monthly_transactions, "administered")
 
