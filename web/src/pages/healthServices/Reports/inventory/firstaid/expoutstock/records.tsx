@@ -106,7 +106,7 @@ export default function FirstAidProblemDetails() {
       "Date Received": item.date_received ? new Date(item.date_received).toLocaleDateString() : "N/A",
       "First Aid Item": item.fa_name,
       "Stock on Hand Available": formatQuantityForExport(item, "opening_stock"),
-      "Stock Used": `${item.dispensed - (item.wasted || 0)} ${formatUnitDisplay(item)}`,
+      "Stock Used": `${item.dispensed } ${formatUnitDisplay(item)}`,
       "Stock Wasted": `${item.wasted || 0} ${formatUnitDisplay(item)}`,
       "Stock on Hand": formatQuantityForExport(item, "closing_stock"),
       "Expiry Date": item.expiry_date,
@@ -232,7 +232,7 @@ export default function FirstAidProblemDetails() {
                     <div key={`opening-${item.fa_name}`}>{formatQuantityDisplay(item, "opening_stock")}</div>,
                     // Custom rendering for Stock Used (dispensed - wasted)
                     <div key={`used-${item.fa_name}`}>
-                      {item.dispensed - (item.wasted || 0)} {formatUnitDisplay(item)}
+                      {item.dispensed} {formatUnitDisplay(item)}
                     </div>,
                     // Custom rendering for Stock Wasted
                     <div key={`wasted-${item.fa_name}`}>
