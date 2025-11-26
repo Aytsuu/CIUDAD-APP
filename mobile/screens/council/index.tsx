@@ -26,12 +26,12 @@ export default () => {
       icon: "",
       gradient: ['#3b82f6', '#2563eb'],
     },
-    {
-      title: "Templates",
-      route: "/(council)/template/template-main-page",
-      icon: "",
-      gradient: ['#2563eb', '#1e40af'],
-    },
+    // {
+    //   title: "Templates",
+    //   route: "/(council)/template/template-main-page",
+    //   icon: "",
+    //   gradient: ['#2563eb', '#1e40af'],
+    // },
     {
       title: "Resolutions",
       route: "/(council)/resolution/res-main",
