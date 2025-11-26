@@ -121,7 +121,7 @@ export default function Records({
       count: medicineCount,
       title: "Medicine",
       icon: <Pill className="w-5 h-5 text-gray-600" />,
-      link: "/services/medicine/records",
+      link: "/services/medicine/records/individual-records",
       state: { params: { patientData: patientLinkData } },
     },
     {

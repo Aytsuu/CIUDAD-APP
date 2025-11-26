@@ -322,7 +322,7 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
               </div>
             </div>
 
-            <div className=" w-full overflow-x-auto">
+            <div className="bg-white w-full overflow-x-auto">
               {isLoading ? (
                 <TableLoading />
               ) : error ? (
