@@ -403,15 +403,15 @@ export default function HealthcareReports() {
     }
   };
 
-  // Get tabs to display based on user role
+  // Get tabs to display based on user role - DOCTORS ONLY SEE DOCTOR TAB
   const getVisibleTabs = () => {
-    const tabs = Object.entries(TAB_CONFIG).filter(([tabType]) => {
-      // Always show doctor tab to doctors, never show it to non-doctors
-      if (tabType === "doctor") {
-        return isDoctor;
-      }
-      return true;
-    }) as [TabType, typeof TAB_CONFIG.all][];
+    // If user is doctor, only show the doctor tab
+    if (isDoctor) {
+      return [["doctor", { ...TAB_CONFIG.doctor, count: DOCTOR_REPORTS.length }] as const];
+    }
+
+    // For non-doctors, show all tabs except doctor
+    const tabs = Object.entries(TAB_CONFIG).filter(([tabType]) => tabType !== "doctor") as [TabType, typeof TAB_CONFIG.all][];
 
     // Update the "all" tab count dynamically
     return tabs.map(([tabType, tabInfo]) => {

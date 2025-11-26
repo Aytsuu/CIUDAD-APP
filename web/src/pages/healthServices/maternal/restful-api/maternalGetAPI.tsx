@@ -234,6 +234,23 @@ export const getPrenatalLabResult = async (pregnancyId: string) => {
   }
 }
 
+// prenatal forms list with embedded prenatal care entries
+export const getPrenatalFormsWithCare = async (params: { page?: number; pageSize?: number; patientId?: string; pregnancyId?: string }) => {
+  try {
+    const { page, pageSize, patientId, pregnancyId } = params || {}
+    const queryParams: any = {}
+    if (page) queryParams.page = page
+    if (pageSize) queryParams.page_size = pageSize
+    if (patientId) queryParams.pat_id = patientId
+    if (pregnancyId) queryParams.pregnancy_id = pregnancyId
+    const res = await api2.get('maternal/prenatal/forms/', { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching prenatal forms with care: ', error)
+    throw error
+  }
+}
+
 
 {/* *********** postpartum *********** */}
 
@@ -311,6 +328,33 @@ export const getPrenatalAppointmentsPending = async () => {
   } catch (error) {
     console.error("Error fetching prenatal appointments pending: ", error);
     throw error;
+  }
+}
+
+// combined follow-ups (prenatal + postpartum)
+export const getCombinedFollowUps = async (
+  patientId: string,
+  filters?: {
+    status?: string;
+    type?: 'prenatal' | 'postpartum';
+    from_date?: string;
+    to_date?: string;
+    limit?: number;
+  }
+) => {
+  try {
+    const queryParams: any = {}
+    if (filters?.status) queryParams.status = filters.status
+    if (filters?.type) queryParams.type = filters.type
+    if (filters?.from_date) queryParams.from_date = filters.from_date
+    if (filters?.to_date) queryParams.to_date = filters.to_date
+    if (filters?.limit) queryParams.limit = filters.limit
+    
+    const res = await api2.get(`maternal/patient/${patientId}/followups/combined/`, { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching combined follow-ups: ', error)
+    throw error
   }
 }
 

@@ -179,7 +179,7 @@ export default function PrenatalFormFourthPq({
           })
         })
         
-        console.log("🔍 Mapped prenatal care entries:", allCareEntries)
+        // console.log("🔍 Mapped prenatal care entries:", allCareEntries)
         setPrenatalCareHistoryTableData(allCareEntries)
       } else {
         setPrenatalCareHistoryTableData([])
@@ -192,7 +192,7 @@ export default function PrenatalFormFourthPq({
   }
 
   const addPrenatalCare = () => {
-    console.log("🔍 Adding prenatal care entry...")
+    // console.log("🔍 Adding prenatal care entry...")
     
     // Get values directly from the form state for the temporary input fields
     const date = getValues("prenatalCare.date")
@@ -211,23 +211,23 @@ export default function PrenatalFormFourthPq({
     const pulseRate = getValues("prenatalCare.notes.pulseRate")
     const o2 = getValues("prenatalCare.notes.o2")
 
-    console.log("🔍 Form values retrieved:", {
-      date,
-      weight,
-      aogWks,
-      aogDays,
-      systolic,
-      diastolic,
-      fundalHt,
-      fetalHR,
-      fetalPos,
-      complaints,
-      advises,
-      temp,
-      resRate,
-      pulseRate,
-      o2,
-    })
+    // console.log("🔍 Form values retrieved:", {
+    //   date,
+    //   weight,
+    //   aogWks,
+    //   aogDays,
+    //   systolic,
+    //   diastolic,
+    //   fundalHt,
+    //   fetalHR,
+    //   fetalPos,
+    //   complaints,
+    //   advises,
+    //   temp,
+    //   resRate,
+    //   pulseRate,
+    //   o2,
+    // })
 
 
     const newEntry: prenatalCareTypes = {
@@ -250,7 +250,7 @@ export default function PrenatalFormFourthPq({
       },
     }
 
-    console.log("New entry created:", newEntry)
+    // console.log("New entry created:", newEntry)
     setPrenatalCareData((prev) => [...prev, newEntry])
 
     // Clear the input fields in the form state
@@ -270,11 +270,11 @@ export default function PrenatalFormFourthPq({
     setValue("prenatalCare.notes.pulseRate", "")
     setValue("prenatalCare.notes.o2", "")
 
-    console.log("Prenatal care data added successfully. Total entries:", prenatalCareData.length + 1)
+    // console.log("Prenatal care data added successfully. Total entries:", prenatalCareData.length + 1)
   }
 
   const removePrenatalCareEntry = (index: number) => {
-    console.log("🔍 Removing prenatal care entry at index:", index)
+    // console.log("🔍 Removing prenatal care entry at index:", index)
     setPrenatalCareData((prev) => prev.filter((_, i) => i !== index))
   }
 
@@ -399,10 +399,10 @@ export default function PrenatalFormFourthPq({
         }
       }))
 
-      console.log("Transformed prenatal care data:", transformedPrenatalCare)
+      // console.log("Transformed prenatal care data:", transformedPrenatalCare)
 
       setValue("prenatalCare", transformedPrenatalCare)
-      console.log("Prenatal care data set in form as array")
+      // console.log("Prenatal care data set in form as array")
 
       // Handle forward record logic based on position
       if (selectedStaffId) {
@@ -413,11 +413,11 @@ export default function PrenatalFormFourthPq({
         if (selectedStaffPosition.toUpperCase() === "ADMIN") {
           forwardStatus = "tbc_by_midwife"
           forwardedStatus = "pending"
-          console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
+          // console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
         } else if (selectedStaffPosition.toUpperCase() === "DOCTOR") {
           forwardStatus = "check_up"
           forwardedStatus = "completed"
-          console.log("Forwarding to DOCTOR staff - setting status to: check_up, forwarded_status to: completed")
+          // console.log("Forwarding to DOCTOR staff - setting status to: check_up, forwarded_status to: completed")
         }
         
         // Store forward information in form for backend
@@ -425,7 +425,7 @@ export default function PrenatalFormFourthPq({
         form.setValue("status", forwardStatus)
         form.setValue("forwarded_status", forwardedStatus)
         
-        console.log("Forward record: Staff ID:", selectedStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
+        // console.log("Forward record: Staff ID:", selectedStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
       }
 
       setIsSubmitting(true)
@@ -435,7 +435,7 @@ export default function PrenatalFormFourthPq({
       onSubmit()
       
     } catch (error) {
-      console.error("Error in handleFormSubmit:", error)
+      // console.error("Error in handleFormSubmit:", error)
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsSubmitting(false)
     }
@@ -604,7 +604,7 @@ export default function PrenatalFormFourthPq({
                     const fullStaffData = staffsData?.staff.find((staff: any) => String(staff.staff_id) === realStaffId)
                     const position = fullStaffData?.position || fullStaffData?.pos || ""
                     
-                    console.log("Selected staff:", value, "Real ID:", realStaffId, "Position:", position)
+                    // console.log("Selected staff:", value, "Real ID:", realStaffId, "Position:", position)
                     setSelectedStaffId(realStaffId)
                     setSelectedStaffPosition(position)
                   }}

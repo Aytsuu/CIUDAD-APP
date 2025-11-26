@@ -3,20 +3,13 @@ import { formatDate } from "@/helpers/dateHelper";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 
-import { Trash2, Eye } from "lucide-react";
-import { ProtectedComponent } from "@/ProtectedComponent";
+import { Eye } from "lucide-react";
 
 type Note = {
    no: number;
    date: string;
    name: string;
-}
-
-const handleEdit = (no: number) => {
-   console.log("Edit note with no:", no);
-}
-const handleDelete = (no: number) => {
-   console.log("Delete note with no:", no);
+   bhwdn_id: number | null;
 }
 
 
@@ -40,17 +33,11 @@ export const noteColumns: ColumnDef<Note>[] = [
       header: "Actions",
       cell: ({ row }) => (
          <div className="flex justify-center gap-2">
-            <Link to={`/bhw/form/`}>
-               <Button variant="outline" onClick={() => handleEdit(row.original.no)}>
+            <Link to={`/bhw/view/${row.original.bhwdn_id}`}>
+               <Button variant="outline" title="View details">
                   <Eye size={16}/>
                </Button>
             </Link>
-            
-            <ProtectedComponent exclude={['ADMIN']}>
-               <Button className=" flex gap-1 bg-red-500 text-white hover:bg-red-600" onClick={() => handleDelete(row.original.no)}>
-                  <Trash2 size={20}/>
-               </Button>
-            </ProtectedComponent>
          </div>
       )
    }

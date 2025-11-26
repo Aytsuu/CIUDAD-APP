@@ -33,6 +33,7 @@ urlpatterns=[
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),
     path('pregnancy/loss/', PregLossPregnancyView.as_view(), name='pregnancy-loss'),
+    path('pregnancy/postpartum/complete/', PostpartumPregnancyView.as_view(), name='pregnancy-postpartum-complete'),
 
     # Prenatal URLs
     path('patient/<str:pat_id>/medicalhistory/', PrenatalPatientMedHistoryView.as_view(), name='prenatal-patient-medical-history'),
@@ -55,6 +56,8 @@ urlpatterns=[
     path('prenatal/illnesses/', get_illness_list, name='illness-list'),
     path('prenatal/illness/create/', IllnessCreateView.as_view(), name='illness-create'),
     path('prenatal/appointment/check-pending/<str:rp_id>/', CheckPendingAppointmentView.as_view(), name='check-pending-appointment'),
+    path('prenatal/forms/', PrenatalFormListWithCareView.as_view(), name='prenatal-forms-with-care'),
+    path('patient/<str:pat_id>/followups/combined/', PatientCombinedFollowUpsView.as_view(), name='patient-combined-followups'),
     
     # Staff URLs
     path('staff/', get_maternal_staff, name='maternal-staff-list'),

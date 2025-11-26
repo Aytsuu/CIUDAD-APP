@@ -81,12 +81,13 @@ class BHWReferOrFollowUp(models.Model):
 
 class BHWAttendanceRecord(models.Model):
     bhwa_id = models.BigAutoField(primary_key=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='staff_id', related_name='attendance_records')
     num_working_days = models.IntegerField(default=0)
     days_present = models.IntegerField(default=0)
     days_absent = models.IntegerField(default=0)
     noted_by = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='noted_by', related_name='attendance_noted')
     approved_by = models.ForeignKey(Staff, on_delete=models.CASCADE, db_column='approved_by', related_name='attendance_approved')
-    bhwdn = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE, db_column='bhwdn_id')
+    # bhwdn = models.ForeignKey(BHWDailyNotes, on_delete=models.CASCADE, db_column='bhwdn_id')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

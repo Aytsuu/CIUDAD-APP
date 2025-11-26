@@ -1,5 +1,5 @@
 // src/features/medicine/pages/IndivMedicineRecords.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { serializePatientData } from "@/helpers/serializePatientData";
 import TableLoading from "../../../../components/ui/table-loading";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 
 export default function IndivMedicineRecords({ patientDataProps }: { patientDataProps?: any }) {
   console.log("tesxzxt", patientDataProps);
@@ -67,7 +68,101 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
     }
   }, [medicineRecords]);
 
-  if (!pat_id || medicineRecords.length === 0) {
+  // Prepare export data function
+  const prepareExportData = useCallback(() => {
+    if (!medicineRecords || medicineRecords.length === 0) return [];
+
+    return medicineRecords.map((record: any, index: number) => {
+      const patientDetails = record.pat_details || {};
+      const personalInfo = patientDetails.personal_info || {};
+      
+      return {
+        "No.": index + 1,
+        "Patient ID": record.pat_id || "N/A",
+        "Full Name": `${personalInfo.per_lname || ""}, ${personalInfo.per_fname || ""} ${personalInfo.per_mname || ""}`.trim(),
+        "Medicine Name": record.medicine_name || "N/A",
+        "Category": record.medicine_category || "N/A",
+        "Dosage": record.medicine_dosage || "N/A",
+        "Frequency": record.medicine_frequency || "N/A",
+        "Quantity": record.medicine_quantity || "N/A",
+        "Date Given": record.medicine_date_given ? new Date(record.medicine_date_given).toLocaleDateString() : "N/A",
+        "Time Given": record.medicine_time_given || "N/A",
+        "Remarks": record.medicine_remarks || "N/A",
+        "Status": record.medicine_status || "N/A",
+      };
+    });
+  }, [medicineRecords]);
+
+  // Export handlers
+  const handleExportCSV = useCallback(() => {
+    const dataToExport = prepareExportData();
+    if (dataToExport.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    
+    const patientName = derivedPatientData 
+      ? `${derivedPatientData.lname}_${derivedPatientData.fname}`
+      : "patient";
+    
+    exportToCSV(dataToExport, `medicine_records_${patientName}_${new Date().toISOString().slice(0, 10)}`);
+  }, [prepareExportData, derivedPatientData]);
+
+  const handleExportExcel = useCallback(() => {
+    const dataToExport = prepareExportData();
+    if (dataToExport.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    
+    const patientName = derivedPatientData 
+      ? `${derivedPatientData.lname}_${derivedPatientData.fname}`
+      : "patient";
+    
+    exportToExcel(dataToExport, `medicine_records_${patientName}_${new Date().toISOString().slice(0, 10)}`);
+  }, [prepareExportData, derivedPatientData]);
+
+  const handleExportPDF = useCallback(() => {
+    const dataToExport = prepareExportData();
+    if (dataToExport.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    
+    const patientName = derivedPatientData 
+      ? `${derivedPatientData.lname}_${derivedPatientData.fname}`
+      : "patient";
+    
+    exportToPDF2(dataToExport, `medicine_records_${patientName}_${new Date().toISOString().slice(0, 10)}`, "Medicine Records");
+  }, [prepareExportData, derivedPatientData]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <LayoutWithBack title="Medicine Records" description="View individual patient's medicine records">
+        <div className="p-4 mb-4">
+          <TableLoading />
+        </div>
+      </LayoutWithBack>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <LayoutWithBack title="Medicine Records" description="View individual patient's medicine records">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+          <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>Error loading medicine records. Please try again.</span>
+          </div>
+        </div>
+      </LayoutWithBack>
+    );
+  }
+
+  // Show no records found state - ONLY after loading is complete and there's no data
+  if (!isLoading && medicineRecords.length === 0) {
     return (
       <LayoutWithBack title="Medicine Records" description="View individual patient's medicine records">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -111,15 +206,15 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data">
+                  <Button variant="outline" aria-label="Export data" disabled={medicineRecords.length === 0}>
                     <ArrowUpDown className="mr-2 h-4 w-4" />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportCSV}>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel}>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>Export as PDF</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -213,15 +308,15 @@ export default function IndivMedicineRecords({ patientDataProps }: { patientData
               <div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" aria-label="Export data">
+                    <Button variant="outline" aria-label="Export data" disabled={medicineRecords.length === 0}>
                       <ArrowUpDown className="mr-2 h-4 w-4" />
                       Export
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportCSV}>Export as CSV</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportExcel}>Export as Excel</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPDF}>Export as PDF</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
