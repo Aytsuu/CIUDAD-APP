@@ -26,6 +26,11 @@ function PersonalClearance() {
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [residentType, setResidentType] = useState<"resident" | "non-resident">("resident");
+    
+    // Reset to page 1 when tab or resident type changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, residentType]);
     const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
     const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
     const [appliedDiscountAmount, setAppliedDiscountAmount] = useState<string | undefined>(undefined);
@@ -45,8 +50,21 @@ function PersonalClearance() {
 
     const [searchTerm, setSearchTerm] = useState("");
 
-    const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize);
-    const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize);
+    // Map activeTab to API payment_status filter
+    const getPaymentStatusFilter = () => {
+        if (activeTab === "paid") return "Paid";
+        if (activeTab === "unpaid") return "Unpaid";
+        return undefined; // For declined tab, we'll filter by status instead
+    };
+
+    // Map activeTab to API status filter (for declined/cancelled)
+    const getStatusFilter = () => {
+        if (activeTab === "declined") return "Declined";
+        return undefined;
+    };
+
+    const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize, getStatusFilter(), getPaymentStatusFilter());
+    const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize, getStatusFilter(), getPaymentStatusFilter());
     
     // Function to get resident eligibility info directly from API response (backend calculates it)
     const getResidentEligibility = (residentDetails: any) => {
@@ -85,42 +103,28 @@ function PersonalClearance() {
 
     useEffect(() => {
         if (error) {
-            console.error("Error fetching personal clearances:", error);
             showErrorToast("Failed to load personal clearance data. Please try again.");
         }
     }, [error]);
 
-    const filteredData = clearanceRequests?.filter((item: NonResidentReq | ResidentReq) => {
+    // Server handles pagination and payment_status filtering
+    // We still need to exclude declined/cancelled from paid/unpaid tabs (server filters by payment_status but not status)
+    const tableData = useMemo(() => {
+        if (!clearanceRequests) return [];
+        
+        // For declined tab, server already filters by status=Declined
         if (activeTab === "declined") {
-            // Show only declined requests
-            return residentType === "non-resident" 
-                ? (item as NonResidentReq).nrc_req_status === "Declined"
-                : (item as ResidentReq).cr_req_status === "Declined";
-        } else {
-            // Filter out declined requests for paid/unpaid tabs
-            const isDeclined = residentType === "non-resident" 
-                ? (item as NonResidentReq).nrc_req_status === "Declined"
-                : (item as ResidentReq).cr_req_status === "Declined";
-            
-            if (isDeclined) {
-                return false;
-            }
-            
-            // Then filter by payment status
-            const paymentStatus = residentType === "non-resident" 
-                ? (item as NonResidentReq).nrc_req_payment_status 
-                : (item as ResidentReq).cr_req_payment_status;
-                
-            return activeTab === "paid" 
-                ? paymentStatus === "Paid" 
-                : paymentStatus !== "Paid";
+            return clearanceRequests;
         }
-    });
-
-    // Apply pagination to filtered data
-    const paginatedData = filteredData ? 
-        filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : 
-        [];
+        
+        // For paid/unpaid tabs, exclude declined/cancelled requests
+        return clearanceRequests.filter((item: NonResidentReq | ResidentReq) => {
+            const status = residentType === "non-resident" 
+                ? (item as NonResidentReq).nrc_req_status
+                : (item as ResidentReq).cr_req_status;
+            return status !== "Declined" && status !== "Cancelled";
+        });
+    }, [clearanceRequests, activeTab, residentType]);
 
     // Non-Resident Columns
     const nonResidentColumns: ColumnDef<NonResidentReq>[] = [
@@ -207,8 +211,6 @@ function PersonalClearance() {
                                 <div
                                     className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
                                     onClick={() => {
-                                        console.log('DEBUG: Non-resident row data:', row.original);
-                                        console.log('DEBUG: nrc_id value:', row.original.nrc_id, 'type:', typeof row.original.nrc_id);
                                         setCurrentReceipt({
                                             id: row.original.nrc_id,
                                             purpose: row.original.purpose?.pr_purpose,
@@ -629,7 +631,7 @@ function PersonalClearance() {
                          <div className="rounded-md border">
                              <DataTable 
                                  columns={columns} 
-                                 data={paginatedData as any[]} 
+                                 data={tableData as any[]} 
                                  header={true} 
                              /> 
                          </div>

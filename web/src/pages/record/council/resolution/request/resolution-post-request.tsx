@@ -6,15 +6,6 @@ import {api} from "@/api/api";
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
 
-        console.log("RESOLUTION CREATED: ",{
-            res_title: resolutionInfo.res_title,
-            res_date_approved: resolutionInfo.res_date_approved,
-            res_area_of_focus: resolutionInfo.res_area_of_focus,
-            res_is_archive: false,
-            gpr_id: resolutionInfo.gpr_id,
-            staff: resolutionInfo.staff,
-        })
-
         const res = await api.post('council/resolution/',{
             res_num: resolutionInfo.res_num,
             res_title: resolutionInfo.res_title,
@@ -28,7 +19,8 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
         return res.data.res_num;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw new Error("Error creating resolution: " + err);
     }
 }
 

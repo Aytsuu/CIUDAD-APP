@@ -799,7 +799,22 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
     doc.setFontSize(11);
     
     const contentWidth = pageWidth - marginValue * 2;
-    const splitText = doc.splitTextToSize(template.temp_body, contentWidth);
+    
+    // Pre-process the body to handle bold markers before splitting
+    // This prevents bold markers from being split across lines
+    let processedBody = template.temp_body;
+    const boldParts: { placeholder: string; text: string }[] = [];
+    let boldIndex = 0;
+    
+    // Extract bold text and replace with placeholders that won't be split
+    processedBody = processedBody.replace(/\/\*(.*?)\*\//g, (_match, text) => {
+      const placeholder = `__BOLD${boldIndex}__`;
+      boldParts.push({ placeholder, text });
+      boldIndex++;
+      return placeholder;
+    });
+    
+    const splitText = doc.splitTextToSize(processedBody, contentWidth);
     const lineSpacing = 18;
     
     for (let i = 0; i < splitText.length; i++) {
@@ -808,16 +823,22 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
         yPos = marginValue;
       }
       
-      // Process each line for bold markup
+      // Process each line - check for bold placeholders
       let currentX = marginValue;
-      const parts = splitText[i].split(/(\/\*.*?\*\/)/g);
+      let lineText = splitText[i];
+      
+      // Split by bold placeholders
+      const parts = lineText.split(/(__BOLD\d+__)/g);
       
       parts.forEach((part: string) => {
-        if (part.startsWith('/*') && part.endsWith('*/')) {
-          const boldText = part.slice(2, -2);
-          doc.setFont("times", "bold");
-          doc.text(boldText, currentX, yPos);
-          currentX += doc.getTextWidth(boldText);
+        if (part.match(/__BOLD\d+__/)) {
+          // Find the corresponding bold text
+          const boldItem = boldParts.find(bp => bp.placeholder === part);
+          if (boldItem) {
+            doc.setFont("times", "bold");
+            doc.text(boldItem.text, currentX, yPos);
+            currentX += doc.getTextWidth(boldItem.text);
+          }
         } else if (part) {
           doc.setFont("times", "normal");
           doc.text(part, currentX, yPos);
@@ -1003,9 +1024,15 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
 
       doc.setFont("times", "bold");
       
-      doc.text(`${template.temp_applicantName}`, signatureX, currentY);
+      // Handle undefined applicant name - use empty string or placeholder
+      const applicantName = template.temp_applicantName && 
+                           !template.temp_applicantName.includes('undefined') 
+                           ? template.temp_applicantName 
+                           : '';
       
-      const textWidth = doc.getTextWidth(`${template.temp_applicantName}`);
+      doc.text(applicantName, signatureX, currentY);
+      
+      const textWidth = doc.getTextWidth(applicantName);
       const underlineY = currentY + 2;
       doc.setLineWidth(0.5);
       doc.line(signatureX, underlineY, signatureX + textWidth, underlineY);

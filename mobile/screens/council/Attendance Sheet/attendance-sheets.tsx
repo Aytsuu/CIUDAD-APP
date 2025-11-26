@@ -82,7 +82,7 @@ const AttendanceSheets = () => {
       setUploadModalVisible(false);
       await refetch();
     } catch (error) {
-      console.error("Upload failed:", error);
+      // console.error("Upload failed:", error);
     } finally {
       setIsUploading(false);
     }

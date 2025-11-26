@@ -3,12 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   FlatList,
   Modal,
   Image,
   ScrollView,
-  ActivityIndicator
+  RefreshControl
 } from 'react-native';
 import {
   X,
@@ -71,6 +70,7 @@ const ExpenseTracking = () => {
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState('expense');
+  const [isRefreshing, setIsRefreshing] = useState(false); 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const { 
@@ -249,10 +249,13 @@ const ExpenseTracking = () => {
     await archiveRestore(allValues);
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
 
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
   
   // Loading state component
   const renderLoadingState = () => (
@@ -517,6 +520,14 @@ const ExpenseTracking = () => {
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
                   showsVerticalScrollIndicator={false} 
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }                  
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No active entries found
@@ -544,7 +555,15 @@ const ExpenseTracking = () => {
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
-                  showsVerticalScrollIndicator={false}                   
+                  showsVerticalScrollIndicator={false}   
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }                                                    
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No archived entries found

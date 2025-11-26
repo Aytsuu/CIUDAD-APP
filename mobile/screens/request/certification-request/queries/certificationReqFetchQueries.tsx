@@ -12,11 +12,12 @@ export interface PurposeAndRate {
 
 export interface AnnualGrossSales {
     ags_id: number;
-    ags_minimum: number;
-    ags_maximum: number;
-    ags_rate: number;
+    ags_minimum: string | number;
+    ags_maximum: string | number;
+    ags_rate: string | number;
     ags_date: string;
     ags_is_archive: boolean;
+    staff_id?: string;
 }
 
 // Query hooks for fetching data

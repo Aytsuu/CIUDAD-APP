@@ -105,8 +105,8 @@ class BusinessPermitRequest(models.Model):
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
     bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
+    bus_nonresident_name = models.TextField(null=True, blank=True)  # Add non-resident name field
     bus_reason = models.TextField(null=True, blank=True)
-
 
     class Meta:
         db_table = 'business_permit_request'

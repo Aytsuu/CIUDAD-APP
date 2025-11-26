@@ -92,7 +92,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             // Validate staff_id format
             if (staffId.length !== 11) {
                 showErrorToast(`Invalid staff ID format. Expected 11 digits, got ${staffId.length}. Please re-login and try again.`);
-                console.error(`Invalid staff ID format: ${staffId} (length: ${staffId.length})`);
                 return;
             }
 
@@ -121,7 +120,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             await queryClient.invalidateQueries({ queryKey: ["residentReq"] });
             
         } catch (error: any) {
-            console.error('Error creating personal clearance:', error);
             showErrorToast(error.message || "Failed to create personal clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -156,7 +154,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             if (onSuccess) onSuccess();
             
         } catch (error) {
-            console.error('Error creating personal clearance:', error);
             showErrorToast("Failed to create personal clearance. Please try again.");
         } finally {
             setIsSubmitting(false);

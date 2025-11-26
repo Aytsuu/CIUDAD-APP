@@ -15,7 +15,7 @@ import { formatDate } from "@/helpers/dateHelpers";
 import { useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { LoadingModal } from "@/components/ui/loading-modal"; // Import the LoadingModal
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 const CLCreateEvent = () => {
   const { user } = useAuth();
@@ -56,6 +56,7 @@ const CLCreateEvent = () => {
         ce_is_archive: false,
         ce_rows: numRows,
         staff_id: user?.staff?.staff_id || null,
+        // staff_id: '00001250924',
       };
 
       const newEvent = await addEventMutation.mutateAsync(eventPayload);
@@ -63,7 +64,7 @@ const CLCreateEvent = () => {
       queryClient.invalidateQueries({ queryKey: ["attendees", newEvent] });
       router.back();
     } catch (error) {
-      console.error("Error creating event:", error);
+      // console.error("Error creating event:", error);
     } finally {
       setIsSubmitting(false);
     }

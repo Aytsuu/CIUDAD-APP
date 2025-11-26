@@ -30,8 +30,8 @@ export const useAddWasteReport = (onSuccess?: () => void) => {
                 toast.success('Report Submitted!')
                 onSuccess?.()
             },
-            onError: (err) => {
-                console.error("Error submitting report:", err);
+            onError: (_err) => {
+                // console.error("Error submitting report:", err);
                 toast.error("Failed to submit report. Please check the input data and try again.");
             }
         })

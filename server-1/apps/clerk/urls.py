@@ -42,6 +42,10 @@ urlpatterns = [
     path('mediation-analytics/', MediationAnalyticsView.as_view(), name='mediation-analytics'),
     path('remarks-analytics/', SummonRemarksAnalyticsView.as_view(), name='remarks-analytics'),
 
+    # calendar
+    path('mediation-calendar/', CouncilMediationCalendarView.as_view(), name='mediation-calendar'),
+    path('conciliation-calendar/', ConciliationProceedingsCalendarView.as_view(), name='conciliation-calendar'),
+
     # resident case tracking
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
     path('summon-payment-logs/<str:comp_id>/', SummonPaymentLogsView.as_view(), name='summon-payment-logs'),
@@ -57,7 +61,7 @@ urlpatterns = [
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
     path('business-permit/upload/', BusinessPermitUploadView.as_view(), name='business-permit-upload'),
     path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
-    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit_cancel'),
+    path('business-permit/<str:bpr_id>/cancel/', CancelBusinessPermitView.as_view(), name='business-permit-cancel'),
     path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
     

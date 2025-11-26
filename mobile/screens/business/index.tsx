@@ -151,7 +151,7 @@ export default () => {
   }
 
   // =================== MAIN RENDER ===================
-  if(!user?.rp) {
+  if(!user?.rp && !user?.br) {
     return (isReady && <NoAccessScreen
         title="Resident Access Required"
         description="The business feature is only available to registered residents and business respondents."

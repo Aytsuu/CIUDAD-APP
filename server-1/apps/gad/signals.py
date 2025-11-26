@@ -24,7 +24,8 @@ def update_budget_year_totals(sender, instance, **kwargs):
             budget_year.gbudy_expenses = expense_total
             budget_year.save()
     except Exception as e:
-        print(f"Error updating budget year totals: {e}")
+        # Error updating budget year totals
+        pass
 
 # COMMENTED OUT: Archiving disabled
 # def archive_passed_gad_plans():

@@ -3,14 +3,10 @@ import { api } from "@/api/api";
 // Fetch certificates
 export const getCertificates = async () => {
     try {
-        console.log('Making request to /clerk/certificate/');
         const res = await api.get('/clerk/certificate/');
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as any;
-        console.error('Error fetching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -18,14 +14,10 @@ export const getCertificates = async () => {
 // Fetch certificate by ID
 export const getCertificateById = async (crId: string) => {
     try {
-        console.log(`Making request to /clerk/certificate/${crId}/`);
         const res = await api.get(`/clerk/certificate/${crId}/`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as any;
-        console.error('Error fetching certificate by ID:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -33,14 +25,10 @@ export const getCertificateById = async (crId: string) => {
 // Search certificates
 export const searchCertificates = async (query: string) => {
     try {
-        console.log(`Making search request to /clerk/certificate/?search=${query}`);
         const res = await api.get(`/clerk/certificate/?search=${encodeURIComponent(query)}`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as any;
-        console.error('Error searching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -48,14 +36,10 @@ export const searchCertificates = async (query: string) => {
 // Get personal clearances
 export const getPersonalClearances = async () => {
     try {
-        console.log('Making request to /clerk/personal-clearances/');
         const res = await api.get('/clerk/personal-clearances/');
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as any;
-        console.error('Error fetching personal clearances:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -67,19 +51,61 @@ export const getPurposeAndRates = async () => {
         // Ensure we return an array even if API format changes
         return response.data.results || response.data || [];
     } catch (error) {
-        console.error("Failed to fetch purpose and rates:", error);
         throw new Error("Failed to fetch purpose and rates");
     }
 };
 
-// Annual Gross Sales API
+// Annual Gross Sales API - Fetch ALL records (handles pagination)
 export const getAnnualGrossSales = async () => {
     try {
-        const response = await api.get('/treasurer/annual-gross-sales-active/');
-        // The API returns paginated data with results array
-        return response.data.results || response.data || [];
+        let allResults: any[] = [];
+        let nextUrl: string | null = null;
+        let isFirstRequest = true;
+        
+        // First, try to fetch with large page size
+        let response = await api.get('/treasurer/annual-gross-sales-active/', {
+            params: {
+                page: 1,
+                page_size: 1000 // Large page size to get all records in one go
+            }
+        });
+        
+        let data = response.data;
+        
+        // Handle paginated response with results array
+        if (data.results && Array.isArray(data.results)) {
+            allResults = [...allResults, ...data.results];
+            nextUrl = data.next;
+        } 
+        // Handle non-paginated response (direct array)
+        else if (Array.isArray(data)) {
+            return data;
+        }
+        // Handle response without results array (fallback)
+        else {
+            return data.results || data || [];
+        }
+        
+        // If there are more pages, fetch them using the next URL
+        while (nextUrl) {
+            // Extract path from full URL if needed
+            const urlToFetch = nextUrl.startsWith('http') 
+                ? new URL(nextUrl).pathname + new URL(nextUrl).search
+                : nextUrl;
+            
+            response = await api.get(urlToFetch);
+            data = response.data;
+            
+            if (data.results && Array.isArray(data.results)) {
+                allResults = [...allResults, ...data.results];
+                nextUrl = data.next;
+            } else {
+                nextUrl = null;
+            }
+        }
+        
+        return allResults;
     } catch (error) {
-        console.error("Failed to fetch annual gross sales:", error);
         throw new Error("Failed to fetch annual gross sales");
     }
 };
@@ -90,7 +116,6 @@ export const getPersonalCertifications = async (residentId: string) => {
         const res = await api.get(`clerk/certificate/?rp=${residentId}`);
         return res.data;
     } catch (err) {
-        console.error("Error fetching personal certifications:", err);
         throw err;
     }
 };
@@ -101,7 +126,6 @@ export const getBusinessPermitRequests = async (residentId: string) => {
         const res = await api.get(`clerk/business-permit/?rp=${residentId}`);
         return res.data;
     } catch (err) {
-        console.error("Error fetching business permit requests:", err);
         throw err;
     }
 };
@@ -119,7 +143,6 @@ export const getAllCertificationRequests = async (residentId: string) => {
             business_permit_requests: businessPermits
         };
     } catch (err) {
-        console.error("Error fetching all certification requests:", err);
         throw err;
     }
 };
@@ -130,7 +153,6 @@ export const getPersonalCertificationById = async (certId: string) => {
         const res = await api.get(`clerk/certificate/${certId}/`);
         return res.data;
     } catch (err) {
-        console.error("Error fetching personal certification by ID:", err);
         throw err;
     }
 };
@@ -141,7 +163,6 @@ export const getBusinessPermitById = async (permitId: string) => {
         const res = await api.get(`clerk/business-permit/${permitId}/`);
         return res.data;
     } catch (err) {
-        console.error("Error fetching business permit by ID:", err);
         throw err;
     }
 };
@@ -184,7 +205,6 @@ export const getCertificationStats = async (residentId: string) => {
 
         return stats;
     } catch (err) {
-        console.error("Error fetching certification stats:", err);
         throw err;
     }
 };
@@ -212,7 +232,6 @@ export const getCertificationRequestsByStatus = async (residentId: string, statu
 
         return filteredRequests;
     } catch (err) {
-        console.error("Error fetching certification requests by status:", err);
         throw err;
     }
 };
@@ -224,7 +243,6 @@ export const getBusinessByResidentId = async (rpId: string) => {
         const response = await api.get(`/profiling/business/specific/ownership/?rp=${rpId}`);
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch business by resident ID:", error);
         throw new Error("Failed to fetch business details");
     }
 };
@@ -268,7 +286,6 @@ export const checkResidentVoterId = async (rpId: string, userPersonalData?: any)
             return false;
         }
     } catch (error) {
-        console.error("Error checking resident voter ID:", error);
         return false;
     }
 };

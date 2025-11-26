@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { resolveCase, escalateCase, forwardCase } from "../requestAPI/summonPutAPI";
+import { resolveCase, escalateCase, forwardCase, reEscalateCase } from "../requestAPI/summonPutAPI";
 
 export const useResolveCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -27,8 +27,8 @@ export const useResolveCase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "resolveCase",
             duration: 2000
@@ -61,8 +61,8 @@ export const useForwardcase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "resolveCase",
             duration: 2000
@@ -94,11 +94,41 @@ export const useEscalateCase = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error in marking case:", err);
+        onError: () => {
+            // console.error("Error in marking case:", err);
             toast.error("Failed to mark case.", {
             id: "escalateCase",
             duration: 2000
+            });
+        }
+    })
+}
+
+export const useReEscalateCase = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ( comp_id: string) => reEscalateCase(comp_id),
+        onMutate: () =>{
+            toast.loading("Re-escalating case...", { id: "reEscalateCase" });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCases'] })
+            
+            toast.success('Case re-escalated successfully', {
+                id: "reEscalateCase",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            
+            onSuccess?.();
+        },
+        onError: () => {
+            // console.error("Error in re-escalating case:", err);
+            toast.error("Failed to re-escalate case.", {
+                id: "reEscalateCase",
+                duration: 2000
             });
         }
     })

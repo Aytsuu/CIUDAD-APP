@@ -9,7 +9,7 @@ export const getSitio = async () => {
         const res = await api.get('waste/sitio/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -22,7 +22,7 @@ export const getWasteResReport = async (rp_id?: string) => {
         const res = await api.get('waste/waste-report/', config);
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err; // Important: re-throw the error so React Query can handle it
     }
 };
@@ -39,7 +39,8 @@ export const getWasteReport = async (
     searchQuery?: string,
     reportMatter?: string,
     status?: string,
-    rp_id?: string
+    rp_id?: string,
+    rep_id?: string 
 ): Promise<{ results: WasteReport[]; count: number }> => {
     try {
         const params: any = { page, page_size: pageSize };
@@ -47,6 +48,7 @@ export const getWasteReport = async (
         if (reportMatter && reportMatter !== "0") params.report_matter = reportMatter;
         if (status) params.status = status;
         if (rp_id) params.rp_id = rp_id;
+        if (rep_id) params.rep_id = rep_id;
         
         const res = await api.get('waste/waste-report/', { params });
         
@@ -63,8 +65,8 @@ export const getWasteReport = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };

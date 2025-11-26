@@ -7,16 +7,16 @@ export const addSupportDocument = async (gprId: number, files: MediaItem[]) => {
   }
 
   try {
-    console.log('API payload:', {
-      gpr_id: gprId,
-      files: files.map(file => ({
-        name: file.name,
-        type: file.type,
-        file: file.file ? file.file.substring(0, 20) + '...' : 'undefined',
-        path: `uploads/${file.name || `file_${Date.now()}`}`,
-        psd_is_archive: false
-      }))
-    });
+    // console.log('API payload:', {
+    //   gpr_id: gprId,
+    //   files: files.map(file => ({
+    //     name: file.name,
+    //     type: file.type,
+    //     file: file.file ? file.file.substring(0, 20) + '...' : 'undefined',
+    //     path: `uploads/${file.name || `file_${Date.now()}`}`,
+    //     psd_is_archive: false
+    //   }))
+    // });
     const response = await api.post(`/gad/project-proposals/${gprId}/support-docs/`, {
       gpr_id: gprId,
       files: files.map((file) => ({
@@ -27,10 +27,9 @@ export const addSupportDocument = async (gprId: number, files: MediaItem[]) => {
         psd_is_archive: false,
       })),
     });
-    console.log('API response:', response.data);
     return response.data;
   } catch (error) {
-    console.error("File upload error:", error);
+    // console.error("File upload error:", error);
     throw new Error("Failed to upload files to server");
   }
 };

@@ -34,7 +34,7 @@ export const useDeleteParticular = () => {
           await queryClient.invalidateQueries({ queryKey: ['income'] });
 
         } catch (err) {
-          console.error(err);
+        //   console.error(err);
           throw err;
         }
     };

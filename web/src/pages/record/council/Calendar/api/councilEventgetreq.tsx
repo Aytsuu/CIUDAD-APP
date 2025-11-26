@@ -35,7 +35,7 @@ export const getCouncilEvents = async (
       count: Array.isArray(data) ? data.length : 0
     };
   } catch (err) {
-    console.error('Error fetching council events:', err);
+    // console.error('Error fetching council events:', err);
     return { results: [], count: 0 };
   }
 };
@@ -45,7 +45,7 @@ export const getCouncilEventYears = async (): Promise<number[]> => {
     const res = await api.get("council/event-meeting/years/");
     return res.data || [];
   } catch (err) {
-    console.error('Error fetching council event years:', err);
+    // console.error('Error fetching council event years:', err);
     return [];
   }
 };

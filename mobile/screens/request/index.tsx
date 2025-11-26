@@ -62,7 +62,7 @@ export default () => {
   }, [user])
 
   // ============== RENDER ==============
-  if (!user?.rp) {
+  if (!user?.rp && !user?.br) {
     return (isReady && <NoAccessScreen
       title="Resident Access Required"
       description="The request feature is only available to registered residents."

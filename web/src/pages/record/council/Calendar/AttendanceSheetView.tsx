@@ -57,7 +57,7 @@ async function generatePDF(
     try {
       doc.addImage(barangayLogoBase64, "JPEG", leftLogoX, yPos, logoWidth, logoHeight);
     } catch (e) {
-      console.error("Error adding barangay logo:", e);
+      // console.error("Error adding barangay logo:", e);
     }
   }
 
@@ -65,7 +65,7 @@ async function generatePDF(
     try {
       doc.addImage(cityLogoBase64, "JPEG", rightLogoX, yPos, logoWidth, logoHeight);
     } catch (e) {
-      console.error("Error adding city logo:", e);
+      // console.error("Error adding city logo:", e);
     }
   }
 
@@ -252,7 +252,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
         }
       };
       img.onerror = () => {
-        console.error("Failed to load image:", imageSrc);
+        // console.error("Failed to load image:", imageSrc);
         callback("");
       };
     };
@@ -296,7 +296,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
           onLoad?.();
         }
       } catch (error) {
-        console.error("PDF generation error:", error);
+        // console.error("PDF generation error:", error);
         if (isMounted.current) {
           setGenerationError(true);
           setIsGenerating(false);

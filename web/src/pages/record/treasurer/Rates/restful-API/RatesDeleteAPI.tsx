@@ -8,7 +8,8 @@ export const deleteAnnualGrossSales= async (ags_id: number) => {
         })
         return res.data
     } catch(error){
-        console.error(error)
+        // console.error(error)
+        throw error
     }
 }
 
@@ -24,6 +25,7 @@ export const deletePurposeAndRate= async (pr_id: number) => {
 
         return res.data, res2.data
     } catch(error){
-        console.error(error)
+        // console.error(error)
+        throw error
     }
 }

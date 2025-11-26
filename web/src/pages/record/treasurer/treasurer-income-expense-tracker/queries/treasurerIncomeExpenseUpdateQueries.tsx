@@ -28,6 +28,7 @@ type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseEditFormSch
   totalBudget: number;
   totalExpense: number;
   returnAmount: number;
+  prevAmount: number;
   proposedBud: number;
   particularId: number;
   staff: string;
@@ -67,7 +68,7 @@ export const useUpdateIncomeExpense = (
       });
 
       //5. add new expense log
-      if(values.returnAmount > 0){
+      if(values.returnAmount > 0 || values.prevAmount!=Number(values.iet_amount)){
         await expense_log(iet_num, {
           returnAmount: values.returnAmount,
           el_proposed_budget: values.iet_amount,
@@ -91,8 +92,8 @@ export const useUpdateIncomeExpense = (
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error updating expense:", err);
-      showErrorToast("Failed to update expense");
+      // console.error("Error updating expense:", err);
+      showErrorToast(`Failed to update expense: ${err.message}`);
     }
   });
 };
@@ -101,7 +102,6 @@ export const useUpdateIncomeExpense = (
 
 const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
   try {
-    console.log("MEDIA FILESS SA QUERY EDIT: ", mediaFiles)
     // Get current files from server
     const currentFilesRes = await api.get(`treasurer/income-expense-files/?iet_num=${iet_num}`);
     const currentFiles = currentFilesRes.data || [];
@@ -130,7 +130,7 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
       })
     ));
   } catch (err) {
-    console.error("Error updating files:", err);
+    // console.error("Error updating files:", err);
     throw err;
   }
 };
@@ -175,8 +175,8 @@ export const useUpdateIncome = (
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error updating income:", err);
-      showErrorToast("Failed to update income");
+      // console.error("Error updating income:", err);
+      showErrorToast(`Failed to update income: ${err.message}`);
     }
   });
 };

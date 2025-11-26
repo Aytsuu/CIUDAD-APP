@@ -195,7 +195,6 @@ function OrdinancePage() {
             setOrdinanceToToggle(null);
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (e) {
-            console.error('Failed to toggle repeal:', e);
             showErrorToast('Failed to update ordinance repeal status');
         }
     };
@@ -234,7 +233,6 @@ function OrdinancePage() {
             showSuccessToast('Ordinance deleted successfully');
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (error) {
-            console.error('Error deleting ordinance:', error);
             showErrorToast('Failed to delete ordinance');
         } finally {
             setDeleteDialogOpen(false);
@@ -473,10 +471,10 @@ function OrdinancePage() {
         return baseMatches || amendmentMatches;
     })
     .sort((a, b) => {
-        // Sort by ord_num (extract number and year for proper sorting)
-        const aNum = a.baseOrdinance.ord_num || '';
-        const bNum = b.baseOrdinance.ord_num || '';
-        return aNum.localeCompare(bNum, undefined, { numeric: true, sensitivity: 'base' });
+        // Sort by ord_date_created (newest first)
+        const aDate = a.baseOrdinance.ord_date_created ? new Date(a.baseOrdinance.ord_date_created).getTime() : 0;
+        const bDate = b.baseOrdinance.ord_date_created ? new Date(b.baseOrdinance.ord_date_created).getTime() : 0;
+        return bDate - aDate; // Descending order (newest first)
     });
 
     // Calculate pagination for filtered items (client-side pagination)

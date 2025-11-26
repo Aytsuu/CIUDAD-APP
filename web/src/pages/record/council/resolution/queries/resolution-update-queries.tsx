@@ -50,8 +50,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error updating resolution:", err);
-      showErrorToast("Failed to update resolution");        
+      showErrorToast(`Failed to update resolution: ${err.message}`);        
     }
   });
 };
@@ -88,7 +87,7 @@ const handleResolutionFileUpdates = async (res_num: string, mediaFiles: any[]) =
       })
     ));
   } catch (err) {
-    console.error("Error updating resolution files:", err);
+    // console.error("Error updating resolution files:", err);
     throw err;
   }
 };

@@ -12,12 +12,15 @@ import { useState } from 'react';
 import { useInsertMinutesOfMeeting } from './queries/MOMInsertQueries';
 import { useAuth } from '@/context/AuthContext';
 
+
 export default function AddMinutesOfMeeting({onSuccess}: {
     onSuccess?: () => void;
 }) {
     const {user}  = useAuth();
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
+    const [suppMediaFiles, setSuppMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [suppActiveVideoId, setSuppActiveVideoId] = useState<string>("");
     const [fileError, setFileError] = useState<string>("");
     const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting(onSuccess)
     const form = useForm<z.infer<typeof minutesOfMeetingFormSchema>>({
@@ -50,9 +53,14 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                 'name': media.name,
                 'type': media.type,
                 'file': media.file
-            }))    
+            }))
+        const suppDocs = suppMediaFiles.map((media) => ({
+                'name': media.name,
+                'type': media.type,
+                'file': media.file
+            }))
         
-        addMOM({ values, files });
+        addMOM({ ...values, files, suppDocs });
     }
 
 
@@ -84,11 +92,12 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         max={new Date().toISOString().split('T')[0]}
                     />
 
+                    {/* Required Meeting File */}
                     <FormItem>
                         <FormControl>
                             <MediaUpload
-                                title="Meeting File"
-                                description="Upload meeting documentation"
+                                title="Meeting File *"
+                                description="Upload meeting documentation (required)"
                                 mediaFiles={mediaFiles}
                                 setMediaFiles={setMediaFiles}
                                 activeVideoId={activeVideoId}
@@ -101,6 +110,22 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         {fileError && (
                             <div className="text-red-500 text-xs mt-2">{fileError}</div>
                         )}
+                    </FormItem>
+
+                    {/* Optional Supporting Images */}
+                    <FormItem>
+                        <FormControl>
+                            <MediaUpload
+                                title="Supporting Images"
+                                description="Upload supporting images (optional)"
+                                mediaFiles={suppMediaFiles}
+                                setMediaFiles={setSuppMediaFiles}
+                                activeVideoId={suppActiveVideoId}
+                                setActiveVideoId={setSuppActiveVideoId}
+                                acceptableFiles='image'
+                            />
+                        </FormControl>
+                        <FormMessage />
                     </FormItem>
                       
                     

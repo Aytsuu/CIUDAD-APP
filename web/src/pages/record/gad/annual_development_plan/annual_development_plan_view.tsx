@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import { useArchiveAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const { data: proposals = [] } = useGetProjectProposals();
   const { data: resolutions = [] } = useResolution();
   const archivePlansMutation = useArchiveAnnualDevPlans();
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -127,7 +130,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       const plansData = Array.isArray(data) ? data : data?.results || [];
       setPlans(plansData);
     } catch (error) {
-      console.error("Error fetching plans:", error);
       showErrorToast("Failed to fetch annual development plans");
     } finally {
       setIsLoading(false);
@@ -135,7 +137,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   };
 
   const handleEdit = (devId: number) => {
-    navigate(`/gad-annual-development-plan/edit/${devId}`);
+    navigate(`/gad-annual-development-plan/edit/${devId}`, { state: { fromView: true, year } });
   };
 
   const handleViewProject = (proposal: any) => {
@@ -215,13 +217,12 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         showErrorToast(`Cannot archive ${skippedCount} plan(s) with linked resolutions. Archiving remaining plans.`);
       }
       
-      await archivePlansMutation.mutateAsync(planIdsWithoutResolutions);
+      await archivePlansMutation.mutateAsync({ devIds: planIdsWithoutResolutions, staffId });
       showSuccessToast(`Successfully archived ${planIdsWithoutResolutions.length} development plan(s)`);
       setShowArchiveDialog(false);
       setShowArchiveButtons(false);
       onBack(); // Go back to main view after archiving
     } catch (error) {
-      console.error("Failed to archive plans:", error);
       showErrorToast("Failed to archive development plans");
     } finally {
       setIsArchiving(false);
@@ -252,7 +253,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     
     setIsArchiving(true);
     try {
-      await archivePlansMutation.mutateAsync([archiveDialogPlanId]);
+      await archivePlansMutation.mutateAsync({ devIds: [archiveDialogPlanId], staffId });
       showSuccessToast("Successfully archived development plan");
       setShowArchiveDialog(false);
       const archivedId = archiveDialogPlanId;
@@ -260,7 +261,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       // Remove the archived plan from the view
       setPlans(prev => prev.filter(plan => plan.dev_id !== archivedId));
     } catch (error) {
-      console.error("Failed to archive plan:", error);
       showErrorToast("Failed to archive development plan");
     } finally {
       setIsArchiving(false);

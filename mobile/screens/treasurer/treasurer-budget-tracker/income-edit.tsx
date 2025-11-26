@@ -65,8 +65,6 @@ function IncomeEditForm() {
   const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
-  console.log("TOTAL INCOME: ", totInc)
-
   const IncomeParticulars = IncomeParticularItems
     .filter(item => item.id && item.name)
     .map(item => ({

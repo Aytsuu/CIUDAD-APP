@@ -1,5 +1,5 @@
 import { DefaultTheme, ThemeProvider, Theme} from '@react-navigation/native';
-import { useFonts } from 'expo-font';
+import { useState } from 'react'
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -32,25 +32,37 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const queryClient = new QueryClient();
-
-  const [loaded] = useFonts({
-    PoppinsRegular: require('../assets/fonts/Poppins-Regular.ttf'),
-    PoppinsMedium: require('../assets/fonts/Poppins-Medium.ttf'),
-    PoppinsSemiBold: require('../assets/fonts/Poppins-SemiBold.ttf'),
-  });
+  const [appIsReady, setAppIsReady] = useState(false); 
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync('#ffffff');
-    NavigationBar.setButtonStyleAsync('dark');
+    async function prepare() {
+      try {
+        // Set navigation bar
+        await NavigationBar.setBackgroundColorAsync('#ffffff');
+        await NavigationBar.setButtonStyleAsync('dark');
+        
+        // Small delay to ensure everything is ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (e) {
+        console.warn('Error during app initialization:', e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
   }, []);
 
   useEffect(() => {
-    if (loaded) {
+    // Hide splash screen once app is ready
+    if (appIsReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [appIsReady]);
 
-  if (!loaded) {
+  // Keep showing splash screen while app initializes
+  if (!appIsReady) {
     return null;
   }
 
@@ -84,6 +96,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(gad)" options = {{ headerShown: false, animation: 'fade' }}/>
                         <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
                         <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
+                        <Stack.Screen name="(certificates)" options = {{headerShown: false, animation: 'fade'}} />
                         <Stack.Screen name="(notification)" options = {{headerShown: false, animation: 'fade'}} />
                         <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
                       </Stack>

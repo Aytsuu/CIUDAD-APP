@@ -48,7 +48,7 @@ export const useGetPersonalList = () => {
     queryFn: () =>
       getPersonalList().catch((error) => {
         toast.error(error.message || "Failed to fetch personal list");
-        console.error("Error fetching personal list:", error);
+        // console.error("Error fetching personal list:", error);
         throw error;
       }),
     staleTime: 1000 * 60 * 5, // 5 minutes

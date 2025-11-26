@@ -150,7 +150,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         },
       });
     } catch (error) {
-      console.error("Error uploading files:", error);
+      // console.error("Error uploading files:", error);
     }
   };
 
@@ -197,7 +197,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     try {
       await Linking.openURL(doc.disf_url);
     } catch (error) {
-      console.error("Error opening file:", error);
+      // console.error("Error opening file:", error);
     }
   };
 

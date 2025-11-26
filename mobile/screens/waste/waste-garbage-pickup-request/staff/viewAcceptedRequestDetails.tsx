@@ -1,6 +1,6 @@
 import PageLayout from "@/screens/_PageLayout"
-import { View, TouchableOpacity, Text, ScrollView, Image } from "react-native"
-import { ChevronLeft, Edit, MapPin, Trash, Calendar, User, Users, Truck, Camera, Info } from "lucide-react-native"
+import { View, TouchableOpacity, Text, ScrollView, Image, Modal, RefreshControl } from "react-native"
+import { ChevronLeft, Edit, MapPin, Trash, Calendar, User, Users, Truck, Camera, Info, X } from "lucide-react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
@@ -10,20 +10,39 @@ import { Button } from "@/components/ui/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { useUpdateGarbageRequestStatus } from "./queries/garbagePickupStaffUpdateQueries"
 import { LoadingModal } from "@/components/ui/loading-modal"
+import { useState } from "react"
+import { formatDate } from "@/helpers/dateHelpers"
 
 export default function ViewRequestDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
-  const { data: requestDetails, isLoading } = useGetViewAccepted(garb_id)
+  
+  // Add refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Add refetch to the query hook
+  const { data: requestDetails, isLoading, refetch } = useGetViewAccepted(garb_id)
   const { mutate: confirm, isPending} = useUpdateGarbageRequestStatus()
 
-  if(isLoading){
-    return(
-      <View className="flex-1 justify-center items-center">
-          <LoadingState/>
-      </View>
-    )
+  // State for image modal
+  const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{url: string, name: string} | null>(null);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Function to handle viewing the image
+  const handleViewImage = (imageUrl: string, imageName: string = "") => {
+    setSelectedImage({
+      url: imageUrl,
+      name: imageName
+    })
+    setViewImageModalVisible(true)
   }
 
   const handleConfirm = (garb_id: string) => {
@@ -46,6 +65,14 @@ export default function ViewRequestDetails() {
     })
   }
 
+  if(isLoading && !isRefreshing){
+    return(
+      <View className="flex-1 justify-center items-center">
+          <LoadingState/>
+      </View>
+    )
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -59,22 +86,32 @@ export default function ViewRequestDetails() {
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Details</Text>}
       wrapScroll={false}
       footer={
-        <View className="p-6 bg-white border-t border-gray-200">
-          <ConfirmationModal
-            trigger={
-              <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
-                <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm Completion</Text>
-            </Button>
-            }
-            description="Are you sure you want to mark this request as completed?"
-            title="Completion Confirmation"
-            onPress={() => handleConfirm(garb_id)}
-          />
-        </View>
+        <ConfirmationModal
+          trigger={
+            <Button className="bg-green-500 native:h-[56px] w-full rounded-xl shadow-lg">
+              <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm Completion</Text>
+          </Button>
+          }
+          description="Are you sure you want to mark this request as completed?"
+          title="Completion Confirmation"
+          onPress={() => handleConfirm(garb_id)}
+        />
       }
     >
       <View className="flex-1 bg-gray-50">
-        <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          className="flex-1 p-6" 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+              tintColor="#00a8f0"
+            />
+          }
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20  }}
+        >
           {/* Request Info Card */}
           <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
             <View className="flex-row items-center mb-4 gap-2">
@@ -115,6 +152,16 @@ export default function ViewRequestDetails() {
             <View className="py-3 border-b border-gray-100">
               <View className="flex-row items-center mb-2">
                 <Calendar size={16} color="#6b7280" className="mr-2" />
+                <Text className="text-gray-600 font-PoppinsMedium">Preferred Date & Time:</Text>
+              </View>
+              <Text className="font-PoppinsSemiBold text-gray-800 ml-6">
+                {formatDate(requestDetails?.garb_pref_date || "", "long")} • {formatTime(requestDetails?.garb_pref_time || "")}
+              </Text>
+            </View>
+
+            <View className="py-3 border-b border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <Calendar size={16} color="#6b7280" className="mr-2" />
                 <Text className="text-gray-600 font-PoppinsMedium">Created:</Text>
               </View>
               <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
@@ -122,15 +169,13 @@ export default function ViewRequestDetails() {
               </Text>
             </View>
 
-            {requestDetails?.dec_date && (
+            {requestDetails?.garb_additional_notes && (
               <View className="py-3">
-                <View className="flex-row items-center mb-2">
-                  <Calendar size={16} color="#6b7280" className="mr-2" />
-                  <Text className="text-gray-600 font-PoppinsMedium">Decision Date:</Text>
+                <View className="flex-row items-center mb-2 gap-2">
+                  <Info size={16} color="#6b7280" className="mr-2" />
+                  <Text className="text-gray-600 font-PoppinsMedium">Additional Notes:</Text>
                 </View>
-                <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
-                  {formatTimestamp(requestDetails?.dec_date)}
-                </Text>
+                <Text className="font-PoppinsSemiBold text-gray-800 ml-6">{requestDetails?.garb_additional_notes}</Text>
               </View>
             )}
           </View>
@@ -208,24 +253,41 @@ export default function ViewRequestDetails() {
                 <View className="ml-6">
                   <View className="bg-green-100 px-3 py-2 rounded-lg self-start">
                     <Text className="font-PoppinsSemiBold text-green-700">
-                      {requestDetails.assignment_info.pick_date}, {formatTime(requestDetails.assignment_info.pick_time)}
+                      {formatDate(requestDetails.assignment_info.pick_date, "long")}, {formatTime(requestDetails.assignment_info.pick_time)}
                     </Text>
                   </View>
                 </View>
               </View>
             )}
+
+           {(requestDetails?.staff_name || requestDetails?.dec_date) && (
+            <View className="py-3">
+                <View className="flex-row items-center mb-2">
+                  <Calendar size={16} color="#6b7280" className="mr-2" />
+                  <Text className="text-gray-600 font-PoppinsMedium">Assigned & Accepted by:</Text>
+                </View>
+                <Text className="font-PoppinsSemiBold text-gray-800 ml-6" style={{ flexWrap: "wrap" }}>
+                  {requestDetails?.staff_name || "Staff"} {requestDetails?.dec_date && `• ${formatTimestamp(requestDetails.dec_date)}`}
+                </Text>
+              </View>
+            )}
           </View>
 
-          {/* Attached Image Section */}
+          {/* Attached Image Section - Updated with modal functionality */}
           {requestDetails?.file_url && (
             <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
-              <View className="flex-row items-center mb-4">
+              <View className="flex-row items-center mb-4 gap-2">
                 <Camera size={20} color="#9333ea" className="mr-2" />
-                <Text className="font-PoppinsBold text-lg text-gray-800">Attached Image</Text>
+                <Text className="font-PoppinsBold text-lg text-gray-800 font-bold">Attached Image</Text>
               </View>
-              <View className="bg-gray-50 rounded-lg p-2">
+              
+              {/* Make the image clickable */}
+              <TouchableOpacity 
+                onPress={() => handleViewImage(requestDetails.file_url)}
+                className="bg-gray-50 rounded-lg p-2"
+              >
                 <Image
-                  source={{ uri: requestDetails?.file_url }}
+                  source={{ uri: requestDetails.file_url }}
                   style={{
                     width: "100%",
                     height: undefined,
@@ -234,12 +296,44 @@ export default function ViewRequestDetails() {
                     resizeMode: "cover",
                   }}
                 />
-              </View>
+              </TouchableOpacity>
             </View>
           )}
           <LoadingModal visible={isPending}/>
         </ScrollView>
       </View>
+
+      {/* Image Viewer Modal */}
+      <Modal
+        visible={viewImageModalVisible}
+        transparent={true}
+        onRequestClose={() => setViewImageModalVisible(false)}
+        animationType="fade"
+      >
+        <View className="flex-1 bg-black/90">
+          {/* Header with close button and file name */}
+          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
+            <Text className="text-white text-lg font-medium w-[90%]" numberOfLines={1}>
+              {selectedImage?.name || ''}
+            </Text>
+            <TouchableOpacity 
+              onPress={() => setViewImageModalVisible(false)}
+              className="bg-black/50 rounded-full p-1"
+            >
+              <X size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Main Image - Make the entire area clickable to close */}
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage.url }}
+              className="w-full h-full"
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </PageLayout>
   )
 }

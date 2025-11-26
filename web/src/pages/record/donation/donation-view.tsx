@@ -23,8 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   const { user } = useAuth();
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
-  
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const [isEditing, setIsEditing] = useState(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
   const {

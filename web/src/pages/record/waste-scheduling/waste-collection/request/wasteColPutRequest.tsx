@@ -2,7 +2,6 @@ import {api} from '@/api/api';
 
 export const updateWasteColData = async (wc_num: number, collectionInfo: Record<string, any>) => {
     try {
-      
 
         const res = await api.put(`waste/waste-collection-sched/${wc_num}/`, {
             wc_day: collectionInfo.day,
@@ -15,7 +14,7 @@ export const updateWasteColData = async (wc_num: number, collectionInfo: Record<
         });
         return res.data;
     } catch (err) {
-        console.error("Error updating waste schedule:", err);
+        // console.error("Error updating waste schedule:", err);
         throw err;
     }
 };

@@ -27,12 +27,12 @@ export const useAddSupportDocument = () => {
       }
       // Filter files with valid base64 data
       const validFiles = files.filter(isValidMediaItem);
-      console.log('Valid files for upload:', validFiles.map(file => ({
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        filePrefix: file.file.substring(0, 20)
-      })));
+      // console.log('Valid files for upload:', validFiles.map(file => ({
+      //   id: file.id,
+      //   name: file.name,
+      //   type: file.type,
+      //   filePrefix: file.file.substring(0, 20)
+      // })));
       if (validFiles.length === 0) {
         throw new Error("No valid files to upload");
       }
@@ -42,12 +42,12 @@ export const useAddSupportDocument = () => {
           ? file.file 
           : `data:${file.type || 'image/jpeg'};base64,${file.file}`
       }));
-      console.log('Formatted files:', formattedFiles.map(file => ({
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        filePrefix: file.file.substring(0, 20)
-      })));
+      // console.log('Formatted files:', formattedFiles.map(file => ({
+      //   id: file.id,
+      //   name: file.name,
+      //   type: file.type,
+      //   filePrefix: file.file.substring(0, 20)
+      // })));
       return addSupportDocument(gprId, formattedFiles);
     },
     onSuccess: (data, variables) => {
@@ -56,7 +56,7 @@ export const useAddSupportDocument = () => {
       toast.success("Supporting documents added successfully.");
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
+      // console.error('Mutation error:', error);
       toast.error("Failed to add supporting document.");
     },
   });

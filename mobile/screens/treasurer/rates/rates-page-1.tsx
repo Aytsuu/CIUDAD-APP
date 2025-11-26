@@ -56,10 +56,10 @@ export default function RatesPage1() {
     setIsRefreshing(false);
   };
 
-  const handleSearch = React.useCallback(() => {
-    setSearchQuery(searchInputVal);
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
     setCurrentPage(1);
-  }, [searchInputVal]);
+  };
 
   const handleCreate = () => {
     const sortedData = [...rates]
@@ -79,6 +79,7 @@ export default function RatesPage1() {
   const handleDelete = (agsId: string) => {
     deleteGrossSales(Number(agsId), {
       onSuccess: () => {
+        // Refetch both tabs to ensure data consistency
         refetchActive();
         refetchAll();
       }
@@ -197,23 +198,28 @@ export default function RatesPage1() {
     <>
       <View className="flex-1 p-6">
         <View className="mb-4">
-          {/* Search Input */}
-           <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
-            <Search size={18} color="#6b7280" />
-            <Input
-              className="flex-1 ml-2 bg-white text-black"
-              placeholder="Search..."
-              value={searchInputVal}
-              onChangeText={setSearchInputVal}
-              onSubmitEditing={handleSearch}
-              style={{ borderWidth: 0, shadowOpacity: 0 }}
-            />
-          </View>
+          {/* Search Input - Updated for real-time search */}
+          {!isLoading && (
+              <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-2">
+                <Search size={18} color="#6b7280" />
+                <Input
+                  className="flex-1 ml-2 bg-white text-black"
+                  placeholder="Search annual gross sales..."
+                  value={searchInputVal}
+                  onChangeText={(text) => {
+                    setSearchInputVal(text);
+                    handleSearch(text);
+                  }}
+                  style={{ borderWidth: 0, shadowOpacity: 0 }}
+                />
+              </View>
+            
+          )}
 
-          {/* Add Button — added top margin */}
+          {/* Add Button */}
           <Button 
             onPress={handleCreate} 
-            className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md mt-3"
+            className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md"
           >
             <Plus size={20} color="white" />
             <Text className="text-white ml-2 font-semibold">Add</Text>
@@ -256,9 +262,13 @@ export default function RatesPage1() {
                       refreshing={isRefreshing}
                       onRefresh={handleRefresh}
                       colors={['#00a8f0']}
+                      tintColor="#00a8f0"
                     />
                   }
-                  style={{ flex: 1 }}
+                  contentContainerStyle={{ 
+                    flexGrow: 1,
+                    paddingBottom: 16 
+                  }}
                 />
               </View>
             )}
@@ -282,9 +292,13 @@ export default function RatesPage1() {
                       refreshing={isRefreshing}
                       onRefresh={handleRefresh}
                       colors={['#00a8f0']}
+                      tintColor="#00a8f0"
                     />
                   }
-                  style={{ flex: 1 }}
+                  contentContainerStyle={{ 
+                    flexGrow: 1,
+                    paddingBottom: 16 
+                  }}
                 />
               </View>
             )}

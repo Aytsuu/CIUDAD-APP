@@ -26,7 +26,7 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
                 router.back()
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
+                // console.error("Error submitting record:", err);
                 toast.error("Failed to submit record. Please check the input data and try again.")
             }
         })
@@ -60,7 +60,7 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
             router.back();
         },
         onError: (err: Error) => {
-            console.error("Upload error:", err);
+            // console.error("Upload error:", err);
             toast.error( "Failed to upload documents. Please try again.")
         }
     });
@@ -98,7 +98,7 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             router.back()
         },
         onError: (err: Error) => {
-            console.error("Upload error:", err);
+            // console.error("Upload error:", err);
             toast.error( "Failed to add remarks. Please try again.")
         }
     });

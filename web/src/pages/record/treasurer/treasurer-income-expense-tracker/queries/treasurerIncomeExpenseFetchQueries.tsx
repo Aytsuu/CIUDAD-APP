@@ -62,10 +62,10 @@ export const useBudgetItems = (year?: number) => {
             const response = await getExpenseParticulars(year);
             const items = Array.isArray(response) ? response : response?.data;
             
-            if (!items) {
-                console.warn("No items found in response", response);
-                return [];
-            }
+            // if (!items) {
+            //     console.warn("No items found in response", response);
+            //     return [];
+            // }
             
             return items.map((item: any) => ({
                 id: item.exp_id?.toString() || '',
